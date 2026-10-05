@@ -93,8 +93,8 @@ export function CheckboxField({
 
 export function FormSection({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
   return (
-    <fieldset className="rounded-lg border bg-surface p-5">
-      <legend className="px-1 text-base font-semibold">{title}</legend>
+    <fieldset className="rounded-xl border bg-surface p-4 shadow-xs sm:p-5">
+      <legend className="rounded-md bg-surface px-1.5 text-base font-semibold">{title}</legend>
       {description ? <p className="mb-4 text-sm text-muted-foreground">{description}</p> : null}
       <div className="grid gap-4 sm:grid-cols-2">{children}</div>
     </fieldset>

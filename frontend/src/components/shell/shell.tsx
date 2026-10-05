@@ -1,5 +1,5 @@
 "use client";
-import { Menu, ShieldCheck } from "lucide-react";
+import { Menu, ShieldCheck, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState, type ReactNode } from "react";
 import { Dialog as D } from "radix-ui";
@@ -9,13 +9,20 @@ import { SidebarNav } from "@/components/shell/sidebar-nav";
 import { ProjectSwitcher } from "@/components/shell/project-switcher";
 import { LanguageSwitch } from "@/components/shell/language-switch";
 import { NotificationsBell } from "@/components/shell/notifications-bell";
+import { ThemeToggle } from "@/components/shell/theme-toggle";
 import { UserMenu } from "@/components/shell/user-menu";
 
-function Brand() {
+function Brand({ onNavigate }: { onNavigate?: () => void }) {
   const t = useTranslations("meta");
   return (
-    <Link href="/" className="flex items-center gap-2 px-4 py-4 font-semibold text-sidebar-foreground">
-      <ShieldCheck aria-hidden className="size-6" />
+    <Link
+      href="/"
+      onClick={onNavigate}
+      className="flex min-h-touch items-center gap-2.5 rounded-md px-2 font-semibold leading-tight text-sidebar-foreground"
+    >
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-active">
+        <ShieldCheck aria-hidden className="size-5 text-sidebar-indicator" />
+      </span>
       <span>{t("appName")}</span>
     </Link>
   );
@@ -26,35 +33,65 @@ export function Shell({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   return (
     <div className="flex min-h-dvh">
-      <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:start-2 focus:top-2 focus:z-50 focus:rounded focus:bg-surface focus:p-2">
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:absolute focus:start-2 focus:top-2 focus:z-50 focus:rounded-md focus:bg-surface focus:p-3 focus:shadow-lg"
+      >
         {t("skipToContent")}
       </a>
-      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col overflow-y-auto bg-sidebar lg:flex" data-testid="sidebar">
-        <Brand />
+      <aside
+        className="sticky top-0 hidden h-dvh w-(--sidebar-width) shrink-0 flex-col overflow-y-auto border-e border-white/5 bg-sidebar lg:flex"
+        data-testid="sidebar"
+      >
+        <div className="px-3 pt-3 pb-1">
+          <Brand />
+        </div>
         <SidebarNav />
       </aside>
       <D.Root open={mobileOpen} onOpenChange={setMobileOpen}>
         <D.Portal>
-          <D.Overlay className="fixed inset-0 z-40 bg-black/40 lg:hidden" />
-          <D.Content className="fixed inset-y-0 start-0 z-50 w-72 overflow-y-auto bg-sidebar lg:hidden" aria-describedby={undefined}>
+          <D.Overlay className="fixed inset-0 z-40 bg-overlay lg:hidden" />
+          <D.Content
+            className="fixed inset-y-0 start-0 z-50 flex w-[min(20rem,85vw)] flex-col overflow-y-auto bg-sidebar shadow-lg lg:hidden"
+            aria-describedby={undefined}
+            data-testid="mobile-nav"
+          >
             <D.Title className="sr-only">{t("openMenu")}</D.Title>
-            <Brand />
+            <div className="flex items-center justify-between gap-2 px-3 pt-3 pb-1">
+              <Brand onNavigate={() => setMobileOpen(false)} />
+              <D.Close
+                className="inline-flex size-touch shrink-0 items-center justify-center rounded-md text-sidebar-foreground hover:bg-sidebar-active"
+                aria-label={t("close")}
+              >
+                <X aria-hidden className="size-5" />
+              </D.Close>
+            </div>
             <SidebarNav onNavigate={() => setMobileOpen(false)} />
           </D.Content>
         </D.Portal>
       </D.Root>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b bg-surface/95 px-3 backdrop-blur sm:px-4" data-testid="topbar">
-          <Button variant="ghost" size="icon" className="lg:hidden" aria-label={t("openMenu")} onClick={() => setMobileOpen(true)}>
-            <Menu aria-hidden />
-          </Button>
-          <ProjectSwitcher />
-          <div className="flex-1" />
-          <LanguageSwitch persist />
-          <NotificationsBell />
-          <UserMenu />
+        <header
+          className="sticky top-0 z-30 flex flex-wrap items-center gap-x-1 gap-y-0 border-b bg-surface/95 px-2 shadow-xs backdrop-blur supports-[backdrop-filter]:bg-surface/85 sm:flex-nowrap sm:gap-2 sm:px-4"
+          data-testid="topbar"
+        >
+          <div className="flex h-(--topbar-h) items-center lg:hidden">
+            <Button variant="ghost" size="icon" aria-label={t("openMenu")} onClick={() => setMobileOpen(true)} data-testid="open-menu">
+              <Menu aria-hidden />
+            </Button>
+          </div>
+          {/* Phones: the project switcher gets its own full-width row under the icons. */}
+          <div className="order-last flex w-full min-w-0 pb-2 sm:order-none sm:w-auto sm:flex-1 sm:pb-0">
+            <ProjectSwitcher />
+          </div>
+          <div className="flex h-(--topbar-h) flex-1 items-center justify-end gap-0.5 sm:flex-none sm:gap-1">
+            <LanguageSwitch persist />
+            <ThemeToggle />
+            <NotificationsBell />
+            <UserMenu />
+          </div>
         </header>
-        <main id="main" tabIndex={-1} className="flex-1 p-4 sm:p-6 lg:p-8">
+        <main id="main" tabIndex={-1} className="flex-1 px-4 py-5 outline-none sm:px-6 sm:py-6 lg:px-8 lg:py-8">
           <div className="mx-auto max-w-7xl">{children}</div>
         </main>
       </div>

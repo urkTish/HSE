@@ -1,49 +1,234 @@
 /*
- * Design tokens — the single place for colours, radii, spacing and typography.
- * The UI/UX Designer refines these values; components only reference tokens
- * (via the Tailwind theme mapping in app/globals.css), never raw colours.
+ * HSE Platform design tokens — the single source for colour, type, spacing, radius and elevation.
+ * Components only reference these (through the Tailwind theme mapping in app/globals.css), never raw colours.
+ *
+ * Themes: light is the default; dark applies when the OS prefers dark (unless the user picked light),
+ * or when the user picked dark (`<html data-theme="dark">`). The toggle lives in the top bar.
+ *
+ * Contrast (WCAG 2.1, checked with a script during the Phase 0 design pass, both themes):
+ *   body text ≥ 15:1, secondary text ≥ 6.5:1, status text on its tint ≥ 5.5:1 (sunlight-readable, above AA),
+ *   form-control borders and focus ring ≥ 3:1 against the surface (WCAG 1.4.11).
+ *
+ * Safety semantics (use sparingly; always with an icon + text, never colour alone):
+ *   danger  = genuinely critical only (expired, blacklisted, LTI, stop-work)
+ *   warning = expiring / at risk / suspended
+ *   success = valid / approved / active
+ *   info    = in progress / draft / invited
+ *   neutral = closed / archived / inactive
  */
+
+/* ---------- Theme-independent tokens ---------- */
 :root {
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Noto Sans Arabic",
-    "Geeza Pro", Tahoma, Arial, sans-serif;
+  /* Type: IBM Plex Sans (Latin) + IBM Plex Sans Arabic share metrics, so mixed EN/AR lines sit on one baseline. */
+  --font-sans: "IBM Plex Sans Variable", "IBM Plex Sans Arabic", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    "Noto Sans Arabic", Tahoma, Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
+  /* Type scale (rem; 1rem = 16px). Body copy in tables/forms is --text-sm; inputs are 16px on touch screens. */
+  --text-xs: 0.75rem; /* 12 — meta, badges */
+  --text-sm: 0.875rem; /* 14 — table cells, labels */
+  --text-base: 1rem; /* 16 — body, inputs on mobile */
+  --text-lg: 1.125rem; /* 18 — section titles */
+  --text-xl: 1.25rem; /* 20 */
+  --text-2xl: 1.5rem; /* 24 — page titles */
+  --text-3xl: 1.875rem; /* 30 — KPI figures (Phase 1) */
+  --leading-latin: 1.5;
+  --leading-arabic: 1.7; /* Arabic needs taller lines for diacritics */
+
+  /* Spacing: Tailwind's 4px grid (--spacing) is the scale; these name the layout rhythm. */
+  --space-page-x: 1rem; /* mobile gutter */
+  --space-page-x-lg: 2rem;
+  --space-section: 1.5rem;
+  --space-card: 1.25rem;
+
+  /* Radius */
   --radius: 0.5rem;
-  --touch-target: 2.75rem; /* 44px minimum for field use with gloves */
 
-  --background: oklch(0.985 0.002 247);
-  --foreground: oklch(0.21 0.02 265);
-  --surface: oklch(1 0 0);
+  /* Touch: every interactive control is at least 44px on touch screens (gloves, sunlight, one hand). */
+  --touch-target: 2.75rem;
+  --control-h: 2.75rem; /* default buttons / inputs / selects */
+  --control-h-sm: 2.75rem; /* compact buttons */
+
+  /* Elevation */
+  --shadow-1: 0 1px 2px rgb(15 27 45 / 0.06), 0 1px 1px rgb(15 27 45 / 0.04);
+  --shadow-2: 0 4px 12px rgb(15 27 45 / 0.08), 0 1px 3px rgb(15 27 45 / 0.06);
+  --shadow-3: 0 12px 32px rgb(15 27 45 / 0.16), 0 2px 6px rgb(15 27 45 / 0.08);
+
+  /* Layout */
+  --sidebar-width: 16rem;
+  --topbar-h: 3.5rem;
+}
+
+/* Desktop with a mouse: controls may be more compact (still ≥ 36px). */
+@media (pointer: fine) and (min-width: 1024px) {
+  :root {
+    --control-h: 2.5rem;
+    --control-h-sm: 2.25rem;
+  }
+}
+
+/* ---------- Light theme (default) ---------- */
+:root {
+  color-scheme: light;
+
+  --background: #f4f6f9; /* page plane */
+  --foreground: #0f1b2d;
+  --surface: #ffffff; /* cards, tables, inputs */
   --surface-foreground: var(--foreground);
-  --muted: oklch(0.955 0.005 255);
-  --muted-foreground: oklch(0.47 0.02 260);
-  --border: oklch(0.9 0.008 255);
-  --input: oklch(0.86 0.01 255);
-  --ring: oklch(0.55 0.15 255);
+  --muted: #eceff4; /* table header, skeleton, subtle fills */
+  --muted-foreground: #475569; /* secondary text: 7.0:1 on page */
+  --border: #d6dce5; /* decorative dividers */
+  --input: #7d8899; /* form-control borders: 3.6:1 */
+  --ring: #2563c9;
 
-  --primary: oklch(0.45 0.13 255);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.94 0.01 255);
-  --secondary-foreground: oklch(0.25 0.03 260);
-  --accent: oklch(0.94 0.02 255);
-  --accent-foreground: oklch(0.25 0.05 260);
-  --destructive: oklch(0.55 0.2 27);
-  --destructive-foreground: oklch(0.99 0 0);
+  --primary: #1d4f91;
+  --primary-foreground: #ffffff;
+  --primary-hover: #173f75;
+  --secondary: #e5ecf6;
+  --secondary-foreground: #0f1b2d;
+  --accent: #e5ecf6; /* hover wash */
+  --accent-foreground: #0f1b2d;
+  --destructive: #b42318;
+  --destructive-foreground: #ffffff;
+  --destructive-hover: #921c13;
+  --overlay: rgb(8 13 23 / 0.5);
 
-  /* Status tones (always paired with text + icon, never colour alone) */
-  --status-success: oklch(0.52 0.13 150);
-  --status-success-bg: oklch(0.95 0.04 150);
-  --status-warning: oklch(0.55 0.13 70);
-  --status-warning-bg: oklch(0.96 0.05 85);
-  --status-danger: oklch(0.52 0.19 27);
-  --status-danger-bg: oklch(0.95 0.03 27);
-  --status-info: oklch(0.5 0.12 255);
-  --status-info-bg: oklch(0.95 0.03 255);
-  --status-neutral: oklch(0.48 0.02 260);
-  --status-neutral-bg: oklch(0.95 0.005 260);
+  /* Status text + tint pairs */
+  --status-success: #166534;
+  --status-success-bg: #e3f4e8;
+  --status-warning: #8a4600;
+  --status-warning-bg: #fdf1d6;
+  --status-danger: #b42318;
+  --status-danger-bg: #fde7e5;
+  --status-info: #1d4f91;
+  --status-info-bg: #e5eef9;
+  --status-neutral: #475569;
+  --status-neutral-bg: #eceff4;
 
-  --sidebar: oklch(0.24 0.04 262);
-  --sidebar-foreground: oklch(0.93 0.01 255);
-  --sidebar-muted: oklch(0.72 0.03 258);
-  --sidebar-active: oklch(0.33 0.06 260);
+  /* Safety solids for icons, dots and chart status marks (Phase 1+); pair with icon + label. */
+  --safety-ok: #0ca30c;
+  --safety-caution: #fab219;
+  --safety-serious: #ec835a;
+  --safety-critical: #d03b3b;
+
+  /* Categorical series for charts — colour-blind-safe in this fixed order (validated: CVD ΔE ≥ 9 adjacent).
+     Never cycle; fold a 9th series into "Other". Slots 3-5 are < 3:1 on white → always direct-label or offer a table. */
+  --series-1: #2a78d6; /* blue */
+  --series-2: #eb6834; /* orange */
+  --series-3: #1baf7a; /* aqua */
+  --series-4: #eda100; /* yellow */
+  --series-5: #e87ba4; /* magenta */
+  --series-6: #008300; /* green */
+  --series-7: #4a3aa7; /* violet */
+  --series-8: #e34948; /* red */
+  --chart-grid: #e1e4ea;
+  --chart-axis: #b8c0cc;
+
+  --sidebar: #0e1d33;
+  --sidebar-foreground: #e8eef7;
+  --sidebar-muted: #a3b3c9;
+  --sidebar-active: #1f3a61;
+  --sidebar-indicator: #7ab0ff;
+}
+
+/* ---------- Dark theme ---------- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --background: #0b111c;
+    --foreground: #e8edf5;
+    --surface: #131b2a;
+    --muted: #1b2537;
+    --muted-foreground: #a9b4c6;
+    --border: #2a364b;
+    --input: #6b7a92;
+    --ring: #7ab0ff;
+    --primary: #7ab0ff;
+    --primary-foreground: #0b111c;
+    --primary-hover: #a3c8ff;
+    --secondary: #1f2b40;
+    --secondary-foreground: #e8edf5;
+    --accent: #1f2b40;
+    --accent-foreground: #e8edf5;
+    --destructive: #e5534b;
+    --destructive-foreground: #0b111c;
+    --destructive-hover: #f07a73;
+    --overlay: rgb(0 0 0 / 0.6);
+    --status-success: #6fd28d;
+    --status-success-bg: #11291b;
+    --status-warning: #f3c260;
+    --status-warning-bg: #2d220b;
+    --status-danger: #ff8b82;
+    --status-danger-bg: #3a1513;
+    --status-info: #8fbcff;
+    --status-info-bg: #132540;
+    --status-neutral: #b5c0d1;
+    --status-neutral-bg: #1e293b;
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+    --series-5: #d55181;
+    --series-6: #008300;
+    --series-7: #9085e9;
+    --series-8: #e66767;
+    --chart-grid: #263247;
+    --chart-axis: #3a4860;
+    --sidebar: #080d17;
+    --sidebar-foreground: #e8edf5;
+    --sidebar-muted: #93a3ba;
+    --sidebar-active: #1a2a45;
+    --shadow-1: 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-2: 0 4px 12px rgb(0 0 0 / 0.45);
+    --shadow-3: 0 12px 32px rgb(0 0 0 / 0.55);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --background: #0b111c;
+  --foreground: #e8edf5;
+  --surface: #131b2a;
+  --muted: #1b2537;
+  --muted-foreground: #a9b4c6;
+  --border: #2a364b;
+  --input: #6b7a92;
+  --ring: #7ab0ff;
+  --primary: #7ab0ff;
+  --primary-foreground: #0b111c;
+  --primary-hover: #a3c8ff;
+  --secondary: #1f2b40;
+  --secondary-foreground: #e8edf5;
+  --accent: #1f2b40;
+  --accent-foreground: #e8edf5;
+  --destructive: #e5534b;
+  --destructive-foreground: #0b111c;
+  --destructive-hover: #f07a73;
+  --overlay: rgb(0 0 0 / 0.6);
+  --status-success: #6fd28d;
+  --status-success-bg: #11291b;
+  --status-warning: #f3c260;
+  --status-warning-bg: #2d220b;
+  --status-danger: #ff8b82;
+  --status-danger-bg: #3a1513;
+  --status-info: #8fbcff;
+  --status-info-bg: #132540;
+  --status-neutral: #b5c0d1;
+  --status-neutral-bg: #1e293b;
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --series-6: #008300;
+  --series-7: #9085e9;
+  --series-8: #e66767;
+  --chart-grid: #263247;
+  --chart-axis: #3a4860;
+  --sidebar: #080d17;
+  --sidebar-foreground: #e8edf5;
+  --sidebar-muted: #93a3ba;
+  --sidebar-active: #1a2a45;
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-2: 0 4px 12px rgb(0 0 0 / 0.45);
+  --shadow-3: 0 12px 32px rgb(0 0 0 / 0.55);
 }

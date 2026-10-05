@@ -107,16 +107,16 @@ export function ProjectList() {
             <TBody>
               {query.data.items.map((p) => (
                 <TR key={p.id} data-testid="project-row">
-                  <TD>
+                  <TD label={t("fields.code")}>
                     <Link href={`/projects/${p.id}`} className="font-medium text-primary hover:underline ltr">
                       {p.code}
                     </Link>
                   </TD>
-                  <TD>{name(p.name_en, p.name_ar)}</TD>
-                  <TD>{t(`type.${p.project_type}`)}</TD>
-                  <TD>{p.city}</TD>
-                  <TD>{date(p.start_date)}</TD>
-                  <TD>
+                  <TD label={t("fields.name")}>{name(p.name_en, p.name_ar)}</TD>
+                  <TD label={t("fields.project_type")}>{t(`type.${p.project_type}`)}</TD>
+                  <TD label={t("fields.city")}>{p.city}</TD>
+                  <TD label={t("fields.start_date")}>{date(p.start_date)}</TD>
+                  <TD label={t("fields.status")}>
                     <StatusBadge status={p.status} label={t(`status.${p.status}`)} />
                   </TD>
                 </TR>

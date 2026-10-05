@@ -72,14 +72,14 @@ export function NotificationsBell() {
         <Button variant="ghost" size="icon" className="relative" aria-label={`${t("notifications")} — ${t("unreadCount", { count: unread })}`} data-testid="notifications-bell">
           <Bell aria-hidden />
           {unread > 0 ? (
-            <span className="absolute end-1 top-1 min-w-4 rounded-full bg-destructive px-1 text-[10px] leading-4 font-semibold text-destructive-foreground">
+            <span className="absolute end-1 top-1 min-w-4 rounded-full bg-destructive px-1 text-center text-[11px] leading-4 font-semibold text-destructive-foreground ring-2 ring-surface">
               {unread > 99 ? "99+" : unread}
             </span>
           ) : null}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[min(22rem,calc(100vw-2rem))] p-0">
-        <div className="flex items-center justify-between border-b px-3 py-2">
+        <div className="flex min-h-12 items-center justify-between border-b px-3 py-2">
           <h2 className="text-sm font-semibold">{t("notifications")}</h2>
           {unread > 0 ? (
             <Button variant="link" size="sm" className="h-auto p-0" onClick={markAll}>
@@ -99,7 +99,10 @@ export function NotificationsBell() {
                   <button
                     type="button"
                     onClick={() => void openItem(n)}
-                    className={cn("flex w-full flex-col gap-0.5 px-3 py-2 text-start hover:bg-muted", !n.read_at && "bg-info-bg/50")}
+                    className={cn(
+                      "flex min-h-touch w-full flex-col gap-0.5 border-s-4 border-transparent px-3 py-2.5 text-start hover:bg-accent",
+                      !n.read_at && "border-info bg-info-bg/60",
+                    )}
                   >
                     <span className={cn("text-sm", !n.read_at && "font-semibold")}>{name(n.title_en, n.title_ar)}</span>
                     {n.body_en || n.body_ar ? <span className="text-xs text-muted-foreground">{name(n.body_en, n.body_ar)}</span> : null}

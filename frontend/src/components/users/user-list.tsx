@@ -99,14 +99,14 @@ export function UserList() {
             <TBody>
               {query.data.items.map((u) => (
                 <TR key={u.id} data-testid="user-row">
-                  <TD>
+                  <TD label={t("fields.name")}>
                     <Link href={`/users/${u.id}`} className="font-medium text-primary hover:underline">
                       {name(u.full_name_en, u.full_name_ar)}
                     </Link>
                   </TD>
-                  <TD className="ltr">{u.email ?? <span className="text-muted-foreground">{t("contactHidden")}</span>}</TD>
-                  <TD>{t(`employerType.${u.employer_type}`)}</TD>
-                  <TD>
+                  <TD label={t("fields.email")}><span className="ltr">{u.email ?? <span className="text-muted-foreground">{t("contactHidden")}</span>}</span></TD>
+                  <TD label={t("fields.employer_type")}>{t(`employerType.${u.employer_type}`)}</TD>
+                  <TD label={t("fields.roles")}>
                     <ul className="flex flex-col gap-0.5 text-xs">
                       {u.role_assignments
                         .filter((a) => a.is_active)
@@ -118,8 +118,8 @@ export function UserList() {
                         ))}
                     </ul>
                   </TD>
-                  <TD>{u.last_login_at ? dateTime(u.last_login_at) : t("neverLoggedIn")}</TD>
-                  <TD>
+                  <TD label={t("fields.last_login_at")}>{u.last_login_at ? dateTime(u.last_login_at) : t("neverLoggedIn")}</TD>
+                  <TD label={t("fields.status")}>
                     <StatusBadge status={u.status} label={t(`status.${u.status}`)} />
                   </TD>
                 </TR>

@@ -16,3 +16,6 @@
 | 12 | 2026-10-05 | Emails go to an `email_outbox` table (EN/AR by recipient language); no SMTP sender yet. | No provider decided; keeps flows testable. |
 | 13 | 2026-10-05 | Hijri dates are formatted by the frontend (ICU islamic-umalqura); the backend stores `show_hijri`/`hijri_calendar` only. | Display concern (rule 34, K3). |
 | 14 | 2026-10-05 | Breached-password list: SecLists 10k-most-common (MIT) in `backend/app/data/`. | Rule 2. |
+| 15 | 2026-10-05 | Typeface IBM Plex Sans + IBM Plex Sans Arabic, self-hosted via `@fontsource` packages (no Google Fonts at build or run time). | Matching Latin/Arabic metrics; works offline/on restricted site networks and in CI without font downloads. |
+| 16 | 2026-10-05 | Theme preference (light/dark/device) is stored per device in `localStorage` (`hse.theme`), not on the user profile. | A viewing convenience (office screen vs phone outdoors); no contract change needed. |
+| 17 | 2026-10-05 | On phones (< 768 px) data tables render as labelled cards; controls are 44 px on touch screens and compact only with a mouse on ≥ 1024 px. | Field use with gloves/sunlight; desktop density preserved. |

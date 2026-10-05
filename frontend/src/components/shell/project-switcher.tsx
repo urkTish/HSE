@@ -1,4 +1,5 @@
 "use client";
+import { Building2, ChevronDown } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { useCurrentProject } from "@/lib/current-project";
@@ -13,7 +14,7 @@ export function ProjectSwitcher() {
   const pathname = usePathname();
   const router = useRouter();
 
-  if (projects.length === 0) return <span className="text-sm text-muted-foreground">{t("noProjects")}</span>;
+  if (projects.length === 0) return <span className="px-2 text-sm text-muted-foreground">{t("noProjects")}</span>;
 
   function change(id: string) {
     setProjectId(id);
@@ -25,12 +26,15 @@ export function ProjectSwitcher() {
   }
 
   return (
-    <label className="flex min-w-0 items-center gap-2 text-sm">
-      <span className="hidden text-muted-foreground sm:inline">{t("projectSwitcher")}</span>
+    <label className="flex w-full min-w-0 items-center gap-2 text-sm sm:w-auto">
+      <span className="hidden shrink-0 text-xs font-medium text-muted-foreground xl:inline">{t("projectSwitcher")}</span>
+      <span className="relative min-w-0 flex-1 sm:flex-none">
+        <Building2 aria-hidden className="pointer-events-none absolute start-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <ChevronDown aria-hidden className="pointer-events-none absolute end-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
       <select
         aria-label={t("projectSwitcher")}
         data-testid="project-switcher"
-        className="h-9 max-w-[14rem] truncate rounded-md border border-input bg-surface px-2 text-sm sm:max-w-xs"
+        className="h-control-sm w-full min-w-0 appearance-none truncate rounded-md border border-input bg-surface ps-8 pe-8 text-base font-medium text-foreground hover:bg-accent sm:w-[min(22rem,40vw)] lg:text-sm"
         value={projectId ?? ""}
         onChange={(e) => change(e.target.value)}
       >
@@ -40,6 +44,7 @@ export function ProjectSwitcher() {
           </option>
         ))}
       </select>
+      </span>
     </label>
   );
 }

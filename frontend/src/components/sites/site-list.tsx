@@ -69,14 +69,14 @@ export function SiteList({ projectId }: { projectId: string }) {
             <TBody>
               {query.data.items.map((s) => (
                 <TR key={s.id} data-testid="site-row">
-                  <TD>
+                  <TD label={t("fields.code")}>
                     <Link href={`/projects/${projectId}/sites/${s.id}`} className="font-medium text-primary hover:underline ltr">
                       {s.code}
                     </Link>
                   </TD>
-                  <TD>{name(s.name_en, s.name_ar)}</TD>
-                  <TD>{t(`side.${s.site_side}`)}</TD>
-                  <TD>
+                  <TD label={t("fields.name")}>{name(s.name_en, s.name_ar)}</TD>
+                  <TD label={t("fields.site_side")}>{t(`side.${s.site_side}`)}</TD>
+                  <TD label={t("fields.status")}>
                     <StatusBadge status={s.status} label={t(`status.${s.status}`)} />
                   </TD>
                 </TR>

@@ -1,5 +1,5 @@
 "use client";
-import { SearchX } from "lucide-react";
+import { Inbox, SearchX } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,7 @@ export function LoadingState({ rows = 4 }: { rows?: number }) {
 export function NotFoundState() {
   const t = useTranslations("common");
   return (
-    <div className="flex flex-col items-center gap-2 rounded-lg border bg-surface p-10 text-center" data-testid="not-found">
+    <div className="flex flex-col items-center gap-2 rounded-xl border bg-surface p-10 text-center" data-testid="not-found">
       <SearchX aria-hidden className="size-8 text-muted-foreground" />
       <h2 className="text-lg font-semibold">{t("notFoundTitle")}</h2>
       <p className="text-sm text-muted-foreground">{t("notFoundBody")}</p>
@@ -49,7 +49,12 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () =>
 
 export function EmptyState({ message }: { message?: string }) {
   const t = useTranslations("common");
-  return <p className="rounded-lg border border-dashed bg-surface p-8 text-center text-sm text-muted-foreground">{message ?? t("noResults")}</p>;
+  return (
+    <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-input/60 bg-surface p-8 text-center text-sm text-muted-foreground">
+      <Inbox aria-hidden className="size-7" />
+      <p>{message ?? t("noResults")}</p>
+    </div>
+  );
 }
 
 /** Top-of-form error summary for a failed mutation. */

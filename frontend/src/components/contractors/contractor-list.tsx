@@ -97,22 +97,22 @@ export function ContractorList() {
             <TBody>
               {items.map((c) => (
                 <TR key={c.id} data-testid="contractor-row" data-code={c.short_code}>
-                  <TD>
+                  <TD label={t("fields.short_code")}>
                     <Link href={`/contractors/${c.id}`} className="font-medium text-primary hover:underline ltr">
                       {c.short_code}
                     </Link>
                   </TD>
-                  <TD>{name(c.legal_name_en, c.legal_name_ar)}</TD>
-                  <TD className="ltr">{c.cr_number}</TD>
-                  <TD>{t(`category.${c.contractor_category}`)}</TD>
-                  <TD>{date(c.cr_expiry_date)}</TD>
+                  <TD label={t("fields.legal_name")}>{name(c.legal_name_en, c.legal_name_ar)}</TD>
+                  <TD label={t("fields.cr_number")}><span className="ltr">{c.cr_number}</span></TD>
+                  <TD label={t("fields.contractor_category")}>{t(`category.${c.contractor_category}`)}</TD>
+                  <TD label={t("fields.cr_expiry_date")}>{date(c.cr_expiry_date)}</TD>
                   {showContact ? (
-                    <TD data-testid="contractor-contact">
+                    <TD label={t("contact")} data-testid="contractor-contact">
                       {c.primary_contact_name ?? "—"}
                       {c.primary_contact_email ? <span className="block text-xs text-muted-foreground ltr">{c.primary_contact_email}</span> : null}
                     </TD>
                   ) : null}
-                  <TD>
+                  <TD label={t("fields.status")}>
                     <StatusBadge status={c.status} label={t(`status.${c.status}`)} />
                   </TD>
                 </TR>

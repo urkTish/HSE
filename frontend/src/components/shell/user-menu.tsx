@@ -31,7 +31,7 @@ export function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" aria-label={t("userMenu")} data-testid="user-menu">
+        <Button variant="ghost" size="sm" aria-label={t("userMenu")} data-testid="user-menu" className="min-w-control px-1.5 md:px-2">
           <span aria-hidden className="flex size-7 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
             {initials}
           </span>

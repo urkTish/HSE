@@ -30,22 +30,22 @@ export function ZoneTable({ projectId, zones, showSite = true }: { projectId: st
       <TBody>
         {zones.map((z) => (
           <TR key={z.id} data-testid="zone-row">
-            <TD>
+            <TD label={t("fields.code")}>
               <Link href={`/projects/${projectId}/zones/${z.id}`} className="font-medium text-primary hover:underline ltr">
                 {z.code}
               </Link>
             </TD>
-            <TD>{name(z.name_en, z.name_ar)}</TD>
+            <TD label={t("fields.name")}>{name(z.name_en, z.name_ar)}</TD>
             {showSite ? (
-              <TD className="ltr" data-testid="zone-site">
-                {siteCode.get(z.site_id) ?? "—"}
+              <TD label={t("fields.site")} data-testid="zone-site">
+                <span className="ltr">{siteCode.get(z.site_id) ?? "—"}</span>
               </TD>
             ) : null}
-            <TD>
+            <TD label={t("fields.zone_type")}>
               <Badge tone={z.zone_type === "airside" ? "info" : "neutral"}>{t(`type.${z.zone_type}`)}</Badge>
             </TD>
-            <TD>{z.airside ? t(`area.${z.airside.airside_area}`) : "—"}</TD>
-            <TD>
+            <TD label={t("fields.airside_area")}>{z.airside ? t(`area.${z.airside.airside_area}`) : "—"}</TD>
+            <TD label={t("fields.status")}>
               <StatusBadge status={z.status} label={t(`status.${z.status}`)} />
             </TD>
           </TR>

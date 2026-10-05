@@ -27,8 +27,8 @@ export function LanguageSwitch({ persist = false }: { persist?: boolean }) {
   }
 
   return (
-    <Button variant="ghost" size="sm" onClick={onClick} aria-label={t("switchLanguage")} data-testid="language-switch" lang={target}>
-      <Languages aria-hidden />
+    <Button variant="ghost" size="sm" onClick={onClick} aria-label={t("switchLanguage")} data-testid="language-switch" lang={target} className="px-2.5 sm:px-3">
+      <Languages aria-hidden className="hidden sm:block" />
       {target === "ar" ? t("switchToArabic") : t("switchToEnglish")}
     </Button>
   );

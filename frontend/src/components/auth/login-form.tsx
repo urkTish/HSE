@@ -88,7 +88,7 @@ export function LoginForm() {
           <Button type="submit" size="lg" disabled={isSubmitting}>
             {isSubmitting ? t("submitting") : t("submit")}
           </Button>
-          <Link href="/forgot-password" className="text-center text-sm text-primary hover:underline">
+          <Link href="/forgot-password" className="inline-flex min-h-touch items-center justify-center text-sm font-medium text-primary underline-offset-4 hover:underline">
             {t("forgot")}
           </Link>
         </form>

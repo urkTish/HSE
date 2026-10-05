@@ -44,7 +44,7 @@ export function ProjectLayout({ projectId, children }: { projectId: string; chil
     <div>
       <Breadcrumbs items={[{ label: tn("projects"), href: "/projects" }, { label: p.code, href: base }]} />
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight" data-testid="project-title">
+        <h1 className="text-xl font-semibold tracking-tight text-balance sm:text-2xl" data-testid="project-title">
           {name(p.name_en, p.name_ar)}
         </h1>
         <Badge tone="neutral" className="ltr">
@@ -62,7 +62,7 @@ export function ProjectLayout({ projectId, children }: { projectId: string; chil
           {t("closedBanner")}
         </Alert>
       ) : null}
-      <nav aria-label={tn("currentProject")} className="mb-6 overflow-x-auto border-b">
+      <nav aria-label={tn("currentProject")} className="-mx-4 mb-6 overflow-x-auto border-b px-4 [scrollbar-width:none] sm:mx-0 sm:px-0">
         <ul className="flex gap-1">
           {tabs.map((tab) => {
             const active = tab.exact ? pathname === tab.href : pathname.startsWith(tab.href);
@@ -72,8 +72,8 @@ export function ProjectLayout({ projectId, children }: { projectId: string; chil
                   href={tab.href}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "inline-flex min-h-touch items-center border-b-2 px-3 text-sm whitespace-nowrap",
-                    active ? "border-primary font-medium text-foreground" : "border-transparent text-muted-foreground hover:text-foreground",
+                    "-mb-px inline-flex min-h-touch items-center border-b-[3px] px-3 text-sm whitespace-nowrap transition-colors",
+                    active ? "border-primary font-semibold text-foreground" : "border-transparent text-muted-foreground hover:border-input hover:text-foreground",
                   )}
                 >
                   {tab.label}

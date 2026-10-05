@@ -115,9 +115,9 @@ export function EngagementList({ projectId }: { projectId: string }) {
               const parent = e.parent_engagement_id ? byId.get(e.parent_engagement_id) : undefined;
               return (
                 <TR key={e.id} data-testid="engagement-row" data-code={e.contractor.short_code}>
-                  <TD>
+                  <TD label={t("fields.contractor")}>
                     <div className="flex items-center gap-2" style={{ paddingInlineStart: `${(e.tier - 1) * 1.25}rem` }}>
-                      {e.tier > 1 ? <span aria-hidden className="text-muted-foreground">└</span> : null}
+                      {e.tier > 1 ? <span aria-hidden className="inline-block text-muted-foreground rtl:-scale-x-100">└</span> : null}
                       <Link href={`/projects/${projectId}/engagements/${e.id}`} className="font-medium text-primary hover:underline">
                         <span className="ltr">{e.contractor.short_code}</span>
                       </Link>
@@ -130,11 +130,11 @@ export function EngagementList({ projectId }: { projectId: string }) {
                       ) : null}
                     </div>
                   </TD>
-                  <TD>{t("tierShort", { tier: e.tier })}</TD>
-                  <TD className="ltr">{parent?.contractor.short_code ?? "—"}</TD>
-                  <TD className="ltr">{e.site_ids.map((s) => siteCode.get(s) ?? "…").join(", ")}</TD>
-                  <TD>{date(e.mobilisation_date)}</TD>
-                  <TD>
+                  <TD label={t("fields.tier")}>{t("tierShort", { tier: e.tier })}</TD>
+                  <TD label={t("fields.parent")}><span className="ltr">{parent?.contractor.short_code ?? "—"}</span></TD>
+                  <TD label={t("fields.sites")}><span className="ltr">{e.site_ids.map((s) => siteCode.get(s) ?? "…").join(", ")}</span></TD>
+                  <TD label={t("fields.mobilisation_date")}>{date(e.mobilisation_date)}</TD>
+                  <TD label={tc("fields.status")}>
                     <StatusBadge status={e.contractor.status} label={tc(`status.${e.contractor.status}`)} />
                   </TD>
                 </TR>

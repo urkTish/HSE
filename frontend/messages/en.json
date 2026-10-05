@@ -53,7 +53,9 @@
     "addAnother": "Add another",
     "remove": "Remove",
     "view": "View",
-    "unknown": "Unknown"
+    "unknown": "Unknown",
+    "moreFilters": "More filters",
+    "fewerFilters": "Fewer filters"
   },
   "export": {
     "label": "Export",
@@ -700,5 +702,11 @@
       "NETWORK_ERROR": "The server could not be reached. Check your connection.",
       "UNKNOWN": "An unexpected error occurred."
     }
+  },
+  "theme": {
+    "label": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "Match device"
   }
 }

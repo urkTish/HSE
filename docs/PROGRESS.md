@@ -4,6 +4,7 @@
 - Phase: 0 — Foundation
 - Module: foundation (auth & roles, projects/sites/zones, contractors, audit log, i18n/RTL shell, CI)
 - Step: Integrate/Verify (backend and frontend implemented; e2e green against the real API)
+- Design pass: done (Phase 0). Findings in `docs/design/phase-0-findings.md`, before/after screenshots in `docs/screenshots/phase-0/design/`. Ready for the phase demo; L items wait for the user under "Design proposals".
 
 ## Done
 
@@ -28,6 +29,22 @@
 - CI: `frontend` job in `.github/workflows/ci.yml` (npm ci, lint, typecheck, i18n check, build, Playwright with Postgres service + real backend via uv).
 - Screenshots: `docs/screenshots/phase-0/` (login EN, login AR, projects list AR, zone detail EN).
 
+### Design pass — Phase 0 (UI/UX Designer)
+- Design system: `frontend/src/styles/tokens.css` is the only token file. It defines colour roles, safety semantics, a colour-blind-safe chart series palette (8 slots, light and dark), the type scale, spacing, radius, elevation and touch/control heights. Light and dark themes meet WCAG AA in both: status text ≥ 5.5:1, control borders ≥ 3:1.
+- IBM Plex Sans and IBM Plex Sans Arabic are self-hosted (`@fontsource-variable/ibm-plex-sans`, `@fontsource/ibm-plex-sans-arabic`). Arabic gets taller lines and no letter-spacing or upper-casing.
+- Theme toggle (Light / Dark / Match device) in the top bar and on auth pages, stored per device, applied before first paint.
+- Phones:
+  - two-row top bar with a full-width project switcher
+  - drawer navigation with a close button
+  - tables become labelled cards (`TD label`)
+  - filters fold behind "More filters"
+  - 44 px controls everywhere on touch screens
+  - 16 px inputs (no iOS zoom)
+- RTL fixes: sidebar icons are not mirrored, the tree connector is mirrored, and LTR codes are isolated in spans.
+- Polish: sidebar active indicator, alerts, badges, empty state, Yes/No icons, auth page brand band, project tabs, notifications.
+- No business logic, API, permission or data changes.
+- New e2e `e2e/design.spec.ts` (theme persistence; phone drawer, 44 px target, stacked-row labels in AR). Suite: 35 passed, 1 skipped (on-demand screenshots).
+
 ## Next
 - Phase 1 — Dashboard (with AI)
 
@@ -47,4 +64,10 @@
 - (Frontend, low priority, not blocking) `GET /contractors/{id}/engagements` (engagements of one contractor across the caller's projects) so the contractor detail page can list where a firm is engaged. Today that view would need one request per project.
 
 ## Design proposals
-- (Frontend) Lists show dates using the *current* project's display settings (Hijri/digits); cross-project lists (projects, contractors, users) could instead use each row's project settings. Left for the design pass.
+L items from the Phase 0 design pass, waiting for the user's decision at the phase demo (details in `docs/design/phase-0-findings.md`):
+- **P1. Two-line dates.** Show the Hijri date as a muted second line under the Gregorian date in tables and detail fields, instead of "01 Jun 2025 · 5 Dhuʻl-Hijjah 1446 AH" on one line that wraps mid-date. Needs `useFormatters` to return date parts and a `<DateText>` component used everywhere. Data stays the same; only the layout changes.
+- **P2. Sticky mobile action bar on detail pages.** On phones the status actions (suspend, close, archive, deactivate) now come after all the details and the history. Proposal: a sticky bottom bar with the primary action, and the others in a menu. The same pattern will serve Phase 3 PTW actions (suspend, close) in the field.
+- **P3. Searchable project switcher.** Replace the native select with a combobox: search by code or name, recent projects first, project status shown. This matters once there are more than about 10 projects.
+- **P4. Date settings in cross-project lists** (frontend note). Today the projects, contractors and users lists use the *current* project's Hijri/digit settings. Recommendation: keep one consistent format per list (the current project's, as now), and say so in the list footer ("Dates shown in ANIA-EXP display settings"). Mixing formats row by row is harder to scan. Needs the user's call.
+- **P5. Collapsible desktop sidebar (icon rail).** Gives about 190 px back to wide tables (audit log, Phase 1 registers) at 1366 px.
+- **P6. Print/export styles** for the Phase 1 monthly report and the Phase 3 permits: project logo, bilingual header, page footer with audit hash. Belongs with those phases; noted so the token set (series and safety colours) is reused there.

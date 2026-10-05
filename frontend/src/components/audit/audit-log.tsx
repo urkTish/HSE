@@ -129,22 +129,22 @@ export function AuditLog() {
               {items.map((e) => (
                 <Fragment key={e.id}>
                   <TR data-testid="audit-row" data-action={e.action}>
-                    <TD className="whitespace-nowrap">
+                    <TD label={t("columns.occurredAt")} className="md:whitespace-nowrap">
                       <time dateTime={e.occurred_at} data-testid="audit-time">
                         {dateTime(e.occurred_at)}
                       </time>
                     </TD>
-                    <TD>
+                    <TD label={t("columns.actor")}>
                       {e.actor_name ?? t("system")}
                       {e.actor_role ? <span className="block text-xs text-muted-foreground">{tr(e.actor_role)}</span> : null}
                     </TD>
-                    <TD>{t(`action.${e.action}`)}</TD>
-                    <TD>{e.entity_type ? t(`entity.${e.entity_type}`) : "—"}</TD>
-                    <TD className="ltr" data-testid="audit-project">{e.project_id ? (projectCode.get(e.project_id) ?? "…") : "—"}</TD>
-                    <TD>
+                    <TD label={t("columns.action")}>{t(`action.${e.action}`)}</TD>
+                    <TD label={t("columns.entity")}>{e.entity_type ? t(`entity.${e.entity_type}`) : "—"}</TD>
+                    <TD label={t("columns.project")} data-testid="audit-project"><span className="ltr">{e.project_id ? (projectCode.get(e.project_id) ?? "…") : "—"}</span></TD>
+                    <TD label={t("columns.result")}>
                       <StatusBadge status={e.result} label={t(`result.${e.result}`)} />
                     </TD>
-                    {showIp ? <TD className="ltr">{e.ip_address ?? "—"}</TD> : null}
+                    {showIp ? <TD label={t("columns.ip")}><span className="ltr">{e.ip_address ?? "—"}</span></TD> : null}
                     <TD>
                       <Button variant="ghost" size="sm" aria-expanded={open === e.id} onClick={() => setOpen(open === e.id ? null : e.id)}>
                         {open === e.id ? t("detail.hideDetails") : t("detail.showDetails")}

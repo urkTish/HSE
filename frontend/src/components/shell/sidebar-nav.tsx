@@ -38,11 +38,14 @@ function NavLink({ item, onNavigate }: { item: Item; onNavigate?: () => void }) 
       aria-current={active ? "page" : undefined}
       data-testid={item.testId}
       className={cn(
-        "flex min-h-touch items-center gap-3 rounded-md px-3 text-sm text-sidebar-foreground/90 hover:bg-sidebar-active",
-        active && "bg-sidebar-active font-medium text-sidebar-foreground",
+        "relative flex min-h-touch items-center gap-3 rounded-md px-3 text-sm text-sidebar-foreground/85 transition-colors hover:bg-sidebar-active hover:text-sidebar-foreground",
+        "focus-visible:outline-sidebar-indicator",
+        active &&
+          "bg-sidebar-active font-semibold text-sidebar-foreground before:absolute before:inset-y-2 before:start-0 before:w-1 before:rounded-full before:bg-sidebar-indicator",
       )}
     >
-      <item.Icon aria-hidden className="size-4 shrink-0 rtl:-scale-x-100" />
+      {/* Icons are not directional, so they are not mirrored in RTL. */}
+      <item.Icon aria-hidden className={cn("size-5 shrink-0", active ? "text-sidebar-indicator" : "text-sidebar-muted")} />
       <span className="truncate">{item.label}</span>
     </Link>
   );
@@ -81,7 +84,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
     : [];
 
   return (
-    <nav aria-label={t("main")} className="flex flex-col gap-6 p-3">
+    <nav aria-label={t("main")} className="flex flex-1 flex-col gap-5 p-3">
       <ul className="flex flex-col gap-1">
         {main.map((i) => (
           <li key={i.href}>
@@ -91,8 +94,10 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
       </ul>
       {project ? (
         <div>
-          <p className="px-3 pb-2 text-xs font-medium tracking-wide text-sidebar-muted uppercase">
-            {t("currentProject")} · <span className="ltr">{project.code}</span>
+          <p className="flex items-center gap-1.5 border-t border-white/10 px-3 pt-4 pb-2 text-xs font-medium text-sidebar-muted">
+            <span>{t("currentProject")}</span>
+            <span aria-hidden>·</span>
+            <span className="ltr rounded bg-sidebar-active px-1.5 py-0.5 font-semibold text-sidebar-foreground">{project.code}</span>
           </p>
           <ul className="flex flex-col gap-1">
             {projectItems.map((i) => (
@@ -103,7 +108,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           </ul>
         </div>
       ) : null}
-      <ul className="flex flex-col gap-1">
+      <ul className="mt-auto flex flex-col gap-1 border-t border-white/10 pt-3">
         <li>
           <NavLink item={{ href: "/profile", label: t("profile"), Icon: UserRound, testId: "nav-profile" }} onNavigate={onNavigate} />
         </li>

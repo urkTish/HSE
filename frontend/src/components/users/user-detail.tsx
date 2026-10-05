@@ -243,13 +243,13 @@ export function UserDetail({ userId }: { userId: string }) {
                   <TBody>
                     {list.map((a) => (
                       <TR key={a.id} data-testid="assignment-row" data-role={a.role}>
-                        <TD>{tr(a.role)}</TD>
-                        <TD className="ltr">{a.project_id ? (projectCode.get(a.project_id) ?? "…") : ta("orgWide")}</TD>
-                        <TD>{a.project_id ? <SiteCodes projectId={a.project_id} ids={a.site_ids} /> : "—"}</TD>
-                        <TD>{a.contractor_engagement_id ? <EngagementCode id={a.contractor_engagement_id} /> : "—"}</TD>
-                        <TD>{date(a.valid_from)}</TD>
-                        <TD>{date(a.valid_to)}</TD>
-                        <TD>
+                        <TD label={ta("fields.role")}>{tr(a.role)}</TD>
+                        <TD label={ta("fields.project")}><span className="ltr">{a.project_id ? (projectCode.get(a.project_id) ?? "…") : ta("orgWide")}</span></TD>
+                        <TD label={ta("fields.sites")}>{a.project_id ? <SiteCodes projectId={a.project_id} ids={a.site_ids} /> : "—"}</TD>
+                        <TD label={ta("fields.contractor_engagement")}>{a.contractor_engagement_id ? <EngagementCode id={a.contractor_engagement_id} /> : "—"}</TD>
+                        <TD label={ta("fields.valid_from")}>{date(a.valid_from)}</TD>
+                        <TD label={ta("fields.valid_to")}>{date(a.valid_to)}</TD>
+                        <TD label={ta("fields.state")}>
                           {a.revoked_at ? (
                             <Badge tone="neutral">{ta("revokedState")}</Badge>
                           ) : a.is_active ? (
@@ -259,7 +259,7 @@ export function UserDetail({ userId }: { userId: string }) {
                           )}
                         </TD>
                         {canInvite ? (
-                          <TD>
+                          <TD label={tc("actions")}>
                             {!a.revoked_at ? (
                               <Button variant="outline" size="sm" onClick={() => { setActionError(null); setRevoking(a); }} data-testid="revoke-role">
                                 {ta("revoke")}

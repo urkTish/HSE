@@ -1,3 +1,4 @@
+import { Check, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
@@ -9,7 +10,7 @@ export function FieldItem({ label, children, ltr }: { label: string; children: R
   return (
     <div className="min-w-0">
       <dt className="text-xs font-medium text-muted-foreground">{label}</dt>
-      <dd className={cn("mt-1 break-words text-sm", ltr && "ltr")}>{children ?? "—"}</dd>
+      <dd className={cn("mt-1 text-sm [overflow-wrap:anywhere]", ltr && "ltr")}>{children ?? "—"}</dd>
     </div>
   );
 }
@@ -18,8 +19,8 @@ export function FieldItem({ label, children, ltr }: { label: string; children: R
 export function YesNo({ value, yes, no }: { value: boolean | null | undefined; yes: string; no: string }) {
   if (value === null || value === undefined) return <>—</>;
   return (
-    <span className={value ? "text-success" : "text-muted-foreground"}>
-      {value ? "✓ " : "✕ "}
+    <span className={cn("inline-flex items-center gap-1", value ? "font-medium text-success" : "text-muted-foreground")}>
+      {value ? <Check aria-hidden className="size-4" /> : <X aria-hidden className="size-4" />}
       {value ? yes : no}
     </span>
   );

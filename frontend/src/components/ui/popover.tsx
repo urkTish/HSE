@@ -12,7 +12,7 @@ export function PopoverContent({ className, align = "end", sideOffset = 6, ...pr
       <P.Content
         align={align}
         sideOffset={sideOffset}
-        className={cn("z-50 w-80 rounded-md border bg-surface p-3 shadow-md", className)}
+        className={cn("z-50 w-80 rounded-lg border bg-surface p-3 text-foreground shadow-lg", className)}
         {...props}
       />
     </P.Portal>
