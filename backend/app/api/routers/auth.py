@@ -1,0 +1,142 @@
+"""Authentication, own profile, invitations, password reset, privacy notice (spec §5.1)."""
+
+from fastapi import APIRouter, Response, status
+
+from app.api.deps import CurrentUser
+from app.core.errors import error_responses, not_implemented
+from app.schemas.auth import (
+    AcceptedResponse,
+    InvitationAcceptRequest,
+    InvitationInfo,
+    InvitationTokenRequest,
+    LoginRequest,
+    LoginResponse,
+    Me,
+    MeUpdate,
+    PasswordChangeRequest,
+    PasswordResetConfirm,
+    PasswordResetRequest,
+    PrivacyAckRequest,
+    PrivacyNotice,
+)
+
+router = APIRouter(prefix="/auth", tags=["auth"])
+public_router = APIRouter(tags=["auth"])
+
+
+@router.post(
+    "/login",
+    response_model=LoginResponse,
+    summary="Log in with email and password",
+    description="Sets the httpOnly `hse_session` cookie and returns the same JWT. Unknown email "
+    "and wrong password give an identical 401 INVALID_CREDENTIALS. After 5 failures in 15 min "
+    "the account is locked for 15 min (401 ACCOUNT_LOCKED).",
+    responses=error_responses(401, 422),
+)
+def login(body: LoginRequest, response: Response) -> LoginResponse:
+    raise not_implemented()
+
+
+@router.post(
+    "/logout",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Log out (revokes the session, clears the cookie)",
+    responses=error_responses(401),
+)
+def logout(user: CurrentUser, response: Response) -> None:
+    raise not_implemented()
+
+
+@router.get(
+    "/me",
+    response_model=Me,
+    summary="Current user with resolved roles and capabilities",
+    responses=error_responses(401, 403),
+)
+def get_me(user: CurrentUser) -> Me:
+    raise not_implemented()
+
+
+@router.patch(
+    "/me",
+    response_model=Me,
+    summary="Edit own profile (name, mobile, language)",
+    responses=error_responses(401, 403, 422),
+)
+def update_me(body: MeUpdate, user: CurrentUser) -> Me:
+    raise not_implemented()
+
+
+@router.post(
+    "/me/password",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Change own password",
+    description="Other sessions of the user are revoked.",
+    responses=error_responses(401, 403, 422),
+)
+def change_password(body: PasswordChangeRequest, user: CurrentUser) -> None:
+    raise not_implemented()
+
+
+@router.post(
+    "/privacy-notice/ack",
+    response_model=Me,
+    summary="Acknowledge the current privacy notice",
+    description="Allowed before acknowledgement (rule 6). 409 PRIVACY_NOTICE_VERSION_MISMATCH "
+    "if `version` is not the current one.",
+    responses=error_responses(401, 409, 422),
+)
+def acknowledge_privacy_notice(body: PrivacyAckRequest, user: CurrentUser) -> Me:
+    raise not_implemented()
+
+
+@router.post(
+    "/invitations/validate",
+    response_model=InvitationInfo,
+    summary="Check an invite token (no auth)",
+    description="404 INVITE_INVALID for unknown/used/superseded tokens; 410 INVITE_EXPIRED "
+    "after 72 h.",
+    responses=error_responses(404, 410, 422),
+)
+def validate_invitation(body: InvitationTokenRequest) -> InvitationInfo:
+    raise not_implemented()
+
+
+@router.post(
+    "/invitations/accept",
+    response_model=LoginResponse,
+    summary="Accept an invite: set password, acknowledge privacy notice, log in",
+    responses=error_responses(404, 409, 410, 422),
+)
+def accept_invitation(body: InvitationAcceptRequest, response: Response) -> LoginResponse:
+    raise not_implemented()
+
+
+@router.post(
+    "/password-reset",
+    response_model=AcceptedResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Request a password reset email (always 202)",
+    responses=error_responses(422),
+)
+def request_password_reset(body: PasswordResetRequest) -> AcceptedResponse:
+    raise not_implemented()
+
+
+@router.post(
+    "/password-reset/confirm",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Set a new password with a reset token (single use, 60 min)",
+    responses=error_responses(404, 410, 422),
+)
+def confirm_password_reset(body: PasswordResetConfirm) -> None:
+    raise not_implemented()
+
+
+@public_router.get(
+    "/privacy-notice",
+    response_model=PrivacyNotice,
+    summary="Current privacy notice text (public)",
+)
+def get_privacy_notice() -> PrivacyNotice:
+    raise not_implemented()
