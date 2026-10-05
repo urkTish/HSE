@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     session_idle_minutes: int = 30
     session_absolute_hours: int = 12
     cookie_secure: bool = False
+    trust_proxy_headers: bool = False
 
     # Lockout (§5.1 rule 3)
     lockout_threshold: int = 5

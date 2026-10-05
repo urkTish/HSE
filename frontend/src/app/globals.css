@@ -1,0 +1,63 @@
+@import "tailwindcss";
+@import "../styles/tokens.css";
+
+@theme inline {
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-foreground: var(--surface-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--status-success);
+  --color-success-bg: var(--status-success-bg);
+  --color-warning: var(--status-warning);
+  --color-warning-bg: var(--status-warning-bg);
+  --color-danger: var(--status-danger);
+  --color-danger-bg: var(--status-danger-bg);
+  --color-info: var(--status-info);
+  --color-info-bg: var(--status-info-bg);
+  --color-neutral: var(--status-neutral);
+  --color-neutral-bg: var(--status-neutral-bg);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-sidebar-active: var(--sidebar-active);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --spacing-touch: var(--touch-target);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html,
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}
+
+/* Codes, emails, phone and CR numbers stay LTR inside RTL text (rule 42). */
+.ltr {
+  direction: ltr;
+  unicode-bidi: isolate;
+}

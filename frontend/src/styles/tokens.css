@@ -1,0 +1,49 @@
+/*
+ * Design tokens — the single place for colours, radii, spacing and typography.
+ * The UI/UX Designer refines these values; components only reference tokens
+ * (via the Tailwind theme mapping in app/globals.css), never raw colours.
+ */
+:root {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Noto Sans Arabic",
+    "Geeza Pro", Tahoma, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --radius: 0.5rem;
+  --touch-target: 2.75rem; /* 44px minimum for field use with gloves */
+
+  --background: oklch(0.985 0.002 247);
+  --foreground: oklch(0.21 0.02 265);
+  --surface: oklch(1 0 0);
+  --surface-foreground: var(--foreground);
+  --muted: oklch(0.955 0.005 255);
+  --muted-foreground: oklch(0.47 0.02 260);
+  --border: oklch(0.9 0.008 255);
+  --input: oklch(0.86 0.01 255);
+  --ring: oklch(0.55 0.15 255);
+
+  --primary: oklch(0.45 0.13 255);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.94 0.01 255);
+  --secondary-foreground: oklch(0.25 0.03 260);
+  --accent: oklch(0.94 0.02 255);
+  --accent-foreground: oklch(0.25 0.05 260);
+  --destructive: oklch(0.55 0.2 27);
+  --destructive-foreground: oklch(0.99 0 0);
+
+  /* Status tones (always paired with text + icon, never colour alone) */
+  --status-success: oklch(0.52 0.13 150);
+  --status-success-bg: oklch(0.95 0.04 150);
+  --status-warning: oklch(0.55 0.13 70);
+  --status-warning-bg: oklch(0.96 0.05 85);
+  --status-danger: oklch(0.52 0.19 27);
+  --status-danger-bg: oklch(0.95 0.03 27);
+  --status-info: oklch(0.5 0.12 255);
+  --status-info-bg: oklch(0.95 0.03 255);
+  --status-neutral: oklch(0.48 0.02 260);
+  --status-neutral-bg: oklch(0.95 0.005 260);
+
+  --sidebar: oklch(0.24 0.04 262);
+  --sidebar-foreground: oklch(0.93 0.01 255);
+  --sidebar-muted: oklch(0.72 0.03 258);
+  --sidebar-active: oklch(0.33 0.06 260);
+}

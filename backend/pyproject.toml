@@ -5,6 +5,7 @@ description = "HSE platform backend (FastAPI)"
 requires-python = ">=3.12"
 dependencies = [
     "alembic>=1.20.0",
+    "apscheduler>=3.11.3",
     "argon2-cffi>=25.1.0",
     "email-validator>=2.3.0",
     "fastapi>=0.142.2",
@@ -15,6 +16,7 @@ dependencies = [
     "python-multipart>=0.0.32",
     "pyyaml>=6.0.3",
     "sqlalchemy>=2.0",
+    "tzdata>=2026.5",
     "uvicorn[standard]>=0.54.0",
 ]
 
