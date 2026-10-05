@@ -48,6 +48,7 @@ ignore = [
   "PLR0917",  # FastAPI handlers take many query params
   "S105",     # enum values like "password_changed" are not secrets
   "UP046",    # keep typing.Generic for pydantic generic models
+  "UP047",
   "B008",     # FastAPI Depends() in defaults
   "RUF001", "RUF002", "RUF003",  # Arabic text is intentional
 ]
@@ -57,7 +58,7 @@ known-first-party = ["app"]
 known-third-party = ["alembic"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101", "S105", "S106", "PLR2004", "S311"]
+"tests/**" = ["S101", "S105", "S106", "PLR2004", "S311", "N802", "PLC0415", "S608"]
 "alembic/**" = ["N999"]
 
 [tool.ruff.lint.flake8-bugbear]
@@ -70,7 +71,7 @@ plugins = ["pydantic.mypy"]
 warn_unused_ignores = true
 
 [[tool.mypy.overrides]]
-module = ["openpyxl.*"]
+module = ["openpyxl.*", "apscheduler.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

@@ -60,7 +60,7 @@ def password_problems(password: str, email: str) -> list[str]:
     )
     if classes < 3:
         problems.append("must contain at least 3 of: upper case, lower case, digit, symbol")
-    if password.casefold() == email.split("@")[0].casefold():
+    if password.casefold() == email.split("@", maxsplit=1)[0].casefold():
         problems.append("must not equal the email name")
     if password.casefold() in _breached():
         problems.append("is too common (found in breached-password list)")

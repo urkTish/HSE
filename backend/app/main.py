@@ -19,13 +19,14 @@ from app.api.routers import (
     sites,
     users,
 )
-from app.core.config import API_PREFIX, CONTRACT_VERSION
+from app.core.config import API_PREFIX, CONTRACT_VERSION, get_settings
 from app.core.errors import (
     ApiError,
     api_error_handler,
     http_exception_handler,
     validation_exception_handler,
 )
+from app.core.middleware import RequestContextMiddleware
 
 DESCRIPTION = """
 HSE platform API — Phase 0 Foundation (spec `docs/specs/0-foundation.md` v1.0).
@@ -81,6 +82,7 @@ def create_app() -> FastAPI:
         redoc_url=None,
         generate_unique_id_function=_operation_id,
     )
+    app.add_middleware(RequestContextMiddleware, trust_proxy=get_settings().trust_proxy_headers)
     app.add_exception_handler(ApiError, api_error_handler)
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
     app.add_exception_handler(StarletteHTTPException, http_exception_handler)

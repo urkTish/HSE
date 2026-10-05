@@ -137,9 +137,7 @@ class Zone(UUIDPk, TimestampMixin, Base):
     security_restricted_area: Mapped[bool | None] = mapped_column(Boolean)
     notam_required_for_works: Mapped[bool | None] = mapped_column(Boolean)
     ols_height_limit_m_amsl: Mapped[float | None] = mapped_column(Numeric(7, 2, asdecimal=False))
-    max_equipment_height_m_agl: Mapped[float | None] = mapped_column(
-        Numeric(6, 2, asdecimal=False)
-    )
+    max_equipment_height_m_agl: Mapped[float | None] = mapped_column(Numeric(6, 2, asdecimal=False))
     escort_required: Mapped[bool | None] = mapped_column(Boolean)
     adp_required: Mapped[bool | None] = mapped_column(Boolean)
     fod_control_required: Mapped[bool | None] = mapped_column(Boolean)

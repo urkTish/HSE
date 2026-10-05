@@ -5,9 +5,10 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query, Response
 
-from app.api.deps import CurrentUser
+from app.api.deps import DB, CurrentUser
 from app.core.enums import ExportDataset, ExportFormat
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
+from app.services import exports as svc
 
 router = APIRouter(prefix="/exports", tags=["exports"])
 
@@ -37,9 +38,15 @@ _FILE_RESPONSES: dict[int | str, dict[str, object]] = {
 def export_dataset(
     dataset: ExportDataset,
     user: CurrentUser,
+    db: DB,
     format_: Annotated[ExportFormat, Query(alias="format")] = ExportFormat.csv,
     project_id: uuid.UUID | None = None,
     status_: Annotated[str | None, Query(alias="status", max_length=40)] = None,
     q: Annotated[str | None, Query(max_length=100)] = None,
 ) -> Response:
-    raise not_implemented()
+    content, media_type, filename = svc.export(db, user, dataset, format_, project_id, status_, q)
+    return Response(
+        content=content,
+        media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )

@@ -87,7 +87,8 @@ def scrub(values: dict[str, Any] | None) -> dict[str, Any] | None:
         if k in SECRET_KEYS:
             continue
         out[k] = MASK if k in SENSITIVE_KEYS and v is not None else v
-    return jsonable(out)
+    result: dict[str, Any] = jsonable(out)
+    return result
 
 
 def diff(before: dict[str, Any], after: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -233,9 +234,9 @@ def verify_chain(db: Session) -> ChainResult:
         prev_seq = prev.seq if prev else 0
         if entry.seq != prev_seq + 1:
             broken = broken or not _gap_is_purged(prev_seq + 1, entry.seq - 1, purged)
-        elif prev is not None and entry.prev_hash != prev.hash:
-            broken = True
-        elif prev is None and entry.prev_hash is not None:
+        elif (prev is not None and entry.prev_hash != prev.hash) or (
+            prev is None and entry.prev_hash is not None
+        ):
             broken = True
         if broken:
             return ChainResult(False, count, entry.seq, entry.id)

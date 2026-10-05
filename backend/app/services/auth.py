@@ -13,8 +13,14 @@ from sqlalchemy.orm import Session
 from app.core.clock import now
 from app.core.config import get_settings
 from app.core.context import get_request_context
-from app.core.enums import AuditAction, AuditResult, Capability, EntityType, NotificationKind
-from app.core.enums import UserStatus as US
+from app.core.enums import (
+    AuditAction,
+    AuditResult,
+    Capability,
+    EntityType,
+    NotificationKind,
+    UserStatus,
+)
 from app.core.errors import ApiError, ErrorCode, FieldError
 from app.core.security import (
     encode_jwt,
@@ -35,7 +41,7 @@ from app.schemas.auth import (
 )
 from app.services import audit, notify
 from app.services.audit import SYSTEM, AuditActor
-from app.services.permissions import Principal, build_principal, capability_list
+from app.services.permissions import ROLE_RANK, Principal, build_principal, capability_list
 
 
 def invalid_credentials() -> ApiError:
@@ -149,8 +155,8 @@ def send_reset(db: Session, user: User) -> str:
 
 # ---- login / lockout -------------------------------------------------------------------
 def _auto_unlock(db: Session, user: User, current: datetime) -> None:
-    if user.status == US.locked and user.locked_until and user.locked_until <= current:
-        user.status = US.active
+    if user.status == UserStatus.locked and user.locked_until and user.locked_until <= current:
+        user.status = UserStatus.active
         user.locked_until = None
         user.failed_login_count = 0
         user.failed_window_started_at = None
@@ -160,8 +166,8 @@ def _auto_unlock(db: Session, user: User, current: datetime) -> None:
             SYSTEM,
             entity_type=EntityType.user,
             entity_id=user.id,
-            before={"status": US.locked},
-            after={"status": US.active},
+            before={"status": UserStatus.locked},
+            after={"status": UserStatus.active},
             details={"reason": "lock period elapsed"},
         )
 
@@ -175,7 +181,7 @@ def _register_failure(db: Session, user: User, current: datetime) -> None:
     else:
         user.failed_login_count += 1
     if user.failed_login_count >= s.lockout_threshold:
-        user.status = US.locked
+        user.status = UserStatus.locked
         user.locked_until = current + timedelta(minutes=s.lockout_minutes)
         revoke_sessions(db, user.id, "locked")
         audit.record(
@@ -184,8 +190,8 @@ def _register_failure(db: Session, user: User, current: datetime) -> None:
             SYSTEM,
             entity_type=EntityType.user,
             entity_id=user.id,
-            before={"status": US.active},
-            after={"status": US.locked, "locked_until": user.locked_until},
+            before={"status": UserStatus.active},
+            after={"status": UserStatus.locked, "locked_until": user.locked_until},
             details={"failed_attempts": user.failed_login_count},
         )
         notify.send_email(db, user, "account_locked")
@@ -238,8 +244,8 @@ def login(db: Session, email: str, password: str) -> tuple[IssuedSession, User]:
     _auto_unlock(db, user, current)
     ok = verify_password(password, user.password_hash)
     actor = AuditActor(user.id)
-    if user.status != US.active or not ok:
-        reason = user.status.value if user.status != US.active else "wrong_password"
+    if user.status != UserStatus.active or not ok:
+        reason = user.status.value if user.status != UserStatus.active else "wrong_password"
         audit.record(
             db,
             AuditAction.login_failed,
@@ -249,9 +255,9 @@ def login(db: Session, email: str, password: str) -> tuple[IssuedSession, User]:
             result=AuditResult.failed,
             details={"email": email, "reason": reason},
         )
-        if user.status == US.active:
+        if user.status == UserStatus.active:
             _register_failure(db, user, current)
-        locked = user.status == US.locked and ok
+        locked = user.status == UserStatus.locked and ok
         db.commit()
         if locked:
             raise ApiError(
@@ -319,7 +325,9 @@ def change_password(db: Session, p: Principal, current_pw: str, new_pw: str) -> 
         )
     check_password(new_pw, p.user.email, "new_password")
     p.user.password_hash = hash_password(new_pw)
-    revoke_sessions(db, p.user.id, "password_changed", except_id=p.session.id if p.session else None)
+    revoke_sessions(
+        db, p.user.id, "password_changed", except_id=p.session.id if p.session else None
+    )
     audit.record(
         db,
         AuditAction.password_changed,
@@ -332,7 +340,9 @@ def change_password(db: Session, p: Principal, current_pw: str, new_pw: str) -> 
 def _find_token(db: Session, raw: str, kind: TokenKind, invalid: ErrorCode) -> UserToken:
     tok = db.scalar(select(UserToken).where(UserToken.token_hash == token_digest(raw)))
     if tok is None or tok.kind != kind or tok.used_at or tok.superseded_at:
-        raise ApiError(404, invalid, "This link is invalid or was already used.", "الرابط غير صالح.")
+        raise ApiError(
+            404, invalid, "This link is invalid or was already used.", "الرابط غير صالح."
+        )
     if tok.expires_at <= now():
         code = ErrorCode.INVITE_EXPIRED if kind == TokenKind.invite else invalid
         raise ApiError(410, code, "This link has expired.", "انتهت صلاحية الرابط.")
@@ -342,7 +352,7 @@ def _find_token(db: Session, raw: str, kind: TokenKind, invalid: ErrorCode) -> U
 def validate_invite(db: Session, raw: str) -> tuple[UserToken, User]:
     tok = _find_token(db, raw, TokenKind.invite, ErrorCode.INVITE_INVALID)
     user = db.get(User, tok.user_id)
-    if user is None or user.status != US.invited:
+    if user is None or user.status != UserStatus.invited:
         raise ApiError(404, ErrorCode.INVITE_INVALID, "This invite is no longer valid.")
     return tok, user
 
@@ -391,7 +401,7 @@ def accept_invite(
     current = now()
     tok.used_at = current
     user.password_hash = hash_password(password)
-    user.status = US.active
+    user.status = UserStatus.active
     user.activated_at = current
     user.last_login_at = current
     if language:
@@ -403,8 +413,8 @@ def accept_invite(
         actor,
         entity_type=EntityType.user,
         entity_id=user.id,
-        before={"status": US.invited},
-        after={"status": US.active},
+        before={"status": UserStatus.invited},
+        after={"status": UserStatus.active},
         details={"reason": "invite accepted"},
     )
     _ack(db, user, version)
@@ -422,7 +432,7 @@ def acknowledge(db: Session, p: Principal, version: str) -> None:
 
 def request_reset(db: Session, email: str) -> None:
     user = db.scalar(select(User).where(User.email == email.strip().lower()))
-    if user is None or user.status not in (US.active, US.locked):
+    if user is None or user.status not in (UserStatus.active, UserStatus.locked):
         return
     send_reset(db, user)
     audit.record(
@@ -437,7 +447,7 @@ def request_reset(db: Session, email: str) -> None:
 def confirm_reset(db: Session, raw: str, new_password: str) -> None:
     tok = _find_token(db, raw, TokenKind.password_reset, ErrorCode.RESET_TOKEN_INVALID)
     user = db.get(User, tok.user_id)
-    if user is None or user.status not in (US.active, US.locked):
+    if user is None or user.status not in (UserStatus.active, UserStatus.locked):
         raise ApiError(404, ErrorCode.RESET_TOKEN_INVALID, "This link is invalid.")
     check_password(new_password, user.email, "new_password")
     tok.used_at = now()
@@ -465,13 +475,17 @@ def build_me(db: Session, p: Principal) -> Me:
             ProjectAccess(
                 project_id=scope.project_id,
                 project_code=scope.project_code,
-                roles=sorted(scope.roles, key=lambda r: list(type(r)).index(r)),
+                roles=sorted(scope.roles, key=lambda r: ROLE_RANK[r]),
                 capabilities=[
                     CapabilityGrant(capability=c, scope=g.scope) for c, g in capability_list(scope)
                 ],
                 site_ids=sites,
                 contractor_engagement_ids=sorted(
-                    {a.contractor_engagement_id for a in scope.assignments if a.contractor_engagement_id}
+                    {
+                        a.contractor_engagement_id
+                        for a in scope.assignments
+                        if a.contractor_engagement_id
+                    }
                 ),
                 read_only=scope.read_only,
             )

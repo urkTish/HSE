@@ -6,10 +6,12 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query
 
-from app.api.deps import CurrentUser, PageParams
+from app.api.deps import DB, CurrentUser, PageParams
 from app.core.enums import AuditAction, AuditResult, EntityType
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.schemas.audit import AuditChainVerification, AuditEntryPage, ChangeHistoryPage
+from app.services import audit_read as svc
+from app.services.common import paginate
 
 router = APIRouter(tags=["audit"])
 
@@ -25,6 +27,7 @@ router = APIRouter(tags=["audit"])
 def list_audit_log(
     user: CurrentUser,
     pg: PageParams,
+    db: DB,
     project_id: uuid.UUID | None = None,
     actor_user_id: uuid.UUID | None = None,
     action: Annotated[list[AuditAction] | None, Query()] = None,
@@ -34,7 +37,25 @@ def list_audit_log(
     occurred_from: Annotated[datetime | None, Query(description="Inclusive, ISO 8601.")] = None,
     occurred_to: Annotated[datetime | None, Query(description="Exclusive, ISO 8601.")] = None,
 ) -> AuditEntryPage:
-    raise not_implemented()
+    filters = {
+        "project_id": project_id,
+        "actor_user_id": actor_user_id,
+        "actions": action,
+        "entity_type": entity_type,
+        "entity_id": entity_id,
+        "result": result,
+        "occurred_from": occurred_from,
+        "occurred_to": occurred_to,
+    }
+    stmt = svc.audit_query(db, user, **filters)  # type: ignore[arg-type]
+    items, total = paginate(db, stmt, pg.page, pg.page_size)
+    svc.log_viewed(db, user, filters, len(items))
+    return AuditEntryPage(
+        items=svc.entry_reads(db, user, list(items)),
+        total=total,
+        page=pg.page,
+        page_size=pg.page_size,
+    )
 
 
 @router.post(
@@ -43,8 +64,8 @@ def list_audit_log(
     summary="Verify the audit hash chain now (HSE Manager)",
     responses=error_responses(401, 403),
 )
-def verify_audit_chain(user: CurrentUser) -> AuditChainVerification:
-    raise not_implemented()
+def verify_audit_chain(user: CurrentUser, db: DB) -> AuditChainVerification:
+    return svc.verify(db, user)
 
 
 @router.get(
@@ -54,6 +75,10 @@ def verify_audit_chain(user: CurrentUser) -> AuditChainVerification:
     responses=error_responses(401, 403, 404, 422),
 )
 def get_change_history(
-    entity_type: EntityType, entity_id: uuid.UUID, user: CurrentUser, pg: PageParams
+    entity_type: EntityType, entity_id: uuid.UUID, user: CurrentUser, pg: PageParams, db: DB
 ) -> ChangeHistoryPage:
-    raise not_implemented()
+    stmt = svc.history_query(db, user, entity_type, entity_id)
+    items, total = paginate(db, stmt, pg.page, pg.page_size)
+    return ChangeHistoryPage(
+        items=svc.history_reads(db, list(items)), total=total, page=pg.page, page_size=pg.page_size
+    )

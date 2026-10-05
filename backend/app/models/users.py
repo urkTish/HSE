@@ -110,6 +110,3 @@ class UserToken(UUIDPk, Base):
     created_by_user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))
     reminder_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     expiry_notified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-
-
-

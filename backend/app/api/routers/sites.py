@@ -5,9 +5,9 @@ from typing import Annotated, Literal
 
 from fastapi import APIRouter, Query, status
 
-from app.api.deps import CurrentUser, PageParams
+from app.api.deps import DB, CurrentUser, PageParams
 from app.core.enums import AirsideArea, SiteSide, SiteStatus, ZoneStatus, ZoneType
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.schemas.org import (
     SiteCreate,
     SitePage,
@@ -20,6 +20,8 @@ from app.schemas.org import (
     ZoneTransitionRequest,
     ZoneUpdate,
 )
+from app.services import org as svc
+from app.services.common import paginate
 
 router = APIRouter(tags=["sites & zones"])
 
@@ -37,12 +39,19 @@ def list_sites(
     project_id: uuid.UUID,
     user: CurrentUser,
     pg: PageParams,
+    db: DB,
     status_: Annotated[SiteStatus | None, Query(alias="status")] = None,
     site_side: SiteSide | None = None,
     q: Q = None,
     sort: OrgSort = "code",
 ) -> SitePage:
-    raise not_implemented()
+    stmt = svc.list_sites_query(
+        db, user, project_id, status_, site_side, q, sort, user.user.preferred_language
+    )
+    items, total = paginate(db, stmt, pg.page, pg.page_size)
+    return SitePage(
+        items=[svc.site_read(x) for x in items], total=total, page=pg.page, page_size=pg.page_size
+    )
 
 
 @router.post(
@@ -52,8 +61,8 @@ def list_sites(
     summary="Create a site",
     responses=error_responses(401, 403, 404, 409, 422),
 )
-def create_site(project_id: uuid.UUID, body: SiteCreate, user: CurrentUser) -> SiteRead:
-    raise not_implemented()
+def create_site(project_id: uuid.UUID, body: SiteCreate, user: CurrentUser, db: DB) -> SiteRead:
+    return svc.site_read(svc.create_site(db, user, project_id, body))
 
 
 @router.get(
@@ -62,8 +71,8 @@ def create_site(project_id: uuid.UUID, body: SiteCreate, user: CurrentUser) -> S
     summary="Get a site",
     responses=error_responses(401, 403, 404),
 )
-def get_site(site_id: uuid.UUID, user: CurrentUser) -> SiteRead:
-    raise not_implemented()
+def get_site(site_id: uuid.UUID, user: CurrentUser, db: DB) -> SiteRead:
+    return svc.site_read(svc.get_site(db, user, site_id))
 
 
 @router.patch(
@@ -72,8 +81,8 @@ def get_site(site_id: uuid.UUID, user: CurrentUser) -> SiteRead:
     summary="Update a site",
     responses=error_responses(401, 403, 404, 409, 422),
 )
-def update_site(site_id: uuid.UUID, body: SiteUpdate, user: CurrentUser) -> SiteRead:
-    raise not_implemented()
+def update_site(site_id: uuid.UUID, body: SiteUpdate, user: CurrentUser, db: DB) -> SiteRead:
+    return svc.site_read(svc.update_site(db, user, site_id, body))
 
 
 @router.post(
@@ -82,8 +91,10 @@ def update_site(site_id: uuid.UUID, body: SiteUpdate, user: CurrentUser) -> Site
     summary="Activate / inactivate a site",
     responses=error_responses(401, 403, 404, 409, 422),
 )
-def transition_site(site_id: uuid.UUID, body: SiteTransitionRequest, user: CurrentUser) -> SiteRead:
-    raise not_implemented()
+def transition_site(
+    site_id: uuid.UUID, body: SiteTransitionRequest, user: CurrentUser, db: DB
+) -> SiteRead:
+    return svc.site_read(svc.transition_site(db, user, site_id, body))
 
 
 @router.get(
@@ -96,6 +107,7 @@ def list_zones(
     project_id: uuid.UUID,
     user: CurrentUser,
     pg: PageParams,
+    db: DB,
     site_id: uuid.UUID | None = None,
     zone_type: ZoneType | None = None,
     airside_area: AirsideArea | None = None,
@@ -103,7 +115,22 @@ def list_zones(
     q: Q = None,
     sort: OrgSort = "code",
 ) -> ZonePage:
-    raise not_implemented()
+    stmt = svc.list_zones_query(
+        db,
+        user,
+        project_id,
+        site_id,
+        zone_type,
+        airside_area,
+        status_,
+        q,
+        sort,
+        user.user.preferred_language,
+    )
+    items, total = paginate(db, stmt, pg.page, pg.page_size)
+    return ZonePage(
+        items=[svc.zone_read(x) for x in items], total=total, page=pg.page, page_size=pg.page_size
+    )
 
 
 @router.post(
@@ -113,8 +140,8 @@ def list_zones(
     summary="Create a zone in a site",
     responses=error_responses(401, 403, 404, 409, 422),
 )
-def create_zone(site_id: uuid.UUID, body: ZoneCreate, user: CurrentUser) -> ZoneRead:
-    raise not_implemented()
+def create_zone(site_id: uuid.UUID, body: ZoneCreate, user: CurrentUser, db: DB) -> ZoneRead:
+    return svc.zone_read(svc.create_zone(db, user, site_id, body))
 
 
 @router.get(
@@ -123,8 +150,8 @@ def create_zone(site_id: uuid.UUID, body: ZoneCreate, user: CurrentUser) -> Zone
     summary="Get a zone",
     responses=error_responses(401, 403, 404),
 )
-def get_zone(zone_id: uuid.UUID, user: CurrentUser) -> ZoneRead:
-    raise not_implemented()
+def get_zone(zone_id: uuid.UUID, user: CurrentUser, db: DB) -> ZoneRead:
+    return svc.zone_read(svc.get_zone(db, user, zone_id))
 
 
 @router.patch(
@@ -133,8 +160,8 @@ def get_zone(zone_id: uuid.UUID, user: CurrentUser) -> ZoneRead:
     summary="Update a zone (airside attribute changes audited with before/after)",
     responses=error_responses(401, 403, 404, 409, 422),
 )
-def update_zone(zone_id: uuid.UUID, body: ZoneUpdate, user: CurrentUser) -> ZoneRead:
-    raise not_implemented()
+def update_zone(zone_id: uuid.UUID, body: ZoneUpdate, user: CurrentUser, db: DB) -> ZoneRead:
+    return svc.zone_read(svc.update_zone(db, user, zone_id, body))
 
 
 @router.post(
@@ -143,5 +170,7 @@ def update_zone(zone_id: uuid.UUID, body: ZoneUpdate, user: CurrentUser) -> Zone
     summary="Close temporarily / reopen / archive a zone",
     responses=error_responses(401, 403, 404, 409, 422),
 )
-def transition_zone(zone_id: uuid.UUID, body: ZoneTransitionRequest, user: CurrentUser) -> ZoneRead:
-    raise not_implemented()
+def transition_zone(
+    zone_id: uuid.UUID, body: ZoneTransitionRequest, user: CurrentUser, db: DB
+) -> ZoneRead:
+    return svc.zone_read(svc.transition_zone(db, user, zone_id, body))

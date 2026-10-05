@@ -15,11 +15,15 @@ export class ApiError extends Error {
   readonly messageAr: string | null;
   readonly fieldErrors: FieldError[];
 
-  constructor(status: number, detail: Partial<Schemas["ErrorDetail"]> | null) {
+  constructor(
+    status: number,
+    detail: Partial<Schemas["ErrorDetail"]> | null,
+    fallbackCode: "NETWORK_ERROR" | "UNKNOWN" = "UNKNOWN",
+  ) {
     super(detail?.message ?? `HTTP ${status}`);
     this.name = "ApiError";
     this.status = status;
-    this.code = detail?.code ?? "UNKNOWN";
+    this.code = detail?.code ?? fallbackCode;
     this.messageAr = detail?.message_ar ?? null;
     this.fieldErrors = detail?.errors ?? [];
   }
@@ -55,7 +59,7 @@ export async function unwrap<T>(promise: Promise<FetchResult<T>>): Promise<T> {
   try {
     result = await promise;
   } catch {
-    throw new ApiError(0, { code: "INTERNAL_ERROR", message: "Network error" });
+    throw new ApiError(0, null, "NETWORK_ERROR");
   }
   if (!result.response.ok) {
     const err = toApiError(result.response.status, result.error);

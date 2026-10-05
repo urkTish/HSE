@@ -5,9 +5,9 @@ from typing import Annotated, Literal
 
 from fastapi import APIRouter, Query, status
 
-from app.api.deps import CurrentUser, PageParams
+from app.api.deps import DB, CurrentUser, PageParams
 from app.core.enums import ProjectStatus, ProjectType
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.schemas.projects import (
     ProjectCreate,
     ProjectPage,
@@ -17,6 +17,8 @@ from app.schemas.projects import (
     ProjectTransitionRequest,
     ProjectUpdate,
 )
+from app.services import projects as svc
+from app.services.common import paginate
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
@@ -32,12 +34,17 @@ ProjectSort = Literal["code", "-code", "name", "-name", "start_date", "-start_da
 def list_projects(
     user: CurrentUser,
     pg: PageParams,
+    db: DB,
     status_: Annotated[list[ProjectStatus] | None, Query(alias="status")] = None,
     project_type: ProjectType | None = None,
     q: Annotated[str | None, Query(max_length=100, description="Code/name search.")] = None,
     sort: ProjectSort = "code",
 ) -> ProjectPage:
-    raise not_implemented()
+    stmt = svc.list_query(user, status_, project_type, q, sort, user.user.preferred_language)
+    items, total = paginate(db, stmt, pg.page, pg.page_size)
+    return ProjectPage(
+        items=[svc.to_read(x) for x in items], total=total, page=pg.page, page_size=pg.page_size
+    )
 
 
 @router.post(
@@ -47,8 +54,8 @@ def list_projects(
     summary="Create a project (HSE Manager); starts in planning with default settings",
     responses=error_responses(401, 403, 409, 422),
 )
-def create_project(body: ProjectCreate, user: CurrentUser) -> ProjectRead:
-    raise not_implemented()
+def create_project(body: ProjectCreate, user: CurrentUser, db: DB) -> ProjectRead:
+    return svc.to_read(svc.create(db, user, body))
 
 
 @router.get(
@@ -57,8 +64,8 @@ def create_project(body: ProjectCreate, user: CurrentUser) -> ProjectRead:
     summary="Get a project",
     responses=error_responses(401, 403, 404),
 )
-def get_project(project_id: uuid.UUID, user: CurrentUser) -> ProjectRead:
-    raise not_implemented()
+def get_project(project_id: uuid.UUID, user: CurrentUser, db: DB) -> ProjectRead:
+    return svc.to_read(svc.get_visible(db, user, project_id))
 
 
 @router.patch(
@@ -67,8 +74,10 @@ def get_project(project_id: uuid.UUID, user: CurrentUser) -> ProjectRead:
     summary="Update a project (HSE Manager)",
     responses=error_responses(401, 403, 404, 409, 422),
 )
-def update_project(project_id: uuid.UUID, body: ProjectUpdate, user: CurrentUser) -> ProjectRead:
-    raise not_implemented()
+def update_project(
+    project_id: uuid.UUID, body: ProjectUpdate, user: CurrentUser, db: DB
+) -> ProjectRead:
+    return svc.to_read(svc.update(db, user, project_id, body))
 
 
 @router.post(
@@ -78,9 +87,9 @@ def update_project(project_id: uuid.UUID, body: ProjectUpdate, user: CurrentUser
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def transition_project(
-    project_id: uuid.UUID, body: ProjectTransitionRequest, user: CurrentUser
+    project_id: uuid.UUID, body: ProjectTransitionRequest, user: CurrentUser, db: DB
 ) -> ProjectRead:
-    raise not_implemented()
+    return svc.to_read(svc.transition(db, user, project_id, body))
 
 
 @router.get(
@@ -89,8 +98,8 @@ def transition_project(
     summary="Get project settings",
     responses=error_responses(401, 403, 404),
 )
-def get_project_settings(project_id: uuid.UUID, user: CurrentUser) -> ProjectSettingsRead:
-    raise not_implemented()
+def get_project_settings(project_id: uuid.UUID, user: CurrentUser, db: DB) -> ProjectSettingsRead:
+    return svc.settings_read(svc.get_settings_for(db, user, project_id))
 
 
 @router.patch(
@@ -100,6 +109,6 @@ def get_project_settings(project_id: uuid.UUID, user: CurrentUser) -> ProjectSet
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def update_project_settings(
-    project_id: uuid.UUID, body: ProjectSettingsUpdate, user: CurrentUser
+    project_id: uuid.UUID, body: ProjectSettingsUpdate, user: CurrentUser, db: DB
 ) -> ProjectSettingsRead:
-    raise not_implemented()
+    return svc.settings_read(svc.update_settings(db, user, project_id, body))

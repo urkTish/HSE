@@ -5,9 +5,9 @@ from typing import Annotated, Literal
 
 from fastapi import APIRouter, Query, status
 
-from app.api.deps import CurrentUser, PageParams
+from app.api.deps import DB, CurrentUser, PageParams
 from app.core.enums import ContractorCategory, ContractorStatus
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.schemas.contractors import (
     ContractorCreate,
     ContractorPage,
@@ -19,6 +19,8 @@ from app.schemas.contractors import (
     EngagementRead,
     EngagementUpdate,
 )
+from app.services import contractors as svc
+from app.services.common import paginate
 
 router = APIRouter(tags=["contractors"])
 
@@ -37,6 +39,7 @@ ContractorSort = Literal["short_code", "-short_code", "name", "-name", "cr_expir
 def list_contractors(
     user: CurrentUser,
     pg: PageParams,
+    db: DB,
     status_: Annotated[list[ContractorStatus] | None, Query(alias="status")] = None,
     category: ContractorCategory | None = None,
     project_id: Annotated[
@@ -48,7 +51,25 @@ def list_contractors(
     q: Annotated[str | None, Query(max_length=100)] = None,
     sort: ContractorSort = "short_code",
 ) -> ContractorPage:
-    raise not_implemented()
+    stmt = svc.list_query(
+        db,
+        user,
+        status_,
+        category,
+        project_id,
+        cr_expiring_within_days,
+        q,
+        sort,
+        user.user.preferred_language,
+    )
+    items, total = paginate(db, stmt, pg.page, pg.page_size)
+    contacts = svc.contact_visible_ids(db, user, [c.id for c in items])
+    return ContractorPage(
+        items=[svc.contractor_read(c, c.id in contacts) for c in items],
+        total=total,
+        page=pg.page,
+        page_size=pg.page_size,
+    )
 
 
 @router.post(
@@ -58,8 +79,8 @@ def list_contractors(
     summary="Create a contractor (draft)",
     responses=error_responses(401, 403, 409, 422),
 )
-def create_contractor(body: ContractorCreate, user: CurrentUser) -> ContractorRead:
-    raise not_implemented()
+def create_contractor(body: ContractorCreate, user: CurrentUser, db: DB) -> ContractorRead:
+    return svc.contractor_read(svc.create(db, user, body), contacts=True)
 
 
 @router.get(
@@ -69,8 +90,9 @@ def create_contractor(body: ContractorCreate, user: CurrentUser) -> ContractorRe
     summary="Get a contractor",
     responses=error_responses(401, 403, 404),
 )
-def get_contractor(contractor_id: uuid.UUID, user: CurrentUser) -> ContractorRead:
-    raise not_implemented()
+def get_contractor(contractor_id: uuid.UUID, user: CurrentUser, db: DB) -> ContractorRead:
+    c = svc.get_visible(db, user, contractor_id)
+    return svc.contractor_read(c, c.id in svc.contact_visible_ids(db, user, [c.id]))
 
 
 @router.patch(
@@ -80,9 +102,9 @@ def get_contractor(contractor_id: uuid.UUID, user: CurrentUser) -> ContractorRea
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def update_contractor(
-    contractor_id: uuid.UUID, body: ContractorUpdate, user: CurrentUser
+    contractor_id: uuid.UUID, body: ContractorUpdate, user: CurrentUser, db: DB
 ) -> ContractorRead:
-    raise not_implemented()
+    return svc.contractor_read(svc.update(db, user, contractor_id, body), contacts=True)
 
 
 @router.post(
@@ -95,9 +117,9 @@ def update_contractor(
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def transition_contractor(
-    contractor_id: uuid.UUID, body: ContractorTransitionRequest, user: CurrentUser
+    contractor_id: uuid.UUID, body: ContractorTransitionRequest, user: CurrentUser, db: DB
 ) -> ContractorRead:
-    raise not_implemented()
+    return svc.contractor_read(svc.transition(db, user, contractor_id, body), contacts=True)
 
 
 @router.get(
@@ -111,13 +133,23 @@ def list_engagements(
     project_id: uuid.UUID,
     user: CurrentUser,
     pg: PageParams,
+    db: DB,
     tier: Annotated[int | None, Query(ge=1, le=3)] = None,
     contractor_id: uuid.UUID | None = None,
     parent_engagement_id: uuid.UUID | None = None,
     site_id: uuid.UUID | None = None,
     parent_blacklisted: bool | None = None,
 ) -> EngagementPage:
-    raise not_implemented()
+    stmt = svc.list_engagements_query(
+        db, user, project_id, tier, contractor_id, parent_engagement_id, site_id, parent_blacklisted
+    )
+    items, total = paginate(db, stmt, pg.page, pg.page_size)
+    return EngagementPage(
+        items=[svc.engagement_read(e) for e in items],
+        total=total,
+        page=pg.page,
+        page_size=pg.page_size,
+    )
 
 
 @router.post(
@@ -130,9 +162,9 @@ def list_engagements(
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def create_engagement(
-    project_id: uuid.UUID, body: EngagementCreate, user: CurrentUser
+    project_id: uuid.UUID, body: EngagementCreate, user: CurrentUser, db: DB
 ) -> EngagementRead:
-    raise not_implemented()
+    return svc.engagement_read(svc.create_engagement(db, user, project_id, body))
 
 
 @router.get(
@@ -141,8 +173,8 @@ def create_engagement(
     summary="Get an engagement",
     responses=error_responses(401, 403, 404),
 )
-def get_engagement(engagement_id: uuid.UUID, user: CurrentUser) -> EngagementRead:
-    raise not_implemented()
+def get_engagement(engagement_id: uuid.UUID, user: CurrentUser, db: DB) -> EngagementRead:
+    return svc.engagement_read(svc.get_engagement(db, user, engagement_id))
 
 
 @router.patch(
@@ -152,9 +184,9 @@ def get_engagement(engagement_id: uuid.UUID, user: CurrentUser) -> EngagementRea
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def update_engagement(
-    engagement_id: uuid.UUID, body: EngagementUpdate, user: CurrentUser
+    engagement_id: uuid.UUID, body: EngagementUpdate, user: CurrentUser, db: DB
 ) -> EngagementRead:
-    raise not_implemented()
+    return svc.engagement_read(svc.update_engagement(db, user, engagement_id, body))
 
 
 @router.post(
@@ -163,5 +195,5 @@ def update_engagement(
     summary="HSE Manager: mark a 'parent blacklisted' flag as reviewed",
     responses=error_responses(401, 403, 404, 409),
 )
-def clear_parent_blacklisted(engagement_id: uuid.UUID, user: CurrentUser) -> EngagementRead:
-    raise not_implemented()
+def clear_parent_blacklisted(engagement_id: uuid.UUID, user: CurrentUser, db: DB) -> EngagementRead:
+    return svc.engagement_read(svc.clear_parent_blacklisted(db, user, engagement_id))

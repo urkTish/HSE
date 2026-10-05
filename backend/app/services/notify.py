@@ -25,7 +25,10 @@ TEMPLATES: dict[str, dict[Language, tuple[str, str]]] = {
         ),
     },
     "invite_reminder": {
-        Language.en: ("Reminder: your HSE platform invitation", "Your invite expires soon:\n{link}\n"),
+        Language.en: (
+            "Reminder: your HSE platform invitation",
+            "Your invite expires soon:\n{link}\n",
+        ),
         Language.ar: ("تذكير: دعوتك إلى المنصة", "تنتهي صلاحية دعوتك قريباً:\n{link}\n"),
     },
     "password_reset": {
@@ -120,4 +123,3 @@ def users_with_role(
 
 def managers(db: Session) -> list[uuid.UUID]:
     return users_with_role(db, Role.hse_manager)
-

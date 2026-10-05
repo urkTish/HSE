@@ -5,9 +5,9 @@ from typing import Annotated, Literal
 
 from fastapi import APIRouter, Query, status
 
-from app.api.deps import CurrentUser, PageParams
+from app.api.deps import DB, CurrentUser, PageParams
 from app.core.enums import EmployerType, Role, UserStatus
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.schemas.auth import RoleAssignmentRead
 from app.schemas.users import (
     RoleAssignmentCreate,
@@ -19,6 +19,7 @@ from app.schemas.users import (
     UserTransitionRequest,
     UserUpdate,
 )
+from app.services import users as svc
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -35,6 +36,7 @@ UserSort = Literal["name", "-name", "email", "-email", "last_login_at", "-last_l
 def list_users(
     user: CurrentUser,
     pg: PageParams,
+    db: DB,
     project_id: uuid.UUID | None = None,
     role: Role | None = None,
     status_: Annotated[list[UserStatus] | None, Query(alias="status")] = None,
@@ -43,7 +45,21 @@ def list_users(
     q: Annotated[str | None, Query(max_length=100, description="Name/email search.")] = None,
     sort: UserSort = "name",
 ) -> UserPage:
-    raise not_implemented()
+    items, total = svc.list_users(
+        db,
+        user,
+        pg.page,
+        pg.page_size,
+        project_id=project_id,
+        role=role,
+        statuses=status_,
+        employer_type=employer_type,
+        employer_contractor_id=employer_contractor_id,
+        q=q,
+        sort=sort,
+        lang=user.user.preferred_language,
+    )
+    return UserPage(items=items, total=total, page=pg.page, page_size=pg.page_size)
 
 
 @router.post(
@@ -55,8 +71,8 @@ def list_users(
     "contractor_hse_rep, viewer_client on own projects (rule 14) → 403 ROLE_NOT_ASSIGNABLE.",
     responses=error_responses(401, 403, 404, 409, 422),
 )
-def invite_user(body: UserInvite, user: CurrentUser) -> UserRead:
-    raise not_implemented()
+def invite_user(body: UserInvite, user: CurrentUser, db: DB) -> UserRead:
+    return svc.user_read(db, user, svc.invite(db, user, body), contacts=True)
 
 
 @router.get(
@@ -66,8 +82,8 @@ def invite_user(body: UserInvite, user: CurrentUser) -> UserRead:
     summary="Get a user",
     responses=error_responses(401, 403, 404),
 )
-def get_user(user_id: uuid.UUID, user: CurrentUser) -> UserRead:
-    raise not_implemented()
+def get_user(user_id: uuid.UUID, user: CurrentUser, db: DB) -> UserRead:
+    return svc.user_read(db, user, svc.get_visible_user(db, user, user_id))
 
 
 @router.patch(
@@ -76,8 +92,8 @@ def get_user(user_id: uuid.UUID, user: CurrentUser) -> UserRead:
     summary="Edit a user's profile (HSE Manager)",
     responses=error_responses(401, 403, 404, 409, 422),
 )
-def update_user(user_id: uuid.UUID, body: UserUpdate, user: CurrentUser) -> UserRead:
-    raise not_implemented()
+def update_user(user_id: uuid.UUID, body: UserUpdate, user: CurrentUser, db: DB) -> UserRead:
+    return svc.user_read(db, user, svc.update_user(db, user, user_id, body), contacts=True)
 
 
 @router.post(
@@ -88,8 +104,10 @@ def update_user(user_id: uuid.UUID, body: UserUpdate, user: CurrentUser) -> User
     "SELF_MODIFICATION_FORBIDDEN on own account.",
     responses=error_responses(401, 403, 404, 409, 422),
 )
-def transition_user(user_id: uuid.UUID, body: UserTransitionRequest, user: CurrentUser) -> UserRead:
-    raise not_implemented()
+def transition_user(
+    user_id: uuid.UUID, body: UserTransitionRequest, user: CurrentUser, db: DB
+) -> UserRead:
+    return svc.user_read(db, user, svc.transition_user(db, user, user_id, body), contacts=True)
 
 
 @router.post(
@@ -98,8 +116,8 @@ def transition_user(user_id: uuid.UUID, body: UserTransitionRequest, user: Curre
     summary="Re-send the invite (new token; old one invalidated)",
     responses=error_responses(401, 403, 404, 409),
 )
-def resend_invite(user_id: uuid.UUID, user: CurrentUser) -> UserRead:
-    raise not_implemented()
+def resend_invite(user_id: uuid.UUID, user: CurrentUser, db: DB) -> UserRead:
+    return svc.user_read(db, user, svc.resend_invite(db, user, user_id), contacts=True)
 
 
 @router.get(
@@ -108,8 +126,11 @@ def resend_invite(user_id: uuid.UUID, user: CurrentUser) -> UserRead:
     summary="List a user's role assignments",
     responses=error_responses(401, 403, 404),
 )
-def list_role_assignments(user_id: uuid.UUID, user: CurrentUser) -> RoleAssignmentList:
-    raise not_implemented()
+def list_role_assignments(user_id: uuid.UUID, user: CurrentUser, db: DB) -> RoleAssignmentList:
+    target = svc.get_visible_user(db, user, user_id)
+    return RoleAssignmentList(
+        items=svc.user_read(db, user, target, contacts=False).role_assignments
+    )
 
 
 @router.post(
@@ -121,9 +142,9 @@ def list_role_assignments(user_id: uuid.UUID, user: CurrentUser) -> RoleAssignme
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def create_role_assignment(
-    user_id: uuid.UUID, body: RoleAssignmentCreate, user: CurrentUser
+    user_id: uuid.UUID, body: RoleAssignmentCreate, user: CurrentUser, db: DB
 ) -> RoleAssignmentRead:
-    raise not_implemented()
+    return svc.assignment_read(svc.add_assignment(db, user, user_id, body), user.today)
 
 
 @router.patch(
@@ -137,8 +158,10 @@ def update_role_assignment(
     assignment_id: uuid.UUID,
     body: RoleAssignmentUpdate,
     user: CurrentUser,
+    db: DB,
 ) -> RoleAssignmentRead:
-    raise not_implemented()
+    a = svc.update_assignment(db, user, user_id, assignment_id, body)
+    return svc.assignment_read(a, user.today)
 
 
 @router.post(
@@ -148,6 +171,7 @@ def update_role_assignment(
     responses=error_responses(401, 403, 404, 409),
 )
 def revoke_role_assignment(
-    user_id: uuid.UUID, assignment_id: uuid.UUID, user: CurrentUser
+    user_id: uuid.UUID, assignment_id: uuid.UUID, user: CurrentUser, db: DB
 ) -> RoleAssignmentRead:
-    raise not_implemented()
+    a = svc.revoke_assignment(db, user, user_id, assignment_id)
+    return svc.assignment_read(a, user.today)

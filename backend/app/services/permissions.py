@@ -32,7 +32,7 @@ S = CapabilityScope
 
 # Spec §5.10, one dict per role. Missing capability = "—".
 MATRIX: dict[Role, dict[Capability, CapabilityScope]] = {
-    Role.hse_manager: {cap: S.all for cap in Capability},
+    Role.hse_manager: dict.fromkeys(Capability, S.all),
     Role.hse_officer: {
         C.project_view: S.project,
         C.site_zone_manage: S.project,
@@ -236,9 +236,7 @@ class Principal:
         scope = self.projects.get(project_id) if project_id else None
         if scope:
             return AuditActor(self.user.id, scope.primary_role, project_id)
-        roles = sorted(
-            {a.role for a in self.active_assignments}, key=lambda r: ROLE_RANK[r]
-        )
+        roles = sorted({a.role for a in self.active_assignments}, key=lambda r: ROLE_RANK[r])
         return AuditActor(self.user.id, roles[0] if roles else None, project_id)
 
     # ---- guards -------------------------------------------------------------------------
@@ -273,11 +271,11 @@ class Principal:
             raise forbidden_error()
 
 
-def forbidden_error() -> ApiError:
+def forbidden_error(message: str = "You do not have permission for this action.") -> ApiError:
     return ApiError(
         403,
         ErrorCode.FORBIDDEN,
-        "You do not have permission for this action.",
+        message,
         "ليس لديك صلاحية لتنفيذ هذا الإجراء.",
     )
 
