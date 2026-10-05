@@ -20,7 +20,7 @@ function makeClient(): QueryClient {
   });
 }
 
-const PUBLIC_PATHS = ["/login", "/privacy", "/accept-invite", "/forgot-password", "/reset-password"];
+const PUBLIC_PATHS = ["/login", "/privacy", "/invite", "/forgot-password", "/reset-password"];
 
 function AuthEventBridge({ client }: { client: QueryClient }) {
   const router = useRouter();

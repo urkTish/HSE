@@ -84,7 +84,7 @@ export function formatDateTime(value: string | Date | null | undefined, prefs: D
 /** Umm al-Qura Hijri date from ICU, e.g. "13 Rabiʻ II 1448 AH". */
 export function formatHijri(value: string | Date, prefs: DateDisplayPrefs, timeZone?: string): string {
   const d = toDate(value);
-  const base = prefs.locale === "ar" ? "ar-SA" : "en";
+  const base = prefs.locale === "ar" ? "ar-SA" : "en-GB";
   return new Intl.DateTimeFormat(`${base}-u-ca-islamic-umalqura-nu-${numbering(prefs)}`, {
     timeZone: timeZone ?? zoneFor(value, prefs),
     day: "numeric",

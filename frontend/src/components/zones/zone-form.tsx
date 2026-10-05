@@ -144,6 +144,7 @@ export function ZoneForm({
         : await unwrap(api.POST("/api/v1/sites/{site_id}/zones", { params: { path: { site_id: site.id } }, body }));
       qc.setQueryData(keys.zone(saved.id), saved);
       await qc.invalidateQueries({ queryKey: ["zones", project.id] });
+      await qc.invalidateQueries({ queryKey: ["history"] });
       toast.success(zone ? tc("saved") : tc("created"));
       router.push(`/projects/${project.id}/zones/${saved.id}`);
     } catch (e) {

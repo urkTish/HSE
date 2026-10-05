@@ -58,7 +58,7 @@ export function AcceptInvite() {
           body: { token, password: v.password, privacy_notice_version: info.data.privacy_notice.version, preferred_language: locale },
         }),
       );
-      qc.clear();
+      qc.removeQueries({ predicate: (q) => q.queryKey[0] !== "invitation" });
       qc.setQueryData(keys.me, res.user);
       router.replace("/", { locale: res.user.display_language });
     } catch (e) {

@@ -59,3 +59,68 @@ jobs:
   # FRONTEND JOB — owned by the Frontend Agent. Add the `frontend` job here
   # (lint, typecheck, i18n key check, build, Playwright e2e).
   # ---------------------------------------------------------------------------
+  frontend:
+    name: frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: hse
+          POSTGRES_PASSWORD: hse
+          POSTGRES_DB: hse
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U hse -d hse"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      CI: "true"
+      BACKEND_URL: http://localhost:8000
+      PGHOST: localhost
+      PGUSER: hse
+      PGPASSWORD: hse
+      E2E_DB_NAME: hse_e2e
+      JWT_SECRET: ci-only-secret-ci-only-secret-ci-only
+      SEED_PASSWORD: Demo-Passw0rd!2026
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+      - name: Install backend dependencies (real API for e2e)
+        working-directory: backend
+        run: uv sync --frozen
+      - name: Install dependencies
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Typecheck
+        run: npm run typecheck
+      - name: i18n key check (EN/AR parity)
+        run: npm run i18n:check
+      - name: Build
+        run: npm run build
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: E2E (Playwright against the real backend)
+        run: npm run test:e2e
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report
+          retention-days: 7

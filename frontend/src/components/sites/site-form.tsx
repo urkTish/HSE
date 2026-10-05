@@ -67,6 +67,7 @@ export function SiteForm({ project, site }: { project: Schemas["ProjectRead"]; s
         : await unwrap(api.POST("/api/v1/projects/{project_id}/sites", { params: { path: { project_id: project.id } }, body }));
       qc.setQueryData(keys.site(saved.id), saved);
       await qc.invalidateQueries({ queryKey: ["sites", project.id] });
+      await qc.invalidateQueries({ queryKey: ["history"] });
       toast.success(site ? tc("saved") : tc("created"));
       router.push(`/projects/${project.id}/sites/${saved.id}`);
     } catch (e) {

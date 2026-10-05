@@ -93,6 +93,7 @@ export function ProjectForm({ project }: { project?: Schemas["ProjectRead"] }) {
         : await unwrap(api.POST("/api/v1/projects", { body: { ...body, code: v.code } }));
       qc.setQueryData(keys.project(saved.id), saved);
       await qc.invalidateQueries({ queryKey: ["projects"] });
+      await qc.invalidateQueries({ queryKey: ["history"] });
       toast.success(project ? tc("saved") : tc("created"));
       router.push(`/projects/${saved.id}`);
     } catch (e) {

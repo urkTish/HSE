@@ -70,6 +70,7 @@ export function ContractorForm({ contractor }: { contractor?: Schemas["Contracto
         : await unwrap(api.POST("/api/v1/contractors", { body }));
       qc.setQueryData(keys.contractor(saved.id), saved);
       await qc.invalidateQueries({ queryKey: ["contractors"] });
+      await qc.invalidateQueries({ queryKey: ["history"] });
       toast.success(contractor ? tc("saved") : tc("created"));
       router.push(`/contractors/${saved.id}`);
     } catch (e) {

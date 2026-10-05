@@ -83,6 +83,7 @@ function UserEditForm({ user }: { user: Schemas["UserRead"] }) {
       );
       qc.setQueryData(keys.user(saved.id), saved);
       await qc.invalidateQueries({ queryKey: ["users"] });
+      await qc.invalidateQueries({ queryKey: ["history"] });
       toast.success(tc("saved"));
       router.push(`/users/${saved.id}`);
     } catch (e) {

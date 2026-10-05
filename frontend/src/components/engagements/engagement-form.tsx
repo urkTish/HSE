@@ -116,6 +116,7 @@ export function EngagementForm({ projectId, engagement }: { projectId: string; e
       }
       qc.setQueryData(keys.engagement(saved.id), saved);
       await qc.invalidateQueries({ queryKey: ["engagements", projectId] });
+      await qc.invalidateQueries({ queryKey: ["history"] });
       toast.success(engagement ? tc("saved") : tc("created"));
       router.push(`/projects/${projectId}/engagements/${saved.id}`);
     } catch (e) {

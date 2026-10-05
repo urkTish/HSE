@@ -3,7 +3,7 @@
 ## Current
 - Phase: 0 — Foundation
 - Module: foundation (auth & roles, projects/sites/zones, contractors, audit log, i18n/RTL shell, CI)
-- Step: Build (backend implemented & tested; frontend in progress)
+- Step: Integrate/Verify (backend and frontend implemented; e2e green against the real API)
 
 ## Done
 
@@ -17,6 +17,16 @@
 - Settings (rule 30-32, base labels), audit log (hash chain, verify, retention purge, officer view without IP), change history, CSV/XLSX exports (rule 49), in-app notifications + email outbox, scheduled jobs (`app.jobs`, `app.scheduler`), K1 rate in `app/kpi`.
 - Seed (`app.seed`, idempotent, Appendix A). Dev password: `SEED_PASSWORD` in `.env.example`.
 - Tests: 96 passing; every backend-side AC (1-25, 28, 30-35) has a test named `test_AC<n>_...`. AC26 backend part (setting round-trip) tested; AC27/AC29 are frontend.
+
+### Frontend — Phase 0 Foundation (against contract v0.1.0)
+- Stack: Next.js 16 (App Router, TS strict, no `any`), Tailwind 4 + shadcn-style components on Radix, TanStack Query, React Hook Form + Zod, next-intl (`/en`, `/ar`, `dir=rtl`), openapi-fetch with types from `npm run gen:api`; Prism mock via `npm run mock` (use `BACKEND_URL=http://localhost:4010 npm run dev`).
+- Design tokens in one file: `frontend/src/styles/tokens.css` (mapped to Tailwind in `src/app/globals.css`).
+- Screens: login (invalid/locked/session-expired/signed-out messages), privacy-notice acknowledgement (EN/AR text), invitation acceptance (`/invite?token=`), forgot/reset password; app shell (sidebar, topbar, project switcher, EN/AR switch saved to profile, notifications bell, user menu); placeholder home (Phase 1 dashboard goes here); projects list/create/edit/detail + status transitions; project settings (KPI bases with API labels, Hijri/digits/date format, retention, live date preview); sites list/detail/form + transitions; zones list/detail/form incl. airside attributes + transitions; contractors list/detail/form + full workflow incl. blacklist/lift blacklist; project engagements (tier tree, parent limited to tier − 1, review-flag clearing); users list/invite/edit/detail with role assignments (assign/revoke, SoD and officer limits surfaced), deactivate/unlock/reactivate/resend invite; audit log with filters, details/diff and chain verification; change-history panel on every detail page; CSV/Excel export buttons on every list; own profile + password change.
+- Role-aware UI from `Me` capabilities/read_only (server still enforces); contact fields treated as optional; error codes mapped to EN/AR text; dates in Asia/Riyadh with optional Umm al-Qura Hijri (ICU).
+- i18n: 574 keys in `messages/en.json` and `messages/ar.json`; `npm run i18n:check` fails on a missing/empty key or an untranslated Arabic value (AC29). Message keys are typed, so typecheck fails on unknown keys.
+- E2E: 33 Playwright tests (`frontend/e2e`) run against the real backend on a freshly created, migrated and seeded database (`e2e/start-backend.sh`). Covered UI-side ACs: 1-15, 17, 18, 20, 21, 22, 23, 24, 25, 26, 27, 28, 31, 33 (+ login AR/RTL, language switch, logout, session expiry). AC19 has no seeded DLIFT user (backend test covers it); AC16/30/32/34/35 have no UI side.
+- CI: `frontend` job in `.github/workflows/ci.yml` (npm ci, lint, typecheck, i18n check, build, Playwright with Postgres service + real backend via uv).
+- Screenshots: `docs/screenshots/phase-0/` (login EN, login AR, projects list AR, zone detail EN).
 
 ## Next
 - Phase 1 — Dashboard (with AI)
@@ -34,5 +44,7 @@
 - (Backend, §5.6 rule 40) Audit entries with no project (logins, contractor master changes) use an org-wide retention (`ORG_AUDIT_RETENTION_YEARS`, default 5). Confirm.
 
 ## Contract requests
+- (Frontend, low priority, not blocking) `GET /contractors/{id}/engagements` (engagements of one contractor across the caller's projects) so the contractor detail page can list where a firm is engaged. Today that view would need one request per project.
 
 ## Design proposals
+- (Frontend) Lists show dates using the *current* project's display settings (Hijri/digits); cross-project lists (projects, contractors, users) could instead use each row's project settings. Left for the design pass.
