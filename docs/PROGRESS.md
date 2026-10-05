@@ -1,10 +1,12 @@
 # Progress
 
 ## Current
-- Phase: 0 — Foundation
-- Module: foundation (auth & roles, projects/sites/zones, contractors, audit log, i18n/RTL shell, CI)
-- Step: Integrate/Verify (backend and frontend implemented; e2e green against the real API)
-- Design pass: done (Phase 0). Findings in `docs/design/phase-0-findings.md`, before/after screenshots in `docs/screenshots/phase-0/design/`. Ready for the phase demo; L items wait for the user under "Design proposals".
+- Phase: 1 — Dashboard (with AI)
+- Module: dashboard & core data (spec `docs/specs/1-dashboard.md` v1.0)
+- Step: Contract
+
+## Phase log
+- Phase 0 — Foundation: built, e2e green, design pass done (2026-10-05). The user asked to continue phase after phase without per-phase approval; open questions are collected below for a single review.
 
 ## Done
 
