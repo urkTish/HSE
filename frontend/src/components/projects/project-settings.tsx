@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -86,7 +86,7 @@ function SettingsForm({ settings, closed }: { settings: Schemas["ProjectSettings
     },
   });
   const { errors, isSubmitting, isDirty } = form.formState;
-  const w = form.watch();
+  const w = useWatch({ control: form.control });
 
   async function onSubmit(v: Out) {
     setError(null);

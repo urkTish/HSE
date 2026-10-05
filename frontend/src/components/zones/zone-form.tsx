@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -116,7 +116,7 @@ export function ZoneForm({
     },
   });
   const { errors, isSubmitting } = form.formState;
-  const isAirside = form.watch("zone_type") === "airside";
+  const isAirside = useWatch({ control: form.control, name: "zone_type" }) === "airside";
   const ae = errors.airside;
 
   async function onSubmit(v: Values) {
