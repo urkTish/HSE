@@ -48,8 +48,8 @@ jobs:
         run: uv run ruff format --check .
       - name: Typecheck (mypy)
         run: uv run mypy app
-      - name: Migrations apply cleanly
-        run: uv run alembic upgrade head
+      - name: Migrations apply cleanly and match the models
+        run: uv run alembic upgrade head && uv run alembic check
       - name: Tests (pytest)
         run: uv run pytest
       - name: Contract is up to date

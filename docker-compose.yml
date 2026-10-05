@@ -46,6 +46,18 @@ services:
       minio:
         condition: service_started
 
+  scheduler:
+    build:
+      context: ./backend
+    command: ["python", "-m", "app.scheduler"]
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-hse}:${POSTGRES_PASSWORD:-hse}@db:5432/${POSTGRES_DB:-hse}
+    depends_on:
+      - backend
+
   frontend:
     build:
       context: ./frontend
