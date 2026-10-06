@@ -3,7 +3,7 @@
 ## Current
 - Phase: 1 — Dashboard (with AI)
 - Module: dashboard & core data (spec `docs/specs/1-dashboard.md` v1.0)
-- Step: Contract v0.2.0 published (backend stage 1: schemas + routers, handlers return 501); backend implementation next
+- Step: Backend stage 2 implemented on contract v0.2.0 (no contract changes); frontend e2e green against the seeded backend. Next: phase demo and HSE Manager review of the open questions
 
 ## Phase log
 - Phase 0 — Foundation: built, e2e green, design pass done (2026-10-05). The user asked to continue phase after phase without per-phase approval; open questions are collected below for a single review.
@@ -19,6 +19,38 @@
   - Charts: `GET /kpi/charts/{C1..C9}` and AI answers both use `ChartSpec` (categories, axes, series with `color_role` tokens, bands, reference lines, optional table).
   - `POST /ai/ask` streams SSE (`AiStreamEvent`): `meta` → `status`* → `delta`* → `citations` → `chart`? → `recommendations`? → `done` (full `AiAnswer`); `error` ends the stream. Send `Accept: application/json` to get only the final answer (Prism mock serves this). Hide the assistant when `GET /ai/status` says `enabled = false` (AC73).
   - Injury cases: identity/medical keys are absent (not null) without capability 29/30; `redacted_groups` says which. Anonymous observations omit `observer`.
+
+### Backend — Phase 1 implementation (stage 2, contract v0.2.0 unchanged)
+- All v0.2.0 handlers are implemented (no more 501s). Migration `0002` matches the models (`alembic check` is clean).
+- Services implement the spec rules and state machines for: workforce returns, month lock/unlock/restatement and import (dry run, 60 min expiry, insert-only/upsert, E01–E14, W01–W06, EN/AR headers, CSV/XLSX); incidents, injury cases (derived/confirmed classification, PDPL redaction by capabilities 29/30, encrypted IDs), investigations, external notifications; observations; inspection plans and inspections; corrective actions with extensions and verification; HSE meetings; attachments (local storage, scan status `skipped`); Phase 1 settings and the AI transfer approval.
+- KPI engine `app/kpi/`: one engine for every K-01…K-47 formula with the spec's rounding. Unit tests reproduce W1–W8 to the decimal. On top of it: scope building (role scope first, D-3), comparisons, trends (trend allowed only with ≥ 6 monthly points), breakdowns, the safety pyramid, the league table, leading warnings E1–E4, data completeness and charts C1–C9. Dashboard queries load facts per scope in a fixed number of queries (no N+1), using the indexes in `0002`.
+- Permissions follow the §5.10 matrix rows 20–45. Sensitive reads are audited: identity/medical reveal, sensitive breakdowns and exports. `GET /history/{entity}/{id}` covers the Phase 1 entities.
+- Jobs (`app/hse_jobs.py`, 20 jobs, scheduled in `app/scheduler.py`):
+  - CA due-soon and overdue alerts, with escalation once per day
+  - incident and notification alerts
+  - high-risk observations without a CA (24 h)
+  - missing daily returns and the completeness check
+  - inspection generation, missed inspections and inspections-due alerts
+  - leading warnings and LTI-free milestones
+  - month auto-lock and injury identity anonymisation
+- AI layer (`app/ai/`):
+  - Anthropic Python SDK client with tool use and server-side fallbacks. Models come from config: default `claude-sonnet-5-5`, deep analysis `claude-opus-5-5`.
+  - 15 tools, each a thin wrapper over the KPI engine and read-only queries, run with the caller's permissions. Tool outputs are de-identified (no names, IDs or contacts) and report `scope_narrowed`.
+  - Number-grounding check with one regeneration, then a fallback message and raw table. Language checks: AI-8 trend wording, AI-9 association/causal wording, AI-11 recommendation hierarchy.
+  - The server adds the data notes and the Sources block.
+  - Prompt masking (mobile, email, ID numbers) with warnings to the user.
+  - Rate limits: 60 questions per user per day, 10 reports per project per month.
+  - Answer cache and insights cache keyed by the data snapshot.
+  - `ai_logs` holds masked prompts and excerpts only.
+  - Without `ANTHROPIC_API_KEY` the service returns 503 `AI_UNAVAILABLE`; rule-based insights still work.
+  - Monthly report: 13 sections with backend-rendered tables. The model writes the narrative only, checked for grounding. Lifecycle draft → reviewed → published; publishing freezes the figures hash, and a later restatement shows "figures revised since publication".
+- Seed (`app/seed_hse.py`, loaded by `python -m app.seed`):
+  - Appendix A: 13 months plus ramp-up, deterministic.
+  - ANIA-EXP monthly MH and case counts equal W3; observations, inspections, CAs raised, month-end overdue, DO/PD/ENV and toolbox talks equal A.3.
+  - July 2026 completeness is 98.1 % (GULFPAVE filter: 90.3 %); E1 fires for Jul 2026 only.
+  - Named incidents follow A.5.6. Fake IDs match `^[12]0{5}\d{4}$` and every record has `seed_fake = true`.
+  - Each project gets a clearly fake AI transfer approval (`SEED-FAKE-AI-APPROVAL`), so the assistant works once a key is set.
+- Tests: 213 passed. They cover AC1–AC60 and AC64–AC78 with a backend side (`test_AC<n>_…`; AC61 checks the backend part), using a fake LLM client (`tests/fake_llm.py`). ruff, ruff format, mypy (strict), `alembic check` and `export_openapi --check` are all green.
 
 ### Frontend — Phase 1 Dashboard (against contract v0.2.0)
 - Home page = KPI dashboard for capability 38 (users without it keep the Phase 0 home): filter bar with every D-2 filter in the URL (shareable, survives reload; saved per user via `/dashboard/preferences`, a URL with filters wins), completeness / provisional / restated chips and the backend banners, headline band (LTI-free days and hours, man-hours period/ITD, headcount, direct/sub split), lagging and leading tiles (backend `display`, first comparison Δ with direction, 12-month sparkline, RAG + target, warnings), Phase 3 placeholders, charts C1–C3/C5/C7/C8/C9 through one `ChartRenderer` (token palette, semantic colour roles, small multiples instead of a second axis, bands, reference lines, legend, table toggle, RTL mirroring), C7 dimension/measure switch (sensitive dimensions only with `breakdown.sensitive_view`), safety pyramid, sortable contractor league table with roll-up, action panel (each item opens the pre-filtered list), due-soon list, insights, KPI/league CSV exports (capability 42).
@@ -69,15 +101,23 @@
 - New e2e `e2e/design.spec.ts` (theme persistence; phone drawer, 44 px target, stacked-row labels in AR). Suite: 35 passed, 1 skipped (on-demand screenshots).
 
 ## Next
-- Phase 1 — Dashboard (with AI)
+- Phase 1 demo; then Phase 2 per the roadmap
 
 ## Parked
+- (Phase 1, D-10) PDF export of the dashboard/monthly report: deferred by the coordinator. The frontend print view covers it for now.
+- (Phase 1, I-15) The check that the supervisor named on an incident holds a supervisor role on that site is not implemented; the field is free text.
+- (Phase 1) Attachment virus scanning: files are stored locally with `scan_status = skipped`. A scanner/object store is not chosen yet.
+- (Phase 1) Ramadan dates are a table for 2025/2026 marked VERIFY. Replace them with an Umm al-Qura library before go-live.
 - Email delivery: messages go to the `email_outbox` table; an SMTP/provider sender is not built (no provider chosen).
 - MFA (`mfa_enabled` stored, not enforced) — waits for §10 Q3.
 - Data-subject requests (P8) and breach records (P9) — no Phase 0 endpoints; propose for Phase 6 / when the Consultant specs them.
 - Per-entity retention/anonymisation (P7) — no personal-data entities with retention defaults in Phase 0 beyond the audit log.
 
 ## Open questions for the HSE Manager
+- (Backend, Phase 1, defaults pending the HSE Manager — DECISIONS 18-20) AI-8 trend wording; D-10 PDF export deferred; who may see observations/inspections/CAs (incident-register scope via capability 31 plus own/verifier records).
+- (Backend, Phase 1, §6.9 E4) A "repeat event" is a recordable case with the same mechanism in the same tier-1 tree within 90 days. With the seed volumes this fires in most months. Should it be limited to LTI/RWC, or need ≥ 2 repeats?
+- (Backend, Phase 1, W4) The spec's longest LTI-free run (112 days) does not match its own LTI dates (the actual gaps are longer). The engine computes from the dates.
+- (Backend, Phase 1) GOSI notification deadline is set to 3 days from the incident date (spec §10 Q7 still open).
 - (Backend, §5.10 row 8) HSE Officers currently see the whole contractor register (needed to onboard and engage contractors). Should they see only contractors engaged on their projects plus drafts they created?
 - (Backend, §5.4 rule 28) Users of a suspended contractor are blocked from business-data writes but may still edit their own profile and password. Confirm.
 - (Backend, §7) CR-expiry alerts go to reps of the contractor *and* of its parent engagements (the reps whose tree contains it). Confirm.
