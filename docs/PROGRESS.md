@@ -1,12 +1,13 @@
 # Progress
 
 ## Current
-- Phase: 1 — Dashboard (with AI)
-- Module: dashboard & core data (spec `docs/specs/1-dashboard.md` v1.0)
-- Step: Backend stage 2 implemented on contract v0.2.0 (no contract changes); frontend e2e green against the seeded backend. Design pass: done (Phase 1). Next: phase demo and HSE Manager review of the open questions
+- Phase: 2 — Site / Airport access permits
+- Module: site & airport access permits (spec `docs/specs/2-access-permits.md`)
+- Step: Spec
 
 ## Phase log
 - Phase 0 — Foundation: built, e2e green, design pass done (2026-10-05). The user asked to continue phase after phase without per-phase approval; open questions are collected below for a single review.
+- Phase 1 — Dashboard (with AI): built, e2e green, design pass done (2026-10-06).
 - Phase 1 — Dashboard (with AI): built, e2e green, design pass done (2026-10-06).
 
 ## Done
