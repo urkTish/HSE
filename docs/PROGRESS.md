@@ -8,7 +8,6 @@
 ## Phase log
 - Phase 0 — Foundation: built, e2e green, design pass done (2026-10-05). The user asked to continue phase after phase without per-phase approval; open questions are collected below for a single review.
 - Phase 1 — Dashboard (with AI): built, e2e green, design pass done (2026-10-06).
-- Phase 1 — Dashboard (with AI): built, e2e green, design pass done (2026-10-06).
 
 ## Done
 
