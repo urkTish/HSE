@@ -524,7 +524,7 @@ export function InspectionDetail({ id }: { id: string }) {
                   {i.findings.map((f) => (
                     <li key={f.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
                       <span>
-                        <StatusBadge status={f.severity === "critical" || f.severity === "high" ? "overdue" : "warning"} label={te(`findingSeverity.${f.severity}`)} /> {f.description}
+                        <StatusBadge status={f.severity === "critical" || f.severity === "high" ? "risk_high" : f.severity === "medium" ? "risk_medium" : "risk_low"} label={te(`findingSeverity.${f.severity}`)} /> {f.description}
                       </span>
                       {f.ca_id ? (
                         <Link href={`/actions/${f.ca_id}`} className="ltr text-primary hover:underline">

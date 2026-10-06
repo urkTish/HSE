@@ -1,6 +1,7 @@
 "use client";
 import { ChevronDown, Search, SlidersHorizontal } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useSearchParams } from "next/navigation";
 import { Children, useId, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,13 +11,23 @@ import { cn } from "@/lib/utils";
 
 /**
  * Filters + list actions. On phones and tablets only the first filter (usually search) shows;
- * the rest fold behind "More filters" so the records are visible without scrolling.
+ * the rest fold behind "More filters" so the records are visible without scrolling. On desktop,
+ * long toolbars (more than DESKTOP_VISIBLE + 1 filters) show the first DESKTOP_VISIBLE and fold the
+ * rest. The toolbar opens by itself when the URL carries filters (e.g. a dashboard link), so an
+ * applied filter is never hidden.
  */
+const DESKTOP_VISIBLE = 4;
+const NOT_FILTERS = new Set(["page", "project", "sort", "order"]);
+
 export function ListToolbar({ children, actions }: { children: ReactNode; actions?: ReactNode }) {
   const t = useTranslations("common");
   const id = useId();
-  const [open, setOpen] = useState(false);
-  const collapsible = Children.toArray(children).length > 2;
+  const params = useSearchParams();
+  const filtered = Array.from(params.keys()).some((k) => !NOT_FILTERS.has(k));
+  const [open, setOpen] = useState(filtered);
+  const count = Children.toArray(children).length;
+  const collapsible = count > 2;
+  const desktopFold = count > DESKTOP_VISIBLE + 1;
   return (
     <div className="mb-4 flex flex-col gap-3 rounded-xl border bg-surface p-3 shadow-xs sm:p-4 lg:flex-row lg:items-end lg:justify-between">
       <div
@@ -24,12 +35,20 @@ export function ListToolbar({ children, actions }: { children: ReactNode; action
         className={cn(
           "grid flex-1 gap-3 sm:grid-cols-2 lg:flex lg:flex-wrap lg:items-end",
           collapsible && !open && "max-lg:[&>*:not(:first-child)]:hidden",
+          desktopFold && !open && "lg:[&>*:nth-child(n+5)]:hidden",
         )}
       >
         {children}
       </div>
       {collapsible ? (
-        <Button variant="ghost" size="sm" className="self-start lg:hidden" aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)}>
+        <Button
+          variant="ghost"
+          size="sm"
+          className={cn("self-start", desktopFold ? "lg:self-end" : "lg:hidden")}
+          aria-expanded={open}
+          aria-controls={id}
+          onClick={() => setOpen(!open)}
+        >
           <SlidersHorizontal aria-hidden />
           {open ? t("fewerFilters") : t("moreFilters")}
           <ChevronDown aria-hidden className={cn("transition-transform", open && "rotate-180")} />

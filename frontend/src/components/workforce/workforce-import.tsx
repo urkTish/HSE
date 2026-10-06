@@ -1,5 +1,5 @@
 "use client";
-import { CheckCircle2, Download, FileUp, Trash2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Download, FileUp, Trash2, XCircle } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
@@ -21,6 +21,7 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { api, downloadFile, postForm, unwrap, type Schemas } from "@/lib/api/client";
 import { hk, useWorkforceImport, useWorkforceImports } from "@/lib/api/hse";
 import { useDisplay } from "@/lib/digits";
+import { cn } from "@/lib/utils";
 import { IMPORT_MODES } from "@/lib/enums";
 import { useErrorMessage, useLocalizedName } from "@/lib/i18n-helpers";
 import { canWrite } from "@/lib/permissions";
@@ -133,7 +134,7 @@ export function WorkforceImportPage({ project }: { project: Schemas["ProjectRead
       {recent.isLoading ? (
         <LoadingState rows={2} />
       ) : (recent.data?.items.length ?? 0) === 0 ? (
-        <EmptyState />
+        <EmptyState message={t("noImports")} />
       ) : (
         <Table>
           <THead>
@@ -235,8 +236,20 @@ export function ImportReport({ id }: { id: string }) {
       />
       <dl className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6" data-testid="import-counts">
         {COUNT_KEYS.map((k) => (
-          <div key={k} className="rounded-xl border bg-surface p-3 shadow-xs" data-testid={`count-${k}`}>
-            <dt className="text-xs font-medium text-muted-foreground">{t(`counts.${k}`)}</dt>
+          <div
+            key={k}
+            className={cn(
+              "rounded-xl border bg-surface p-3 shadow-xs",
+              k === "rows_error" && b.counts[k] > 0 && "border-danger/60 bg-danger-bg",
+              k === "rows_warning" && b.counts[k] > 0 && "border-warning/60 bg-warning-bg",
+            )}
+            data-testid={`count-${k}`}
+          >
+            <dt className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
+              {k === "rows_error" && b.counts[k] > 0 ? <XCircle aria-hidden className="size-3.5 text-danger" /> : null}
+              {k === "rows_warning" && b.counts[k] > 0 ? <AlertTriangle aria-hidden className="size-3.5 text-warning" /> : null}
+              {t(`counts.${k}`)}
+            </dt>
             <dd className="mt-1 text-2xl font-semibold">{show(b.counts[k])}</dd>
           </div>
         ))}
@@ -256,7 +269,12 @@ export function ImportReport({ id }: { id: string }) {
       {pending ? (
         <div className="mb-4 flex flex-col gap-3 rounded-xl border bg-surface p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between">
           <div className="text-sm">
-            {b.counts.rows_error > 0 ? <p className="font-medium text-danger" data-testid="commit-blocked">{t("blockedByErrors")}</p> : null}
+            {b.counts.rows_error > 0 ? (
+              <p className="flex items-center gap-1.5 font-medium" data-testid="commit-blocked">
+                <XCircle aria-hidden className="size-4 shrink-0 text-danger" />
+                {t("blockedByErrors")}
+              </p>
+            ) : null}
             <p className="text-muted-foreground">{t("expiresAt", { time: dateTime(b.expires_at) })}</p>
           </div>
           {allowed ? (

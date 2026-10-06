@@ -366,7 +366,7 @@ export function IncidentDetail({ id }: { id: string }) {
             <CardContent className="flex flex-col gap-3 text-sm">
               {r.investigation ? (
                 <>
-                  <FieldList>
+                  <FieldList className="sm:grid-cols-2 lg:grid-cols-1">
                     <FieldItem label={t("minLevel")}>{te(`investigationLevel.${r.investigation.level}`)}</FieldItem>
                     <FieldItem label={tc("owner")}>{r.investigation.lead_investigator ? name(r.investigation.lead_investigator.full_name_en, r.investigation.lead_investigator.full_name_ar) : "—"}</FieldItem>
                     <FieldItem label={t("dueAt")}>

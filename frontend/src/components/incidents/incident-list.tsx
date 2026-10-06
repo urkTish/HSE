@@ -175,7 +175,7 @@ export function IncidentList({ project }: { project: Schemas["ProjectRead"] }) {
                       {r.ref}
                     </Link>
                   </TD>
-                  <TD label={t("list.occurred")}>{dateTime(r.occurred_at)}</TD>
+                  <TD label={t("list.occurred")} className="md:min-w-40">{dateTime(r.occurred_at)}</TD>
                   <TD label={t("list.type")}>
                     <span className="inline-flex flex-wrap gap-1">
                       {r.incident_types.map((x) => (
@@ -185,7 +185,7 @@ export function IncidentList({ project }: { project: Schemas["ProjectRead"] }) {
                       ))}
                     </span>
                   </TD>
-                  <TD label={t("list.title")}>{r.title}</TD>
+                  <TD label={t("list.title")} className="md:min-w-48">{r.title}</TD>
                   <TD label={t("list.site")}>
                     <span className="ltr">
                       {r.site.code}
@@ -198,7 +198,7 @@ export function IncidentList({ project }: { project: Schemas["ProjectRead"] }) {
                       <span className="tabular-nums">
                         {show(r.actual_severity)}/{show(r.potential_severity)}
                       </span>
-                      {r.hipo ? <StatusBadge status="warning" label={t("hipo")} /> : null}
+                      {r.hipo ? <StatusBadge status="hipo" label={t("hipo")} /> : null}
                     </span>
                   </TD>
                   <TD label={t("list.cases")}>

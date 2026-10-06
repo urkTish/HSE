@@ -16,7 +16,7 @@ import { useMeData } from "@/components/shell/me-context";
 import { Link, useRouter } from "@/i18n/navigation";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
 import { hk, useWorkforceReturn } from "@/lib/api/hse";
-import { useDisplay } from "@/lib/digits";
+import { useDisplay, groupDecimal } from "@/lib/digits";
 import { useErrorMessage, useLocalizedName } from "@/lib/i18n-helpers";
 import { can, canWrite } from "@/lib/permissions";
 import { useFormatters } from "@/lib/use-formatters";
@@ -106,7 +106,7 @@ export function WorkforceDetail({ id }: { id: string }) {
                   <YesNo value={r.no_work} yes={tc("yes")} no={tc("no")} />
                 </FieldItem>
                 <FieldItem label={t("fields.headcount")}>{show(r.headcount)}</FieldItem>
-                <FieldItem label={t("fields.man_hours")}>{show(r.man_hours)}</FieldItem>
+                <FieldItem label={t("fields.man_hours")}>{show(groupDecimal(r.man_hours))}</FieldItem>
                 <FieldItem label={t("fields.toolbox_talks")}>{show(r.toolbox_talks)}</FieldItem>
                 <FieldItem label={t("fields.toolbox_attendees")}>{show(r.toolbox_attendees)}</FieldItem>
                 <FieldItem label={t("fields.inductions")}>{show(r.inductions)}</FieldItem>

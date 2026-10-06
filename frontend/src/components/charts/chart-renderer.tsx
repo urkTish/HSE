@@ -15,18 +15,39 @@ type Series = Schemas["ChartSeries"];
 /**
  * Semantic roles map onto fixed series slots so a colour always means the same thing
  * (never cycled). Status colours are not used for series identity.
+ *
+ * Dashboard colour map (same entity → same colour on every chart):
+ *   series-1 blue    injury cases / TRIR / LTI (lagging)
+ *   series-2 orange  unsafe observations, rolling R12 TRIR
+ *   series-3 aqua    overdue corrective actions (C5, C9)
+ *   series-5 magenta heat-related cases
+ *   series-6 green   safe observations
+ *   series-7 violet  rate lines in a lower panel (inspection compliance, R12 LTIFR)
  */
 const ROLE_SLOT: Record<string, string> = {
   target: "var(--muted-foreground)",
   lagging: "var(--series-1)",
-  leading: "var(--series-3)",
+  leading: "var(--series-7)",
   safe: "var(--series-6)",
   unsafe: "var(--series-2)",
 };
 
-export function seriesColor(role: string): string {
+/** Series keys whose backend slot would clash with the colour map above (e.g. aqua = overdue CAs). */
+const KEY_SLOT: Record<string, string> = {
+  r12_ltifr: "var(--series-7)",
+  inspection_compliance: "var(--series-7)",
+};
+
+export function seriesColor(role: string, key?: string): string {
+  if (key && KEY_SLOT[key]) return KEY_SLOT[key];
   if (/^series-[1-8]$/.test(role)) return `var(--${role})`;
   return ROLE_SLOT[role] ?? "var(--series-1)";
+}
+
+/** Axis caption: the unit is appended only when the label does not already contain it. */
+function axisCaption(label: string, unit: string): string {
+  if (!unit || label.includes(unit)) return label;
+  return `${label} (${unit})`;
 }
 
 function num(v: string | null | undefined): number | null {
@@ -97,7 +118,7 @@ export function ChartRenderer({ spec, height = 260, arabicDigits = false, onPoin
 
   const empty = spec.series.every((s) => s.points.every((p) => num(p.value) === null)) && !(spec.table && spec.table.rows.length);
   const title = L(spec.title_en, spec.title_ar);
-  const showLegend = spec.series.length >= 2;
+  const showLegend = spec.series.length >= 2 || spec.bands.length > 0 || spec.reference_lines.length > 0;
   const canChart = spec.kind !== "table" && spec.kind !== "pyramid" && spec.x_axis !== null;
   const horizontal = spec.kind === "horizontal_bar";
 
@@ -105,7 +126,7 @@ export function ChartRenderer({ spec, height = 260, arabicDigits = false, onPoin
     <figure className="flex min-w-0 flex-col gap-2" data-testid={testId ?? `chart-${spec.chart_id}`} data-chart-kind={spec.kind}>
       <div className="flex flex-wrap items-start justify-between gap-2">
         {!hideTitle ? <figcaption className="text-sm font-semibold">{title}</figcaption> : <span />}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 print:hidden">
           {actions}
           {canChart ? (
             <Button
@@ -127,8 +148,14 @@ export function ChartRenderer({ spec, height = 260, arabicDigits = false, onPoin
         <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground" data-testid="chart-legend">
           {spec.series.map((s) => (
             <li key={s.key} className="inline-flex items-center gap-1.5">
-              <span aria-hidden className={cn("inline-block", s.kind === "line" ? "h-0.5 w-4" : "size-2.5 rounded-sm")} style={{ background: seriesColor(s.color_role) }} />
+              <span aria-hidden className={cn("inline-block", s.kind === "line" ? "h-0.5 w-4" : "size-2.5 rounded-sm")} style={{ background: seriesColor(s.color_role, s.key) }} />
               {L(s.label_en, s.label_ar)}
+            </li>
+          ))}
+          {Array.from(new Map(spec.bands.map((b) => [L(b.label_en, b.label_ar), b])).keys()).map((label) => (
+            <li key={`band-${label}`} className="inline-flex items-center gap-1.5">
+              <span aria-hidden className="inline-block h-2.5 w-4 rounded-sm border" style={{ background: "var(--muted)" }} />
+              {label}
             </li>
           ))}
           {spec.reference_lines.map((r, i) => (
@@ -149,8 +176,7 @@ export function ChartRenderer({ spec, height = 260, arabicDigits = false, onPoin
             <div key={axis.id}>
               {panels.length > 1 ? (
                 <p className="mb-1 text-xs font-medium text-muted-foreground">
-                  {L(axis.label_en, axis.label_ar)}
-                  {axis.unit_en ? ` (${L(axis.unit_en, axis.unit_ar ?? "")})` : ""}
+                  {axisCaption(L(axis.label_en, axis.label_ar), axis.unit_en ? L(axis.unit_en, axis.unit_ar ?? "") : "")}
                 </p>
               ) : null}
               <div
@@ -163,7 +189,7 @@ export function ChartRenderer({ spec, height = 260, arabicDigits = false, onPoin
                   <ComposedChart
                     data={rows}
                     layout={horizontal ? "vertical" : "horizontal"}
-                    margin={{ top: 8, right: 8, bottom: 0, left: 0 }}
+                    margin={{ top: 8, right: 12, bottom: 0, left: 12 }}
                     barCategoryGap="20%"
                     accessibilityLayer
                   >
@@ -236,12 +262,6 @@ export function ChartRenderer({ spec, height = 260, arabicDigits = false, onPoin
                               fillOpacity={0.7}
                               stroke="none"
                               ifOverflow="extendDomain"
-                              label={{
-                                value: L(b.label_en, b.label_ar),
-                                position: "insideTop",
-                                fill: "var(--muted-foreground)",
-                                fontSize: 10,
-                              }}
                             />
                           ) : null;
                         })
@@ -260,7 +280,7 @@ export function ChartRenderer({ spec, height = 260, arabicDigits = false, onPoin
                       ))}
                     <Tooltip content={(p) => <ChartTooltip {...p} series={series} ar={ar} digits={digits} />} cursor={{ fill: "var(--accent)", opacity: 0.5 }} />
                     {series.map((s, si) => {
-                      const color = seriesColor(s.color_role);
+                      const color = seriesColor(s.color_role, s.key);
                       const lastInStack = s.stack ? series.filter((x) => x.stack === s.stack).at(-1)?.key === s.key : true;
                       const click = onPointClick ? (d: { payload?: Row }) => d.payload && onPointClick(s.key, String(d.payload.x)) : undefined;
                       if (s.kind === "line")
@@ -330,6 +350,7 @@ export function ChartRenderer({ spec, height = 260, arabicDigits = false, onPoin
           ))}
         </div>
       )}
+      {spec.table && canChart && !asTable && !empty ? <SpecTable table={spec.table} ar={ar} digits={digits} /> : null}
       {spec.notes.length > 0 ? (
         <ul className="text-xs text-muted-foreground">
           {spec.notes.map((n, i) => (
@@ -374,13 +395,46 @@ function ChartTooltip({
         {series.map((s) => (
           <li key={s.key} className="flex items-center justify-between gap-4">
             <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-              <span aria-hidden className="inline-block size-2 rounded-sm" style={{ background: seriesColor(s.color_role) }} />
+              <span aria-hidden className="inline-block size-2 rounded-sm" style={{ background: seriesColor(s.color_role, s.key) }} />
               {ar ? s.label_ar || s.label_en : s.label_en}
             </span>
             <span className="font-medium tabular-nums">{digits(String(row[`${s.key}__d`] ?? "—"))}</span>
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+/** A backend-supplied companion table (e.g. C9 control-level mix) shown under the chart. */
+function SpecTable({ table, ar, digits }: { table: NonNullable<Spec["table"]>; ar: boolean; digits: (s: string) => string }) {
+  return (
+    <div className="overflow-x-auto" data-testid="chart-spec-table">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b text-xs text-muted-foreground">
+            {table.columns.map((c) => (
+              <th key={c.key} className={cn("px-2 py-1.5 font-medium", c.numeric ? "text-end" : "text-start")}>
+                {ar ? c.label_ar || c.label_en : c.label_en}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {table.rows.map((r, i) => (
+            <tr key={i} className="border-b last:border-0">
+              {table.columns.map((c) => {
+                const v = String((r as Record<string, unknown>)[c.key] ?? "—");
+                return (
+                  <td key={c.key} className={cn("px-2 py-1.5", c.numeric && "text-end tabular-nums")}>
+                    {c.numeric ? digits(v) : v}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

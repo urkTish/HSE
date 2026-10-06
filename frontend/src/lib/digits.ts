@@ -34,3 +34,15 @@ export function useArabicDigits(projectId?: string | null): boolean {
   const settings = useProjectSettings(projectId ?? current);
   return settings.data?.digits === "arabic_indic";
 }
+
+/**
+ * Thousands grouping for raw decimal strings from record APIs (e.g. man-hours "870000.00" → "870,000").
+ * Presentation only: no rounding beyond two decimals, which the API already applied. KPI values keep
+ * their backend `display` strings and never go through this.
+ */
+export function groupDecimal(v: string | number | null | undefined): string | null {
+  if (v === null || v === undefined || v === "") return null;
+  const n = Number(v);
+  if (!Number.isFinite(n)) return String(v);
+  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(n);
+}

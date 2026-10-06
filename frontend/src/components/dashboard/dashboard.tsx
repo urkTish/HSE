@@ -14,7 +14,6 @@ import { PageHeader } from "@/components/common/page-header";
 import { ErrorState, LoadingState } from "@/components/common/states";
 import { useMeData } from "@/components/shell/me-context";
 import { api, downloadFile, unwrap, type Schemas } from "@/lib/api/client";
-import { useAiStatus } from "@/lib/api/ai";
 import { useChart, useDashboard, useDashboardPrefs, type KpiQuery } from "@/lib/api/kpi";
 import { useCurrentProject } from "@/lib/current-project";
 import { fromPreferences, toKpiQuery, toPreferences, useDashFilters } from "@/lib/dashboard-filters";
@@ -116,8 +115,6 @@ function DashboardBody({ query, projectId }: { query: KpiQuery; projectId: strin
   const show = useDisplay(projectId);
   const { filters, set } = useDashFilters();
   const d = useDashboard(query);
-  const ai = useAiStatus(projectId, !filters.allProjects);
-  const aiInsights = Boolean(ai.data?.enabled && ai.data.available);
   const canExport = can(me, "export.kpis", projectId);
 
   return (
@@ -131,6 +128,19 @@ function DashboardBody({ query, projectId }: { query: KpiQuery; projectId: strin
         <div className={cn("flex flex-col gap-4 transition-opacity", d.isPlaceholderData && "opacity-60")} aria-busy={d.isFetching}>
           <ContextBar ctx={d.data.context} show={show} projectId={projectId} />
           <Headline h={d.data.headline} show={show} projectId={projectId} periodLabel={locale === "ar" ? d.data.context.period.label_ar : d.data.context.period.label_en} />
+          <section aria-labelledby="needs-h" className="flex flex-col gap-2">
+            <h2 id="needs-h" className="sr-only">
+              {t("needsToday")}
+            </h2>
+            <div className="grid gap-4 lg:grid-cols-2">
+              <Panel title={t("actionPanel")} testId="action-panel-card">
+                <ActionPanel query={query} show={show} />
+              </Panel>
+              <Panel title={t("expiring")} testId="expiring-card">
+                <ExpiringItems projectId={filters.allProjects ? null : projectId} asOf={filters.asOf} show={show} />
+              </Panel>
+            </div>
+          </section>
           <section aria-labelledby="lagging-h">
             <h2 id="lagging-h" className="mb-2 text-sm font-semibold">
               {t("lagging")}
@@ -154,32 +164,18 @@ function DashboardBody({ query, projectId }: { query: KpiQuery; projectId: strin
               ))}
             </div>
           </section>
-          <div className="grid gap-4 lg:grid-cols-3">
-            <Panel title={t("actionPanel")} testId="action-panel-card" className="lg:col-span-2">
-              <ActionPanel query={query} show={show} />
-            </Panel>
-            <Panel title={t("expiring")} testId="expiring-card">
-              <ExpiringItems projectId={filters.allProjects ? null : projectId} asOf={filters.asOf} show={show} />
-            </Panel>
-          </div>
           <Charts query={query} projectId={projectId} show={show} />
+          <Panel title={t("league")} testId="league-card" actions={canExport ? <ExportButton table="contractors" query={query} label={t("exportContractors")} /> : null}>
+            <LeagueTable query={query} show={show} />
+          </Panel>
           <div className="grid gap-4 lg:grid-cols-3">
             <Panel title={t("pyramid")} testId="pyramid-card">
               <SafetyPyramid query={query} show={show} />
             </Panel>
-            <Panel
-              title={t("league")}
-              testId="league-card"
-              className="lg:col-span-2"
-              actions={canExport ? <ExportButton table="contractors" query={query} label={t("exportContractors")} /> : null}
-            >
-              <LeagueTable query={query} show={show} />
+            <Panel title={t("insights")} testId="insights-card" className="lg:col-span-2">
+              <InsightsPanel query={query} enabled={!filters.allProjects} show={show} />
             </Panel>
           </div>
-          <Panel title={t("insights")} testId="insights-card">
-            {!aiInsights && ai.data ? <p className="mb-2 text-xs text-muted-foreground">{t("insightsAiOff")}</p> : null}
-            <InsightsPanel query={query} enabled={!filters.allProjects} show={show} />
-          </Panel>
           {canExport ? (
             <div className="flex flex-wrap gap-2 print:hidden" data-testid="dashboard-export">
               <ExportButton table="metrics" query={query} label={t("exportMetrics")} />
@@ -252,11 +248,13 @@ function Headline({ h, show, projectId, periodLabel }: { h: Schemas["DashboardHe
   const { date } = useFormatters(projectId);
   const l = h.lti_free;
   return (
-    <section aria-label={t("headline")} className="grid gap-3 rounded-xl border bg-surface p-4 shadow-xs sm:grid-cols-2 lg:grid-cols-6" data-testid="headline">
-      <div className="flex flex-col gap-1 lg:col-span-2" data-testid="lti-free">
-        <p className="text-xs font-medium text-muted-foreground">{ar ? l.label_ar : l.label_en}</p>
+    <section aria-label={t("headline")} className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-xl border bg-surface p-4 shadow-xs lg:grid-cols-6" data-testid="headline">
+      <div className="col-span-2 flex flex-col gap-1 border-b pb-3 lg:border-e lg:border-b-0 lg:pe-4 lg:pb-0" data-testid="lti-free">
+        <p className="text-xs font-medium text-muted-foreground">
+          <Bidi text={ar ? l.label_ar : l.label_en} />
+        </p>
         <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-          <DrillNumber metric="K-28" label={t("ltiFree")} className="text-3xl font-semibold text-success">
+          <DrillNumber metric="K-28" label={t("ltiFree")} className="text-4xl font-semibold text-success">
             <span data-testid="lti-free-days">{show(l.days_display)}</span>
             <span className="ms-1 text-sm font-normal text-muted-foreground">{t("days")}</span>
           </DrillNumber>
@@ -267,18 +265,36 @@ function Headline({ h, show, projectId, periodLabel }: { h: Schemas["DashboardHe
         </div>
         <p className="text-xs text-muted-foreground">
           {l.basis === "since_start" ? t("sinceStart") : t("lastLti", { date: date(l.last_lti_date) })}
-          {l.last_lti_incident_ref ? <span className="ltr ms-1">({l.last_lti_incident_ref})</span> : null}
-          {l.longest_run_days > 0 ? <span className="ms-2">· {t("longestRun", { days: show(l.longest_run_days) })}</span> : null}
+          {l.last_lti_incident_ref ? <span className="ltr ms-1 whitespace-nowrap">({l.last_lti_incident_ref})</span> : null}
+          {l.longest_run_days > 0 ? <span className="ms-2 whitespace-nowrap">· {t("longestRun", { days: show(l.longest_run_days) })}</span> : null}
         </p>
       </div>
       <HeadlineValue v={h.man_hours_period} show={show} big caption={periodLabel} />
       <HeadlineValue v={h.man_hours_itd} show={show} caption={t("sinceStart")} />
       <HeadlineValue v={h.average_headcount} show={show} />
-      <div className="flex flex-col gap-3">
-        <HeadlineValue v={h.peak_headcount} show={show} />
-        <HeadlineValue v={h.direct_sub_split} show={show} />
+      <HeadlineValue v={h.peak_headcount} show={show} />
+      <div className="col-span-2 border-t pt-3 lg:col-span-6">
+        <HeadlineValue v={h.direct_sub_split} show={show} inline />
       </div>
     </section>
+  );
+}
+
+/** Isolates Latin codes (e.g. INC-ANIA-EXP-2026-0147) inside Arabic text so they do not reorder. */
+function Bidi({ text }: { text: string }) {
+  const parts = text.split(/([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+)/);
+  return (
+    <>
+      {parts.map((p, i) =>
+        i % 2 === 1 ? (
+          <bdi key={i} className="ltr whitespace-nowrap">
+            {p}
+          </bdi>
+        ) : (
+          p
+        ),
+      )}
+    </>
   );
 }
 

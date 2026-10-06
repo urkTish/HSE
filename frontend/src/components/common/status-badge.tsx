@@ -1,4 +1,4 @@
-import { AlertTriangle, Archive, Ban, CheckCircle2, CircleDashed, Clock, Hourglass, Loader, Lock, PauseCircle, Search, ShieldCheck, XCircle } from "lucide-react";
+import { AlertTriangle, Archive, Ban, CheckCircle2, CircleDashed, Clock, Hourglass, Info, Loader, Lock, PauseCircle, Search, ShieldCheck, XCircle } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
 
@@ -60,6 +60,14 @@ const MAP: Record<string, { tone: Tone; Icon: ComponentType<SVGProps<SVGSVGEleme
   late: { tone: "warning", Icon: Clock },
   pending: { tone: "info", Icon: Hourglass },
   unplanned: { tone: "neutral", Icon: CircleDashed },
+  // Month lock: a locked month is the normal, final state (not a warning).
+  month_open: { tone: "info", Icon: CircleDashed },
+  month_locked: { tone: "neutral", Icon: Lock },
+  // Risk / finding severity: red only for high/critical; low is not an alarm.
+  risk_high: { tone: "danger", Icon: AlertTriangle },
+  risk_medium: { tone: "warning", Icon: AlertTriangle },
+  risk_low: { tone: "neutral", Icon: Info },
+  hipo: { tone: "warning", Icon: AlertTriangle },
 };
 
 /** Status shown with colour + icon + text (never colour alone). */

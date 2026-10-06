@@ -157,7 +157,7 @@ export function CaList({ project }: { project: Schemas["ProjectRead"] }) {
                       {c.ref}
                     </Link>
                   </TD>
-                  <TD label={t("fields.title")}>{c.title}</TD>
+                  <TD label={t("fields.title")} className="md:min-w-48">{c.title}</TD>
                   <TD label={t("fields.source")}>
                     {te(`caSource.${c.source.type}`)}
                     {c.source.ref && c.source.type !== "ai_recommendation" ? <span className="ltr block text-xs text-muted-foreground">{c.source.ref}</span> : null}
@@ -168,7 +168,7 @@ export function CaList({ project }: { project: Schemas["ProjectRead"] }) {
                   <TD label={t("fields.engagement")}>
                     <span className="ltr">{c.responsible_engagement.short_code}</span>
                   </TD>
-                  <TD label={t("fields.due_date")}>
+                  <TD label={t("fields.due_date")} className="md:min-w-40">
                     {date(c.due_date)}
                     {c.overdue && c.days_overdue ? <span className="block text-xs text-destructive">{t("daysOverdue", { days: show(c.days_overdue) })}</span> : null}
                   </TD>

@@ -156,7 +156,7 @@ export function ObservationList({ project }: { project: Schemas["ProjectRead"] }
                   <TD label={t("fields.observed_at")}>{dateTime(o.observed_at)}</TD>
                   <TD label={t("fields.obs_type")}>{te(`observationType.${o.obs_type}`)}</TD>
                   <TD label={t("fields.category")}>{ref.label("observation_category", o.category)}</TD>
-                  <TD label={t("fields.risk_rating")}>{o.risk_rating ? te(`riskRating.${o.risk_rating}`) : "—"}</TD>
+                  <TD label={t("fields.risk_rating")}>{o.risk_rating ? <StatusBadge status={`risk_${o.risk_rating}`} label={te(`riskRating.${o.risk_rating}`)} /> : "—"}</TD>
                   <TD label={t("fields.site")}>
                     <span className="ltr">
                       {o.site.code}
@@ -501,7 +501,7 @@ export function ObservationDetail({ id }: { id: string }) {
                 <CardTitle className="flex flex-wrap items-center gap-2">
                   <span data-testid="observation-title">{te(`observationType.${o.obs_type}`)}</span>
                   <StatusBadge status={o.status} label={te(`observationStatus.${o.status}`)} />
-                  {o.risk_rating ? <StatusBadge status={o.risk_rating === "high" ? "overdue" : o.risk_rating === "medium" ? "warning" : "unplanned"} label={te(`riskRating.${o.risk_rating}`)} /> : null}
+                  {o.risk_rating ? <StatusBadge status={`risk_${o.risk_rating}`} label={te(`riskRating.${o.risk_rating}`)} /> : null}
                 </CardTitle>
               </div>
               <div className="flex flex-wrap gap-2">

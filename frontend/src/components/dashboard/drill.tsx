@@ -17,6 +17,13 @@ import { cn } from "@/lib/utils";
 
 type Metric = Schemas["KpiMetric"];
 
+/** Thousands grouping for raw decimal strings (e.g. "870000.00" → "870,000"); presentation only. */
+function grouped(v: string): string {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return v;
+  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(n);
+}
+
 interface DrillCtx {
   open: (metric: Metric, label?: string, override?: Partial<KpiQuery>) => void;
 }
@@ -88,6 +95,15 @@ function DrillDialog({ metric, label, query, projectId, onClose }: { metric: Met
   const k = kpi.data?.kpi;
   const title = label ?? (k ? (ar ? k.label_ar : k.label_en) : metric);
   const hasDenominator = Boolean(k?.denominator_label_en);
+  // The API names numerator/denominator in English only: Arabic shows the generic term with the English name isolated.
+  const partLabel = (p: "numerator" | "denominator", en: string | null) =>
+    !en ? t(p) : ar ? (
+      <>
+        {t(p)} · <bdi className="ltr text-xs">{en}</bdi>
+      </>
+    ) : (
+      en
+    );
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
@@ -109,12 +125,12 @@ function DrillDialog({ metric, label, query, projectId, onClose }: { metric: Met
               </p>
               {k.numerator !== null ? (
                 <p className="text-sm text-muted-foreground">
-                  {k.numerator_label_en ?? t("numerator")}: <span className="font-medium text-foreground">{show(k.numerator)}</span>
+                  {partLabel("numerator", k.numerator_label_en)}: <span className="font-medium text-foreground tabular-nums">{show(grouped(k.numerator))}</span>
                 </p>
               ) : null}
               {k.denominator !== null ? (
                 <p className="text-sm text-muted-foreground">
-                  {k.denominator_label_en ?? t("denominator")}: <span className="font-medium text-foreground">{show(k.denominator)}</span>
+                  {partLabel("denominator", k.denominator_label_en)}: <span className="font-medium text-foreground tabular-nums">{show(grouped(k.denominator))}</span>
                 </p>
               ) : null}
             </div>
@@ -143,7 +159,7 @@ function DrillDialog({ metric, label, query, projectId, onClose }: { metric: Met
                     }}
                     data-testid={`drill-part-${p}`}
                   >
-                    {p === "numerator" ? (k.numerator_label_en ?? t("numerator")) : (k.denominator_label_en ?? t("denominator"))}
+                    {partLabel(p, p === "numerator" ? k.numerator_label_en : k.denominator_label_en)}
                   </Button>
                 ))}
               </div>
@@ -160,22 +176,23 @@ function DrillDialog({ metric, label, query, projectId, onClose }: { metric: Met
                     const href = apiPathToRoute(r.detail_path);
                     const text = (
                       <>
-                        <span className="font-medium">
-                          {r.ref ? <span className="ltr me-2">{r.ref}</span> : null}
-                          {ar ? r.label_ar : r.label_en}
-                        </span>
+                        {r.ref ? <bdi className="ltr block text-xs font-medium text-muted-foreground">{r.ref}</bdi> : null}
+                        <span className="block font-medium">{ar ? r.label_ar : r.label_en}</span>
                         <span className="block text-xs text-muted-foreground">
-                          {date(r.date)}
-                          {r.site_code ? <span className="ltr"> · {r.site_code}</span> : null}
-                          {r.engagement_code ? <span className="ltr"> · {r.engagement_code}</span> : null}
+                          {[date(r.date), r.site_code, r.engagement_code].filter(Boolean).map((x, i) => (
+                            <span key={i}>
+                              {i > 0 ? " · " : null}
+                              <bdi>{x}</bdi>
+                            </span>
+                          ))}
                         </span>
                       </>
                     );
                     return (
                       <li key={`${r.entity_type}-${r.id}`} className="p-2 text-sm" data-testid="drill-source">
                         {href ? (
-                          <Link href={href} className="flex items-start justify-between gap-2 hover:underline" onClick={onClose}>
-                            <span>{text}</span>
+                          <Link href={href} className="-m-2 flex min-h-touch items-start justify-between gap-2 rounded-sm p-2 hover:bg-accent/60" onClick={onClose}>
+                            <span className="min-w-0">{text}</span>
                             <ExternalLink aria-hidden className="mt-0.5 size-4 shrink-0 text-muted-foreground rtl:-scale-x-100" />
                           </Link>
                         ) : (

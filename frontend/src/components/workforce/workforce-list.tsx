@@ -22,7 +22,7 @@ import { useMeData } from "@/components/shell/me-context";
 import { Link } from "@/i18n/navigation";
 import { api, ApiError, unwrap, type Schemas } from "@/lib/api/client";
 import { useWorkforceReturns } from "@/lib/api/hse";
-import { useDisplay } from "@/lib/digits";
+import { useDisplay, groupDecimal } from "@/lib/digits";
 import { SHIFTS, WORKFORCE_STATUSES } from "@/lib/enums";
 import { useErrorMessage } from "@/lib/i18n-helpers";
 import { can, canWrite } from "@/lib/permissions";
@@ -212,7 +212,7 @@ export function WorkforceList({ project }: { project: Schemas["ProjectRead"] }) 
                     {show(r.headcount)}
                   </TD>
                   <TD label={t("fields.man_hours")} className="text-end tabular-nums">
-                    {show(r.man_hours)}
+                    {show(groupDecimal(r.man_hours))}
                   </TD>
                   <TD label={t("fields.source")}>{te(`workforceSource.${r.source}`)}</TD>
                   <TD label={t("fields.status")}>

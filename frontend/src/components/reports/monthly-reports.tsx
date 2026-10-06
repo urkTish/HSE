@@ -1,8 +1,8 @@
 "use client";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FilePlus2, Loader2, Pencil, Printer } from "lucide-react";
+import { FilePlus2, Loader2, Pencil, Printer, ShieldCheck } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
@@ -24,9 +24,11 @@ import { useMeData } from "@/components/shell/me-context";
 import { Link, useRouter } from "@/i18n/navigation";
 import { aiKeys, useAiStatus } from "@/lib/api/ai";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
+import { useCurrentProject } from "@/lib/current-project";
 import { useArabicDigits, useDisplay } from "@/lib/digits";
 import { can, canWrite } from "@/lib/permissions";
 import { useFormatters } from "@/lib/use-formatters";
+import { cn } from "@/lib/utils";
 import { useSearchState } from "@/lib/url-state";
 
 type Report = Schemas["MonthlyReportRead"];
@@ -243,6 +245,8 @@ export function ReportDetail({ id }: { id: string }) {
       <div className="print:hidden">
         <Breadcrumbs items={[{ label: tn("reports"), href: "/reports" }, { label: monthLabel(locale, r.month) }]} />
       </div>
+      <PrintHeader report={r} />
+      <div className="print:hidden">
       <PageHeader
         title={t("reportTitle", {
           project: r.project_code,
@@ -285,6 +289,7 @@ export function ReportDetail({ id }: { id: string }) {
           </div>
         }
       />
+      </div>
       {r.status === "generating" ? (
         <Alert tone="info" data-testid="report-generating">
           <span className="flex items-center gap-2">
@@ -306,12 +311,13 @@ export function ReportDetail({ id }: { id: string }) {
       {editing ? (
         <NarrativeEditor report={r} onDone={() => setEditing(false)} />
       ) : (
-        <div className="flex flex-col gap-4 print:gap-2" lang={lang} dir={lang === "ar" ? "rtl" : "ltr"} data-testid="report-sections">
+        <div className="flex flex-col gap-4 print:gap-3" lang={lang} dir={lang === "ar" ? "rtl" : "ltr"} data-testid="report-sections">
           {sections.map((s) => (
             <ReportSection key={s.section} s={s} lang={lang} projectId={pid} />
           ))}
         </div>
       )}
+      <PrintFooter report={r} />
       {transition ? (
         <TransitionDialog
           report={r}
@@ -335,13 +341,13 @@ function ReportSection({ s, lang, projectId }: { s: Schemas["ReportSectionRead"]
   const t = useTranslations("reports");
   const narrative = lang === "ar" ? s.narrative_ar : s.narrative_en;
   return (
-    <Card className="break-inside-avoid print:border-0 print:shadow-none" data-testid="report-section" data-section={s.section}>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base">
+    <Card className="report-section print:rounded-none print:border-0 print:bg-transparent print:shadow-none" data-testid="report-section" data-section={s.section}>
+      <CardHeader className="pb-2 print:border-b print:px-0 print:pt-0">
+        <CardTitle className="text-base break-after-avoid print:text-[12pt]">
           {s.order}. {lang === "ar" ? s.title_ar : s.title_en}
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col gap-3">
+      <CardContent className="flex flex-col gap-3 print:px-0 print:pt-2">
         {narrative ? (
           <div className="text-sm leading-relaxed [&_li]:ms-4 [&_ol]:list-decimal [&_p]:mb-2 [&_ul]:list-disc" data-testid="report-narrative">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{digits ? show(narrative) : narrative}</ReactMarkdown>
@@ -353,7 +359,7 @@ function ReportSection({ s, lang, projectId }: { s: Schemas["ReportSectionRead"]
               <thead>
                 <tr>
                   {tb.columns.map((c) => (
-                    <th key={c.key} className="border-b bg-muted p-1.5 text-start font-semibold">
+                    <th key={c.key} className={cn("border-b border-input bg-muted p-1.5 font-semibold", c.numeric ? "text-end" : "text-start")}>
                       {lang === "ar" ? c.label_ar : c.label_en}
                     </th>
                   ))}
@@ -363,7 +369,7 @@ function ReportSection({ s, lang, projectId }: { s: Schemas["ReportSectionRead"]
                 {tb.rows.map((row, j) => (
                   <tr key={j} className="border-b">
                     {tb.columns.map((c) => (
-                      <td key={c.key} className="p-1.5 tabular-nums">
+                      <td key={c.key} className={cn("p-1.5 tabular-nums", c.numeric ? "text-end" : "text-start")}>
                         {show(String((row as Record<string, unknown>)[c.key] ?? ""))}
                       </td>
                     ))}
@@ -530,4 +536,97 @@ function TransitionDialog({ report, to, onClose, onDone }: { report: Report; to:
       </DialogContent>
     </Dialog>
   );
+}
+
+/** "EN|AR" message → both halves (the print view shows both languages side by side). */
+function useBilingual() {
+  const t = useTranslations("reports.printDoc");
+  return (key: Parameters<typeof t>[0]) => {
+    const [en = "", ar = ""] = t(key).split("|");
+    return { en, ar };
+  };
+}
+
+/** Print-only cover block: bilingual (EN | AR) whatever the on-screen language, for client and authority submission. */
+function PrintHeader({ report: r }: { report: Report }) {
+  const bi = useBilingual();
+  const { projects } = useCurrentProject();
+  const p = projects.find((x) => x.id === r.project_id);
+  const { dateTime } = useFormatters(r.project_id);
+  const title = bi("title");
+  const rows: { k: ReturnType<typeof bi>; en: string; ar: string; ltr?: boolean }[] = [
+    { k: bi("project"), en: p ? `${r.project_code} — ${p.name_en}` : r.project_code, ar: p ? `${r.project_code} — ${p.name_ar || p.name_en}` : r.project_code },
+    { k: bi("month"), en: monthLabel("en", r.month), ar: monthLabel("ar", r.month) },
+    { k: bi("status"), en: r.status_label_en, ar: r.status_label_ar },
+  ];
+  // One date cell spanning both language columns (formatted in the UI language and project date settings).
+  if (r.published_at) rows.push({ k: bi("published"), en: dateTime(r.published_at), ar: "", ltr: true });
+  else if (r.generated_at) rows.push({ k: bi("generated"), en: dateTime(r.generated_at), ar: "", ltr: true });
+  return (
+    <header dir="ltr" className="mb-4 hidden border-b-2 border-foreground pb-3 print:block" data-testid="report-print-header">
+      <div className="flex items-center justify-between gap-4">
+        <div dir="ltr" lang="en" className="flex items-center gap-2">
+          <span aria-hidden className="flex size-9 items-center justify-center rounded-md bg-primary text-primary-foreground">
+            <ShieldCheck className="size-5" />
+          </span>
+          <div>
+            <p className="text-[9pt] tracking-wide text-muted-foreground uppercase">{r.project_code}</p>
+            <p className="text-[15pt] leading-tight font-semibold">{title.en}</p>
+          </div>
+        </div>
+        <p dir="rtl" lang="ar" className="text-[15pt] leading-tight font-semibold">
+          {title.ar}
+        </p>
+      </div>
+      <table dir="ltr" className="mt-3 w-full text-[9.5pt]">
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.k.en} className="border-t">
+              <th scope="row" className="w-[17%] py-1 pe-2 text-start font-medium text-muted-foreground">
+                {row.k.en}
+              </th>
+              {row.ltr ? (
+                <td colSpan={2} className="py-1 text-center">
+                  <bdi>{row.en}</bdi>
+                </td>
+              ) : (
+                <>
+                  <td className="w-[33%] py-1 pe-3">{row.en}</td>
+                  <td dir="rtl" lang="ar" className="w-[33%] py-1 ps-3 text-start">
+                    {row.ar}
+                  </td>
+                </>
+              )}
+              <th scope="row" dir="rtl" lang="ar" className="w-[17%] py-1 ps-2 text-start font-medium text-muted-foreground">
+                {row.k.ar}
+              </th>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </header>
+  );
+}
+
+/**
+ * Footer on every printed page: confidentiality line (EN | AR) and the frozen figures hash. Chrome has no
+ * running elements, so the text is handed to the `@page` margin boxes through custom properties on <html>
+ * (see globals.css); nothing renders on screen.
+ */
+function PrintFooter({ report: r }: { report: Report }) {
+  const bi = useBilingual();
+  const conf = bi("confidential");
+  const hash = bi("hash");
+  const start = r.data_hash ? `${conf.en} · ${hash.en} ${r.data_hash.slice(0, 12)}` : conf.en;
+  const end = conf.ar;
+  useEffect(() => {
+    const root = document.documentElement.style;
+    root.setProperty("--print-footer-start", JSON.stringify(start));
+    root.setProperty("--print-footer-end", JSON.stringify(end));
+    return () => {
+      root.removeProperty("--print-footer-start");
+      root.removeProperty("--print-footer-end");
+    };
+  }, [start, end]);
+  return null;
 }

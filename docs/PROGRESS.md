@@ -3,10 +3,11 @@
 ## Current
 - Phase: 1 — Dashboard (with AI)
 - Module: dashboard & core data (spec `docs/specs/1-dashboard.md` v1.0)
-- Step: Backend stage 2 implemented on contract v0.2.0 (no contract changes); frontend e2e green against the seeded backend. Next: phase demo and HSE Manager review of the open questions
+- Step: Backend stage 2 implemented on contract v0.2.0 (no contract changes); frontend e2e green against the seeded backend. Design pass: done (Phase 1). Next: phase demo and HSE Manager review of the open questions
 
 ## Phase log
 - Phase 0 — Foundation: built, e2e green, design pass done (2026-10-05). The user asked to continue phase after phase without per-phase approval; open questions are collected below for a single review.
+- Phase 1 — Dashboard (with AI): built, e2e green, design pass done (2026-10-06).
 
 ## Done
 
@@ -62,6 +63,15 @@
 - i18n: all new strings in EN and AR (`scripts/i18n/p1-*.py` → `npm run i18n:check`); RTL verified on the dashboard, AI panel and forms; mobile layout checked at 390 px (no horizontal page scroll).
 - E2E (Playwright, real backend): full suite 71 passed, 2 skipped (screenshot specs, on demand) on a fresh migrated + seeded DB — 35 Phase 0 + 36 Phase 1 tests in `e2e/p1-*.spec.ts` — dashboard (AC55, 59, 60, 61, 62, 63, 64, filters in URL, drill-down, charts, mobile), AI (AC65, 72, 73, 74, 75, insufficient data, errors, Arabic) via a recorded SSE stream in `e2e/fixtures/ai-stream.ts` (typed against the contract, replayed with `page.route`; test-only), workforce/import (AC2, 3, 4, 7, 10), incidents/PDPL (AC13, 19, 20, 21, 29, 30, 31, 33), CAs (AC40, 41, 42, 43), observations (AC35) and create flows for observations, inspections, meetings, settings, reports. Phase 0 specs unchanged except a wait in AC12 (options load asynchronously).
 - Screenshots: `docs/screenshots/phase-1/` (run `SCREENSHOTS=1 npx playwright test e2e/screenshots-p1.spec.ts`).
+
+### Design pass — Phase 1 (UI/UX Designer)
+- Design pass: done (Phase 1). Findings, ranking and the Phase 1 design-system additions: `docs/design/phase-1-findings.md`; before/after screenshots: `docs/screenshots/phase-1/design/`.
+- Dashboard now answers "are we safe, and what needs me today?" above the fold: compact period bar (scope filters behind "More filters"), headline band, then "Needs attention" and "Due soon" side by side, then tiles, charts, league table, pyramid and insights.
+- Safety pyramid rebuilt (real centred bars, one-hue ordinal ramp, counts in text colour); dashboard series colour map (same entity, same colour; aqua = overdue CAs only); C9 control-level table shown; axis units no longer doubled; RTL plot margins; heat-season band in the legend; tile units no longer doubled; worse deltas amber instead of red.
+- Due soon, insights, league table, drill-down dialog (grouping, AR labels, bidi), AI label chip, import page (picker, counts, empty text), month lock (locked = neutral), risk/finding badges, investigation sidebar.
+- Monthly report print view: bilingual EN/AR header, footer with confidentiality line and figures hash, A4 page numbers, light colours in print.
+- Shared: codes in tables no longer break at hyphens; `ListToolbar` folds filters after the 4th on desktop (opens by itself when the URL has filters); styled file inputs; new status badge keys.
+- No business logic, API calls, permissions, KPI values or data shown changed. New strings in `scripts/i18n/p1-design.py`.
 
 ### Backend — Phase 0 Foundation (contract v0.1.0)
 - Schema + Alembic migration `0001` (audit log append-only trigger, `hse_audit_purge()` SECURITY DEFINER purge path, grants for an optional `hse_app` role).
@@ -127,6 +137,7 @@
 - (Frontend, medium) `ChartSeries.metric` (KpiMetric | null) and, for period axes, `ChartCategory.start`/`end`: lets a click on a bar/point drill into the exact records. Today the UI drills only when a series key happens to be a metric id (e.g. `K-21`) and derives the month from the category key.
 - (Frontend, low) `metric` on each pyramid layer (and one metric for RWC+JTC, e.g. a K-07/K-08 combined drill): the UI maps layers to K-05/06/07/09/12/13/30 itself; RWC_JTC drills K-07 only.
 - (Frontend, low) A capability for HSE meetings (none in §5.10): the UI gates meeting edits on `inspection.plan_manage` as an assumption.
+- (Design, low) Arabic labels the UI cannot show today: `ChartCitation.period_label_ar` / `scope_label_ar` / `base_label_ar`, `KpiValue.numerator_label_ar` / `denominator_label_ar`, and AR text in the C9 control-level table rows (the drill dialog falls back to the generic Arabic term plus the English name).
 - (Frontend, low priority, not blocking) `GET /contractors/{id}/engagements` (engagements of one contractor across the caller's projects) so the contractor detail page can list where a firm is engaged. Today that view would need one request per project.
 
 ## Design proposals
@@ -136,4 +147,10 @@ L items from the Phase 0 design pass, waiting for the user's decision at the pha
 - **P3. Searchable project switcher.** Replace the native select with a combobox: search by code or name, recent projects first, project status shown. This matters once there are more than about 10 projects.
 - **P4. Date settings in cross-project lists** (frontend note). Today the projects, contractors and users lists use the *current* project's Hijri/digit settings. Recommendation: keep one consistent format per list (the current project's, as now), and say so in the list footer ("Dates shown in ANIA-EXP display settings"). Mixing formats row by row is harder to scan. Needs the user's call.
 - **P5. Collapsible desktop sidebar (icon rail).** Gives about 190 px back to wide tables (audit log, Phase 1 registers) at 1366 px.
-- **P6. Print/export styles** for the Phase 1 monthly report and the Phase 3 permits: project logo, bilingual header, page footer with audit hash. Belongs with those phases; noted so the token set (series and safety colours) is reused there.
+- **P6. Print/export styles** for the Phase 1 monthly report and the Phase 3 permits: project logo, bilingual header, page footer with audit hash. Belongs with those phases; noted so the token set (series and safety colours) is reused there. *Phase 1: done for the monthly report (bilingual header, footer with figures hash, page numbers); the logo is P9.*
+
+L items from the Phase 1 design pass (details in `docs/design/phase-1-findings.md`):
+- **P1 (raised priority).** Two-line dates are now the main cause of tall rows in every Phase 1 register (incidents, CAs, meetings, month lock, due soon): "29 Sept 2026 14:40 · 18 Rabiʻ II 1448 AH" wraps to 3–4 lines. Recommended before go-live.
+- **P7. Default sort and saved views for registers.** The CA list and incident register open on the oldest records (closed 2025 actions first). Proposal: open/overdue first by due date by default, plus one-click views ("My actions", "Overdue", "Awaiting my verification"). Changes the list query (sort parameter), so it needs approval.
+- **P8. KPI tile tiers.** 27 tiles have equal weight. Proposal: a first row of 6 headline KPIs chosen in HSE settings (e.g. LTI, TRIR, HiPo, overdue CAs, inspection compliance, safe %), a "moved most vs previous period" strip, and the rest folded under "All indicators".
+- **P9. Project logo** on the monthly report (and later permits): needs a logo upload on the project (contract change). The print header uses the platform mark until then.

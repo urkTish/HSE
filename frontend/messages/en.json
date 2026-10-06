@@ -1393,7 +1393,8 @@
     "uploadedBy": "Uploaded by",
     "fileName": "File",
     "viewRows": "View imported rows",
-    "noIssues": "No errors or warnings."
+    "noIssues": "No errors or warnings.",
+    "noImports": "No imports yet."
   },
   "incidents": {
     "title": "Incident register",
@@ -1951,7 +1952,7 @@
     "actionPanel": "Needs attention",
     "allClear": "Nothing needs attention.",
     "expiring": "Due soon",
-    "daysLeft": "{days} days left",
+    "daysLeft": "{n, plural, one {{days} day left} other {{days} days left}}",
     "dueToday": "Due today",
     "daysOverdue": "{days} days overdue",
     "insights": "Insights",
@@ -1971,7 +1972,11 @@
     "noProject": "Choose a project in the top bar to see its dashboard.",
     "days": "days",
     "hours": "man-hours",
-    "exportComparisons": "Comparisons (CSV)"
+    "exportComparisons": "Comparisons (CSV)",
+    "showAll": "Show all ({count})",
+    "showLess": "Show fewer",
+    "refreshInsights": "Refresh insights",
+    "needsToday": "What needs you today"
   },
   "ai": {
     "open": "Ask about your HSE data",
@@ -2014,7 +2019,6 @@
     "markReviewed": "Mark reviewed",
     "publish": "Publish",
     "returnToDraft": "Return to draft",
-    "print": "Print",
     "generating": "Drafting the report… this page updates by itself.",
     "failed": "The draft could not be produced.",
     "revisedBanner": "Figures revised since publication. This report shows the numbers as published.",
@@ -2024,6 +2028,17 @@
     "returnHint": "Say what needs changing.",
     "reviewHint": "Confirm you have checked the narrative against the tables.",
     "comment": "Comment",
-    "commentOptional": "Comment (optional)"
+    "commentOptional": "Comment (optional)",
+    "print": "Print",
+    "printDoc": {
+      "title": "Monthly HSE report|التقرير الشهري للصحة والسلامة والبيئة",
+      "project": "Project|المشروع",
+      "month": "Reporting month|شهر التقرير",
+      "status": "Status|الحالة",
+      "generated": "Drafted|تاريخ الإعداد",
+      "published": "Published|تاريخ النشر",
+      "hash": "Figures hash|بصمة الأرقام",
+      "confidential": "Confidential: for client and authority submission|سري: للتقديم إلى العميل والجهات المختصة"
+    }
   }
 }

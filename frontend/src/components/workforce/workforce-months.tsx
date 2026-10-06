@@ -19,7 +19,7 @@ import { StatusBadge } from "@/components/common/status-badge";
 import { useMeData } from "@/components/shell/me-context";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
 import { useWorkforceMonths } from "@/lib/api/hse";
-import { useDisplay } from "@/lib/digits";
+import { useDisplay, groupDecimal } from "@/lib/digits";
 import { todayInZone } from "@/lib/datetime";
 import { useLocalizedName } from "@/lib/i18n-helpers";
 import { canWrite } from "@/lib/permissions";
@@ -123,12 +123,12 @@ export function WorkforceMonths({ project }: { project: Schemas["ProjectRead"] }
                 </TD>
                 <TD label={t("monthCols.status")}>
                   <span className="inline-flex flex-wrap gap-1">
-                    <StatusBadge status={m.status === "locked" ? "locked" : "active"} label={te(`monthLock.${m.status}`)} />
+                    <StatusBadge status={m.status === "locked" ? "month_locked" : "month_open"} label={te(`monthLock.${m.status}`)} />
                     {m.restated ? <Badge tone="warning">{t("restatedBadge")}</Badge> : null}
                   </span>
                 </TD>
                 <TD label={t("monthCols.manHours")} className="text-end tabular-nums">
-                  {show(m.man_hours)}
+                  {show(groupDecimal(m.man_hours))}
                 </TD>
                 <TD label={t("monthCols.rows")}>
                   <span className="text-xs">

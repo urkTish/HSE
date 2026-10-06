@@ -16,7 +16,6 @@ import { ApiError, type Schemas } from "@/lib/api/client";
 import { useArabicDigits, useDisplay } from "@/lib/digits";
 import { useErrorMessage } from "@/lib/i18n-helpers";
 import { toQueryString } from "@/lib/url-state";
-import { cn } from "@/lib/utils";
 
 interface Turn {
   id: number;
@@ -354,6 +353,12 @@ function TurnView({ turn, projectId, show }: { turn: Turn; projectId: string; sh
           {t("thinking")}
         </p>
       ) : null}
+      {a ? (
+        <p className="inline-flex items-center gap-1.5 self-start rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground" data-testid="ai-label" data-grounding={a.grounding}>
+          <Sparkles aria-hidden className="size-3" />
+          {ar ? a.ai_label_ar : a.ai_label_en} · <span className="ltr">{a.model}</span>
+        </p>
+      ) : null}
       {turn.text ? (
         <div
           className="prose-sm max-w-none rounded-lg border bg-background p-3 text-sm [&_li]:ms-4 [&_ol]:list-decimal [&_p]:mb-2 [&_table]:w-full [&_td]:border [&_td]:px-1 [&_th]:border [&_th]:px-1 [&_ul]:list-disc"
@@ -443,11 +448,6 @@ function TurnView({ turn, projectId, show }: { turn: Turn; projectId: string; sh
             </div>
           ))}
         </div>
-      ) : null}
-      {a ? (
-        <p className={cn("text-[11px] text-muted-foreground")} data-testid="ai-label" data-grounding={a.grounding}>
-          {ar ? a.ai_label_ar : a.ai_label_en} · {a.model}
-        </p>
       ) : null}
       {turn.error ? (
         <Alert tone={turn.error.code === "AI_RATE_LIMITED" || turn.error.code === "ABORTED" ? "warning" : "danger"} data-testid="ai-error" data-code={turn.error.code}>

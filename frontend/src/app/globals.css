@@ -175,3 +175,104 @@
     min-height: var(--touch-target);
   }
 }
+
+/*
+ * Print (monthly report and later permits): A4, always light tokens, page numbers in the margin,
+ * a bilingual footer repeated on every page, sections that do not split their title from the body.
+ */
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm 14mm 20mm;
+    @bottom-center {
+      content: counter(page) " / " counter(pages);
+      font-size: 8pt;
+      color: #475569;
+    }
+    @bottom-left {
+      content: var(--print-footer-start, "");
+      font-size: 7.5pt;
+      color: #475569;
+    }
+    @bottom-right {
+      content: var(--print-footer-end, "");
+      font-size: 7.5pt;
+      color: #475569;
+      direction: rtl;
+    }
+  }
+  :root,
+  :root[data-theme] {
+    color-scheme: light;
+    --background: #ffffff;
+    --foreground: #0f1b2d;
+    --surface: #ffffff;
+    --muted: #eef1f5;
+    --muted-foreground: #475569;
+    --border: #d6dce5;
+    --input: #7d8899;
+    --primary: #1d4f91;
+    --primary-foreground: #ffffff;
+    --series-1: #2a78d6;
+    --series-2: #eb6834;
+    --series-3: #1baf7a;
+    --series-4: #eda100;
+    --series-5: #e87ba4;
+    --series-6: #008300;
+    --series-7: #4a3aa7;
+    --series-8: #e34948;
+    --chart-grid: #e1e4ea;
+    --chart-axis: #b8c0cc;
+    --status-success: #166534;
+    --status-warning: #8a4600;
+    --status-danger: #b42318;
+    --status-info: #1d4f91;
+  }
+  html,
+  body {
+    background: #ffffff !important;
+    font-size: 10.5pt;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  main {
+    padding: 0 !important;
+    max-width: none !important;
+  }
+  thead {
+    display: table-header-group;
+  }
+  tr,
+  figure,
+  .recharts-wrapper {
+    break-inside: avoid;
+  }
+  .report-section {
+    break-inside: auto;
+  }
+  /* Charts were sized for the screen; let them shrink to the paper width (the SVG keeps its viewBox). */
+  .recharts-responsive-container,
+  .recharts-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+  }
+  svg.recharts-surface {
+    max-width: 100%;
+    height: auto;
+  }
+  .report-section > :first-child {
+    break-after: avoid;
+  }
+}
+
+/* Codes in tables (INC-ANIA-EXP-2026-0292, S-LAND, E08) never break at their hyphens. On phones the
+   row is a stacked card, so only the record ref link keeps nowrap there. */
+table a.ltr {
+  white-space: nowrap;
+}
+@media (min-width: 768px) {
+  table .ltr {
+    white-space: nowrap;
+  }
+}

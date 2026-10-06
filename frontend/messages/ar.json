@@ -1393,7 +1393,8 @@
     "uploadedBy": "رفعه",
     "fileName": "الملف",
     "viewRows": "عرض الصفوف المستوردة",
-    "noIssues": "لا توجد أخطاء أو تنبيهات."
+    "noIssues": "لا توجد أخطاء أو تنبيهات.",
+    "noImports": "لا توجد عمليات استيراد بعد."
   },
   "incidents": {
     "title": "سجل الحوادث",
@@ -1971,7 +1972,11 @@
     "noProject": "اختر مشروعاً من الشريط العلوي لعرض لوحته.",
     "days": "يوماً",
     "hours": "ساعة عمل",
-    "exportComparisons": "المقارنات (CSV)"
+    "exportComparisons": "المقارنات (CSV)",
+    "showAll": "عرض الكل ({count})",
+    "showLess": "عرض أقل",
+    "refreshInsights": "تحديث الرؤى",
+    "needsToday": "ما يتطلب متابعتك اليوم"
   },
   "ai": {
     "open": "اسأل عن بيانات السلامة",
@@ -2014,7 +2019,6 @@
     "markReviewed": "تحديد كمراجَع",
     "publish": "نشر",
     "returnToDraft": "إعادة إلى المسودة",
-    "print": "طباعة",
     "generating": "جارٍ إعداد التقرير… تتحدث هذه الصفحة تلقائياً.",
     "failed": "تعذر إعداد المسودة.",
     "revisedBanner": "عُدّلت الأرقام منذ النشر. يعرض هذا التقرير الأرقام كما نُشرت.",
@@ -2024,6 +2028,17 @@
     "returnHint": "اذكر ما يحتاج إلى تعديل.",
     "reviewHint": "أكّد أنك راجعت النص مقابل الجداول.",
     "comment": "تعليق",
-    "commentOptional": "تعليق (اختياري)"
+    "commentOptional": "تعليق (اختياري)",
+    "print": "طباعة",
+    "printDoc": {
+      "title": "Monthly HSE report|التقرير الشهري للصحة والسلامة والبيئة",
+      "project": "Project|المشروع",
+      "month": "Reporting month|شهر التقرير",
+      "status": "Status|الحالة",
+      "generated": "Drafted|تاريخ الإعداد",
+      "published": "Published|تاريخ النشر",
+      "hash": "Figures hash|بصمة الأرقام",
+      "confidential": "Confidential: for client and authority submission|سري: للتقديم إلى العميل والجهات المختصة"
+    }
   }
 }

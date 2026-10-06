@@ -20,7 +20,8 @@ export function Comparison({ c, show }: { c: Schemas["KpiComparison"]; show: (v:
   const te = useTranslations("enums");
   const ar = useLocale() === "ar";
   const Icon = c.abs_delta === null || c.direction === "n/a" ? Minus : Number(c.abs_delta) > 0 ? ArrowUpRight : Number(c.abs_delta) < 0 ? ArrowDownRight : Minus;
-  const tone = c.direction === "better" ? "text-success" : c.direction === "worse" ? "text-danger" : "text-muted-foreground";
+  // A worse delta is "at risk" (amber), not critical: red is kept for genuinely critical states (alarm fatigue).
+  const tone = c.direction === "better" ? "text-success" : c.direction === "worse" ? "text-warning" : "text-muted-foreground";
   return (
     <p className="flex flex-wrap items-center gap-1 text-xs" data-testid="tile-comparison" data-direction={c.direction}>
       <span className={cn("inline-flex items-center gap-0.5 font-medium", tone)}>
@@ -95,6 +96,13 @@ export function Sparkline({ points, show, label }: { points: Schemas["SparkPoint
   );
 }
 
+/** The unit is shown after the value unless the backend `display` already carries it (e.g. "70.0 %"). */
+function showUnit(tile: Tile): boolean {
+  const u = tile.unit_en?.trim();
+  if (!u || tile.kind === "count") return false;
+  return !tile.display.trim().endsWith(u);
+}
+
 export function KpiTile({ tile, show }: { tile: Tile; show: (v: string) => string }) {
   const t = useTranslations("dashboard");
   const te = useTranslations("enums");
@@ -117,7 +125,7 @@ export function KpiTile({ tile, show }: { tile: Tile; show: (v: string) => strin
       </div>
       <DrillNumber metric={tile.metric} label={full} className="text-2xl leading-tight font-semibold">
         <span data-testid="tile-value">{show(tile.display)}</span>
-        {tile.unit_en && tile.kind !== "count" ? <span className="ms-1 text-xs font-normal text-muted-foreground">{ar ? tile.unit_ar : tile.unit_en}</span> : null}
+        {showUnit(tile) ? <span className="ms-1 text-xs font-normal text-muted-foreground">{ar ? tile.unit_ar : tile.unit_en}</span> : null}
       </DrillNumber>
       {cmp ? <Comparison c={cmp} show={show} /> : null}
       {tile.components.length > 0 ? (
@@ -140,17 +148,17 @@ export function KpiTile({ tile, show }: { tile: Tile; show: (v: string) => strin
   );
 }
 
-/** Headline figure (K-01..K-04, K-28/29): no sparkline, comparison when present. */
-export function HeadlineValue({ v, show, big, caption }: { v: Value; show: (v: string) => string; big?: boolean; caption?: string }) {
+/** Headline figure (K-01..K-04, K-28/29): no sparkline, comparison when present. `inline` lays it out as one row. */
+export function HeadlineValue({ v, show, big, caption, inline }: { v: Value; show: (v: string) => string; big?: boolean; caption?: string; inline?: boolean }) {
   const ar = useLocale() === "ar";
   const label = ar ? v.label_ar : v.label_en;
   return (
-    <div className="flex min-w-0 flex-col gap-1" data-testid="headline-value" data-metric={v.metric}>
+    <div className={cn("flex min-w-0", inline ? "flex-row flex-wrap items-baseline gap-x-4 gap-y-1" : "flex-col gap-1")} data-testid="headline-value" data-metric={v.metric}>
       <p className="text-xs font-medium text-muted-foreground">
         {ar ? v.short_label_ar || label : v.short_label_en || label}
         {caption ? <span className="font-normal"> · {caption}</span> : null}
       </p>
-      <DrillNumber metric={v.metric} label={label} className={cn("font-semibold leading-tight", big ? "text-3xl" : "text-xl")}>
+      <DrillNumber metric={v.metric} label={label} className={cn("leading-tight font-semibold", big ? "text-3xl" : "text-xl")}>
         {show(v.display)}
       </DrillNumber>
       {v.components.length > 0 ? (
