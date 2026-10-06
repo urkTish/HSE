@@ -87,7 +87,7 @@ def _user_dict(u: User) -> dict[str, Any]:
     return {f: getattr(u, f) for f in PUBLIC_FIELDS}
 
 
-# ---- visibility ------------------------------------------------------------------------
+# ---- visibility ----------------------------------------------------------------------------------
 def _engagement_contractors(db: Session, ids: frozenset[uuid.UUID]) -> set[uuid.UUID]:
     if not ids:
         return set()
@@ -242,7 +242,7 @@ def list_users(
     return [user_read(db, p, u) for u in items], total
 
 
-# ---- assignment validation -------------------------------------------------------------
+# ---- assignment validation -----------------------------------------------------------------------
 def _role_not_assignable(role: Role) -> ApiError:
     return ApiError(
         403,
@@ -380,7 +380,7 @@ def _create_assignment(
     return a
 
 
-# ---- last HSE manager (rule 13) --------------------------------------------------------
+# ---- last HSE manager (rule 13) ------------------------------------------------------------------
 def _active_manager_ids(db: Session, day: date) -> set[uuid.UUID]:
     rows = db.scalars(
         select(RoleAssignment)
@@ -421,7 +421,7 @@ def _ensure_not_last_manager(
     )
 
 
-# ---- invite / update / transitions -----------------------------------------------------
+# ---- invite / update / transitions ---------------------------------------------------------------
 def invite(db: Session, p: Principal, body: UserInvite) -> User:
     p.require_any(Capability.user_invite)
     for ra in body.role_assignments:

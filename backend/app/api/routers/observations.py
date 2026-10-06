@@ -7,7 +7,7 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, Query, status
 
 from app.api.deps import DB, CurrentUser, PageParams
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.core.hse_enums import ObservationCategory, ObservationStatus, ObservationType, RiskRating
 from app.schemas.observations import (
     ObservationCloseRequest,
@@ -16,6 +16,7 @@ from app.schemas.observations import (
     ObservationRead,
     ObservationUpdate,
 )
+from app.services import observations as svc
 
 router = APIRouter(tags=["observations"])
 
@@ -49,7 +50,26 @@ def list_observations(
     date_to: date | None = None,
     sort: Literal["observed_at", "-observed_at"] = "-observed_at",
 ) -> ObservationPage:
-    raise not_implemented()
+    return svc.list_page(
+        db,
+        user,
+        project_id,
+        pg.page,
+        pg.page_size,
+        statuses=status_,
+        obs_types=obs_type,
+        category=category,
+        risk_rating=risk_rating,
+        site_ids=site_id,
+        zone_ids=zone_id,
+        engagement_ids=engagement_id,
+        include_subcontractors=include_subcontractors,
+        without_ca_over_hours=without_ca_over_hours,
+        mine=mine,
+        date_from=date_from,
+        date_to=date_to,
+        sort=sort,
+    )
 
 
 @router.post(
@@ -63,7 +83,7 @@ def list_observations(
 def create_observation(
     project_id: uuid.UUID, body: ObservationCreate, user: CurrentUser, db: DB
 ) -> ObservationRead:
-    raise not_implemented()
+    return svc.create(db, user, project_id, body)
 
 
 @router.get(
@@ -74,7 +94,7 @@ def create_observation(
     responses=error_responses(401, 403, 404),
 )
 def get_observation(observation_id: uuid.UUID, user: CurrentUser, db: DB) -> ObservationRead:
-    raise not_implemented()
+    return svc.read(db, user, observation_id)
 
 
 @router.patch(
@@ -87,7 +107,7 @@ def get_observation(observation_id: uuid.UUID, user: CurrentUser, db: DB) -> Obs
 def update_observation(
     observation_id: uuid.UUID, body: ObservationUpdate, user: CurrentUser, db: DB
 ) -> ObservationRead:
-    raise not_implemented()
+    return svc.update(db, user, observation_id, body)
 
 
 @router.post(
@@ -100,4 +120,4 @@ def update_observation(
 def close_observation(
     observation_id: uuid.UUID, body: ObservationCloseRequest, user: CurrentUser, db: DB
 ) -> ObservationRead:
-    raise not_implemented()
+    return svc.close(db, user, observation_id, body)

@@ -6,9 +6,9 @@ export function FieldList({ children, className }: { children: ReactNode; classN
   return <dl className={cn("grid gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-3", className)}>{children}</dl>;
 }
 
-export function FieldItem({ label, children, ltr }: { label: string; children: ReactNode; ltr?: boolean }) {
+export function FieldItem({ label, children, ltr, wide }: { label: string; children: ReactNode; ltr?: boolean; wide?: boolean }) {
   return (
-    <div className="min-w-0">
+    <div className={cn("min-w-0", wide && "sm:col-span-2 lg:col-span-3")}>
       <dt className="text-xs font-medium text-muted-foreground">{label}</dt>
       <dd className={cn("mt-1 text-sm [overflow-wrap:anywhere]", ltr && "ltr")}>{children ?? "—"}</dd>
     </div>

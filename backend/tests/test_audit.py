@@ -14,6 +14,7 @@ from app.models import AuditEntry
 from app.services import audit
 from app.services.audit import AuditActor
 from tests.conftest import Api, Ids
+from tests.hse_helpers import add_case, create_ca, create_incident
 
 
 def _some_entries(api: Api, ids: Ids) -> None:
@@ -160,3 +161,22 @@ def test_rule35_create_update_status_logged(api: Api, ids: Ids, db: Session) -> 
         )
     ]
     assert actions == [AuditAction.create, AuditAction.archive]
+
+
+def test_phase1_entity_history(api: Api, ids: Ids) -> None:
+    noura = api.as_("noura.qahtani")
+    inc = create_incident(noura, ids)
+    case = add_case(noura, ids, inc["id"])
+    ca = create_ca(noura, ids, "incident", inc["id"])
+    for kind, eid in (
+        ("incident", inc["id"]),
+        ("injury_case", case["id"]),
+        ("corrective_action", ca["id"]),
+    ):
+        res = noura.get(f"/api/v1/history/{kind}/{eid}")
+        assert res.status_code == 200, (kind, res.text)
+        assert res.json()["total"] >= 1, kind
+    # Yousef (RBT-52 only) gets 404 for ANIA-EXP records, no hint
+    yousef = api.as_("yousef.ghamdi")
+    assert yousef.get(f"/api/v1/history/incident/{inc['id']}").status_code == 404
+    assert yousef.get(f"/api/v1/history/injury_case/{case['id']}").status_code == 404

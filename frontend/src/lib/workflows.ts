@@ -60,3 +60,23 @@ export const USER_FLOW: Record<Schemas["UserStatus"], Edge<Schemas["UserStatus"]
   locked: [{ to: "active", kind: "unlock" }, { to: "deactivated", reasonRequired: true, kind: "deactivate" }],
   deactivated: [{ to: "active", reasonRequired: true, kind: "reactivate" }],
 };
+
+// ---- Phase 1 (spec 1-dashboard §4) ----
+type Cap = Schemas["Capability"];
+export interface P1Edge<S extends string> {
+  to: S;
+  kind: string;
+  cap: Cap;
+  reasonRequired?: boolean;
+  destructive?: boolean;
+}
+
+export const WORKFORCE_FLOW: Record<Schemas["WorkforceStatus"], P1Edge<Schemas["WorkforceStatus"]>[]> = {
+  draft: [{ to: "submitted", kind: "submit", cap: "workforce.edit" }],
+  submitted: [
+    { to: "verified", kind: "verify", cap: "workforce.verify" },
+    { to: "draft", kind: "backToDraft", cap: "workforce.edit" },
+  ],
+  verified: [{ to: "submitted", kind: "correct", cap: "workforce.verify", reasonRequired: true }],
+  locked: [{ to: "verified", kind: "unlockRow", cap: "workforce.unlock", reasonRequired: true }],
+};

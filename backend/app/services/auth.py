@@ -62,7 +62,7 @@ def privacy_notice() -> PrivacyNotice:
     return PrivacyNotice(**data)
 
 
-# ---- sessions --------------------------------------------------------------------------
+# ---- sessions ------------------------------------------------------------------------------------
 @dataclass(frozen=True)
 class IssuedSession:
     token: str
@@ -153,7 +153,7 @@ def send_reset(db: Session, user: User) -> str:
     return raw
 
 
-# ---- login / lockout -------------------------------------------------------------------
+# ---- login / lockout -----------------------------------------------------------------------------
 def _auto_unlock(db: Session, user: User, current: datetime) -> None:
     if user.status == UserStatus.locked and user.locked_until and user.locked_until <= current:
         user.status = UserStatus.active
@@ -301,7 +301,7 @@ def logout(db: Session, p: Principal) -> None:
     )
 
 
-# ---- passwords -------------------------------------------------------------------------
+# ---- passwords -----------------------------------------------------------------------------------
 def check_password(password: str, email: str, field: str = "password") -> None:
     problems = password_problems(password, email)
     if problems:
@@ -463,7 +463,7 @@ def confirm_reset(db: Session, raw: str, new_password: str) -> None:
     )
 
 
-# ---- Me --------------------------------------------------------------------------------
+# ---- Me ------------------------------------------------------------------------------------------
 def build_me(db: Session, p: Principal) -> Me:
     from app.services.users import assignment_read  # noqa: PLC0415  (avoid import cycle)
 

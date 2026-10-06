@@ -96,3 +96,25 @@ export async function downloadFile(url: string, fallbackName: string): Promise<v
   a.remove();
   URL.revokeObjectURL(href);
 }
+
+/** POST a multipart form (file uploads, workforce import) and return the typed JSON body. */
+export async function postForm<T>(url: string, form: FormData): Promise<T> {
+  let res: Response;
+  try {
+    res = await fetch(url, { method: "POST", body: form, credentials: "same-origin" });
+  } catch {
+    throw new ApiError(0, null, "NETWORK_ERROR");
+  }
+  let body: unknown = null;
+  try {
+    body = await res.json();
+  } catch {
+    body = null;
+  }
+  if (!res.ok) {
+    const err = toApiError(res.status, body);
+    notifyAuthError(err);
+    throw err;
+  }
+  return body as T;
+}

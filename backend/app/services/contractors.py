@@ -63,7 +63,7 @@ ENG_FIELDS = (
 )
 
 
-# ---- visibility ------------------------------------------------------------------------
+# ---- visibility ----------------------------------------------------------------------------------
 def _sees_all_contractors(p: Principal) -> bool:
     # HSE Officers onboard contractors (capability 5), so they see the whole register.
     return p.is_manager or p.has_role_anywhere(Role.hse_officer)
@@ -174,7 +174,7 @@ def list_query(
     )
 
 
-# ---- create / update -------------------------------------------------------------------
+# ---- create / update -----------------------------------------------------------------------------
 def _search(c: Contractor) -> str:
     return search_blob(c.short_code, c.cr_number, c.legal_name_en, c.legal_name_ar)
 
@@ -271,7 +271,7 @@ def update(
     return c
 
 
-# ---- transitions -----------------------------------------------------------------------
+# ---- transitions ---------------------------------------------------------------------------------
 CS = ContractorStatus
 # (from, to) -> (manager only, reason required)   — spec §4.2
 CONTRACTOR_TRANSITIONS: dict[tuple[ContractorStatus, ContractorStatus], tuple[bool, bool]] = {
@@ -430,7 +430,7 @@ def transition(
     return c
 
 
-# ---- engagements -----------------------------------------------------------------------
+# ---- engagements ---------------------------------------------------------------------------------
 def engagement_read(e: ProjectEngagement) -> EngagementRead:
     return EngagementRead(
         id=e.id,

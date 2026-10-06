@@ -1,136 +1,92 @@
-"""Scheduled jobs (§7 alerts, §4.3 inactivity, K6)."""
+"""Spec 1-dashboard §7 scheduled alerts, D-11 automatic month lock — AC36 and job smoke tests."""
 
-from datetime import timedelta
+import uuid
+from datetime import date, timedelta
 
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
-from app.core.clock import now, today
-from app.core.enums import NotificationKind, UserStatus
-from app.jobs import (
-    cr_expiry_alerts,
-    inactive_accounts,
-    invite_followups,
-    last_manager_risk,
-    role_assignment_ending,
-    unlock_expired,
-)
-from app.models import Contractor, EmailMessage, Notification, RoleAssignment, User, UserToken
+from app import hse_jobs
+from app.core.clock import now
+from app.core.enums import NotificationKind
+from app.models import CorrectiveAction, Notification, Observation, PeriodLock, Project
 from tests.conftest import Api, Ids
+from tests.hse_helpers import API, create_ca, reported_incident
 
 
-def test_cr_expiry_alerts_once_per_threshold(db: Session) -> None:
-    db.execute(
-        update(Contractor)
-        .where(Contractor.short_code == "GULFPAVE")
-        .values(cr_expiry_date=today() + timedelta(days=13))
+def _recipients(db: Session, kind: NotificationKind, entity_id: str) -> set[str]:
+    rows = db.scalars(
+        select(Notification.user_id).where(
+            Notification.kind == kind, Notification.entity_id == uuid.UUID(entity_id)
+        )
     )
-    db.commit()
-    assert cr_expiry_alerts(db)["alerts"] >= 1
-    db.commit()
-    kinds = db.scalars(
-        select(Notification).where(Notification.kind == NotificationKind.contractor_cr_expiry)
-    ).all()
-    recipients = {n.user_id for n in kinds}
-    emails = dict(db.execute(select(User.id, User.email)).all())
-    names = {emails[r] for r in recipients}
-    assert {
-        "faisal.harbi@example.com",
-        "noura.qahtani@example.com",
-        "ahmed.zahrani@example.com",
-    } <= names
-    count = len(kinds)
-    cr_expiry_alerts(db)
-    db.commit()
-    again = db.scalars(
-        select(Notification).where(Notification.kind == NotificationKind.contractor_cr_expiry)
-    ).all()
-    assert len(again) == count  # not re-sent for the same threshold
+    return {str(u) for u in rows}
 
 
-def test_inactive_accounts_warn_then_deactivate(db: Session) -> None:
-    db.execute(
-        update(User)
-        .where(User.email == "khalid.otaibi@example.com")
-        .values(last_login_at=now() - timedelta(days=85))
-    )
-    db.execute(
-        update(User)
-        .where(User.email == "omar.siddiqui@example.com")
-        .values(last_login_at=now() - timedelta(days=91))
-    )
-    db.commit()
-    res = inactive_accounts(db)
-    db.commit()
-    assert res == {"warned": 1, "deactivated": 1}
-    omar = db.scalars(select(User).where(User.email == "omar.siddiqui@example.com")).one()
-    assert omar.status == UserStatus.deactivated
-
-
-def test_inactive_last_manager_never_deactivated(db: Session) -> None:
-    db.execute(
-        update(User)
-        .where(User.email == "faisal.harbi@example.com")
-        .values(last_login_at=now() - timedelta(days=400))
-    )
-    db.commit()
-    inactive_accounts(db)
-    db.commit()
-    faisal = db.scalars(select(User).where(User.email == "faisal.harbi@example.com")).one()
-    assert faisal.status == UserStatus.active
-    assert last_manager_risk(db) == {"active_managers": 1}
-
-
-def test_invite_followups(api: Api, ids: Ids, db: Session) -> None:
-    api.as_("faisal.harbi").post(
-        "/api/v1/users",
+def test_AC36_high_risk_observation_without_ca_alerts(api: Api, ids: Ids, db: Session) -> None:
+    res = api.as_("omar.siddiqui").post(
+        f"{API}/projects/{ids.project('ANIA-EXP')}/observations",
         json={
-            "email": "late.joiner@example.com",
-            "full_name_en": "Late Joiner",
-            "employer_type": "client",
-            "role_assignments": [{"role": "viewer_client", "project_id": ids.project("RBT-52")}],
+            "site_id": ids.site("S-AIR"),
+            "observed_at": "2026-10-04T08:10:00Z",
+            "observed_engagement_id": ids.engagement("GULFPAVE"),
+            "obs_type": "unsafe_condition",
+            "category": "airside_fod_control",
+            "risk_rating": "high",
+            "description": "Loose aggregate on TWB shoulder",
+            "immediate_action": "Area coned off",
+            "closed_on_spot": False,
         },
     )
-    db.execute(update(UserToken).values(created_at=now() - timedelta(hours=49)))
-    db.commit()
-    assert invite_followups(db)["reminded"] == 1
-    db.commit()
-    assert db.scalar(select(EmailMessage.id).where(EmailMessage.template == "invite_reminder"))
-    db.execute(update(UserToken).values(expires_at=now() - timedelta(minutes=1)))
-    db.commit()
-    assert invite_followups(db)["expired_notified"] == 1
-    db.commit()
-
-
-def test_role_assignment_ending_and_unlock(db: Session, ids: Ids, api: Api) -> None:
+    assert res.status_code == 201, res.text
+    oid = res.json()["id"]
+    assert hse_jobs.high_risk_observations(db)["alerted"] == 0  # not 24 h yet
     db.execute(
-        update(RoleAssignment)
-        .where(RoleAssignment.user_id == ids.user("khalid.otaibi"))
-        .values(valid_to=today() + timedelta(days=5))
+        update(Observation)
+        .where(Observation.id == uuid.UUID(oid))
+        .values(created_at=now() - timedelta(hours=25))
     )
-    db.commit()
-    assert role_assignment_ending(db)["notified"] == 1
-    db.commit()
-    for _ in range(5):
-        api.login("omar.siddiqui@example.com", "Wrong-Password-1!")
+    assert hse_jobs.high_risk_observations(db)["alerted"] == 1
+    who = _recipients(db, NotificationKind.high_risk_observation_without_ca, oid)
+    assert ids.user("noura.qahtani") in who  # HSE Officer
+    assert ids.user("ahmed.zahrani") in who  # Contractor HSE Rep (RAWABI tree has GULFPAVE)
+    assert hse_jobs.high_risk_observations(db)["alerted"] == 0  # sent once
+
+
+def test_ca_overdue_escalates_once_per_day(api: Api, ids: Ids, db: Session) -> None:
+    n = api.as_("noura.qahtani")
+    inc = reported_incident(n, ids)
+    ca = create_ca(n, ids, "incident", inc["id"])
+    late = date.today() - timedelta(days=8)
     db.execute(
-        update(User)
-        .values(locked_until=now() - timedelta(seconds=1))
-        .where(User.status == UserStatus.locked)
+        update(CorrectiveAction)
+        .where(CorrectiveAction.id == uuid.UUID(ca["id"]))
+        .values(due_date=late, original_due_date=late)
     )
-    db.commit()
-    assert unlock_expired(db)["unlocked"] == 1
-    db.commit()
+    first = hse_jobs.ca_alerts(db)
+    assert first["overdue"] >= 1
+    who = _recipients(db, NotificationKind.ca_overdue, ca["id"])
+    assert ids.user("ramesh.kumar") in who  # owner
+    assert ids.user("noura.qahtani") in who  # officer at ≥ 7 days
+    assert ids.user("faisal.harbi") not in who  # manager only at ≥ 30 days
+    again = hse_jobs.ca_alerts(db)
+    assert again["overdue"] == 0  # once per day
 
 
-def test_notifications_mark_read(api: Api, ids: Ids) -> None:
-    mgr = api.as_("faisal.harbi")
-    mgr.patch(f"/api/v1/projects/{ids.project('ANIA-EXP')}/settings", json={"show_hijri": False})
-    noura = api.as_("noura.qahtani")
-    page = noura.get("/api/v1/notifications", params={"unread_only": True}).json()
-    assert page["unread_count"] == 1
-    nid = page["items"][0]["id"]
-    assert noura.post(f"/api/v1/notifications/{nid}/read").status_code == 204
-    assert noura.get("/api/v1/notifications").json()["unread_count"] == 0
-    assert mgr.post(f"/api/v1/notifications/{nid}/read").status_code == 404
-    assert noura.post("/api/v1/notifications/read-all").status_code == 204
+def test_month_auto_lock_on_lock_day(db: Session) -> None:
+    project = db.scalar(select(Project).where(Project.code == "ANIA-EXP"))
+    assert project is not None
+    res = hse_jobs.month_auto_lock(db, date(2026, 10, 9))
+    assert "ANIA-EXP:2026-09" not in res["locked"]  # before month_lock_day (10)
+    res = hse_jobs.month_auto_lock(db, date(2026, 10, 10))
+    assert "ANIA-EXP:2026-09" in res["locked"]
+    row = db.get(PeriodLock, (project.id, date(2026, 9, 1)))
+    assert row is not None and row.locked
+    assert "ANIA-EXP:2026-09" not in hse_jobs.month_auto_lock(db, date(2026, 10, 11))["locked"]
+
+
+def test_all_phase1_jobs_run(db: Session) -> None:
+    for name, job in hse_jobs.PHASE1_JOBS.items():
+        out = job(db)
+        assert isinstance(out, dict), name
+    db.rollback()

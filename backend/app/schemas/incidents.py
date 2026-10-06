@@ -56,7 +56,7 @@ from app.schemas.hse_common import (
 P3_HINT = "Do not enter person names, ID numbers or medical details here (P3)."
 ISO2 = r"^[A-Z]{2}$"
 
-# ---- incident --------------------------------------------------------------------------------
+# ---- incident ------------------------------------------------------------------------------------
 
 
 class PropertyDamageInput(StrictInput):
@@ -351,7 +351,7 @@ class IncidentTransitionRequest(StrictInput):
     )
 
 
-# ---- injury cases ----------------------------------------------------------------------------
+# ---- injury cases --------------------------------------------------------------------------------
 
 
 class _InjuryCaseFields(StrictInput):
@@ -565,7 +565,7 @@ class ClassificationConfirm(StrictInput):
     justification: str | None = Field(default=None, min_length=20, max_length=1000)
 
 
-# ---- investigation ---------------------------------------------------------------------------
+# ---- investigation -------------------------------------------------------------------------------
 
 
 class RootCauseInput(StrictInput):
@@ -648,7 +648,7 @@ class InvestigationRead(ApiModel):
     )
 
 
-# ---- excluded-from-rates listing (AC21) --------------------------------------------------------
+# ---- excluded-from-rates listing (AC21) ----------------------------------------------------------
 
 
 class ExcludedCaseRow(ApiModel):

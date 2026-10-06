@@ -7,9 +7,10 @@ from fastapi import APIRouter, Query, Response
 
 from app.api.deps import DB, CurrentUser
 from app.core.enums import ExportDataset, ExportFormat
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.core.hse_enums import ExportPurpose
 from app.services import exports as svc
+from app.services import hse_exports
 
 router = APIRouter(prefix="/exports", tags=["exports"])
 
@@ -69,8 +70,22 @@ def export_dataset(
     ] = None,
 ) -> Response:
     if dataset in PHASE1_DATASETS:
-        raise not_implemented()
-    content, media_type, filename = svc.export(db, user, dataset, format_, project_id, status_, q)
+        content, media_type, filename = hse_exports.export(
+            db,
+            user,
+            dataset,
+            format_,
+            project_id,
+            status_,
+            q,
+            include_identity,
+            purpose,
+            purpose_text,
+        )
+    else:
+        content, media_type, filename = svc.export(
+            db, user, dataset, format_, project_id, status_, q
+        )
     return Response(
         content=content,
         media_type=media_type,

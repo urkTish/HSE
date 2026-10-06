@@ -43,6 +43,7 @@ from app.models import (
     Zone,
 )
 from app.models.org import AIRSIDE_FIELDS
+from app.seed_hse import seed_data, seed_settings
 
 VALID_FROM = date(2025, 1, 1)
 
@@ -74,7 +75,7 @@ PROJECTS: list[dict[str, Any]] = [
         "client_name_en": "Riyadh Business Tower Development Co. (fictional)",
         "client_name_ar": "شركة تطوير برج الرياض للأعمال (وهمية)",
         "city": "Riyadh",
-        "start_date": date(2025, 6, 1),
+        "start_date": date(2025, 1, 15),
         "planned_end_date": date(2029, 6, 30),
         "settings": {
             "ltifr_base_hours": 200_000,
@@ -245,7 +246,7 @@ CONTRACTORS: list[dict[str, Any]] = [
             ["S-AIR", "S-LAND"],
             "Main civil works contractor",
             "المقاول الرئيسي للأعمال المدنية",
-            date(2025, 3, 15),
+            date(2025, 3, 1),
         ),
     },
     {
@@ -283,7 +284,7 @@ CONTRACTORS: list[dict[str, Any]] = [
             ["S-AIR"],
             "Apron and taxiway pavement works",
             "أعمال رصف الساحات والممرات",
-            date(2025, 6, 1),
+            date(2025, 4, 15),
         ),
     },
     {
@@ -302,7 +303,7 @@ CONTRACTORS: list[dict[str, Any]] = [
             ["S-LAND"],
             "Scaffolding for steel erection",
             "السقالات لأعمال تركيب الحديد",
-            date(2025, 6, 15),
+            date(2025, 6, 1),
         ),
     },
     {
@@ -321,7 +322,7 @@ CONTRACTORS: list[dict[str, Any]] = [
             ["S-TWR", "S-POD"],
             "Main contractor, tower and podium",
             "المقاول الرئيسي للبرج والمنصة",
-            date(2025, 6, 15),
+            date(2025, 1, 15),
         ),
     },
     {
@@ -341,7 +342,7 @@ CONTRACTORS: list[dict[str, Any]] = [
             ["S-TWR"],
             "Tower crane supply and operation",
             "توريد وتشغيل الرافعات البرجية",
-            date(2025, 8, 1),
+            date(2025, 3, 1),
         ),
     },
 ]
@@ -592,6 +593,7 @@ def seed(db: Session, password: str) -> None:
                 )
             )
     db.flush()
+    seed_settings(db)
 
 
 def main() -> int:
@@ -605,6 +607,8 @@ def main() -> int:
         return 2
     with get_sessionmaker()() as db:
         seed(db, password)
+        db.commit()
+        seed_data(db)
         db.commit()
     print("Seed data loaded.")
     return 0

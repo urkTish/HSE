@@ -1,19 +1,28 @@
 """AI assistant (spec 1-dashboard §5.9): ask (SSE), insights, monthly report, status, logs."""
 
+import json
 import uuid
 from datetime import date
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Query, Response, status
+from fastapi import APIRouter, BackgroundTasks, Query, Request, Response, status
+from fastapi.responses import JSONResponse, StreamingResponse
 
+from app.ai import assistant, insights, reports
+from app.ai import status as ai_status
+from app.ai.client import unavailable_error
 from app.api.deps import DB, CurrentUser, PageParams
 from app.api.kpi_params import KpiParams
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.schemas.ai import (
     AiAnswer,
     AiAskRequest,
     AiLogPage,
     AiStatusRead,
+    AiStreamDelta,
+    AiStreamError,
+    AiStreamEvent,
+    AiStreamMeta,
     InsightsResponse,
     MonthlyReportCreate,
     MonthlyReportPage,
@@ -63,8 +72,58 @@ _ASK_RESPONSES: dict[int | str, dict[str, Any]] = {
     response_class=Response,
     responses=_ASK_RESPONSES,
 )
-def ai_ask(body: AiAskRequest, user: CurrentUser, db: DB) -> Response:
-    raise not_implemented()
+def ai_ask(body: AiAskRequest, request: Request, user: CurrentUser, db: DB) -> Response:
+    sse = "application/json" not in request.headers.get("accept", "")
+    try:
+        out = assistant.ask(db, user, body)
+    except assistant.AskFailed as e:
+        err = unavailable_error(e.reason)
+        if not sse:
+            raise err from e
+        meta = AiStreamMeta(
+            answer_id=e.answer_id,
+            conversation_id=e.conversation_id,
+            model=e.model,
+            prompt_warnings=e.warnings,
+            question_masked=e.masked,
+        )
+        error = AiStreamError(code=err.code.value, message=err.message, message_ar=err.message_ar)
+        frames = [_frame("meta", meta), _frame("error", error)]
+        return StreamingResponse(iter(frames), media_type="text/event-stream")
+    a = out.answer
+    if not sse:
+        return JSONResponse(a.model_dump(mode="json"))
+    frames = [
+        _frame(
+            "meta",
+            AiStreamMeta(
+                answer_id=a.id,
+                conversation_id=a.conversation_id,
+                model=a.model,
+                prompt_warnings=a.prompt_warnings,
+                question_masked=a.question_masked,
+            ),
+        )
+    ]
+    frames += [_frame("status", s) for s in out.statuses]
+    frames += [_frame("delta", AiStreamDelta(text=c)) for c in _chunks(a.text)]
+    frames.append(_frame("citations", a.citations))
+    if a.chart is not None:
+        frames.append(_frame("chart", a.chart))
+    if a.recommendations:
+        frames.append(_frame("recommendations", a.recommendations))
+    frames.append(_frame("done", a))
+    return StreamingResponse(iter(frames), media_type="text/event-stream")
+
+
+def _chunks(text: str, size: int = 400) -> list[str]:
+    return [text[i : i + size] for i in range(0, len(text), size)] or [""]
+
+
+def _frame(event: str, data: Any) -> str:
+    ev = AiStreamEvent(event=event, data=data)
+    payload = json.dumps(ev.model_dump(mode="json")["data"], ensure_ascii=False)
+    return f"event: {event}\ndata: {payload}\n\n"
 
 
 @router.get(
@@ -74,7 +133,7 @@ def ai_ask(body: AiAskRequest, user: CurrentUser, db: DB) -> Response:
     responses=error_responses(401, 403, 404),
 )
 def get_ai_answer(answer_id: uuid.UUID, user: CurrentUser, db: DB) -> AiAnswer:
-    raise not_implemented()
+    return assistant.get_answer(db, user, answer_id)
 
 
 @router.get(
@@ -84,7 +143,7 @@ def get_ai_answer(answer_id: uuid.UUID, user: CurrentUser, db: DB) -> AiAnswer:
     responses=error_responses(401, 403, 404),
 )
 def get_ai_status(project_id: uuid.UUID, user: CurrentUser, db: DB) -> AiStatusRead:
-    raise not_implemented()
+    return ai_status.status(db, user, project_id)
 
 
 @router.get(
@@ -102,7 +161,7 @@ def get_ai_insights(
     q: KpiParams,
     refresh: Annotated[bool, Query(description="Bypass the cache (counts toward quota).")] = False,
 ) -> InsightsResponse:
-    raise not_implemented()
+    return insights.insights(db, user, q, refresh)
 
 
 @router.post(
@@ -117,9 +176,13 @@ def get_ai_insights(
     responses=error_responses(401, 403, 404, 409, 422, 429, 503),
 )
 def create_monthly_report(
-    body: MonthlyReportCreate, user: CurrentUser, db: DB
+    body: MonthlyReportCreate, user: CurrentUser, db: DB, tasks: BackgroundTasks
 ) -> MonthlyReportRead:
-    raise not_implemented()
+    r = reports.create(db, user, body)
+    out = reports.to_read(db, r)
+    db.commit()
+    tasks.add_task(reports.generate, r.id)
+    return out
 
 
 @router.get(
@@ -131,7 +194,7 @@ def create_monthly_report(
 def list_monthly_reports(
     project_id: uuid.UUID, user: CurrentUser, pg: PageParams, db: DB
 ) -> MonthlyReportPage:
-    raise not_implemented()
+    return reports.list_page(db, user, project_id, pg.page, pg.page_size)
 
 
 @router.get(
@@ -141,7 +204,7 @@ def list_monthly_reports(
     responses=error_responses(401, 403, 404),
 )
 def get_monthly_report(report_id: uuid.UUID, user: CurrentUser, db: DB) -> MonthlyReportRead:
-    raise not_implemented()
+    return reports.read(db, user, report_id)
 
 
 @router.patch(
@@ -153,7 +216,7 @@ def get_monthly_report(report_id: uuid.UUID, user: CurrentUser, db: DB) -> Month
 def update_monthly_report(
     report_id: uuid.UUID, body: MonthlyReportUpdate, user: CurrentUser, db: DB
 ) -> MonthlyReportRead:
-    raise not_implemented()
+    return reports.update(db, user, report_id, body)
 
 
 @router.post(
@@ -165,7 +228,7 @@ def update_monthly_report(
 def transition_monthly_report(
     report_id: uuid.UUID, body: MonthlyReportTransition, user: CurrentUser, db: DB
 ) -> MonthlyReportRead:
-    raise not_implemented()
+    return reports.transition(db, user, report_id, body)
 
 
 @router.get(
@@ -184,4 +247,6 @@ def list_ai_logs(
     date_from: date | None = None,
     date_to: date | None = None,
 ) -> AiLogPage:
-    raise not_implemented()
+    return ai_status.logs(
+        db, user, pg.page, pg.page_size, project_id, user_id, grounding_failed, date_from, date_to
+    )

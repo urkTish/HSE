@@ -83,6 +83,7 @@ test.describe("Role scoping visible in the UI", () => {
   test("AC12: HSE Officer Noura is not offered hse_manager / hse_officer roles", async ({ page }) => {
     await login(page, USERS.noura);
     await page.goto("/en/users/invite");
+    await expect(page.getByTestId("assignment-role").locator("option").nth(1)).toBeAttached();
     const options = await page.getByTestId("assignment-role").locator("option").allTextContents();
     expect(options).not.toContain(en.role.hse_manager);
     expect(options).not.toContain(en.role.hse_officer);

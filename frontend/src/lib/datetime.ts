@@ -104,3 +104,37 @@ export function todayInZone(timeZone: string = DEFAULT_TIME_ZONE): string {
 export function riyadhDayBoundary(date: string, end: boolean): string {
   return end ? `${date}T23:59:59.999+03:00` : `${date}T00:00:00+03:00`;
 }
+
+function zoneOffsetMinutes(instant: Date, timeZone: string): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).formatToParts(instant);
+  const get = (t: string) => Number(parts.find((p) => p.type === t)?.value ?? 0);
+  const asUtc = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second"));
+  return Math.round((asUtc - instant.getTime()) / 60000);
+}
+
+/** "YYYY-MM-DDTHH:mm" typed in the project time zone → UTC ISO instant for the API. */
+export function zonedInputToUtc(local: string, timeZone: string = DEFAULT_TIME_ZONE): string {
+  const [d, tm] = local.split("T");
+  const [y, mo, da] = (d ?? "").split("-").map(Number);
+  const [h, mi] = (tm ?? "00:00").split(":").map(Number);
+  const guess = new Date(Date.UTC(y ?? 1970, (mo ?? 1) - 1, da ?? 1, h ?? 0, mi ?? 0));
+  const offset = zoneOffsetMinutes(guess, timeZone);
+  return new Date(guess.getTime() - offset * 60000).toISOString();
+}
+
+/** UTC ISO instant → "YYYY-MM-DDTHH:mm" in the project time zone (datetime-local inputs). */
+export function utcToZonedInput(iso: string | null | undefined, timeZone: string = DEFAULT_TIME_ZONE): string {
+  if (!iso) return "";
+  const instant = new Date(iso);
+  const local = new Date(instant.getTime() + zoneOffsetMinutes(instant, timeZone) * 60000);
+  return local.toISOString().slice(0, 16);
+}

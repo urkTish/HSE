@@ -6,9 +6,10 @@ from datetime import date
 from fastapi import APIRouter, Response, status
 
 from app.api.deps import DB, CurrentUser, PageParams
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.core.hse_enums import MeetingType
 from app.schemas.meetings import HseMeetingCreate, HseMeetingPage, HseMeetingRead, HseMeetingUpdate
+from app.services import meetings as svc
 
 router = APIRouter(tags=["hse meetings"])
 
@@ -28,7 +29,9 @@ def list_hse_meetings(
     date_from: date | None = None,
     date_to: date | None = None,
 ) -> HseMeetingPage:
-    raise not_implemented()
+    return svc.list_page(
+        db, user, project_id, pg.page, pg.page_size, meeting_type, date_from, date_to
+    )
 
 
 @router.post(
@@ -41,7 +44,7 @@ def list_hse_meetings(
 def create_hse_meeting(
     project_id: uuid.UUID, body: HseMeetingCreate, user: CurrentUser, db: DB
 ) -> HseMeetingRead:
-    raise not_implemented()
+    return svc.create(db, user, project_id, body)
 
 
 @router.get(
@@ -51,7 +54,7 @@ def create_hse_meeting(
     responses=error_responses(401, 403, 404),
 )
 def get_hse_meeting(meeting_id: uuid.UUID, user: CurrentUser, db: DB) -> HseMeetingRead:
-    raise not_implemented()
+    return svc.read(db, user, meeting_id)
 
 
 @router.patch(
@@ -63,7 +66,7 @@ def get_hse_meeting(meeting_id: uuid.UUID, user: CurrentUser, db: DB) -> HseMeet
 def update_hse_meeting(
     meeting_id: uuid.UUID, body: HseMeetingUpdate, user: CurrentUser, db: DB
 ) -> HseMeetingRead:
-    raise not_implemented()
+    return svc.update(db, user, meeting_id, body)
 
 
 @router.delete(
@@ -73,4 +76,5 @@ def update_hse_meeting(
     responses=error_responses(401, 403, 404, 409),
 )
 def delete_hse_meeting(meeting_id: uuid.UUID, user: CurrentUser, db: DB) -> Response:
-    raise not_implemented()
+    svc.delete(db, user, meeting_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

@@ -40,7 +40,7 @@ from app.schemas.hse_common import EngagementRef
 
 DEC = "Decimal string rounded per K-R8 (half-up); null = '—'."
 
-# ---- context -----------------------------------------------------------------------------------
+# ---- context -------------------------------------------------------------------------------------
 
 
 class PeriodRead(ApiModel):
@@ -124,7 +124,7 @@ class KpiContext(ApiModel):
     )
 
 
-# ---- values ------------------------------------------------------------------------------------
+# ---- values --------------------------------------------------------------------------------------
 
 
 class KpiCell(ApiModel):
@@ -257,7 +257,7 @@ class KpiCatalogue(ApiModel):
     items: list[KpiDefinition]
 
 
-# ---- LTI-free, dashboard bundle ----------------------------------------------------------------
+# ---- LTI-free, dashboard bundle ------------------------------------------------------------------
 
 
 class LtiFreeRead(ApiModel):
@@ -310,7 +310,7 @@ class DashboardResponse(ApiModel):
     placeholders: list[KpiPlaceholder]
 
 
-# ---- trends, comparisons table ----------------------------------------------------------------
+# ---- trends, comparisons table -------------------------------------------------------------------
 
 
 class TrendPoint(ApiModel):
@@ -368,7 +368,7 @@ class ComparisonTableResponse(ApiModel):
     rows: list[ComparisonRow]
 
 
-# ---- breakdowns, pyramid, league table -------------------------------------------------------
+# ---- breakdowns, pyramid, league table -----------------------------------------------------------
 
 
 class BreakdownRow(ApiModel):
@@ -438,7 +438,7 @@ class ContractorLeagueResponse(ApiModel):
     rows: list[ContractorRow]
 
 
-# ---- leading indicators & warnings -----------------------------------------------------------
+# ---- leading indicators & warnings ---------------------------------------------------------------
 
 
 class WarningInput(ApiModel):
@@ -468,7 +468,7 @@ class LeadingIndicatorsResponse(ApiModel):
     evaluated_months: list[str]
 
 
-# ---- data quality ------------------------------------------------------------------------------
+# ---- data quality --------------------------------------------------------------------------------
 
 
 class MissingReturn(ApiModel):
@@ -489,7 +489,7 @@ class DataQualityResponse(ApiModel):
     restated_months: list[str]
 
 
-# ---- drill-down -------------------------------------------------------------------------------
+# ---- drill-down ----------------------------------------------------------------------------------
 
 
 class SourceRecord(ApiModel):
@@ -512,7 +512,7 @@ class SourceRecordPage(Page[SourceRecord]):
     part: str = Field(description="numerator | denominator")
 
 
-# ---- chart spec (shared by dashboard charts and AI answers) --------------------------------
+# ---- chart spec (shared by dashboard charts and AI answers) --------------------------------------
 
 
 class ChartCategory(ApiModel):

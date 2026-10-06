@@ -95,7 +95,7 @@ class AiAnswer(ApiModel):
     created_at: datetime
 
 
-# ---- SSE stream ---------------------------------------------------------------------------------
+# ---- SSE stream ----------------------------------------------------------------------------------
 
 
 class AiStreamMeta(ApiModel):
@@ -158,7 +158,7 @@ class AiStreamEvent(ApiModel):
     )
 
 
-# ---- status, insights -------------------------------------------------------------------------
+# ---- status, insights ----------------------------------------------------------------------------
 
 
 class AiStatusRead(ApiModel):
@@ -206,7 +206,7 @@ class InsightsResponse(ApiModel):
     items: list[Insight]
 
 
-# ---- monthly report ---------------------------------------------------------------------------
+# ---- monthly report ------------------------------------------------------------------------------
 
 
 class MonthlyReportCreate(StrictInput):
@@ -289,7 +289,7 @@ class MonthlyReportTransition(StrictInput):
     comment: str | None = Field(default=None, max_length=1000)
 
 
-# ---- logs (AI-16) ----------------------------------------------------------------------------
+# ---- logs (AI-16) --------------------------------------------------------------------------------
 
 
 class AiToolCallLog(ApiModel):

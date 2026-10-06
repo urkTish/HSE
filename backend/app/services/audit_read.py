@@ -7,6 +7,13 @@ from typing import Any
 from sqlalchemy import Select, and_, false, not_, or_, select
 from sqlalchemy.orm import Session
 
+import app.services.corrective_actions as ca_svc
+import app.services.incidents as inc_svc
+import app.services.injury_cases as case_svc
+import app.services.inspections as ins_svc
+import app.services.meetings as meet_svc
+import app.services.observations as obs_svc
+import app.services.workforce as wf_svc
 from app.core.enums import (
     AUTH_ACTIONS,
     AuditAction,
@@ -197,9 +204,41 @@ def _history_allowed(
         users.get_visible_user(db, p, a.user_id)
         ok = p.has_any(cap)
     else:
-        raise not_found("History")
+        pid = _phase1_project(db, p, entity_type, entity_id)
+        ok = p.grant(pid, cap) is not None
     if not ok:
         raise forbidden_error()
+
+
+def _phase1_project(
+    db: Session, p: Principal, entity_type: EntityType, entity_id: uuid.UUID
+) -> uuid.UUID:
+    """Phase 1 records: visible through their own service (404 otherwise); injured-person
+    history needs identity and medical access (capabilities 29 and 30)."""
+    et = EntityType
+    if entity_type in (et.incident, et.investigation):
+        return inc_svc.get_incident(db, p, entity_id).project_id
+    if entity_type == et.injury_case:
+        case, _ = case_svc._load(db, p, entity_id)
+        if not (
+            p.grant(case.project_id, Capability.injury_identity_view)
+            and p.grant(case.project_id, Capability.injury_medical_view)
+        ):
+            raise forbidden_error("Injured-person history needs capabilities 29 and 30.")
+        return case.project_id
+    if entity_type == et.corrective_action:
+        return ca_svc.get_ca(db, p, entity_id).project_id
+    if entity_type == et.observation:
+        return obs_svc.get_obs(db, p, entity_id).project_id
+    if entity_type == et.inspection:
+        return ins_svc.get_ins(db, p, entity_id).project_id
+    if entity_type == et.inspection_plan:
+        return ins_svc.get_plan(db, p, entity_id).project_id
+    if entity_type == et.hse_meeting:
+        return meet_svc._get(db, p, entity_id).project_id
+    if entity_type == et.workforce_return:
+        return wf_svc.get_row(db, p, entity_id).project_id
+    raise not_found("History")
 
 
 def history_query(

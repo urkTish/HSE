@@ -43,6 +43,33 @@ class Settings(BaseSettings):
     # Public base URL of the frontend, used in emailed links
     frontend_base_url: str = "http://localhost:3000"
 
+    # ---- Phase 1 ----
+    # AI (spec 1-dashboard §5.9). No key → the assistant answers AI_UNAVAILABLE (AI-18).
+    anthropic_api_key: str | None = None
+    ai_model_default: str = "claude-sonnet-5-5"
+    ai_model_deep: str = "claude-opus-5-5"
+    ai_server_fallbacks: bool = Field(
+        default=True, description="Send the server-side refusal fallback (beta) with requests."
+    )
+    ai_timeout_seconds: float = 60.0
+    ai_max_tool_rounds: int = 8
+    ai_questions_per_user_day: int = 60  # AI-17
+    ai_reports_per_project_month: int = 10  # AI-17
+    ai_insights_cache_minutes: int = 360
+
+    # Field encryption for ID numbers (P2). Dev default only; set FIELD_ENCRYPTION_KEY in prod.
+    field_encryption_key: str = Field(
+        default="dev-only-field-key-change-me-dev-only-field-key", min_length=32
+    )
+    # Attachments: local storage root (S3/MinIO adapter later) and signed-URL secret (P1-3)
+    storage_dir: str = "./var/storage"
+    attachment_url_secret: str = Field(
+        default="dev-only-attachment-url-secret-change-me", min_length=32
+    )
+    attachment_max_bytes: int = 20 * 1024 * 1024
+    import_max_bytes: int = 5 * 1024 * 1024
+    import_max_rows: int = 20_000
+
     # Seed (only used by app.seed)
     seed_password: str | None = None
 

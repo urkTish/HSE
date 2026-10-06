@@ -9,32 +9,13 @@ import { useRouter } from "@/i18n/navigation";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
 import { useNotifications } from "@/lib/api/queries";
 import { useLocalizedName } from "@/lib/i18n-helpers";
+import { entityRoute } from "@/lib/routes";
 import { useFormatters } from "@/lib/use-formatters";
 import { cn } from "@/lib/utils";
 
 function hrefFor(n: Schemas["NotificationRead"]): string | null {
-  const id = n.entity_id;
-  const pid = n.project_id;
-  switch (n.entity_type) {
-    case "project":
-      return id ? `/projects/${id}` : null;
-    case "contractor":
-      return id ? `/contractors/${id}` : null;
-    case "user":
-      return id ? `/users/${id}` : null;
-    case "site":
-      return id && pid ? `/projects/${pid}/sites/${id}` : null;
-    case "zone":
-      return id && pid ? `/projects/${pid}/zones/${id}` : null;
-    case "project_engagement":
-      return id && pid ? `/projects/${pid}/engagements/${id}` : null;
-    case "project_settings":
-      return pid ? `/projects/${pid}/settings` : null;
-    case "audit_log":
-      return "/audit-log";
-    default:
-      return null;
-  }
+  if (n.entity_type === "audit_log") return "/audit-log";
+  return entityRoute(n.entity_type, n.entity_id, n.project_id);
 }
 
 export function NotificationsBell() {

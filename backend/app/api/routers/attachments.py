@@ -6,9 +6,11 @@ from typing import Annotated
 from fastapi import APIRouter, File, Form, Query, Response, UploadFile, status
 
 from app.api.deps import DB, CurrentUser
-from app.core.errors import error_responses, not_implemented
+from app.core.config import get_settings
+from app.core.errors import error_responses
 from app.core.hse_enums import AttachmentOwner
 from app.schemas.attachments import AttachmentList, AttachmentRead, SignedUrlRead
+from app.services import attachments as svc
 
 router = APIRouter(tags=["attachments"])
 
@@ -35,7 +37,8 @@ def upload_attachment(
     owner_id: Annotated[uuid.UUID, Form()],
     file: Annotated[UploadFile, File()],
 ) -> AttachmentRead:
-    raise not_implemented()
+    content = file.file.read(get_settings().attachment_max_bytes + 1)
+    return svc.upload(db, user, owner_type, owner_id, file.filename or "file", content)
 
 
 @router.get(
@@ -50,7 +53,7 @@ def list_attachments(
     owner_type: AttachmentOwner,
     owner_id: uuid.UUID,
 ) -> AttachmentList:
-    raise not_implemented()
+    return svc.list_for(db, user, owner_type, owner_id)
 
 
 @router.post(
@@ -60,7 +63,7 @@ def list_attachments(
     responses=error_responses(401, 403, 404, 409),
 )
 def sign_attachment_url(attachment_id: uuid.UUID, user: CurrentUser, db: DB) -> SignedUrlRead:
-    raise not_implemented()
+    return svc.signed_url(db, user, attachment_id)
 
 
 @router.get(
@@ -82,7 +85,12 @@ def download_attachment(
     expires: Annotated[int, Query(description="Unix seconds.")],
     signature: Annotated[str, Query(max_length=128)],
 ) -> Response:
-    raise not_implemented()
+    content, media_type, name = svc.download(db, attachment_id, expires, signature)
+    return Response(
+        content=content,
+        media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="{name}"'},
+    )
 
 
 @router.delete(
@@ -92,4 +100,5 @@ def download_attachment(
     responses=error_responses(401, 403, 404, 409),
 )
 def delete_attachment(attachment_id: uuid.UUID, user: CurrentUser, db: DB) -> Response:
-    raise not_implemented()
+    svc.delete(db, user, attachment_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

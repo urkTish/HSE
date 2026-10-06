@@ -1,7 +1,18 @@
 "use client";
 import {
+  Bot,
   Building2,
+  CalendarCheck,
+  ClipboardCheck,
   ClipboardList,
+  Eye,
+  FileText,
+  Gauge,
+  ListChecks,
+  ListTree,
+  ShieldAlert,
+  SlidersHorizontal,
+  Timer,
   HardHat,
   Home,
   LayoutGrid,
@@ -58,11 +69,13 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const g = (c: Capability, pid?: string | null) => can(me, c, pid);
 
   const main: Item[] = [
-    { href: "/", label: t("home"), Icon: Home, exact: true, testId: "nav-home" },
+    { href: "/", label: g("dashboard.view") ? t("dashboard") : t("home"), Icon: g("dashboard.view") ? Gauge : Home, exact: true, testId: "nav-home" },
     ...(g("project.view") ? [{ href: "/projects", label: t("projects"), Icon: Building2, exact: true, testId: "nav-projects" }] : []),
     ...(g("contractor.view") ? [{ href: "/contractors", label: t("contractors"), Icon: HardHat, testId: "nav-contractors" }] : []),
     ...(g("user.view_directory") ? [{ href: "/users", label: t("users"), Icon: Users, testId: "nav-users" }] : []),
     ...(g("audit_log.read") ? [{ href: "/audit-log", label: t("auditLog"), Icon: ScrollText, testId: "nav-audit" }] : []),
+    ...(me.is_hse_manager ? [{ href: "/ai-logs", label: t("aiLogs"), Icon: Bot, testId: "nav-ai-logs" }] : []),
+    ...(g("hse_settings.edit") ? [{ href: "/reference-lists", label: t("referenceLists"), Icon: ListTree, testId: "nav-reference-lists" }] : []),
   ];
   const pid = project?.id;
   const projectItems: Item[] = pid
@@ -83,6 +96,24 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
       ]
     : [];
 
+  const dash = pid ? g("dashboard.view", pid) : false;
+  const hseItems: Item[] = pid
+    ? [
+        ...(g("workforce.view", pid) ? [{ href: "/workforce", label: t("workforce"), Icon: Timer, testId: "nav-workforce" }] : []),
+        ...(g("incident.view", pid) ? [{ href: "/incidents", label: t("incidents"), Icon: ShieldAlert, testId: "nav-incidents" }] : []),
+        ...(g("observation.create", pid) || dash ? [{ href: "/observations", label: t("observations"), Icon: Eye, testId: "nav-observations" }] : []),
+        ...(g("inspection.record", pid) || g("inspection.plan_manage", pid) || dash
+          ? [{ href: "/inspections", label: t("inspections"), Icon: ClipboardCheck, testId: "nav-inspections" }]
+          : []),
+        ...(g("ca.create", pid) || g("ca.update_own", pid) || dash ? [{ href: "/actions", label: t("actions"), Icon: ListChecks, testId: "nav-actions" }] : []),
+        ...(dash ? [{ href: "/meetings", label: t("meetings"), Icon: CalendarCheck, testId: "nav-meetings" }] : []),
+        ...(g("monthly_report.view", pid) || g("monthly_report.generate", pid)
+          ? [{ href: "/reports", label: t("reports"), Icon: FileText, testId: "nav-reports" }]
+          : []),
+        ...(g("settings.view", pid) ? [{ href: "/hse-settings", label: t("hseSettings"), Icon: SlidersHorizontal, testId: "nav-hse-settings" }] : []),
+      ]
+    : [];
+
   return (
     <nav aria-label={t("main")} className="flex flex-1 flex-col gap-5 p-3">
       <ul className="flex flex-col gap-1">
@@ -99,6 +130,18 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             <span aria-hidden>·</span>
             <span className="ltr rounded bg-sidebar-active px-1.5 py-0.5 font-semibold text-sidebar-foreground">{project.code}</span>
           </p>
+          {hseItems.length > 0 ? (
+            <>
+              <p className="px-3 pt-1 pb-1 text-xs font-medium text-sidebar-muted">{t("hseData")}</p>
+              <ul className="mb-3 flex flex-col gap-1" data-testid="nav-hse">
+                {hseItems.map((i) => (
+                  <li key={i.href}>
+                    <NavLink item={i} onNavigate={onNavigate} />
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : null}
           <ul className="flex flex-col gap-1">
             {projectItems.map((i) => (
               <li key={i.href}>

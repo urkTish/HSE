@@ -258,19 +258,26 @@ def export(
             },
         },
     )
-    name = f"{dataset.value}.{fmt.value}"
+    return encode(cols, rows, fmt, dataset.value)
+
+
+def encode(
+    cols: list[str], rows: list[list[Any]], fmt: ExportFormat, name: str
+) -> tuple[bytes, str, str]:
+    """CSV (UTF-8 with BOM, for Excel) or XLSX bytes → (content, media type, filename)."""
+    filename = f"{name}.{fmt.value}"
     if fmt == ExportFormat.csv:
         buf = io.StringIO()
         writer = csv.writer(buf)
         writer.writerow(cols)
-        writer.writerows(rows)
-        return ("﻿" + buf.getvalue()).encode("utf-8"), "text/csv; charset=utf-8", name
+        writer.writerows([[_cell(v) for v in r] for r in rows])
+        return ("\ufeff" + buf.getvalue()).encode("utf-8"), "text/csv; charset=utf-8", filename
     wb = Workbook()
     ws = wb.active
-    ws.title = dataset.value
+    ws.title = name[:31]
     ws.append(cols)
     for r in rows:
-        ws.append(r)
+        ws.append([_cell(v) for v in r])
     out = io.BytesIO()
     wb.save(out)
-    return out.getvalue(), XLSX, name
+    return out.getvalue(), XLSX, filename

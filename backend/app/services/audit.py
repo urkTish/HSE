@@ -26,7 +26,18 @@ from app.models import AuditEntry, ProjectSettings
 
 AUDIT_LOCK_KEY = 0x48534541  # "HSEA"
 SECRET_KEYS = frozenset({"password", "password_hash", "token", "token_hash", "new_password"})
-SENSITIVE_KEYS: frozenset[str] = frozenset()  # Phase 0 stores no sensitive fields
+SENSITIVE_KEYS: frozenset[str] = frozenset(
+    {
+        # Phase 1 injured-person identity and medical free text (1-dashboard P1-1)
+        "person_name",
+        "id_number",
+        "id_number_enc",
+        "medical_notes",
+        "treatments",
+        "privacy_reason",
+        "date_of_death",
+    }
+)
 MASK = "***"
 DEFERRED_KEY = "deferred_audit"
 

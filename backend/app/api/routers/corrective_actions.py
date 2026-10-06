@@ -7,7 +7,7 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, Query, status
 
 from app.api.deps import DB, CurrentUser, PageParams
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.core.hse_enums import CaPriority, CaSourceType, CaStatus, ControlLevel, OverdueBucket
 from app.schemas.actions import (
     CaCreate,
@@ -18,6 +18,7 @@ from app.schemas.actions import (
     CaTransitionRequest,
     CaUpdate,
 )
+from app.services import corrective_actions as svc
 
 router = APIRouter(tags=["corrective actions"])
 
@@ -54,7 +55,31 @@ def list_corrective_actions(
     q: Annotated[str | None, Query(max_length=100)] = None,
     sort: Literal["due_date", "-due_date", "created_at", "-created_at", "priority"] = "due_date",
 ) -> CaPage:
-    raise not_implemented()
+    return svc.list_page(
+        db,
+        user,
+        project_id,
+        pg.page,
+        pg.page_size,
+        statuses=status_,
+        overdue=overdue,
+        overdue_bucket=overdue_bucket,
+        verification_overdue=verification_overdue,
+        priorities=priority,
+        control_levels=control_level,
+        source_type=source_type,
+        source_id=source_id,
+        site_ids=site_id,
+        engagement_ids=engagement_id,
+        include_subcontractors=include_subcontractors,
+        owner_is_me=owner_is_me,
+        verifier_is_me=verifier_is_me,
+        due_from=due_from,
+        due_to=due_to,
+        as_of=as_of,
+        q=q,
+        sort=sort,
+    )
 
 
 @router.post(
@@ -67,7 +92,7 @@ def list_corrective_actions(
 def create_corrective_action(
     project_id: uuid.UUID, body: CaCreate, user: CurrentUser, db: DB
 ) -> CaRead:
-    raise not_implemented()
+    return svc.create(db, user, project_id, body)
 
 
 @router.get(
@@ -77,7 +102,7 @@ def create_corrective_action(
     responses=error_responses(401, 403, 404),
 )
 def get_corrective_action(ca_id: uuid.UUID, user: CurrentUser, db: DB) -> CaRead:
-    raise not_implemented()
+    return svc.read(db, user, ca_id)
 
 
 @router.patch(
@@ -87,7 +112,7 @@ def get_corrective_action(ca_id: uuid.UUID, user: CurrentUser, db: DB) -> CaRead
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def update_corrective_action(ca_id: uuid.UUID, body: CaUpdate, user: CurrentUser, db: DB) -> CaRead:
-    raise not_implemented()
+    return svc.update(db, user, ca_id, body)
 
 
 @router.post(
@@ -99,7 +124,7 @@ def update_corrective_action(ca_id: uuid.UUID, body: CaUpdate, user: CurrentUser
 def transition_corrective_action(
     ca_id: uuid.UUID, body: CaTransitionRequest, user: CurrentUser, db: DB
 ) -> CaRead:
-    raise not_implemented()
+    return svc.transition(db, user, ca_id, body)
 
 
 @router.post(
@@ -112,7 +137,7 @@ def transition_corrective_action(
 def request_ca_extension(
     ca_id: uuid.UUID, body: CaExtensionCreate, user: CurrentUser, db: DB
 ) -> CaRead:
-    raise not_implemented()
+    return svc.request_extension(db, user, ca_id, body)
 
 
 @router.post(
@@ -128,4 +153,4 @@ def decide_ca_extension(
     user: CurrentUser,
     db: DB,
 ) -> CaRead:
-    raise not_implemented()
+    return svc.decide_extension(db, user, ca_id, extension_id, body)

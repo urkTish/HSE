@@ -176,7 +176,7 @@ class MonthUnlockRequest(StrictInput):
     reason: str = Field(min_length=1, max_length=500)
 
 
-# ---- import (§3.2, rule W-5) ---------------------------------------------------------------
+# ---- import (§3.2, rule W-5) ---------------------------------------------------------------------
 
 
 class ImportCounts(ApiModel):

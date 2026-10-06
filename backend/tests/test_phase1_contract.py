@@ -1,9 +1,8 @@
-"""Phase 1 contract surface (stage 1: stubs). Replaced by real behaviour tests in stage 2."""
+"""Phase 1 contract surface: paths, SSE schema and capability matrix."""
 
 from app.core.enums import Capability
 from app.main import create_app
 from app.services.permissions import MATRIX, Role
-from tests.conftest import Api, Ids
 
 PHASE1_PATHS = {
     "/api/v1/projects/{project_id}/workforce-returns",
@@ -45,10 +44,3 @@ def test_phase1_capabilities_in_matrix() -> None:
     assert Capability.ai_ask in MATRIX[Role.viewer_client]
     assert Capability.injury_medical_view not in MATRIX[Role.contractor_hse_rep]
     assert Capability.hse_settings_edit not in MATRIX[Role.hse_officer]
-
-
-def test_phase1_stub_returns_501_envelope(api: Api, ids: Ids) -> None:
-    c = api.as_("faisal.harbi")
-    res = c.get("/api/v1/kpi/dashboard", params={"project_id": ids.project("ANIA-EXP")})
-    assert res.status_code == 501
-    assert res.json()["detail"]["code"] == "NOT_IMPLEMENTED"

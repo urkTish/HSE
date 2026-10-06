@@ -9,7 +9,7 @@ from fastapi import APIRouter, Query, Response
 from app.api.deps import DB, CurrentUser, PageParams
 from app.api.kpi_params import KpiParams
 from app.core.enums import ExportFormat
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.core.hse_enums import (
     BreakdownDimension,
     BreakdownMeasure,
@@ -18,6 +18,7 @@ from app.core.hse_enums import (
     KpiExportTable,
     KpiMetric,
 )
+from app.kpi import charts, scope, service, views
 from app.schemas.kpi import (
     BreakdownResponse,
     ChartResponse,
@@ -54,7 +55,7 @@ KPI_ERRORS = error_responses(401, 403, 404, 422)
     responses=error_responses(401, 403),
 )
 def kpi_catalogue(user: CurrentUser) -> KpiCatalogue:
-    raise not_implemented()
+    return service.catalogue()
 
 
 @router.get(
@@ -72,7 +73,8 @@ def get_kpis(
         list[KpiMetric] | None, Query(description="Metrics to compute; default all.")
     ] = None,
 ) -> KpiListResponse:
-    raise not_implemented()
+    sc = scope.build(db, user, q)
+    return KpiListResponse(context=service.context(sc), kpis=service.metric_list(sc, metric))
 
 
 @router.get(
@@ -91,7 +93,10 @@ def get_kpi(
         int, Query(ge=0, le=1000, description="Max source ids per part in `sources`.")
     ] = 200,
 ) -> KpiResponse:
-    raise not_implemented()
+    sc = scope.build(db, user, q)
+    return KpiResponse(
+        context=service.context(sc), kpi=service.single_kpi(sc, metric, source_limit)
+    )
 
 
 @router.get(
@@ -109,7 +114,8 @@ def get_kpi_sources(
     pg: PageParams,
     part: Literal["numerator", "denominator"] = "numerator",
 ) -> SourceRecordPage:
-    raise not_implemented()
+    sc = scope.build(db, user, q)
+    return service.source_records(db, sc, metric, part, pg.page, pg.page_size)
 
 
 @router.get(
@@ -120,7 +126,7 @@ def get_kpi_sources(
     responses=KPI_ERRORS,
 )
 def get_dashboard(user: CurrentUser, db: DB, q: KpiParams) -> DashboardResponse:
-    raise not_implemented()
+    return service.dashboard(scope.build(db, user, q))
 
 
 @router.get(
@@ -131,7 +137,7 @@ def get_dashboard(user: CurrentUser, db: DB, q: KpiParams) -> DashboardResponse:
     responses=KPI_ERRORS,
 )
 def get_lti_free(user: CurrentUser, db: DB, q: KpiParams) -> LtiFreeRead:
-    raise not_implemented()
+    return service.lti_free_read(scope.build(db, user, q))
 
 
 @router.get(
@@ -151,7 +157,8 @@ def get_trends(
     series_start: Annotated[date | None, Query(description="First period start.")] = None,
     series_end: Annotated[date | None, Query(description="Last period end.")] = None,
 ) -> TrendsResponse:
-    raise not_implemented()
+    sc = scope.build(db, user, q)
+    return service.trends(sc, metric, granularity, series_start, series_end)
 
 
 @router.get(
@@ -167,7 +174,7 @@ def get_comparisons(
     q: KpiParams,
     metric: Annotated[list[KpiMetric] | None, Query()] = None,
 ) -> ComparisonTableResponse:
-    raise not_implemented()
+    return service.comparison_table(scope.build(db, user, q), metric)
 
 
 @router.get(
@@ -186,7 +193,7 @@ def get_breakdown(
     dimension: BreakdownDimension,
     top_n: Annotated[int, Query(ge=1, le=20)] = 10,
 ) -> BreakdownResponse:
-    raise not_implemented()
+    return views.breakdown(db, scope.build(db, user, q), measure, dimension, top_n)
 
 
 @router.get(
@@ -197,7 +204,7 @@ def get_breakdown(
     responses=KPI_ERRORS,
 )
 def get_pyramid(user: CurrentUser, db: DB, q: KpiParams) -> PyramidResponse:
-    raise not_implemented()
+    return service.pyramid(scope.build(db, user, q))
 
 
 @router.get(
@@ -214,7 +221,7 @@ def get_leading_indicators(
     q: KpiParams,
     months: Annotated[int, Query(ge=1, le=12)] = 3,
 ) -> LeadingIndicatorsResponse:
-    raise not_implemented()
+    return views.leading_indicators(scope.build(db, user, q), months)
 
 
 @router.get(
@@ -230,7 +237,7 @@ def get_contractor_league(
     q: KpiParams,
     rollup: Annotated[bool, Query(description="Each row includes its subcontractors.")] = False,
 ) -> ContractorLeagueResponse:
-    raise not_implemented()
+    return service.contractor_league(scope.build(db, user, q), rollup)
 
 
 @router.get(
@@ -241,7 +248,7 @@ def get_contractor_league(
     responses=KPI_ERRORS,
 )
 def get_data_quality(user: CurrentUser, db: DB, q: KpiParams) -> DataQualityResponse:
-    raise not_implemented()
+    return service.data_quality(db, scope.build(db, user, q))
 
 
 @router.get(
@@ -260,7 +267,9 @@ def get_chart(
     dimension: BreakdownDimension | None = None,
     measure: BreakdownMeasure | None = None,
 ) -> ChartResponse:
-    raise not_implemented()
+    sc = scope.build(db, user, q)
+    spec = charts.chart(db, sc, chart_id, dimension, measure)
+    return ChartResponse(context=service.context(sc), chart=spec)
 
 
 @router.get(
@@ -290,4 +299,10 @@ def export_kpi_table(
     dimension: BreakdownDimension | None = None,
     measure: BreakdownMeasure | None = None,
 ) -> Response:
-    raise not_implemented()
+    sc = scope.build(db, user, q)
+    content, media, name = views.export_table(db, sc, table, format_, dimension, measure)
+    return Response(
+        content=content,
+        media_type=media,
+        headers={"Content-Disposition": f'attachment; filename="{name}"'},
+    )

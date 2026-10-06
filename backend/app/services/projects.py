@@ -250,7 +250,7 @@ def transition(
     return project
 
 
-# ---- settings --------------------------------------------------------------------------
+# ---- settings ------------------------------------------------------------------------------------
 def base_label(base: int, lang: Language) -> str:
     """Rule 31: the base is printed next to every rate."""
     return f"per {base:,} h" if lang == Language.en else f"لكل {base:,} ساعة"

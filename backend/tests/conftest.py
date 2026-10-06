@@ -1,6 +1,7 @@
 """Test fixtures: a fresh migrated test database, re-seeded before every test."""
 
 import os
+import tempfile
 
 TEST_DB = os.environ.get(
     "TEST_DATABASE_URL", "postgresql+psycopg://hse:hse@localhost:5432/hse_test"
@@ -8,6 +9,8 @@ TEST_DB = os.environ.get(
 os.environ["DATABASE_URL"] = TEST_DB
 os.environ["ENVIRONMENT"] = "test"
 os.environ.setdefault("SEED_PASSWORD", "Seed-Passw0rd!2026")
+os.environ.setdefault("STORAGE_DIR", tempfile.mkdtemp(prefix="hse-test-storage-"))
+os.environ["ANTHROPIC_API_KEY"] = ""
 
 from collections.abc import Iterator  # noqa: E402
 from pathlib import Path  # noqa: E402
@@ -25,6 +28,7 @@ from app.db.session import get_engine, get_sessionmaker  # noqa: E402
 from app.main import app  # noqa: E402
 from app.models import Contractor, Project, ProjectEngagement, Site, User, Zone  # noqa: E402
 from app.seed import seed  # noqa: E402
+from app.seed_hse import seed_data  # noqa: E402
 
 PASSWORD = os.environ["SEED_PASSWORD"]
 BACKEND = Path(__file__).resolve().parents[1]
@@ -116,3 +120,11 @@ class Ids:
 @pytest.fixture
 def ids(db: Session) -> Ids:
     return Ids(db)
+
+
+@pytest.fixture
+def hse_seed(_fresh_data: None) -> None:
+    """Phase 1 volume seed (Appendix A, 13 months); loaded only by the tests that use it."""
+    with get_sessionmaker()() as db:
+        seed_data(db)
+        db.commit()

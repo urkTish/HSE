@@ -1,7 +1,7 @@
 "use client";
 import { Menu, ShieldCheck, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState, type ReactNode } from "react";
+import { Suspense, useState, type ReactNode } from "react";
 import { Dialog as D } from "radix-ui";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
@@ -40,7 +40,7 @@ export function Shell({ children }: { children: ReactNode }) {
         {t("skipToContent")}
       </a>
       <aside
-        className="sticky top-0 hidden h-dvh w-(--sidebar-width) shrink-0 flex-col overflow-y-auto border-e border-white/5 bg-sidebar lg:flex"
+        className="sticky top-0 hidden h-dvh w-(--sidebar-width) shrink-0 print:!hidden flex-col overflow-y-auto border-e border-white/5 bg-sidebar lg:flex"
         data-testid="sidebar"
       >
         <div className="px-3 pt-3 pb-1">
@@ -72,7 +72,7 @@ export function Shell({ children }: { children: ReactNode }) {
       </D.Root>
       <div className="flex min-w-0 flex-1 flex-col">
         <header
-          className="sticky top-0 z-30 flex flex-wrap items-center gap-x-1 gap-y-0 border-b bg-surface/95 px-2 shadow-xs backdrop-blur supports-[backdrop-filter]:bg-surface/85 sm:flex-nowrap sm:gap-2 sm:px-4"
+          className="sticky top-0 z-30 flex flex-wrap print:!hidden items-center gap-x-1 gap-y-0 border-b bg-surface/95 px-2 shadow-xs backdrop-blur supports-[backdrop-filter]:bg-surface/85 sm:flex-nowrap sm:gap-2 sm:px-4"
           data-testid="topbar"
         >
           <div className="flex h-(--topbar-h) items-center lg:hidden">
@@ -92,7 +92,9 @@ export function Shell({ children }: { children: ReactNode }) {
           </div>
         </header>
         <main id="main" tabIndex={-1} className="flex-1 px-4 py-5 outline-none sm:px-6 sm:py-6 lg:px-8 lg:py-8">
-          <div className="mx-auto max-w-7xl">{children}</div>
+          <div className="mx-auto max-w-7xl">
+            <Suspense>{children}</Suspense>
+          </div>
         </main>
       </div>
     </div>

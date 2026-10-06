@@ -7,7 +7,7 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, Query, status
 
 from app.api.deps import DB, CurrentUser, PageParams
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.core.hse_enums import InspectionStatus, InspectionTimeliness, InspectionType
 from app.schemas.inspections import (
     InspectionCancel,
@@ -20,6 +20,7 @@ from app.schemas.inspections import (
     InspectionRead,
     UnplannedInspectionCreate,
 )
+from app.services import inspections as svc
 
 router = APIRouter(tags=["inspections"])
 
@@ -39,7 +40,9 @@ def list_inspection_plans(
     inspection_type: InspectionType | None = None,
     site_id: uuid.UUID | None = None,
 ) -> InspectionPlanPage:
-    raise not_implemented()
+    return svc.list_plans(
+        db, user, project_id, pg.page, pg.page_size, active, inspection_type, site_id
+    )
 
 
 @router.post(
@@ -52,7 +55,7 @@ def list_inspection_plans(
 def create_inspection_plan(
     project_id: uuid.UUID, body: InspectionPlanCreate, user: CurrentUser, db: DB
 ) -> InspectionPlanRead:
-    raise not_implemented()
+    return svc.create_plan(db, user, project_id, body)
 
 
 @router.get(
@@ -62,7 +65,7 @@ def create_inspection_plan(
     responses=error_responses(401, 403, 404),
 )
 def get_inspection_plan(plan_id: uuid.UUID, user: CurrentUser, db: DB) -> InspectionPlanRead:
-    raise not_implemented()
+    return svc.get_plan(db, user, plan_id)
 
 
 @router.patch(
@@ -74,7 +77,7 @@ def get_inspection_plan(plan_id: uuid.UUID, user: CurrentUser, db: DB) -> Inspec
 def update_inspection_plan(
     plan_id: uuid.UUID, body: InspectionPlanUpdate, user: CurrentUser, db: DB
 ) -> InspectionPlanRead:
-    raise not_implemented()
+    return svc.update_plan(db, user, plan_id, body)
 
 
 @router.get(
@@ -101,7 +104,23 @@ def list_inspections(
         "-planned_date"
     ),
 ) -> InspectionPage:
-    raise not_implemented()
+    return svc.list_page(
+        db,
+        user,
+        project_id,
+        pg.page,
+        pg.page_size,
+        statuses=status_,
+        timeliness_=timeliness,
+        plan_id=plan_id,
+        inspection_type=inspection_type,
+        site_ids=site_id,
+        engagement_ids=engagement_id,
+        assigned_to_me=assigned_to_me,
+        planned_from=planned_from,
+        planned_to=planned_to,
+        sort=sort,
+    )
 
 
 @router.post(
@@ -114,7 +133,7 @@ def list_inspections(
 def create_unplanned_inspection(
     project_id: uuid.UUID, body: UnplannedInspectionCreate, user: CurrentUser, db: DB
 ) -> InspectionRead:
-    raise not_implemented()
+    return svc.create_unplanned(db, user, project_id, body)
 
 
 @router.get(
@@ -124,7 +143,7 @@ def create_unplanned_inspection(
     responses=error_responses(401, 403, 404),
 )
 def get_inspection(inspection_id: uuid.UUID, user: CurrentUser, db: DB) -> InspectionRead:
-    raise not_implemented()
+    return svc.read(db, user, inspection_id)
 
 
 @router.post(
@@ -136,7 +155,7 @@ def get_inspection(inspection_id: uuid.UUID, user: CurrentUser, db: DB) -> Inspe
 def complete_inspection(
     inspection_id: uuid.UUID, body: InspectionComplete, user: CurrentUser, db: DB
 ) -> InspectionRead:
-    raise not_implemented()
+    return svc.complete(db, user, inspection_id, body)
 
 
 @router.post(
@@ -148,4 +167,4 @@ def complete_inspection(
 def cancel_inspection(
     inspection_id: uuid.UUID, body: InspectionCancel, user: CurrentUser, db: DB
 ) -> InspectionRead:
-    raise not_implemented()
+    return svc.cancel(db, user, inspection_id, body)

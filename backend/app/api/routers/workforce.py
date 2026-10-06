@@ -8,7 +8,7 @@ from fastapi import APIRouter, File, Form, Path, Query, Response, UploadFile, st
 
 from app.api.deps import DB, CurrentUser, PageParams
 from app.core.enums import ExportFormat
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.core.hse_enums import ImportMode, ImportStatus, Shift, WorkforceSource, WorkforceStatus
 from app.schemas.workforce import (
     MONTH,
@@ -26,6 +26,8 @@ from app.schemas.workforce import (
     WorkforceReturnUpdate,
     WorkforceTransitionRequest,
 )
+from app.services import workforce as svc
+from app.services import workforce_import as imp
 
 router = APIRouter(tags=["workforce"])
 
@@ -57,7 +59,25 @@ def list_workforce_returns(
     has_warnings: bool | None = None,
     sort: ReturnSort = "-work_date",
 ) -> WorkforceReturnPage:
-    raise not_implemented()
+    return svc.list_page(
+        db,
+        user,
+        project_id,
+        pg.page,
+        pg.page_size,
+        date_from=date_from,
+        date_to=date_to,
+        site_ids=site_id,
+        zone_id=zone_id,
+        engagement_ids=engagement_id,
+        include_subcontractors=include_subcontractors,
+        shift=shift,
+        statuses=status_,
+        source=source,
+        import_batch_id=import_batch_id,
+        has_warnings=has_warnings,
+        sort=sort,
+    )
 
 
 @router.post(
@@ -74,7 +94,7 @@ def list_workforce_returns(
 def create_workforce_return(
     project_id: uuid.UUID, body: WorkforceReturnCreate, user: CurrentUser, db: DB
 ) -> WorkforceReturnRead:
-    raise not_implemented()
+    return svc.create(db, user, project_id, body)
 
 
 @router.get(
@@ -84,7 +104,7 @@ def create_workforce_return(
     responses=error_responses(401, 403, 404),
 )
 def get_workforce_return(return_id: uuid.UUID, user: CurrentUser, db: DB) -> WorkforceReturnRead:
-    raise not_implemented()
+    return svc.get(db, user, return_id)
 
 
 @router.patch(
@@ -96,7 +116,7 @@ def get_workforce_return(return_id: uuid.UUID, user: CurrentUser, db: DB) -> Wor
 def update_workforce_return(
     return_id: uuid.UUID, body: WorkforceReturnUpdate, user: CurrentUser, db: DB
 ) -> WorkforceReturnRead:
-    raise not_implemented()
+    return svc.update(db, user, return_id, body)
 
 
 @router.delete(
@@ -106,7 +126,8 @@ def update_workforce_return(
     responses=error_responses(401, 403, 404, 409),
 )
 def delete_workforce_return(return_id: uuid.UUID, user: CurrentUser, db: DB) -> Response:
-    raise not_implemented()
+    svc.delete(db, user, return_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post(
@@ -118,7 +139,7 @@ def delete_workforce_return(return_id: uuid.UUID, user: CurrentUser, db: DB) -> 
 def transition_workforce_return(
     return_id: uuid.UUID, body: WorkforceTransitionRequest, user: CurrentUser, db: DB
 ) -> WorkforceReturnRead:
-    raise not_implemented()
+    return svc.transition(db, user, return_id, body.to_status, body.reason)
 
 
 @router.post(
@@ -130,7 +151,7 @@ def transition_workforce_return(
 def bulk_verify_workforce_returns(
     project_id: uuid.UUID, body: BulkVerifyRequest, user: CurrentUser, db: DB
 ) -> BulkVerifyResult:
-    raise not_implemented()
+    return svc.bulk_verify(db, user, project_id, body.ids)
 
 
 @router.get(
@@ -145,7 +166,7 @@ def list_workforce_months(
     db: DB,
     year: Annotated[int | None, Query(ge=2000, le=2100)] = None,
 ) -> WorkforceMonthList:
-    raise not_implemented()
+    return svc.list_months(db, user, project_id, year)
 
 
 @router.post(
@@ -161,7 +182,7 @@ def lock_workforce_month(
     user: CurrentUser,
     db: DB,
 ) -> WorkforceMonthRead:
-    raise not_implemented()
+    return svc.lock(db, user, project_id, month, body.reason)
 
 
 @router.post(
@@ -178,10 +199,10 @@ def unlock_workforce_month(
     user: CurrentUser,
     db: DB,
 ) -> WorkforceMonthRead:
-    raise not_implemented()
+    return svc.unlock(db, user, project_id, month, body.reason)
 
 
-# ---- import ------------------------------------------------------------------------------------
+# ---- import --------------------------------------------------------------------------------------
 
 _TEMPLATE_RESPONSES: dict[int | str, dict[str, object]] = {
     200: {
@@ -208,7 +229,12 @@ def workforce_import_template(
     format_: Annotated[ExportFormat, Query(alias="format")] = ExportFormat.xlsx,
     headers: Annotated[Literal["en", "ar"], Query()] = "en",
 ) -> Response:
-    raise not_implemented()
+    content, media_type, filename = imp.template(format_, headers)
+    return Response(
+        content=content,
+        media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @router.post(
@@ -229,7 +255,8 @@ def create_workforce_import(
     file: Annotated[UploadFile, File(description=".csv or .xlsx")],
     mode: Annotated[ImportMode, Form()] = ImportMode.insert_only,
 ) -> WorkforceImportRead:
-    raise not_implemented()
+    content = file.file.read(imp.MAX_BYTES + 1)
+    return imp.dry_run(db, user, project_id, file.filename or "upload", content, mode)
 
 
 @router.get(
@@ -245,7 +272,7 @@ def list_workforce_imports(
     db: DB,
     status_: Annotated[ImportStatus | None, Query(alias="status")] = None,
 ) -> WorkforceImportPage:
-    raise not_implemented()
+    return imp.list_page(db, user, project_id, pg.page, pg.page_size, status_)
 
 
 @router.get(
@@ -260,7 +287,7 @@ def get_workforce_import(
     db: DB,
     include_ok_rows: bool = False,
 ) -> WorkforceImportRead:
-    raise not_implemented()
+    return imp.get(db, user, batch_id, include_ok_rows)
 
 
 @router.post(
@@ -274,7 +301,7 @@ def get_workforce_import(
     responses=error_responses(401, 403, 404, 409),
 )
 def commit_workforce_import(batch_id: uuid.UUID, user: CurrentUser, db: DB) -> WorkforceImportRead:
-    raise not_implemented()
+    return imp.commit(db, user, batch_id)
 
 
 @router.post(
@@ -284,4 +311,4 @@ def commit_workforce_import(batch_id: uuid.UUID, user: CurrentUser, db: DB) -> W
     responses=error_responses(401, 403, 404, 409),
 )
 def discard_workforce_import(batch_id: uuid.UUID, user: CurrentUser, db: DB) -> WorkforceImportRead:
-    raise not_implemented()
+    return imp.discard(db, user, batch_id)

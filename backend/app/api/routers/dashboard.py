@@ -8,13 +8,14 @@ from fastapi import APIRouter, Query
 
 from app.api.deps import DB, CurrentUser
 from app.api.kpi_params import KpiParams
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.schemas.dashboard import (
     ActionPanelResponse,
     DashboardFilters,
     DashboardPreferencesRead,
     ExpiringItemsResponse,
 )
+from app.services import dashboard as svc
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
@@ -28,7 +29,7 @@ router = APIRouter(prefix="/dashboard", tags=["dashboard"])
     responses=error_responses(401, 403, 404, 422),
 )
 def get_action_panel(user: CurrentUser, db: DB, q: KpiParams) -> ActionPanelResponse:
-    raise not_implemented()
+    return svc.action_panel(db, user, q)
 
 
 @router.get(
@@ -45,7 +46,7 @@ def get_expiring_items(
     include_overdue: bool = True,
     as_of: date | None = None,
 ) -> ExpiringItemsResponse:
-    raise not_implemented()
+    return svc.expiring_items(db, user, project_id, within_days, include_overdue, as_of)
 
 
 @router.get(
@@ -55,7 +56,7 @@ def get_expiring_items(
     responses=error_responses(401, 403),
 )
 def get_dashboard_preferences(user: CurrentUser, db: DB) -> DashboardPreferencesRead:
-    raise not_implemented()
+    return svc.get_preferences(db, user)
 
 
 @router.put(
@@ -67,4 +68,4 @@ def get_dashboard_preferences(user: CurrentUser, db: DB) -> DashboardPreferences
 def put_dashboard_preferences(
     body: DashboardFilters, user: CurrentUser, db: DB
 ) -> DashboardPreferencesRead:
-    raise not_implemented()
+    return svc.put_preferences(db, user, body)

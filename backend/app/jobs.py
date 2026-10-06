@@ -15,6 +15,7 @@ from app.core.clock import local_date, now, today
 from app.core.config import get_settings
 from app.core.enums import AuditAction, AuditResult, EntityType, NotificationKind, Role, UserStatus
 from app.db.session import get_sessionmaker
+from app.hse_jobs import PHASE1_JOBS
 from app.models import (
     Contractor,
     ProjectEngagement,
@@ -290,6 +291,7 @@ JOBS: dict[str, Callable[[Session], dict[str, Any]]] = {
     "cr_expiry_alerts": cr_expiry_alerts,
     "role_assignment_ending": role_assignment_ending,
     "last_manager_risk": last_manager_risk,
+    **PHASE1_JOBS,
 }
 
 
