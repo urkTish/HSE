@@ -19,7 +19,9 @@ class Role(StrEnum):
 
 
 class Capability(StrEnum):
-    """Rows of the permission matrix (§5.10), numbered 1-19 in spec order."""
+    """Rows of the permission matrix: 1-19 Phase 0 (0-foundation §5.10), 20-45 Phase 1
+    (1-dashboard §5.10), numbered in spec order. Rows with two capabilities (23, 32, 33, 41)
+    are split into one value per action."""
 
     project_manage = "project.manage"  # 1
     project_view = "project.view"  # 2
@@ -40,6 +42,39 @@ class Capability(StrEnum):
     history_view = "history.view"  # 17
     export_lists = "export.lists"  # 18
     profile_edit_own = "profile.edit_own"  # 19
+    # ---- Phase 1 (1-dashboard §5.10) ----
+    workforce_edit = "workforce.edit"  # 20
+    workforce_import = "workforce.import"  # 21
+    workforce_verify = "workforce.verify"  # 22
+    workforce_lock = "workforce.lock"  # 23 lock month
+    workforce_unlock = "workforce.unlock"  # 23 unlock (Locked → Verified)
+    workforce_view = "workforce.view"  # 24
+    incident_report = "incident.report"  # 25
+    incident_classify = "incident.classify"  # 26
+    investigation_edit = "investigation.edit"  # 27
+    investigation_approve = "investigation.approve"  # 28
+    injury_identity_view = "injury.identity_view"  # 29
+    injury_medical_view = "injury.medical_view"  # 30
+    incident_view = "incident.view"  # 31
+    observation_create = "observation.create"  # 32
+    observation_close = "observation.close"  # 32
+    inspection_plan_manage = "inspection.plan_manage"  # 33
+    inspection_record = "inspection.record"  # 33
+    ca_create = "ca.create"  # 34
+    ca_update_own = "ca.update_own"  # 35
+    ca_verify = "ca.verify"  # 36
+    ca_approve_extension = "ca.approve_extension"  # 37 (also cancel)
+    dashboard_view = "dashboard.view"  # 38
+    breakdown_sensitive_view = "breakdown.sensitive_view"  # 39
+    ai_ask = "ai.ask"  # 40
+    monthly_report_generate = "monthly_report.generate"  # 41
+    monthly_report_review = "monthly_report.review"  # 41
+    monthly_report_publish = "monthly_report.publish"  # 41
+    monthly_report_view = "monthly_report.view"  # 41 (R = published only)
+    export_kpis = "export.kpis"  # 42
+    export_identity = "export.identity"  # 43
+    hse_settings_edit = "hse_settings.edit"  # 44
+    observer_identity_view = "observer.identity_view"  # 45
 
 
 class CapabilityScope(StrEnum):
@@ -257,6 +292,24 @@ class EntityType(StrEnum):
     role_assignment = "role_assignment"
     project_settings = "project_settings"
     audit_log = "audit_log"
+    # Phase 1
+    workforce_return = "workforce_return"
+    workforce_import_batch = "workforce_import_batch"
+    workforce_month = "workforce_month"
+    incident = "incident"
+    injury_case = "injury_case"
+    investigation = "investigation"
+    observation = "observation"
+    inspection_plan = "inspection_plan"
+    inspection = "inspection"
+    corrective_action = "corrective_action"
+    hse_meeting = "hse_meeting"
+    hse_settings = "hse_settings"
+    reference_list_item = "reference_list_item"
+    attachment = "attachment"
+    ai_answer = "ai_answer"
+    monthly_report = "monthly_report"
+    kpi = "kpi"
 
 
 class ExportDataset(StrEnum):
@@ -269,6 +322,13 @@ class ExportDataset(StrEnum):
     engagements = "engagements"
     users = "users"
     audit_log = "audit_log"
+    # Phase 1 registers (incidents: identity columns only with capability 43 + purpose)
+    workforce_returns = "workforce_returns"
+    incidents = "incidents"
+    observations = "observations"
+    inspections = "inspections"
+    corrective_actions = "corrective_actions"
+    hse_meetings = "hse_meetings"
 
 
 class ExportFormat(StrEnum):
@@ -290,3 +350,25 @@ class NotificationKind(StrEnum):
     role_assignment_ending = "role_assignment_ending"
     invite_expired = "invite_expired"
     inactive_account = "inactive_account"
+    # ---- Phase 1 (1-dashboard §7) ----
+    incident_reported = "incident_reported"
+    incident_unclassified = "incident_unclassified"
+    external_notification_due = "external_notification_due"
+    investigation_due = "investigation_due"
+    preliminary_report_missing = "preliminary_report_missing"
+    open_lti_case = "open_lti_case"
+    case_restated = "case_restated"
+    ca_assigned = "ca_assigned"
+    ca_due = "ca_due"
+    ca_overdue = "ca_overdue"
+    ca_pending_verification = "ca_pending_verification"
+    high_risk_observation_without_ca = "high_risk_observation_without_ca"
+    daily_return_missing = "daily_return_missing"
+    data_completeness_low = "data_completeness_low"
+    month_lock_approaching = "month_lock_approaching"
+    inspection_due = "inspection_due"
+    inspection_missed = "inspection_missed"
+    leading_warning = "leading_warning"
+    lti_free_milestone = "lti_free_milestone"
+    monthly_report_ready = "monthly_report_ready"
+    import_committed_with_warnings = "import_committed_with_warnings"

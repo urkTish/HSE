@@ -6,18 +6,31 @@ from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.openapi.utils import get_openapi
 from fastapi.routing import APIRoute
+from pydantic import BaseModel
+from pydantic.json_schema import models_json_schema
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.routers import (
+    ai,
+    attachments,
     audit,
     auth,
     contractors,
+    corrective_actions,
+    dashboard,
     exports,
     health,
+    hse_settings,
+    incidents,
+    inspections,
+    kpi,
+    meetings,
     notifications,
+    observations,
     projects,
     sites,
     users,
+    workforce,
 )
 from app.core.config import API_PREFIX, CONTRACT_VERSION, get_settings
 from app.core.errors import (
@@ -27,9 +40,11 @@ from app.core.errors import (
     validation_exception_handler,
 )
 from app.core.middleware import RequestContextMiddleware
+from app.schemas.ai import AiStreamEvent
 
 DESCRIPTION = """
-HSE platform API — Phase 0 Foundation (spec `docs/specs/0-foundation.md` v1.0).
+HSE platform API — Phase 0 Foundation (spec `docs/specs/0-foundation.md` v1.0) and Phase 1
+Dashboard & core data with AI (spec `docs/specs/1-dashboard.md` v1.0).
 
 * Auth: `POST /api/v1/auth/login` sets the httpOnly SameSite=Lax cookie `hse_session` (JWT) and
   returns `{access_token, user}`. Send the cookie or `Authorization: Bearer <token>`.
@@ -37,7 +52,16 @@ HSE platform API — Phase 0 Foundation (spec `docs/specs/0-foundation.md` v1.0)
   403 forbidden, 404 not found / out of scope, 409 conflict / invalid transition, 422 validation.
 * Lists: `?page=1&page_size=50` → `{items, total, page, page_size}`.
 * Timestamps are UTC; display and day boundaries use the project timezone (Asia/Riyadh).
+* Decimals (man-hours, rates, percentages) are JSON strings, already rounded half-up per spec
+  K-R8; KPI payloads also carry the exact `display` text. The frontend never recomputes.
+* KPI/dashboard endpoints share one filter set (`project_id`, `site_id`, `zone_id`,
+  `zone_type`, `engagement_id`, `include_subcontractors`, `tier`, `period`, `anchor`,
+  `start`, `end`, `as_of`, `compare`).
+* `POST /ai/ask` streams Server-Sent Events (schema `AiStreamEvent`).
 """
+
+# Schemas used only in non-JSON responses (SSE) and therefore not reachable from any route.
+EXTRA_SCHEMAS: tuple[type[BaseModel], ...] = (AiStreamEvent,)
 
 
 def _operation_id(route: APIRoute) -> str:
@@ -63,7 +87,13 @@ def _install_openapi(app: FastAPI) -> None:
                 if resp is not None:
                     resp["description"] = "Validation error (field errors in detail.errors)."
                     resp["content"] = {"application/json": {"schema": {"$ref": ref}}}
-        comps = schema.get("components", {}).get("schemas", {})
+        comps = schema.setdefault("components", {}).setdefault("schemas", {})
+        _, extra = models_json_schema(
+            [(m, "serialization") for m in EXTRA_SCHEMAS],
+            ref_template="#/components/schemas/{model}",
+        )
+        for name, definition in extra.get("$defs", {}).items():
+            comps.setdefault(name, definition)
         comps.pop("HTTPValidationError", None)
         comps.pop("ValidationError", None)
         app.openapi_schema = schema
@@ -97,6 +127,17 @@ def create_app() -> FastAPI:
         audit,
         exports,
         notifications,
+        hse_settings,
+        workforce,
+        incidents,
+        observations,
+        inspections,
+        corrective_actions,
+        meetings,
+        attachments,
+        kpi,
+        dashboard,
+        ai,
     ):
         app.include_router(module.router, prefix=API_PREFIX)
     app.include_router(auth.public_router, prefix=API_PREFIX)

@@ -3,12 +3,22 @@
 ## Current
 - Phase: 1 — Dashboard (with AI)
 - Module: dashboard & core data (spec `docs/specs/1-dashboard.md` v1.0)
-- Step: Contract
+- Step: Contract v0.2.0 published (backend stage 1: schemas + routers, handlers return 501); backend implementation next
 
 ## Phase log
 - Phase 0 — Foundation: built, e2e green, design pass done (2026-10-05). The user asked to continue phase after phase without per-phase approval; open questions are collected below for a single review.
 
 ## Done
+
+### Backend — Phase 1 contract v0.2.0 (stage 1)
+- `docs/contracts/openapi.yaml` v0.2.0: 74 new paths (workforce returns/months/import, incidents, injury cases, investigations, external notifications, observations, inspection plans/inspections, corrective actions + extensions, HSE meetings, attachments + signed URLs, Phase 1 settings + AI transfer approval, reference lists, KPI engine endpoints, dashboard action panel/expiring items/preferences, AI ask (SSE)/insights/status/answers/logs, monthly reports). Phase 0 paths and schemas unchanged; capability enum extended with matrix rows 20-45.
+- Notes for the frontend:
+  - Decimals (man-hours, rates, %) are JSON strings already rounded half-up; every KPI value also has a `display` string. Show `display` as is (only re-map digits for `digits = arabic_indic`).
+  - All `/kpi/*`, `/dashboard/action-panel` and `/ai/insights` take the same filters: `project_id` (repeat) or `all_projects`, `site_id`, `zone_id`, `zone_type`, `engagement_id`, `include_subcontractors` (default true), `tier`, `period` (+ `anchor`, or `start`/`end` for custom), `as_of`, `compare` (default previous).
+  - Drill-down: `GET /kpi/metrics/{metric}` returns `sources.numerator/denominator` (entity type, count, first ids); `GET /kpi/metrics/{metric}/sources?part=` pages the records with `detail_path` (null if the user may not open it). Action-panel items carry `link {path, query}` that returns exactly the counted records.
+  - Charts: `GET /kpi/charts/{C1..C9}` and AI answers both use `ChartSpec` (categories, axes, series with `color_role` tokens, bands, reference lines, optional table).
+  - `POST /ai/ask` streams SSE (`AiStreamEvent`): `meta` → `status`* → `delta`* → `citations` → `chart`? → `recommendations`? → `done` (full `AiAnswer`); `error` ends the stream. Send `Accept: application/json` to get only the final answer (Prism mock serves this). Hide the assistant when `GET /ai/status` says `enabled = false` (AC73).
+  - Injury cases: identity/medical keys are absent (not null) without capability 29/30; `redacted_groups` says which. Anonymous observations omit `observer`.
 
 ### Backend — Phase 0 Foundation (contract v0.1.0)
 - Schema + Alembic migration `0001` (audit log append-only trigger, `hse_audit_purge()` SECURITY DEFINER purge path, grants for an optional `hse_app` role).
