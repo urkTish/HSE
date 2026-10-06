@@ -1,6 +1,6 @@
 # Module Spec — Phase 1: Dashboard & Core Data (with AI)
 
-**Version:** v1.0 · **Date:** 2026-10-05 · **Author:** HSE Consultant Agent · **Status:** Draft for HSE Manager review
+**Version:** v1.1 · **Date:** 2026-10-06 · **Author:** HSE Consultant Agent · **Status:** Draft for HSE Manager review
 **Builds on:** `0-foundation.md` v1.0 — reuses its entities (Project, Site, Zone, Contractor, Project engagement, User, Role assignment, Audit log), role codes (§3.8), settings (§3.9, incl. `ltifr_base_hours` default 1,000,000 and `rate_base_hours` default 200,000), calculation K1, roll-up rule (§8.3) and PDPL baseline P1–P13.
 **Covers (in build order):** 1.1 Workforce & man-hours (entry + CSV/Excel import) · 1.2 Incident register · 1.3 Observations · 1.4 Inspections · 1.5 Corrective actions · 1.6 KPI engine · 1.7 Dashboard · 1.8 AI assistant.
 **Out of scope:** PTW audits (Phase 3), training records/matrix (Phase 5), inspection checklists, toolbox-talk module, WBGT heat-stress module, GOSI e-filing (Phase 6). Placeholders are named where the dashboard will later consume them.
@@ -192,6 +192,7 @@ An `injury_illness` incident has ≥ 1 injury case. **KPIs count cases, not even
 | medical_notes | ملاحظات طبية | text(2000) | N | — | — | **sensitive** |
 | medical_attachments | مرفقات طبية | file[] | N | stored in separate encrypted bucket | — | **sensitive** |
 | gosi_case_ref | مرجع GOSI | string(30) | N | — | GOSI-TEST-0001 | personal |
+| worker_id | العامل (سجل العمال) | FK | N | v1.1: Phase 2 worker (`2-access-permits.md` §3.1) with a deployment on the incident's project; when set, pre-fills person_name, id_type/id_number, employee_no, trade and site_start_date (= deployment.mobilised_on), all still editable; no rule of this spec depends on it | WKR-000001 | personal |
 
 ### 3.5 Investigation — التحقيق (1 per incident when level ≥ 1)
 
@@ -318,6 +319,7 @@ Ref `CA-<project>-<YYYY>-<seq5>`.
 | month_lock_day | يوم قفل الشهر | int | 10 (day of next month) ASSUMPTION | 1–28 |
 | injury_identity_retention_years | مدة الاحتفاظ بهوية المصاب | int | 10 ASSUMPTION `VERIFY` | 5–30 |
 | ai_enabled | تفعيل المساعد الذكي | bool | true | — |
+| induction_register_from | بدء احتساب التعريفات من السجل | date / null | null (v1.1) | any date ≥ project start; set when Phase 2 induction register goes live on the project (K-38) |
 
 ### 3.11 Reference lists (seeded enums, EN/AR, editable by HSE Manager — codes immutable)
 
@@ -526,7 +528,8 @@ Model: default `claude-sonnet-5-5`; `claude-opus-5-5` for monthly report draftin
 | T10 | `get_data_quality` | period, filters | completeness % and missing engagement-days, provisional cases, late reports, restated periods, investigations overdue |
 | T11 | `get_lti_free` | filters, as_of | days, man-hours, last LTI date and ref, run start basis |
 | T12 | `get_settings_and_targets` | project_id | bases, thresholds, targets, heat season, new_starter_days |
-| T13 | `get_leading_warnings` | project_id, months | backend-computed warnings E1–E4 (§6.9) with inputs |
+| T13 | `get_leading_warnings` | project_id, months | backend-computed warnings E1–E4 (§6.9) and, v1.1, E5–E7 (`2-access-permits.md` §6.9) with inputs |
+| T14 | `get_access_kpis` (v1.1) | project_ids, period, filters {site_ids, zone_ids, engagement_ids, include_descendants, gate_ids}, metrics[] (K-38, K-48…K-60, K-53b), group_by {kind, reason_code, contractor, zone, gate, month} | aggregates only, per `2-access-permits.md` §6.8 and KA-5: value, numerator, denominator, breakdown rows; no names, ID numbers, worker_no, photos or plates |
 
 **Rules:**
 - AI-1. Every numeric statement (count, rate, %, date, delta) in an answer must come verbatim (after display rounding) from a tool result in the same conversation turn. The model does not do its own arithmetic; derived comparisons must be requested from tools (T1/T2/T9 return deltas and ratios).
@@ -547,13 +550,13 @@ Model: default `claude-sonnet-5-5`; `claude-opus-5-5` for monthly report draftin
 - AI-16. Logging: question, tool calls (name, params), tool result hashes, answer, grounding-check result, model, tokens and latency are logged per turn; retention 12 months ASSUMPTION; visible to hse_manager.
 - AI-17. Rate limit: 60 questions/user/day; monthly report generation 10/project/month ASSUMPTION.
 - AI-18. If the AI provider is unavailable the dashboard is unaffected; the assistant shows "AI unavailable" — never cached or fabricated answers.
-- AI-19. **Monthly report draft** (EN and AR versions; opus model) — numeric tables are rendered by the backend from T1–T13 outputs, the model writes narrative only; structure:
+- AI-19. **Monthly report draft** (EN and AR versions; opus model) — numeric tables are rendered by the backend from T1–T14 outputs, the model writes narrative only; structure:
   1. Cover: project, month, bases, prepared by (user), status "DRAFT — AI-assisted".
   2. Executive summary (≤ 150 words): headline numbers, LTI-free days/hours, top 3 issues, top 3 positives.
   3. KPI table: each K-metric for month, previous month, SPLY, YTD, R12, target, with Δ.
   4. Manpower & exposure: man-hours and average/peak headcount by contractor and tier; direct vs subcontractor; data completeness.
   5. Lagging indicators: safety pyramid; de-identified list of recordable cases and HiPo events (ref, date, contractor, category, mechanism, short description).
-  6. Leading indicators: observations, inspections compliance, toolbox talks, training h/worker, HSE meetings, CA closure; warnings E1–E4.
+  6. Leading indicators: observations, inspections compliance, toolbox talks, training h/worker, HSE meetings, CA closure; access indicators (K-49, K-53, K-54, K-59, K-57) on projects with `induction_register_from` set; warnings E1–E7.
   7. Contractor performance table (MH, TRI, TRIR, LTIFR, NM, unsafe obs, overdue CAs) — ranking only if each contractor's man-hours ≥ low_exposure_hours, else flagged.
   8. Investigations & root-cause themes (counts by ICAM level/code; overdue investigations).
   9. Corrective actions: raised/closed/on-time %, overdue ageing, control-level mix (% engineering-or-higher).
@@ -642,7 +645,7 @@ Notation: MH = Σ man_hours in scope and period (§5.6); B_L = `ltifr_base_hours
 | K-35b | Inspections done / عدد عمليات التفتيش المنجزة | completed (planned + unplanned) with completed_at in period | count | higher |
 | K-36 | Toolbox talks & attendance / اجتماعات التوعية والحضور | Σ toolbox_talks; Σ toolbox_attendees | count | higher |
 | K-37 | Training hours per worker / ساعات التدريب لكل عامل | Σ training_hours ÷ K-03 | h, 2 dp | higher |
-| K-38 | Inductions / التعريفات | Σ inductions | count | — |
+| K-38 | Inductions / التعريفات | v1.1: for days d < `induction_register_from` (or when it is null): Σ daily-return inductions; for d ≥ `induction_register_from`: n(Phase 2 induction records with course type `general_site`, result passed, local delivered date = d). Period value = sum over its days. Other induction types are shown as a breakdown, not in the value. If the period contains days ≥ the date and |register − daily return| > 5 % for those days, the tile shows a reconciliation note ASSUMPTION | count | — |
 | K-39 | HSE meeting attendance % / نسبة حضور اجتماعات السلامة | Σ attended ÷ Σ invited × 100 (meetings held in period); meetings held ÷ planned × 100 | % | higher |
 | K-40 | CAs raised / closed / الإجراءات المنشأة والمغلقة | created_at in period; verified_at in period | count | — |
 | K-41 | **CA on-time closure %** / نسبة إغلاق الإجراءات في الموعد | n(due_date in period, ≤ as_of, status Closed, completed_at local date ≤ due_date) ÷ n(due_date in period, ≤ as_of, status ≠ Cancelled) × 100 | % | higher |
@@ -691,6 +694,7 @@ Evaluated for each complete month M per project (and per tier-1 contractor tree)
 - **E2** Inspection compliance K-34 < 80 % in two consecutive months ASSUMPTION.
 - **E3** Unsafe share of observations > 40 % in M with ≥ 50 observations ASSUMPTION.
 - **E4** ≥ 2 HiPo events in M, or a repeat event (same mechanism + same contractor tree within 90 days).
+- **E5–E7** (v1.1, defined in `2-access-permits.md` §6.9): E5 induction coverage K-49 below `induction_coverage_warning_pct`; E6 gate denial rate K-53 ≥ 2 × prior-3-month mean and ≥ 1.00 %; E7 ≥ 1 OFF-05 runway-incursion driving offence or ≥ 3 ADP suspensions in M. Same job, scope (project and tier-1 tree) and alert as E1–E4.
 
 ### 6.10 Worked examples (exact expected values — backend unit tests must match)
 
@@ -890,7 +894,7 @@ Expected: K-41 = 1 ÷ 4 = **25.0 %**; K-42 = **2** (both in the 8–30 bucket); 
 | Data completeness < threshold for previous month | HSE Officer; HSE Manager | 3rd day of month | In-app |
 | Month lock approaching | HSE Officers; Contractor HSE Reps | 3 days before month_lock_day | In-app |
 | Inspection due / missed | assignee; HSE Officer on Missed | On planned date 07:00; at Missed | In-app |
-| Leading-indicator warning E1–E4 raised | HSE Manager; HSE Officers; Contractor HSE Rep of affected tree | Monthly job on 2nd day of month | In-app + email |
+| Leading-indicator warning E1–E7 raised | HSE Manager; HSE Officers; Contractor HSE Rep of affected tree | Monthly job on 2nd day of month | In-app + email |
 | LTI-free milestone (1, 2, 5, 10 million h; 100/365 days) | HSE Manager; HSE Officers | On reaching | In-app |
 | Monthly report draft ready | HSE Officer; HSE Manager | When generated | In-app |
 | Import committed with warnings | HSE Officers (verifiers) | On commit | In-app |
@@ -914,7 +918,8 @@ Alert texts never contain injured names (P6); they contain the incident ref and 
    - C7 Breakdowns (switchable dimension, §6.8): mechanism, agency, body part, nature, activity, root cause, site/zone, airside vs landside, shift, hour band, weekday, days-on-site band.
    - C8 Heat-season view: injury cases and heat-related cases by month with heat_season band shading.
    - C9 CA ageing (buckets) and control-level mix.
-6. **Action panel** (counts, each opens a pre-filtered list): overdue CAs (by contractor); CAs pending verification > 3 days; investigations overdue; incidents unclassified > 24 h; external notifications due/overdue; open LTI cases without rtw_date; missed inspections (last 7 days); missing daily returns (yesterday); high-risk unsafe observations without CA; leading warnings E1–E4 active.
+6. **Action panel** (counts, each opens a pre-filtered list): overdue CAs (by contractor); CAs pending verification > 3 days; investigations overdue; incidents unclassified > 24 h; external notifications due/overdue; open LTI cases without rtw_date; missed inspections (last 7 days); missing daily returns (yesterday); high-risk unsafe observations without CA; leading warnings E1–E7 active; v1.1: Phase 2 access items (`2-access-permits.md` §8.3).
+   **Expiring-items panel** (`GET /dashboard/expiring-items`): kinds ca_due, investigation_due, external_notification_due, inspection_planned, month_lock and, v1.1, induction_expiry, reinduction_due, worker_id_expiry, airport_pass_expiry, bg_recheck_due (hse_manager/hse_officer only), adp_expiry, adp_suspension_end, avp_expiry, vehicle_document_expiry, wap_expiry, notam_expiry, obstacle_clearance_expiry, pass_return_due; item fields and name rules per `2-access-permits.md` §8.2.
 7. **AI panel:** "Ask about your HSE data" input, suggested questions, and "Draft monthly report" button (capability 41).
 
 ### 8.2 Feeds to later phases
@@ -1094,3 +1099,4 @@ Use the W3 table for MH and case counts. Contractor man-hour share per month: RA
 
 ### Change log
 - v1.0 (2026-10-05) — first issue.
+- v1.1 (2026-10-06) — changes required by Phase 2 (`2-access-permits.md` v1.0); no existing rule, formula or worked example changes value: (1) §3.4 optional `worker_id` on injury case; (2) §3.10 new setting `induction_register_from` and §6.1 K-38 counts passed `general_site` induction-register records from that date (daily returns before it; null = daily returns only, so W-examples are unchanged); (3) §8.1 expiring-items panel gains 13 Phase 2 kinds and the action panel Phase 2 items; (4) §5.9 AI tool T14 `get_access_kpis`, T13 returns E5–E7, monthly report uses T1–T14; (5) §6.9/§7/§8.1 warnings E5–E7.
