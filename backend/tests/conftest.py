@@ -8,6 +8,7 @@ TEST_DB = os.environ.get(
 )
 os.environ["DATABASE_URL"] = TEST_DB
 os.environ["ENVIRONMENT"] = "test"
+os.environ["KPI_CACHE_SECONDS"] = "0"  # tests swap databases under the process; see test_kpi_cache
 os.environ.setdefault("SEED_PASSWORD", "Seed-Passw0rd!2026")
 os.environ.setdefault("STORAGE_DIR", tempfile.mkdtemp(prefix="hse-test-storage-"))
 os.environ["ANTHROPIC_API_KEY"] = ""
@@ -136,7 +137,7 @@ ACCESS_TEMPLATE = "hse_test_access_tpl"
 
 
 def _admin_exec(*statements: str) -> None:
-    from sqlalchemy import create_engine  # noqa: PLC0415
+    from sqlalchemy import create_engine
 
     url = TEST_DB.rsplit("/", 1)[0] + "/postgres"
     eng = create_engine(url, isolation_level="AUTOCOMMIT")
@@ -162,7 +163,7 @@ def _terminate(name: str) -> str:
 @pytest.fixture(scope="session")
 def _access_template(_migrated: None) -> str:
     """Phase 0 + Phase 1 + Phase 2 Appendix A seed, saved once as a template database."""
-    from app.seed_access import seed_access_data  # noqa: PLC0415
+    from app.seed_access import seed_access_data
 
     tables = ", ".join(t.name for t in Base.metadata.sorted_tables)
     with get_engine().begin() as conn:
@@ -199,9 +200,9 @@ def access_seed(_fresh_data: None, _access_template: str) -> None:
 @pytest.fixture
 def noon() -> Iterator[None]:
     """Pin the clock to Appendix A "today" (2026-10-06 12:00 Asia/Riyadh = 09:00Z)."""
-    from datetime import UTC, datetime  # noqa: PLC0415
+    from datetime import UTC, datetime
 
-    from app.core.clock import set_now  # noqa: PLC0415
+    from app.core.clock import set_now
 
     set_now(datetime(2026, 10, 6, 9, 0, tzinfo=UTC))
     yield

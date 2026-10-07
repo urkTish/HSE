@@ -179,6 +179,33 @@ def _expiring(until: date | None, d: date) -> bool:
 # ---- inductions ----------------------------------------------------------------------------------
 
 
+def _any_course(
+    db: Session,
+    worker_id: uuid.UUID,
+    project_id: uuid.UUID,
+    courses: dict[str, InductionCourse],
+    kind: InductionType,
+    at: datetime,
+    s: AccessSettings,
+) -> list[Item]:
+    """GC-4 site gate / visitors: any Valid induction of an active course of that type
+    (code GEN preferred); when none is valid, the preferred course's failure is reported."""
+    cands = sorted(
+        (c for c in courses.values() if c.induction_type == kind and c.active),
+        key=lambda c: (c.code != "GEN", c.created_at),
+    )
+    if not cands:
+        return [Item(RK.induction, "GEN" if kind == InductionType.general_site else None,
+                     RS.not_met, G.INDUCTION_MISSING)]  # fmt: skip
+    first: list[Item] | None = None
+    for c in cands:
+        res = induction_item(db, worker_id, project_id, c, c.code, at, s)
+        if all(i.status != RS.not_met for i in res):
+            return res
+        first = first if first is not None else res
+    return first or []
+
+
 def induction_item(
     db: Session,
     worker_id: uuid.UUID,
@@ -448,16 +475,18 @@ def evaluate(
             select(InductionCourse).where(InductionCourse.project_id == zone.project_id)
         )
     }
-    if worker.person_type == WorkerPersonType.visitor:
-        codes = [c.code for c in courses.values() if c.induction_type == InductionType.visitor][:1]
-    elif site_only:
-        codes = [
-            c.code for c in courses.values() if c.induction_type == InductionType.general_site
-        ][:1]
+    if worker.person_type == WorkerPersonType.visitor or site_only:
+        kind = (
+            InductionType.visitor
+            if worker.person_type == WorkerPersonType.visitor
+            else InductionType.general_site
+        )
+        items.extend(_any_course(db, worker.id, zone.project_id, courses, kind, at, s))
     else:
-        codes = list(profiles.ensure(db, zone).required_inductions or [])
-    for code in codes:
-        items.extend(induction_item(db, worker.id, zone.project_id, courses.get(code), code, at, s))
+        for code in list(profiles.ensure(db, zone).required_inductions or []):
+            items.extend(
+                induction_item(db, worker.id, zone.project_id, courses.get(code), code, at, s)
+            )
     if site_only:
         return ev
     prof = profiles.ensure(db, zone)

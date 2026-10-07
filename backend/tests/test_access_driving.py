@@ -41,7 +41,9 @@ def adp_body(db: Session, name: str, category: str) -> dict[str, object]:
 
 def issue_adp(api: Api, ids: Ids, db: Session, name: str, category: str, rtf: bool) -> object:
     n = api.as_("noura.qahtani")
-    res = n.post(f"{API}/projects/{ids.project('ANIA-EXP')}/adps", json=adp_body(db, name, category))
+    res = n.post(
+        f"{API}/projects/{ids.project('ANIA-EXP')}/adps", json=adp_body(db, name, category)
+    )
     assert res.status_code == 201, res.text
     aid = res.json()["id"]
     res = n.patch(
@@ -183,10 +185,12 @@ def test_P2AC39_checklist_na_not_allowed(api: Api, ids: Ids, db: Session) -> Non
     )
     assert res.status_code == 201, res.text
     aid = res.json()["id"]
-    checklist = {k: "pass" for k in (
+    items = (
         "amber_beacon", "company_marking", "chequered_flag_or_marking", "radio_fitted",
         "fire_extinguisher", "spill_kit", "fod_bin", "tyres_brakes", "reverse_alarm", "lights",
-        "no_loose_items", "height_marking")}  # fmt: skip
+        "no_loose_items", "height_marking",
+    )  # fmt: skip
+    checklist = dict.fromkeys(items, "pass")
     checklist["amber_beacon"] = "n.a."
     res = n.patch(
         f"{API}/avps/{aid}",

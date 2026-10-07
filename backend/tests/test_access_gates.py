@@ -11,6 +11,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.access_enums import (
+    CrewMemberStatus,
+    CrewRole,
     GateResult,
     PairingState,
     PairingWaitingFor,
@@ -20,9 +22,19 @@ from app.core.access_enums import (
 from app.core.clock import set_now
 from app.core.enums import NotificationKind, Role
 from app.main import app
-from app.models import AccessSettings, GateCheck, GatePairing, QrToken, RoleAssignment
+from app.models import AccessSettings, GateCheck, GatePairing, QrToken, RoleAssignment, WapCrew
 from app.services.access import common, gates
-from tests.access_helpers import API, avp, deployment, gate, notifications, project_id, riyadh
+from tests.access_helpers import (
+    API,
+    avp,
+    deployment,
+    gate,
+    notifications,
+    project_id,
+    riyadh,
+    wap,
+    worker,
+)
 from tests.conftest import Api, Ids
 
 pytestmark = pytest.mark.usefixtures("access_seed", "noon")
@@ -70,6 +82,19 @@ def codes(r: dict[str, Any]) -> list[str]:
     return [x["code"] for x in r["reasons"]]
 
 
+# Appendix A puts training_course AVSEC-AWR on every airside zone profile with hook policy
+# `warn`, so GC-5 turns every otherwise clean airside scan into GRANTED_WITH_WARNING
+# (HOOK_NOT_AVAILABLE). The ACs' "GRANTED" is read as "no DENY reason".
+HOOK = "HOOK_NOT_AVAILABLE"
+
+
+def granted(r: dict[str, Any], *expected_warn: str) -> bool:
+    return r["result"] in ("GRANTED", "GRANTED_WITH_WARNING") and set(codes(r)) <= {
+        HOOK,
+        *expected_warn,
+    }
+
+
 def test_P2AC54_induction_expired_no_id_or_nationality(api: Api, db: Session) -> None:
     n = api.as_("noura.qahtani")
     r = scan(n, db, "G-AAP3", "Z-APR-21", payload=card(db, "Suman Tamang"))
@@ -105,11 +130,12 @@ def test_P2AC56_escort_pairing_within_and_after_timeout(api: Api, db: Session) -
     pid = r["pairing"]["pairing_id"]
     set_now(riyadh(2026, 10, 6, 23, 31, 59))
     r2 = scan(n, db, "G-AAP3", "Z-TWB", payload=card(db, "Tariq Mahmood"), pairing_id=pid)
-    assert r2["result"] == "GRANTED", r2
+    assert granted(r2), r2
     (abdul,) = r2["paired_results"][:1]
-    assert abdul["display_ref"] == deployment(db, "Abdul Karim Mia").worker.worker_no
+    assert abdul["display_ref"] == worker(db, "Abdul Karim Mia").worker_no
     assert abdul["result"] == "GRANTED_WITH_WARNING"
-    assert [x["code"] for x in abdul["reasons"]] == ["EXPIRING_7D"]
+    assert "EXPIRING_7D" in [x["code"] for x in abdul["reasons"]]
+    assert {x["severity"] for x in abdul["reasons"]} == {"warn"}
 
     set_now(riyadh(2026, 10, 6, 23, 40))
     r = scan(n, db, "G-AAP3", "Z-TWB", payload=card(db, "Abdul Karim Mia"))
@@ -122,7 +148,8 @@ def test_P2AC56_escort_pairing_within_and_after_timeout(api: Api, db: Session) -
     assert body["pairing"]["state"] == "timed_out"
     (final,) = body["results"]
     assert final["result"] == "DENIED"
-    assert [x["code"] for x in final["reasons"]] == ["ESCORT_REQUIRED"]
+    deny = [x["code"] for x in final["reasons"] if x["severity"] == "deny"]
+    assert deny == ["ESCORT_REQUIRED"]
 
 
 def test_pairing_timeout_job_writes_denied_row(api: Api, db: Session) -> None:
@@ -137,12 +164,11 @@ def test_pairing_timeout_job_writes_denied_row(api: Api, db: Session) -> None:
     db.commit()
     pr = db.get(GatePairing, pid)
     assert pr is not None and pr.state == PairingState.timed_out
-    rows = list(
-        db.scalars(select(GateCheck).where(GateCheck.pairing_id == pid, GateCheck.final))
-    )
+    rows = list(db.scalars(select(GateCheck).where(GateCheck.pairing_id == pid, GateCheck.final)))
     assert len(rows) == 1
     assert rows[0].result == GateResult.DENIED
-    assert rows[0].reason_codes == ["ESCORT_REQUIRED"]
+    assert rows[0].first_deny_reason == "ESCORT_REQUIRED"
+    assert rows[0].reason_codes[0] == "ESCORT_REQUIRED"
     assert rows[0].occurred_at == pr.expires_at
 
 
@@ -168,6 +194,19 @@ def test_P2AC57_escort_ratio_exceeded(api: Api, db: Session) -> None:
                 subjects=[],
             )
         )
+    # the visitor is listed on WAP-0033 (Z-APR-21) as escorted by Mahmoud (ZP-4 step 7)
+    db.add(
+        WapCrew(
+            id=uuid.uuid4(),
+            wap_id=wap(db, "2026-0033").id,
+            worker_id=worker(db, "David Brown").id,
+            crew_role=CrewRole.worker,
+            escort_worker_id=mahmoud.worker_id,
+            status=CrewMemberStatus.included,
+            exclusion_reasons=[],
+            escorted=True,
+        )
+    )
     db.commit()
     n = api.as_("noura.qahtani")
     r = scan(n, db, "G-AAP3", "Z-APR-21", payload=card(db, "David Brown"))
@@ -189,7 +228,7 @@ def test_P2AC58_wap_window(api: Api, db: Session) -> None:
     set_now(riyadh(2026, 10, 7, 4, 30))
     n = api.as_("noura.qahtani")
     r = scan(n, db, "G-AAP3", "Z-TWB", payload=card(db, "Rajesh Nair"))
-    assert r["result"] == "GRANTED", r
+    assert granted(r), r
 
 
 def test_P2AC59_demobilised_and_lost_card(api: Api, db: Session) -> None:
@@ -211,7 +250,7 @@ def test_P2AC59_demobilised_and_lost_card(api: Api, db: Session) -> None:
     db.commit()
     r = scan(n, db, "G-AAP3", "Z-APR-21", payload=old_payload)
     assert r["result"] == "DENIED" and codes(r) == ["CREDENTIAL_LOST"]
-    assert r["person"] is None
+    assert r.get("person") is None
     assert notifications(db, NotificationKind.revoked_token_scanned)
 
 
@@ -220,13 +259,14 @@ def test_P2AC60_vehicle_escort_vehicle_and_driver(api: Api, db: Session) -> None
     n = api.as_("noura.qahtani")
     r = scan(n, db, "G-AAP3", "Z-APR-21", printed_ref="VEH-0004")
     assert r["result"] == "PENDING_ESCORT_VEHICLE", r
-    assert "escort" not in str(r["vehicle"]).lower() or r["vehicle"]["vehicle_no"] == "VEH-0004"
+    assert r["vehicle"]["vehicle_no"] == "VEH-0004" and r["qr_kind"] is None
     pid = r["pairing"]["pairing_id"]
     r = scan(n, db, "G-AAP3", "Z-APR-21", payload=sticker(db, "VEH-0006"), pairing_id=pid)
     assert r["result"] == "PENDING_DRIVER", r
     r = scan(n, db, "G-AAP3", "Z-APR-21", payload=card(db, "Mahmoud Fathy"), pairing_id=pid)
-    assert r["result"] in ("GRANTED", "GRANTED_WITH_WARNING"), r
+    assert granted(r), r
     assert {x["result"] for x in r["paired_results"]} <= {"GRANTED", "GRANTED_WITH_WARNING"}
+    assert {x["display_ref"] for x in r["paired_results"]} >= {"VEH-0004", "VEH-0006"}
     # VEH-0002 is not on a Z-APR-21 WAP: as escort vehicle → DENIED WAP_MISSING
     r = scan(n, db, "G-AAP3", "Z-APR-21", printed_ref="VEH-0004")
     pid = r["pairing"]["pairing_id"]
@@ -252,10 +292,12 @@ def test_P2AC62_hook_warns(api: Api, db: Session) -> None:
 def test_P2AC63_out_of_scope(api: Api, db: Session) -> None:
     r = scan(api.as_("yousef.ghamdi"), db, "G-RBT-01", payload=card(db, "Bikash Rai"))
     assert r["person"]["full_name_en"] == "Bikash Rai"
+    # Ahmed has no RBT-52 assignment: at his own gate an RBT-52 card is out of scope (GC-13)
     a = api.as_("ahmed.zahrani")
-    r = scan(a, db, "G-RBT-01", payload=card(db, "Bikash Rai"))
+    assert scan(a, db, "G-RBT-01", payload=card(db, "Bikash Rai"), status=403)
+    r = scan(a, db, "G-AAP3", "Z-APR-21", payload=card(db, "Bikash Rai"))
     assert r["result"] == "DENIED" and codes(r) == ["OUT_OF_SCOPE"]
-    assert r["person"] is None and r["vehicle"] is None
+    assert r.get("person") is None and r.get("vehicle") is None
     assert "Bikash" not in str(r)
 
 
@@ -298,8 +340,10 @@ def test_P2AC66_gate_device_cannot_list_workers(api: Api, ids: Ids, db: Session)
     assert login.status_code == 200, login.text
     dev = TestClient(app)
     dev.headers["Authorization"] = f"Bearer {login.json()['access_token']}"
-    res = dev.get(f"{API}/projects/{ids.project('ANIA-EXP')}/workers")
-    assert res.status_code == 403, res.text
+    for path in ("/workers", f"/projects/{ids.project('ANIA-EXP')}/deployments"):
+        res = dev.get(f"{API}{path}")
+        assert res.status_code == 403, res.text
+        assert res.json()["detail"]["code"] == "GATE_DEVICE_FORBIDDEN"
     r = scan(dev, db, "G-AAP3", "Z-APR-21", payload=card(db, "Suman Tamang"))
     assert r["result"] == "DENIED"
     other = gate(db, "G-ANIA-01")

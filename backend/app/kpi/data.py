@@ -6,18 +6,23 @@ closure). Eligibility of injury cases for rates (I-4) and of events (status ∉ 
 work related) is decided here from the project settings; the engine never sees settings.
 """
 
+import copy
 import hashlib
+import threading
+import time
 import uuid
 from collections.abc import Iterable
 from dataclasses import replace
 from datetime import date
 from decimal import Decimal
+from typing import Any
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import case, func, or_, select
-from sqlalchemy.orm import Session
+from sqlalchemy import case, event, func, or_, select
+from sqlalchemy.orm import ORMExecuteState, Session
 
 from app.core.access_enums import InductionResult, InductionType
+from app.core.config import get_settings
 from app.core.hse_enums import (
     CaStatus,
     IncidentStatus,
@@ -82,7 +87,81 @@ def case_eligible(incident: Incident, c: InjuryCase, s: HseSettings) -> tuple[bo
     return True, None
 
 
+# ---- per-process facts cache --------------------------------------------------------------------
+
+_CACHE: dict[tuple[uuid.UUID, ...], tuple[float, int, Facts]] = {}
+_CACHE_LOCK = threading.Lock()
+_GENERATION = 0
+
+
+def _mark_write(session: Session, *_: Any) -> None:
+    session.info["kpi_wrote"] = True
+
+
+def _mark_statement(state: ORMExecuteState) -> None:
+    if not state.is_select:
+        state.session.info["kpi_wrote"] = True
+
+
+def _after_commit(session: Session) -> None:
+    global _GENERATION  # noqa: PLW0603
+    if session.info.pop("kpi_wrote", False):
+        with _CACHE_LOCK:
+            _GENERATION += 1
+            _CACHE.clear()
+
+
+event.listen(Session, "after_flush", _mark_write)
+event.listen(Session, "do_orm_execute", _mark_statement)
+event.listen(Session, "after_commit", _after_commit)
+
+
+def clear_cache() -> None:
+    with _CACHE_LOCK:
+        _CACHE.clear()
+
+
 def load(
+    db: Session,
+    projects: Iterable[Project],
+    hse: dict[uuid.UUID, HseSettings],
+) -> Facts:
+    """Facts for these projects, cached for `kpi_cache_seconds` (see Settings). The cached
+    Facts are read-only for every consumer; the lazy access facts load at most once."""
+    plist = list(projects)
+    ttl = get_settings().kpi_cache_seconds
+    if ttl <= 0:
+        return _load(db, plist, hse)
+    key = tuple(sorted(p.id for p in plist))
+    at = time.monotonic()
+    with _CACHE_LOCK:
+        hit = _CACHE.get(key)
+        gen = _GENERATION
+    if hit is not None and hit[1] == gen and at - hit[0] < ttl:
+        shared = hit[2]
+        facts = copy.copy(shared)  # own lazy loader on this request's session
+        if shared._access is None:
+            facts.access_loader = _access_loader(db, key, shared)
+        return facts
+    facts = _load(db, plist, hse)
+    with _CACHE_LOCK:
+        if gen == _GENERATION:
+            if len(_CACHE) > 64:
+                _CACHE.clear()
+            _CACHE[key] = (at, gen, facts)
+    return facts
+
+
+def _access_loader(db: Session, pids: tuple[uuid.UUID, ...], shared: Facts) -> Any:
+    def run() -> Any:
+        acc = load_access(db, list(pids))
+        shared.access = acc
+        return acc
+
+    return run
+
+
+def _load(
     db: Session,
     projects: Iterable[Project],
     hse: dict[uuid.UUID, HseSettings],

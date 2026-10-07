@@ -3,7 +3,7 @@
 ## Current
 - Phase: 2 — Site / Airport access permits
 - Module: site & airport access permits (spec `docs/specs/2-access-permits.md`)
-- Step: Frontend Phase 2 built against contract v0.3.0, full e2e green (104 passed); design pass next
+- Step: Backend Phase 2 stage 2 done (contract 0.3.1, frontend issues fixed); Frontend Phase 2 built against v0.3.0, e2e green (104 passed); design pass next
 
 ## Phase log
 - Phase 0 — Foundation: built, e2e green, design pass done (2026-10-05). The user asked to continue phase after phase without per-phase approval; open questions are collected below for a single review.
@@ -57,7 +57,7 @@
   - pass application (draft);
   - dashboard access band.
 
-#### Phase 2 — backend issues found by the frontend (not fixed here; backend/ is out of scope for the frontend)
+#### Phase 2 — backend issues found by the frontend (all fixed by the backend in stage 2, contract 0.3.1 — see "Backend — Phase 2 implementation" below)
 - Resolved during the run:
   - Attachments, `/kpi/access` and the Phase 2 action-panel items are now live.
   - The backend agent fixed the slow `/kpi/*` calls (all access facts were loaded on every request).
@@ -72,6 +72,20 @@
   - ADP RTF requirement (AC33) and offence entry;
   - credential suspend/revoke/reinstate screens.
   The backend tests cover these rules.
+
+### Backend — Phase 2 implementation (stage 2, contract v0.3.1)
+- All 125 Phase 2 operations are live (no more 501). Services under `app/services/access/` (workers, inductions, profiles/eligibility, passes, driving, vehicles, works, waps, credentials/lifecycle, gates, exports, dashboard items, cascades); KPI engine K-48…K-60, K-53b, C10–C12, band, E5–E7 (`app/kpi/access*.py`); AI T14 `get_access_kpis`; seed `python -m app.seed_access` (Appendix A, ~4,000 workers, 313,770 gate rows).
+- Jobs (`app/access_jobs.py`, wired in `app/scheduler.py`): `access_daily` 00:05:30, `credential_alerts` 07:00:30, `access_minute` every minute (incl. gate pairing timeouts — coordinator), `access_retention` Fri 03:30. See DECISIONS 37–38.
+- Phase 0 contractor status changes cascade to access (LC-7 suspend WAPs; LC-8 blacklist: demobilise, revoke, notify officers).
+- Tests: every AC 1–73 has a `test_P2AC<n>_…` test (`tests/test_access_*.py`), plus X1–X11, jobs, cascades, exports, attachments, the frontend follow-ups and the KPI cache. Full suite: see the run below.
+- Fixed from the frontend list above:
+  - `GET /history/{entity_type}/{id}` serves every Phase 2 entity type (D-50).
+  - The WAP read no longer sends the supervisor (or any worker_no) to callers without capability 46; expiring-item titles/refs say "Worker" for them (D-48).
+  - Site-gate / visitor induction check: any active course of the type, GEN preferred (D-47).
+  - Field errors carry `msg_ar` (D-49).
+  - KPI speed: lazy access facts + per-process facts cache (20 s, cleared on any local commit) + 4 uvicorn workers in the image/compose (`WEB_CONCURRENCY`). On the Phase 2 seed: first dashboard request ~1.7 s, following /kpi requests 0.12–0.4 s (D-42).
+  - A banned worker's card answers `WORKER_BANNED` (ZP-4 step 2, GC-6 order) (D-46).
+- Contract changes since v0.3.0 (all additive, now 0.3.1): `FieldError.msg_ar`; `gate_id` query on `/kpi/access`, `/kpi/charts/{id}`, `/kpi/metrics/{metric}`; injury-case `id_type` + `gcc_id`, `id_number` max 15; `HookRequirement.trades`; attachments and exports for the Phase 2 owners/datasets implemented (descriptions updated); `GateCheckRequest.printed_ref` accepts a typed `vehicle_no` for vehicles without an AVP. Behaviour changes the UI may notice: WAP `SOD_CONFLICT` is 422; a supervisor may be named as escort; K-53 displays 2 decimals; non-46 callers get `supervisor: null` on WAPs and "Worker" titles without worker_no.
 
 ### Backend — Phase 2 contract v0.3.0 (stage 1)
 - `docs/contracts/openapi.yaml` v0.3.0: 94 new paths / 125 operations, all returning 501 `NOT_IMPLEMENTED` until stage 2 (the Prism mock serves them now). Tags: workers, inductions, airport-passes, airside-driving, airside-works, work-area-permits, credentials, gates, access-settings; plus `GET /kpi/access`.
@@ -244,14 +258,21 @@
 - (Backend, §7) CR-expiry alerts go to reps of the contractor *and* of its parent engagements (the reps whose tree contains it). Confirm.
 - (Backend, §5.6 rule 40) Audit entries with no project (logins, contractor master changes) use an org-wide retention (`ORG_AUDIT_RETENTION_YEARS`, default 5). Confirm.
 
+- (Backend, Phase 2, spec conflict) Appendix A puts `training_course: AVSEC-AWR` on every airside zone with hook policy `warn`, so by GC-5 every clean airside scan is GRANTED_WITH_WARNING (`HOOK_NOT_AVAILABLE`) until Phase 5. AC56/AC58/AC60 say "GRANTED"; the tests accept "no DENY reason". Keep the zone hook (amber until Phase 5) or drop it from the zone profiles?
+- (Backend, Phase 2, spec conflict) §8.2 says non-46 callers see "Worker WKR-nnnnnn"; KA-4/AC72 say Viewer lists have no worker_no. We follow AC72 ("Worker", no number). Confirm.
+- (Backend, Phase 2, WA-11) A WAP supervisor may be named as an escort (Appendix A: Tariq is supervisor & escort). Confirm, or require a separate `escort` crew role.
+- (Backend, Phase 2, GC-13) A card of another project scans as DENIED `OUT_OF_SCOPE` (no card) for everyone, not only Contractor HSE Reps. Confirm.
+- (Backend, Phase 2 ASSUMPTIONS) Approved-but-uncollected passes are cancelled after 30 days; workers with no deployment for 30 days become Inactive; LC-8 revokes only credentials held through the blacklisted contractor. Confirm the numbers and scope.
+- (Backend, ops) With 4 API workers the KPI cache can show figures up to 20 s old after a write made through another worker, and the gate rate limit (120/min) is counted per worker. Acceptable for v1.0?
+
 ## Contract requests
 - (Frontend, medium) `ChartSeries.metric` (KpiMetric | null) and, for period axes, `ChartCategory.start`/`end`: lets a click on a bar/point drill into the exact records. Today the UI drills only when a series key happens to be a metric id (e.g. `K-21`) and derives the month from the category key.
 - (Frontend, low) `metric` on each pyramid layer (and one metric for RWC+JTC, e.g. a K-07/K-08 combined drill): the UI maps layers to K-05/06/07/09/12/13/30 itself; RWC_JTC drills K-07 only.
 - (Frontend, low) A capability for HSE meetings (none in §5.10): the UI gates meeting edits on `inspection.plan_manage` as an assumption.
 - (Design, low) Arabic labels the UI cannot show today: `ChartCitation.period_label_ar` / `scope_label_ar` / `base_label_ar`, `KpiValue.numerator_label_ar` / `denominator_label_ar`, and AR text in the C9 control-level table rows (the drill dialog falls back to the generic Arabic term plus the English name).
 - (Frontend, Phase 2, low) `primary_language` (and other spoken languages) on `DeploymentRead` / the worker summary used by the induction form. The UI can warn about a language mismatch before submitting, instead of only after the hook answers.
-- (Frontend, Phase 2, low) The WAP read should omit the supervisor `worker_no` / name for callers without `worker.view`, like the crew.
-- (Frontend, Phase 2, low) Arabic text for `FieldError` messages (or a stable message code the UI can translate).
+- ~~(Frontend, Phase 2, low) The WAP read should omit the supervisor `worker_no` / name for callers without `worker.view`, like the crew.~~ Done in 0.3.1 (`supervisor: null`).
+- ~~(Frontend, Phase 2, low) Arabic text for `FieldError` messages (or a stable message code the UI can translate).~~ Done in 0.3.1 (`FieldError.msg_ar`).
 - (Frontend, low priority, not blocking) `GET /contractors/{id}/engagements` (engagements of one contractor across the caller's projects) so the contractor detail page can list where a firm is engaged. Today that view would need one request per project.
 
 ## Design proposals

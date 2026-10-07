@@ -132,10 +132,10 @@ class GateCallerContext(ApiModel):
 class GateCheckRequest(StrictInput):
     """GC-2. Send `payload` (QR text) or `printed_ref` (manual fallback, e.g.
     "WKR-000002 / ANIA-EXP", "AVP-S-0118", "WAP-ANIA-EXP-2026-0031"); a vehicle without an AVP
-    has no sticker, so type its vehicle_no ("VEH-0004": PENDING_ESCORT_VEHICLE, VP-8). `zone_id` defaults to the
-    gate's single protected zone; required when the gate protects several; omitted for a site
-    gate. `pairing_id` continues an escort / driver / escort-vehicle pairing started on the
-    same device (GC-8, GC-9)."""
+    has no sticker, so type its vehicle_no ("VEH-0004": PENDING_ESCORT_VEHICLE, VP-8).
+    `zone_id` defaults to the gate's single protected zone; required when the gate protects
+    several; omitted for a site gate. `pairing_id` continues an escort / driver /
+    escort-vehicle pairing started on the same device (GC-8, GC-9)."""
 
     gate_id: uuid.UUID
     payload: str | None = Field(

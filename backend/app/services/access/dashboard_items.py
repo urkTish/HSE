@@ -1,7 +1,8 @@
 """Phase 2 additions to the dashboard expiring-items panel (§8.2) and action panel (§8.3).
 
-Both are scoped by capability 77's grant; names appear only for capability 46 holders, other
-callers see "Worker WKR-nnnnnn" (KA-4). Background rechecks show only to capability 56."""
+Both are scoped by capability 77's grant; names and worker_no appear only for capability 46
+holders, other callers see "Worker" (KA-4 / AC72 over §8.2's "Worker WKR-nnnnnn").
+Background rechecks show only to capability 56."""
 
 import uuid
 from collections import Counter
@@ -104,7 +105,8 @@ class _Ctx:
             return "Worker", "عامل"
         if self.names:
             return f"{w.worker_no} {w.full_name_en}", f"{w.worker_no} {w.full_name_ar}"
-        return f"Worker {w.worker_no}", f"العامل {w.worker_no}"
+        # KA-4 / AC72: without capability 46 lists carry no names and no worker_no either
+        return "Worker", "عامل"
 
 
 def _item(
@@ -193,7 +195,8 @@ def expiring(
             continue
         c._workers[w.id] = w
         assert w.id_expiry_date is not None  # noqa: S101
-        out.append(_item(c, K.worker_id_expiry, EntityType.worker, w.id, w.worker_no,
+        out.append(_item(c, K.worker_id_expiry, EntityType.worker, w.id,
+                         w.worker_no if c.names else None,
                          c.worker_title(w.id), w.id_expiry_date, dep.engagement_id,
                          f"/workers/{w.id}"))  # fmt: skip
     # passes, ADPs, AVPs (effective validity) and return due

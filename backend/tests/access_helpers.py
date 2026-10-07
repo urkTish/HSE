@@ -16,8 +16,8 @@ from app.models import (
     Gate,
     InductionCourse,
     InductionRecord,
-    Notification,
     NotamRequest,
+    Notification,
     ObstacleClearance,
     Project,
     Vehicle,
@@ -107,15 +107,15 @@ def vehicle(db: Session, no: str) -> Vehicle:
 
 def avp(db: Session, vehicle_no: str) -> Avp:
     v = vehicle(db, vehicle_no)
-    a = db.scalars(select(Avp).where(Avp.vehicle_id == v.id).order_by(Avp.created_at.desc())).first()
+    a = db.scalars(
+        select(Avp).where(Avp.vehicle_id == v.id).order_by(Avp.created_at.desc())
+    ).first()
     assert a is not None, vehicle_no
     return a
 
 
 def wap(db: Session, no_suffix: str) -> Wap:
-    w = db.scalar(
-        select(Wap).where(Wap.wap_no.like(f"%{no_suffix}"), Wap.revision_of_id.is_(None))
-    )
+    w = db.scalar(select(Wap).where(Wap.wap_no.like(f"%{no_suffix}"), Wap.revision_of_id.is_(None)))
     assert w is not None, no_suffix
     return w
 

@@ -203,6 +203,9 @@ def _history_allowed(
             raise not_found("Role assignment")
         users.get_visible_user(db, p, a.user_id)
         ok = p.has_any(cap)
+    elif entity_type.value in PHASE2_HISTORY:
+        pid = _phase2_project(db, p, entity_type, entity_id)
+        ok = p.has_any(cap) if pid is None else p.grant(pid, cap) is not None
     else:
         pid = _phase1_project(db, p, entity_type, entity_id)
         ok = p.grant(pid, cap) is not None
@@ -238,6 +241,93 @@ def _phase1_project(
         return meet_svc._get(db, p, entity_id).project_id
     if entity_type == et.workforce_return:
         return wf_svc.get_row(db, p, entity_id).project_id
+    raise not_found("History")
+
+
+PHASE2_HISTORY = frozenset(
+    {
+        "worker", "worker_deployment", "induction_course", "induction_record",
+        "zone_access_profile", "airport_pass_category", "airport_pass_area", "pass_application",
+        "airport_pass", "adp", "airside_offence", "vehicle", "avp", "notam_request",
+        "obstacle_clearance", "wap", "ops_event", "gate", "gate_device", "access_settings",
+    }
+)  # fmt: skip
+
+
+def _phase2_project(
+    db: Session, p: Principal, entity_type: EntityType, entity_id: uuid.UUID
+) -> uuid.UUID | None:
+    """Phase 2 records: visible through their own service (404/403 otherwise). Returns the
+    record's project, or None for a worker (cross-project; visible = seen through a
+    deployment in scope, capability 46)."""
+    from app.models import GateDevice, PassArea, PassCategory  # noqa: PLC0415
+    from app.services.access import (  # noqa: PLC0415
+        driving,
+        gates,
+        inductions,
+        passes,
+        profiles,
+        vehicles,
+        waps,
+        workers,
+        works,
+    )
+    from app.services.access import settings as access_settings  # noqa: PLC0415
+
+    et = EntityType
+    if entity_type == et.worker:
+        workers.get_worker(db, p, entity_id)
+        return None
+    if entity_type == et.worker_deployment:
+        return workers.get_deployment(db, p, entity_id).project_id
+    if entity_type == et.induction_course:
+        return inductions.get_course(db, p, entity_id).project_id
+    if entity_type == et.induction_record:
+        return inductions.get_record(db, p, entity_id).project_id
+    if entity_type == et.zone_access_profile:
+        profiles.read(db, p, entity_id)
+        zone = org.get_zone(db, p, entity_id)
+        return zone.project_id
+    if entity_type in (et.airport_pass_category, et.airport_pass_area):
+        row: PassCategory | PassArea | None = (
+            db.get(PassCategory, entity_id)
+            if entity_type == et.airport_pass_category
+            else db.get(PassArea, entity_id)
+        )
+        if row is None:
+            raise not_found("History")
+        projects.get_visible(db, p, row.project_id)
+        return row.project_id
+    if entity_type == et.pass_application:
+        return passes.get_application(db, p, entity_id)[0].project_id
+    if entity_type == et.airport_pass:
+        return passes.get_pass(db, p, entity_id).project_id
+    if entity_type == et.adp:
+        return driving.get_adp_row(db, p, entity_id)[0].project_id
+    if entity_type == et.airside_offence:
+        return driving.get_offence_row(db, p, entity_id).project_id
+    if entity_type == et.vehicle:
+        return vehicles.get_vehicle_row(db, p, entity_id).project_id
+    if entity_type == et.avp:
+        return vehicles.get_avp_row(db, p, entity_id).project_id
+    if entity_type == et.notam_request:
+        return works.get_notam_row(db, p, entity_id).project_id
+    if entity_type == et.obstacle_clearance:
+        return works.get_obstacle_row(db, p, entity_id).project_id
+    if entity_type == et.wap:
+        return waps.get_wap_row(db, p, entity_id).project_id
+    if entity_type == et.ops_event:
+        return waps.get_ops_row(db, p, entity_id).project_id
+    if entity_type == et.gate:
+        return gates.get_gate_row(db, p, entity_id).project_id
+    if entity_type == et.gate_device:
+        dev = db.get(GateDevice, entity_id)
+        if dev is None:
+            raise not_found("History")
+        return gates.get_gate_row(db, p, dev.gate_id).project_id
+    if entity_type == et.access_settings:
+        access_settings.read(db, p, entity_id)
+        return entity_id
     raise not_found("History")
 
 

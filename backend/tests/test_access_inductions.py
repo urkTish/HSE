@@ -31,9 +31,7 @@ def course_id(db: Session, project: str, code: str) -> str:
     return str(cid)
 
 
-def record(
-    c: TestClient, db: Session, project: str, worker_id: Any, code: str, **over: Any
-) -> Any:
+def record(c: TestClient, db: Session, project: str, worker_id: Any, code: str, **over: Any) -> Any:
     body: dict[str, Any] = {
         "worker_id": str(worker_id),
         "course_id": course_id(db, project, code),
@@ -93,12 +91,12 @@ def test_P2AC10_seeded_records_match_X1(db: Session) -> None:
     assert induction(db, "Abdul Karim Mia", "AIR").valid_until == date(2026, 10, 13)
 
 
-def test_P2AC11_retest_fails_then_passes_and_mobilises(
-    api: Api, ids: Ids, db: Session
-) -> None:
+def test_P2AC11_retest_fails_then_passes_and_mobilises(api: Api, ids: Ids, db: Session) -> None:
     wid = new_rbt_worker(api, ids, "2000009801")
     n = api.as_("yousef.ghamdi")
-    res = record(n, db, "RBT-52", wid, "GEN", test_score_pct="65", delivered_at="2026-10-05T06:00:00Z")
+    res = record(
+        n, db, "RBT-52", wid, "GEN", test_score_pct="65", delivered_at="2026-10-05T06:00:00Z"
+    )
     assert res.status_code == 201, res.text
     assert res.json()["result"] == "failed" and res.json()["status"] == "failed"
     dep = db.scalar(select(Deployment).where(Deployment.worker_id == wid))
@@ -157,9 +155,7 @@ def test_P2AC14_air_needs_valid_gen(api: Api, db: Session) -> None:
     assert res.json()["detail"]["code"] == "INDUCTION_PREREQUISITE"
 
 
-def test_P2AC15_language_mismatch_warning_and_action_panel(
-    api: Api, ids: Ids, db: Session
-) -> None:
+def test_P2AC15_language_mismatch_warning_and_action_panel(api: Api, ids: Ids, db: Session) -> None:
     w = worker(db, "Abdul Karim Mia")
     n = api.as_("noura.qahtani")
     res = record(n, db, "ANIA-EXP", w.id, "GEN", test_score_pct="90", delivery_language="en")
@@ -175,9 +171,7 @@ def test_P2AC15_language_mismatch_warning_and_action_panel(
 
 def test_P2AC16_expiry_job_is_idempotent(db: Session) -> None:
     r = induction(db, "Suman Tamang", "GEN")
-    db.execute(
-        update(type(r)).where(type(r).id == r.id).values(status=InductionStatus.valid)
-    )
+    db.execute(update(type(r)).where(type(r).id == r.id).values(status=InductionStatus.valid))
     db.commit()
     with frozen(riyadh(2026, 10, 1, 0, 5)):
         first = access_jobs.access_daily(db)
@@ -222,7 +216,7 @@ def k38(c: TestClient, ids: Ids) -> Any:
 
 
 def test_P2AC18_k38_source_switch(api: Api, ids: Ids, db: Session) -> None:
-    from app.models import InductionRecord, WorkforceReturn  # noqa: PLC0415
+    from app.models import InductionRecord, WorkforceReturn
 
     pid = project_id(db, "ANIA-EXP")
     passed_gen = len(
@@ -252,7 +246,9 @@ def test_P2AC18_k38_source_switch(api: Api, ids: Ids, db: Session) -> None:
     assert int(float(value)) == passed_gen
     assert "reconcil" not in str(v).lower()
     db.execute(
-        update(HseSettings).where(HseSettings.project_id == pid).values(induction_register_from=None)
+        update(HseSettings)
+        .where(HseSettings.project_id == pid)
+        .values(induction_register_from=None)
     )
     db.commit()
     v2 = k38(c, ids)

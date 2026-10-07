@@ -300,7 +300,9 @@ def test_P2AC31_id_copy_deleted_after_retention(db: Session) -> None:
     db.expire_all()
     assert db.get(PassApplication, a.id).id_copy_deleted_at is not None  # type: ignore[union-attr]
     row = db.scalar(
-        select(AuditEntry).where(AuditEntry.entity_id == a.id, AuditEntry.action == AuditAction.archive)
+        select(AuditEntry).where(
+            AuditEntry.entity_id == a.id, AuditEntry.action == AuditAction.archive
+        )
     )
     assert row is not None and row.details["id_copy_deleted"] == 1
     _ = datetime

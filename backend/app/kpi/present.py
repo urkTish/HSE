@@ -14,7 +14,9 @@ def decimals(defn: KpiDef) -> int:
     k = defn.kind
     if k == KpiKind.rate:
         return 2
-    if k in (KpiKind.percentage, KpiKind.ratio):
+    if k == KpiKind.percentage:
+        return max(1, defn.decimals)  # 1 dp, K-53 2 dp (2-access-permits §6.8)
+    if k == KpiKind.ratio:
         return 1
     if k == KpiKind.average:
         return defn.decimals
@@ -37,7 +39,7 @@ def display_kind(kind: KpiKind, value: Decimal | None, dp: int = 0) -> str:
     if value is None:
         return fmt.DASH
     if kind == KpiKind.percentage:
-        return fmt.percent(value, 1)
+        return fmt.percent(value, max(1, dp))
     if kind == KpiKind.ratio:
         return fmt.ratio(value, 1)
     if kind == KpiKind.rate:

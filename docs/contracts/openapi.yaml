@@ -19,7 +19,7 @@ info:
     \ accept a user session or a gate-device\n  session (`POST /gate-device/login`); device sessions can\
     \ call nothing else.\n* Some errors carry `detail.meta` (e.g. WORKER_EXISTS → worker_no; VALIDITY_EXCEEDS_LIMIT\
     \ →\n  limiting_factor; WAP_BLOCKED → blockers).\n"
-  version: 0.3.0
+  version: 0.3.1
 paths:
   /api/v1/health:
     get:
@@ -7913,10 +7913,11 @@ paths:
       description: 'Images (JPEG/PNG/HEIC) or PDF, ≤ 20 MB each. Limits: observation ≤ 3 photos. Phase
         2: `worker_photo` (owner = worker; JPEG/PNG ≤ 2 MB, ≥ 400×400, one current photo; capability 47),
         `pass_application_id_copy` (owner = application; capability 53 to upload, 48 to open; auto-deleted
-        after id_copy_retention_days, P2-5), `offence_evidence` (capability 62). Phase 2 files are in
-        the encrypted bucket with ≤ 5 min signed URLs. `injury_case_medical` needs capability 30 and is
-        stored in the separate encrypted bucket; it is never included in bulk exports (P1-3). Files are
-        virus-scanned (scan_status); 422 FILE_TOO_LARGE / FILE_TYPE_NOT_ALLOWED.'
+        after id_copy_retention_days, P2-5), `offence_evidence` (capability 62); `induction_signature`
+        is read-only (captured with the induction record). Phase 2 files are in the encrypted bucket with
+        ≤ 5 min signed URLs. `injury_case_medical` needs capability 30 and is stored in the separate encrypted
+        bucket; it is never included in bulk exports (P1-3). Files are virus-scanned (scan_status); 422
+        FILE_TOO_LARGE / FILE_TYPE_NOT_ALLOWED.'
       operationId: upload_attachment
       security:
       - sessionCookie: []
@@ -11051,6 +11052,19 @@ paths:
           - $ref: '#/components/schemas/BreakdownMeasure'
           - type: 'null'
           title: Measure
+      - name: gate_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+              format: uuid
+          - type: 'null'
+          description: 'Gate(s): filters gate KPIs (K-52, K-53, K-53b) only.'
+          title: Gate Id
+        description: 'Gate(s): filters gate KPIs (K-52, K-53, K-53b) only.'
       - name: project_id
         in: query
         required: false
@@ -11213,19 +11227,6 @@ paths:
           description: 'Comparisons to compute (K-R11). Default: previous.'
           title: Compare
         description: 'Comparisons to compute (K-R11). Default: previous.'
-      - name: gate_id
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: array
-            items:
-              type: string
-              format: uuid
-          - type: 'null'
-          description: 'Gate(s): filters gate KPIs (K-52, K-53, K-53b) only.'
-          title: Gate Id
-        description: 'Gate(s): filters gate KPIs (K-52, K-53, K-53b) only.'
       responses:
         '200':
           description: Successful Response
@@ -11550,6 +11551,19 @@ paths:
               $ref: '#/components/schemas/AccessKpiGroupBy'
           - type: 'null'
           title: Group By
+      - name: gate_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+              format: uuid
+          - type: 'null'
+          description: 'Gate(s): filters gate KPIs (K-52, K-53, K-53b) only.'
+          title: Gate Id
+        description: 'Gate(s): filters gate KPIs (K-52, K-53, K-53b) only.'
       - name: project_id
         in: query
         required: false
@@ -11712,19 +11726,6 @@ paths:
           description: 'Comparisons to compute (K-R11). Default: previous.'
           title: Compare
         description: 'Comparisons to compute (K-R11). Default: previous.'
-      - name: gate_id
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: array
-            items:
-              type: string
-              format: uuid
-          - type: 'null'
-          description: 'Gate(s): filters gate KPIs (K-52, K-53, K-53b) only.'
-          title: Gate Id
-        description: 'Gate(s): filters gate KPIs (K-52, K-53, K-53b) only.'
       responses:
         '200':
           description: Successful Response
@@ -28209,6 +28210,13 @@ components:
           type: string
           title: Msg
           description: English description of the problem.
+        msg_ar:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Msg Ar
+          description: Arabic description of the problem (always sent by the server; a generic text per
+            `type` when no specific translation exists).
         type:
           type: string
           title: Type
@@ -28424,13 +28432,15 @@ components:
       title: GateCheckRequest
       description: 'GC-2. Send `payload` (QR text) or `printed_ref` (manual fallback, e.g.
 
-        "WKR-000002 / ANIA-EXP", "AVP-S-0118", "WAP-ANIA-EXP-2026-0031"). `zone_id` defaults to the
+        "WKR-000002 / ANIA-EXP", "AVP-S-0118", "WAP-ANIA-EXP-2026-0031"); a vehicle without an AVP
 
-        gate''s single protected zone; required when the gate protects several; omitted for a site
+        has no sticker, so type its vehicle_no ("VEH-0004": PENDING_ESCORT_VEHICLE, VP-8).
 
-        gate. `pairing_id` continues an escort / driver / escort-vehicle pairing started on the
+        `zone_id` defaults to the gate''s single protected zone; required when the gate protects
 
-        same device (GC-8, GC-9).'
+        several; omitted for a site gate. `pairing_id` continues an escort / driver /
+
+        escort-vehicle pairing started on the same device (GC-8, GC-9).'
     GateCheckResponse:
       properties:
         check_id:
@@ -29525,6 +29535,13 @@ components:
           title: Code
           examples:
           - AVSEC-AWR
+        trades:
+          items:
+            $ref: '#/components/schemas/Trade'
+          type: array
+          title: Trades
+          description: Only workers of these trades (zone profiles, e.g. CRANE-OPERATOR for crane_operator);
+            empty = everyone.
       additionalProperties: false
       type: object
       required:
@@ -29541,6 +29558,11 @@ components:
         code:
           type: string
           title: Code
+        trades:
+          items:
+            $ref: '#/components/schemas/Trade'
+          type: array
+          title: Trades
       type: object
       required:
       - kind
@@ -30044,6 +30066,7 @@ components:
       enum:
       - iqama
       - national_id
+      - gcc_id
       - passport
       title: IdType
     ImportCode:
@@ -31775,11 +31798,11 @@ components:
         id_number:
           anyOf:
           - type: string
-            maxLength: 10
+            maxLength: 15
           - type: 'null'
           title: Id Number
-          description: iqama ^2\d{9}$, national_id ^1\d{9}$, passport ^[A-Z0-9]{6,9}$. Encrypted at rest;
-            never returned in full except by GET …/id-number.
+          description: iqama ^2\d{9}$, national_id ^1\d{9}$, gcc_id ^[A-Z0-9]{6,15}$ (v1.1), passport
+            ^[A-Z0-9]{6,9}$. Encrypted at rest; never returned in full except by GET …/id-number.
         employee_no:
           anyOf:
           - type: string
@@ -32300,7 +32323,7 @@ components:
         id_number:
           anyOf:
           - type: string
-            maxLength: 10
+            maxLength: 15
           - type: 'null'
           title: Id Number
         employee_no:

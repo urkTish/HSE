@@ -38,6 +38,7 @@ from app.core.access_enums import (
     VehicleStatus,
     WapBlocker,
     WapStatus,
+    WorkerStatus,
 )
 from app.core.clock import now
 from app.core.config import get_settings
@@ -953,7 +954,14 @@ def gate_check(db: Session, caller: Caller, body: GateCheckRequest) -> GateCheck
     if t.status != QrTokenStatus.active:
         dep, veh, wap = _subject(db, t)
         code = G.CREDENTIAL_LOST if t.lost else G.CREDENTIAL_REVOKED
-        if not t.lost and dep is not None and dep.status != DeploymentStatus.mobilised:
+        banned = (
+            dep is not None
+            and (wk := db.get(Worker, dep.worker_id)) is not None
+            and (wk.status == WorkerStatus.banned)
+        )
+        if not t.lost and banned:
+            code = G.WORKER_BANNED  # LC-9 revoked the card; name the cause (GC-6 order)
+        elif not t.lost and dep is not None and dep.status != DeploymentStatus.mobilised:
             code = G.WORKER_NOT_DEPLOYED  # AC59: the card died with the deployment
         else:
             _lost_alert(db, t, g)
@@ -1173,9 +1181,7 @@ def _vehicle_verdict(
         prof = profiles.ensure(db, zone)
         need = prof.avp_area_required
         if need is not None and (
-            no_avp
-            or avp is None
-            or not any(profiles.covers(x, need) for x in avp.areas or [])
+            no_avp or avp is None or not any(profiles.covers(x, need) for x in avp.areas or [])
         ):
             needs_escort = True  # VP-8
         # VP-7 height
@@ -1525,7 +1531,9 @@ def _final_rows(
     )
     out = []
     started = db.get(GateCheck, pr.started_check_id)
-    for sub in pr.subjects or []:
+    # copy first: mutating the loaded JSONB dicts in place hides the change from the ORM
+    subjects = [dict(x) for x in pr.subjects or []]
+    for sub in subjects:
         if roles is not None and sub["role"] not in roles:
             continue
         if sub.get("final_check_id"):
@@ -1563,7 +1571,7 @@ def _final_rows(
         row.user_id = started.user_id if started else pr.user_id
         sub["final_check_id"] = str(row.id)
         out.append(row)
-    pr.subjects = [dict(x) for x in pr.subjects or []]
+    pr.subjects = subjects
     db.flush()
     return out
 

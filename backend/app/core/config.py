@@ -5,7 +5,7 @@ from functools import lru_cache
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-CONTRACT_VERSION = "0.3.0"
+CONTRACT_VERSION = "0.3.1"
 API_PREFIX = "/api/v1"
 SESSION_COOKIE_NAME = "hse_session"
 GATE_SESSION_COOKIE = "hse_gate_session"
@@ -54,6 +54,10 @@ class Settings(BaseSettings):
     )
     ai_timeout_seconds: float = 60.0
     ai_max_tool_rounds: int = 8
+    # KPI facts cache (per API process): a dashboard fires ~15 /kpi requests over the same
+    # facts. Any committed write in this process clears it; writes made by other processes
+    # show after at most this many seconds. 0 disables (the test suite runs with 0).
+    kpi_cache_seconds: int = 20
     ai_questions_per_user_day: int = 60  # AI-17
     ai_reports_per_project_month: int = 10  # AI-17
     ai_insights_cache_minutes: int = 360

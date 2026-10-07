@@ -38,6 +38,8 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-hse}:${POSTGRES_PASSWORD:-hse}@db:5432/${POSTGRES_DB:-hse}
       S3_ENDPOINT_URL: http://minio:9000
+      # KPI requests are CPU-bound: run several API processes (jobs run in `scheduler`).
+      WEB_CONCURRENCY: ${WEB_CONCURRENCY:-4}
     ports:
       - "8000:8000"
     depends_on:

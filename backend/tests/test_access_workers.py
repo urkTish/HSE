@@ -133,7 +133,7 @@ def test_P2AC8_id_numbers_encrypted_at_rest(db: Session) -> None:
         select(Worker.worker_no, Worker.id_number_enc, Worker.id_type, Worker.id_number_bidx)
     ).all()
     assert len(rows) > 3000
-    for no, enc, id_type, bidx in rows[:500]:
+    for no, enc, _id_type, bidx in rows[:500]:
         assert enc is not None and bidx is not None, no
         plain = crypto.decrypt(enc)
         assert plain.encode() not in enc

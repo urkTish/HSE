@@ -136,6 +136,11 @@ class FieldError(BaseModel):
 
     loc: list[str | int] = Field(description='Path to the field, e.g. ["body", "zone_type"].')
     msg: str = Field(description="English description of the problem.")
+    msg_ar: str | None = Field(
+        default=None,
+        description="Arabic description of the problem (always sent by the server; a generic "
+        "text per `type` when no specific translation exists).",
+    )
     type: str = Field(description="Machine-readable error type, e.g. 'missing', 'value_error'.")
 
 
@@ -172,6 +177,10 @@ class ApiError(Exception):
         meta: dict[str, Any] | None = None,
     ) -> None:
         super().__init__(message)
+        for e in errors or []:
+            if e.msg_ar is None:
+                same = len(errors or []) == 1 and e.msg == message and message_ar
+                e.msg_ar = message_ar if same else arabic_for(e.type)
         self.status_code = status_code
         self.code = code
         self.message = message
@@ -197,12 +206,66 @@ class ApiError(Exception):
         )
 
 
-def field_error(field: str, msg: str, type_: str = "value_error") -> FieldError:
-    return FieldError(loc=["body", field], msg=msg, type=type_)
+# Arabic fallbacks per error type (Pydantic types and our own codes).
+AR_BY_TYPE: dict[str, str] = {
+    "missing": "هذا الحقل مطلوب.",
+    "string_too_short": "النص أقصر من المسموح.",
+    "string_too_long": "النص أطول من المسموح.",
+    "string_pattern_mismatch": "الصيغة غير صحيحة.",
+    "string_type": "يجب أن تكون القيمة نصًا.",
+    "int_parsing": "يجب أن تكون القيمة رقمًا صحيحًا.",
+    "int_type": "يجب أن تكون القيمة رقمًا صحيحًا.",
+    "decimal_parsing": "يجب أن تكون القيمة رقمًا.",
+    "decimal_type": "يجب أن تكون القيمة رقمًا.",
+    "decimal_max_digits": "عدد الأرقام أكبر من المسموح.",
+    "decimal_max_places": "عدد المنازل العشرية أكبر من المسموح.",
+    "float_parsing": "يجب أن تكون القيمة رقمًا.",
+    "greater_than": "القيمة أصغر من المسموح.",
+    "greater_than_equal": "القيمة أصغر من المسموح.",
+    "less_than": "القيمة أكبر من المسموح.",
+    "less_than_equal": "القيمة أكبر من المسموح.",
+    "too_short": "عدد العناصر أقل من المسموح.",
+    "too_long": "عدد العناصر أكبر من المسموح.",
+    "enum": "القيمة ليست من الخيارات المسموحة.",
+    "literal_error": "القيمة ليست من الخيارات المسموحة.",
+    "bool_parsing": "يجب أن تكون القيمة نعم أو لا.",
+    "date_parsing": "صيغة التاريخ غير صحيحة.",
+    "date_from_datetime_parsing": "صيغة التاريخ غير صحيحة.",
+    "datetime_parsing": "صيغة التاريخ والوقت غير صحيحة.",
+    "datetime_from_date_parsing": "صيغة التاريخ والوقت غير صحيحة.",
+    "time_parsing": "صيغة الوقت غير صحيحة.",
+    "uuid_parsing": "المعرّف غير صالح.",
+    "uuid_type": "المعرّف غير صالح.",
+    "extra_forbidden": "هذا الحقل غير مسموح.",
+    "list_type": "يجب أن تكون القيمة قائمة.",
+    "dict_type": "يجب أن تكون القيمة كائنًا.",
+    "model_type": "يجب أن تكون القيمة كائنًا.",
+    "json_invalid": "صيغة JSON غير صحيحة.",
+    "value_error": "القيمة غير صالحة.",
+    "duplicate": "هذه القيمة مستخدمة من قبل.",
+    "not_null": "لا يمكن حذف قيمة هذا الحقل.",
+    "weak_password": "كلمة المرور لا تستوفي متطلبات الأمان.",
+}
+AR_GENERIC = "القيمة غير صالحة."
 
 
-def validation_error(field: str, msg: str, type_: str = "value_error") -> ApiError:
-    return ApiError(422, ErrorCode.VALIDATION_ERROR, msg, errors=[field_error(field, msg, type_)])
+def arabic_for(type_: str) -> str:
+    return AR_BY_TYPE.get(type_, AR_GENERIC)
+
+
+def field_error(
+    field: str, msg: str, type_: str = "value_error", msg_ar: str | None = None
+) -> FieldError:
+    return FieldError(loc=["body", field], msg=msg, msg_ar=msg_ar, type=type_)
+
+
+def validation_error(
+    field: str, msg: str, type_: str = "value_error", msg_ar: str | None = None
+) -> ApiError:
+    ar = msg_ar or arabic_for(type_)
+    return ApiError(
+        422, ErrorCode.VALIDATION_ERROR, msg, ar, errors=[field_error(field, msg, type_, ar)]
+    )
 
 
 def not_found(what: str = "Resource") -> ApiError:
@@ -229,7 +292,10 @@ async def validation_exception_handler(_: Request, exc: Exception) -> JSONRespon
     errors: list[FieldError] = []
     for err in exc.errors():
         loc: list[Any] = [x if isinstance(x, str | int) else str(x) for x in err.get("loc", [])]
-        errors.append(FieldError(loc=loc, msg=str(err.get("msg", "")), type=str(err["type"])))
+        t = str(err["type"])
+        errors.append(
+            FieldError(loc=loc, msg=str(err.get("msg", "")), msg_ar=arabic_for(t), type=t)
+        )
     return ApiError(
         422,
         ErrorCode.VALIDATION_ERROR,

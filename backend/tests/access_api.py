@@ -10,8 +10,12 @@ from tests.access_helpers import API
 
 def png(w: int = 400, h: int = 400) -> bytes:
     """A PNG header with the given IHDR size (enough for the photo checks)."""
-    return b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", w, h) + (
-        b"\x08\x02\x00\x00\x00" + b"\x00" * 64
+    return (
+        b"\x89PNG\r\n\x1a\n"
+        + struct.pack(">I", 13)
+        + b"IHDR"
+        + struct.pack(">II", w, h)
+        + (b"\x08\x02\x00\x00\x00" + b"\x00" * 64)
     )
 
 
@@ -27,6 +31,4 @@ def upload(c: TestClient, owner_type: str, owner_id: Any, name: str, content: by
 
 
 def transition(c: TestClient, app_id: Any, to: str, **extra: Any) -> Any:
-    return c.post(
-        f"{API}/pass-applications/{app_id}/transitions", json={"to_status": to, **extra}
-    )
+    return c.post(f"{API}/pass-applications/{app_id}/transitions", json={"to_status": to, **extra})

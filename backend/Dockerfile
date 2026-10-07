@@ -25,4 +25,4 @@ USER hse
 EXPOSE 8000
 
 # Apply migrations, then serve. Seed separately: `docker compose exec backend python -m app.seed`.
-CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers ${WEB_CONCURRENCY:-4}"]

@@ -124,9 +124,7 @@ def run_jobs(db: Session, at: Any, daily: bool = False) -> None:
     db.expire_all()
 
 
-def test_P2AC45_AC46_obs_suspends_then_notam_issue_activates_wap(
-    api: Api, db: Session
-) -> None:
+def test_P2AC45_AC46_obs_suspends_then_notam_issue_activates_wap(api: Api, db: Session) -> None:
     run_jobs(db, riyadh(2026, 10, 8, 0, 5), daily=True)
     o = obstacle(db, "2026-0007")
     assert o.status == ObstacleStatus.suspended and o.system_suspended
@@ -180,12 +178,12 @@ def submitted_wap(api: Api, ids: Ids, db: Session) -> str:
 
 
 def rawabi_issuer(db: Session, ids: Ids) -> None:
-    import uuid  # noqa: PLC0415
+    import uuid
 
-    from app.core.clock import now  # noqa: PLC0415
-    from app.core.config import get_settings  # noqa: PLC0415
-    from app.core.security import hash_password  # noqa: PLC0415
-    from tests.conftest import PASSWORD  # noqa: PLC0415
+    from app.core.clock import now
+    from app.core.config import get_settings
+    from app.core.security import hash_password
+    from tests.conftest import PASSWORD
 
     u = User(
         id=uuid.uuid4(),
@@ -219,7 +217,9 @@ def rawabi_issuer(db: Session, ids: Ids) -> None:
 def test_P2AC47_segregation_of_duties(api: Api, ids: Ids, db: Session) -> None:
     rawabi_issuer(db, ids)
     wid = submitted_wap(api, ids, db)
-    res = api.as_("rawabi.issuer").post(f"{API}/waps/{wid}/transitions", json={"to_status": "approved"})
+    res = api.as_("rawabi.issuer").post(
+        f"{API}/waps/{wid}/transitions", json={"to_status": "approved"}
+    )
     assert res.status_code == 422, res.text
     assert res.json()["detail"]["code"] == "SOD_CONFLICT"
     own = submitted_wap(api, ids, db)
