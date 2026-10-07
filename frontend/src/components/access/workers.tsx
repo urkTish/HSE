@@ -36,13 +36,13 @@ import { DEPLOYMENT_STATUSES, EXPORT_PURPOSES_ACCESS, TRADES, WORKER_ID_TYPES, W
 import { ak, useAccessCard, useDeployment, useEligibility, useInductions, useWorker, useWorkers } from "@/lib/api/access";
 import { ApiError, api, postForm, unwrap, type Schemas } from "@/lib/api/client";
 import { useCurrentProject } from "@/lib/current-project";
-import { todayInZone, zonedInputToUtc } from "@/lib/datetime";
+import { formatDate, todayInZone, zonedInputToUtc } from "@/lib/datetime";
 import { applyServerErrors } from "@/lib/forms";
 import { useErrorMessage, useFieldErrorTranslator, useLocalizedName } from "@/lib/i18n-helpers";
 import { can, canWrite } from "@/lib/permissions";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
-import { Code, EligibilityItems, MaskedIdNumber, QrImage, SubNav, WorkerPhoto, personName } from "./common";
+import { AccessPrintHeader, BiLabel, Code, EligibilityItems, MaskedIdNumber, QrImage, SubNav, WorkerPhoto, personName } from "./common";
 import { CredentialPanel } from "./credential-actions";
 
 const PAGE_SIZE = 50;
@@ -1336,7 +1336,9 @@ export function AccessCardPrint({ deploymentId }: { deploymentId: string }) {
   const t = useTranslations("workers");
   const tc = useTranslations("common");
   const q = useAccessCard(deploymentId);
-  const { date } = useFormatters();
+  const { prefs } = useFormatters();
+  // The card is 54 mm tall: one calendar line (Gregorian, project digits) instead of the two-calendar date.
+  const date = (v: string) => formatDate(v, { ...prefs, showHijri: false });
   if (q.isError) return <ErrorState error={q.error} onRetry={() => q.refetch()} />;
   if (!q.data) return <LoadingState />;
   const c = q.data;
@@ -1347,37 +1349,45 @@ export function AccessCardPrint({ deploymentId }: { deploymentId: string }) {
           <Printer aria-hidden />
           {tc("print")}
         </Button>
+        <Button variant="outline" asChild>
+          <Link href={`/deployments/${deploymentId}`}>{tc("back")}</Link>
+        </Button>
       </div>
-      <div className="flex w-[86mm] flex-col gap-2 rounded-xl border-2 bg-white p-3 text-black shadow-sm print:shadow-none" data-testid="card-print">
-        <div className="flex items-start gap-3">
+      {/* ID-1 card size (85.6 × 54 mm), black on white: prints the same from a light or dark screen. */}
+      <div
+        dir="ltr"
+        className="paper flex h-[54mm] w-[86mm] flex-col gap-1.5 overflow-hidden rounded-[3mm] border border-black bg-white px-[3mm] py-[2.5mm] text-black shadow-sm print:shadow-none"
+        data-testid="card-print"
+      >
+        <AccessPrintHeader title="cardTitle" variant="card" />
+        <div className="flex min-h-0 flex-1 gap-2">
           <WorkerPhoto attachmentId={c.photo_attachment_id} name={c.full_name_en} size={76} />
-          <div className="min-w-0 text-sm">
-            <p className="font-semibold">{c.full_name_en}</p>
-            <p dir="rtl" lang="ar" className="font-semibold">
+          <div className="flex min-w-0 flex-1 flex-col">
+            <p lang="en" dir="ltr" className="truncate text-[9pt] leading-tight font-bold">
+              {c.full_name_en}
+            </p>
+            <p lang="ar" dir="rtl" className="truncate text-end text-[9.5pt] leading-tight font-bold">
               {c.full_name_ar}
             </p>
-            <p className="mt-1">
-              <Code>{c.worker_no}</Code>
-              {c.employer_short_code ? (
-                <>
-                  {" · "}
-                  <Code>{c.employer_short_code}</Code>
-                </>
-              ) : null}
+            <p className="mt-1 text-[8pt] leading-tight">
+              <Code className="font-mono font-semibold">{c.worker_no}</Code>
+            </p>
+            {c.employer_short_code ? (
+              <p className="text-[7.5pt] leading-tight">
+                <Code>{c.employer_short_code}</Code>
+              </p>
+            ) : null}
+            <p className="mt-auto text-[6.5pt] leading-tight">
+              <BiLabel k="issued" className="text-[6pt]" /> <bdi className="whitespace-nowrap">{date(c.issued_on)}</bdi>
             </p>
           </div>
-        </div>
-        <div className="flex items-end justify-between gap-2">
-          <QrImage payload={c.qr_payload} size={120} label={t("cardQr", { no: c.printed_ref })} />
-          <div className="text-end text-xs">
-            <p className="font-mono text-sm font-semibold">
-              <Code>{c.printed_ref}</Code>
-            </p>
-            <p>
-              {t("issuedOn", { date: date(c.issued_on) })}
-            </p>
+          <div className="flex shrink-0 flex-col items-center">
+            <QrImage payload={c.qr_payload} size={84} label={t("cardQr", { no: c.printed_ref })} />
           </div>
         </div>
+        <p className="ltr border-t border-black pt-0.5 text-center font-mono text-[9pt] font-bold tracking-wide" data-testid="card-printed-ref">
+          {c.printed_ref}
+        </p>
       </div>
     </div>
   );

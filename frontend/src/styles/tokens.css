@@ -54,6 +54,21 @@
   --shadow-2: 0 4px 12px rgb(15 27 45 / 0.08), 0 1px 3px rgb(15 27 45 / 0.06);
   --shadow-3: 0 12px 32px rgb(15 27 45 / 0.16), 0 2px 6px rgb(15 27 45 / 0.08);
 
+  /* Gate verdict panels (Phase 2): solid fills, identical in light and dark so a verdict looks the same on
+     every gate device, and readable in direct sun. Text contrast on each fill (checked): granted 7.1:1,
+     granted-with-note 10.0:1 (near-black on amber), denied 6.6:1, pending 8.1:1, neutral 7.6:1.
+     Colour is never alone: every verdict also has its own icon and word. */
+  --verdict-granted: #166534;
+  --verdict-granted-fg: #ffffff;
+  --verdict-note: #f5b000;
+  --verdict-note-fg: #111111;
+  --verdict-denied: #b42318;
+  --verdict-denied-fg: #ffffff;
+  --verdict-pending: #1d4f91;
+  --verdict-pending-fg: #ffffff;
+  --verdict-neutral: #475569;
+  --verdict-neutral-fg: #ffffff;
+
   /* Layout */
   --sidebar-width: 16rem;
   --topbar-h: 3.5rem;

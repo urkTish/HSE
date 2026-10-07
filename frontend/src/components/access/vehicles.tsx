@@ -35,7 +35,7 @@ import { todayInZone } from "@/lib/datetime";
 import { can, canWrite } from "@/lib/permissions";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
-import { AirportOnly, Code, DaysLeft, Plate, QrImage, StepDialog, SubNav, ValidityBadge, ValidityLine } from "./common";
+import { AccessPrintHeader, AirportOnly, BiLabel, Code, DaysLeft, Plate, QrImage, StepDialog, SubNav, ValidityBadge, ValidityLine } from "./common";
 import { CredentialPanel } from "./credential-actions";
 
 const PAGE_SIZE = 50;
@@ -977,21 +977,37 @@ export function AvpStickerPrint({ id }: { id: string }) {
           <Link href={`/avps/${id}`}>{tc("back")}</Link>
         </Button>
       </div>
-      <div className="flex w-[90mm] flex-col items-center gap-2 rounded-xl border-4 border-black bg-white p-4 text-black" data-testid="sticker-print" lang={locale}>
-        <p className="text-lg font-bold">{t("stickerTitle")}</p>
-        <QrImage payload={s.qr_payload} size={220} label={t("stickerQr", { no: s.sticker_no })} />
-        <p className="ltr font-mono text-xl font-bold tracking-wider">{s.printed_ref}</p>
-        <div className="ltr grid w-full grid-cols-2 gap-1 text-sm">
-          <span>AVP</span>
-          <span className="font-semibold">{s.avp_no}</span>
-          <span>{t("fields.sticker_no")}</span>
-          <span className="font-semibold">{s.sticker_no}</span>
-          <span>{t("fields.vehicle_no")}</span>
-          <span className="font-semibold">{s.vehicle_no}</span>
-          <span>{t("fields.fleet_no")}</span>
-          <span className="font-semibold">{s.fleet_no}</span>
+      {/* 90 mm windscreen sticker, black on white; labels in both languages, codes LTR. */}
+      <div className="paper flex w-[90mm] flex-col gap-2 rounded-xl border-4 border-black bg-white p-[4mm] text-black" data-testid="sticker-print" lang={locale}>
+        <AccessPrintHeader title="stickerTitle" projectId={a.data.project_id} variant="narrow" />
+        <div className="flex flex-col items-center gap-1">
+          <QrImage payload={s.qr_payload} size={220} label={t("stickerQr", { no: s.sticker_no })} />
+          <p className="ltr font-mono text-xl font-bold tracking-wider">{s.printed_ref}</p>
+          <BiLabel k="scanAtGate" className="text-[8pt]" />
         </div>
-        <p className="text-sm">{a.data.areas.map((x) => te(`areaCategory.${x}`)).join(" · ")}</p>
+        <dl className="grid w-full grid-cols-[auto_1fr] gap-x-3 gap-y-1 border-t border-black pt-2 text-sm">
+          {(
+            [
+              ["avpNo", s.avp_no],
+              ["stickerNo", s.sticker_no],
+              ["vehicleNo", s.vehicle_no],
+              ["fleetNo", s.fleet_no],
+            ] as const
+          ).map(([k, v]) => (
+            <div key={k} className="contents">
+              <dt>
+                <BiLabel k={k} className="text-[8pt]" />
+              </dt>
+              <dd className="text-end font-semibold">
+                <Code>{v}</Code>
+              </dd>
+            </div>
+          ))}
+          <dt>
+            <BiLabel k="areas" className="text-[8pt]" />
+          </dt>
+          <dd className="text-end font-semibold">{a.data.areas.length ? a.data.areas.map((x) => te(`areaCategory.${x}`)).join(" · ") : "—"}</dd>
+        </dl>
       </div>
     </div>
   );

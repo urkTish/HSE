@@ -104,6 +104,8 @@ const MAP: Record<string, { tone: Tone; Icon: ComponentType<SVGProps<SVGSVGEleme
   expiring: { tone: "warning", Icon: Clock },
   // Hook results that are not checked yet: amber information, never an error.
   warn: { tone: "warning", Icon: Info },
+  // Phase 2 design: a gate entry granted with a note is still an entry — amber (spec) but with a tick.
+  granted_note: { tone: "warning", Icon: CheckCircle2 },
   not_evaluated: { tone: "neutral", Icon: CircleDashed },
   rotated: { tone: "neutral", Icon: Archive },
   cleared: { tone: "success", Icon: ShieldCheck },

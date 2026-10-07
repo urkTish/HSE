@@ -1,6 +1,6 @@
 "use client";
 import { useQueryClient } from "@tanstack/react-query";
-import { Ban, Copy, DoorOpen, KeyRound, Pencil, Plus, ScanLine } from "lucide-react";
+import { Ban, Copy, DoorOpen, KeyRound, Pencil, Plus, ScanLine, ShieldAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -527,7 +527,7 @@ export function GateLogPage() {
 
 const RESULT_TONE: Record<Schemas["GateResult"], string> = {
   GRANTED: "active",
-  GRANTED_WITH_WARNING: "warn",
+  GRANTED_WITH_WARNING: "granted_note",
   DENIED: "rejected",
   PENDING_ESCORT: "pending",
   PENDING_DRIVER: "pending",
@@ -625,27 +625,37 @@ function GateLog({ project }: { project: Schemas["ProjectRead"] }) {
               {items.map((r) => (
                 <TR key={r.id} data-testid="gate-log-row" data-result={r.result} data-admitted={r.admitted_despite_denial ? "true" : "false"}>
                   <TD label={t("occurredAt")}>
-                    <span className="tabular-nums">{dateTime(r.occurred_at)}</span>
-                    <span className="block text-xs text-muted-foreground">{te(`gateDirection.${r.direction}`)}</span>
+                    {/* One wrapper per cell: on phones the stacked card puts each child of a cell on its own grid row. */}
+                    <span className="flex flex-col items-start">
+                      <span className="tabular-nums">{dateTime(r.occurred_at)}</span>
+                      <span className="text-xs text-muted-foreground">{te(`gateDirection.${r.direction}`)}</span>
+                    </span>
                   </TD>
                   <TD label={t("gate")}>
                     <Code>{r.gate_code}</Code>
                   </TD>
                   <TD label={t("subject")}>
-                    <span className="text-xs text-muted-foreground">{te(`gateSubjectKind.${r.subject_kind}`)}</span>
-                    {r.subject_ref ? <span className="ltr block font-medium">{r.subject_ref}</span> : null}
-                    {r.subject_name_en || r.subject_name_ar ? <span className="block">{name(r.subject_name_en ?? "", r.subject_name_ar ?? "")}</span> : null}
+                    <span className="flex flex-col items-start">
+                      <span className="text-xs text-muted-foreground">{te(`gateSubjectKind.${r.subject_kind}`)}</span>
+                      {r.subject_ref ? <bdi className="ltr block font-medium whitespace-nowrap">{r.subject_ref}</bdi> : null}
+                      {r.subject_name_en || r.subject_name_ar ? <span>{name(r.subject_name_en ?? "", r.subject_name_ar ?? "")}</span> : null}
+                    </span>
                   </TD>
                   <TD label={tc("zone")}>{r.zone ? <Code>{r.zone.code}</Code> : "—"}</TD>
                   <TD label={t("result")}>
-                    <GateResultBadge result={r.result} />
-                    {r.late_exit ? <span className="block text-xs text-warning">{t("lateExit")}</span> : null}
-                    {r.admitted_despite_denial ? (
-                      <span className="mt-1 block text-xs font-medium text-destructive" data-testid="admitted-flag">
-                        {t("admittedDespiteDenial")}
-                        {r.admitted_reason ? <span className="block font-normal text-muted-foreground">{r.admitted_reason}</span> : null}
-                      </span>
-                    ) : null}
+                    <span className="flex flex-col items-start gap-1">
+                      <GateResultBadge result={r.result} />
+                      {r.late_exit ? <span className="text-xs text-warning">{t("lateExit")}</span> : null}
+                      {r.admitted_despite_denial ? (
+                        <span className="flex items-start gap-1 text-xs font-medium text-danger" data-testid="admitted-flag">
+                          <ShieldAlert aria-hidden className="mt-0.5 size-3.5 shrink-0" />
+                          <span>
+                            {t("admittedDespiteDenial")}
+                            {r.admitted_reason ? <span className="block font-normal text-muted-foreground">{r.admitted_reason}</span> : null}
+                          </span>
+                        </span>
+                      ) : null}
+                    </span>
                   </TD>
                   <TD label={t("reason")}>{r.reason_codes.length ? <ReasonChips codes={r.reason_codes} /> : "—"}</TD>
                   <TD label={t("by")}>{r.device_id ? <Code>{r.device_id}</Code> : r.user ? name(r.user.full_name_en, r.user.full_name_ar ?? null) : "—"}</TD>

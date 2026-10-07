@@ -46,6 +46,16 @@
   --color-series-6: var(--series-6);
   --color-series-7: var(--series-7);
   --color-series-8: var(--series-8);
+  --color-verdict-granted: var(--verdict-granted);
+  --color-verdict-granted-fg: var(--verdict-granted-fg);
+  --color-verdict-note: var(--verdict-note);
+  --color-verdict-note-fg: var(--verdict-note-fg);
+  --color-verdict-denied: var(--verdict-denied);
+  --color-verdict-denied-fg: var(--verdict-denied-fg);
+  --color-verdict-pending: var(--verdict-pending);
+  --color-verdict-pending-fg: var(--verdict-pending-fg);
+  --color-verdict-neutral: var(--verdict-neutral);
+  --color-verdict-neutral-fg: var(--verdict-neutral-fg);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-muted: var(--sidebar-muted);
@@ -103,6 +113,17 @@
       transition-duration: 0.01ms !important;
     }
   }
+}
+
+/* Paper surfaces (printed card, sticker, permit) keep light tokens on a dark screen, so what you see is what prints. */
+.paper {
+  color-scheme: light;
+  --foreground: #0f1b2d;
+  --surface: #ffffff;
+  --muted: #eceff4;
+  --muted-foreground: #475569;
+  --border: #d6dce5;
+  --input: #7d8899;
 }
 
 /* Codes, emails, phone and CR numbers stay LTR inside RTL text (rule 42). */

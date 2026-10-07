@@ -103,7 +103,7 @@ export function ChartRenderer({ spec, height = 260, arabicDigits = false, onPoin
         r[`${s.key}__d`] = p.display;
       }
     }
-    return ar ? [...out].reverse() : out;
+    return out;
   }, [spec, ar]);
 
   const panels = useMemo(() => {
@@ -121,6 +121,9 @@ export function ChartRenderer({ spec, height = 260, arabicDigits = false, onPoin
   const showLegend = spec.series.length >= 2 || spec.bands.length > 0 || spec.reference_lines.length > 0;
   const canChart = spec.kind !== "table" && spec.kind !== "pyramid" && spec.x_axis !== null;
   const horizontal = spec.kind === "horizontal_bar";
+  // RTL: a time/category x-axis runs right-to-left, so the plot gets the rows reversed. A horizontal bar
+  // chart keeps its order (largest first, top to bottom) in both languages; only its value axis mirrors.
+  const plotRows = ar && !horizontal ? [...rows].reverse() : rows;
 
   return (
     <figure className="flex min-w-0 flex-col gap-2" data-testid={testId ?? `chart-${spec.chart_id}`} data-chart-kind={spec.kind}>
@@ -187,7 +190,7 @@ export function ChartRenderer({ spec, height = 260, arabicDigits = false, onPoin
               >
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart
-                    data={rows}
+                    data={plotRows}
                     layout={horizontal ? "vertical" : "horizontal"}
                     margin={{ top: 8, right: 12, bottom: 0, left: 12 }}
                     barCategoryGap="20%"
@@ -468,7 +471,7 @@ function ChartTable({ spec, rows, ar, digits }: { spec: Spec; rows: Row[]; ar: b
       </div>
     );
   }
-  const ordered = ar ? [...rows].reverse() : rows;
+  const ordered = rows;
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm" data-testid="chart-table">

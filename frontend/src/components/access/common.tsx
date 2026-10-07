@@ -1,5 +1,5 @@
 "use client";
-import { CalendarClock, Eye, EyeOff, Plane, ShieldAlert, ShieldCheck, TriangleAlert, Users } from "lucide-react";
+import { CalendarClock, Eye, EyeOff, Info, Plane, ShieldCheck, TriangleAlert, Users } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
 import QRCode from "qrcode";
@@ -20,6 +20,7 @@ import { Link, usePathname } from "@/i18n/navigation";
 import { UNMASK_REASONS } from "@/lib/access-enums";
 import { useDeployments, useVehicles } from "@/lib/api/access";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
+import { useCurrentProject } from "@/lib/current-project";
 import { useLocalizedName } from "@/lib/i18n-helpers";
 import { can } from "@/lib/permissions";
 import { useDebounced } from "@/lib/use-debounced";
@@ -167,7 +168,7 @@ export function EligibilityItems({ items, projectId }: { items: Schemas["Eligibi
       {items.map((i, idx) => {
         const msg = ar ? i.message_ar : i.message_en;
         return (
-          <li key={`${i.kind}-${i.code ?? ""}-${idx}`} className={cn("flex flex-wrap items-center justify-between gap-2 p-2.5 text-sm", i.status === "warn" && "bg-warning-bg/50")} data-testid="eligibility-item" data-status={i.status} data-reason={i.reason_code ?? ""}>
+          <li key={`${i.kind}-${i.code ?? ""}-${idx}`} className={cn("flex flex-wrap items-center justify-between gap-2 p-2.5 text-sm", i.status === "warn" && i.reason_code !== "HOOK_NOT_AVAILABLE" && "bg-warning-bg/50")} data-testid="eligibility-item" data-status={i.status} data-reason={i.reason_code ?? ""}>
             <span className="min-w-0">
               <span className="font-medium">{te(`requirementKind.${i.kind}`)}</span>
               {i.code ? (
@@ -489,8 +490,9 @@ export function ReasonChips({ codes }: { codes: Schemas["GateReasonCode"][] }) {
   return (
     <span className="flex flex-wrap gap-1">
       {codes.map((c) => (
-        <Badge key={c} tone={c === "EXPIRING_7D" || c === "HOOK_NOT_AVAILABLE" || c === "LANGUAGE_MISMATCH" ? "warning" : "danger"} data-reason={c}>
-          {c === "HOOK_NOT_AVAILABLE" ? <ShieldAlert aria-hidden /> : null}
+        // A hook with no provider yet is information, not a warning: neutral so airside rows are not all amber.
+        <Badge key={c} tone={c === "HOOK_NOT_AVAILABLE" ? "neutral" : c === "EXPIRING_7D" || c === "LANGUAGE_MISMATCH" ? "warning" : "danger"} data-reason={c}>
+          {c === "HOOK_NOT_AVAILABLE" ? <Info aria-hidden /> : null}
           {te(`gateReason.${c}`)}
         </Badge>
       ))}
@@ -587,21 +589,27 @@ export function SignaturePad({ id, onChange, label, error }: { id: string; onCha
           *
         </span>
       </Label>
-      <canvas
-        id={id}
-        ref={ref}
-        width={480}
-        height={160}
-        role="img"
-        aria-label={label}
-        data-testid={id}
-        data-signed={signed ? "true" : "false"}
-        className="h-32 w-full max-w-md touch-none rounded-md border-2 border-dashed bg-white"
-        onPointerDown={start}
-        onPointerMove={move}
-        onPointerUp={end}
-        onPointerLeave={end}
-      />
+      {/* Paper metaphor: always white with a dark pen (also in dark mode), a baseline to sign on. */}
+      <div className="relative w-full max-w-md">
+        <canvas
+          id={id}
+          ref={ref}
+          width={480}
+          height={160}
+          role="img"
+          aria-label={label}
+          data-testid={id}
+          data-signed={signed ? "true" : "false"}
+          className={cn("block h-40 w-full touch-none rounded-md border-2 bg-white sm:h-32", signed ? "border-input" : "border-dashed border-input", error && "border-danger")}
+          onPointerDown={start}
+          onPointerMove={move}
+          onPointerUp={end}
+          onPointerLeave={end}
+        />
+        <span aria-hidden className="pointer-events-none absolute inset-x-6 bottom-8 flex items-end gap-1 border-b border-black/30 text-lg leading-none text-black/50 sm:bottom-6">
+          ×
+        </span>
+      </div>
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <span>{signed ? t("signed") : t("signHere")}</span>
         {signed ? (
@@ -680,5 +688,84 @@ export function StepDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/* ───────────────────────────── Print documents (access card, AVP sticker, WAP) ───────────────────────────── */
+
+type BiKey = Parameters<ReturnType<typeof useTranslations<"accessPrint">>>[0];
+
+/** "EN|AR" print message → both halves: printed credentials are bilingual whatever the screen language. */
+export function useBi() {
+  const t = useTranslations("accessPrint");
+  return (key: BiKey) => {
+    const [en = "", ar = ""] = t(key).split("|");
+    return { en, ar };
+  };
+}
+
+/** A label in both languages, English first (stacked when `stack`, else on one line with a separator). */
+export function BiLabel({ k, stack, className }: { k: BiKey; stack?: boolean; className?: string }) {
+  const bi = useBi();
+  const v = bi(k);
+  return (
+    <span className={cn(stack ? "flex flex-col items-start leading-tight" : "inline-flex flex-wrap items-baseline gap-x-1.5", className)}>
+      <span lang="en" dir="ltr">
+        {v.en}
+      </span>
+      {stack ? null : <span aria-hidden>/</span>}
+      <span lang="ar" dir="rtl">
+        {v.ar}
+      </span>
+    </span>
+  );
+}
+
+/**
+ * Bilingual header for printed access documents: platform mark, project code and name, document title in
+ * English (start) and Arabic (end). Always laid out LTR so the English side is on the left on paper.
+ */
+export function AccessPrintHeader({ title, projectId, variant = "wide" }: { title: BiKey; projectId?: string | null; variant?: "wide" | "narrow" | "card" }) {
+  const bi = useBi();
+  const { projects, project: current } = useCurrentProject();
+  const p = projects.find((x) => x.id === projectId) ?? current;
+  const v = bi(title);
+  const mark = (
+    <span aria-hidden className={cn("flex shrink-0 items-center justify-center rounded bg-black text-white", variant === "card" ? "size-5" : "size-8")}>
+      <ShieldCheck className={variant === "card" ? "size-3.5" : "size-5"} />
+    </span>
+  );
+  if (variant === "narrow") {
+    // Sticker (90 mm): titles stacked and centred, so neither language is squeezed.
+    return (
+      <header dir="ltr" className="flex flex-col items-center gap-1 border-b-2 border-black pb-2 text-center" data-testid="print-doc-header">
+        <span className="flex items-center gap-2">
+          {mark}
+          {p ? <span className="text-[9pt] font-semibold tracking-wide">{p.code}</span> : null}
+        </span>
+        <span lang="en" className="text-[12pt] leading-tight font-bold uppercase">
+          {v.en}
+        </span>
+        <span lang="ar" dir="rtl" className="text-[13pt] leading-tight font-bold">
+          {v.ar}
+        </span>
+      </header>
+    );
+  }
+  const card = variant === "card";
+  return (
+    <header dir="ltr" className={cn("flex items-center justify-between gap-2 border-b-2 border-black", card ? "pb-1" : "pb-3")} data-testid="print-doc-header">
+      <div lang="en" className="flex min-w-0 items-center gap-2">
+        {mark}
+        <span className="min-w-0">
+          {p ? <span className={cn("block truncate font-semibold tracking-wide", card ? "text-[6.5pt]" : "text-[9pt]")}>{card ? p.code : `${p.code} — ${p.name_en}`}</span> : null}
+          <span className={cn("block leading-tight font-bold uppercase", card ? "text-[7.5pt]" : "text-[15pt]")}>{v.en}</span>
+        </span>
+      </div>
+      <span lang="ar" dir="rtl" className={cn("shrink-0 leading-tight font-bold", card ? "text-[8.5pt]" : "text-[16pt]")}>
+        {v.ar}
+        {p && !card ? <span className="block text-[9pt] font-medium">{p.name_ar || p.name_en}</span> : null}
+      </span>
+    </header>
   );
 }

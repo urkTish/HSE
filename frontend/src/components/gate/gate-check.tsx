@@ -5,9 +5,10 @@
  * are cleared after clear_after_seconds; nothing personal is cached (GC-7).
  */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Camera, CameraOff, Check, CircleAlert, Clock, KeyRound, LogIn, LogOut, ShieldAlert, Truck, UserRound, WifiOff, X } from "lucide-react";
+import { Camera, CameraOff, Check, CircleAlert, CircleCheck, Clock, Info, KeyRound, LogIn, LogOut, ShieldAlert, Truck, UserRound, WifiOff, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -61,19 +62,23 @@ function useOnline(): boolean {
 
 /** Verdict colours: solid fills with maximum contrast for bright sunlight. Colour is never the only signal. */
 const TONE: Record<Result, string> = {
-  GRANTED: "bg-green-700 text-white",
-  GRANTED_WITH_WARNING: "bg-amber-400 text-black",
-  DENIED: "bg-red-700 text-white",
-  PENDING_ESCORT: "bg-blue-800 text-white",
-  PENDING_DRIVER: "bg-blue-800 text-white",
-  PENDING_ESCORT_VEHICLE: "bg-blue-800 text-white",
-  EXIT_RECORDED: "bg-slate-700 text-white",
-  WAP_VIEW: "bg-slate-800 text-white",
+  GRANTED: "bg-verdict-granted text-verdict-granted-fg",
+  GRANTED_WITH_WARNING: "bg-verdict-note text-verdict-note-fg",
+  DENIED: "bg-verdict-denied text-verdict-denied-fg",
+  PENDING_ESCORT: "bg-verdict-pending text-verdict-pending-fg",
+  PENDING_DRIVER: "bg-verdict-pending text-verdict-pending-fg",
+  PENDING_ESCORT_VEHICLE: "bg-verdict-pending text-verdict-pending-fg",
+  EXIT_RECORDED: "bg-verdict-neutral text-verdict-neutral-fg",
+  WAP_VIEW: "bg-verdict-neutral text-verdict-neutral-fg",
 };
+
+/** Reason codes that are information only (no provider yet), shown as a calm note rather than a warning. */
+const NOTE_CODES = new Set<string>(["HOOK_NOT_AVAILABLE"]);
 
 function VerdictIcon({ result, className }: { result: Result; className?: string }) {
   if (result === "GRANTED") return <Check aria-hidden className={className} />;
-  if (result === "GRANTED_WITH_WARNING") return <CircleAlert aria-hidden className={className} />;
+  // Granted with a note is still an entry: a tick, not an exclamation mark (no alarm fatigue).
+  if (result === "GRANTED_WITH_WARNING") return <CircleCheck aria-hidden className={className} />;
   if (result === "DENIED") return <X aria-hidden className={className} />;
   if (result.startsWith("PENDING")) return <Clock aria-hidden className={className} />;
   if (result === "EXIT_RECORDED") return <LogOut aria-hidden className={className} />;
@@ -109,7 +114,7 @@ export function GateCheckScreen() {
   return (
     <div className="flex min-h-dvh flex-col bg-background text-foreground" data-testid="gate-screen">
       {!online ? (
-        <div role="alert" className="flex items-center justify-center gap-2 bg-red-700 px-4 py-3 text-center text-lg font-bold text-white" data-testid="gate-offline">
+        <div role="alert" className="flex items-center justify-center gap-2 bg-verdict-denied px-4 py-3 text-center text-lg font-bold text-verdict-denied-fg" data-testid="gate-offline">
           <WifiOff aria-hidden className="size-6" />
           {t("offline")}
         </div>
@@ -137,10 +142,10 @@ function Offline({ onRetry }: { onRetry: () => void }) {
   return (
     <>
       <Header title={t("title")} />
-      <div className="flex flex-1 flex-col items-center justify-center gap-4 bg-red-700 p-6 text-center text-white" role="alert" data-testid="gate-offline">
+      <div className="flex flex-1 flex-col items-center justify-center gap-4 bg-verdict-denied p-6 text-center text-verdict-denied-fg" role="alert" data-testid="gate-offline">
         <WifiOff aria-hidden className="size-16" />
         <p className="text-2xl font-bold">{t("offline")}</p>
-        <Button size="lg" variant="outline" className="bg-white text-black" onClick={onRetry}>
+        <Button size="lg" variant="outline" className="h-14 border-0 bg-surface px-8 text-lg text-foreground" onClick={onRetry}>
           {t("retry")}
         </Button>
       </div>
@@ -194,7 +199,7 @@ function SignIn({ revoked, onDone }: { revoked: boolean; onDone: () => void }) {
       <Header title={t("title")} />
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 p-4">
         {revoked ? (
-          <p role="alert" className="rounded-md bg-red-700 p-3 font-semibold text-white">
+          <p role="alert" className="rounded-md bg-verdict-denied p-3 font-semibold text-verdict-denied-fg">
             {t("deviceRevoked")}
           </p>
         ) : null}
@@ -269,6 +274,16 @@ function Scanner({ ctx, onSessionLost }: { ctx: Ctx; onSessionLost: () => void }
   const [holdClear, setHoldClear] = useState(false);
   const [camera, setCamera] = useState(false);
   const [now, setNow] = useState(() => Date.now());
+  // The thumb bar is fixed; the page reserves its measured height so nothing hides behind it.
+  const [bar, setBar] = useState<HTMLDivElement | null>(null);
+  const [slot, setSlot] = useState<HTMLDivElement | null>(null);
+  const [barH, setBarH] = useState(224);
+  useEffect(() => {
+    if (!bar || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => setBarH(bar.getBoundingClientRect().height));
+    ro.observe(bar);
+    return () => ro.disconnect();
+  }, [bar]);
   const clearSeconds = ctx.clear_after_seconds;
   const name = (en: string, ar: string | null | undefined) => (locale === "ar" && ar ? ar : en);
 
@@ -431,8 +446,9 @@ function Scanner({ ctx, onSessionLost }: { ctx: Ctx; onSessionLost: () => void }
         )}
       </Header>
 
-      <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-3 p-3 pb-56">
-        {!isDevice && activeGates.length > 1 ? (
+      <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-3 p-3" style={{ paddingBottom: barH + 16 }}>
+        {/* Gate and zone pickers only before a scan: while a verdict is up it owns the screen (it repeats gate · zone). */}
+        {!shown && !isDevice && activeGates.length > 1 ? (
           <label className="flex flex-col gap-1 text-sm font-medium">
             {t("gate")}
             <select
@@ -454,7 +470,7 @@ function Scanner({ ctx, onSessionLost }: { ctx: Ctx; onSessionLost: () => void }
             </select>
           </label>
         ) : null}
-        {gate.protected_zones.length > 1 ? (
+        {shown ? null : gate.protected_zones.length > 1 ? (
           <label className="flex flex-col gap-1 text-sm font-medium">
             {t("zone")}
             <select className="h-12 rounded-md border bg-surface px-3 text-base" value={zone} onChange={(e) => setZoneId(e.target.value)} data-testid="zone-select">
@@ -472,7 +488,7 @@ function Scanner({ ctx, onSessionLost }: { ctx: Ctx; onSessionLost: () => void }
         )}
 
         {error ? (
-          <div role="alert" className={cn("rounded-lg p-4 text-lg font-bold", error.code === "NETWORK_ERROR" ? "bg-red-700 text-white" : "border-2 border-destructive text-destructive")} data-testid="gate-error">
+          <div role="alert" className={cn("rounded-lg p-4 text-lg font-bold", error.code === "NETWORK_ERROR" ? "bg-verdict-denied text-verdict-denied-fg" : "border-2 border-danger bg-danger-bg text-danger")} data-testid="gate-error">
             {error.code === "NETWORK_ERROR" ? (
               <span className="flex items-center gap-2">
                 <WifiOff aria-hidden className="size-6" />
@@ -499,6 +515,7 @@ function Scanner({ ctx, onSessionLost }: { ctx: Ctx; onSessionLost: () => void }
               reset();
             }}
             onHold={setHoldClear}
+            actionSlot={slot}
           />
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-6 text-center text-muted-foreground" data-testid="gate-ready">
@@ -510,8 +527,10 @@ function Scanner({ ctx, onSessionLost }: { ctx: Ctx; onSessionLost: () => void }
       </main>
 
       {/* Thumb zone: everything the guard needs is at the bottom of the screen. */}
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t bg-surface/95 p-3 shadow-lg backdrop-blur">
+      <div ref={setBar} className="fixed inset-x-0 bottom-0 z-20 border-t bg-surface/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-lg backdrop-blur">
         <div className="mx-auto flex max-w-xl flex-col gap-2">
+          {/* Result actions (next scan, cancel pairing, admitted despite denial) are portalled here: always in thumb reach. */}
+          <div ref={setSlot} className="flex flex-col gap-2 empty:hidden" />
           {camera ? <CameraScanner onResult={(p) => void submit({ payload: p })} onClose={() => setCamera(false)} paused={busy || Boolean(shown && !pairing)} /> : null}
           <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label={t("direction")}>
             {(["in", "out"] as const).map((d) => (
@@ -521,10 +540,15 @@ function Scanner({ ctx, onSessionLost }: { ctx: Ctx; onSessionLost: () => void }
                 role="radio"
                 aria-checked={direction === d}
                 onClick={() => setDirection(d)}
-                className={cn("h-11 rounded-md border-2 text-base font-semibold", direction === d ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background")}
+                className={cn(
+                  "inline-flex h-12 items-center justify-center gap-2 rounded-md border-2 text-base font-semibold",
+                  direction === d ? "border-primary bg-primary text-primary-foreground" : "border-input bg-background text-muted-foreground",
+                )}
                 data-testid={`direction-${d}`}
               >
+                {d === "in" ? <LogIn aria-hidden className="size-5 rtl:-scale-x-100" /> : <LogOut aria-hidden className="size-5 rtl:-scale-x-100" />}
                 {te(`gateDirection.${d}`)}
+                {direction === d ? <Check aria-hidden className="size-4" /> : null}
               </button>
             ))}
           </div>
@@ -606,7 +630,7 @@ function CameraScanner({ onResult, onClose, paused }: { onResult: (payload: stri
       ) : (
         <video ref={videoRef} className="aspect-video w-full object-cover" muted playsInline aria-label={t("cameraView")} />
       )}
-      <button type="button" onClick={onClose} className="absolute end-2 top-2 rounded-full bg-black/60 p-2 text-white" aria-label={t("stopCamera")}>
+      <button type="button" onClick={onClose} className="absolute end-2 top-2 flex size-11 items-center justify-center rounded-full bg-black/60 text-white" aria-label={t("stopCamera")}>
         <X aria-hidden className="size-5" />
       </button>
     </div>
@@ -624,6 +648,7 @@ function ResultView({
   onCancelPairing,
   onClear,
   onHold,
+  actionSlot,
 }: {
   res: Res;
   pairing: Pairing | null;
@@ -633,6 +658,7 @@ function ResultView({
   onCancelPairing: () => void;
   onClear: () => void;
   onHold: (v: boolean) => void;
+  actionSlot: HTMLElement | null;
 }) {
   const t = useTranslations("gate");
   const te = useTranslations("enums");
@@ -641,12 +667,30 @@ function ResultView({
   const [admitted, setAdmitted] = useState(false);
   const pending = Boolean(pairing);
   const total = pairing ? Math.max(1, Math.round((new Date(pairing.expires_at).getTime() - new Date(res.occurred_at).getTime()) / 1000)) : 1;
+  const withNote = res.result === "GRANTED_WITH_WARNING";
+  // Deny reasons first, then warnings, then information-only notes (display order only).
+  const rank = (r: Res["reasons"][number]) => (r.severity === "deny" ? 0 : NOTE_CODES.has(r.code) ? 2 : 1);
+  const reasons = [...res.reasons].sort((a, b) => rank(a) - rank(b));
   return (
     <section className="flex flex-col gap-3" data-testid="gate-result" data-result={res.result} aria-live="assertive">
-      <div className={cn("flex flex-col items-center gap-1 rounded-xl p-5 text-center shadow-md", TONE[res.result])} data-testid="verdict">
+      <div
+        className={cn("flex flex-col items-center gap-1 rounded-xl p-5 text-center shadow-md", TONE[res.result])}
+        data-testid="verdict"
+      >
         <VerdictIcon result={res.result} className="size-16 stroke-[3]" />
-        <p className="text-4xl font-black uppercase tracking-tight sm:text-5xl">{te(`gateResult.${res.result}`)}</p>
-        <p className="text-sm opacity-90">
+        {withNote ? (
+          <>
+            {/* "Granted" first and largest: the subject may enter; the note is secondary. */}
+            <p className="text-5xl leading-none font-black tracking-tight uppercase sm:text-6xl">{te("gateResult.GRANTED")}</p>
+            <p className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-black/10 px-3 py-0.5 text-base font-bold">
+              <Info aria-hidden className="size-4" />
+              {t("withNote")}
+            </p>
+          </>
+        ) : (
+          <p className="text-4xl leading-tight font-black tracking-tight uppercase sm:text-5xl">{te(`gateResult.${res.result}`)}</p>
+        )}
+        <p className="text-sm font-medium opacity-90">
           {te(`gateDirection.${res.direction}`)} · <span className="ltr">{res.gate.gate_code}</span>
           {res.zone ? (
             <>
@@ -670,19 +714,37 @@ function ResultView({
         ) : null}
       </div>
 
-      {res.reasons.length ? (
+      {reasons.length ? (
         <ul className="flex flex-col gap-2" data-testid="reasons">
-          {res.reasons.map((r, i) => (
-            <li key={`${r.code}-${i}`} className={cn("rounded-lg border-2 p-3 text-base font-medium", r.severity === "deny" ? "border-red-700 bg-red-50 text-red-900 dark:bg-red-950 dark:text-red-100" : "border-amber-500 bg-amber-50 text-amber-950 dark:bg-amber-950 dark:text-amber-100")} data-code={r.code} data-severity={r.severity}>
-              <span className="flex items-start gap-2">
-                {r.severity === "deny" ? <X aria-hidden className="mt-0.5 size-5 shrink-0" /> : <CircleAlert aria-hidden className="mt-0.5 size-5 shrink-0" />}
-                <span>
-                  {locale === "ar" ? r.message_ar : r.message_en}
-                  <span className="ltr block text-xs opacity-70">{r.code}</span>
+          {reasons.map((r, i) => {
+            const note = r.severity !== "deny" && NOTE_CODES.has(r.code);
+            return (
+              <li
+                key={`${r.code}-${i}`}
+                className={cn(
+                  "rounded-lg border-2 p-3 text-base font-medium",
+                  r.severity === "deny" ? "border-danger bg-danger-bg text-foreground" : note ? "border-border bg-neutral-bg text-foreground" : "border-warning/60 bg-warning-bg text-foreground",
+                )}
+                data-code={r.code}
+                data-severity={r.severity}
+              >
+                <span className="flex items-start gap-2">
+                  {r.severity === "deny" ? (
+                    <X aria-hidden className="mt-0.5 size-6 shrink-0 stroke-[3] text-danger" />
+                  ) : note ? (
+                    <Info aria-hidden className="mt-0.5 size-5 shrink-0 text-neutral" />
+                  ) : (
+                    <CircleAlert aria-hidden className="mt-0.5 size-5 shrink-0 text-warning" />
+                  )}
+                  <span className="min-w-0">
+                    <span className="sr-only">{r.severity === "deny" ? t("reasonDeny") : note ? t("reasonNote") : t("reasonWarn")}: </span>
+                    {locale === "ar" ? r.message_ar : r.message_en}
+                    <span className="ltr block text-xs font-normal text-muted-foreground">{r.code}</span>
+                  </span>
                 </span>
-              </span>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       ) : null}
 
@@ -698,34 +760,47 @@ function ResultView({
         </div>
       ) : null}
 
-      <div className="flex flex-wrap gap-2">
-        {pending ? (
-          <Button size="lg" variant="outline" className="h-12 flex-1 text-base" onClick={onCancelPairing} data-testid="cancel-pairing">
-            {t("cancelPairing")}
-          </Button>
-        ) : (
-          <Button size="lg" variant="outline" className="h-12 flex-1 text-base" onClick={onClear} data-testid="next-scan">
-            {t("next")}
-            {clearLeft != null ? <span className="text-sm text-muted-foreground tabular-nums">({t("clearsIn", { s: clearLeft })})</span> : null}
-          </Button>
-        )}
-        {res.result === "DENIED" && !admitted ? (
-          <Button
-            size="lg"
-            variant="destructive"
-            className="h-12 flex-1 text-base"
-            onClick={() => {
-              setAdmit(true);
-              onHold(true);
-            }}
-            data-testid="admitted-despite-denial"
-          >
-            {t("admittedDespiteDenial")}
-          </Button>
-        ) : null}
-      </div>
+      {actionSlot
+        ? createPortal(
+            <div className="flex gap-2">
+              {pending ? (
+                <Button size="lg" variant="outline" className="h-14 flex-1 border-2 text-lg" onClick={onCancelPairing} data-testid="cancel-pairing">
+                  <X aria-hidden />
+                  {t("cancelPairing")}
+                </Button>
+              ) : (
+                <Button size="lg" variant="outline" className="relative h-14 flex-1 overflow-hidden border-2 text-lg" onClick={onClear} data-testid="next-scan">
+                  <span className="flex flex-col items-center leading-tight">
+                    {t("next")}
+                    {clearLeft != null ? <span className="text-xs font-normal text-muted-foreground tabular-nums">{t("clearsIn", { s: clearLeft })}</span> : null}
+                  </span>
+                  {clearLeft != null ? (
+                    <span aria-hidden className="absolute inset-x-0 bottom-0 h-1 bg-primary/70 transition-[width] duration-500 ease-linear" style={{ width: `${Math.min(100, (clearLeft / Math.max(1, res.clear_after_seconds || 30)) * 100)}%` }} />
+                  ) : null}
+                </Button>
+              )}
+              {res.result === "DENIED" && !admitted ? (
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="h-14 flex-1 border-2 border-danger px-3 text-base leading-tight whitespace-normal text-danger"
+                  onClick={() => {
+                    setAdmit(true);
+                    onHold(true);
+                  }}
+                  data-testid="admitted-despite-denial"
+                >
+                  <ShieldAlert aria-hidden />
+                  {t("admittedDespiteDenial")}
+                </Button>
+              ) : null}
+            </div>,
+            actionSlot,
+          )
+        : null}
       {admitted ? (
-        <p role="status" className="rounded-lg border-2 border-red-700 p-3 font-semibold text-red-800 dark:text-red-200" data-testid="admitted-recorded">
+        <p role="status" className="flex items-start gap-2 rounded-lg border-2 border-danger bg-danger-bg p-3 font-semibold text-foreground" data-testid="admitted-recorded">
+          <ShieldAlert aria-hidden className="mt-0.5 size-5 shrink-0 text-danger" />
           {t("admittedRecorded")}
         </p>
       ) : null}
@@ -799,7 +874,7 @@ function CredLines({ lines }: { lines: Schemas["GateCredentialLine"][] }) {
     <ul className="mt-3 flex flex-col divide-y rounded-md border" data-testid="credentials">
       {lines.map((c, i) => (
         <li key={`${c.kind}-${i}`} className="flex items-start gap-2 p-2 text-sm" data-ok={c.ok ? "true" : "false"}>
-          {c.ok ? <Check aria-label={t("ok")} className="mt-0.5 size-5 shrink-0 text-green-700" /> : <X aria-label={t("notOk")} className="mt-0.5 size-5 shrink-0 text-red-700" />}
+          {c.ok ? <Check aria-label={t("ok")} className="mt-0.5 size-5 shrink-0 text-success" /> : <X aria-label={t("notOk")} className="mt-0.5 size-5 shrink-0 text-danger" />}
           <span className="flex-1">
             <span className="font-semibold">{locale === "ar" ? c.label_ar : c.label_en}</span>
             <span className="block text-muted-foreground">
@@ -855,7 +930,7 @@ function PersonCard({ p }: { p: Schemas["GatePersonCard"] }) {
             {p.trade ? <> · {te(`trade.${p.trade}`)}</> : null}
           </p>
           {p.escort_required ? (
-            <p className="mt-1 inline-block rounded bg-blue-800 px-2 py-0.5 text-sm font-bold text-white" data-testid="escort-required">
+            <p className="mt-1 inline-block rounded bg-verdict-pending px-2 py-0.5 text-sm font-bold text-verdict-pending-fg" data-testid="escort-required">
               {t("escortRequired")}
             </p>
           ) : null}
@@ -898,7 +973,7 @@ function WapCard({ w }: { w: Schemas["GateWapCard"] }) {
     <article className="rounded-xl border bg-surface p-3" data-testid="wap-card">
       <p className="ltr text-xl font-bold">{w.wap_no}</p>
       <p className="text-sm">
-        {te(`wapStatus.${w.status}`)} · {w.in_window_now ? <span className="font-semibold text-green-700 dark:text-green-400">{t("inWindow")}</span> : <span className="font-semibold text-red-700 dark:text-red-400">{t("outsideWindow")}</span>}
+        {te(`wapStatus.${w.status}`)} · {w.in_window_now ? <span className="font-semibold text-success">{t("inWindow")}</span> : <span className="font-semibold text-danger">{t("outsideWindow")}</span>}
         {w.window_today ? (
           <>
             {" "}
@@ -909,7 +984,7 @@ function WapCard({ w }: { w: Schemas["GateWapCard"] }) {
       {w.blockers.length ? (
         <ul className="mt-2 flex flex-wrap gap-1">
           {w.blockers.map((b) => (
-            <li key={b} className="rounded bg-red-700 px-2 py-0.5 text-xs font-semibold text-white">
+            <li key={b} className="rounded bg-verdict-denied px-2 py-0.5 text-xs font-semibold text-verdict-denied-fg">
               {te(`wapBlocker.${b}`)}
             </li>
           ))}
@@ -919,7 +994,7 @@ function WapCard({ w }: { w: Schemas["GateWapCard"] }) {
       <ul className="mt-1 flex flex-col divide-y rounded-md border">
         {w.crew.map((c) => (
           <li key={c.worker_no} className="flex items-start gap-2 p-2 text-sm" data-eligible={c.eligible_now ? "true" : "false"}>
-            {c.eligible_now ? <Check aria-label={t("ok")} className="size-5 shrink-0 text-green-700" /> : <X aria-label={t("notOk")} className="size-5 shrink-0 text-red-700" />}
+            {c.eligible_now ? <Check aria-label={t("ok")} className="size-5 shrink-0 text-success" /> : <X aria-label={t("notOk")} className="size-5 shrink-0 text-danger" />}
             <span className="flex-1">
               <span className="font-medium">{locale === "ar" ? c.full_name_ar : c.full_name_en}</span> <span className="ltr text-muted-foreground">{c.worker_no}</span>
               <span className="block text-xs text-muted-foreground">

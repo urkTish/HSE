@@ -1,6 +1,6 @@
 "use client";
 import { useMutation } from "@tanstack/react-query";
-import { Download } from "lucide-react";
+import { Download, OctagonAlert } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
@@ -331,7 +331,10 @@ function AccessBandView({ b, show }: { b: Schemas["AccessBand"]; show: Show }) {
           <p className="text-xs font-medium text-muted-foreground">{t("band.ops")}</p>
           {b.ops_suspension_in_force ? (
             <Link href="/ops-events" className="flex flex-col">
-              <span className="inline-flex w-fit items-center gap-1 rounded bg-danger-bg px-1.5 py-0.5 text-sm font-semibold text-danger">{t("band.opsYes")}</span>
+              <span className="inline-flex w-fit items-center gap-1 rounded bg-danger-bg px-1.5 py-0.5 text-sm font-semibold text-danger">
+                <OctagonAlert aria-hidden className="size-4" />
+                {t("band.opsYes")}
+              </span>
               <span className="text-xs text-muted-foreground">
                 {b.ops_suspension_zones.map((z) => (
                   <bdi key={z.id} className="ltr me-1" title={name(z.name_en, z.name_ar)}>

@@ -1,18 +1,21 @@
 "use client";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  Clock,
   CloudFog,
   GitBranch,
   Pencil,
   Plus,
   Printer,
   Trash2,
+  TriangleAlert,
   UserPlus,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Alert } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -74,8 +77,11 @@ import { joinList, useLocalizedName } from "@/lib/i18n-helpers";
 import { can, canWrite } from "@/lib/permissions";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
+import { cn } from "@/lib/utils";
 import {
+  AccessPrintHeader,
   AirportOnly,
+  BiLabel,
   Blockers,
   Code,
   DeploymentPicker,
@@ -2111,7 +2117,12 @@ function WapBoard({ project }: { project: Schemas["ProjectRead"] }) {
                     <Link
                       key={w.id}
                       href={`/waps/${w.id}`}
-                      className="flex flex-col gap-1 rounded-lg border p-2 hover:bg-accent"
+                      className={cn(
+                        "flex flex-col gap-1 rounded-lg border p-2.5 hover:bg-accent",
+                        // Working now: a solid start bar so live works stand out on a wall screen.
+                        w.current_window && "border-s-4 border-s-success",
+                        w.blockers.length > 0 && "border-s-4 border-s-warning",
+                      )}
                       data-testid="board-wap"
                       data-status={w.status}
                     >
@@ -2126,7 +2137,16 @@ function WapBoard({ project }: { project: Schemas["ProjectRead"] }) {
                         {w.engagement.short_code} ·{" "}
                         {locale === "ar" ? w.scope_ar : w.scope_en}
                       </span>
-                      <span className="text-xs">
+                      <span className={cn("flex items-start gap-1.5 text-xs", w.current_window && "font-semibold text-success")}>
+                        {w.current_window ? (
+                          <span aria-hidden className="relative mt-1 flex size-2 shrink-0">
+                            <span className="absolute inline-flex size-full animate-ping rounded-full bg-success opacity-60" />
+                            <span className="relative inline-flex size-2 rounded-full bg-success" />
+                          </span>
+                        ) : (
+                          <Clock aria-hidden className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
+                        )}
+                        <span>
                         {w.current_window
                           ? t("nowWindow", {
                               to: dateTime(w.current_window.end_utc),
@@ -2136,16 +2156,20 @@ function WapBoard({ project }: { project: Schemas["ProjectRead"] }) {
                                 at: dateTime(w.next_window.start_utc),
                               })
                             : t("noWindowToday")}
+                        </span>
                       </span>
                       <span className="text-xs">
                         {t("crewN", { n: w.crew_count })} ·{" "}
                         {t("vehiclesN", { n: w.vehicle_count })}
                       </span>
                       {w.blockers.length ? (
-                        <span className="text-xs font-medium text-warning">
-                          {w.blockers
-                            .map((b) => te(`wapBlocker.${b.code}`))
-                            .join(" · ")}
+                        <span className="flex flex-wrap gap-1" data-testid="board-blockers">
+                          {w.blockers.map((b, i) => (
+                            <Badge key={`${b.code}-${i}`} tone="warning">
+                              <TriangleAlert aria-hidden />
+                              {te(`wapBlocker.${b.code}`)}
+                            </Badge>
+                          ))}
                         </span>
                       ) : null}
                     </Link>
@@ -2186,57 +2210,82 @@ export function WapPrint({ id }: { id: string }) {
           <Link href={`/waps/${id}`}>{tc("back")}</Link>
         </Button>
       </div>
+      {/* A4 permit for display at the work site: bilingual labels (EN / AR) whatever the screen language,
+          black on white so it prints the same from a dark screen. */}
       <article
-        className="mx-auto flex w-full max-w-3xl flex-col gap-4 rounded-xl border bg-white p-6 text-black"
+        className="paper mx-auto flex w-full max-w-3xl flex-col gap-4 rounded-xl border bg-white p-6 text-black print:max-w-none print:rounded-none print:border-0 print:p-0"
         data-testid="wap-print"
       >
-        <header className="flex flex-wrap items-start justify-between gap-4 border-b pb-4">
-          <div>
-            <h1 className="text-2xl font-bold">{t("printTitle")}</h1>
-            <p className="ltr text-lg font-semibold">
+        <AccessPrintHeader title="wapTitle" projectId={w.project_id} />
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex min-w-0 flex-col gap-2">
+            <p className="ltr text-2xl font-bold tracking-wide">
               {w.wap_no}
-              {w.revision_no ? ` · r${w.revision_no}` : ""}
+              {w.revision_no ? <span className="text-lg font-semibold"> · r{w.revision_no}</span> : null}
             </p>
-            <p>{te(`wapStatus.${w.status}`)}</p>
+            <p className="flex items-center gap-2 text-sm">
+              <BiLabel k="status" className="text-xs" />
+              <span className="rounded border-2 border-black px-2 py-0.5 text-base font-bold">{te(`wapStatus.${w.status}`)}</span>
+            </p>
+            <p className="flex flex-col text-sm">
+              <BiLabel k="dates" className="text-xs" />
+              <span className="text-lg font-semibold">
+                {date(w.valid_from)} – {date(w.valid_to)}
+              </span>
+            </p>
           </div>
-          <div className="flex flex-col items-center">
-            <QrImage
-              payload={p.qr_payload}
-              size={150}
-              label={t("wapQr", { no: w.wap_no })}
-            />
+          <div className="flex flex-col items-center gap-1 rounded-lg border-2 border-black p-2">
+            <QrImage payload={p.qr_payload} size={150} label={t("wapQr", { no: w.wap_no })} />
             <span className="ltr font-mono font-bold">{p.printed_ref}</span>
+            <BiLabel k="scanAtGate" className="text-[8pt]" />
           </div>
-        </header>
-        <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
-          <dt className="font-medium">{tc("site")}</dt>
+        </div>
+        <dl className="grid grid-cols-[minmax(7rem,auto)_1fr] gap-x-6 gap-y-2 border-y border-black py-3 text-sm">
+          <dt><BiLabel k="site" stack className="text-xs font-medium" /></dt>
           <dd>{name(w.site.name_en, w.site.name_ar)}</dd>
-          <dt className="font-medium">{t("fields.zones")}</dt>
-          <dd className="ltr">{w.zones.map((z) => z.code).join(", ")}</dd>
-          <dt className="font-medium">{tc("contractor")}</dt>
-          <dd>{w.engagement.short_code}</dd>
-          <dt className="font-medium">{t("fields.dates")}</dt>
+          <dt><BiLabel k="zones" stack className="text-xs font-medium" /></dt>
           <dd>
-            {date(w.valid_from)} – {date(w.valid_to)}
+            {w.zones.map((z) => (
+              <span key={z.id} className="me-3 inline-block">
+                <Code className="font-semibold">{z.code}</Code> {name(z.name_en, z.name_ar)}
+              </span>
+            ))}
           </dd>
-          <dt className="font-medium">{t("fields.windows")}</dt>
+          <dt><BiLabel k="contractor" stack className="text-xs font-medium" /></dt>
+          <dd><Code>{w.engagement.short_code}</Code></dd>
+          <dt><BiLabel k="windows" stack className="text-xs font-medium" /></dt>
           <dd>
             <WindowsText windows={w.windows} />
           </dd>
-          <dt className="font-medium">{t("fields.scope_en")}</dt>
-          <dd>{locale === "ar" ? w.scope_ar : w.scope_en}</dd>
+          <dt><BiLabel k="scope" stack className="text-xs font-medium" /></dt>
+          <dd className="flex flex-col items-start gap-1">
+            <span lang="en" dir="ltr">{w.scope_en}</span>
+            {w.scope_ar ? (
+              <span lang="ar" dir="rtl" className="text-start">
+                {w.scope_ar}
+              </span>
+            ) : null}
+          </dd>
         </dl>
         <section>
-          <h2 className="mb-2 font-semibold">
-            {t("crewTitle", { n: w.crew_count })}
+          <h2 className="mb-2 flex items-baseline gap-2 font-semibold">
+            <BiLabel k="crew" />
+            <span className="tabular-nums">({w.crew_count})</span>
           </h2>
           <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b-2 border-black text-start text-xs">
+                <th className="py-1 text-start font-medium"><BiLabel k="workerNo" stack /></th>
+                <th className="py-1 text-start font-medium"><BiLabel k="name" stack /></th>
+                <th className="py-1 text-start font-medium"><BiLabel k="role" stack /></th>
+              </tr>
+            </thead>
             <tbody>
               {w.crew
                 .filter((c) => c.status === "included")
                 .map((c) => (
                   <tr key={c.worker.id} className="border-b">
-                    <td className="ltr py-1">{c.worker.worker_no}</td>
+                    <td className="py-1"><Code>{c.worker.worker_no}</Code></td>
                     <td className="py-1">{personName(c.worker, locale)}</td>
                     <td className="py-1">{te(`crewRole.${c.crew_role}`)}</td>
                   </tr>
@@ -2246,8 +2295,9 @@ export function WapPrint({ id }: { id: string }) {
         </section>
         {w.vehicles.length ? (
           <section>
-            <h2 className="mb-2 font-semibold">
-              {t("vehiclesTitle", { n: w.vehicle_count })}
+            <h2 className="mb-2 flex items-baseline gap-2 font-semibold">
+              <BiLabel k="vehicles" />
+              <span className="tabular-nums">({w.vehicle_count})</span>
             </h2>
             <p className="ltr text-sm">
               {w.vehicles
@@ -2257,7 +2307,9 @@ export function WapPrint({ id }: { id: string }) {
             </p>
           </section>
         ) : null}
-        <p className="text-xs">{t("printFooter")}</p>
+        <footer className="mt-auto border-t-2 border-black pt-2 text-xs">
+          <BiLabel k="wapFooter" stack className="gap-1" />
+        </footer>
       </article>
     </div>
   );
