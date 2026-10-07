@@ -5,6 +5,7 @@ from datetime import date
 
 from pydantic import Field
 
+from app.core.access_enums import LimitingFactor
 from app.core.enums import EntityType, ZoneType
 from app.core.hse_enums import (
     ActionPanelItem,
@@ -61,6 +62,9 @@ class ExpiringItem(ApiModel):
     days_left: int = Field(description="Negative = overdue.")
     engagement: EngagementRef | None
     detail_path: str | None
+    limiting_factor: LimitingFactor | None = Field(
+        default=None, description="Phase 2 credentials: the term giving the effective validity."
+    )
 
 
 class ExpiringItemsResponse(ApiModel):

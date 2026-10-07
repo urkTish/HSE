@@ -63,6 +63,11 @@ class HseSettingsRead(ApiModel):
     )
     month_lock_day: int
     injury_identity_retention_years: int
+    induction_register_from: date | None = Field(
+        default=None,
+        description="v1.1: K-38 counts passed general_site induction records from this date "
+        "(daily-return inductions before it; null = daily returns only).",
+    )
     ai_enabled: bool = Field(description="Effective: requested AND approval recorded (AI-14).")
     ai_requested: bool = Field(description="The HSE Manager's switch.")
     ai_transfer_approval: AiTransferApprovalRead | None
@@ -120,6 +125,9 @@ class HseSettingsUpdate(PatchInput):
     kpi_targets: dict[KpiMetric, DecimalStr] | None = None
     month_lock_day: int | None = Field(default=None, ge=1, le=28)
     injury_identity_retention_years: int | None = Field(default=None, ge=5, le=30)
+    induction_register_from: date | None = Field(
+        default=None, description="≥ project start; null switches K-38 back to daily returns."
+    )
     ai_enabled: bool | None = None
 
 
@@ -133,6 +141,10 @@ class ReferenceItemRead(ApiModel):
         "level AD/IT/TE/OF; severity: description key.",
     )
     treatment_class: TreatmentClass | None = None
+    points: int | None = Field(default=None, description="airside_offence: ADP points.")
+    immediate_suspension: bool | None = Field(
+        default=None, description="airside_offence: suspends the ADP immediately (OFF-05/06)."
+    )
     description_en: str | None = None
     description_ar: str | None = None
     sort_order: int
@@ -156,3 +168,6 @@ class ReferenceItemUpdate(PatchInput):
     label_ar: str | None = Field(default=None, min_length=1, max_length=120)
     description_en: str | None = Field(default=None, max_length=300)
     description_ar: str | None = Field(default=None, max_length=300)
+    points: int | None = Field(
+        default=None, ge=0, le=24, description="airside_offence only (applies to new offences)."
+    )

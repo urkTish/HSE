@@ -7,7 +7,7 @@ from fastapi import APIRouter, Query, Response
 
 from app.api.deps import DB, CurrentUser
 from app.core.enums import ExportDataset, ExportFormat
-from app.core.errors import error_responses
+from app.core.errors import error_responses, not_implemented
 from app.core.hse_enums import ExportPurpose
 from app.services import exports as svc
 from app.services import hse_exports
@@ -22,6 +22,25 @@ PHASE1_DATASETS = frozenset(
         ExportDataset.inspections,
         ExportDataset.corrective_actions,
         ExportDataset.hse_meetings,
+    }
+)
+
+PHASE2_DATASETS = frozenset(
+    {
+        ExportDataset.workers,
+        ExportDataset.deployments,
+        ExportDataset.inductions,
+        ExportDataset.pass_applications,
+        ExportDataset.airport_passes,
+        ExportDataset.adps,
+        ExportDataset.airside_offences,
+        ExportDataset.vehicles,
+        ExportDataset.avps,
+        ExportDataset.waps,
+        ExportDataset.notam_requests,
+        ExportDataset.obstacle_clearances,
+        ExportDataset.ops_events,
+        ExportDataset.gate_log,
     }
 )
 
@@ -47,7 +66,10 @@ _FILE_RESPONSES: dict[int | str, dict[str, object]] = {
     "register. Writes an `export` audit entry with row count and filters. Incidents: identity "
     "columns only with `include_identity=true`, capability 43 and a `purpose` (422 "
     "EXPORT_PURPOSE_REQUIRED; recorded in the audit entry, P1-6); medical attachments are never "
-    "exported.",
+    "exported. Phase 2 access registers (capability 78) mask IDs; `include_identity=true` adds "
+    "full ID numbers with capability 79 and a purpose (pass_office, authority_request, legal, "
+    "other + purpose_text) recorded in the audit entry (P2-10); photos and ID copies are never "
+    "exported; gate_log needs capability 76.",
     response_class=Response,
     responses=_FILE_RESPONSES,
 )
@@ -60,7 +82,11 @@ def export_dataset(
     status_: Annotated[str | None, Query(alias="status", max_length=40)] = None,
     q: Annotated[str | None, Query(max_length=100)] = None,
     include_identity: Annotated[
-        bool, Query(description="incidents only: add injured-person identity columns.")
+        bool,
+        Query(
+            description="incidents: add injured-person identity columns; Phase 2 registers: "
+            "full ID numbers (capability 79)."
+        ),
     ] = False,
     purpose: Annotated[
         ExportPurpose | None, Query(description="Required with include_identity (P1-6).")
@@ -69,6 +95,8 @@ def export_dataset(
         str | None, Query(max_length=200, description="Required when purpose = other.")
     ] = None,
 ) -> Response:
+    if dataset in PHASE2_DATASETS:
+        raise not_implemented()
     if dataset in PHASE1_DATASETS:
         content, media_type, filename = hse_exports.export(
             db,

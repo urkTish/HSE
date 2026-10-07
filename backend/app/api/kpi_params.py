@@ -28,6 +28,7 @@ class KpiQuery:
     end: date | None
     as_of: date | None
     compare: list[ComparisonKind] = field(default_factory=list)
+    gate_ids: list[uuid.UUID] = field(default_factory=list)
 
 
 def kpi_query(
@@ -70,6 +71,10 @@ def kpi_query(
         list[ComparisonKind] | None,
         Query(description="Comparisons to compute (K-R11). Default: previous."),
     ] = None,
+    gate_id: Annotated[
+        list[uuid.UUID] | None,
+        Query(description="Gate(s): filters gate KPIs (K-52, K-53, K-53b) only."),
+    ] = None,
 ) -> KpiQuery:
     return KpiQuery(
         project_ids=project_id or [],
@@ -86,6 +91,7 @@ def kpi_query(
         end=end,
         as_of=as_of,
         compare=[ComparisonKind.previous] if compare is None else compare,
+        gate_ids=gate_id or [],
     )
 
 

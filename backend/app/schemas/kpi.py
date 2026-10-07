@@ -36,7 +36,7 @@ from app.core.hse_enums import (
     Severity,
 )
 from app.schemas.common import ApiModel, Page
-from app.schemas.hse_common import EngagementRef
+from app.schemas.hse_common import EngagementRef, ZoneRef
 
 DEC = "Decimal string rounded per K-R8 (half-up); null = '—'."
 
@@ -77,6 +77,9 @@ class AppliedFilters(ApiModel):
     )
     scope_narrowed: bool = Field(
         description="True when the caller's role scope reduced the request (D-3, AI-4)."
+    )
+    gate_ids: list[uuid.UUID] = Field(
+        default_factory=list, description="Gate filter (gate KPIs K-52/K-53/K-53b only)."
     )
 
 
@@ -299,6 +302,22 @@ class DashboardHeadline(ApiModel):
     direct_sub_split: KpiValue
 
 
+class AccessBand(ApiModel):
+    """2-access-permits §8.1 item 2 (airport projects). Counts at as_of; aggregates only
+    (KA-4)."""
+
+    project_id: uuid.UUID
+    as_of: date
+    active_deployed_workers: KpiValue = Field(description="K-48.")
+    active_passes: int
+    active_adps: int
+    active_avps: int
+    active_waps_now: int
+    active_obstacle_clearances: int = Field(description="K-60 active part.")
+    ops_suspension_in_force: bool
+    ops_suspension_zones: list[ZoneRef]
+
+
 class DashboardResponse(ApiModel):
     """§8.1 items 1-4 in one call. Charts: GET /kpi/charts/{chart_id}; action panel:
     GET /dashboard/action-panel."""
@@ -308,6 +327,9 @@ class DashboardResponse(ApiModel):
     lagging: list[KpiTile]
     leading: list[KpiTile]
     placeholders: list[KpiPlaceholder]
+    access_band: AccessBand | None = Field(
+        default=None, description="Phase 2 access band; null on non-airport projects."
+    )
 
 
 # ---- trends, comparisons table -------------------------------------------------------------------

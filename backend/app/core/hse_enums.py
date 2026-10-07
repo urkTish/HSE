@@ -753,6 +753,11 @@ class AttachmentOwner(StrEnum):
     observation = "observation"
     corrective_action_evidence = "corrective_action_evidence"
     hse_meeting_minutes = "hse_meeting_minutes"
+    # Phase 2 (encrypted bucket, signed URL ≤ 5 min)
+    worker_photo = "worker_photo"
+    pass_application_id_copy = "pass_application_id_copy"
+    induction_signature = "induction_signature"
+    offence_evidence = "offence_evidence"
 
 
 class ScanStatus(StrEnum):
@@ -763,13 +768,16 @@ class ScanStatus(StrEnum):
 
 
 class ExportPurpose(StrEnum):
-    """P1-6: purpose recorded when exporting incidents with identity columns."""
+    """P1-6: purpose recorded when exporting incidents with identity columns; P2-10:
+    pass_office / authority_request / legal / other for access exports with full IDs."""
 
     gosi = "gosi"
     client_report = "client_report"
     legal = "legal"
     insurance = "insurance"
     other = "other"
+    pass_office = "pass_office"
+    authority_request = "authority_request"
 
 
 # ---------------------------------------------------------------------------------------------
@@ -831,6 +839,21 @@ class KpiMetric(StrEnum):
     K45 = "K-45"
     K46 = "K-46"
     K47 = "K-47"
+    # Phase 2 access KPIs (2-access-permits §6.8)
+    K48 = "K-48"
+    K49 = "K-49"
+    K50 = "K-50"
+    K51 = "K-51"
+    K52 = "K-52"
+    K53 = "K-53"
+    K53b = "K-53b"
+    K54 = "K-54"
+    K55 = "K-55"
+    K56 = "K-56"
+    K57 = "K-57"
+    K58 = "K-58"
+    K59 = "K-59"
+    K60 = "K-60"
 
 
 class KpiKind(StrEnum):
@@ -1015,6 +1038,9 @@ class LeadingWarningCode(StrEnum):
     E2 = "E2"
     E3 = "E3"
     E4 = "E4"
+    E5 = "E5"  # 2-access-permits §6.9: induction coverage below threshold
+    E6 = "E6"  # gate denial rate ≥ 2 × prior-3-month mean and ≥ 1.00 %
+    E7 = "E7"  # ≥ 1 OFF-05 offence or ≥ 3 ADP suspensions in the month
 
 
 class ChartId(StrEnum):
@@ -1029,6 +1055,9 @@ class ChartId(StrEnum):
     C7 = "C7"
     C8 = "C8"
     C9 = "C9"
+    C10 = "C10"  # gate checks by month with denial rate (2-access-permits §8.1)
+    C11 = "C11"  # denial reasons breakdown, top 8
+    C12 = "C12"  # expiring credentials next 90 days by week and kind
 
 
 class ChartKind(StrEnum):
@@ -1070,6 +1099,17 @@ class ActionPanelItem(StrEnum):
     missing_daily_returns = "missing_daily_returns"
     high_risk_observations_without_ca = "high_risk_observations_without_ca"
     leading_warnings = "leading_warnings"
+    # Phase 2 (2-access-permits §8.3)
+    pass_applications_stale = "pass_applications_stale"
+    raised_suspensions_pending = "raised_suspensions_pending"
+    unreturned_overdue = "unreturned_overdue"
+    lost_without_authority_notice = "lost_without_authority_notice"
+    waps_approved_blocked = "waps_approved_blocked"
+    ops_suspensions_active = "ops_suspensions_active"
+    notam_not_issued_48h = "notam_not_issued_48h"
+    revoked_token_scans = "revoked_token_scans"
+    admitted_despite_denial = "admitted_despite_denial"
+    induction_language_mismatch = "induction_language_mismatch"
 
 
 class ExpiringItemKind(StrEnum):
@@ -1078,6 +1118,20 @@ class ExpiringItemKind(StrEnum):
     external_notification_due = "external_notification_due"
     inspection_planned = "inspection_planned"
     month_lock = "month_lock"
+    # Phase 2 (2-access-permits §8.2)
+    induction_expiry = "induction_expiry"
+    reinduction_due = "reinduction_due"
+    worker_id_expiry = "worker_id_expiry"
+    airport_pass_expiry = "airport_pass_expiry"
+    bg_recheck_due = "bg_recheck_due"
+    adp_expiry = "adp_expiry"
+    adp_suspension_end = "adp_suspension_end"
+    avp_expiry = "avp_expiry"
+    vehicle_document_expiry = "vehicle_document_expiry"
+    wap_expiry = "wap_expiry"
+    notam_expiry = "notam_expiry"
+    obstacle_clearance_expiry = "obstacle_clearance_expiry"
+    pass_return_due = "pass_return_due"
 
 
 class Severity(StrEnum):
@@ -1114,6 +1168,7 @@ class AiTool(StrEnum):
     get_leading_warnings = "get_leading_warnings"
     get_expiring_items = "get_expiring_items"
     propose_chart = "propose_chart"
+    get_access_kpis = "get_access_kpis"  # T14 (1-dashboard v1.1)
 
 
 class GroundingResult(StrEnum):
@@ -1186,3 +1241,7 @@ class ReferenceList(StrEnum):
     observation_category = "observation_category"
     inspection_type = "inspection_type"
     root_cause = "root_cause"
+    # Phase 2 (2-access-permits §3.21)
+    airside_offence = "airside_offence"
+    vehicle_category = "vehicle_category"
+    credential_reason = "credential_reason"

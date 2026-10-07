@@ -8,8 +8,9 @@ from fastapi import APIRouter, Query, Response
 
 from app.api.deps import DB, CurrentUser, PageParams
 from app.api.kpi_params import KpiParams
+from app.core.access_enums import AccessKpiGroupBy
 from app.core.enums import ExportFormat
-from app.core.errors import error_responses
+from app.core.errors import error_responses, not_implemented
 from app.core.hse_enums import (
     BreakdownDimension,
     BreakdownMeasure,
@@ -19,6 +20,7 @@ from app.core.hse_enums import (
     KpiMetric,
 )
 from app.kpi import charts, scope, service, views
+from app.schemas.access_kpi import AccessKpiResponse
 from app.schemas.kpi import (
     BreakdownResponse,
     ChartResponse,
@@ -46,6 +48,7 @@ FILTERS = (
     "`context.filters.scope_narrowed`. Capability 38."
 )
 KPI_ERRORS = error_responses(401, 403, 404, 422)
+PHASE2_CHARTS = frozenset({ChartId.C10, ChartId.C11, ChartId.C12})
 
 
 @router.get(
@@ -254,7 +257,7 @@ def get_data_quality(user: CurrentUser, db: DB, q: KpiParams) -> DataQualityResp
 @router.get(
     "/charts/{chart_id}",
     response_model=ChartResponse,
-    summary="Dashboard chart C1-C9 as a renderer-agnostic ChartSpec",
+    summary="Dashboard chart C1-C12 as a renderer-agnostic ChartSpec",
     description=FILTERS + " C7 needs `dimension` (and optional `measure`, default "
     "injury_cases). Monthly charts cover the 12 months ending at the period end.",
     responses=KPI_ERRORS,
@@ -267,6 +270,8 @@ def get_chart(
     dimension: BreakdownDimension | None = None,
     measure: BreakdownMeasure | None = None,
 ) -> ChartResponse:
+    if chart_id in PHASE2_CHARTS:
+        raise not_implemented()
     sc = scope.build(db, user, q)
     spec = charts.chart(db, sc, chart_id, dimension, measure)
     return ChartResponse(context=service.context(sc), chart=spec)
@@ -306,3 +311,24 @@ def export_kpi_table(
         media_type=media,
         headers={"Content-Disposition": f'attachment; filename="{name}"'},
     )
+
+
+@router.get(
+    "/access",
+    response_model=AccessKpiResponse,
+    summary="Access KPIs K-38, K-48…K-60, K-53b with breakdowns (2-access-permits §6.8)",
+    description=FILTERS + " Plus `gate_id` (gate KPIs only). Capability 77; Viewer/Client get "
+    "aggregates only (KA-4). `group_by` adds breakdown tables: K-51 by kind, K-53 by reason "
+    "code (first DENY reason), contractor, zone, gate or month.",
+    responses=KPI_ERRORS,
+)
+def get_access_kpis(
+    user: CurrentUser,
+    db: DB,
+    q: KpiParams,
+    metric: Annotated[
+        list[KpiMetric] | None, Query(description="Default: all access KPIs.")
+    ] = None,
+    group_by: Annotated[list[AccessKpiGroupBy] | None, Query()] = None,
+) -> AccessKpiResponse:
+    raise not_implemented()

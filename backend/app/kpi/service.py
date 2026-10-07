@@ -361,7 +361,7 @@ def kpi_value(
     en, ar = metric_label(defn, scope)
     display = present.display(defn, res.value)
     if not defn.available:
-        display = "Available from Phase 3"
+        display = "Available from Phase 3" if metric == M.K46 else "—"
     return KpiValue(
         metric=metric,
         label_en=en,

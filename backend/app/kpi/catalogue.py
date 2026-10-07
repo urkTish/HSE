@@ -1,6 +1,6 @@
 """KPI catalogue §6.1: labels (EN/AR), kind, unit, direction, decimals, base."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from app.core.hse_enums import KpiBaseKind, KpiBetter, KpiGroup, KpiKind, KpiMetric
 
@@ -12,6 +12,16 @@ HIGH = KpiBetter.higher_is_better
 NONE = KpiBetter.none
 BL = KpiBaseKind.ltifr
 BR = KpiBaseKind.rate
+
+
+PHASE2_METRICS: frozenset[KpiMetric] = frozenset(
+    {
+        M.K48, M.K49, M.K50, M.K51, M.K52, M.K53, M.K53b, M.K54, M.K55, M.K56, M.K57,
+        M.K58, M.K59, M.K60,
+    }
+)  # fmt: skip
+PHASE2_PENDING: frozenset[KpiMetric] = PHASE2_METRICS
+"""Stage 1 (contract only): the access KPIs are listed but not computed yet."""
 
 
 @dataclass(frozen=True)
@@ -35,6 +45,8 @@ class KpiDef:
 
     @property
     def spec_ref(self) -> str:
+        if self.metric in PHASE2_METRICS:
+            return f"2-access-permits §6.8 {self.metric.value}"
         return f"1-dashboard §6.1 {self.metric.value}"
 
 
@@ -102,7 +114,7 @@ def _pct(
 
 
 CATALOGUE: dict[KpiMetric, KpiDef] = {
-    d.metric: d
+    d.metric: (replace(d, available=False) if d.metric in PHASE2_PENDING else d)
     for d in [
         KpiDef(M.K01, "Man-hours", "ساعات العمل", "Man-hours", "ساعات العمل", K.hours,
                G.exposure, NONE, "h", "ساعة", "Σ man_hours (submitted/verified/locked rows)"),
@@ -224,6 +236,52 @@ CATALOGUE: dict[KpiMetric, KpiDef] = {
                available=False),
         _count(M.K47, "Late reports", "البلاغات المتأخرة", "Late reports", "البلاغات المتأخرة",
                G.data_quality, LOW, "n(reported_at − occurred_at > 24 h)"),
+        # ---- Phase 2 access KPIs (2-access-permits §6.8) ----
+        _count(M.K48, "Active deployed workers", "العمال المعيّنون النشطون", "Deployed workers",
+               "العمال المعيّنون", G.exposure, NONE,
+               "n(contractor_worker deployments Mobilised at as_of)", ("workers", "عامل")),
+        _pct(M.K49, "Induction coverage", "تغطية التعريف بالسلامة", "Induction coverage",
+             "تغطية التعريف", "K-48 with a Valid general_site induction ÷ K-48 × 100",
+             numerator="Deployed with valid induction", denominator="Active deployed workers"),
+        _pct(M.K50, "Induction first-attempt pass rate", "نسبة النجاح من المحاولة الأولى",
+             "First-attempt pass", "النجاح من أول محاولة",
+             "first attempts passed ÷ first attempts delivered in period × 100",
+             numerator="First attempts passed", denominator="First attempts"),
+        _count(M.K51, "Credentials expiring ≤ 30 days", "التصاريح القريبة من الانتهاء",
+               "Expiring ≤ 30 d", "تنتهي خلال 30 يوماً", G.leading, LOW,
+               "n(valid credentials with eff in [as_of, as_of + 30]) by kind"),
+        _count(M.K52, "Gate checks", "عمليات التحقق عند البوابات", "Gate checks",
+               "التحقق عند البوابات", G.exposure, NONE, "n(in-direction checks in period)"),
+        KpiDef(M.K53, "Gate denial rate", "نسبة الرفض عند البوابات", "Gate denials",
+               "الرفض عند البوابات", K.percentage, G.leading, LOW, "%", "%",
+               "denied in-checks ÷ K-52 × 100; by first DENY reason", 2, None,
+               "Denied checks", "Gate checks"),
+        _count(M.K53b, "Admitted despite denial", "دخول رغم الرفض", "Admitted despite denial",
+               "دخول رغم الرفض", G.leading, LOW, "n(gate-log rows admitted_despite_denial)"),
+        _pct(M.K54, "Pass return compliance", "الالتزام بإرجاع التصاريح", "Pass returns",
+             "إرجاع التصاريح",
+             "returned by due date ÷ items due in period (≤ as_of) × 100",
+             numerator="Returned on time", denominator="Items due"),
+        _count(M.K55, "Unreturned overdue", "تصاريح غير مُعادة متأخرة", "Unreturned overdue",
+               "غير مُعادة متأخرة", G.leading, LOW,
+               "n(custody Return Due and as_of > return_due_on); ageing 1-7, 8-30, > 30"),
+        KpiDef(M.K56, "Pass application lead time", "مدة إصدار التصريح", "Pass lead time",
+               "مدة الإصدار", K.days, G.leading, LOW, "days", "يوم",
+               "median(issued − submitted) over applications issued in period", 1),
+        KpiDef(M.K57, "Airside driving offence rate", "معدل مخالفات القيادة الجوية",
+               "Offence rate", "معدل المخالفات", K.rate, G.leading, LOW, "per 100 ADPs",
+               "لكل 100 تصريح", "offences in period × 100 ÷ Active ADPs at as_of", 2, None,
+               "Offences", "Active ADPs"),
+        _count(M.K58, "WAP activity", "نشاط تصاريح دخول المناطق", "WAPs approved",
+               "التصاريح المعتمدة", G.leading, NONE,
+               "approved in period; Active at as_of; suspensions by reason; blocked WAP-days"),
+        _pct(M.K59, "NOTAM request lead-time compliance", "الالتزام بمهلة طلب NOTAM",
+             "NOTAM lead time", "مهلة NOTAM",
+             "NOTAM requests on time ÷ submitted in period × 100",
+             numerator="On time", denominator="Submitted"),
+        _count(M.K60, "Obstacle clearances", "موافقات العوائق", "Obstacle clearances",
+               "موافقات العوائق", G.leading, NONE,
+               "active at as_of; expiring ≤ 7 days; rejected in period; active with penetration"),
     ]
 }  # fmt: skip
 

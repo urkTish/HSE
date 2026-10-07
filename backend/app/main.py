@@ -11,17 +11,24 @@ from pydantic.json_schema import models_json_schema
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.routers import (
+    access_settings,
     ai,
+    airport_passes,
+    airside_driving,
+    airside_works,
     attachments,
     audit,
     auth,
     contractors,
     corrective_actions,
+    credentials,
     dashboard,
     exports,
+    gates,
     health,
     hse_settings,
     incidents,
+    inductions,
     inspections,
     kpi,
     meetings,
@@ -30,6 +37,8 @@ from app.api.routers import (
     projects,
     sites,
     users,
+    waps,
+    workers,
     workforce,
 )
 from app.core.config import API_PREFIX, CONTRACT_VERSION, get_settings
@@ -43,8 +52,9 @@ from app.core.middleware import RequestContextMiddleware
 from app.schemas.ai import AiStreamEvent
 
 DESCRIPTION = """
-HSE platform API — Phase 0 Foundation (spec `docs/specs/0-foundation.md` v1.0) and Phase 1
-Dashboard & core data with AI (spec `docs/specs/1-dashboard.md` v1.0).
+HSE platform API — Phase 0 Foundation (spec `docs/specs/0-foundation.md` v1.0), Phase 1
+Dashboard & core data with AI (spec `docs/specs/1-dashboard.md` v1.1) and Phase 2 Site/Airport
+access permits (spec `docs/specs/2-access-permits.md` v1.0).
 
 * Auth: `POST /api/v1/auth/login` sets the httpOnly SameSite=Lax cookie `hse_session` (JWT) and
   returns `{access_token, user}`. Send the cookie or `Authorization: Bearer <token>`.
@@ -58,6 +68,12 @@ Dashboard & core data with AI (spec `docs/specs/1-dashboard.md` v1.0).
   `zone_type`, `engagement_id`, `include_subcontractors`, `tier`, `period`, `anchor`,
   `start`, `end`, `as_of`, `compare`).
 * `POST /ai/ask` streams Server-Sent Events (schema `AiStreamEvent`).
+* Phase 2: ID numbers are masked everywhere (`2*******02`); the full value only from
+  `POST /workers/{id}/id-number/unmask` (audited). QR payloads are `HSE2:<AC|VS|WP>:<token>`
+  with no personal data. Gate checks (`/gate-checks/*`) accept a user session or a gate-device
+  session (`POST /gate-device/login`); device sessions can call nothing else.
+* Some errors carry `detail.meta` (e.g. WORKER_EXISTS → worker_no; VALIDITY_EXCEEDS_LIMIT →
+  limiting_factor; WAP_BLOCKED → blockers).
 """
 
 # Schemas used only in non-JSON responses (SSE) and therefore not reachable from any route.
@@ -138,6 +154,16 @@ def create_app() -> FastAPI:
         kpi,
         dashboard,
         ai,
+        # Phase 2
+        workers,
+        inductions,
+        airport_passes,
+        airside_driving,
+        airside_works,
+        waps,
+        credentials,
+        gates,
+        access_settings,
     ):
         app.include_router(module.router, prefix=API_PREFIX)
     app.include_router(auth.public_router, prefix=API_PREFIX)

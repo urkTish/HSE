@@ -190,6 +190,58 @@ MATRIX: dict[Role, dict[Capability, CapabilityScope]] = {
     },
 }
 
+# Phase 2 (2-access-permits §5.13), rows 46-81. Viewer/Client rows 73 and 77 are aggregates /
+# no-names reads (WA-19, KA-4), enforced in the services.
+PHASE2_MATRIX: dict[Role, dict[Capability, CapabilityScope]] = {
+    Role.hse_officer: {
+        **dict.fromkeys(
+            [
+                C.worker_view, C.worker_edit, C.worker_unmask_id, C.induction_course_manage,
+                C.induction_record, C.induction_suspend_revoke, C.pass_application_create,
+                C.pass_application_endorse, C.pass_application_process, C.background_check_view,
+                C.credential_suspend_raise, C.credential_suspend_confirm, C.credential_custody,
+                C.adp_apply, C.adp_issue, C.offence_record, C.vehicle_edit, C.avp_issue,
+                C.wap_edit, C.wap_approve, C.wap_suspend, C.wap_close, C.notam_edit,
+                C.notam_process, C.obstacle_edit, C.obstacle_decide, C.access_works_view,
+                C.gate_check, C.gate_manage, C.gate_log_view, C.access_kpi_view, C.export_access,
+                C.export_access_identity, C.zone_profile_edit,
+            ],
+            S.project,
+        ),
+    },
+    Role.site_engineer: dict.fromkeys(
+        [
+            C.worker_view, C.credential_suspend_raise, C.offence_record, C.wap_edit,
+            C.wap_suspend, C.wap_close, C.notam_edit, C.obstacle_edit, C.access_works_view,
+            C.gate_check, C.gate_log_view, C.access_kpi_view, C.export_access,
+        ],
+        S.sites,
+    ),
+    Role.permit_issuer: dict.fromkeys(
+        [
+            C.worker_view, C.credential_suspend_raise, C.offence_record, C.wap_approve,
+            C.wap_suspend, C.wap_close, C.access_works_view, C.gate_check, C.access_kpi_view,
+        ],
+        S.sites,
+    ),
+    Role.permit_receiver: dict.fromkeys(
+        [C.worker_view, C.wap_edit, C.wap_close, C.access_works_view, C.access_kpi_view],
+        S.own_engagement,
+    ),
+    Role.contractor_hse_rep: dict.fromkeys(
+        [
+            C.worker_view, C.worker_edit, C.worker_unmask_id, C.induction_record,
+            C.pass_application_create, C.credential_custody, C.adp_apply, C.vehicle_edit,
+            C.wap_edit, C.wap_close, C.notam_edit, C.obstacle_edit, C.access_works_view,
+            C.gate_check, C.gate_log_view, C.access_kpi_view, C.export_access,
+        ],
+        S.contractor_tree,
+    ),
+    Role.viewer_client: dict.fromkeys([C.access_works_view, C.access_kpi_view], S.project),
+}  # fmt: skip
+for _role, _caps in PHASE2_MATRIX.items():
+    MATRIX[_role].update(_caps)
+
 SCOPE_RANK = {S.own_engagement: 1, S.contractor_tree: 2, S.sites: 3, S.project: 4, S.all: 5}
 ROLE_RANK = {r: i for i, r in enumerate(Role)}  # lower index = more senior
 OFFICER_ASSIGNABLE = frozenset(

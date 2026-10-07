@@ -81,6 +81,52 @@ class ErrorCode(StrEnum):
     AI_TRANSFER_APPROVAL_REQUIRED = "AI_TRANSFER_APPROVAL_REQUIRED"  # AI-14 enabling AI
     AI_UNAVAILABLE = "AI_UNAVAILABLE"  # AI-18: no API key / provider down / timeout
     AI_RATE_LIMITED = "AI_RATE_LIMITED"  # AI-17 per-user / per-project limits
+    # ---- Phase 2 (2-access-permits) ----
+    GATE_DEVICE_FORBIDDEN = "GATE_DEVICE_FORBIDDEN"  # GC-1 device session outside gate checks
+    GATE_DEVICE_REVOKED = "GATE_DEVICE_REVOKED"  # GC-1 revoked / unknown device token
+    GATE_RATE_LIMITED = "GATE_RATE_LIMITED"  # GC-3 120 checks/min per device or user
+    PAIRING_NOT_FOUND = "PAIRING_NOT_FOUND"  # GC-8 pairing id unknown / other device
+    WORKER_EXISTS = "WORKER_EXISTS"  # WK-2 (meta.worker_no, meta.worker_id)
+    WORKER_EXISTS_OUT_OF_SCOPE = "WORKER_EXISTS_OUT_OF_SCOPE"  # WK-2 (no identifying data)
+    ADULT_ATTESTATION_REQUIRED = "ADULT_ATTESTATION_REQUIRED"  # WK-6
+    DEPLOYMENT_EXISTS = "DEPLOYMENT_EXISTS"  # WK-10
+    WORKER_BANNED = "WORKER_BANNED"  # WK-12
+    PHOTO_REQUIRED = "PHOTO_REQUIRED"  # §3.1 photo for airside/pass, AP-5
+    DELIVERER_NOT_ALLOWED = "DELIVERER_NOT_ALLOWED"  # IN-3 / IN-12 / AC13
+    INDUCTION_PREREQUISITE = "INDUCTION_PREREQUISITE"  # IN-4
+    INDUCTION_ATTEMPTS_EXCEEDED = "INDUCTION_ATTEMPTS_EXCEEDED"  # IN-5
+    INDUCTION_TOO_SHORT = "INDUCTION_TOO_SHORT"  # IN-7
+    INDUCTION_EDIT_LOCKED = "INDUCTION_EDIT_LOCKED"  # IN-11 edits after 24 h
+    PROFILE_LOOSENING = "PROFILE_LOOSENING"  # ZP-2
+    HOOK_PROVIDER_MISSING = "HOOK_PROVIDER_MISSING"  # HK-4
+    NOT_AIRPORT_PROJECT = "NOT_AIRPORT_PROJECT"  # AP-2
+    APPLICATION_OPEN = "APPLICATION_OPEN"  # AP-3
+    ID_EXPIRES_SOON = "ID_EXPIRES_SOON"  # AP-5
+    ID_EXPIRED = "ID_EXPIRED"  # WK-7 on writes that need a valid ID
+    VALIDITY_EXCEEDS_LIMIT = "VALIDITY_EXCEEDS_LIMIT"  # AP-6 (meta.limiting_factor, meta.max)
+    BACKGROUND_NOT_CLEARED = "BACKGROUND_NOT_CLEARED"  # AP-4
+    ENDORSER_NOT_ALLOWED = "ENDORSER_NOT_ALLOWED"  # AP-8
+    PREREQUISITES_NOT_MET = "PREREQUISITES_NOT_MET"  # AP-7 endorse (meta.requirements)
+    AREA_NOT_REQUESTED = "AREA_NOT_REQUESTED"  # AP-9 issued areas ⊆ requested
+    ADP_PASS_REQUIRED = "ADP_PASS_REQUIRED"  # DP-3
+    ADP_EXISTS = "ADP_EXISTS"  # DP-2
+    LICENCE_NOT_VALID = "LICENCE_NOT_VALID"  # DP-4
+    RTF_REQUIRED = "RTF_REQUIRED"  # DP-5
+    TESTS_NOT_VALID = "TESTS_NOT_VALID"  # DP-6
+    SUSPENSION_PERIOD_RUNNING = "SUSPENSION_PERIOD_RUNNING"  # DP-8
+    AVP_PRECONDITION = "AVP_PRECONDITION"  # VP-3 / VP-4
+    AVP_EXISTS = "AVP_EXISTS"  # VP-2
+    LATE_JUSTIFICATION_REQUIRED = "LATE_JUSTIFICATION_REQUIRED"  # NT-2 / OB-5 short lead
+    OB_CONDITIONS_REQUIRED = "OB_CONDITIONS_REQUIRED"  # OB-4
+    CLEARANCE_NOT_LINKABLE = "CLEARANCE_NOT_LINKABLE"  # OB-8 rejected clearance on a WAP
+    WAP_DURATION_EXCEEDED = "WAP_DURATION_EXCEEDED"  # WA-5 wap_max_days
+    WSP_REQUIRED = "WSP_REQUIRED"  # WA-6
+    WAP_BLOCKED = "WAP_BLOCKED"  # WA-13 resume with blockers (meta.blockers)
+    CREW_INVALID = "CREW_INVALID"  # WA-2 crew / supervisor composition
+    FOD_HANDBACK_REQUIRED = "FOD_HANDBACK_REQUIRED"  # WA-17
+    OPS_ZONES_LOCKED = "OPS_ZONES_LOCKED"  # WA-16 default zones cannot be removed
+    SYSTEM_SUSPENSION = "SYSTEM_SUSPENSION"  # LC-6 dependency suspensions lift automatically
+    CREDENTIAL_TERMINAL = "CREDENTIAL_TERMINAL"  # LC-5 revoked/expired/lost
     NOT_IMPLEMENTED = "NOT_IMPLEMENTED"
     INTERNAL_ERROR = "INTERNAL_ERROR"
 
@@ -100,6 +146,12 @@ class ErrorDetail(BaseModel):
     errors: list[FieldError] | None = Field(
         default=None, description="Field-level errors (422 validation, 409 duplicates)."
     )
+    meta: dict[str, Any] | None = Field(
+        default=None,
+        description="Machine-readable context for some codes, e.g. WORKER_EXISTS → "
+        "{worker_id, worker_no}; VALIDITY_EXCEEDS_LIMIT → {limiting_factor, max_date}; "
+        "WAP_BLOCKED → {blockers}; PREREQUISITES_NOT_MET → {requirements}.",
+    )
 
 
 class ErrorResponse(BaseModel):
@@ -117,6 +169,7 @@ class ApiError(Exception):
         message_ar: str | None = None,
         errors: list[FieldError] | None = None,
         headers: dict[str, str] | None = None,
+        meta: dict[str, Any] | None = None,
     ) -> None:
         super().__init__(message)
         self.status_code = status_code
@@ -125,6 +178,7 @@ class ApiError(Exception):
         self.message_ar = message_ar
         self.errors = errors
         self.headers = headers
+        self.meta = meta
 
     def to_response(self) -> JSONResponse:
         body = ErrorResponse(
@@ -133,6 +187,7 @@ class ApiError(Exception):
                 message=self.message,
                 message_ar=self.message_ar,
                 errors=self.errors,
+                meta=self.meta,
             )
         )
         return JSONResponse(

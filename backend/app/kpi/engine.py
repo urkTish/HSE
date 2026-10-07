@@ -30,7 +30,7 @@ from app.core.hse_enums import (
     PermanentDisability,
 )
 from app.kpi.cases import day_counts, lost_days_charged
-from app.kpi.catalogue import CATALOGUE
+from app.kpi.catalogue import CATALOGUE, PHASE2_PENDING
 from app.kpi.facts import (
     CaseFact,
     EventFact,
@@ -798,6 +798,13 @@ def _k46(e: Engine, a: Agg) -> Result:
     return Result(M.K46, None, null_reason=NullReason.NOT_AVAILABLE_YET)
 
 
+def _not_yet(metric: KpiMetric) -> Callable[[Engine, Agg], Result]:
+    def fn(e: Engine, a: Agg) -> Result:
+        return Result(metric, None, null_reason=NullReason.NOT_AVAILABLE_YET)
+
+    return fn
+
+
 def _rate_fn(
     metric: KpiMetric, count: Callable[[Agg], int], ltifr: bool = False
 ) -> Callable[[Engine, Agg], Result]:
@@ -875,5 +882,6 @@ _DISPATCH: dict[KpiMetric, Callable[[Engine, Agg], Result]] = {
     M.K45: _k45,
     M.K46: _k46,
     M.K47: _count_fn(M.K47, lambda a: a.late),
+    **{m: _not_yet(m) for m in PHASE2_PENDING},
 }
 assert set(_DISPATCH) == set(KpiMetric) == set(CATALOGUE)  # noqa: S101

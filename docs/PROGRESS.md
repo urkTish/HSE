@@ -3,13 +3,62 @@
 ## Current
 - Phase: 2 — Site / Airport access permits
 - Module: site & airport access permits (spec `docs/specs/2-access-permits.md`)
-- Step: Spec
+- Step: Contract v0.3.0 published (backend stage 1); backend implementation next
 
 ## Phase log
 - Phase 0 — Foundation: built, e2e green, design pass done (2026-10-05). The user asked to continue phase after phase without per-phase approval; open questions are collected below for a single review.
 - Phase 1 — Dashboard (with AI): built, e2e green, design pass done (2026-10-06).
 
 ## Done
+
+### Backend — Phase 2 contract v0.3.0 (stage 1)
+- `docs/contracts/openapi.yaml` v0.3.0: 94 new paths / 125 operations, all returning 501 `NOT_IMPLEMENTED` until stage 2 (the Prism mock serves them now). Tags: workers, inductions, airport-passes, airside-driving, airside-works, work-area-permits, credentials, gates, access-settings; plus `GET /kpi/access`.
+- Phase 0/1 paths unchanged except additive fields: `ExpiringItem.limiting_factor`, `AppliedFilters.gate_ids`, `DashboardResponse.access_band`, `HseSettings.induction_register_from` (v1.1), injury case `worker_id` (+ `worker_no` on read, v1.1), reference items `points` / `immediate_suspension` (list `airside_offence`), `ErrorDetail.meta`, `gate_id` query on every /kpi endpoint. Enums extended: `Capability` (46-81), `ErrorCode`, `EntityType`, `NotificationKind`, `ExportDataset` (14 access registers), `ExportPurpose` (+pass_office, authority_request), `AttachmentOwner` (+worker_photo, pass_application_id_copy, induction_signature, offence_evidence), `ReferenceList` (+airside_offence, vehicle_category, credential_reason), `KpiMetric` (K-48…K-60, K-53b — return `null` / `NOT_AVAILABLE_YET` until stage 2), `ChartId` (C10-C12), `LeadingWarningCode` (E5-E7), `ActionPanelItem` (10 access items), `ExpiringItemKind` (13 access kinds), `AiTool` (+get_access_kpis).
+- The permission matrix rows 46-81 are live, so `Me.capabilities` already shows the Phase 2 capabilities per role.
+
+#### Phase 2 — what the frontend must know
+- **IDs and masking.** No endpoint returns a full Iqama/National ID/passport number except `POST /workers/{id}/id-number/unmask` (capability `worker.unmask_id`, body `{reason, reason_text?}` with reasons pass_application / authority_request / identity_verification / incident_investigation / other+text). It is audited as `sensitive_field_read`. Show the value on demand only (e.g. reveal for 30 s), never cache or prefill it. Everything else carries `id_number_masked` (`2*******02`; GCC/passport `TE*****12`). ID search is `POST /workers/lookup {id_type, id_number, passport_country?}` (exact match only, POST so the number stays out of URLs); the list `q` searches names / worker_no only.
+- **Duplicates.** `409 WORKER_EXISTS` has `detail.meta = {worker_id, worker_no}` (offer "open existing worker"); `409 WORKER_EXISTS_OUT_OF_SCOPE` has no identifying data. `422 VALIDITY_EXCEEDS_LIMIT` has `meta = {limiting_factor, max_date}` (name the limiting field in the form).
+- **Photos, ID copies, signatures** go through `/attachments` (owner types `worker_photo`, `pass_application_id_copy`, `offence_evidence`); open them with `POST /attachments/{id}/signed-url` (≤ 5 min). The ID copy id is only present for capability 48. Induction signatures are sent inline as `signature_png_base64` in the induction body.
+- **Hidden keys.** Like Phase 1, some keys are *absent* (not null) when the caller lacks the right: `background_check` / `outcome_note` / `background_recheck_due` need capability 56. A refused application shows `status_label_en/ar` = "Refused by issuing authority / مرفوض من جهة الإصدار" (AP-13). Worker names in `WorkerRef` are null without capability 46. Viewer/Client get WAPs with `crew: []` and only `crew_count` / `vehicle_count` (WA-19), and only aggregates from `/kpi/access`.
+- **QR codes.** `GET /deployments/{id}/access-card`, `GET /avps/{id}/sticker`, `GET /waps/{id}/print` return `qr_payload` = `HSE2:<AC|VS|WP>:<22-char token>` (no personal data) and `printed_ref` to print beside the QR (manual fallback). Reissue rotates the token (`…/access-card/reissue`, `…/sticker/reissue`); old tokens then scan as `CREDENTIAL_REVOKED` / `CREDENTIAL_LOST`.
+- **Gate screen.**
+  - A tablet logs in with `POST /gate-device/login {device_token}`. The token is shown once by `POST /gates/{id}/devices`. The response sets the httpOnly cookie `hse_gate_session` and also returns `access_token` for `Authorization: Bearer`. A device session can call only `/gate-checks/*` and `/gate-device/logout`; anything else returns `403 GATE_DEVICE_FORBIDDEN`. A logged-in user with `gate.check` can use the same endpoints.
+  - Start with `GET /gate-checks/context` (gates the caller may use, `escort_pairing_seconds`, `clear_after_seconds` = 30).
+  - Scan: `POST /gate-checks {gate_id, payload | printed_ref, direction (in/out), zone_id?, pairing_id?}`. `zone_id` is needed when the gate protects several zones and is omitted at a site gate. Rate limit: 120 per minute (`429 GATE_RATE_LIMITED`).
+  - Response `GateCheckResponse`: `result` is GRANTED (green), GRANTED_WITH_WARNING (amber), DENIED (red), PENDING_ESCORT, PENDING_DRIVER, PENDING_ESCORT_VEHICLE, EXIT_RECORDED or WAP_VIEW. `reasons[]` each have `{code, severity deny|warn, message_en, message_ar}`.
+  - The response carries one card: `person` (photo URL, names, worker_no, employer, trade, `escort_required` badge, credential lines with valid_until), `vehicle` (with `plate_display`), or `wap` (status, in-window now, blockers, crew eligibility). It never contains an ID number, nationality, background status or offences. Clear the screen after `clear_after_seconds` and cache nothing.
+  - **Pairing.** A PENDING_* result has `pairing {pairing_id, waiting_for escort|driver|escort_vehicle, expires_at}`. Scan the next card with that `pairing_id` on the same device. That response's `paired_results[]` holds the final result of the first subject (both GRANTED or both DENIED).
+    - Poll `GET /gate-checks/pairings/{id}` to show the countdown. After `expires_at` it returns the timeout result (escorted person DENIED `ESCORT_REQUIRED`).
+    - `POST …/cancel` aborts the pairing.
+    - Vehicle flow: sticker → PENDING_ESCORT_VEHICLE (no AVP) → escort sticker → PENDING_DRIVER → driver card → GRANTED.
+  - Out of scope (Contractor HSE Rep): DENIED with only `OUT_OF_SCOPE` and no card.
+  - `out` scans never deny. They return EXIT_RECORDED, with `late_exit = true` after the WAP window + grace.
+  - There is no override. If the guard lets a DENIED subject in anyway, call `POST /gate-checks/{check_id}/admitted-despite-denial {reason}`; this alerts the HSE Officer and HSE Manager.
+  - Offline: v1.0 is online only. With no connection, show "No connection — call the HSE Officer / لا يوجد اتصال — اتصل بمسؤول السلامة".
+- **State machines** (every transition is `POST …/transitions {to_status, …}` unless named below; an invalid transition returns 409 `INVALID_TRANSITION`, a failed precondition returns the specific code):
+  - Worker: active ⇄ banned (`worker.ban`, reason ≥ 10 chars). Inactive and anonymised are set by the system.
+  - Deployment: pending_induction → mobilised happens automatically on the first passed general_site induction (the access card is issued then; `GET …/access-card` returns 409 before that). mobilised → demobilised by transition. Remobilising creates a new deployment.
+  - Induction record: valid | failed (derived from the score), then suspended / revoked / superseded / expired. Suspension and revocation go through `/credentials/induction/{id}/…`.
+  - Pass application: draft → submitted → endorsed → lodged → approved → issued (`POST /pass-applications/{id}/issue` creates the pass). Also refused, withdrawn, cancelled, and submitted → draft (returned). Background status: `PUT …/background-check`.
+  - Pass / ADP / AVP `validity_status`: active / suspended / revoked / expired. ADPs and AVPs start as `pending` (application) → `…/issue` → active, or `…/withdraw` → withdrawn. `custody_status`: held / return_due / returned / lost; `return_overdue` is derived.
+  - Lifecycle for induction, airport_pass, adp, avp and access_card: `/credentials/{kind}/{id}/suspend | confirm-suspension | reinstate | revoke | return | loss | authority-notified`, each returning `CredentialState` (with `open_suspensions[]` and the events). Behaviour:
+    - Suspend: with `credential.suspend_raise` only, the suspension is *raised* and lifts automatically after 72 h unless confirmed; with `credential.suspend_confirm` it is confirmed.
+    - Reinstate: system suspensions (dependency_invalid, id_expired, licence_expired, vehicle_document_expired) cannot be lifted by hand (409 `SYSTEM_SUSPENSION`). A points suspension can be lifted only after `suspension_end` (422 `SUSPENSION_PERIOD_RUNNING`).
+    - Manual actions need `reason_code` (LC-R list) and `reason_text` ≥ 10 characters.
+  - NOTAM: draft → submitted_to_ops → requested_from_ais → issued → cancelled or expired, plus rejected. `POST …/replace` records a NOTAMR as a new record. A late submit needs `late_justification` (422 `LATE_JUSTIFICATION_REQUIRED`).
+  - Obstacle clearance: draft → submitted → (`POST …/decision`) approved / approved_with_conditions / rejected, then suspended ⇄ approved, withdrawn, expired. `POST /obstacle-clearances/preview` computes heights and reasons for the form without saving (m and ft, strings, 2 dp).
+  - WAP: draft → submitted → approved → active (system, only with no blockers) → suspended ⇄ active (resume) → closed. Also rejected, cancelled, expired, and submitted → draft. Details:
+    - `blockers[]` is recomputed on every read; show them on Approved WAPs.
+    - Resume or close with `fod_handback_required` needs `fod_check {result: clear, checked_at, checked_by_*}` (422 `FOD_HANDBACK_REQUIRED`).
+    - Resume with blockers → 409 `WAP_BLOCKED` with `meta.blockers`.
+    - On an Approved/Active WAP, change zones, dates, windows or links with `POST /waps/{id}/revisions` (201, a new revision in submitted). Crew and vehicles have their own add/remove endpoints.
+    - Window times are local; `current_window` / `next_window` give the UTC instances.
+  - Ops event: `POST /projects/{id}/ops-events` suspends the affected Active WAPs. `POST /ops-events/{id}/end` does not resume them.
+- **Hook results ("warn").** Until Phases 4/5/6 register providers, hook requirements (AVSEC-AWR training, CRANE-TPI, etc.) come back as eligibility items with `status = warn`, `reason_code = HOOK_NOT_AVAILABLE`, message "Training check available from Phase 5 / فحص التدريب متاح من المرحلة 5". They never block; at the gate they turn the result amber (GRANTED_WITH_WARNING). `GET /hook-providers?project_id=` lists provider availability and policy. Switching a policy to `block` without a provider returns 422 `HOOK_PROVIDER_MISSING`. Show these as amber info, not as errors.
+- **Eligibility.** `GET /workers/{id}/eligibility?zone_id&at&context` returns per-requirement items (met / not_met / expiring / warn / not_evaluated) with `valid_until`, `ref` and `reason_code` (the GC-6 codes). Use it on the worker page ("Can enter zone X?").
+- **Dates and units.** Credential dates are local dates, inclusive. NOTAM times are UTC (`*_utc`): show both the NOTAM form (`effective_from_notam`, YYMMDDHHMM) and local time, LTR. Plates: Arabic letters with LTR digits. Heights are decimal strings in m with `_ft` twins.
+- **Dashboard.** New KPI ids appear in `/kpi/metrics` with `display = "—"` and `null_reason = NOT_AVAILABLE_YET` until stage 2. `/kpi/access` and charts C10-C12 return 501 until then. `DashboardResponse.access_band` is null until then. Expiring items gain 13 kinds and `limiting_factor`; the action panel gains 10 access items, each with a `link`.
 
 ### Backend — Phase 1 contract v0.2.0 (stage 1)
 - `docs/contracts/openapi.yaml` v0.2.0: 74 new paths (workforce returns/months/import, incidents, injury cases, investigations, external notifications, observations, inspection plans/inspections, corrective actions + extensions, HSE meetings, attachments + signed URLs, Phase 1 settings + AI transfer approval, reference lists, KPI engine endpoints, dashboard action panel/expiring items/preferences, AI ask (SSE)/insights/status/answers/logs, monthly reports). Phase 0 paths and schemas unchanged; capability enum extended with matrix rows 20-45.

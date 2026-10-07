@@ -20,8 +20,8 @@ class Role(StrEnum):
 
 class Capability(StrEnum):
     """Rows of the permission matrix: 1-19 Phase 0 (0-foundation §5.10), 20-45 Phase 1
-    (1-dashboard §5.10), numbered in spec order. Rows with two capabilities (23, 32, 33, 41)
-    are split into one value per action."""
+    (1-dashboard §5.10), 46-81 Phase 2 (2-access-permits §5.13), numbered in spec order.
+    Rows with two capabilities (23, 32, 33, 41) are split into one value per action."""
 
     project_manage = "project.manage"  # 1
     project_view = "project.view"  # 2
@@ -75,6 +75,43 @@ class Capability(StrEnum):
     export_identity = "export.identity"  # 43
     hse_settings_edit = "hse_settings.edit"  # 44
     observer_identity_view = "observer.identity_view"  # 45
+    # ---- Phase 2 (2-access-permits §5.13) ----
+    worker_view = "worker.view"  # 46
+    worker_edit = "worker.edit"  # 47 workers & deployments; demobilise
+    worker_unmask_id = "worker.unmask_id"  # 48 full ID / ID copy (audited)
+    worker_ban = "worker.ban"  # 49
+    induction_course_manage = "induction.course_manage"  # 50 courses & sessions
+    induction_record = "induction.record"  # 51
+    induction_suspend_revoke = "induction.suspend_revoke"  # 52 confirm suspension / revoke
+    pass_application_create = "pass_application.create"  # 53 create / submit / withdraw
+    pass_application_endorse = "pass_application.endorse"  # 54 endorse / return
+    pass_application_process = "pass_application.process"  # 55 pass office progress, issue
+    background_check_view = "background_check.view"  # 56
+    credential_suspend_raise = "credential.suspend_raise"  # 57 (≤ 72 h, LC-3)
+    credential_suspend_confirm = "credential.suspend_confirm"  # 58 confirm/lift; revoke
+    credential_custody = "credential.custody"  # 59 return / loss
+    adp_apply = "adp.apply"  # 60
+    adp_issue = "adp.issue"  # 61 tests + issue
+    offence_record = "offence.record"  # 62
+    vehicle_edit = "vehicle.edit"  # 63 vehicles; apply for AVP
+    avp_issue = "avp.issue"  # 64 inspection + issue
+    wap_edit = "wap.edit"  # 65 create / submit / amend
+    wap_approve = "wap.approve"  # 66 approve / reject / resume
+    wap_suspend = "wap.suspend"  # 67 suspend WAP; declare / end ops suspension
+    wap_close = "wap.close"  # 68 close / cancel
+    notam_edit = "notam.edit"  # 69
+    notam_process = "notam.process"  # 70
+    obstacle_edit = "obstacle.edit"  # 71
+    obstacle_decide = "obstacle.decide"  # 72
+    access_works_view = "access_works.view"  # 73 WAPs, NOTAMs, obstacle clearances, ops events
+    gate_check = "gate.check"  # 74
+    gate_manage = "gate.manage"  # 75 gates and devices
+    gate_log_view = "gate_log.view"  # 76 view / export gate log
+    access_kpi_view = "access_kpi.view"  # 77 access KPIs, expiring items, action panel
+    export_access = "export.access"  # 78 (IDs masked)
+    export_access_identity = "export.access_identity"  # 79 full IDs / per-worker data report
+    access_settings_edit = "access_settings.edit"  # 80 settings, AP-CAT/AP-AREA/OFF/VC, hooks
+    zone_profile_edit = "zone_profile.edit"  # 81
 
 
 class CapabilityScope(StrEnum):
@@ -310,6 +347,29 @@ class EntityType(StrEnum):
     ai_answer = "ai_answer"
     monthly_report = "monthly_report"
     kpi = "kpi"
+    # Phase 2
+    worker = "worker"
+    worker_deployment = "worker_deployment"
+    induction_course = "induction_course"
+    induction_record = "induction_record"
+    zone_access_profile = "zone_access_profile"
+    airport_pass_category = "airport_pass_category"
+    airport_pass_area = "airport_pass_area"
+    pass_application = "pass_application"
+    airport_pass = "airport_pass"
+    adp = "adp"
+    airside_offence = "airside_offence"
+    vehicle = "vehicle"
+    avp = "avp"
+    notam_request = "notam_request"
+    obstacle_clearance = "obstacle_clearance"
+    wap = "wap"
+    ops_event = "ops_event"
+    credential_event = "credential_event"
+    gate = "gate"
+    gate_device = "gate_device"
+    gate_log = "gate_log"
+    access_settings = "access_settings"
 
 
 class ExportDataset(StrEnum):
@@ -329,6 +389,21 @@ class ExportDataset(StrEnum):
     inspections = "inspections"
     corrective_actions = "corrective_actions"
     hse_meetings = "hse_meetings"
+    # Phase 2 access registers (IDs masked; full IDs only with capability 79 + purpose, P2-10)
+    workers = "workers"
+    deployments = "deployments"
+    inductions = "inductions"
+    pass_applications = "pass_applications"
+    airport_passes = "airport_passes"
+    adps = "adps"
+    airside_offences = "airside_offences"
+    vehicles = "vehicles"
+    avps = "avps"
+    waps = "waps"
+    notam_requests = "notam_requests"
+    obstacle_clearances = "obstacle_clearances"
+    ops_events = "ops_events"
+    gate_log = "gate_log"
 
 
 class ExportFormat(StrEnum):
@@ -372,3 +447,38 @@ class NotificationKind(StrEnum):
     lti_free_milestone = "lti_free_milestone"
     monthly_report_ready = "monthly_report_ready"
     import_committed_with_warnings = "import_committed_with_warnings"
+    # ---- Phase 2 (2-access-permits §7) ----
+    induction_expiry = "induction_expiry"
+    reinduction_due = "reinduction_due"
+    worker_id_expiry = "worker_id_expiry"
+    passport_registration = "passport_registration"
+    airport_pass_expiry = "airport_pass_expiry"
+    bg_recheck_due = "bg_recheck_due"
+    pass_application_update = "pass_application_update"
+    pass_application_stale = "pass_application_stale"
+    adp_expiry = "adp_expiry"
+    avp_expiry = "avp_expiry"
+    vehicle_document_expiry = "vehicle_document_expiry"
+    adp_suspended = "adp_suspended"
+    adp_suspension_ended = "adp_suspension_ended"
+    raised_suspension_pending = "raised_suspension_pending"
+    credential_status_changed = "credential_status_changed"
+    return_due = "return_due"
+    return_overdue = "return_overdue"
+    credential_lost = "credential_lost"
+    lost_authority_not_notified = "lost_authority_not_notified"
+    revoked_token_scanned = "revoked_token_scanned"
+    admitted_despite_denial = "admitted_despite_denial"
+    contractor_blacklisted_passes = "contractor_blacklisted_passes"
+    wap_update = "wap_update"
+    wap_blocked = "wap_blocked"
+    wap_crew_excluded = "wap_crew_excluded"
+    wap_suspended = "wap_suspended"
+    wap_ending = "wap_ending"
+    notam_ending = "notam_ending"
+    notam_late = "notam_late"
+    notam_not_issued = "notam_not_issued"
+    notam_ended_with_waps = "notam_ended_with_waps"
+    obstacle_clearance_update = "obstacle_clearance_update"
+    obstacle_clearance_ending = "obstacle_clearance_ending"
+    ops_suspension = "ops_suspension"

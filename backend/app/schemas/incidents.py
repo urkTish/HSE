@@ -355,6 +355,12 @@ class IncidentTransitionRequest(StrictInput):
 
 
 class _InjuryCaseFields(StrictInput):
+    worker_id: uuid.UUID | None = Field(
+        default=None,
+        description="v1.1: Phase 2 worker with a deployment on the incident's project; pre-fills "
+        "person_name, id_type/id_number, employee_no, trade and site_start_date (still "
+        "editable).",
+    )
     person_type: PersonType
     employer_engagement_id: uuid.UUID | None = Field(
         default=None, description="Required iff person_type = contractor_worker."
@@ -432,6 +438,7 @@ class InjuryCaseUpdate(PatchInput):
         }
     )
 
+    worker_id: uuid.UUID | None = None
     person_type: PersonType | None = None
     employer_engagement_id: uuid.UUID | None = None
     person_name: str | None = Field(default=None, min_length=1, max_length=120)
@@ -515,6 +522,8 @@ class InjuryCaseRead(ApiModel):
     open_lti: bool
     redacted_groups: list[str] = Field(description="Subset of ['identity', 'medical'].")
     # identity group
+    worker_id: uuid.UUID | None = Field(default=None, description="v1.1 worker link.")
+    worker_no: str | None = None
     person_name: str | None = None
     id_type: IdType | None = None
     id_number_masked: str | None = Field(default=None, examples=["2*******17"])
