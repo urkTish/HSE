@@ -57,6 +57,19 @@
   - pass application (draft);
   - dashboard access band.
 
+#### Frontend sync to contract v0.3.1
+- Types are regenerated from the v0.3.1 contract.
+- Arabic forms now show `FieldError.msg_ar`: under the form fields and in the dialog error lists.
+- Injury cases accept the `gcc_id` ID type (pattern `^[A-Z0-9]{6,15}$`, max length 15).
+- Zone-profile hook requirements can be limited to trades (`HookRequirement.trades`).
+- The gate's manual-entry hint mentions typing the vehicle number for a vehicle with no sticker.
+- A WAP supervisor can be chosen as an escort.
+- Workarounds removed:
+  - The WAP supervisor is shown whenever the API sends it; the API now nulls it for callers without worker access.
+  - The gate e2e now expects `WORKER_BANNED` for a banned worker.
+- `gate_id` already flows to every KPI query.
+- Full e2e on a fresh seed: 104 passed, 2 skipped. lint, typecheck, i18n:check and build are green.
+
 #### Phase 2 — backend issues found by the frontend (all fixed by the backend in stage 2, contract 0.3.1 — see "Backend — Phase 2 implementation" below)
 - Resolved during the run:
   - Attachments, `/kpi/access` and the Phase 2 action-panel items are now live.
