@@ -1,6 +1,6 @@
 "use client";
 import { Inbox, SearchX } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -22,7 +22,10 @@ export function LoadingState({ rows = 4 }: { rows?: number }) {
 export function NotFoundState() {
   const t = useTranslations("common");
   return (
-    <div className="flex flex-col items-center gap-2 rounded-xl border bg-surface p-10 text-center" data-testid="not-found">
+    <div
+      className="flex flex-col items-center gap-2 rounded-xl border bg-surface p-10 text-center"
+      data-testid="not-found"
+    >
       <SearchX aria-hidden className="size-8 text-muted-foreground" />
       <h2 className="text-lg font-semibold">{t("notFoundTitle")}</h2>
       <p className="text-sm text-muted-foreground">{t("notFoundBody")}</p>
@@ -30,10 +33,17 @@ export function NotFoundState() {
   );
 }
 
-export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
+export function ErrorState({
+  error,
+  onRetry,
+}: {
+  error: unknown;
+  onRetry?: () => void;
+}) {
   const t = useTranslations("common");
   const msg = useErrorMessage();
-  if (error instanceof ApiError && error.status === 404) return <NotFoundState />;
+  if (error instanceof ApiError && error.status === 404)
+    return <NotFoundState />;
   return (
     <Alert tone="danger" data-testid="error-state">
       <p className="font-medium">{t("loadError")}</p>
@@ -60,16 +70,25 @@ export function EmptyState({ message }: { message?: string }) {
 /** Top-of-form error summary for a failed mutation. */
 export function MutationError({ error }: { error: unknown }) {
   const msg = useErrorMessage();
+  const ar = useLocale() === "ar";
   if (!error) return null;
   return (
     <Alert tone="danger" data-testid="form-error">
       {msg(error)}
-      {/* Dialogs have no per-field slots: list the API's field errors (English-only by contract) as a fallback. */}
-      {error instanceof ApiError && error.code === "VALIDATION_ERROR" && error.fieldErrors.length ? (
-        <ul className="mt-1 list-inside list-disc text-xs" data-testid="form-field-errors">
+      {/* Dialogs have no per-field slots: list the API's field errors in the page language. */}
+      {error instanceof ApiError &&
+      error.code === "VALIDATION_ERROR" &&
+      error.fieldErrors.length ? (
+        <ul
+          className="mt-1 list-inside list-disc text-xs"
+          data-testid="form-field-errors"
+        >
           {error.fieldErrors.map((f, i) => (
             <li key={i}>
-              <bdi className="ltr font-mono">{String(f.loc[f.loc.length - 1] ?? "")}</bdi>: <bdi className="ltr">{f.msg}</bdi>
+              <bdi className="ltr font-mono">
+                {String(f.loc[f.loc.length - 1] ?? "")}
+              </bdi>
+              : <bdi>{ar ? f.msg_ar || f.msg : f.msg}</bdi>
             </li>
           ))}
         </ul>

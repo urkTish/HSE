@@ -10,7 +10,7 @@ P = {"enums": {
   "incidentStatus": {"draft": ["Draft", "مسودة"], "reported": ["Reported", "مُبلَّغ"], "under_investigation": ["Under investigation", "قيد التحقيق"], "pending_review": ["Pending review", "بانتظار المراجعة"], "actions_pending": ["Actions pending", "إجراءات قيد التنفيذ"], "closed": ["Closed", "مغلق"], "voided": ["Voided", "ملغى"]},
   "incidentType": {"injury_illness": ["Injury / illness", "إصابة/مرض"], "near_miss": ["Near miss", "حادث وشيك"], "property_damage": ["Property damage", "أضرار ممتلكات"], "environmental": ["Environmental", "حادث بيئي"], "dangerous_occurrence": ["Dangerous occurrence", "حدث خطير"]},
   "personType": {"contractor_worker": ["Contractor worker", "عامل مقاول"], "client_pmc_staff": ["Client / PMC staff", "موظف العميل/الاستشاري"], "visitor": ["Visitor", "زائر"], "third_party_public": ["Third party / public", "طرف ثالث"]},
-  "idType": {"iqama": ["Iqama", "إقامة"], "national_id": ["National ID", "هوية وطنية"], "passport": ["Passport", "جواز سفر"]},
+  "idType": {"iqama": ["Iqama", "إقامة"], "national_id": ["National ID", "هوية وطنية"], "gcc_id": ["GCC ID", "هوية خليجية"], "passport": ["Passport", "جواز سفر"]},
   "bodySide": {"left": ["Left", "يسار"], "right": ["Right", "يمين"], "both": ["Both", "كلاهما"], "n/a": ["Not applicable", "لا ينطبق"]},
   "treatedAt": {"site_clinic": ["Site clinic", "عيادة الموقع"], "hospital_outpatient": ["Hospital (outpatient)", "مستشفى (عيادات خارجية)"], "hospital_admitted": ["Hospital (admitted)", "مستشفى (تنويم)"], "none": ["Not treated", "بدون علاج"]},
   "permanentDisability": {"none": ["None", "لا يوجد"], "partial": ["Partial", "جزئي"], "total": ["Total", "كلي"]},

@@ -37,7 +37,12 @@ export function useErrorMessage() {
 export function useFieldErrorTranslator() {
   const t = useTranslations("errors");
   const locale = useLocale();
-  return useCallback((_type: string, msg: string) => (locale === "ar" ? t("fieldInvalid") : msg), [t, locale]);
+  // The API sends both texts (FieldError.msg / msg_ar, v0.3.1); the generic Arabic message is only a fallback.
+  return useCallback(
+    (_type: string, msg: string, msgAr?: string | null) =>
+      locale === "ar" ? msgAr || t("fieldInvalid") : msg,
+    [t, locale],
+  );
 }
 
 /**
@@ -45,6 +50,7 @@ export function useFieldErrorTranslator() {
  * Only used on data rendered after client-side fetches, so reading <html lang> is safe.
  */
 export function joinList(items: readonly string[]): string {
-  const ar = typeof document !== "undefined" && document.documentElement.lang === "ar";
+  const ar =
+    typeof document !== "undefined" && document.documentElement.lang === "ar";
   return items.join(ar ? "، " : ", ");
 }

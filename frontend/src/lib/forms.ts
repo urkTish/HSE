@@ -15,13 +15,16 @@ export function numberOrNull(v: string | null | undefined): number | null {
 export function applyServerErrors<T extends FieldValues>(
   err: unknown,
   setError: UseFormSetError<T>,
-  translate: (type: string, msg: string) => string,
+  translate: (type: string, msg: string, msgAr?: string | null) => string,
 ): void {
   if (!(err instanceof ApiError)) return;
   for (const fe of err.fieldErrors) {
     const parts = fe.loc.filter((p) => p !== "body").map(String);
     if (parts.length === 0) continue;
-    setError(parts.join(".") as Path<T>, { type: "server", message: translate(fe.type, fe.msg) });
+    setError(parts.join(".") as Path<T>, {
+      type: "server",
+      message: translate(fe.type, fe.msg, fe.msg_ar),
+    });
   }
 }
 

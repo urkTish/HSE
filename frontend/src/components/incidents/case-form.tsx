@@ -25,7 +25,7 @@ import { applyServerErrors } from "@/lib/forms";
 import { useFieldErrorTranslator } from "@/lib/i18n-helpers";
 import { useRefLists } from "@/lib/reference";
 
-const ID_RE: Record<Schemas["IdType"], RegExp> = { iqama: /^2\d{9}$/, national_id: /^1\d{9}$/, passport: /^[A-Z0-9]{6,9}$/ };
+const ID_RE: Record<Schemas["IdType"], RegExp> = { iqama: /^2\d{9}$/, national_id: /^1\d{9}$/, gcc_id: /^[A-Z0-9]{6,15}$/, passport: /^[A-Z0-9]{6,9}$/ };
 type Treatment = Schemas["Treatment"];
 
 export function CaseForm({ incident, kase }: { incident: Schemas["IncidentRead"]; kase?: Schemas["InjuryCaseRead"] }) {
@@ -255,7 +255,7 @@ export function CaseForm({ incident, kase }: { incident: Schemas["IncidentRead"]
           </FormField>
           {sel("id_type", t("fields.id_type"), ID_TYPES.map((x) => ({ value: x, label: te(`idType.${x}`) })))}
           <FormField id="case-id_number" label={t("fields.id_number")} error={errors.id_number?.message} hint={kase?.id_number_masked ? kase.id_number_masked : undefined}>
-            <Input className="ltr" autoComplete="off" maxLength={10} {...form.register("id_number")} />
+            <Input className="ltr" autoComplete="off" maxLength={15} {...form.register("id_number")} />
           </FormField>
           <FormField id="case-employee_no" label={t("fields.employee_no")} error={errors.employee_no?.message}>
             <Input className="ltr" maxLength={20} {...form.register("employee_no")} />

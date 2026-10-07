@@ -973,7 +973,8 @@
     "idType": {
       "iqama": "Iqama",
       "national_id": "National ID",
-      "passport": "Passport"
+      "passport": "Passport",
+      "gcc_id": "GCC ID"
     },
     "bodySide": {
       "left": "Left",
@@ -3178,7 +3179,9 @@
       "lvp_withdrawal_required": "Withdraw during low visibility",
       "ils_outage_notam_required": "NOTAM needed for ILS outage",
       "hook_requirements": "Other requirements"
-    }
+    },
+    "hookTrades": "Only for trades",
+    "allTrades": "All trades"
   },
   "passSetup": {
     "title": "Pass categories and areas",
@@ -3751,7 +3754,7 @@
     "direction": "Direction",
     "rateLimited": "Too many checks. Wait a moment and try again.",
     "ready": "Ready to scan",
-    "readyHint": "Scan the QR code on the card, sticker or permit, or type the printed reference.",
+    "readyHint": "Scan the QR code on the card, sticker or permit, or type the printed reference (a vehicle with no sticker: its vehicle number).",
     "printedRef": "Printed reference",
     "check": "Check",
     "scan": "Scan QR",

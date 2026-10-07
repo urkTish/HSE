@@ -20,7 +20,7 @@ P = {"gate": {
   "direction": ["Direction", "الاتجاه"],
   "rateLimited": ["Too many checks. Wait a moment and try again.", "عدد كبير من عمليات التحقق. انتظر قليلاً ثم أعد المحاولة."],
   "ready": ["Ready to scan", "جاهز للمسح"],
-  "readyHint": ["Scan the QR code on the card, sticker or permit, or type the printed reference.", "امسح رمز QR على البطاقة أو الملصق أو التصريح، أو اكتب الرقم المطبوع."],
+  "readyHint": ["Scan the QR code on the card, sticker or permit, or type the printed reference (a vehicle with no sticker: its vehicle number).", "امسح رمز QR على البطاقة أو الملصق أو التصريح، أو اكتب الرقم المطبوع (للمركبة بدون ملصق: رقم المركبة)."],
   "printedRef": ["Printed reference", "الرقم المطبوع"],
   "check": ["Check", "تحقق"],
   "scan": ["Scan QR", "مسح QR"],

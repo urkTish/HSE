@@ -1,6 +1,6 @@
 import type { Schemas } from "@/lib/api/client";
 
-// Phase 2 enum value lists mirrored from contract v0.3.0 (the `satisfies` clauses keep them in sync).
+// Phase 2 enum value lists mirrored from contract v0.3.1 (the `satisfies` clauses keep them in sync).
 type S = Schemas;
 
 export const WORKER_ID_TYPES = ["iqama", "national_id", "gcc_id", "passport"] as const satisfies readonly S["WorkerIdType"][];

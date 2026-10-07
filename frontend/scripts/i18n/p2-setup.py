@@ -11,6 +11,8 @@ P = {"zoneProfiles": {
   "hookKind": ["Check type", "نوع الفحص"],
   "hookCode": ["Code", "الرمز"],
   "addHook": ["Add", "إضافة"],
+  "hookTrades": ["Only for trades", "لمهن محددة فقط"],
+  "allTrades": ["All trades", "جميع المهن"],
   "fields": {
     "required_inductions": ["Required inductions", "التعريفات المطلوبة"], "airport_pass_area_code": ["Pass area code", "رمز منطقة التصريح"],
     "access_permit_required": ["Work-area permit required", "يتطلب تصريح دخول منطقة"], "adp_category_required": ["Driving permit category", "فئة تصريح القيادة"],

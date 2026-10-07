@@ -1531,7 +1531,7 @@ export interface paths {
         put?: never;
         /**
          * Upload an attachment to a record
-         * @description Images (JPEG/PNG/HEIC) or PDF, ≤ 20 MB each. Limits: observation ≤ 3 photos. Phase 2: `worker_photo` (owner = worker; JPEG/PNG ≤ 2 MB, ≥ 400×400, one current photo; capability 47), `pass_application_id_copy` (owner = application; capability 53 to upload, 48 to open; auto-deleted after id_copy_retention_days, P2-5), `offence_evidence` (capability 62). Phase 2 files are in the encrypted bucket with ≤ 5 min signed URLs. `injury_case_medical` needs capability 30 and is stored in the separate encrypted bucket; it is never included in bulk exports (P1-3). Files are virus-scanned (scan_status); 422 FILE_TOO_LARGE / FILE_TYPE_NOT_ALLOWED.
+         * @description Images (JPEG/PNG/HEIC) or PDF, ≤ 20 MB each. Limits: observation ≤ 3 photos. Phase 2: `worker_photo` (owner = worker; JPEG/PNG ≤ 2 MB, ≥ 400×400, one current photo; capability 47), `pass_application_id_copy` (owner = application; capability 53 to upload, 48 to open; auto-deleted after id_copy_retention_days, P2-5), `offence_evidence` (capability 62); `induction_signature` is read-only (captured with the induction record). Phase 2 files are in the encrypted bucket with ≤ 5 min signed URLs. `injury_case_medical` needs capability 30 and is stored in the separate encrypted bucket; it is never included in bulk exports (P1-3). Files are virus-scanned (scan_status); 422 FILE_TOO_LARGE / FILE_TYPE_NOT_ALLOWED.
          */
         post: operations["upload_attachment"];
         delete?: never;
@@ -7487,6 +7487,11 @@ export interface components {
              */
             msg: string;
             /**
+             * Msg Ar
+             * @description Arabic description of the problem (always sent by the server; a generic text per `type` when no specific translation exists).
+             */
+            msg_ar?: string | null;
+            /**
              * Type
              * @description Machine-readable error type, e.g. 'missing', 'value_error'.
              */
@@ -7592,10 +7597,11 @@ export interface components {
         /**
          * GateCheckRequest
          * @description GC-2. Send `payload` (QR text) or `printed_ref` (manual fallback, e.g.
-         *     "WKR-000002 / ANIA-EXP", "AVP-S-0118", "WAP-ANIA-EXP-2026-0031"). `zone_id` defaults to the
-         *     gate's single protected zone; required when the gate protects several; omitted for a site
-         *     gate. `pairing_id` continues an escort / driver / escort-vehicle pairing started on the
-         *     same device (GC-8, GC-9).
+         *     "WKR-000002 / ANIA-EXP", "AVP-S-0118", "WAP-ANIA-EXP-2026-0031"); a vehicle without an AVP
+         *     has no sticker, so type its vehicle_no ("VEH-0004": PENDING_ESCORT_VEHICLE, VP-8).
+         *     `zone_id` defaults to the gate's single protected zone; required when the gate protects
+         *     several; omitted for a site gate. `pairing_id` continues an escort / driver /
+         *     escort-vehicle pairing started on the same device (GC-8, GC-9).
          */
         GateCheckRequest: {
             /**
@@ -8251,12 +8257,19 @@ export interface components {
              * @example AVSEC-AWR
              */
             code: string;
+            /**
+             * Trades
+             * @description Only workers of these trades (zone profiles, e.g. CRANE-OPERATOR for crane_operator); empty = everyone.
+             */
+            trades?: components["schemas"]["Trade"][];
         };
         /** HookRequirementRead */
         HookRequirementRead: {
             kind: components["schemas"]["HookKind"];
             /** Code */
             code: string;
+            /** Trades */
+            trades?: components["schemas"]["Trade"][];
         };
         /** HseMeetingCreate */
         HseMeetingCreate: {
@@ -8524,7 +8537,7 @@ export interface components {
          * IdType
          * @enum {string}
          */
-        IdType: "iqama" | "national_id" | "passport";
+        IdType: "iqama" | "national_id" | "gcc_id" | "passport";
         /**
          * ImportCode
          * @description §3.2 validation codes. E* block commit, W* do not.
@@ -9462,7 +9475,7 @@ export interface components {
             id_type?: components["schemas"]["IdType"] | null;
             /**
              * Id Number
-             * @description iqama ^2\d{9}$, national_id ^1\d{9}$, passport ^[A-Z0-9]{6,9}$. Encrypted at rest; never returned in full except by GET …/id-number.
+             * @description iqama ^2\d{9}$, national_id ^1\d{9}$, gcc_id ^[A-Z0-9]{6,15}$ (v1.1), passport ^[A-Z0-9]{6,9}$. Encrypted at rest; never returned in full except by GET …/id-number.
              */
             id_number?: string | null;
             /** Employee No */
@@ -24961,6 +24974,8 @@ export interface operations {
             query?: {
                 dimension?: components["schemas"]["BreakdownDimension"] | null;
                 measure?: components["schemas"]["BreakdownMeasure"] | null;
+                /** @description Gate(s): filters gate KPIs (K-52, K-53, K-53b) only. */
+                gate_id?: string[] | null;
                 /** @description Project(s). Repeat for several. Required unless all_projects=true. Out-of-scope ids → 404. */
                 project_id?: string[] | null;
                 /** @description HSE Manager only: every project (K-R12 bases banner). */
@@ -24989,8 +25004,6 @@ export interface operations {
                 as_of?: string | null;
                 /** @description Comparisons to compute (K-R11). Default: previous. */
                 compare?: components["schemas"]["ComparisonKind"][] | null;
-                /** @description Gate(s): filters gate KPIs (K-52, K-53, K-53b) only. */
-                gate_id?: string[] | null;
             };
             header?: never;
             path: {
@@ -25146,6 +25159,8 @@ export interface operations {
                 /** @description Default: all access KPIs. */
                 metric?: components["schemas"]["KpiMetric"][] | null;
                 group_by?: components["schemas"]["AccessKpiGroupBy"][] | null;
+                /** @description Gate(s): filters gate KPIs (K-52, K-53, K-53b) only. */
+                gate_id?: string[] | null;
                 /** @description Project(s). Repeat for several. Required unless all_projects=true. Out-of-scope ids → 404. */
                 project_id?: string[] | null;
                 /** @description HSE Manager only: every project (K-R12 bases banner). */
@@ -25174,8 +25189,6 @@ export interface operations {
                 as_of?: string | null;
                 /** @description Comparisons to compute (K-R11). Default: previous. */
                 compare?: components["schemas"]["ComparisonKind"][] | null;
-                /** @description Gate(s): filters gate KPIs (K-52, K-53, K-53b) only. */
-                gate_id?: string[] | null;
             };
             header?: never;
             path?: never;
