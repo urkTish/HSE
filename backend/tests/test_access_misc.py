@@ -171,3 +171,11 @@ def test_worker_photo_rules_and_id_copy_capability(api: Api, db: Session) -> Non
         )
     )
     assert rows
+
+
+def test_seeded_adp_register_lists(api: Api, ids: Ids) -> None:
+    """Regression: seeded ADPs must use valid vehicle classes so the register serialises."""
+    pid = ids.project("ANIA-EXP")
+    res = api.as_("noura.qahtani").get(f"{API}/projects/{pid}/adps")
+    assert res.status_code == 200, res.text
+    assert res.json()["total"] > 0

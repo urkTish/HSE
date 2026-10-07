@@ -71,6 +71,7 @@ from app.core.access_enums import (
     SuspensionState,
     ValidityStatus,
     VehicleCategory,
+    VehicleClass,
     VehicleOwnerType,
     VehicleStatus,
     WapStatus,
@@ -1698,9 +1699,9 @@ def _adp_row(ctx: Ctx, a: AdpSpec) -> dict[str, Any]:
         "deployment_id": p.did,
         "engagement_id": eng.id if eng else None,
         "category": a.category,
-        "vehicle_classes": ["light_vehicle", "pickup"]
+        "vehicle_classes": [VehicleClass.light]
         if p.trade == T.driver
-        else ["paver", "roller", "excavator"],
+        else [VehicleClass.heavy, VehicleClass.special_plant],
         "licence_issuer": LicenceIssuer.ksa,
         "licence_class": a.licence_class,
         "licence_expiry_date": a.licence,

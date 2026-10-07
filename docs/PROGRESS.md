@@ -1,13 +1,14 @@
 # Progress
 
 ## Current
-- Phase: 2 — Site / Airport access permits
-- Module: site & airport access permits (spec `docs/specs/2-access-permits.md`)
-- Step: Backend Phase 2 stage 2 done (contract 0.3.1, frontend issues fixed); Frontend Phase 2 built against v0.3.0, e2e green (104 passed); design pass next
+- Phase: 3 — Permit to Work (PTW)
+- Module: PTW (spec `docs/specs/3-ptw.md` v1.0)
+- Step: Contract
 
 ## Phase log
 - Phase 0 — Foundation: built, e2e green, design pass done (2026-10-05). The user asked to continue phase after phase without per-phase approval; open questions are collected below for a single review.
 - Phase 1 — Dashboard (with AI): built, e2e green, design pass done (2026-10-06).
+- Phase 2 — Site / Airport access permits: built, e2e green, design pass done (2026-10-07).
 
 ## Done
 
@@ -202,6 +203,15 @@
 - E2E (Playwright, real backend): full suite 71 passed, 2 skipped (screenshot specs, on demand) on a fresh migrated + seeded DB — 35 Phase 0 + 36 Phase 1 tests in `e2e/p1-*.spec.ts` — dashboard (AC55, 59, 60, 61, 62, 63, 64, filters in URL, drill-down, charts, mobile), AI (AC65, 72, 73, 74, 75, insufficient data, errors, Arabic) via a recorded SSE stream in `e2e/fixtures/ai-stream.ts` (typed against the contract, replayed with `page.route`; test-only), workforce/import (AC2, 3, 4, 7, 10), incidents/PDPL (AC13, 19, 20, 21, 29, 30, 31, 33), CAs (AC40, 41, 42, 43), observations (AC35) and create flows for observations, inspections, meetings, settings, reports. Phase 0 specs unchanged except a wait in AC12 (options load asynchronously).
 - Screenshots: `docs/screenshots/phase-1/` (run `SCREENSHOTS=1 npx playwright test e2e/screenshots-p1.spec.ts`).
 
+### Design pass — Phase 2 (UI/UX Designer)
+- Design pass: done (Phase 2). Findings, ranking and the Phase 2 design-system additions: `docs/design/phase-2-findings.md`; before/after screenshots: `docs/screenshots/phase-2/design/`.
+- Gate screen: "granted with a note" now leads with a tick and GRANTED (amber panel kept, per spec) and a small "With a note" pill; the "training check from Phase 5" reason is a neutral note, not an amber warning; reasons ordered deny → warning → note. While a verdict is up the pickers hide and the result actions (Next scan with a draining 30 s line, Cancel pairing, Admitted despite denial as a red-outlined secondary) sit in the thumb bar. Theme-independent verdict tokens replace raw Tailwind colours; dark mode fixed (the `dark:` classes followed the OS, not the toggle). In/Out with icons, 44–56 px targets.
+- Print: shared bilingual `AccessPrintHeader` + `BiLabel` (`accessPrint.*` "EN|AR"); access card at ID-1 size with fixed LTR layout; AVP sticker with stacked bilingual header and labels; WAP print with bilingual header, labels, crew table and footer, both scope texts. `.paper` keeps them light on a dark screen.
+- Gate log and every register: `HOOK_NOT_AVAILABLE` chips are neutral notes; phone stacked cards keep each cell together. WAP board: working-now and blocker emphasis. C11 (and any horizontal bar chart) keeps largest-first order in Arabic. Signature pad taller on phones with a baseline. Ops-suspension chip has an icon.
+- No business logic, API calls, permissions, KPI values or data shown changed; e2e selectors unchanged. New strings in `scripts/i18n/p2-design.py`.
+- Checks: lint, typecheck, i18n:check and build green; full e2e on a fresh seed 104 passed, 2 skipped (on-demand screenshot specs).
+- Found for the backend (fixed by the lead: seed now uses light / heavy + special_plant; regression test `test_seeded_adp_register_lists`): `GET /projects/{id}/adps` returns 500 on the Phase 2 seed — `ValueError: 'paver' is not a valid VehicleClass` (`app/seed_access.py` ~line 1703 seeds ADP vehicle classes `paver` / `roller` / `excavator`, which are vehicle *categories*). The ADP register shows the error state; `p2-smoke` does not catch it.
+
 ### Design pass — Phase 1 (UI/UX Designer)
 - Design pass: done (Phase 1). Findings, ranking and the Phase 1 design-system additions: `docs/design/phase-1-findings.md`; before/after screenshots: `docs/screenshots/phase-1/design/`.
 - Dashboard now answers "are we safe, and what needs me today?" above the fold: compact period bar (scope filters behind "More filters"), headline band, then "Needs attention" and "Due soon" side by side, then tiles, charts, league table, pyramid and insights.
@@ -302,3 +312,8 @@ L items from the Phase 1 design pass (details in `docs/design/phase-1-findings.m
 - **P7. Default sort and saved views for registers.** The CA list and incident register open on the oldest records (closed 2025 actions first). Proposal: open/overdue first by due date by default, plus one-click views ("My actions", "Overdue", "Awaiting my verification"). Changes the list query (sort parameter), so it needs approval.
 - **P8. KPI tile tiers.** 27 tiles have equal weight. Proposal: a first row of 6 headline KPIs chosen in HSE settings (e.g. LTI, TRIR, HiPo, overdue CAs, inspection compliance, safe %), a "moved most vs previous period" strip, and the rest folded under "All indicators".
 - **P9. Project logo** on the monthly report (and later permits): needs a logo upload on the project (contract change). The print header uses the platform mark until then.
+
+L items from the Phase 2 design pass (details in `docs/design/phase-2-findings.md`):
+- **P10. Access settings: show only the hook requirements that exist.** Today every ADP category, ~25 vehicle categories and every crew role shows an empty picker (≈ 6,000 px of "None"). Proposal: list only categories with a requirement plus "Add requirement for…", each section collapsible.
+- **P11. Colour of "granted with a note" at the gate.** The spec makes GRANTED_WITH_WARNING amber; until Phase 5 that is every clean airside scan. This pass kept amber but leads with a tick and "GRANTED". Option for the HSE Manager: a green panel with an amber note band. Needs a decision because it changes the spec's colour semantics.
+- **P1 / P2 / P9 also apply to Phase 2:** two-calendar dates still wrap in the gate log and WAP windows (P1); pass application and WAP detail have long action rows on phones (P2); the access card, sticker and WAP print use the platform mark until a project logo exists (P9).
