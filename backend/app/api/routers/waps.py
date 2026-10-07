@@ -9,7 +9,7 @@ from fastapi import APIRouter, Query, status
 
 from app.api.deps import DB, CurrentUser, PageParams
 from app.core.access_enums import OpsEventType, WapBlocker, WapStatus
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.schemas.waps import (
     CrewInput,
     OpsEventCreate,
@@ -27,6 +27,7 @@ from app.schemas.waps import (
     WapUpdate,
     WapVehicleInput,
 )
+from app.services.access import waps as svc
 
 router = APIRouter(tags=["work-area-permits"])
 
@@ -56,7 +57,24 @@ def list_waps(
     vehicle_id: uuid.UUID | None = None,
     q: Annotated[str | None, Query(max_length=100)] = None,
 ) -> WapPage:
-    raise not_implemented()
+    return svc.list_waps(
+        db,
+        user,
+        project_id,
+        pg.page,
+        pg.page_size,
+        status_,
+        site_id,
+        zone_id,
+        engagement_id,
+        include_subcontractors,
+        active_on,
+        blocked,
+        blocker,
+        worker_id,
+        vehicle_id,
+        q,
+    )
 
 
 @router.post(
@@ -67,7 +85,7 @@ def list_waps(
     responses=error_responses(401, 403, 404, 422),
 )
 def create_wap(project_id: uuid.UUID, body: WapCreate, user: CurrentUser, db: DB) -> WapRead:
-    raise not_implemented()
+    return svc.create_wap(db, user, project_id, body)
 
 
 @router.get(
@@ -83,7 +101,7 @@ def get_wap_board(
     on: Annotated[date | None, Query(description="Local date; default today.")] = None,
     site_id: uuid.UUID | None = None,
 ) -> WapBoardResponse:
-    raise not_implemented()
+    return svc.board(db, user, project_id, on, site_id)
 
 
 @router.get(
@@ -93,7 +111,7 @@ def get_wap_board(
     responses=error_responses(401, 403, 404),
 )
 def get_wap(wap_id: uuid.UUID, user: CurrentUser, db: DB) -> WapRead:
-    raise not_implemented()
+    return svc.read_wap(db, user, wap_id)
 
 
 @router.patch(
@@ -103,7 +121,7 @@ def get_wap(wap_id: uuid.UUID, user: CurrentUser, db: DB) -> WapRead:
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def update_wap(wap_id: uuid.UUID, body: WapUpdate, user: CurrentUser, db: DB) -> WapRead:
-    raise not_implemented()
+    return svc.update_wap(db, user, wap_id, body)
 
 
 @router.post(
@@ -116,7 +134,7 @@ def update_wap(wap_id: uuid.UUID, body: WapUpdate, user: CurrentUser, db: DB) ->
 def transition_wap(
     wap_id: uuid.UUID, body: WapTransitionRequest, user: CurrentUser, db: DB
 ) -> WapRead:
-    raise not_implemented()
+    return svc.transition_wap(db, user, wap_id, body)
 
 
 @router.post(
@@ -129,7 +147,7 @@ def transition_wap(
 def create_wap_revision(
     wap_id: uuid.UUID, body: WapRevisionCreate, user: CurrentUser, db: DB
 ) -> WapRead:
-    raise not_implemented()
+    return svc.create_revision(db, user, wap_id, body)
 
 
 @router.post(
@@ -139,7 +157,7 @@ def create_wap_revision(
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def add_wap_crew(wap_id: uuid.UUID, body: CrewInput, user: CurrentUser, db: DB) -> WapRead:
-    raise not_implemented()
+    return svc.add_crew(db, user, wap_id, body)
 
 
 @router.delete(
@@ -149,7 +167,7 @@ def add_wap_crew(wap_id: uuid.UUID, body: CrewInput, user: CurrentUser, db: DB) 
     responses=error_responses(401, 403, 404, 409),
 )
 def remove_wap_crew(wap_id: uuid.UUID, worker_id: uuid.UUID, user: CurrentUser, db: DB) -> WapRead:
-    raise not_implemented()
+    return svc.remove_crew(db, user, wap_id, worker_id)
 
 
 @router.post(
@@ -159,7 +177,7 @@ def remove_wap_crew(wap_id: uuid.UUID, worker_id: uuid.UUID, user: CurrentUser, 
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def add_wap_vehicle(wap_id: uuid.UUID, body: WapVehicleInput, user: CurrentUser, db: DB) -> WapRead:
-    raise not_implemented()
+    return svc.add_vehicle(db, user, wap_id, body)
 
 
 @router.delete(
@@ -171,7 +189,7 @@ def add_wap_vehicle(wap_id: uuid.UUID, body: WapVehicleInput, user: CurrentUser,
 def remove_wap_vehicle(
     wap_id: uuid.UUID, vehicle_id: uuid.UUID, user: CurrentUser, db: DB
 ) -> WapRead:
-    raise not_implemented()
+    return svc.remove_vehicle(db, user, wap_id, vehicle_id)
 
 
 @router.get(
@@ -181,7 +199,7 @@ def remove_wap_vehicle(
     responses=error_responses(401, 403, 404, 409),
 )
 def get_wap_print(wap_id: uuid.UUID, user: CurrentUser, db: DB) -> WapPrintRead:
-    raise not_implemented()
+    return svc.print_wap(db, user, wap_id)
 
 
 # ---- operational suspension events --------------------------------------------------------------
@@ -204,7 +222,9 @@ def list_ops_events(
     date_from: date | None = None,
     date_to: date | None = None,
 ) -> OpsEventPage:
-    raise not_implemented()
+    return svc.list_ops(
+        db, user, project_id, pg.page, pg.page_size, active, type_, site_id, date_from, date_to
+    )
 
 
 @router.post(
@@ -217,7 +237,7 @@ def list_ops_events(
 def create_ops_event(
     project_id: uuid.UUID, body: OpsEventCreate, user: CurrentUser, db: DB
 ) -> OpsEventRead:
-    raise not_implemented()
+    return svc.create_ops(db, user, project_id, body)
 
 
 @router.get(
@@ -227,7 +247,7 @@ def create_ops_event(
     responses=error_responses(401, 403, 404),
 )
 def get_ops_event(event_id: uuid.UUID, user: CurrentUser, db: DB) -> OpsEventRead:
-    raise not_implemented()
+    return svc.read_ops(db, user, event_id)
 
 
 @router.patch(
@@ -239,7 +259,7 @@ def get_ops_event(event_id: uuid.UUID, user: CurrentUser, db: DB) -> OpsEventRea
 def update_ops_event(
     event_id: uuid.UUID, body: OpsEventUpdate, user: CurrentUser, db: DB
 ) -> OpsEventRead:
-    raise not_implemented()
+    return svc.update_ops(db, user, event_id, body)
 
 
 @router.post(
@@ -251,4 +271,4 @@ def update_ops_event(
 def end_ops_event(
     event_id: uuid.UUID, body: OpsEventEnd, user: CurrentUser, db: DB
 ) -> OpsEventRead:
-    raise not_implemented()
+    return svc.end_ops(db, user, event_id, body)

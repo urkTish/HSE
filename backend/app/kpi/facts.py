@@ -8,6 +8,7 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
+from typing import Any
 
 from app.core.hse_enums import CaseCategory, CaStatus, ControlLevel, PermanentDisability
 from app.kpi.cases import CaseDates
@@ -33,6 +34,16 @@ class WfFact:
     project: UUID | None = None
     ids: tuple[UUID, ...] = ()  # return ids (drill-down only)
     shift: str = "all"
+
+
+@dataclass(frozen=True, slots=True)
+class IndFact:
+    """v1.1 K-38: a passed general_site induction record (dates ≥ induction_register_from)."""
+
+    d: date
+    eng: UUID | None
+    site: UUID | None
+    project: UUID
 
 
 @dataclass(frozen=True, slots=True)
@@ -182,6 +193,7 @@ class ZoneFact:
 @dataclass
 class Facts:
     wf: list[WfFact] = field(default_factory=list)
+    inds: list[IndFact] = field(default_factory=list)
     cases: list[CaseFact] = field(default_factory=list)
     events: list[EventFact] = field(default_factory=list)
     obs: list[ObsFact] = field(default_factory=list)
@@ -191,9 +203,25 @@ class Facts:
     engagements: dict[UUID, EngFact] = field(default_factory=dict)
     zones: dict[UUID, ZoneFact] = field(default_factory=dict)
     project_start: date | None = None
+    # app.kpi.access_facts.AccessFacts (2-access-permits §6.8), loaded on first use so Phase 1
+    # requests never pay for the access registers / gate log.
+    access_loader: Any = None
+    _access: Any = None
+
+    @property
+    def access(self) -> Any:
+        if self._access is None and self.access_loader is not None:
+            self._access = self.access_loader()
+            self.access_loader = None
+        return self._access
+
+    @access.setter
+    def access(self, value: Any) -> None:
+        self._access = value
 
     def sort(self) -> "Facts":
         self.wf.sort(key=lambda r: r.d)
+        self.inds.sort(key=lambda r: r.d)
         self.cases.sort(key=lambda r: r.d)
         self.events.sort(key=lambda r: r.d)
         self.obs.sort(key=lambda r: r.d)

@@ -35,7 +35,7 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () =>
   const msg = useErrorMessage();
   if (error instanceof ApiError && error.status === 404) return <NotFoundState />;
   return (
-    <Alert tone="danger">
+    <Alert tone="danger" data-testid="error-state">
       <p className="font-medium">{t("loadError")}</p>
       <p>{msg(error)}</p>
       {onRetry ? (
@@ -64,6 +64,16 @@ export function MutationError({ error }: { error: unknown }) {
   return (
     <Alert tone="danger" data-testid="form-error">
       {msg(error)}
+      {/* Dialogs have no per-field slots: list the API's field errors (English-only by contract) as a fallback. */}
+      {error instanceof ApiError && error.code === "VALIDATION_ERROR" && error.fieldErrors.length ? (
+        <ul className="mt-1 list-inside list-disc text-xs" data-testid="form-field-errors">
+          {error.fieldErrors.map((f, i) => (
+            <li key={i}>
+              <bdi className="ltr font-mono">{String(f.loc[f.loc.length - 1] ?? "")}</bdi>: <bdi className="ltr">{f.msg}</bdi>
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </Alert>
   );
 }

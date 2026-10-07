@@ -128,3 +128,81 @@ def hse_seed(_fresh_data: None) -> None:
     with get_sessionmaker()() as db:
         seed_data(db)
         db.commit()
+
+
+# ---- Phase 2: full Appendix A world, built once and cloned per test ----------------------------
+
+ACCESS_TEMPLATE = "hse_test_access_tpl"
+
+
+def _admin_exec(*statements: str) -> None:
+    from sqlalchemy import create_engine  # noqa: PLC0415
+
+    url = TEST_DB.rsplit("/", 1)[0] + "/postgres"
+    eng = create_engine(url, isolation_level="AUTOCOMMIT")
+    try:
+        with eng.connect() as conn:
+            for s in statements:
+                conn.execute(text(s))
+    finally:
+        eng.dispose()
+
+
+def _db_name() -> str:
+    return TEST_DB.rsplit("/", 1)[1]
+
+
+def _terminate(name: str) -> str:
+    return (
+        "SELECT pg_terminate_backend(pid) FROM pg_stat_activity "
+        f"WHERE datname = '{name}' AND pid <> pg_backend_pid()"
+    )
+
+
+@pytest.fixture(scope="session")
+def _access_template(_migrated: None) -> str:
+    """Phase 0 + Phase 1 + Phase 2 Appendix A seed, saved once as a template database."""
+    from app.seed_access import seed_access_data  # noqa: PLC0415
+
+    tables = ", ".join(t.name for t in Base.metadata.sorted_tables)
+    with get_engine().begin() as conn:
+        conn.execute(text(f"TRUNCATE {tables} RESTART IDENTITY CASCADE"))
+    with get_sessionmaker()() as db:
+        seed(db, PASSWORD)
+        db.commit()
+        seed_data(db)
+        db.commit()
+        seed_access_data(db)
+        db.commit()
+    get_engine().dispose()
+    name = _db_name()
+    _admin_exec(
+        _terminate(name),
+        f"DROP DATABASE IF EXISTS {ACCESS_TEMPLATE}",
+        f"CREATE DATABASE {ACCESS_TEMPLATE} TEMPLATE {name}",
+    )
+    return ACCESS_TEMPLATE
+
+
+@pytest.fixture
+def access_seed(_fresh_data: None, _access_template: str) -> None:
+    """Replace the test database with a copy of the Phase 2 template (Appendix A world)."""
+    get_engine().dispose()
+    name = _db_name()
+    _admin_exec(
+        _terminate(name),
+        f"DROP DATABASE {name}",
+        f"CREATE DATABASE {name} TEMPLATE {_access_template}",
+    )
+
+
+@pytest.fixture
+def noon() -> Iterator[None]:
+    """Pin the clock to Appendix A "today" (2026-10-06 12:00 Asia/Riyadh = 09:00Z)."""
+    from datetime import UTC, datetime  # noqa: PLC0415
+
+    from app.core.clock import set_now  # noqa: PLC0415
+
+    set_now(datetime(2026, 10, 6, 9, 0, tzinfo=UTC))
+    yield
+    set_now(None)

@@ -1,6 +1,7 @@
 """KPI engine endpoints (spec 1-dashboard §5.6, §6, §8.1). All values are computed by
 `app.kpi` — the only place rates are computed (D-1)."""
 
+import uuid
 from datetime import date
 from typing import Annotated, Literal
 
@@ -9,8 +10,8 @@ from fastapi import APIRouter, Query, Response
 from app.api.deps import DB, CurrentUser, PageParams
 from app.api.kpi_params import KpiParams
 from app.core.access_enums import AccessKpiGroupBy
-from app.core.enums import ExportFormat
-from app.core.errors import error_responses, not_implemented
+from app.core.enums import Capability, ExportFormat
+from app.core.errors import error_responses
 from app.core.hse_enums import (
     BreakdownDimension,
     BreakdownMeasure,
@@ -19,7 +20,7 @@ from app.core.hse_enums import (
     KpiExportTable,
     KpiMetric,
 )
-from app.kpi import charts, scope, service, views
+from app.kpi import access_views, charts, scope, service, views
 from app.schemas.access_kpi import AccessKpiResponse
 from app.schemas.kpi import (
     BreakdownResponse,
@@ -129,7 +130,7 @@ def get_kpi_sources(
     responses=KPI_ERRORS,
 )
 def get_dashboard(user: CurrentUser, db: DB, q: KpiParams) -> DashboardResponse:
-    return service.dashboard(scope.build(db, user, q))
+    return service.dashboard(scope.build(db, user, q), db)
 
 
 @router.get(
@@ -269,9 +270,14 @@ def get_chart(
     q: KpiParams,
     dimension: BreakdownDimension | None = None,
     measure: BreakdownMeasure | None = None,
+    gate_id: Annotated[
+        uuid.UUID | None, Query(description="C10/C11: one gate's checks only.")
+    ] = None,
 ) -> ChartResponse:
     if chart_id in PHASE2_CHARTS:
-        raise not_implemented()
+        sc = scope.build(db, user, q, Capability.access_kpi_view)
+        spec = access_views.chart(db, sc, chart_id, gate_id)
+        return ChartResponse(context=service.context(sc), chart=spec)
     sc = scope.build(db, user, q)
     spec = charts.chart(db, sc, chart_id, dimension, measure)
     return ChartResponse(context=service.context(sc), chart=spec)
@@ -330,5 +336,7 @@ def get_access_kpis(
         list[KpiMetric] | None, Query(description="Default: all access KPIs.")
     ] = None,
     group_by: Annotated[list[AccessKpiGroupBy] | None, Query()] = None,
+    gate_id: Annotated[uuid.UUID | None, Query(description="Gate KPIs for one gate.")] = None,
 ) -> AccessKpiResponse:
-    raise not_implemented()
+    sc = scope.build(db, user, q, Capability.access_kpi_view)
+    return access_views.access_kpis(db, sc, metric, group_by, gate_id)

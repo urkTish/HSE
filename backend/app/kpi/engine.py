@@ -30,7 +30,7 @@ from app.core.hse_enums import (
     PermanentDisability,
 )
 from app.kpi.cases import day_counts, lost_days_charged
-from app.kpi.catalogue import CATALOGUE, PHASE2_PENDING
+from app.kpi.catalogue import CATALOGUE, PHASE2_METRICS
 from app.kpi.facts import (
     CaseFact,
     EventFact,
@@ -268,6 +268,14 @@ class Engine:
             if keep(a.site, a.zone, a.eng) and not (a.cancelled and a.cancelled <= as_of)
         ]
         self.meetings = [m for m in facts.meetings if f.eng_ok(m.eng)]
+        self.inds = [
+            i
+            for i in facts.inds
+            if f.eng_ok(i.eng)
+            and (f.site_ok(i.site) if i.site is not None else f.sites is None)
+            and not f.zone_filtered
+        ]
+        self._ind_keys = [i.d for i in self.inds]
         self._wf_keys = [r.d for r in self.wf]
         self._unz_keys = [r.d for r in self.unzoned]
         self._case_keys = [c.d for c in self.cases]
@@ -317,6 +325,7 @@ class Engine:
             a.tbt_att += r.tbt_att
             a.ind += r.ind
             a.trn += r.trn
+        a.ind += len(_slice(self.inds, self._ind_keys, w))
         a.hc_dates = sum(1 for v in per_day.values() if v > 0)
         a.hc_peak = max(per_day.values(), default=0)
         for r in _slice(self.unzoned, self._unz_keys, w):
@@ -882,6 +891,8 @@ _DISPATCH: dict[KpiMetric, Callable[[Engine, Agg], Result]] = {
     M.K45: _k45,
     M.K46: _k46,
     M.K47: _count_fn(M.K47, lambda a: a.late),
-    **{m: _not_yet(m) for m in PHASE2_PENDING},
+    **{m: _not_yet(m) for m in PHASE2_METRICS},  # replaced by app.kpi.access
 }
+import app.kpi.access  # noqa: E402, F401  (registers K-48…K-60 into _DISPATCH)
+
 assert set(_DISPATCH) == set(KpiMetric) == set(CATALOGUE)  # noqa: S101

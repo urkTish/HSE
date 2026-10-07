@@ -43,6 +43,43 @@ export function entityRoute(type: Schemas["EntityType"] | string | null | undefi
       return `/meetings/${id}`;
     case "monthly_report":
       return `/reports/${id}`;
+    case "worker":
+      return `/workers/${id}`;
+    case "worker_deployment":
+      return `/deployments/${id}`;
+    case "induction_course":
+      return `/induction-courses/${id}`;
+    case "induction_record":
+      return `/inductions/${id}`;
+    case "zone_access_profile":
+      return `/zone-profiles`;
+    case "airport_pass_category":
+    case "airport_pass_area":
+      return `/pass-setup`;
+    case "pass_application":
+      return `/pass-applications/${id}`;
+    case "airport_pass":
+      return `/airport-passes/${id}`;
+    case "adp":
+      return `/adps/${id}`;
+    case "airside_offence":
+      return `/offences/${id}`;
+    case "vehicle":
+      return `/vehicles/${id}`;
+    case "avp":
+      return `/avps/${id}`;
+    case "notam_request":
+      return `/notams/${id}`;
+    case "obstacle_clearance":
+      return `/obstacle-clearances/${id}`;
+    case "wap":
+      return `/waps/${id}`;
+    case "ops_event":
+      return `/ops-events/${id}`;
+    case "gate":
+      return `/gates/${id}`;
+    case "access_settings":
+      return `/access-settings`;
     default:
       return null;
   }
@@ -60,6 +97,27 @@ const DETAIL: [RegExp, string][] = [
   [/^\/api\/v1\/hse-meetings\/([0-9a-f-]{36})$/, "/meetings/$1"],
   [/^\/api\/v1\/monthly-reports\/([0-9a-f-]{36})$/, "/reports/$1"],
   [/^\/api\/v1\/projects\/[0-9a-f-]{36}\/workforce-months(?:\/.*)?$/, "/workforce/months"],
+  [/^\/api\/v1\/workers\/([0-9a-f-]{36})(?:\/.*)?$/, "/workers/$1"],
+  [/^\/api\/v1\/deployments\/([0-9a-f-]{36})(?:\/access-card)?$/, "/deployments/$1"],
+  [/^\/api\/v1\/induction-courses\/([0-9a-f-]{36})$/, "/induction-courses/$1"],
+  [/^\/api\/v1\/inductions\/([0-9a-f-]{36})$/, "/inductions/$1"],
+  [/^\/api\/v1\/pass-applications\/([0-9a-f-]{36})$/, "/pass-applications/$1"],
+  [/^\/api\/v1\/airport-passes\/([0-9a-f-]{36})$/, "/airport-passes/$1"],
+  [/^\/api\/v1\/adps\/([0-9a-f-]{36})$/, "/adps/$1"],
+  [/^\/api\/v1\/airside-offences\/([0-9a-f-]{36})$/, "/offences/$1"],
+  [/^\/api\/v1\/vehicles\/([0-9a-f-]{36})$/, "/vehicles/$1"],
+  [/^\/api\/v1\/avps\/([0-9a-f-]{36})$/, "/avps/$1"],
+  [/^\/api\/v1\/notam-requests\/([0-9a-f-]{36})$/, "/notams/$1"],
+  [/^\/api\/v1\/obstacle-clearances\/([0-9a-f-]{36})$/, "/obstacle-clearances/$1"],
+  [/^\/api\/v1\/waps\/([0-9a-f-]{36})$/, "/waps/$1"],
+  [/^\/api\/v1\/ops-events\/([0-9a-f-]{36})$/, "/ops-events/$1"],
+  [/^\/api\/v1\/gates\/([0-9a-f-]{36})$/, "/gates/$1"],
+  [/^\/api\/v1\/credentials\/induction\/([0-9a-f-]{36})$/, "/inductions/$1"],
+  [/^\/api\/v1\/credentials\/airport_pass\/([0-9a-f-]{36})$/, "/airport-passes/$1"],
+  [/^\/api\/v1\/credentials\/adp\/([0-9a-f-]{36})$/, "/adps/$1"],
+  [/^\/api\/v1\/credentials\/avp\/([0-9a-f-]{36})$/, "/avps/$1"],
+  [/^\/api\/v1\/credentials\/access_card\/([0-9a-f-]{36})$/, "/deployments/$1"],
+  [/^\/api\/v1\/projects\/[0-9a-f-]{36}\/access-settings$/, "/access-settings"],
 ];
 
 /** Map an API record path (`detail_path`) to the UI page; null when there is none. */
@@ -79,6 +137,22 @@ const LISTS: [RegExp, string][] = [
   [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/inspections$/, "/inspections"],
   [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/workforce-returns$/, "/workforce"],
   [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/hse-meetings$/, "/meetings"],
+  [/^\/api\/v1\/workers$/, "/workers"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/deployments$/, "/workers"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/inductions$/, "/inductions"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/induction-sessions$/, "/inductions"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/pass-applications$/, "/pass-applications"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/airport-passes$/, "/airport-passes"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/adps$/, "/adps"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/airside-offences$/, "/offences"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/vehicles$/, "/vehicles"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/avps$/, "/avps"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/notam-requests$/, "/notams"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/obstacle-clearances$/, "/obstacle-clearances"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/waps$/, "/waps"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/wap-board$/, "/wap-board"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/ops-events$/, "/ops-events"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/gate-log$/, "/gate-log"],
 ];
 
 /** Map an action-panel `ListLink` to the UI list with the same filters in the URL. */

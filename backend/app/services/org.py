@@ -34,6 +34,7 @@ from app.schemas.org import (
     ZoneUpdate,
 )
 from app.services import audit, projects
+from app.services.access import profiles
 from app.services.common import duplicate, ensure_open, invalid_transition
 from app.services.permissions import Grant, Principal, deny, forbidden_error
 
@@ -333,6 +334,7 @@ def create_zone(db: Session, p: Principal, site_id: uuid.UUID, body: ZoneCreate)
         project_id=site.project_id,
         after=_zone_dict(zone),
     )
+    profiles.on_zone_saved(db, zone, created=True)
     return zone
 
 
@@ -381,6 +383,8 @@ def update_zone(db: Session, p: Principal, zone_id: uuid.UUID, body: ZoneUpdate)
             before=b,
             after=a,
         )
+        db.flush()
+        profiles.on_zone_saved(db, zone, created=False)
     return zone
 
 

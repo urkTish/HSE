@@ -5,7 +5,7 @@ import type { KpiQuery } from "@/lib/api/kpi";
 import { useSearchState, type ParamValue } from "@/lib/url-state";
 
 /** URL keys of the dashboard filter bar (D-2). Short so shared links stay readable. */
-export const DASH_KEYS = ["all", "site", "zone", "zt", "eng", "subs", "tier", "period", "anchor", "start", "end", "as_of", "cmp"] as const;
+export const DASH_KEYS = ["all", "site", "zone", "zt", "eng", "subs", "tier", "period", "anchor", "start", "end", "as_of", "cmp", "gate"] as const;
 
 export interface DashFilters {
   allProjects: boolean;
@@ -21,6 +21,8 @@ export interface DashFilters {
   end: string | null;
   asOf: string | null;
   compare: Schemas["ComparisonKind"][];
+  /** Gate KPIs (K-53, C10, C11) also filter by gate (§8.1 item 4). Not saved in preferences. */
+  gateIds: string[];
 }
 
 export function toKpiQuery(projectId: string | null, f: DashFilters): KpiQuery {
@@ -39,6 +41,7 @@ export function toKpiQuery(projectId: string | null, f: DashFilters): KpiQuery {
     end: f.period === "custom" ? f.end : null,
     as_of: f.asOf,
     compare: f.compare.length ? f.compare : ["previous"],
+    gate_id: f.gateIds.length ? f.gateIds : null,
   };
 }
 
@@ -96,6 +99,7 @@ export function useDashFilters() {
       end: s.get("end"),
       asOf: s.get("as_of"),
       compare: s.getAll("cmp") as Schemas["ComparisonKind"][],
+      gateIds: s.getAll("gate"),
     }),
     [s],
   );

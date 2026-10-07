@@ -53,6 +53,7 @@ from app.schemas.dashboard import (
 from app.services import corrective_actions as ca_svc
 from app.services import hse_settings, projects
 from app.services import incidents as inc_svc
+from app.services.access import dashboard_items as access_items
 from app.services.hse_common import Refs, project_today
 from app.services.permissions import Principal, forbidden_error
 
@@ -101,6 +102,9 @@ def _link(resource: str, path: str, query: dict[str, Any]) -> ListLink:
         path=f"{API_PREFIX}{path}",
         query={k: v if isinstance(v, list) else str(v) for k, v in query.items()},
     )
+
+
+LABELS.update(access_items.LABELS)
 
 
 def _ok(f: Filter, site: uuid.UUID, eng: uuid.UUID | None) -> bool:
@@ -327,6 +331,8 @@ def action_panel(db: Session, p: Principal, q: KpiQuery) -> ActionPanelResponse:
         None,
         Counter(x.engagement.id if x.engagement else None for x in found),
     )
+    # 7. Phase 2 access items (2-access-permits §8.3; airport projects, capability 77)
+    access_items.action_items(db, p, project, day, f.engs, f.sites, add, _link, flt)
     return ActionPanelResponse(project_id=pid, as_of=day, items=entries)
 
 
@@ -490,6 +496,7 @@ def expiring_items(
                 detail_path=f"{API_PREFIX}/projects/{project.id}/workforce-months",
             )
         )
+    items.extend(access_items.expiring(db, p, project, day, horizon, include_overdue))
     items.sort(key=lambda x: (x.due_date, x.kind.value, x.ref or ""))
     return ExpiringItemsResponse(
         project_id=project.id, as_of=day, within_days=within_days, items=items

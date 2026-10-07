@@ -9,7 +9,7 @@ from fastapi import APIRouter, Query, status
 
 from app.api.deps import DB, CurrentUser, PageParams
 from app.core.access_enums import EligibilityContext, InductionStatus, InductionType
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.schemas.inductions import (
     EligibilityResult,
     HookProviderInfo,
@@ -30,6 +30,8 @@ from app.schemas.inductions import (
     ZoneAccessProfileRead,
     ZoneAccessProfileUpdate,
 )
+from app.services.access import inductions as svc
+from app.services.access import profiles
 
 router = APIRouter(tags=["inductions"])
 
@@ -46,7 +48,7 @@ router = APIRouter(tags=["inductions"])
 def list_induction_courses(
     project_id: uuid.UUID, user: CurrentUser, db: DB, active: bool | None = None
 ) -> InductionCourseList:
-    raise not_implemented()
+    return svc.list_courses(db, user, project_id, active)
 
 
 @router.post(
@@ -59,7 +61,7 @@ def list_induction_courses(
 def create_induction_course(
     project_id: uuid.UUID, body: InductionCourseCreate, user: CurrentUser, db: DB
 ) -> InductionCourseRead:
-    raise not_implemented()
+    return svc.create_course(db, user, project_id, body)
 
 
 @router.get(
@@ -69,7 +71,7 @@ def create_induction_course(
     responses=error_responses(401, 403, 404),
 )
 def get_induction_course(course_id: uuid.UUID, user: CurrentUser, db: DB) -> InductionCourseRead:
-    raise not_implemented()
+    return svc.read_course(db, user, course_id)
 
 
 @router.patch(
@@ -81,7 +83,7 @@ def get_induction_course(course_id: uuid.UUID, user: CurrentUser, db: DB) -> Ind
 def update_induction_course(
     course_id: uuid.UUID, body: InductionCourseUpdate, user: CurrentUser, db: DB
 ) -> InductionCourseRead:
-    raise not_implemented()
+    return svc.update_course(db, user, course_id, body)
 
 
 @router.post(
@@ -93,7 +95,7 @@ def update_induction_course(
 def publish_induction_course_version(
     course_id: uuid.UUID, body: InductionCourseVersionPublish, user: CurrentUser, db: DB
 ) -> InductionCourseRead:
-    raise not_implemented()
+    return svc.publish_version(db, user, course_id, body)
 
 
 # ---- records ------------------------------------------------------------------------------------
@@ -124,7 +126,24 @@ def list_inductions(
     delivered_to: date | None = None,
     session_ref: Annotated[str | None, Query(max_length=30)] = None,
 ) -> InductionRecordPage:
-    raise not_implemented()
+    return svc.list_records(
+        db,
+        user,
+        project_id,
+        pg.page,
+        pg.page_size,
+        worker_id,
+        course_id,
+        induction_type,
+        status_,
+        engagement_id,
+        include_subcontractors,
+        language_mismatch,
+        expiring_within_days,
+        delivered_from,
+        delivered_to,
+        session_ref,
+    )
 
 
 @router.post(
@@ -137,7 +156,7 @@ def list_inductions(
 def create_induction(
     project_id: uuid.UUID, body: InductionRecordCreate, user: CurrentUser, db: DB
 ) -> InductionRecordRead:
-    raise not_implemented()
+    return svc.create_record(db, user, project_id, body)
 
 
 @router.post(
@@ -150,7 +169,7 @@ def create_induction(
 def create_induction_session(
     project_id: uuid.UUID, body: InductionSessionCreate, user: CurrentUser, db: DB
 ) -> InductionSessionResult:
-    raise not_implemented()
+    return svc.create_session(db, user, project_id, body)
 
 
 @router.post(
@@ -163,7 +182,7 @@ def create_induction_session(
 def create_induction_retraining_note(
     project_id: uuid.UUID, body: InductionRetrainingNote, user: CurrentUser, db: DB
 ) -> InductionRetrainingNoteRead:
-    raise not_implemented()
+    return svc.retraining_note(db, user, project_id, body)
 
 
 @router.get(
@@ -173,7 +192,7 @@ def create_induction_retraining_note(
     responses=error_responses(401, 403, 404),
 )
 def get_induction(induction_id: uuid.UUID, user: CurrentUser, db: DB) -> InductionRecordRead:
-    raise not_implemented()
+    return svc.read_record(db, user, induction_id)
 
 
 @router.patch(
@@ -185,7 +204,7 @@ def get_induction(induction_id: uuid.UUID, user: CurrentUser, db: DB) -> Inducti
 def update_induction(
     induction_id: uuid.UUID, body: InductionRecordUpdate, user: CurrentUser, db: DB
 ) -> InductionRecordRead:
-    raise not_implemented()
+    return svc.update_record(db, user, induction_id, body)
 
 
 # ---- zone access profiles, eligibility, hooks ----------------------------------------------------
@@ -200,7 +219,7 @@ def update_induction(
 def list_zone_access_profiles(
     project_id: uuid.UUID, user: CurrentUser, db: DB, site_id: uuid.UUID | None = None
 ) -> ZoneAccessProfileList:
-    raise not_implemented()
+    return profiles.list_for(db, user, project_id, site_id)
 
 
 @router.get(
@@ -210,7 +229,7 @@ def list_zone_access_profiles(
     responses=error_responses(401, 403, 404),
 )
 def get_zone_access_profile(zone_id: uuid.UUID, user: CurrentUser, db: DB) -> ZoneAccessProfileRead:
-    raise not_implemented()
+    return profiles.read(db, user, zone_id)
 
 
 @router.patch(
@@ -222,7 +241,7 @@ def get_zone_access_profile(zone_id: uuid.UUID, user: CurrentUser, db: DB) -> Zo
 def update_zone_access_profile(
     zone_id: uuid.UUID, body: ZoneAccessProfileUpdate, user: CurrentUser, db: DB
 ) -> ZoneAccessProfileRead:
-    raise not_implemented()
+    return profiles.update(db, user, zone_id, body)
 
 
 @router.get(
@@ -241,7 +260,7 @@ def get_worker_eligibility(
     at: Annotated[datetime | None, Query(description="UTC; default now.")] = None,
     context: EligibilityContext = EligibilityContext.check,
 ) -> EligibilityResult:
-    raise not_implemented()
+    return svc.worker_eligibility(db, user, worker_id, zone_id, at, context)
 
 
 @router.get(
@@ -251,4 +270,4 @@ def get_worker_eligibility(
     responses=error_responses(401, 403, 404),
 )
 def list_hook_providers(user: CurrentUser, db: DB, project_id: uuid.UUID) -> list[HookProviderInfo]:
-    raise not_implemented()
+    return svc.hook_providers(db, user, project_id)

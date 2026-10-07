@@ -12,6 +12,7 @@ import jwt
 from argon2 import PasswordHasher
 from argon2.exceptions import InvalidHashError, VerificationError
 
+from app.core.clock import now
 from app.core.config import get_settings
 
 
@@ -81,10 +82,23 @@ def encode_jwt(user_id: uuid.UUID, session_id: uuid.UUID, expires_at: datetime) 
     return jwt.encode(payload, s.jwt_secret, algorithm=s.jwt_algorithm)
 
 
+def encode_gate_jwt(device_pk: uuid.UUID, session_id: uuid.UUID, expires_at: datetime) -> str:
+    """Gate-device session token (spec 2-access-permits GC-1); `typ = gate`."""
+    s = get_settings()
+    payload = {"sub": str(device_pk), "sid": str(session_id), "typ": "gate", "exp": expires_at}
+    return jwt.encode(payload, s.jwt_secret, algorithm=s.jwt_algorithm)
+
+
 def decode_jwt(token: str) -> dict[str, Any] | None:
+    """Expiry is checked against `app.core.clock.now()` (so a pinned clock applies)."""
     s = get_settings()
     try:
-        data: dict[str, Any] = jwt.decode(token, s.jwt_secret, algorithms=[s.jwt_algorithm])
+        data: dict[str, Any] = jwt.decode(
+            token, s.jwt_secret, algorithms=[s.jwt_algorithm], options={"verify_exp": False}
+        )
     except jwt.PyJWTError:
+        return None
+    exp = data.get("exp")
+    if exp is not None and (not isinstance(exp, int | float) or exp <= now().timestamp()):
         return None
     return data

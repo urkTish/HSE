@@ -1,4 +1,4 @@
-"""AI tools T1-T13 (spec 1-dashboard §5.9) plus get_expiring_items and propose_chart.
+"""AI tools T1-T14 (spec 1-dashboard §5.9 v1.1) plus get_expiring_items and propose_chart.
 
 Every tool is a thin read-only wrapper over the KPI engine or a query service, executed with
 the asking user's principal: projects without capability 40 + 38 are dropped, filters outside
@@ -22,6 +22,7 @@ from sqlalchemy.orm import Session
 
 from app.ai.masking import redact
 from app.api.kpi_params import KpiQuery
+from app.core.access_enums import AccessKpiGroupBy
 from app.core.enums import Capability, Role, ZoneType
 from app.core.errors import ApiError
 from app.core.hse_enums import (
@@ -33,6 +34,7 @@ from app.core.hse_enums import (
     ChartId,
     CompareDimension,
     ComparisonKind,
+    ExpiringItemKind,
     ExtensionStatus,
     Granularity,
     IncidentStatus,
@@ -40,7 +42,7 @@ from app.core.hse_enums import (
     KpiMetric,
     PeriodPreset,
 )
-from app.kpi import charts, fmt, groups, service, views
+from app.kpi import access_views, charts, fmt, groups, service, views
 from app.kpi import scope as kscope
 from app.kpi.facts import Facts
 from app.kpi.periods import week_start
@@ -48,6 +50,7 @@ from app.models import (
     CaExtension,
     Contractor,
     CorrectiveAction,
+    Gate,
     Incident,
     InjuryCase,
     Investigation,
@@ -70,6 +73,18 @@ from app.services.hse_common import user_roles
 from app.services.permissions import Principal
 
 NO_ACCESS = "No access to the requested data."
+ACCESS_KINDS = frozenset(
+    {
+        ExpiringItemKind.induction_expiry, ExpiringItemKind.reinduction_due,
+        ExpiringItemKind.worker_id_expiry, ExpiringItemKind.airport_pass_expiry,
+        ExpiringItemKind.bg_recheck_due, ExpiringItemKind.adp_expiry,
+        ExpiringItemKind.adp_suspension_end, ExpiringItemKind.avp_expiry,
+        ExpiringItemKind.vehicle_document_expiry, ExpiringItemKind.wap_expiry,
+        ExpiringItemKind.notam_expiry, ExpiringItemKind.obstacle_clearance_expiry,
+        ExpiringItemKind.pass_return_due,
+    }
+)  # fmt: skip
+PERSON_KINDS = frozenset({ExpiringItemKind.worker_id_expiry, ExpiringItemKind.bg_recheck_due})
 ROLE_ORDER = [
     Role.hse_manager,
     Role.hse_officer,
@@ -296,7 +311,8 @@ TOOL_DEFS: list[dict[str, Any]] = [
     ),
     _tool(
         AiTool.get_leading_warnings,
-        "Backend-computed leading-indicator warnings E1-E4 with their inputs for the last "
+        "Backend-computed leading-indicator warnings E1-E7 (E5-E7 for airport access: induction "
+        "coverage, gate denial spike, airside driving offences) with their inputs for the last "
         "complete months.",
         {
             "project_code": {"type": "string"},
@@ -306,11 +322,39 @@ TOOL_DEFS: list[dict[str, Any]] = [
     ),
     _tool(
         AiTool.get_expiring_items,
-        "Corrective actions, investigations and notifications due soon or overdue.",
+        "Corrective actions, investigations, notifications and (airport projects) credentials, "
+        "permits and NOTAMs due soon or overdue. Access items carry no person identifiers.",
         {
             "project_code": {"type": "string"},
             "within_days": {"type": "integer", "minimum": 1, "maximum": 90},
             "include_overdue": {"type": "boolean"},
+        },
+        [],
+    ),
+    _tool(
+        AiTool.get_access_kpis,
+        "T14: airport access and permit KPIs (K-38, K-48..K-60, K-53b) for airport projects: "
+        "value, numerator, denominator, comparisons and breakdown rows by kind, reason_code, "
+        "contractor, zone, gate or month. Aggregates only — no names, ID numbers, worker numbers, "
+        "photos or plates. Gate KPIs count in-direction checks under the first DENY reason.",
+        {
+            "project_codes": PROJECTS,
+            "period": PERIOD,
+            "filters": {
+                **FILTERS,
+                "properties": {
+                    **FILTERS["properties"],  # type: ignore[dict-item]
+                    "gate_codes": {"type": "array", "items": {"type": "string"}},
+                },
+            },
+            "metrics": {
+                "type": "array",
+                "items": {"type": "string", "enum": [m.value for m in access_views.ACCESS_METRICS]},
+            },
+            "group_by": {
+                "type": "array",
+                "items": {"type": "string", "enum": [g.value for g in AccessKpiGroupBy]},
+            },
         },
         [],
     ),
@@ -1331,17 +1375,24 @@ def t_get_expiring_items(ctx: ToolContext, params: dict[str, Any]) -> tuple[dict
         bool(params.get("include_overdue", True)),
         ctx.as_of,
     )
-    items = [
-        {
-            "kind": i.kind.value,
-            "ref": i.ref,
-            "title": redact(i.title_en, ctx.names()),
-            "due_date": i.due_date.isoformat(),
-            "days_left": i.days_left,
-            "contractor": i.engagement.short_code if i.engagement else None,
-        }
-        for i in res.items
-    ]
+    items = []
+    for i in res.items:
+        access = i.kind in ACCESS_KINDS
+        ref = i.ref
+        if access and ref and (ref.startswith("WKR-") or i.kind in PERSON_KINDS):
+            ref = None  # AI-5 / KA-5: no worker numbers or person-linked refs
+        items.append(
+            {
+                "kind": i.kind.value,
+                "ref": ref,
+                "title": i.kind.value.replace("_", " ")
+                if access
+                else redact(i.title_en, ctx.names()),
+                "due_date": i.due_date.isoformat(),
+                "days_left": i.days_left,
+                "contractor": i.engagement.short_code if i.engagement else None,
+            }
+        )
     cid = ctx.cite(
         AiTool.get_expiring_items,
         f"Due and overdue items — get_expiring_items, {proj.code}, as of {ctx.as_of.isoformat()}",
@@ -1354,6 +1405,75 @@ def t_get_expiring_items(ctx: ToolContext, params: dict[str, Any]) -> tuple[dict
         "items": items,
         "cite": cid,
     }, narrowed
+
+
+def t_get_access_kpis(ctx: ToolContext, params: dict[str, Any]) -> tuple[dict[str, Any], bool]:
+    """T14 (1-dashboard v1.1 §5.9; 2-access-permits KA-5): aggregates only."""
+    q, narrowed = _query(ctx, params)
+    if q is None:
+        return {"no_access": True, "message": NO_ACCESS}, True
+    try:
+        sc = kscope.build(ctx.db, ctx.p, q, Capability.access_kpi_view)
+    except ApiError:
+        return {"no_access": True, "message": NO_ACCESS}, True
+    if not access_views.has_access(sc):
+        return {
+            "no_access": True,
+            "message": "Access KPIs exist only for airport projects you may view (capability 77).",
+        }, True
+    flt = params.get("filters") or {}
+    gate_id = None
+    gate_codes = [str(g) for g in flt.get("gate_codes") or []]
+    if gate_codes:
+        gate_id = ctx.db.scalar(
+            select(Gate.id).where(
+                Gate.gate_code == gate_codes[0], Gate.project_id.in_(q.project_ids)
+            )
+        )
+        if gate_id is None:
+            raise ToolError(f"Unknown gate {gate_codes[0]}.")
+    metrics = [KpiMetric(m) for m in params.get("metrics") or []] or None
+    group_by = [AccessKpiGroupBy(g) for g in params.get("group_by") or []]
+    res = access_views.access_kpis(ctx.db, sc, metrics, group_by, gate_id)
+    codes, who = _codes_who(sc)
+    period = res.context.period.label_en
+    out = []
+    for v in res.metrics:
+        row = _kpi(v)
+        row["cite"] = ctx.cite(
+            AiTool.get_access_kpis,
+            f"{v.short_label_en} {v.display} — get_access_kpis, {codes}, {period}, {who}",
+            metric=v.metric,
+            value=v.display,
+            period=period,
+            scope=service.scope_label(sc),
+        )
+        out.append(row)
+    breakdowns = [
+        {
+            "metric": b.metric,
+            "group_by": b.group_by.value,
+            "rows": [
+                {"key": r.key, "label": r.label_en, "value": r.display,
+                 "numerator": r.numerator, "denominator": r.denominator}
+                for r in b.rows
+            ],
+        }
+        for b in res.breakdowns
+    ]  # fmt: skip
+    band = None
+    if res.band is not None:
+        band = {
+            k: v for k, v in res.band.model_dump(mode="json").items() if not isinstance(v, list)
+        }
+    return {
+        "scope": service.scope_label(sc),
+        "period": period,
+        "note": access_views.GATE_NOTE,
+        "band": band,
+        "kpis": out,
+        "breakdowns": breakdowns,
+    }, narrowed or sc.narrowed
 
 
 def t_propose_chart(ctx: ToolContext, params: dict[str, Any]) -> tuple[dict[str, Any], bool]:
@@ -1400,6 +1520,7 @@ HANDLERS: dict[str, Callable[[ToolContext, dict[str, Any]], tuple[dict[str, Any]
     AiTool.get_leading_warnings.value: t_get_leading_warnings,
     AiTool.get_expiring_items.value: t_get_expiring_items,
     AiTool.propose_chart.value: t_propose_chart,
+    AiTool.get_access_kpis.value: t_get_access_kpis,
 }
 
 

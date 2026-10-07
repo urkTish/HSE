@@ -1,5 +1,6 @@
-"""Leading-indicator warnings E1-E4 (spec 1-dashboard §6.9), evaluated per complete month per
-project and per tier-1 contractor tree. Means use unrounded values."""
+"""Leading-indicator warnings E1-E4 (spec 1-dashboard §6.9) and E5-E7 (2-access-permits
+§6.9), evaluated per complete month per project and per tier-1 contractor tree.
+Means use unrounded values."""
 
 import uuid
 from dataclasses import dataclass, field
@@ -176,6 +177,72 @@ def evaluate_engine(
                            Decimal(len(repeats)), 0)],
                 )
             )  # fmt: skip
+        out += access_warnings(engine, project_id, tree, m, label_en, label_ar, who_en, who_ar)
+    return out
+
+
+def access_warnings(
+    engine: Engine,
+    project_id: uuid.UUID,
+    tree: EngFact | None,
+    m: Window,
+    label_en: str,
+    label_ar: str,
+    who_en: str,
+    who_ar: str,
+) -> list[Warn]:
+    """E5-E7 (2-access-permits §6.9); unrounded comparisons."""
+    af = getattr(engine.facts, "access", None)
+    if af is None:
+        return []
+    out: list[Warn] = []
+    a = engine.aggregate(m)
+    # E5 induction coverage at month end
+    k49 = engine.result(KpiMetric.K49, a)
+    limit = Decimal(af.coverage_pct.get(project_id, 98))
+    if k49.value is not None and k49.value < limit:
+        out.append(
+            Warn(
+                E.E5, m, project_id, tree,
+                f"Induction coverage below {limit:.0f} % at the end of {label_en}{who_en}",
+                f"تغطية التعريف بالسلامة أقل من {limit:.0f} % في نهاية {label_ar}{who_ar}",
+                [Input("k49_month_end", "Induction coverage (month end)",
+                       "تغطية التعريف (نهاية الشهر)", k49.value, 1, " %"),
+                 Input("threshold_pct", "Threshold", "الحد", limit, 0, " %"),
+                 Input("deployed", "Active deployed workers", "العمال المعيّنون النشطون",
+                       Decimal(k49.denominator or 0), 0)],
+            )
+        )  # fmt: skip
+    # E6 gate denial rate spike
+    k53 = engine.result(KpiMetric.K53, a).value
+    priors = [engine.result(KpiMetric.K53, engine.aggregate(_prior(m, n))).value for n in (3, 2, 1)]
+    mean = _mean(priors)
+    if k53 is not None and mean is not None and k53 >= 2 * mean and k53 >= 1:
+        out.append(
+            Warn(
+                E.E6, m, project_id, tree,
+                f"Gate denial rate doubled in {label_en}{who_en}",
+                f"تضاعفت نسبة الرفض عند البوابات في {label_ar}{who_ar}",
+                [Input("k53_month", "Gate denial rate (month)", "نسبة الرفض (الشهر)", k53, 2, " %"),
+                 Input("k53_prior3_mean", "Mean of prior 3 months", "متوسط الأشهر الثلاثة السابقة",
+                       mean, 2, " %")],
+            )
+        )  # fmt: skip
+    # E7 airside driving
+    k57 = engine.result(KpiMetric.K57, a)
+    comp = {c.key: c.value or Decimal(0) for c in k57.components}
+    off05, susp = comp.get("off05", Decimal(0)), comp.get("suspensions", Decimal(0))
+    if off05 >= 1 or susp >= 3:
+        out.append(
+            Warn(
+                E.E7, m, project_id, tree,
+                f"Serious airside driving offences or repeated ADP suspensions in "
+                f"{label_en}{who_en}",
+                f"مخالفات قيادة جوية خطيرة أو إيقافات متكررة لتصاريح القيادة في {label_ar}{who_ar}",
+                [Input("off05", "OFF-05 runway incursions", "مخالفات OFF-05", off05, 0),
+                 Input("adp_suspensions", "ADP suspensions", "إيقافات تصاريح القيادة", susp, 0)],
+            )
+        )  # fmt: skip
     return out
 
 

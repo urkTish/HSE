@@ -63,6 +63,7 @@ known-third-party = ["alembic"]
 "tests/**" = ["S101", "S105", "S106", "PLR2004", "S311", "N802", "PLC0415", "S608"]
 "alembic/**" = ["N999"]
 "app/seed_hse.py" = ["S311"]  # deterministic demo data, not security
+"app/seed_access.py" = ["S311", "C408"]  # deterministic demo data; dict() rows read as tables
 
 [tool.ruff.lint.flake8-bugbear]
 extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Path", "fastapi.Body", "fastapi.Security"]

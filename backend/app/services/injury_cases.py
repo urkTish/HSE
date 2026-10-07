@@ -24,7 +24,7 @@ from app.core.hse_enums import (
     ReferenceList,
 )
 from app.kpi.cases import CaseDates, day_counts, derive_category, lost_days_charged
-from app.models import Incident, InjuryCase
+from app.models import Deployment, Incident, InjuryCase, Worker
 from app.schemas.hse_common import ApiWarning
 from app.schemas.incidents import (
     CaseDayCounts,
@@ -56,6 +56,7 @@ PRIVACY_AR = "حالة خصوصية"
 ID_PATTERNS = {
     IdType.iqama: re.compile(r"^2\d{9}$"),
     IdType.national_id: re.compile(r"^1\d{9}$"),
+    IdType.gcc_id: re.compile(r"^[A-Z0-9]{6,15}$"),
     IdType.passport: re.compile(r"^[A-Z0-9]{6,9}$"),
 }
 IDENTITY = (
@@ -91,6 +92,14 @@ MEDICAL = (
     "privacy_reason",
     "day_counts",
     "medical_notes",
+)
+IDENTITY_KEEP = (
+    "person_name",
+    "employee_no",
+    "trade",
+    "nationality",
+    "employer_engagement_id",
+    "site_start_date",
 )
 PLAIN = (
     "person_type",
@@ -223,6 +232,47 @@ def _set_id(c: InjuryCase, id_type: IdType | None, number: str | None) -> None:
 # ---- visibility ----------------------------------------------------------------------------------
 
 
+def _apply_worker(
+    db: Session, b: Bundle, c: InjuryCase, worker_id: uuid.UUID | None, given: set[str]
+) -> str | None:
+    """v1.1: link a Phase 2 worker (deployment on the incident's project) and pre-fill the
+    identity fields that were not sent. Returns the full ID number to store, when pre-filled."""
+    c.worker_id = worker_id
+    if worker_id is None:
+        return None
+    w = db.get(Worker, worker_id)
+    dep = (
+        db.scalar(
+            select(Deployment)
+            .where(Deployment.worker_id == worker_id, Deployment.project_id == b.inc.project_id)
+            .order_by(Deployment.created_at.desc())
+            .limit(1)
+        )
+        if w is not None
+        else None
+    )
+    if w is None or dep is None:
+        raise validation_error("worker_id", "The worker has no deployment on this project.")
+    if "person_name" not in given or not c.person_name:
+        c.person_name = w.full_name_en
+    if "employee_no" not in given and dep.employee_no:
+        c.employee_no = dep.employee_no
+    if "trade" not in given and dep.trade:
+        c.trade = dep.trade
+    if "site_start_date" not in given or c.site_start_date is None:
+        c.site_start_date = dep.inducted_on or dep.mobilised_on
+    if ("employer_engagement_id" not in given or c.employer_engagement_id is None) and (
+        dep.engagement_id
+    ):
+        c.employer_engagement_id = dep.engagement_id
+    if "nationality" not in given and w.nationality:
+        c.nationality = w.nationality
+    if "id_number" not in given and w.id_number_enc and w.id_type:
+        c.id_type = IdType(w.id_type.value)
+        return crypto.decrypt(w.id_number_enc)
+    return None
+
+
 def _load(db: Session, p: Principal, case_id: uuid.UUID) -> tuple[InjuryCase, Bundle]:
     c = db.get(InjuryCase, case_id)
     if c is None:
@@ -296,6 +346,8 @@ def to_read(
         hidden = c.privacy_case and not p.is_manager
         days_on_site = (inc.occurred_date - c.site_start_date).days if c.site_start_date else None
         ident = {
+            "worker_id": c.worker_id,
+            "worker_no": _worker_no(db, c.worker_id),
             "person_name": f"{PRIVACY_EN} / {PRIVACY_AR}" if hidden else c.person_name,
             "id_type": None if hidden else c.id_type,
             "id_number_masked": None if hidden else c.id_number_masked,
@@ -424,6 +476,10 @@ def create(
         setattr(c, k, data[k])
     c.treatments = [t.value for t in body.treatments]
     _set_id(c, body.id_type, body.id_number)
+    given = {k for k in body.model_fields_set if data.get(k) is not None}
+    pre = _apply_worker(db, b, c, body.worker_id, given)
+    if pre is not None:
+        _set_id(c, c.id_type, pre)
     _validate(db, b, c)
     c.derived_category = derive(c, b.inc, project_today(b.project))
     c.classification_status = ClassificationStatus.provisional
@@ -466,6 +522,13 @@ def update(db: Session, p: Principal, case_id: uuid.UUID, body: InjuryCaseUpdate
     if "id_number" in ch or "id_type" in ch:
         number = ch.get("id_number") if "id_number" in ch else _current_id(c)
         _set_id(c, ch.get("id_type", c.id_type), number)
+    if "worker_id" in ch and ch["worker_id"] != c.worker_id:
+        keep = {k for k in IDENTITY_KEEP if getattr(c, k) is not None}
+        if c.id_number_enc is not None:
+            keep.add("id_number")
+        pre = _apply_worker(db, b, c, ch["worker_id"], set(ch) | keep)
+        if pre is not None:
+            _set_id(c, c.id_type, pre)
     _validate(db, b, c)
     _rederive(c, b)
     c.updated_at = now()
@@ -492,6 +555,10 @@ def update(db: Session, p: Principal, case_id: uuid.UUID, body: InjuryCaseUpdate
             f"إعادة تصنيف {b.inc.ref}-P{c.person_no}",
         )
     return to_read(db, p, c, b, warnings=id_warnings(medical_notes=c.medical_notes))
+
+
+def _worker_no(db: Session, worker_id: uuid.UUID | None) -> str | None:
+    return db.scalar(select(Worker.worker_no).where(Worker.id == worker_id)) if worker_id else None
 
 
 def _current_id(c: InjuryCase) -> str | None:

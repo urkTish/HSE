@@ -43,6 +43,7 @@ from app.models import (
     Zone,
 )
 from app.models.org import AIRSIDE_FIELDS
+from app.seed_access import seed_access_data
 from app.seed_hse import seed_data, seed_settings
 
 VALID_FROM = date(2025, 1, 1)
@@ -609,6 +610,8 @@ def main() -> int:
         seed(db, password)
         db.commit()
         seed_data(db)
+        db.commit()
+        seed_access_data(db)
         db.commit()
     print("Seed data loaded.")
     return 0

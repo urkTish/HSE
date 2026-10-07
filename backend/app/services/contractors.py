@@ -416,6 +416,10 @@ def transition(
     if body.to_status == CS.blacklisted:
         _blacklist_effects(db, p, c, reason or "")
     if body.to_status in (CS.suspended, CS.blacklisted) or key == (CS.suspended, CS.approved):
+        from app.services.access import cascades  # noqa: PLC0415 (Phase 2 hook, avoids a cycle)
+
+        cascades.on_contractor_status(db, c, body.to_status, p.user.id)
+    if body.to_status in (CS.suspended, CS.blacklisted) or key == (CS.suspended, CS.approved):
         recipients, _ = _stakeholders(db, c)
         notify.notify(
             db,

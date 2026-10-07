@@ -20,7 +20,8 @@ function makeClient(): QueryClient {
   });
 }
 
-const PUBLIC_PATHS = ["/login", "/privacy", "/invite", "/forgot-password", "/reset-password"];
+/** Pages that handle a missing session themselves. "/gate" also serves gate-device sessions (GC-1). */
+const PUBLIC_PATHS = ["/login", "/privacy", "/invite", "/forgot-password", "/reset-password", "/gate"];
 
 function AuthEventBridge({ client }: { client: QueryClient }) {
   const router = useRouter();
@@ -28,7 +29,7 @@ function AuthEventBridge({ client }: { client: QueryClient }) {
   useEffect(
     () =>
       onAuthEvent((e) => {
-        const onPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
+        const onPublic = PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
         if (e === "privacy") {
           if (!pathname.startsWith("/privacy")) router.replace("/privacy");
           return;

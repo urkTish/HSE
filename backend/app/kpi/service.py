@@ -482,7 +482,10 @@ def itd_window(scope: Scope) -> Window:
     return Window(min(start, scope.as_of), scope.as_of)
 
 
-def dashboard(scope: Scope) -> DashboardResponse:
+def dashboard(scope: Scope, db: Session | None = None) -> DashboardResponse:
+    from app.kpi import access_views  # noqa: PLC0415 (cycle: access_views uses service)
+
+    access = db is not None and access_views.has_access(scope)
     headline = DashboardHeadline(
         lti_free=lti_free_read(scope),
         man_hours_period=kpi_value(scope, M.K01),
@@ -495,7 +498,9 @@ def dashboard(scope: Scope) -> DashboardResponse:
         context=context(scope),
         headline=headline,
         lagging=[tile(scope, m) for m in LAGGING_TILES],
-        leading=[tile(scope, m) for m in LEADING_TILES],
+        leading=[tile(scope, m) for m in LEADING_TILES]
+        + ([tile(scope, m) for m in access_views.ACCESS_TILES] if access else []),
+        access_band=access_views.access_band(db, scope) if access and db is not None else None,
         placeholders=[
             KpiPlaceholder(
                 metric=m,

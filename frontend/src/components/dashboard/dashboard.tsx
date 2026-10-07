@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { ChartRenderer } from "@/components/charts/chart-renderer";
+import { Link } from "@/i18n/navigation";
 import { AiAssistant } from "@/components/ai/ai-panel";
 import { PageHeader } from "@/components/common/page-header";
 import { ErrorState, LoadingState } from "@/components/common/states";
@@ -128,6 +129,7 @@ function DashboardBody({ query, projectId }: { query: KpiQuery; projectId: strin
         <div className={cn("flex flex-col gap-4 transition-opacity", d.isPlaceholderData && "opacity-60")} aria-busy={d.isFetching}>
           <ContextBar ctx={d.data.context} show={show} projectId={projectId} />
           <Headline h={d.data.headline} show={show} projectId={projectId} periodLabel={locale === "ar" ? d.data.context.period.label_ar : d.data.context.period.label_en} />
+          {d.data.access_band ? <AccessBandView b={d.data.access_band} show={show} /> : null}
           <section aria-labelledby="needs-h" className="flex flex-col gap-2">
             <h2 id="needs-h" className="sr-only">
               {t("needsToday")}
@@ -165,6 +167,7 @@ function DashboardBody({ query, projectId }: { query: KpiQuery; projectId: strin
             </div>
           </section>
           <Charts query={query} projectId={projectId} show={show} />
+          {can(me, "access_kpi.view", projectId) ? <AccessCharts query={query} projectId={projectId} show={show} /> : null}
           <Panel title={t("league")} testId="league-card" actions={canExport ? <ExportButton table="contractors" query={query} label={t("exportContractors")} /> : null}>
             <LeagueTable query={query} show={show} />
           </Panel>
@@ -295,6 +298,91 @@ function Bidi({ text }: { text: string }) {
         ),
       )}
     </>
+  );
+}
+
+/** Phase 2 access band (§8.1 item 2), airport projects only. Counts link to their registers. */
+function AccessBandView({ b, show }: { b: Schemas["AccessBand"]; show: Show }) {
+  const t = useTranslations("dashboard");
+  const name = useLocalizedName();
+  const items: { key: string; label: string; value: number; href: string }[] = [
+    { key: "passes", label: t("band.passes"), value: b.active_passes, href: "/airport-passes" },
+    { key: "adps", label: t("band.adps"), value: b.active_adps, href: "/adps" },
+    { key: "avps", label: t("band.avps"), value: b.active_avps, href: "/avps" },
+    { key: "waps", label: t("band.wapsNow"), value: b.active_waps_now, href: "/wap-board" },
+    { key: "obstacles", label: t("band.obstacles"), value: b.active_obstacle_clearances, href: "/obstacle-clearances" },
+  ];
+  return (
+    <section aria-labelledby="access-band-h" className="flex flex-col gap-2 rounded-xl border bg-surface p-4 shadow-xs" data-testid="access-band">
+      <h2 id="access-band-h" className="text-sm font-semibold">
+        {t("band.title")}
+      </h2>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3 lg:grid-cols-7">
+        <HeadlineValue v={b.active_deployed_workers} show={show} />
+        {items.map((i) => (
+          <div key={i.key} className="flex min-w-0 flex-col gap-1" data-testid={`band-${i.key}`}>
+            <p className="text-xs font-medium text-muted-foreground">{i.label}</p>
+            <Link href={i.href} className="text-xl leading-tight font-semibold text-primary hover:underline">
+              {show(i.value)}
+            </Link>
+          </div>
+        ))}
+        <div className="flex min-w-0 flex-col gap-1" data-testid="band-ops" data-active={b.ops_suspension_in_force}>
+          <p className="text-xs font-medium text-muted-foreground">{t("band.ops")}</p>
+          {b.ops_suspension_in_force ? (
+            <Link href="/ops-events" className="flex flex-col">
+              <span className="inline-flex w-fit items-center gap-1 rounded bg-danger-bg px-1.5 py-0.5 text-sm font-semibold text-danger">{t("band.opsYes")}</span>
+              <span className="text-xs text-muted-foreground">
+                {b.ops_suspension_zones.map((z) => (
+                  <bdi key={z.id} className="ltr me-1" title={name(z.name_en, z.name_ar)}>
+                    {z.code}
+                  </bdi>
+                ))}
+              </span>
+            </Link>
+          ) : (
+            <span className="text-xl leading-tight font-semibold">{t("band.opsNo")}</span>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/** C10 gate checks by month, C11 denial reasons, C12 expiring credentials (§8.1 item 3). */
+/**
+ * Charts C10–C12 sit below the fold; they load once the section scrolls into view so the
+ * first screen of the dashboard (tiles, action panel) is not queued behind them.
+ */
+function AccessCharts({ query, projectId, show }: { query: KpiQuery; projectId: string | null; show: Show }) {
+  const t = useTranslations("dashboard");
+  const ref = useRef<HTMLElement | null>(null);
+  const [inView, setInView] = useState(() => typeof IntersectionObserver === "undefined");
+  useEffect(() => {
+    const el = ref.current;
+    if (inView || !el) return;
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) setInView(true);
+    }, { rootMargin: "200px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [inView]);
+  return (
+    <section ref={ref} aria-labelledby="access-charts-h" className="flex flex-col gap-3" data-testid="access-charts">
+      <h2 id="access-charts-h" className="text-sm font-semibold">
+        {t("accessCharts")}
+      </h2>
+      {inView ? (
+        <div className="grid gap-4 lg:grid-cols-2">
+          {(["C10", "C11"] as const).map((id) => (
+            <ChartCard key={id} id={id} query={query} projectId={projectId} show={show} />
+          ))}
+          <ChartCard id="C12" query={query} projectId={projectId} show={show} className="lg:col-span-2" />
+        </div>
+      ) : (
+        <div className="min-h-64" aria-hidden />
+      )}
+    </section>
   );
 }
 

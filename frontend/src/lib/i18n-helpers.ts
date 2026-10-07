@@ -39,3 +39,12 @@ export function useFieldErrorTranslator() {
   const locale = useLocale();
   return useCallback((_type: string, msg: string) => (locale === "ar" ? t("fieldInvalid") : msg), [t, locale]);
 }
+
+/**
+ * Join display items with the separator of the page language ("، " in Arabic, ", " otherwise).
+ * Only used on data rendered after client-side fetches, so reading <html lang> is safe.
+ */
+export function joinList(items: readonly string[]): string {
+  const ar = typeof document !== "undefined" && document.documentElement.lang === "ar";
+  return items.join(ar ? "، " : ", ");
+}

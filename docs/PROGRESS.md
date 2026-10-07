@@ -3,13 +3,75 @@
 ## Current
 - Phase: 2 — Site / Airport access permits
 - Module: site & airport access permits (spec `docs/specs/2-access-permits.md`)
-- Step: Contract v0.3.0 published (backend stage 1); backend implementation next
+- Step: Frontend Phase 2 built against contract v0.3.0, full e2e green (104 passed); design pass next
 
 ## Phase log
 - Phase 0 — Foundation: built, e2e green, design pass done (2026-10-05). The user asked to continue phase after phase without per-phase approval; open questions are collected below for a single review.
 - Phase 1 — Dashboard (with AI): built, e2e green, design pass done (2026-10-06).
 
 ## Done
+
+### Frontend — Phase 2 Site / Airport access (against contract v0.3.0)
+- Screens (list → detail → create/edit → workflow actions, EN/AR + RTL, phone layout):
+  - workers (masked ID with reveal-on-demand plus reason, deployments, eligibility per zone, access card with QR and printed ref);
+  - induction courses and inductions (signature pad, language-mismatch amber warning);
+  - zone profiles;
+  - pass setup (categories / areas), pass applications (stepper: submit, endorse, lodge, background check, approve, issue) and airport passes with limiting factor;
+  - ADPs and airside offences;
+  - vehicles (Arabic plate with LTR digits), AVPs with inspection checklist, sticker and print;
+  - NOTAM works requests (UTC times, late-request justification, forward, issue);
+  - obstacle clearances with live height / OLS preview and decision with conditions plus linked NOTAMs;
+  - WAPs (form, crew, submit/approve, suspend/resume with FOD check), WAP board and print view with QR;
+  - ops events (LVP etc.) declare/end with the suspended WAPs;
+  - credential lifecycle (suspend / revoke / reinstate);
+  - gates and devices (register device: token shown once; revoke);
+  - access settings (§3.22 ranges, hook policies per kind with provider badge, PATCH sends only changed keys);
+  - gate log (filters incl. admitted-despite-denial, late exit, Riyadh day range; export).
+- Gate check screen `/gate` (outside the app shell):
+  - Runs in a device session (httpOnly cookie) or as a user with `gate.check`. A device token sign-in is offered on 401, and a revoked device ends the session.
+  - Mobile-first, one-handed. Gate / zone / direction pickers. Manual printed-ref entry. Camera QR via `@zxing/browser` (dynamic import, rear camera, duplicate reads ignored for 5 s).
+  - The e2e test hook is `window.__hseGateScan(payload)`.
+  - Big solid-colour verdict (GRANTED green, WARN amber with black text, DENIED red, PENDING blue) with reasons coloured by deny/warn, person / vehicle / WAP cards, escort/driver pairing countdown with polling, and an auto-clear countdown.
+  - "Admitted despite denial" requires a reason of at least 10 characters and is recorded.
+  - Offline banner.
+- Hook `warn` results are amber everywhere, never errors.
+- Validation field errors are listed under the form message (VALIDATION_ERROR only).
+- Dashboard: access band (passes, ADPs, AVPs, WAPs, obstacles, active ops events; K-48 headline) linking to the registers, a gate filter (`gate_ids`), and charts C10–C12 for `access_kpi.view`.
+- Sidebar: "Gate check" item for `gate.check`.
+- i18n: `scripts/i18n/p2-*.py`. `limitingFactor` keys nested (no dots in key names). New `joinList` uses the locale's list separator (the English UI was showing the Arabic comma).
+- E2E (Playwright, real backend, fresh DB migrated and seeded with the Phase 2 seed): full suite 104 passed, 2 skipped (the on-demand Phase 1 screenshot specs). That is 33 Phase 2 tests plus all Phase 0/1 tests.
+  - `p2-smoke`: every Phase 2 register in EN and AR, with no error state, raw keys or page errors.
+  - `p2-workers`: masked ID with unmask reason and no caching; zone-specific course plus zone profile; language-mismatch amber warning; access card with QR and printed ref; contractor scope.
+  - `p2-passes`: pass category/area setup; apply with ID-copy upload, submit, endorse, lodge; approval refused without a background check (AP-4), then cleared, approved and issued with limiting factor.
+  - `p2-vehicles`: Arabic plate with LTR digits; duplicate plate (AC40); AVP inspection with no n.a. for the amber beacon (AC39); issue, sticker and print.
+  - `p2-works`: late NOTAM request with justification (AC41); forward and issue; obstacle live preview, and a decision refused without the required conditions and linked NOTAM (AC42, OB-7).
+  - `p2-waps`: 31-day WAP refused (AC48); contractor request then issuer approval; board and print QR; viewer sees no crew names or numbers (AC53); LVP declare/end with suspension and FOD resume.
+  - `p2-gate`: site gate and device token shown once; mobile EN/AR GRANTED/DENIED; QR test hook; admitted despite denial, then the gate log; revoked device ends the session; offline banner; user gate selection and exit.
+  - `p2-settings`: §3.22 ranges; hook block refused (HK-4); no settings nav for a contractor rep; access band and C10–C12; a Phase 2 action-panel item opens the filtered gate log.
+  - The camera is never used in tests: scans go through manual entry or `window.__hseGateScan`.
+  - Phase 1 spec change: the drill-down assertion in `p1-dashboard` now waits 30 s. Its request queues behind the dashboard's first KPI requests on the heavier seed.
+- Screenshots in `docs/screenshots/phase-2/`:
+  - gate GRANTED / DENIED, mobile, AR and EN;
+  - WAP board;
+  - worker detail with masked ID;
+  - pass application (draft);
+  - dashboard access band.
+
+#### Phase 2 — backend issues found by the frontend (not fixed here; backend/ is out of scope for the frontend)
+- Resolved during the run:
+  - Attachments, `/kpi/access` and the Phase 2 action-panel items are now live.
+  - The backend agent fixed the slow `/kpi/*` calls (all access facts were loaded on every request).
+- `GET /history/{entity_type}/{id}` returns 404 "History not found" for Phase 2 entity types (worker, gate, vehicle, notam_request, obstacle_clearance, …). The history panels on those pages show the error state.
+- KPI requests are CPU-bound and serialised in one API process. A full airport dashboard is about 15 requests at 0.5–1.2 s each (`/kpi/dashboard` and the action panel about 1.1 s). The UI now loads C10–C12 only when they scroll into view. More API workers or caching would help in production.
+- The site-gate general induction check uses the first `general_site` course of the project (arbitrary order). It ignores whether the course is active and does not prefer code GEN. A second general_site course makes workers fail at site gates with INDUCTION_MISSING.
+- A WAP read returns the supervisor's `worker_no` to users without `worker.view` (the crew is hidden, but the supervisor is not). The UI hides it (PDPL), but the API should not send it.
+- `FieldError.msg` texts are English only, so Arabic forms show English field errors.
+- Banning a worker revokes the card, so the gate answers CREDENTIAL_REVOKED rather than WORKER_BANNED. This may be intended; please confirm.
+- Not covered by UI e2e yet:
+  - escort/driver pairing at the gate (the screen and polling are built);
+  - ADP RTF requirement (AC33) and offence entry;
+  - credential suspend/revoke/reinstate screens.
+  The backend tests cover these rules.
 
 ### Backend — Phase 2 contract v0.3.0 (stage 1)
 - `docs/contracts/openapi.yaml` v0.3.0: 94 new paths / 125 operations, all returning 501 `NOT_IMPLEMENTED` until stage 2 (the Prism mock serves them now). Tags: workers, inductions, airport-passes, airside-driving, airside-works, work-area-permits, credentials, gates, access-settings; plus `GET /kpi/access`.
@@ -187,6 +249,9 @@
 - (Frontend, low) `metric` on each pyramid layer (and one metric for RWC+JTC, e.g. a K-07/K-08 combined drill): the UI maps layers to K-05/06/07/09/12/13/30 itself; RWC_JTC drills K-07 only.
 - (Frontend, low) A capability for HSE meetings (none in §5.10): the UI gates meeting edits on `inspection.plan_manage` as an assumption.
 - (Design, low) Arabic labels the UI cannot show today: `ChartCitation.period_label_ar` / `scope_label_ar` / `base_label_ar`, `KpiValue.numerator_label_ar` / `denominator_label_ar`, and AR text in the C9 control-level table rows (the drill dialog falls back to the generic Arabic term plus the English name).
+- (Frontend, Phase 2, low) `primary_language` (and other spoken languages) on `DeploymentRead` / the worker summary used by the induction form. The UI can warn about a language mismatch before submitting, instead of only after the hook answers.
+- (Frontend, Phase 2, low) The WAP read should omit the supervisor `worker_no` / name for callers without `worker.view`, like the crew.
+- (Frontend, Phase 2, low) Arabic text for `FieldError` messages (or a stable message code the UI can translate).
 - (Frontend, low priority, not blocking) `GET /contractors/{id}/engagements` (engagements of one contractor across the caller's projects) so the contractor detail page can list where a firm is engaged. Today that view would need one request per project.
 
 ## Design proposals

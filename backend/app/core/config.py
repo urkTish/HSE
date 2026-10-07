@@ -8,6 +8,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 CONTRACT_VERSION = "0.3.0"
 API_PREFIX = "/api/v1"
 SESSION_COOKIE_NAME = "hse_session"
+GATE_SESSION_COOKIE = "hse_gate_session"
 
 
 class Settings(BaseSettings):
@@ -61,6 +62,13 @@ class Settings(BaseSettings):
     field_encryption_key: str = Field(
         default="dev-only-field-key-change-me-dev-only-field-key", min_length=32
     )
+    # Phase 2 blind index for worker ID lookup (P2-2): HMAC key separate from the encryption key.
+    blind_index_key: str = Field(
+        default="dev-only-blind-index-key-change-me-dev-only-blind-index", min_length=32
+    )
+    gate_device_idle_hours: int = 12  # GC-1
+    gate_checks_per_minute: int = 120  # GC-3
+
     # Attachments: local storage root (S3/MinIO adapter later) and signed-URL secret (P1-3)
     storage_dir: str = "./var/storage"
     attachment_url_secret: str = Field(

@@ -9,7 +9,7 @@ from fastapi import APIRouter, Query, status
 
 from app.api.deps import DB, CurrentUser, PageParams
 from app.core.access_enums import ClearanceReason, NotamStatus, ObstacleStatus, WorksImpact
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.schemas.airside_works import (
     HeightFigures,
     NotamReplaceRequest,
@@ -26,6 +26,7 @@ from app.schemas.airside_works import (
     ObstacleTransitionRequest,
     ObstacleUpdate,
 )
+from app.services.access import works as svc
 
 router = APIRouter(tags=["airside-works"])
 
@@ -54,7 +55,21 @@ def list_notam_requests(
     date_from: date | None = None,
     date_to: date | None = None,
 ) -> NotamRequestPage:
-    raise not_implemented()
+    return svc.list_notams(
+        db,
+        user,
+        project_id,
+        pg.page,
+        pg.page_size,
+        status_,
+        zone_id,
+        works_impact,
+        in_effect,
+        late_request,
+        not_issued_within_hours,
+        date_from,
+        date_to,
+    )
 
 
 @router.post(
@@ -67,7 +82,7 @@ def list_notam_requests(
 def create_notam_request(
     project_id: uuid.UUID, body: NotamRequestCreate, user: CurrentUser, db: DB
 ) -> NotamRequestRead:
-    raise not_implemented()
+    return svc.create_notam(db, user, project_id, body)
 
 
 @router.get(
@@ -77,7 +92,7 @@ def create_notam_request(
     responses=error_responses(401, 403, 404),
 )
 def get_notam_request(ntm_id: uuid.UUID, user: CurrentUser, db: DB) -> NotamRequestRead:
-    raise not_implemented()
+    return svc.read_notam(db, user, ntm_id)
 
 
 @router.patch(
@@ -89,7 +104,7 @@ def get_notam_request(ntm_id: uuid.UUID, user: CurrentUser, db: DB) -> NotamRequ
 def update_notam_request(
     ntm_id: uuid.UUID, body: NotamRequestUpdate, user: CurrentUser, db: DB
 ) -> NotamRequestRead:
-    raise not_implemented()
+    return svc.update_notam(db, user, ntm_id, body)
 
 
 @router.post(
@@ -101,7 +116,7 @@ def update_notam_request(
 def transition_notam_request(
     ntm_id: uuid.UUID, body: NotamTransitionRequest, user: CurrentUser, db: DB
 ) -> NotamRequestRead:
-    raise not_implemented()
+    return svc.transition_notam(db, user, ntm_id, body)
 
 
 @router.post(
@@ -114,7 +129,7 @@ def transition_notam_request(
 def replace_notam_request(
     ntm_id: uuid.UUID, body: NotamReplaceRequest, user: CurrentUser, db: DB
 ) -> NotamRequestRead:
-    raise not_implemented()
+    return svc.replace_notam(db, user, ntm_id, body)
 
 
 # ---- obstacle / crane clearance -----------------------------------------------------------------
@@ -137,7 +152,18 @@ def list_obstacle_clearances(
     active_on: date | None = None,
     expiring_within_days: Annotated[int | None, Query(ge=0, le=90)] = None,
 ) -> ObstaclePage:
-    raise not_implemented()
+    return svc.list_obstacles(
+        db,
+        user,
+        project_id,
+        pg.page,
+        pg.page_size,
+        status_,
+        zone_id,
+        reason,
+        active_on,
+        expiring_within_days,
+    )
 
 
 @router.post(
@@ -150,7 +176,7 @@ def list_obstacle_clearances(
 def create_obstacle_clearance(
     project_id: uuid.UUID, body: ObstacleCreate, user: CurrentUser, db: DB
 ) -> ObstacleRead:
-    raise not_implemented()
+    return svc.create_obstacle(db, user, project_id, body)
 
 
 @router.post(
@@ -162,7 +188,7 @@ def create_obstacle_clearance(
 def preview_obstacle_clearance(
     body: ObstaclePreviewRequest, user: CurrentUser, db: DB
 ) -> HeightFigures:
-    raise not_implemented()
+    return svc.preview(db, user, body)
 
 
 @router.get(
@@ -172,7 +198,7 @@ def preview_obstacle_clearance(
     responses=error_responses(401, 403, 404),
 )
 def get_obstacle_clearance(obs_id: uuid.UUID, user: CurrentUser, db: DB) -> ObstacleRead:
-    raise not_implemented()
+    return svc.read_obstacle(db, user, obs_id)
 
 
 @router.patch(
@@ -184,7 +210,7 @@ def get_obstacle_clearance(obs_id: uuid.UUID, user: CurrentUser, db: DB) -> Obst
 def update_obstacle_clearance(
     obs_id: uuid.UUID, body: ObstacleUpdate, user: CurrentUser, db: DB
 ) -> ObstacleRead:
-    raise not_implemented()
+    return svc.update_obstacle(db, user, obs_id, body)
 
 
 @router.post(
@@ -196,7 +222,7 @@ def update_obstacle_clearance(
 def transition_obstacle_clearance(
     obs_id: uuid.UUID, body: ObstacleTransitionRequest, user: CurrentUser, db: DB
 ) -> ObstacleRead:
-    raise not_implemented()
+    return svc.transition_obstacle(db, user, obs_id, body)
 
 
 @router.post(
@@ -208,4 +234,4 @@ def transition_obstacle_clearance(
 def decide_obstacle_clearance(
     obs_id: uuid.UUID, body: ObstacleDecisionRequest, user: CurrentUser, db: DB
 ) -> ObstacleRead:
-    raise not_implemented()
+    return svc.decide(db, user, obs_id, body)

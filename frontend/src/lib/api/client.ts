@@ -14,6 +14,8 @@ export class ApiError extends Error {
   readonly code: ErrorCode | "NETWORK_ERROR" | "UNKNOWN";
   readonly messageAr: string | null;
   readonly fieldErrors: FieldError[];
+  /** Extra machine data (e.g. WORKER_EXISTS → worker_id/worker_no, VALIDITY_EXCEEDS_LIMIT → limiting_factor, WAP_BLOCKED → blockers). */
+  readonly meta: Record<string, unknown>;
 
   constructor(
     status: number,
@@ -26,6 +28,7 @@ export class ApiError extends Error {
     this.code = detail?.code ?? fallbackCode;
     this.messageAr = detail?.message_ar ?? null;
     this.fieldErrors = detail?.errors ?? [];
+    this.meta = (detail?.meta as Record<string, unknown> | null | undefined) ?? {};
   }
 }
 

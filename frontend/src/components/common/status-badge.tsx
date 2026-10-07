@@ -1,4 +1,4 @@
-import { AlertTriangle, Archive, Ban, CheckCircle2, CircleDashed, Clock, Hourglass, Info, Loader, Lock, PauseCircle, Search, ShieldCheck, XCircle } from "lucide-react";
+import { AlertTriangle, Archive, Ban, CheckCircle2, CircleDashed, Clock, Hourglass, Info, Loader, Lock, PackageCheck, PauseCircle, Search, ShieldCheck, Undo2, XCircle } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
 
@@ -68,6 +68,47 @@ const MAP: Record<string, { tone: Tone; Icon: ComponentType<SVGProps<SVGSVGEleme
   risk_medium: { tone: "warning", Icon: AlertTriangle },
   risk_low: { tone: "neutral", Icon: Info },
   hipo: { tone: "warning", Icon: AlertTriangle },
+  // Phase 2 — access permits and credentials
+  pending_induction: { tone: "info", Icon: Hourglass },
+  mobilised: { tone: "success", Icon: CheckCircle2 },
+  valid: { tone: "success", Icon: CheckCircle2 },
+  superseded: { tone: "neutral", Icon: Archive },
+  revoked: { tone: "danger", Icon: Ban },
+  banned: { tone: "danger", Icon: Ban },
+  anonymised: { tone: "neutral", Icon: Archive },
+  endorsed: { tone: "info", Icon: ShieldCheck },
+  lodged: { tone: "info", Icon: Clock },
+  issued: { tone: "success", Icon: CheckCircle2 },
+  refused: { tone: "danger", Icon: XCircle },
+  withdrawn: { tone: "neutral", Icon: XCircle },
+  held: { tone: "neutral", Icon: PackageCheck },
+  return_due: { tone: "warning", Icon: Undo2 },
+  return_overdue: { tone: "danger", Icon: AlertTriangle },
+  returned: { tone: "success", Icon: PackageCheck },
+  lost: { tone: "danger", Icon: AlertTriangle },
+  raised: { tone: "warning", Icon: Hourglass },
+  system: { tone: "warning", Icon: Lock },
+  recorded: { tone: "warning", Icon: Clock },
+  disputed: { tone: "info", Icon: Search },
+  upheld: { tone: "danger", Icon: AlertTriangle },
+  submitted_to_ops: { tone: "info", Icon: Clock },
+  requested_from_ais: { tone: "info", Icon: Clock },
+  replaced: { tone: "neutral", Icon: Archive },
+  approved_with_conditions: { tone: "success", Icon: CheckCircle2 },
+  off_site: { tone: "neutral", Icon: Archive },
+  included: { tone: "success", Icon: CheckCircle2 },
+  excluded: { tone: "danger", Icon: Ban },
+  removed: { tone: "neutral", Icon: XCircle },
+  met: { tone: "success", Icon: CheckCircle2 },
+  not_met: { tone: "danger", Icon: XCircle },
+  expiring: { tone: "warning", Icon: Clock },
+  // Hook results that are not checked yet: amber information, never an error.
+  warn: { tone: "warning", Icon: Info },
+  not_evaluated: { tone: "neutral", Icon: CircleDashed },
+  rotated: { tone: "neutral", Icon: Archive },
+  cleared: { tone: "success", Icon: ShieldCheck },
+  not_cleared: { tone: "danger", Icon: XCircle },
+  not_required: { tone: "neutral", Icon: CircleDashed },
 };
 
 /** Status shown with colour + icon + text (never colour alone). */

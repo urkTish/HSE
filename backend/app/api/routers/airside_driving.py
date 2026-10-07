@@ -15,7 +15,7 @@ from app.core.access_enums import (
     VehicleCategory,
     VehicleStatus,
 )
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.schemas.airside_driving import (
     AdpCreate,
     AdpIssueRequest,
@@ -39,6 +39,7 @@ from app.schemas.airside_driving import (
     VehicleTransitionRequest,
     VehicleUpdate,
 )
+from app.services.access import driving, vehicles
 
 router = APIRouter(tags=["airside-driving"])
 
@@ -64,7 +65,20 @@ def list_adps(
     expiring_within_days: Annotated[int | None, Query(ge=0, le=365)] = None,
     q: Annotated[str | None, Query(max_length=100)] = None,
 ) -> AdpPage:
-    raise not_implemented()
+    return driving.list_adps(
+        db,
+        user,
+        project_id,
+        pg.page,
+        pg.page_size,
+        validity_status,
+        category,
+        worker_id,
+        engagement_id,
+        include_subcontractors,
+        expiring_within_days,
+        q,
+    )
 
 
 @router.post(
@@ -75,7 +89,7 @@ def list_adps(
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def create_adp(project_id: uuid.UUID, body: AdpCreate, user: CurrentUser, db: DB) -> AdpRead:
-    raise not_implemented()
+    return driving.create_adp(db, user, project_id, body)
 
 
 @router.get(
@@ -90,7 +104,7 @@ def get_adp(
     db: DB,
     points_as_of: Annotated[date | None, Query(description="Default today.")] = None,
 ) -> AdpRead:
-    raise not_implemented()
+    return driving.read_adp(db, user, adp_id, points_as_of)
 
 
 @router.patch(
@@ -100,7 +114,7 @@ def get_adp(
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def update_adp(adp_id: uuid.UUID, body: AdpUpdate, user: CurrentUser, db: DB) -> AdpRead:
-    raise not_implemented()
+    return driving.update_adp(db, user, adp_id, body)
 
 
 @router.post(
@@ -110,7 +124,7 @@ def update_adp(adp_id: uuid.UUID, body: AdpUpdate, user: CurrentUser, db: DB) ->
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def issue_adp(adp_id: uuid.UUID, body: AdpIssueRequest, user: CurrentUser, db: DB) -> AdpRead:
-    raise not_implemented()
+    return driving.issue_adp(db, user, adp_id, body)
 
 
 @router.post(
@@ -120,7 +134,7 @@ def issue_adp(adp_id: uuid.UUID, body: AdpIssueRequest, user: CurrentUser, db: D
     responses=error_responses(401, 403, 404, 409),
 )
 def withdraw_adp(adp_id: uuid.UUID, user: CurrentUser, db: DB) -> AdpRead:
-    raise not_implemented()
+    return driving.withdraw_adp(db, user, adp_id)
 
 
 # ---- offences -----------------------------------------------------------------------------------
@@ -146,7 +160,21 @@ def list_offences(
     date_from: date | None = None,
     date_to: date | None = None,
 ) -> OffencePage:
-    raise not_implemented()
+    return driving.list_offences(
+        db,
+        user,
+        project_id,
+        pg.page,
+        pg.page_size,
+        status_,
+        offence_code,
+        worker_id,
+        zone_id,
+        engagement_id,
+        include_subcontractors,
+        date_from,
+        date_to,
+    )
 
 
 @router.post(
@@ -159,7 +187,7 @@ def list_offences(
 def create_offence(
     project_id: uuid.UUID, body: OffenceCreate, user: CurrentUser, db: DB
 ) -> OffenceRead:
-    raise not_implemented()
+    return driving.create_offence(db, user, project_id, body)
 
 
 @router.get(
@@ -169,7 +197,7 @@ def create_offence(
     responses=error_responses(401, 403, 404),
 )
 def get_offence(offence_id: uuid.UUID, user: CurrentUser, db: DB) -> OffenceRead:
-    raise not_implemented()
+    return driving.read_offence(db, user, offence_id)
 
 
 @router.post(
@@ -181,7 +209,7 @@ def get_offence(offence_id: uuid.UUID, user: CurrentUser, db: DB) -> OffenceRead
 def transition_offence(
     offence_id: uuid.UUID, body: OffenceTransitionRequest, user: CurrentUser, db: DB
 ) -> OffenceRead:
-    raise not_implemented()
+    return driving.transition_offence(db, user, offence_id, body)
 
 
 # ---- vehicles -----------------------------------------------------------------------------------
@@ -207,7 +235,19 @@ def list_vehicles(
         str | None, Query(max_length=60, description="vehicle_no, fleet_no, plate, serial.")
     ] = None,
 ) -> VehiclePage:
-    raise not_implemented()
+    return vehicles.list_vehicles(
+        db,
+        user,
+        project_id,
+        pg.page,
+        pg.page_size,
+        status_,
+        category,
+        engagement_id,
+        include_subcontractors,
+        documents_expiring_within_days,
+        q,
+    )
 
 
 @router.post(
@@ -220,7 +260,7 @@ def list_vehicles(
 def create_vehicle(
     project_id: uuid.UUID, body: VehicleCreate, user: CurrentUser, db: DB
 ) -> VehicleRead:
-    raise not_implemented()
+    return vehicles.create_vehicle(db, user, project_id, body)
 
 
 @router.get(
@@ -230,7 +270,7 @@ def create_vehicle(
     responses=error_responses(401, 403, 404),
 )
 def get_vehicle(vehicle_id: uuid.UUID, user: CurrentUser, db: DB) -> VehicleRead:
-    raise not_implemented()
+    return vehicles.read_vehicle(db, user, vehicle_id)
 
 
 @router.patch(
@@ -242,7 +282,7 @@ def get_vehicle(vehicle_id: uuid.UUID, user: CurrentUser, db: DB) -> VehicleRead
 def update_vehicle(
     vehicle_id: uuid.UUID, body: VehicleUpdate, user: CurrentUser, db: DB
 ) -> VehicleRead:
-    raise not_implemented()
+    return vehicles.update_vehicle(db, user, vehicle_id, body)
 
 
 @router.post(
@@ -254,7 +294,7 @@ def update_vehicle(
 def transition_vehicle(
     vehicle_id: uuid.UUID, body: VehicleTransitionRequest, user: CurrentUser, db: DB
 ) -> VehicleRead:
-    raise not_implemented()
+    return vehicles.transition_vehicle(db, user, vehicle_id, body)
 
 
 # ---- AVP ----------------------------------------------------------------------------------------
@@ -278,7 +318,19 @@ def list_avps(
     include_subcontractors: bool = True,
     expiring_within_days: Annotated[int | None, Query(ge=0, le=365)] = None,
 ) -> AvpPage:
-    raise not_implemented()
+    return vehicles.list_avps(
+        db,
+        user,
+        project_id,
+        pg.page,
+        pg.page_size,
+        validity_status,
+        area,
+        vehicle_id,
+        engagement_id,
+        include_subcontractors,
+        expiring_within_days,
+    )
 
 
 @router.post(
@@ -289,7 +341,7 @@ def list_avps(
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def create_avp(project_id: uuid.UUID, body: AvpCreate, user: CurrentUser, db: DB) -> AvpRead:
-    raise not_implemented()
+    return vehicles.create_avp(db, user, project_id, body)
 
 
 @router.get(
@@ -299,7 +351,7 @@ def create_avp(project_id: uuid.UUID, body: AvpCreate, user: CurrentUser, db: DB
     responses=error_responses(401, 403, 404),
 )
 def get_avp(avp_id: uuid.UUID, user: CurrentUser, db: DB) -> AvpRead:
-    raise not_implemented()
+    return vehicles.read_avp(db, user, avp_id)
 
 
 @router.patch(
@@ -309,7 +361,7 @@ def get_avp(avp_id: uuid.UUID, user: CurrentUser, db: DB) -> AvpRead:
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def update_avp(avp_id: uuid.UUID, body: AvpUpdate, user: CurrentUser, db: DB) -> AvpRead:
-    raise not_implemented()
+    return vehicles.update_avp(db, user, avp_id, body)
 
 
 @router.post(
@@ -319,7 +371,7 @@ def update_avp(avp_id: uuid.UUID, body: AvpUpdate, user: CurrentUser, db: DB) ->
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def issue_avp(avp_id: uuid.UUID, body: AvpIssueRequest, user: CurrentUser, db: DB) -> AvpRead:
-    raise not_implemented()
+    return vehicles.issue_avp(db, user, avp_id, body)
 
 
 @router.post(
@@ -329,7 +381,7 @@ def issue_avp(avp_id: uuid.UUID, body: AvpIssueRequest, user: CurrentUser, db: D
     responses=error_responses(401, 403, 404, 409),
 )
 def withdraw_avp(avp_id: uuid.UUID, user: CurrentUser, db: DB) -> AvpRead:
-    raise not_implemented()
+    return vehicles.withdraw_avp(db, user, avp_id)
 
 
 @router.get(
@@ -339,7 +391,7 @@ def withdraw_avp(avp_id: uuid.UUID, user: CurrentUser, db: DB) -> AvpRead:
     responses=error_responses(401, 403, 404, 409),
 )
 def get_avp_sticker(avp_id: uuid.UUID, user: CurrentUser, db: DB) -> AvpStickerRead:
-    raise not_implemented()
+    return vehicles.sticker(db, user, avp_id)
 
 
 @router.post(
@@ -351,4 +403,4 @@ def get_avp_sticker(avp_id: uuid.UUID, user: CurrentUser, db: DB) -> AvpStickerR
 def reissue_avp_sticker(
     avp_id: uuid.UUID, body: AvpStickerReissueRequest, user: CurrentUser, db: DB
 ) -> AvpStickerRead:
-    raise not_implemented()
+    return vehicles.reissue_sticker(db, user, avp_id, body)

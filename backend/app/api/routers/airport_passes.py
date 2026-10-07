@@ -13,7 +13,7 @@ from app.core.access_enums import (
     PassApplicationType,
     ValidityStatus,
 )
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.schemas.airport_passes import (
     AirportPassPage,
     AirportPassRead,
@@ -33,6 +33,7 @@ from app.schemas.airport_passes import (
     PassCategoryUpdate,
     PassIssueRequest,
 )
+from app.services.access import passes as svc
 
 router = APIRouter(tags=["airport-passes"])
 
@@ -46,7 +47,7 @@ router = APIRouter(tags=["airport-passes"])
     responses=error_responses(401, 403, 404, 422),
 )
 def list_pass_categories(project_id: uuid.UUID, user: CurrentUser, db: DB) -> PassCategoryList:
-    raise not_implemented()
+    return svc.list_categories(db, user, project_id)
 
 
 @router.post(
@@ -59,7 +60,7 @@ def list_pass_categories(project_id: uuid.UUID, user: CurrentUser, db: DB) -> Pa
 def create_pass_category(
     project_id: uuid.UUID, body: PassCategoryCreate, user: CurrentUser, db: DB
 ) -> PassCategoryRead:
-    raise not_implemented()
+    return svc.create_category(db, user, project_id, body)
 
 
 @router.patch(
@@ -71,7 +72,7 @@ def create_pass_category(
 def update_pass_category(
     category_id: uuid.UUID, body: PassCategoryUpdate, user: CurrentUser, db: DB
 ) -> PassCategoryRead:
-    raise not_implemented()
+    return svc.update_category(db, user, category_id, body)
 
 
 @router.get(
@@ -81,7 +82,7 @@ def update_pass_category(
     responses=error_responses(401, 403, 404, 422),
 )
 def list_pass_areas(project_id: uuid.UUID, user: CurrentUser, db: DB) -> PassAreaList:
-    raise not_implemented()
+    return svc.list_areas(db, user, project_id)
 
 
 @router.post(
@@ -94,7 +95,7 @@ def list_pass_areas(project_id: uuid.UUID, user: CurrentUser, db: DB) -> PassAre
 def create_pass_area(
     project_id: uuid.UUID, body: PassAreaCreate, user: CurrentUser, db: DB
 ) -> PassAreaRead:
-    raise not_implemented()
+    return svc.create_area(db, user, project_id, body)
 
 
 @router.patch(
@@ -106,7 +107,7 @@ def create_pass_area(
 def update_pass_area(
     area_id: uuid.UUID, body: PassAreaUpdate, user: CurrentUser, db: DB
 ) -> PassAreaRead:
-    raise not_implemented()
+    return svc.update_area(db, user, area_id, body)
 
 
 # ---- applications -------------------------------------------------------------------------------
@@ -133,7 +134,20 @@ def list_pass_applications(
     stale: Annotated[bool | None, Query(description="Action panel: lodged > stale days.")] = None,
     q: Annotated[str | None, Query(max_length=100)] = None,
 ) -> PassApplicationPage:
-    raise not_implemented()
+    return svc.list_applications(
+        db,
+        user,
+        project_id,
+        pg.page,
+        pg.page_size,
+        status_,
+        application_type,
+        worker_id,
+        engagement_id,
+        include_subcontractors,
+        stale,
+        q,
+    )
 
 
 @router.post(
@@ -147,7 +161,7 @@ def list_pass_applications(
 def create_pass_application(
     project_id: uuid.UUID, body: PassApplicationCreate, user: CurrentUser, db: DB
 ) -> PassApplicationRead:
-    raise not_implemented()
+    return svc.create_application(db, user, project_id, body)
 
 
 @router.get(
@@ -160,7 +174,7 @@ def create_pass_application(
 def get_pass_application(
     application_id: uuid.UUID, user: CurrentUser, db: DB
 ) -> PassApplicationRead:
-    raise not_implemented()
+    return svc.read_application(db, user, application_id)
 
 
 @router.patch(
@@ -173,7 +187,7 @@ def get_pass_application(
 def update_pass_application(
     application_id: uuid.UUID, body: PassApplicationUpdate, user: CurrentUser, db: DB
 ) -> PassApplicationRead:
-    raise not_implemented()
+    return svc.update_application(db, user, application_id, body)
 
 
 @router.post(
@@ -189,7 +203,7 @@ def transition_pass_application(
     user: CurrentUser,
     db: DB,
 ) -> PassApplicationRead:
-    raise not_implemented()
+    return svc.transition(db, user, application_id, body)
 
 
 @router.put(
@@ -202,7 +216,7 @@ def transition_pass_application(
 def put_background_check(
     application_id: uuid.UUID, body: BackgroundCheckUpdate, user: CurrentUser, db: DB
 ) -> PassApplicationRead:
-    raise not_implemented()
+    return svc.put_background(db, user, application_id, body)
 
 
 @router.post(
@@ -216,7 +230,7 @@ def put_background_check(
 def issue_airport_pass(
     application_id: uuid.UUID, body: PassIssueRequest, user: CurrentUser, db: DB
 ) -> AirportPassRead:
-    raise not_implemented()
+    return svc.issue(db, user, application_id, body)
 
 
 # ---- passes -------------------------------------------------------------------------------------
@@ -245,7 +259,23 @@ def list_airport_passes(
     expiring_within_days: Annotated[int | None, Query(ge=0, le=365)] = None,
     q: Annotated[str | None, Query(max_length=100)] = None,
 ) -> AirportPassPage:
-    raise not_implemented()
+    return svc.list_passes(
+        db,
+        user,
+        project_id,
+        pg.page,
+        pg.page_size,
+        validity_status,
+        custody_status,
+        return_overdue,
+        pass_category,
+        area_code,
+        worker_id,
+        engagement_id,
+        include_subcontractors,
+        expiring_within_days,
+        q,
+    )
 
 
 @router.get(
@@ -256,4 +286,4 @@ def list_airport_passes(
     responses=error_responses(401, 403, 404),
 )
 def get_airport_pass(pass_id: uuid.UUID, user: CurrentUser, db: DB) -> AirportPassRead:
-    raise not_implemented()
+    return svc.get_pass(db, user, pass_id)

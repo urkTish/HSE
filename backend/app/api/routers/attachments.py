@@ -7,28 +7,21 @@ from fastapi import APIRouter, File, Form, Query, Response, UploadFile, status
 
 from app.api.deps import DB, CurrentUser
 from app.core.config import get_settings
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.core.hse_enums import AttachmentOwner
 from app.schemas.attachments import AttachmentList, AttachmentRead, SignedUrlRead
 from app.services import attachments as svc
 
 router = APIRouter(tags=["attachments"])
 
-PHASE2_OWNERS = frozenset(
-    {
-        AttachmentOwner.worker_photo,
-        AttachmentOwner.pass_application_id_copy,
-        AttachmentOwner.induction_signature,
-        AttachmentOwner.offence_evidence,
-    }
-)
-
 UPLOAD_DESC = (
     "Images (JPEG/PNG/HEIC) or PDF, ≤ 20 MB each. Limits: observation ≤ 3 photos. "
     "Phase 2: `worker_photo` (owner = worker; JPEG/PNG ≤ 2 MB, ≥ 400×400, one current photo; "
     "capability 47), `pass_application_id_copy` (owner = application; capability 53 to upload, "
     "48 to open; auto-deleted after id_copy_retention_days, P2-5), `offence_evidence` "
-    "(capability 62). Phase 2 files are in the encrypted bucket with ≤ 5 min signed URLs. "
+    "(capability 62); `induction_signature` is read-only "
+    "(captured with the induction record). Phase 2 files are in the encrypted bucket with "
+    "≤ 5 min signed URLs. "
     "`injury_case_medical` needs capability 30 and is stored in the separate encrypted bucket; "
     "it is never included in bulk exports (P1-3). Files are virus-scanned (scan_status); "
     "422 FILE_TOO_LARGE / FILE_TYPE_NOT_ALLOWED."
@@ -50,8 +43,6 @@ def upload_attachment(
     owner_id: Annotated[uuid.UUID, Form()],
     file: Annotated[UploadFile, File()],
 ) -> AttachmentRead:
-    if owner_type in PHASE2_OWNERS:
-        raise not_implemented()
     content = file.file.read(get_settings().attachment_max_bytes + 1)
     return svc.upload(db, user, owner_type, owner_id, file.filename or "file", content)
 
@@ -68,8 +59,6 @@ def list_attachments(
     owner_type: AttachmentOwner,
     owner_id: uuid.UUID,
 ) -> AttachmentList:
-    if owner_type in PHASE2_OWNERS:
-        raise not_implemented()
     return svc.list_for(db, user, owner_type, owner_id)
 
 

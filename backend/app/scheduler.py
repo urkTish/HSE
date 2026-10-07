@@ -36,6 +36,11 @@ def main() -> None:
     for i, name in enumerate(["incident_alerts", "high_risk_observations", "daily_return_missing"]):
         sched.add_job(_job, "cron", minute=15 + i * 5, args=[name])
     sched.add_job(_job, "cron", day_of_week="fri", hour=3, args=["anonymise_injury_identity"])
+    # Phase 2 (spec 2-access-permits §4 jobs at 00:05, §7 alerts at 07:00, 60 s cascades)
+    sched.add_job(_job, "cron", hour=0, minute=5, second=30, args=["access_daily"])
+    sched.add_job(_job, "cron", hour=7, minute=0, second=30, args=["credential_alerts"])
+    sched.add_job(_job, "interval", minutes=1, args=["access_minute"])
+    sched.add_job(_job, "cron", day_of_week="fri", hour=3, minute=30, args=["access_retention"])
     sched.start()
 
 

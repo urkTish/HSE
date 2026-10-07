@@ -204,6 +204,7 @@ class PersonType(StrEnum):
 class IdType(StrEnum):
     iqama = "iqama"
     national_id = "national_id"
+    gcc_id = "gcc_id"  # v1.1 (Phase 2 worker register)
     passport = "passport"
 
 

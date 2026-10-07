@@ -10,9 +10,11 @@ import { Select } from "@/components/ui/select";
 import { MultiSelect } from "@/components/common/multi-select";
 import { useProjectOptions } from "@/components/common/pickers";
 import { useMeData } from "@/components/shell/me-context";
+import { useGates } from "@/lib/api/access";
 import type { Schemas } from "@/lib/api/client";
 import { ANCHORED_PERIODS, DASH_KEYS, shiftAnchor, type DashFilters } from "@/lib/dashboard-filters";
 import { COMPARISON_KINDS, PERIOD_PRESETS } from "@/lib/enums";
+import { can } from "@/lib/permissions";
 import type { ParamValue } from "@/lib/url-state";
 import { cn } from "@/lib/utils";
 
@@ -35,6 +37,8 @@ export function FilterBar({
   const locale = useLocale();
   const me = useMeData();
   const opts = useProjectOptions(projectId);
+  const gates = useGates(projectId, { enabled: Boolean(projectId) && !f.allProjects && (["access_kpi.view", "gate_log.view", "gate.manage"] as const).some((c) => can(me, c, projectId)) });
+  const gateOptions = (gates.data?.items ?? []).map((g) => ({ value: g.id, label: g.gate_code }));
   const zones = opts.zones.filter((z) => f.siteIds.length === 0 || f.siteIds.includes(z.siteId)).filter((z) => !f.zoneType || z.zoneType === f.zoneType);
   const anchored = ANCHORED_PERIODS.includes(f.period);
   const anchor = f.anchor ?? context?.period.as_of ?? null;
@@ -43,7 +47,7 @@ export function FilterBar({
   // Period controls are always shown on desktop; scope filters (sites, zones, contractors, tiers, as-of) fold
   // behind "More filters" so the figures start above the fold. Phones fold everything behind one toggle.
   const [open, setOpen] = useState(false);
-  const scopeCount = f.siteIds.length + f.zoneIds.length + f.engagementIds.length + f.tiers.length + (f.zoneType ? 1 : 0) + (f.includeSubs ? 0 : 1) + (f.asOf ? 1 : 0);
+  const scopeCount = f.siteIds.length + f.zoneIds.length + f.engagementIds.length + f.tiers.length + f.gateIds.length + (f.zoneType ? 1 : 0) + (f.includeSubs ? 0 : 1) + (f.asOf ? 1 : 0);
   const active = scopeCount + (f.allProjects ? 1 : 0);
   const [scopeOpen, setScopeOpen] = useState(scopeCount > 0);
 
@@ -202,6 +206,7 @@ export function FilterBar({
                 allLabel={tc("anyContractor")}
                 testId="filter-contractor"
               />
+              {gateOptions.length ? <MultiSelect id="f-gate" label={t("gates")} options={gateOptions} value={f.gateIds} onChange={(v) => set({ gate: v })} testId="filter-gate" /> : null}
             </>
           ) : null}
           <MultiSelect

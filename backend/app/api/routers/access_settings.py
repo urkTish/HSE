@@ -5,8 +5,9 @@ import uuid
 from fastapi import APIRouter
 
 from app.api.deps import DB, CurrentUser
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.schemas.access_settings import AccessSettingsRead, AccessSettingsUpdate
+from app.services.access import settings as svc
 
 router = APIRouter(tags=["access-settings"])
 
@@ -18,7 +19,7 @@ router = APIRouter(tags=["access-settings"])
     responses=error_responses(401, 403, 404),
 )
 def get_access_settings(project_id: uuid.UUID, user: CurrentUser, db: DB) -> AccessSettingsRead:
-    raise not_implemented()
+    return svc.read(db, user, project_id)
 
 
 @router.patch(
@@ -30,4 +31,4 @@ def get_access_settings(project_id: uuid.UUID, user: CurrentUser, db: DB) -> Acc
 def update_access_settings(
     project_id: uuid.UUID, body: AccessSettingsUpdate, user: CurrentUser, db: DB
 ) -> AccessSettingsRead:
-    raise not_implemented()
+    return svc.update(db, user, project_id, body)

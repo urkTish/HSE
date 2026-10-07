@@ -1,6 +1,20 @@
 "use client";
 import {
+  BadgeCheck,
   Bot,
+  Car,
+  DoorOpen,
+  GraduationCap,
+  IdCard,
+  KanbanSquare,
+  Plane,
+  RadioTower,
+  QrCode,
+  ScanLine,
+  Shield,
+  SquareParking,
+  TowerControl,
+  Construction,
   Building2,
   CalendarCheck,
   ClipboardCheck,
@@ -114,6 +128,37 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
       ]
     : [];
 
+  const ac = (...cs: Capability[]) => cs.some((c) => g(c, pid));
+  const airport = Boolean(project?.is_airport);
+  const accessItems: Item[] = pid
+    ? [
+        ...(ac("worker.view", "worker.edit") ? [{ href: "/workers", label: t("workers"), Icon: IdCard, testId: "nav-workers" }] : []),
+        ...(ac("induction.record", "induction.course_manage", "worker.view")
+          ? [{ href: "/inductions", label: t("inductions"), Icon: GraduationCap, testId: "nav-inductions" }]
+          : []),
+        ...(ac("zone_profile.edit", "worker.view") ? [{ href: "/zone-profiles", label: t("zoneProfiles"), Icon: Shield, testId: "nav-zone-profiles" }] : []),
+        ...(airport && ac("pass_application.create", "pass_application.endorse", "pass_application.process", "access_works.view")
+          ? [{ href: "/pass-applications", label: t("passes"), Icon: BadgeCheck, testId: "nav-passes" }]
+          : []),
+        ...(airport && ac("adp.apply", "adp.issue", "access_works.view") ? [{ href: "/adps", label: t("adps"), Icon: SquareParking, testId: "nav-adps" }] : []),
+        ...(ac("vehicle.edit", "avp.issue", "access_works.view") ? [{ href: "/vehicles", label: t("vehicles"), Icon: Car, testId: "nav-vehicles" }] : []),
+        ...(airport && ac("notam.edit", "notam.process", "access_works.view") ? [{ href: "/notams", label: t("notams"), Icon: RadioTower, testId: "nav-notams" }] : []),
+        ...(airport && ac("obstacle.edit", "obstacle.decide", "access_works.view")
+          ? [{ href: "/obstacle-clearances", label: t("obstacles"), Icon: TowerControl, testId: "nav-obstacles" }]
+          : []),
+        ...(airport && ac("wap.edit", "wap.approve", "wap.close", "wap.suspend", "access_works.view")
+          ? [
+              { href: "/waps", label: t("waps"), Icon: Construction, testId: "nav-waps" },
+              { href: "/wap-board", label: t("wapBoard"), Icon: KanbanSquare, testId: "nav-wap-board" },
+            ]
+          : []),
+        ...(ac("gate.manage") ? [{ href: "/gates", label: t("gates"), Icon: DoorOpen, testId: "nav-gates" }] : []),
+        ...(ac("gate.check") ? [{ href: "/gate", label: t("gateCheck"), Icon: QrCode, testId: "nav-gate-check" }] : []),
+        ...(ac("gate_log.view") ? [{ href: "/gate-log", label: t("gateLog"), Icon: ScanLine, testId: "nav-gate-log" }] : []),
+        ...(ac("access_settings.edit") ? [{ href: "/access-settings", label: t("accessSettings"), Icon: Plane, testId: "nav-access-settings" }] : []),
+      ]
+    : [];
+
   return (
     <nav aria-label={t("main")} className="flex flex-1 flex-col gap-5 p-3">
       <ul className="flex flex-col gap-1">
@@ -135,6 +180,18 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
               <p className="px-3 pt-1 pb-1 text-xs font-medium text-sidebar-muted">{t("hseData")}</p>
               <ul className="mb-3 flex flex-col gap-1" data-testid="nav-hse">
                 {hseItems.map((i) => (
+                  <li key={i.href}>
+                    <NavLink item={i} onNavigate={onNavigate} />
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : null}
+          {accessItems.length > 0 ? (
+            <>
+              <p className="px-3 pt-1 pb-1 text-xs font-medium text-sidebar-muted">{t("access")}</p>
+              <ul className="mb-3 flex flex-col gap-1" data-testid="nav-access">
+                {accessItems.map((i) => (
                   <li key={i.href}>
                     <NavLink item={i} onNavigate={onNavigate} />
                   </li>

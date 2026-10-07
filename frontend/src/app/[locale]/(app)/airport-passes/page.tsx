@@ -1,0 +1,7 @@
+import { initRequestLocale, type LocaleParams } from "@/i18n/server";
+import { AirportPassListPage } from "@/components/access/passes";
+
+export default async function Page({ params }: LocaleParams) {
+  await initRequestLocale(params);
+  return <AirportPassListPage />;
+}

@@ -9,6 +9,7 @@ work related) is decided here from the project settings; the engine never sees s
 import hashlib
 import uuid
 from collections.abc import Iterable
+from dataclasses import replace
 from datetime import date
 from decimal import Decimal
 from zoneinfo import ZoneInfo
@@ -16,6 +17,7 @@ from zoneinfo import ZoneInfo
 from sqlalchemy import case, func, or_, select
 from sqlalchemy.orm import Session
 
+from app.core.access_enums import InductionResult, InductionType
 from app.core.hse_enums import (
     CaStatus,
     IncidentStatus,
@@ -24,6 +26,7 @@ from app.core.hse_enums import (
     PersonType,
     WorkforceStatus,
 )
+from app.kpi.access_facts import load_access
 from app.kpi.cases import CaseDates
 from app.kpi.facts import (
     CaFact,
@@ -31,6 +34,7 @@ from app.kpi.facts import (
     EngFact,
     EventFact,
     Facts,
+    IndFact,
     InspFact,
     MeetingFact,
     ObsFact,
@@ -39,9 +43,11 @@ from app.kpi.facts import (
 )
 from app.models import (
     CorrectiveAction,
+    Deployment,
     HseMeeting,
     HseSettings,
     Incident,
+    InductionRecord,
     InjuryCase,
     Inspection,
     Investigation,
@@ -151,6 +157,40 @@ def load(
         )
         for r in wf_rows
     ]
+
+    # v1.1 K-38: from induction_register_from the passed general_site induction records replace
+    # the daily-return inductions (KA-2)
+    reg_from: dict[uuid.UUID, date] = {}
+    for pid in pids:
+        rf = hse[pid].induction_register_from if pid in hse else None
+        if rf is not None:
+            reg_from[pid] = rf
+    if reg_from:
+        facts.wf = [
+            replace(r, ind=0)
+            if r.project in reg_from and r.d >= reg_from[r.project] and r.ind
+            else r
+            for r in facts.wf
+        ]
+        ind_rows = db.execute(
+            select(
+                InductionRecord.project_id,
+                InductionRecord.delivered_on,
+                InductionRecord.engagement_id,
+                Deployment.site_ids,
+            )
+            .join(Deployment, Deployment.id == InductionRecord.deployment_id)
+            .where(
+                InductionRecord.project_id.in_(list(reg_from)),
+                InductionRecord.induction_type == InductionType.general_site,
+                InductionRecord.result == InductionResult.passed,
+            )
+        ).all()
+        facts.inds = [
+            IndFact(d=r[1], eng=r[2], site=r[3][0] if r[3] else None, project=r[0])
+            for r in ind_rows
+            if r[1] >= reg_from[r[0]]
+        ]
 
     # incidents (counted events) + their investigation attributes
     inc_rows = db.execute(
@@ -375,6 +415,7 @@ def load(
                 m.project_id,
             )
         )
+    facts.access_loader = lambda: load_access(db, pids)
     return facts.sort()
 
 

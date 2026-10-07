@@ -20,8 +20,8 @@ PHASE2_METRICS: frozenset[KpiMetric] = frozenset(
         M.K58, M.K59, M.K60,
     }
 )  # fmt: skip
-PHASE2_PENDING: frozenset[KpiMetric] = PHASE2_METRICS
-"""Stage 1 (contract only): the access KPIs are listed but not computed yet."""
+PHASE2_PENDING: frozenset[KpiMetric] = frozenset()
+"""Access KPIs not computed yet (none since stage 2)."""
 
 
 @dataclass(frozen=True)

@@ -8,7 +8,7 @@ from fastapi import APIRouter, Query, status
 
 from app.api.deps import DB, CurrentUser, PageParams
 from app.core.access_enums import DeploymentStatus, WorkerPersonType, WorkerStatus
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.core.hse_enums import Trade
 from app.schemas.workers import (
     AccessCardRead,
@@ -30,6 +30,7 @@ from app.schemas.workers import (
     WorkerTransitionRequest,
     WorkerUpdate,
 )
+from app.services.access import workers as svc
 
 router = APIRouter(tags=["workers"])
 
@@ -58,7 +59,22 @@ def list_workers(
     q: Annotated[str | None, Query(max_length=100)] = None,
     sort: Literal["worker_no", "-worker_no", "name", "-name"] = "worker_no",
 ) -> WorkerPage:
-    raise not_implemented()
+    return svc.list_workers(
+        db,
+        user,
+        pg.page,
+        pg.page_size,
+        project_id,
+        engagement_id,
+        include_subcontractors,
+        site_id,
+        status_,
+        deployment_status,
+        person_type,
+        trade,
+        q,
+        sort,
+    )
 
 
 @router.post(
@@ -69,7 +85,7 @@ def list_workers(
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def create_worker(body: WorkerCreate, user: CurrentUser, db: DB) -> WorkerRead:
-    raise not_implemented()
+    return svc.create_worker(db, user, body)
 
 
 @router.post(
@@ -81,7 +97,7 @@ def create_worker(body: WorkerCreate, user: CurrentUser, db: DB) -> WorkerRead:
     responses=error_responses(401, 403, 422),
 )
 def lookup_worker(body: WorkerIdLookup, user: CurrentUser, db: DB) -> WorkerLookupResult:
-    raise not_implemented()
+    return svc.lookup(db, user, body)
 
 
 @router.get(
@@ -91,7 +107,7 @@ def lookup_worker(body: WorkerIdLookup, user: CurrentUser, db: DB) -> WorkerLook
     responses=error_responses(401, 403, 404),
 )
 def get_worker(worker_id: uuid.UUID, user: CurrentUser, db: DB) -> WorkerRead:
-    raise not_implemented()
+    return svc.read_worker(db, user, worker_id)
 
 
 @router.patch(
@@ -103,7 +119,7 @@ def get_worker(worker_id: uuid.UUID, user: CurrentUser, db: DB) -> WorkerRead:
 def update_worker(
     worker_id: uuid.UUID, body: WorkerUpdate, user: CurrentUser, db: DB
 ) -> WorkerRead:
-    raise not_implemented()
+    return svc.update_worker(db, user, worker_id, body)
 
 
 @router.post(
@@ -115,7 +131,7 @@ def update_worker(
 def transition_worker(
     worker_id: uuid.UUID, body: WorkerTransitionRequest, user: CurrentUser, db: DB
 ) -> WorkerRead:
-    raise not_implemented()
+    return svc.transition_worker(db, user, worker_id, body)
 
 
 @router.post(
@@ -129,7 +145,7 @@ def transition_worker(
 def unmask_worker_id(
     worker_id: uuid.UUID, body: UnmaskRequest, user: CurrentUser, db: DB
 ) -> WorkerIdNumberRead:
-    raise not_implemented()
+    return svc.unmask(db, user, worker_id, body)
 
 
 @router.post(
@@ -141,7 +157,7 @@ def unmask_worker_id(
 def worker_data_report(
     worker_id: uuid.UUID, body: WorkerDataReportRequest, user: CurrentUser, db: DB
 ) -> WorkerDataReport:
-    raise not_implemented()
+    return svc.data_report(db, user, worker_id, body)
 
 
 # ---- deployments --------------------------------------------------------------------------------
@@ -165,7 +181,19 @@ def list_deployments(
     trade: Trade | None = None,
     q: Annotated[str | None, Query(max_length=100)] = None,
 ) -> DeploymentPage:
-    raise not_implemented()
+    return svc.list_deployments(
+        db,
+        user,
+        project_id,
+        pg.page,
+        pg.page_size,
+        engagement_id,
+        include_subcontractors,
+        site_id,
+        status_,
+        trade,
+        q,
+    )
 
 
 @router.post(
@@ -178,7 +206,7 @@ def list_deployments(
 def create_deployment(
     project_id: uuid.UUID, body: DeploymentCreate, user: CurrentUser, db: DB
 ) -> DeploymentRead:
-    raise not_implemented()
+    return svc.create_deployment(db, user, project_id, body)
 
 
 @router.get(
@@ -188,7 +216,7 @@ def create_deployment(
     responses=error_responses(401, 403, 404),
 )
 def get_deployment(deployment_id: uuid.UUID, user: CurrentUser, db: DB) -> DeploymentRead:
-    raise not_implemented()
+    return svc.read_deployment(db, user, deployment_id)
 
 
 @router.patch(
@@ -200,7 +228,7 @@ def get_deployment(deployment_id: uuid.UUID, user: CurrentUser, db: DB) -> Deplo
 def update_deployment(
     deployment_id: uuid.UUID, body: DeploymentUpdate, user: CurrentUser, db: DB
 ) -> DeploymentRead:
-    raise not_implemented()
+    return svc.update_deployment(db, user, deployment_id, body)
 
 
 @router.post(
@@ -212,7 +240,7 @@ def update_deployment(
 def transition_deployment(
     deployment_id: uuid.UUID, body: DeploymentTransitionRequest, user: CurrentUser, db: DB
 ) -> DeploymentRead:
-    raise not_implemented()
+    return svc.transition_deployment(db, user, deployment_id, body)
 
 
 @router.get(
@@ -223,7 +251,7 @@ def transition_deployment(
     responses=error_responses(401, 403, 404, 409),
 )
 def get_access_card(deployment_id: uuid.UUID, user: CurrentUser, db: DB) -> AccessCardRead:
-    raise not_implemented()
+    return svc.access_card(db, user, deployment_id)
 
 
 @router.post(
@@ -235,4 +263,4 @@ def get_access_card(deployment_id: uuid.UUID, user: CurrentUser, db: DB) -> Acce
 def reissue_access_card(
     deployment_id: uuid.UUID, body: AccessCardReissueRequest, user: CurrentUser, db: DB
 ) -> AccessCardRead:
-    raise not_implemented()
+    return svc.reissue_card(db, user, deployment_id, body)

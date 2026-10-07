@@ -10,7 +10,7 @@ from fastapi import APIRouter, Query, Response, status
 from app.api.deps import DB, CurrentUser, PageParams
 from app.api.gate_deps import GateCallerDep
 from app.core.access_enums import GateDirection, GateReasonCode, GateResult, GateSubjectKind
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.schemas.gates import (
     AdmittedDespiteDenialRequest,
     GateCallerContext,
@@ -29,6 +29,7 @@ from app.schemas.gates import (
     GateUpdate,
     PairingRead,
 )
+from app.services.access import gates as svc
 
 router = APIRouter(tags=["gates"])
 
@@ -42,7 +43,7 @@ router = APIRouter(tags=["gates"])
     responses=error_responses(401, 403, 404),
 )
 def list_gates(project_id: uuid.UUID, user: CurrentUser, db: DB) -> GateList:
-    raise not_implemented()
+    return svc.list_gates(db, user, project_id)
 
 
 @router.post(
@@ -53,7 +54,7 @@ def list_gates(project_id: uuid.UUID, user: CurrentUser, db: DB) -> GateList:
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def create_gate(project_id: uuid.UUID, body: GateCreate, user: CurrentUser, db: DB) -> GateRead:
-    raise not_implemented()
+    return svc.create_gate(db, user, project_id, body)
 
 
 @router.get(
@@ -63,7 +64,7 @@ def create_gate(project_id: uuid.UUID, body: GateCreate, user: CurrentUser, db: 
     responses=error_responses(401, 403, 404),
 )
 def get_gate(gate_id: uuid.UUID, user: CurrentUser, db: DB) -> GateRead:
-    raise not_implemented()
+    return svc.read_gate(db, user, gate_id)
 
 
 @router.patch(
@@ -73,7 +74,7 @@ def get_gate(gate_id: uuid.UUID, user: CurrentUser, db: DB) -> GateRead:
     responses=error_responses(401, 403, 404, 422),
 )
 def update_gate(gate_id: uuid.UUID, body: GateUpdate, user: CurrentUser, db: DB) -> GateRead:
-    raise not_implemented()
+    return svc.update_gate(db, user, gate_id, body)
 
 
 @router.post(
@@ -86,7 +87,7 @@ def update_gate(gate_id: uuid.UUID, body: GateUpdate, user: CurrentUser, db: DB)
 def register_gate_device(
     gate_id: uuid.UUID, body: GateDeviceCreate, user: CurrentUser, db: DB
 ) -> GateDeviceRegistered:
-    raise not_implemented()
+    return svc.register_device(db, user, gate_id, body)
 
 
 @router.post(
@@ -98,7 +99,7 @@ def register_gate_device(
 def revoke_gate_device(
     gate_id: uuid.UUID, device_pk: uuid.UUID, user: CurrentUser, db: DB
 ) -> GateDeviceRead:
-    raise not_implemented()
+    return svc.revoke_device(db, user, gate_id, device_pk)
 
 
 @router.post(
@@ -112,7 +113,7 @@ def revoke_gate_device(
     responses=error_responses(401, 422, 429),
 )
 def gate_device_login(body: GateDeviceLogin, response: Response, db: DB) -> GateDeviceSession:
-    raise not_implemented()
+    return svc.device_login(db, body, response)
 
 
 @router.post(
@@ -122,7 +123,7 @@ def gate_device_login(body: GateDeviceLogin, response: Response, db: DB) -> Gate
     responses=error_responses(401),
 )
 def gate_device_logout(caller: GateCallerDep, response: Response, db: DB) -> None:
-    raise not_implemented()
+    svc.device_logout(db, caller, response)
 
 
 # ---- gate checks (user with capability 74, or a gate-device session) -----------------------------
@@ -137,7 +138,7 @@ def gate_device_logout(caller: GateCallerDep, response: Response, db: DB) -> Non
 def get_gate_context(
     caller: GateCallerDep, db: DB, project_id: uuid.UUID | None = None
 ) -> GateCallerContext:
-    raise not_implemented()
+    return svc.context(db, caller, project_id)
 
 
 @router.post(
@@ -151,7 +152,7 @@ def get_gate_context(
     responses=error_responses(401, 403, 404, 422, 429),
 )
 def gate_check(body: GateCheckRequest, caller: GateCallerDep, db: DB) -> GateCheckResponse:
-    raise not_implemented()
+    return svc.gate_check(db, caller, body)
 
 
 @router.get(
@@ -161,7 +162,7 @@ def gate_check(body: GateCheckRequest, caller: GateCallerDep, db: DB) -> GateChe
     responses=error_responses(401, 403, 404),
 )
 def get_gate_pairing(pairing_id: uuid.UUID, caller: GateCallerDep, db: DB) -> PairingRead:
-    raise not_implemented()
+    return svc.read_pairing(db, caller, pairing_id)
 
 
 @router.post(
@@ -171,7 +172,7 @@ def get_gate_pairing(pairing_id: uuid.UUID, caller: GateCallerDep, db: DB) -> Pa
     responses=error_responses(401, 403, 404, 409),
 )
 def cancel_gate_pairing(pairing_id: uuid.UUID, caller: GateCallerDep, db: DB) -> PairingRead:
-    raise not_implemented()
+    return svc.cancel_pairing(db, caller, pairing_id)
 
 
 @router.post(
@@ -183,7 +184,7 @@ def cancel_gate_pairing(pairing_id: uuid.UUID, caller: GateCallerDep, db: DB) ->
 def record_admitted_despite_denial(
     check_id: uuid.UUID, body: AdmittedDespiteDenialRequest, caller: GateCallerDep, db: DB
 ) -> GateLogEntry:
-    raise not_implemented()
+    return svc.admitted_despite_denial(db, caller, check_id, body)
 
 
 # ---- gate log -----------------------------------------------------------------------------------
@@ -217,4 +218,23 @@ def list_gate_log(
     since: Annotated[datetime | None, Query(description="UTC.")] = None,
     until: Annotated[datetime | None, Query(description="UTC.")] = None,
 ) -> GateLogPage:
-    raise not_implemented()
+    return svc.list_log(
+        db,
+        user,
+        project_id,
+        pg.page,
+        pg.page_size,
+        gate_id,
+        zone_id,
+        direction,
+        result,
+        reason_code,
+        subject_kind,
+        worker_id,
+        vehicle_id,
+        engagement_id,
+        admitted_despite_denial,
+        late_exit,
+        since,
+        until,
+    )

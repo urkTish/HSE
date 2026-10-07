@@ -6,12 +6,12 @@ from dataclasses import dataclass
 from datetime import timedelta
 from typing import Annotated
 
-from fastapi import Depends, Query, Security
+from fastapi import Depends, Query, Request, Security
 from fastapi.security import APIKeyCookie, HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.core.clock import now
-from app.core.config import SESSION_COOKIE_NAME, get_settings
+from app.core.config import GATE_SESSION_COOKIE, SESSION_COOKIE_NAME, get_settings
 from app.core.enums import UserStatus
 from app.core.errors import ApiError, ErrorCode
 from app.core.security import decode_jwt
@@ -62,12 +62,24 @@ class RawToken:
     token: str
 
 
+def gate_device_forbidden() -> ApiError:
+    return ApiError(
+        403,
+        ErrorCode.GATE_DEVICE_FORBIDDEN,
+        "A gate device session can only perform gate checks.",
+        "جلسة جهاز البوابة مخصصة لعمليات التحقق فقط.",
+    )
+
+
 def raw_token(
+    request: Request,
     cookie: Annotated[str | None, Security(cookie_scheme)] = None,
     bearer: Annotated[HTTPAuthorizationCredentials | None, Security(bearer_scheme)] = None,
 ) -> RawToken:
     token = bearer.credentials if bearer else cookie
     if not token:
+        if request.cookies.get(GATE_SESSION_COOKIE):
+            raise gate_device_forbidden()  # GC-1: device sessions only reach gate checks
         raise ApiError(401, ErrorCode.UNAUTHENTICATED, "Not authenticated.", "غير مسجل الدخول.")
     return RawToken(token)
 
@@ -86,6 +98,8 @@ def get_principal(token: Annotated[RawToken, Depends(raw_token)], db: DB) -> Pri
     claims = decode_jwt(token.token)
     if not claims:
         raise ApiError(401, ErrorCode.UNAUTHENTICATED, "Invalid token.", "رمز غير صالح.")
+    if claims.get("typ") == "gate":
+        raise gate_device_forbidden()
     try:
         sid = uuid.UUID(str(claims.get("sid")))
         uid = uuid.UUID(str(claims.get("sub")))

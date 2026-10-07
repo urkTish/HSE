@@ -221,7 +221,15 @@ export function ActionPanel({ query, show }: { query: KpiQuery; show: Show }) {
   const t = useTranslations("dashboard");
   const te = useTranslations("enums");
   const ar = useLocale() === "ar";
-  const q = useActionPanel(query);
+  // The action panel is per project (the API refuses all_projects).
+  const single = !query.all_projects && (query.project_id?.length ?? 0) === 1;
+  const q = useActionPanel(query, single);
+  if (!single)
+    return (
+      <p className="text-sm text-muted-foreground" data-testid="action-panel-one-project">
+        {t("actionPanelOneProject")}
+      </p>
+    );
   if (q.isError) return <ErrorState error={q.error} onRetry={() => q.refetch()} />;
   if (!q.data) return <LoadingState />;
   const items = q.data.items.filter((i) => i.count > 0);

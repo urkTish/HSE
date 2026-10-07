@@ -7,10 +7,11 @@ from fastapi import APIRouter, Query, Response
 
 from app.api.deps import DB, CurrentUser
 from app.core.enums import ExportDataset, ExportFormat
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.core.hse_enums import ExportPurpose
 from app.services import exports as svc
 from app.services import hse_exports
+from app.services.access import exports as access_exports
 
 router = APIRouter(prefix="/exports", tags=["exports"])
 
@@ -25,24 +26,7 @@ PHASE1_DATASETS = frozenset(
     }
 )
 
-PHASE2_DATASETS = frozenset(
-    {
-        ExportDataset.workers,
-        ExportDataset.deployments,
-        ExportDataset.inductions,
-        ExportDataset.pass_applications,
-        ExportDataset.airport_passes,
-        ExportDataset.adps,
-        ExportDataset.airside_offences,
-        ExportDataset.vehicles,
-        ExportDataset.avps,
-        ExportDataset.waps,
-        ExportDataset.notam_requests,
-        ExportDataset.obstacle_clearances,
-        ExportDataset.ops_events,
-        ExportDataset.gate_log,
-    }
-)
+PHASE2_DATASETS = access_exports.DATASETS
 
 _FILE_RESPONSES: dict[int | str, dict[str, object]] = {
     200: {
@@ -96,8 +80,19 @@ def export_dataset(
     ] = None,
 ) -> Response:
     if dataset in PHASE2_DATASETS:
-        raise not_implemented()
-    if dataset in PHASE1_DATASETS:
+        content, media_type, filename = access_exports.export(
+            db,
+            user,
+            dataset,
+            format_,
+            project_id,
+            status_,
+            q,
+            include_identity,
+            purpose,
+            purpose_text,
+        )
+    elif dataset in PHASE1_DATASETS:
         content, media_type, filename = hse_exports.export(
             db,
             user,

@@ -48,11 +48,67 @@ MAGIC = {
 MEDICAL_TTL = 300
 DEFAULT_TTL = 900
 MAX_OBS_PHOTOS = 3
+PHOTO_MAX_BYTES = 2 * 1024 * 1024
+PHOTO_MIN_PX = 400
 UNKNOWN = UserRef(id=uuid.UUID(int=0), full_name_en="—")
 
 
+PERSONAL = frozenset(
+    {
+        AttachmentOwner.worker_photo,
+        AttachmentOwner.pass_application_id_copy,
+        AttachmentOwner.induction_signature,
+        AttachmentOwner.offence_evidence,
+    }
+)
+ENCRYPTED = frozenset({"medical", "personal"})
+
+
 def _bucket(owner: AttachmentOwner) -> str:
-    return "medical" if owner == AttachmentOwner.injury_case_medical else "general"
+    if owner == AttachmentOwner.injury_case_medical:
+        return "medical"
+    return "personal" if owner in PERSONAL else "general"
+
+
+def store(
+    db: Session,
+    owner_type: AttachmentOwner,
+    owner_id: uuid.UUID,
+    project_id: uuid.UUID,
+    file_name: str,
+    content: bytes,
+    ctype: str,
+    user_id: uuid.UUID,
+) -> Attachment:
+    """Writes the file (encrypted for the medical and personal buckets) and the row."""
+    aid = uuid.uuid4()
+    bucket = _bucket(owner_type)
+    key = f"{bucket}/{project_id}/{aid}"
+    path = Path(get_settings().storage_dir) / key
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(crypto.encrypt_bytes(content) if bucket in ENCRYPTED else content)
+    a = Attachment(
+        id=aid,
+        owner_type=owner_type,
+        owner_id=owner_id,
+        project_id=project_id,
+        file_name=Path(file_name).name[:255],
+        content_type=ctype,
+        size_bytes=len(content),
+        sha256=hashlib.sha256(content).hexdigest(),
+        storage_bucket=bucket,
+        storage_key=key,
+        scan_status=ScanStatus.skipped,
+        uploaded_by_user_id=user_id,
+    )
+    db.add(a)
+    db.flush()
+    return a
+
+
+def erase(db: Session, a: Attachment) -> None:
+    (Path(get_settings().storage_dir) / a.storage_key).unlink(missing_ok=True)
+    db.delete(a)
 
 
 # ---- owner resolution and permissions ------------------------------------------------------------
@@ -88,12 +144,95 @@ def _owner(
         if write and p.user.id != ca.owner_id and not ca_svc._staff(p, ca):
             raise forbidden_error()
         return ca.project_id, ca.status in (CaStatus.open, CaStatus.in_progress)
+    if owner_type in PERSONAL:
+        return _access_owner(db, p, owner_type, owner_id, write)
     m = db.get(HseMeeting, owner_id)
     if m is None or p.grant(m.project_id, Capability.incident_view) is None:
         raise deny(db, p, EntityType.hse_meeting, owner_id, m.project_id if m else None, "Meeting")
     if write:
         p.require(m.project_id, Capability.inspection_plan_manage)
     return m.project_id, True
+
+
+def _access_owner(
+    db: Session, p: Principal, owner_type: AttachmentOwner, owner_id: uuid.UUID, write: bool
+) -> tuple[uuid.UUID, bool]:
+    """Phase 2 personal files (spec 2-access-permits §3.1 photo, §3.8 ID copy, §3.4 signature,
+    §3.11 evidence; P2-2): encrypted bucket, signed URLs ≤ 5 min."""
+    from app.core.access_enums import (  # noqa: PLC0415 (access services import this module)
+        PassApplicationStatus,
+        WorkerStatus,
+    )
+    from app.models import Deployment  # noqa: PLC0415
+    from app.services.access import common as acc  # noqa: PLC0415
+    from app.services.access import driving, inductions, passes, workers  # noqa: PLC0415
+
+    c = Capability
+    if owner_type == AttachmentOwner.worker_photo:
+        w = workers.get_worker(db, p, owner_id)
+        if write:
+            workers._can_edit(db, p, w)
+        dep = db.scalars(
+            select(Deployment)
+            .where(Deployment.worker_id == w.id)
+            .order_by(Deployment.mobilised_on.desc())
+            .limit(1)
+        ).first()
+        if dep is None:
+            raise ApiError(
+                422,
+                ErrorCode.VALIDATION_ERROR,
+                "Deploy the worker on a project before adding a photo.",
+                "يجب تعيين العامل في مشروع قبل إضافة الصورة.",
+            )
+        return dep.project_id, w.status != WorkerStatus.anonymised
+    if owner_type == AttachmentOwner.pass_application_id_copy:
+        a, d = passes.get_application(db, p, owner_id)
+        cap = c.pass_application_create if write else c.worker_unmask_id
+        acc.require_cap(p, a.project_id, cap, d.site_ids, d.engagement_id)
+        editable = a.status in (PassApplicationStatus.draft, PassApplicationStatus.submitted)
+        return a.project_id, editable
+    if owner_type == AttachmentOwner.induction_signature:
+        r = inductions.get_record(db, p, owner_id)
+        if write:
+            raise forbidden_error("The signature is captured with the induction record.")
+        return r.project_id, False
+    o = driving.get_offence_row(db, p, owner_id)
+    if write:
+        acc.require_cap(p, o.project_id, c.offence_record, None, o.engagement_id)
+    return o.project_id, True
+
+
+def _image_size(content: bytes, ctype: str) -> tuple[int, int] | None:
+    """(width, height) from the PNG IHDR or the first JPEG SOF marker."""
+    if ctype == "image/png" and len(content) >= 24:
+        return int.from_bytes(content[16:20], "big"), int.from_bytes(content[20:24], "big")
+    if ctype == "image/jpeg":
+        i = 2
+        while i + 9 < len(content):
+            if content[i] != 0xFF:
+                i += 1
+                continue
+            marker = content[i + 1]
+            seg = int.from_bytes(content[i + 2 : i + 4], "big")
+            if marker in (0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6, 0xC7, 0xC9, 0xCA, 0xCB, 0xCD):
+                h = int.from_bytes(content[i + 5 : i + 7], "big")
+                return int.from_bytes(content[i + 7 : i + 9], "big"), h
+            i += 2 + seg
+    return None
+
+
+def _check_photo(content: bytes, ctype: str) -> None:
+    """§3.1: JPEG/PNG ≤ 2 MB, ≥ 400×400."""
+    size = _image_size(content, ctype) if ctype in ("image/jpeg", "image/png") else None
+    if len(content) > PHOTO_MAX_BYTES or size is None or min(size) < PHOTO_MIN_PX:
+        raise ApiError(
+            422,
+            ErrorCode.FILE_TYPE_NOT_ALLOWED,
+            "Worker photos must be JPEG or PNG, at most 2 MB and at least 400×400 pixels.",
+            "يجب أن تكون صورة العامل JPEG أو PNG بحجم لا يتجاوز 2 ميغابايت "
+            "و400×400 بكسل على الأقل.",
+        )
 
 
 # ---- operations ----------------------------------------------------------------------------------
@@ -156,6 +295,8 @@ def upload(
             "الحد الأقصى 20 ميغابايت.",
         )
     ctype = _content_type(file_name, content)
+    if owner_type == AttachmentOwner.worker_photo:
+        _check_photo(content, ctype)
     if owner_type == AttachmentOwner.observation:
         n = db.scalar(
             select(func.count())
@@ -169,29 +310,7 @@ def upload(
                 "An observation can have at most 3 photos.",
                 "الحد الأقصى 3 صور للملاحظة.",
             )
-    aid = uuid.uuid4()
-    bucket = _bucket(owner_type)
-    key = f"{bucket}/{project_id}/{aid}"
-    path = Path(settings.storage_dir) / key
-    path.parent.mkdir(parents=True, exist_ok=True)
-    data = crypto.encrypt_bytes(content) if bucket == "medical" else content
-    path.write_bytes(data)
-    a = Attachment(
-        id=aid,
-        owner_type=owner_type,
-        owner_id=owner_id,
-        project_id=project_id,
-        file_name=Path(file_name).name[:255],
-        content_type=ctype,
-        size_bytes=len(content),
-        sha256=hashlib.sha256(content).hexdigest(),
-        storage_bucket=bucket,
-        storage_key=key,
-        scan_status=ScanStatus.skipped,
-        uploaded_by_user_id=p.user.id,
-    )
-    db.add(a)
-    db.flush()
+    a = store(db, owner_type, owner_id, project_id, file_name, content, ctype, p.user.id)
     audit.record(
         db,
         AuditAction.create,
@@ -230,7 +349,18 @@ def _get(db: Session, p: Principal, attachment_id: uuid.UUID) -> Attachment:
 def signed_url(db: Session, p: Principal, attachment_id: uuid.UUID) -> SignedUrlRead:
     a = _get(db, p, attachment_id)
     medical = a.owner_type == AttachmentOwner.injury_case_medical
-    expires = int(time.time()) + (MEDICAL_TTL if medical else DEFAULT_TTL)
+    short = medical or a.owner_type in PERSONAL  # P1-3 / P2-2: ≤ 5 min
+    expires = int(time.time()) + (MEDICAL_TTL if short else DEFAULT_TTL)
+    if a.owner_type == AttachmentOwner.pass_application_id_copy:
+        audit.record(
+            db,
+            AuditAction.sensitive_field_read,
+            p.actor(a.project_id),
+            entity_type=EntityType.pass_application,
+            entity_id=a.owner_id,
+            project_id=a.project_id,
+            fields_read=["id_copy"],
+        )
     sig = crypto.sign(f"{a.id}:{expires}", get_settings().attachment_url_secret)
     audit.record(
         db,
@@ -248,6 +378,13 @@ def signed_url(db: Session, p: Principal, attachment_id: uuid.UUID) -> SignedUrl
     )
 
 
+def raw_signed_url(attachment_id: uuid.UUID, ttl: int) -> str:
+    """Short-lived signed URL without a principal (gate result screen photo, GC-7)."""
+    expires = int(time.time()) + ttl
+    sig = crypto.sign(f"{attachment_id}:{expires}", get_settings().attachment_url_secret)
+    return f"{API_PREFIX}/attachments/{attachment_id}/content?expires={expires}&signature={sig}"
+
+
 def download(
     db: Session, attachment_id: uuid.UUID, expires: int, signature: str
 ) -> tuple[bytes, str, str]:
@@ -263,7 +400,7 @@ def download(
             "انتهت صلاحية رابط التنزيل أو أنه غير صالح.",
         )
     data = (Path(get_settings().storage_dir) / a.storage_key).read_bytes()
-    if a.storage_bucket == "medical":
+    if a.storage_bucket in ENCRYPTED:
         data = crypto.decrypt_bytes(data)
     return data, a.content_type, a.file_name
 

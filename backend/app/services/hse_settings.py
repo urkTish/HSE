@@ -11,7 +11,7 @@ from app.core.clock import now
 from app.core.enums import AuditAction, Capability, EntityType
 from app.core.errors import ApiError, ErrorCode, not_found, validation_error
 from app.core.hse_enums import CaPriority, ReferenceList, TreatmentClass
-from app.data.reference import REFERENCE
+from app.data.reference import OFF_POINTS, REFERENCE
 from app.models import HseSettings, ReferenceItem, User
 from app.schemas.hse_common import UserRef
 from app.schemas.hse_settings import (
@@ -100,6 +100,7 @@ def to_read(db: Session, s: HseSettings) -> HseSettingsRead:
         kpi_targets=dict(s.kpi_targets or {}),
         month_lock_day=s.month_lock_day,
         injury_identity_retention_years=s.injury_identity_retention_years,
+        induction_register_from=s.induction_register_from,
         ai_enabled=s.ai_enabled,
         ai_requested=s.ai_requested,
         ai_transfer_approval=approval,
@@ -153,6 +154,11 @@ def update(
                 "يجب تسجيل موافقة العميل على نقل البيانات قبل تفعيل المساعد الذكي.",
             )
         s.ai_requested = want
+    reg = data.get("induction_register_from")
+    if reg is not None and project.start_date is not None and reg < project.start_date:
+        raise validation_error(
+            "induction_register_from", "The date must be on or after the project start date."
+        )
     for k, v in data.items():
         setattr(s, k, v)
     if s.warn_hours_per_person_day > s.max_hours_per_person_day:
@@ -253,6 +259,10 @@ def seed_reference(db: Session) -> None:
                     description_en=den,
                     description_ar=dar,
                     sort_order=i,
+                    points=OFF_POINTS[code][0] if lst == ReferenceList.airside_offence else None,
+                    immediate_suspension=(
+                        OFF_POINTS[code][1] if lst == ReferenceList.airside_offence else False
+                    ),
                 )
             )
     db.flush()
@@ -276,6 +286,10 @@ def _item_read(r: ReferenceItem) -> ReferenceItemRead:
         label_ar=r.label_ar,
         group=r.group,
         treatment_class=tc,
+        points=r.points if r.list_name == ReferenceList.airside_offence.value else None,
+        immediate_suspension=(
+            r.immediate_suspension if r.list_name == ReferenceList.airside_offence.value else None
+        ),
         description_en=r.description_en,
         description_ar=r.description_ar,
         sort_order=r.sort_order,
@@ -284,7 +298,7 @@ def _item_read(r: ReferenceItem) -> ReferenceItemRead:
 
 def list_reference(db: Session) -> ReferenceListsRead:
     rows = db.scalars(select(ReferenceItem)).all()
-    if not rows:
+    if {r.list_name for r in rows} != {lst.value for lst in REFERENCE}:
         seed_reference(db)
         rows = db.scalars(select(ReferenceItem)).all()
     by: dict[str, list[ReferenceItem]] = {}
@@ -310,13 +324,18 @@ def update_reference(
 ) -> ReferenceItemRead:
     if not p.is_manager:
         p.require(None, Capability.hse_settings_edit)
-    if db.scalar(select(ReferenceItem).limit(1)) is None:
+    if db.get(ReferenceItem, (lst.value, code)) is None:
         seed_reference(db)
     r = db.get(ReferenceItem, (lst.value, code))
     if r is None:
         raise not_found("Reference item")
-    before = {"label_en": r.label_en, "label_ar": r.label_ar}
-    for k, v in body.model_dump(exclude_unset=True).items():
+    changes = body.model_dump(exclude_unset=True)
+    if "points" in changes and lst != ReferenceList.airside_offence:
+        raise validation_error("points", "Points apply to the airside offence list only.")
+    if "points" in changes and changes["points"] is None:
+        changes.pop("points")
+    before = {"label_en": r.label_en, "label_ar": r.label_ar, "points": r.points}
+    for k, v in changes.items():
         setattr(r, k, v)
     db.flush()
     audit.record(
@@ -326,7 +345,7 @@ def update_reference(
         entity_type=EntityType.reference_list_item,
         entity_id=None,
         before=before,
-        after={"label_en": r.label_en, "label_ar": r.label_ar},
+        after={"label_en": r.label_en, "label_ar": r.label_ar, "points": r.points},
         details={"list": lst.value, "code": code},
     )
     return _item_read(r)

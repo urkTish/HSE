@@ -9,7 +9,7 @@ from fastapi import APIRouter, Path
 
 from app.api.deps import DB, CurrentUser, PageParams
 from app.core.access_enums import CredentialKind
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.schemas.credentials import (
     AuthorityNotifiedRequest,
     ConfirmSuspensionRequest,
@@ -21,6 +21,7 @@ from app.schemas.credentials import (
     RevokeRequest,
     SuspendRequest,
 )
+from app.services.access import credentials as svc
 
 router = APIRouter(prefix="/credentials", tags=["credentials"])
 
@@ -40,7 +41,7 @@ ERRORS = error_responses(401, 403, 404, 409, 422)
 def get_credential_state(
     kind: KindPath, credential_id: uuid.UUID, user: CurrentUser, db: DB
 ) -> CredentialState:
-    raise not_implemented()
+    return svc.read_state(db, user, kind, credential_id)
 
 
 @router.get(
@@ -52,7 +53,7 @@ def get_credential_state(
 def list_credential_events(
     kind: KindPath, credential_id: uuid.UUID, user: CurrentUser, pg: PageParams, db: DB
 ) -> CredentialEventPage:
-    raise not_implemented()
+    return svc.list_events(db, user, kind, credential_id, pg.page, pg.page_size)
 
 
 @router.post(
@@ -64,7 +65,7 @@ def list_credential_events(
 def suspend_credential(
     kind: KindPath, credential_id: uuid.UUID, body: SuspendRequest, user: CurrentUser, db: DB
 ) -> CredentialState:
-    raise not_implemented()
+    return svc.suspend(db, user, kind, credential_id, body)
 
 
 @router.post(
@@ -80,7 +81,7 @@ def confirm_credential_suspension(
     user: CurrentUser,
     db: DB,
 ) -> CredentialState:
-    raise not_implemented()
+    return svc.confirm(db, user, kind, credential_id, body)
 
 
 @router.post(
@@ -92,7 +93,7 @@ def confirm_credential_suspension(
 def reinstate_credential(
     kind: KindPath, credential_id: uuid.UUID, body: ReinstateRequest, user: CurrentUser, db: DB
 ) -> CredentialState:
-    raise not_implemented()
+    return svc.reinstate(db, user, kind, credential_id, body)
 
 
 @router.post(
@@ -104,7 +105,7 @@ def reinstate_credential(
 def revoke_credential(
     kind: KindPath, credential_id: uuid.UUID, body: RevokeRequest, user: CurrentUser, db: DB
 ) -> CredentialState:
-    raise not_implemented()
+    return svc.revoke(db, user, kind, credential_id, body)
 
 
 @router.post(
@@ -116,7 +117,7 @@ def revoke_credential(
 def return_credential(
     kind: KindPath, credential_id: uuid.UUID, body: ReturnRequest, user: CurrentUser, db: DB
 ) -> CredentialState:
-    raise not_implemented()
+    return svc.record_return(db, user, kind, credential_id, body)
 
 
 @router.post(
@@ -128,7 +129,7 @@ def return_credential(
 def report_credential_loss(
     kind: KindPath, credential_id: uuid.UUID, body: LossReportRequest, user: CurrentUser, db: DB
 ) -> CredentialState:
-    raise not_implemented()
+    return svc.report_loss(db, user, kind, credential_id, body)
 
 
 @router.post(
@@ -144,4 +145,4 @@ def record_authority_notified(
     user: CurrentUser,
     db: DB,
 ) -> CredentialState:
-    raise not_implemented()
+    return svc.authority_notified(db, user, kind, credential_id, body)

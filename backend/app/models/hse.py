@@ -113,6 +113,7 @@ class HseSettings(Base):
     kpi_targets: Mapped[dict[str, str]] = mapped_column(JSONB, default=dict)
     month_lock_day: Mapped[int] = mapped_column(Integer, default=10)
     injury_identity_retention_years: Mapped[int] = mapped_column(Integer, default=10)
+    induction_register_from: Mapped[date | None] = mapped_column(Date)  # v1.1 K-38 (KA-2)
     ai_requested: Mapped[bool] = mapped_column(Boolean, default=True)
     ai_approved_on: Mapped[date | None] = mapped_column(Date)
     ai_approver_name: Mapped[str | None] = mapped_column(String(120))
@@ -142,6 +143,8 @@ class ReferenceItem(Base):
     description_en: Mapped[str | None] = mapped_column(String(300))
     description_ar: Mapped[str | None] = mapped_column(String(300))
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
+    points: Mapped[int | None] = mapped_column(Integer)  # Phase 2 OFF list
+    immediate_suspension: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class DashboardPreference(Base):
@@ -322,6 +325,9 @@ class InjuryCase(UUIDPk, TimestampMixin, Base):
     incident_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("incidents.id"), index=True)
     project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id"), index=True)
     person_no: Mapped[int] = mapped_column(Integer)
+    worker_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("workers.id"), index=True
+    )  # v1.1 (Phase 2 worker register)
     person_type: Mapped[PersonType] = enum_col(PersonType)
     employer_engagement_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("project_engagements.id"), index=True
@@ -329,7 +335,7 @@ class InjuryCase(UUIDPk, TimestampMixin, Base):
     person_name: Mapped[str] = mapped_column(String(120))
     id_type: Mapped[IdType | None] = enum_col(IdType, nullable=True)
     id_number_enc: Mapped[bytes | None] = mapped_column(LargeBinary)
-    id_number_masked: Mapped[str | None] = mapped_column(String(12))
+    id_number_masked: Mapped[str | None] = mapped_column(String(20))
     employee_no: Mapped[str | None] = mapped_column(String(20))
     nationality: Mapped[str | None] = mapped_column(String(2))
     trade: Mapped[Trade] = enum_col(Trade)

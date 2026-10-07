@@ -62,7 +62,8 @@ test.describe("Dashboard", () => {
     await page.locator("[data-testid=kpi-tile][data-metric='K-06']").getByTestId("drill-K-06").click();
     const dlg = page.getByTestId("drill-dialog");
     await expect(dlg).toBeVisible();
-    await expect(dlg.getByTestId("drill-source").first()).toBeVisible();
+    // The drill request queues behind the dashboard's first KPI requests (CPU-bound backend, heavier Phase 2 seed).
+    await expect(dlg.getByTestId("drill-source").first()).toBeVisible({ timeout: 30_000 });
     await dlg.getByTestId("drill-source").first().locator("a").click();
     await expect(page).toHaveURL(/\/incidents\/[0-9a-f-]{36}|\/injury-cases\/[0-9a-f-]{36}/);
   });

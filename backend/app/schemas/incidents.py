@@ -369,8 +369,9 @@ class _InjuryCaseFields(StrictInput):
     id_type: IdType | None = None
     id_number: str | None = Field(
         default=None,
-        max_length=10,
-        description="iqama ^2\\d{9}$, national_id ^1\\d{9}$, passport ^[A-Z0-9]{6,9}$. "
+        max_length=15,
+        description="iqama ^2\\d{9}$, national_id ^1\\d{9}$, gcc_id ^[A-Z0-9]{6,15}$ (v1.1), "
+        "passport ^[A-Z0-9]{6,9}$. "
         "Encrypted at rest; never returned in full except by GET …/id-number.",
     )
     employee_no: str | None = Field(default=None, max_length=20)
@@ -443,7 +444,7 @@ class InjuryCaseUpdate(PatchInput):
     employer_engagement_id: uuid.UUID | None = None
     person_name: str | None = Field(default=None, min_length=1, max_length=120)
     id_type: IdType | None = None
-    id_number: str | None = Field(default=None, max_length=10)
+    id_number: str | None = Field(default=None, max_length=15)
     employee_no: str | None = Field(default=None, max_length=20)
     nationality: str | None = Field(default=None, pattern=ISO2)
     trade: Trade | None = None

@@ -689,7 +689,7 @@ export interface paths {
         };
         /**
          * Export a list as CSV or Excel
-         * @description Contains only fields the caller may read (contact columns only with capability 9/12). `project_id` is required for sites, zones, engagements and every Phase 1 register. Writes an `export` audit entry with row count and filters. Incidents: identity columns only with `include_identity=true`, capability 43 and a `purpose` (422 EXPORT_PURPOSE_REQUIRED; recorded in the audit entry, P1-6); medical attachments are never exported.
+         * @description Contains only fields the caller may read (contact columns only with capability 9/12). `project_id` is required for sites, zones, engagements and every Phase 1 register. Writes an `export` audit entry with row count and filters. Incidents: identity columns only with `include_identity=true`, capability 43 and a `purpose` (422 EXPORT_PURPOSE_REQUIRED; recorded in the audit entry, P1-6); medical attachments are never exported. Phase 2 access registers (capability 78) mask IDs; `include_identity=true` adds full ID numbers with capability 79 and a purpose (pass_office, authority_request, legal, other + purpose_text) recorded in the audit entry (P2-10); photos and ID copies are never exported; gate_log needs capability 76.
          */
         get: operations["export_dataset"];
         put?: never;
@@ -1531,7 +1531,7 @@ export interface paths {
         put?: never;
         /**
          * Upload an attachment to a record
-         * @description Images (JPEG/PNG/HEIC) or PDF, ≤ 20 MB each. Limits: observation ≤ 3 photos. `injury_case_medical` needs capability 30 and is stored in the separate encrypted bucket; it is never included in bulk exports (P1-3). Files are virus-scanned (scan_status); 422 FILE_TOO_LARGE / FILE_TYPE_NOT_ALLOWED.
+         * @description Images (JPEG/PNG/HEIC) or PDF, ≤ 20 MB each. Limits: observation ≤ 3 photos. Phase 2: `worker_photo` (owner = worker; JPEG/PNG ≤ 2 MB, ≥ 400×400, one current photo; capability 47), `pass_application_id_copy` (owner = application; capability 53 to upload, 48 to open; auto-deleted after id_copy_retention_days, P2-5), `offence_evidence` (capability 62). Phase 2 files are in the encrypted bucket with ≤ 5 min signed URLs. `injury_case_medical` needs capability 30 and is stored in the separate encrypted bucket; it is never included in bulk exports (P1-3). Files are virus-scanned (scan_status); 422 FILE_TOO_LARGE / FILE_TYPE_NOT_ALLOWED.
          */
         post: operations["upload_attachment"];
         delete?: never;
@@ -1859,7 +1859,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Dashboard chart C1-C9 as a renderer-agnostic ChartSpec
+         * Dashboard chart C1-C12 as a renderer-agnostic ChartSpec
          * @description Common filters (all /kpi endpoints): `project_id` (repeatable) or `all_projects`, `site_id`, `zone_id`, `zone_type`, `engagement_id` (+ `include_subcontractors`, default true), `tier`, `period` (+ `anchor` or `start`/`end` for custom), `as_of`, `compare`. Role scope is applied first (D-3): a narrower scope is reported in `context.filters.scope_narrowed`. Capability 38. C7 needs `dimension` (and optional `measure`, default injury_cases). Monthly charts cover the 12 months ending at the period end.
          */
         get: operations["get_chart"];
@@ -1883,6 +1883,26 @@ export interface paths {
          * @description Common filters (all /kpi endpoints): `project_id` (repeatable) or `all_projects`, `site_id`, `zone_id`, `zone_type`, `engagement_id` (+ `include_subcontractors`, default true), `tier`, `period` (+ `anchor` or `start`/`end` for custom), `as_of`, `compare`. Role scope is applied first (D-3): a narrower scope is reported in `context.filters.scope_narrowed`. Capability 38.
          */
         get: operations["export_kpi_table"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/kpi/access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Access KPIs K-38, K-48…K-60, K-53b with breakdowns (2-access-permits §6.8)
+         * @description Common filters (all /kpi endpoints): `project_id` (repeatable) or `all_projects`, `site_id`, `zone_id`, `zone_type`, `engagement_id` (+ `include_subcontractors`, default true), `tier`, `period` (+ `anchor` or `start`/`end` for custom), `as_of`, `compare`. Role scope is applied first (D-3): a narrower scope is reported in `context.filters.scope_narrowed`. Capability 38. Plus `gate_id` (gate KPIs only). Capability 77; Viewer/Client get aggregates only (KA-4). `group_by` adds breakdown tables: K-51 by kind, K-53 by reason code (first DENY reason), contractor, zone, gate or month.
+         */
+        get: operations["get_access_kpis"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2125,6 +2145,1645 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List workers in scope (capability 46; IDs masked)
+         * @description Org-wide register filtered to workers with a deployment in the caller's scope (WK-11). `q` matches name or worker_no only — never the ID number (WK-3; use POST /workers/lookup). With `project_id` each item carries that project's deployment.
+         */
+        get: operations["list_workers"];
+        put?: never;
+        /** Create a worker, optionally with the first deployment (capability 47) */
+        post: operations["create_worker"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workers/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Find a worker by full ID number (exact match through the blind index, WK-3)
+         * @description POST so the ID number never appears in URLs or access logs. Returns 0 or 1 item in the caller's scope.
+         */
+        post: operations["lookup_worker"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workers/{worker_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a worker (masked ID) */
+        get: operations["get_worker"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edit a worker (capability 47; ID change kept in encrypted history, WK-9) */
+        patch: operations["update_worker"];
+        trace?: never;
+    };
+    "/api/v1/workers/{worker_id}/transitions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ban / lift ban (capability 49; ban cascades LC-9) */
+        post: operations["transition_worker"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workers/{worker_id}/id-number/unmask": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reveal the full ID number with a reason (capability 48; audited, WK-5)
+         * @description Writes `sensitive_field_read` (field id_number, reason). Show the value only on demand and do not cache it.
+         */
+        post: operations["unmask_worker_id"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workers/{worker_id}/data-report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Per-worker data report for a data-subject request (capability 79, P2-11) */
+        post: operations["worker_data_report"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/deployments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List deployments of a project (capability 46) */
+        get: operations["list_deployments"];
+        put?: never;
+        /** Deploy an existing worker on the project (capability 47) → pending_induction */
+        post: operations["create_deployment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/deployments/{deployment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a deployment with induction and credential badges */
+        get: operations["get_deployment"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edit a deployment (capability 47) */
+        patch: operations["update_deployment"];
+        trace?: never;
+    };
+    "/api/v1/deployments/{deployment_id}/transitions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Demobilise (capability 47; cascades LC-10) */
+        post: operations["transition_deployment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/deployments/{deployment_id}/access-card": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Access card QR payload to print (capability 47; mobilised deployments only)
+         * @description 409 TRANSITION_CONDITION_NOT_MET while pending_induction (no token yet, IN-1).
+         */
+        get: operations["get_access_card"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/deployments/{deployment_id}/access-card/reissue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reissue the access card: rotate the token (capability 47; GC-16) */
+        post: operations["reissue_access_card"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/induction-courses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Induction courses of a project */
+        get: operations["list_induction_courses"];
+        put?: never;
+        /** Create an induction course (capability 50) */
+        post: operations["create_induction_course"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/induction-courses/{course_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an induction course */
+        get: operations["get_induction_course"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edit an induction course (capability 50) */
+        patch: operations["update_induction_course"];
+        trace?: never;
+    };
+    "/api/v1/induction-courses/{course_id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Publish a new course version (capability 50; IN-9 re-induction) */
+        post: operations["publish_induction_course_version"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/inductions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Induction register (capability 46 in scope) */
+        get: operations["list_inductions"];
+        put?: never;
+        /** Record an induction attendance/result (capability 51) */
+        post: operations["create_induction"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/induction-sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record a whole session (several attendees) in one call (capability 51) */
+        post: operations["create_induction_session"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/induction-retraining-notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record a re-training note after the attempt limit (HSE Officer, IN-5) */
+        post: operations["create_induction_retraining_note"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inductions/{induction_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an induction record */
+        get: operations["get_induction"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Correct an induction record (after 24 h HSE Manager with reason, IN-11) */
+        patch: operations["update_induction"];
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/zone-access-profiles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Access profiles of every zone of a project */
+        get: operations["list_zone_access_profiles"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/zones/{zone_id}/access-profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Access profile of a zone (defaults per ZP-1) */
+        get: operations["get_zone_access_profile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Tighten a zone access profile (capability 81; ZP-2 PROFILE_LOOSENING) */
+        patch: operations["update_zone_access_profile"];
+        trace?: never;
+    };
+    "/api/v1/workers/{worker_id}/eligibility": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Evaluate E(worker, zone, at, context) (ZP-3/ZP-4)
+         * @description Read-only. context `check` (default) skips the WAP step; `gate` includes it. Hook items under `warn` policy come back as status warn / HOOK_NOT_AVAILABLE.
+         */
+        get: operations["get_worker_eligibility"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/hook-providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Phase 3/4/5/6 hook providers and the project's policy per kind (HK-3, HK-4) */
+        get: operations["list_hook_providers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/airport-pass-categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Pass categories (AP-CAT) of an airport project */
+        get: operations["list_pass_categories"];
+        put?: never;
+        /** Add a pass category (capability 80) */
+        post: operations["create_pass_category"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/airport-pass-categories/{category_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edit a pass category (capability 80; code immutable) */
+        patch: operations["update_pass_category"];
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/airport-pass-areas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Pass area codes (AP-AREA) of an airport project */
+        get: operations["list_pass_areas"];
+        put?: never;
+        /** Add a pass area code (capability 80) */
+        post: operations["create_pass_area"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/airport-pass-areas/{area_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edit a pass area code (capability 80; code immutable) */
+        patch: operations["update_pass_area"];
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/pass-applications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Pass application tracker (status ageing)
+         * @description background_check / outcome_note keys only with capability 56 (AP-13).
+         */
+        get: operations["list_pass_applications"];
+        put?: never;
+        /** Create a pass application (capability 53) → draft */
+        post: operations["create_pass_application"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pass-applications/{application_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a pass application (background status audited for capability 56) */
+        get: operations["get_pass_application"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edit a draft application (capability 53) */
+        patch: operations["update_pass_application"];
+        trace?: never;
+    };
+    "/api/v1/pass-applications/{application_id}/transitions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Move an application through §4.4 (submit, return, endorse, lodge, decide, …) */
+        post: operations["transition_pass_application"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pass-applications/{application_id}/background-check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Record the background-check status and date (capabilities 55 + 56) */
+        put: operations["put_background_check"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pass-applications/{application_id}/issue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record the issued pass: approved → issued (capability 55; AP-9, AP-11) */
+        post: operations["issue_airport_pass"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/airport-passes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Airport pass register with effective validity and limiting factor */
+        get: operations["list_airport_passes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/airport-passes/{pass_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an airport pass */
+        get: operations["get_airport_pass"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/adps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** ADP register */
+        get: operations["list_adps"];
+        put?: never;
+        /** Apply for an ADP (capability 60) → pending */
+        post: operations["create_adp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/adps/{adp_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an ADP with points (§6.5) and validity */
+        get: operations["get_adp"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edit a pending ADP: licence data (60), tests (61) */
+        patch: operations["update_adp"];
+        trace?: never;
+    };
+    "/api/v1/adps/{adp_id}/issue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Issue the ADP: pending → active (capability 61; DP-3…DP-6) */
+        post: operations["issue_adp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/adps/{adp_id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Withdraw a pending ADP application (capability 60) */
+        post: operations["withdraw_adp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/airside-offences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Airside driving offence register */
+        get: operations["list_offences"];
+        put?: never;
+        /** Record an airside driving offence (capability 62; DP-8, DP-9) */
+        post: operations["create_offence"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/airside-offences/{offence_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an offence */
+        get: operations["get_offence"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/airside-offences/{offence_id}/transitions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Dispute / uphold / withdraw an offence (capability 58; DP-10) */
+        post: operations["transition_offence"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/vehicles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Vehicle / mobile plant register */
+        get: operations["list_vehicles"];
+        put?: never;
+        /** Register a vehicle (capability 63) */
+        post: operations["create_vehicle"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vehicles/{vehicle_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a vehicle */
+        get: operations["get_vehicle"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edit a vehicle (capability 63; later document expiry auto-reinstates, VP-5) */
+        patch: operations["update_vehicle"];
+        trace?: never;
+    };
+    "/api/v1/vehicles/{vehicle_id}/transitions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Set vehicle status active / off_site / withdrawn (capability 63) */
+        post: operations["transition_vehicle"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/avps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** AVP register */
+        get: operations["list_avps"];
+        put?: never;
+        /** Apply for an AVP (capability 63) → pending */
+        post: operations["create_avp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/avps/{avp_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an AVP */
+        get: operations["get_avp"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Record inspection and checklist on a pending AVP (capability 64) */
+        patch: operations["update_avp"];
+        trace?: never;
+    };
+    "/api/v1/avps/{avp_id}/issue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Issue the AVP: pending → active (capability 64; VP-3/VP-4) */
+        post: operations["issue_avp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/avps/{avp_id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Withdraw a pending AVP application (capability 63) */
+        post: operations["withdraw_avp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/avps/{avp_id}/sticker": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** AVP sticker QR payload to print (capability 64; active AVPs) */
+        get: operations["get_avp_sticker"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/avps/{avp_id}/sticker/reissue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reissue the sticker: rotate the token (capability 64; GC-16) */
+        post: operations["reissue_avp_sticker"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/notam-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** NOTAM log (capability 73) */
+        get: operations["list_notam_requests"];
+        put?: never;
+        /** Create a NOTAM works request (capability 69) → draft */
+        post: operations["create_notam_request"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notam-requests/{ntm_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a NOTAM works record */
+        get: operations["get_notam_request"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edit a draft NOTAM request (capability 69) */
+        patch: operations["update_notam_request"];
+        trace?: never;
+    };
+    "/api/v1/notam-requests/{ntm_id}/transitions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Move a NOTAM record through §4.6 (submit, request, issue, reject, cancel) */
+        post: operations["transition_notam_request"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notam-requests/{ntm_id}/replace": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record a NOTAMR: issued → replaced, new Issued record (capability 70) */
+        post: operations["replace_notam_request"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/obstacle-clearances": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Obstacle clearance register with heights in m and ft (capability 73) */
+        get: operations["list_obstacle_clearances"];
+        put?: never;
+        /** Create an obstacle/crane clearance (capability 71; any project, OB-1) → draft */
+        post: operations["create_obstacle_clearance"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/obstacle-clearances/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Compute heights, margin, penetration and reasons without saving (§6.4, OB-3) */
+        post: operations["preview_obstacle_clearance"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/obstacle-clearances/{obs_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an obstacle clearance */
+        get: operations["get_obstacle_clearance"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edit a draft obstacle clearance (capability 71) */
+        patch: operations["update_obstacle_clearance"];
+        trace?: never;
+    };
+    "/api/v1/obstacle-clearances/{obs_id}/transitions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit / suspend / restore / withdraw (§4.7) */
+        post: operations["transition_obstacle_clearance"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/obstacle-clearances/{obs_id}/decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record the GACA/operator decision (capability 72; OB-4) */
+        post: operations["decide_obstacle_clearance"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/waps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** WAP register (capability 73; crew names only with capability 46, WA-19) */
+        get: operations["list_waps"];
+        put?: never;
+        /** Create a WAP (capability 65) → draft */
+        post: operations["create_wap"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/wap-board": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Today's WAP board per zone (crew counts, windows, NOTAM, clearance) */
+        get: operations["get_wap_board"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/waps/{wap_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a WAP with live blockers (WA-13) */
+        get: operations["get_wap"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edit a draft WAP (capability 65) */
+        patch: operations["update_wap"];
+        trace?: never;
+    };
+    "/api/v1/waps/{wap_id}/transitions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Move a WAP through §4.8 (submit, return, approve, reject, suspend, resume, close, cancel) */
+        post: operations["transition_wap"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/waps/{wap_id}/revisions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Amend zones/dates/windows/links of an Approved/Active WAP → revision (WA-14) */
+        post: operations["create_wap_revision"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/waps/{wap_id}/crew": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add a crew member (capability 65; effective once evaluated, WA-14) */
+        post: operations["add_wap_crew"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/waps/{wap_id}/crew/{worker_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove a crew member (capability 65; history kept as status removed) */
+        delete: operations["remove_wap_crew"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/waps/{wap_id}/vehicles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add a vehicle (capability 65) */
+        post: operations["add_wap_vehicle"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/waps/{wap_id}/vehicles/{vehicle_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove a vehicle (capability 65) */
+        delete: operations["remove_wap_vehicle"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/waps/{wap_id}/print": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** WAP print with QR (crew names and worker_no only, WA-18) */
+        get: operations["get_wap_print"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/ops-events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Operational suspension log (capability 73) */
+        get: operations["list_ops_events"];
+        put?: never;
+        /** Declare an operational suspension (capability 67; WA-15 suspends WAPs) */
+        post: operations["create_ops_event"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ops-events/{event_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an operational suspension event */
+        get: operations["get_ops_event"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Add zones to an active event (capability 67; defaults cannot be removed) */
+        patch: operations["update_ops_event"];
+        trace?: never;
+    };
+    "/api/v1/ops-events/{event_id}/end": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** End the event (capability 67; WAPs stay suspended until resumed) */
+        post: operations["end_ops_event"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/credentials/{kind}/{credential_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Validity, custody, open suspensions and recent events of a credential */
+        get: operations["get_credential_state"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/credentials/{kind}/{credential_id}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Full §3.18 status-event log of a credential */
+        get: operations["list_credential_events"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/credentials/{kind}/{credential_id}/suspend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Suspend: raise (capability 57, ≤ raised_suspension_max_hours) or confirmed (58) */
+        post: operations["suspend_credential"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/credentials/{kind}/{credential_id}/confirm-suspension": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm a raised suspension (capability 58; inductions 52) */
+        post: operations["confirm_credential_suspension"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/credentials/{kind}/{credential_id}/reinstate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Lift manual suspensions (capability 58; DP-8 after suspension_end) */
+        post: operations["reinstate_credential"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/credentials/{kind}/{credential_id}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revoke (terminal; capability 58, inductions 52; custody → return due) */
+        post: operations["revoke_credential"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/credentials/{kind}/{credential_id}/return": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record the physical return (capability 59; LC-11) */
+        post: operations["return_credential"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/credentials/{kind}/{credential_id}/loss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Report loss/theft (capability 59; rotates/revokes the token, LC-12) */
+        post: operations["report_credential_loss"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/credentials/{kind}/{credential_id}/authority-notified": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record when the pass office was told about a loss (capability 59) */
+        post: operations["record_authority_notified"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/gates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Gates of a project with their devices */
+        get: operations["list_gates"];
+        put?: never;
+        /** Register a gate (capability 75) */
+        post: operations["create_gate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gates/{gate_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a gate */
+        get: operations["get_gate"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edit a gate (capability 75) */
+        patch: operations["update_gate"];
+        trace?: never;
+    };
+    "/api/v1/gates/{gate_id}/devices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Register a gate device; returns its device token once (capability 75) */
+        post: operations["register_gate_device"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gates/{gate_id}/devices/{device_pk}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revoke a gate device and end its sessions (capability 75) */
+        post: operations["revoke_gate_device"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate-device/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start a gate-device session with the device token (no user login)
+         * @description Sets the httpOnly cookie `hse_gate_session` and returns the same token for `Authorization: Bearer`. The session can only call /gate-checks/* (any other endpoint → 403 GATE_DEVICE_FORBIDDEN); 12 h idle timeout; revoked with the device (401 GATE_DEVICE_REVOKED).
+         */
+        post: operations["gate_device_login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate-device/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** End the gate-device session */
+        post: operations["gate_device_logout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate-checks/context": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Gates the caller may scan at (device: its own gate) and screen timings */
+        get: operations["get_gate_context"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate-checks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Scan a QR (or typed printed ref) at a gate and get the verdict (GC-2…GC-13)
+         * @description Every call writes an immutable gate-log row (GC-12). Rate limit 120/min per device or user (429 GATE_RATE_LIMITED). Lost/revoked/rotated tokens return DENIED CREDENTIAL_LOST / CREDENTIAL_REVOKED and alert the HSE Officer (LC-12).
+         */
+        post: operations["gate_check"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate-checks/pairings/{pairing_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Poll a pending escort/driver/escort-vehicle pairing (finalises on timeout) */
+        get: operations["get_gate_pairing"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate-checks/pairings/{pairing_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel a pending pairing (the started subject is DENIED ESCORT_REQUIRED etc.) */
+        post: operations["cancel_gate_pairing"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gate-checks/{check_id}/admitted-despite-denial": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record that a DENIED subject was admitted anyway (GC-14; alerts immediately) */
+        post: operations["record_admitted_despite_denial"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/gate-log": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Gate-check log (capability 76)
+         * @description Never exposed as a time-and-attendance export (P2-8). Action-panel links use `reason_code=CREDENTIAL_LOST&reason_code=CREDENTIAL_REVOKED` or `admitted_despite_denial=true` with `since`.
+         */
+        get: operations["list_gate_log"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/access-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Phase 2 settings, hook policy and hook-requirement maps of a project */
+        get: operations["get_access_settings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Phase 2 settings (HSE Manager, capability 80; audited) */
+        patch: operations["update_access_settings"];
+        trace?: never;
+    };
     "/api/v1/privacy-notice": {
         parameters: {
             query?: never;
@@ -2160,6 +3819,400 @@ export interface components {
              */
             message: string;
         };
+        /**
+         * AccessBand
+         * @description 2-access-permits §8.1 item 2 (airport projects). Counts at as_of; aggregates only
+         *     (KA-4).
+         */
+        AccessBand: {
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /** @description K-48. */
+            active_deployed_workers: components["schemas"]["KpiValue"];
+            /** Active Passes */
+            active_passes: number;
+            /** Active Adps */
+            active_adps: number;
+            /** Active Avps */
+            active_avps: number;
+            /** Active Waps Now */
+            active_waps_now: number;
+            /**
+             * Active Obstacle Clearances
+             * @description K-60 active part.
+             */
+            active_obstacle_clearances: number;
+            /** Ops Suspension In Force */
+            ops_suspension_in_force: boolean;
+            /** Ops Suspension Zones */
+            ops_suspension_zones: components["schemas"]["ZoneRef"][];
+        };
+        /** AccessBreakdown */
+        AccessBreakdown: {
+            /**
+             * Metric
+             * @example K-53
+             */
+            metric: string;
+            group_by: components["schemas"]["AccessKpiGroupBy"];
+            /** Rows */
+            rows: components["schemas"]["AccessBreakdownRow"][];
+        };
+        /** AccessBreakdownRow */
+        AccessBreakdownRow: {
+            /**
+             * Key
+             * @example INDUCTION_EXPIRED
+             * @example 2026-09
+             * @example GULFPAVE
+             */
+            key: string;
+            /** Label En */
+            label_en: string;
+            /** Label Ar */
+            label_ar: string;
+            /** Value */
+            value: string | null;
+            /** Display */
+            display: string;
+            /** Numerator */
+            numerator?: string | null;
+            /** Denominator */
+            denominator?: string | null;
+        };
+        /**
+         * AccessCardRead
+         * @description Access card to print (capability 47). The token is opaque; no personal data in the QR.
+         */
+        AccessCardRead: {
+            /**
+             * Deployment Id
+             * Format: uuid
+             */
+            deployment_id: string;
+            /** Worker No */
+            worker_no: string;
+            /** Full Name En */
+            full_name_en: string;
+            /** Full Name Ar */
+            full_name_ar: string;
+            /** Employer Short Code */
+            employer_short_code: string | null;
+            /** Photo Attachment Id */
+            photo_attachment_id: string | null;
+            /**
+             * Qr Payload
+             * @description `HSE2:<AC|VS|WP>:<22-char base64url token>` — no name, ID or other personal data (§3.20). Encode as a QR code; print `printed_ref` beside it for manual fallback.
+             * @example HSE2:AC:q8Xb2mJf0Q9nZr4tYc1wKA
+             */
+            qr_payload: string;
+            /**
+             * Printed Ref
+             * @example WKR-000002 / ANIA-EXP
+             */
+            printed_ref: string;
+            /**
+             * Issued On
+             * Format: date
+             */
+            issued_on: string;
+            /** Reissue Count */
+            reissue_count: number;
+            token_status: components["schemas"]["QrTokenStatus"];
+        };
+        /**
+         * AccessCardReissueReason
+         * @enum {string}
+         */
+        AccessCardReissueReason: "lost" | "damaged" | "other";
+        /**
+         * AccessCardReissueRequest
+         * @description Rotates the token (old one → `rotated`; scans of it return CREDENTIAL_REVOKED or, for a
+         *     loss, CREDENTIAL_LOST — GC-16, LC-12). Loss reports go through
+         *     POST /credentials/access_card/{deployment_id}/loss.
+         */
+        AccessCardReissueRequest: {
+            reason: components["schemas"]["AccessCardReissueReason"];
+            /** Reason Text */
+            reason_text?: string | null;
+        };
+        /** AccessCardSummary */
+        AccessCardSummary: {
+            /** Issued On */
+            issued_on: string | null;
+            /** Reissue Count */
+            reissue_count: number;
+            /** @description Null until the first issue (IN-1). */
+            token_status: components["schemas"]["QrTokenStatus"] | null;
+        };
+        /**
+         * AccessKpiGroupBy
+         * @description T14 group_by (1-dashboard v1.1 §5.9).
+         * @enum {string}
+         */
+        AccessKpiGroupBy: "kind" | "reason_code" | "contractor" | "zone" | "gate" | "month";
+        /**
+         * AccessKpiResponse
+         * @description GET /kpi/access: the access KPI page (K-38, K-48…K-60, K-53b) for the /kpi filters plus
+         *     `gate_id`. Viewer/Client receive the same aggregates (no names, worker_no or plates).
+         */
+        AccessKpiResponse: {
+            context: components["schemas"]["KpiContext"];
+            /** @description Null on non-airport projects. */
+            band: components["schemas"]["AccessBand"] | null;
+            /** Metrics */
+            metrics: components["schemas"]["KpiValue"][];
+            /** Breakdowns */
+            breakdowns: components["schemas"]["AccessBreakdown"][];
+        };
+        /**
+         * AccessSettingsRead
+         * @description Every key of §3.22 (except induction_register_from, which is a Phase 1 setting on
+         *     /projects/{id}/hse-settings, 1-dashboard v1.1).
+         */
+        AccessSettingsRead: {
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Induction Pass Mark Pct */
+            induction_pass_mark_pct: number;
+            /** Induction Retest Wait Hours */
+            induction_retest_wait_hours: number;
+            /** Induction Max Attempts 30D */
+            induction_max_attempts_30d: number;
+            /** Reinduction Absence Days */
+            reinduction_absence_days: number | null;
+            /** Reinduction Grace Days */
+            reinduction_grace_days: number;
+            /** Id Expiry Blocks Access */
+            id_expiry_blocks_access: boolean;
+            /** Pass Max Validity Months */
+            pass_max_validity_months: number;
+            /** Temp Escorted Pass Max Days */
+            temp_escorted_pass_max_days: number;
+            /** Visitor Pass Max Days */
+            visitor_pass_max_days: number;
+            /** Bg Recheck Months */
+            bg_recheck_months: number;
+            /** Application Stale Days */
+            application_stale_days: number;
+            /** Id Copy Retention Days */
+            id_copy_retention_days: number;
+            /** Pass Return Days */
+            pass_return_days: number;
+            /** Lost Report Hours */
+            lost_report_hours: number;
+            /** Escort Ratio Max Apron */
+            escort_ratio_max_apron: number;
+            /** Escort Ratio Max Manoeuvring */
+            escort_ratio_max_manoeuvring: number;
+            /** Escort Ratio Max Other */
+            escort_ratio_max_other: number;
+            /** Vehicle Escort Ratio Max Apron */
+            vehicle_escort_ratio_max_apron: number;
+            /** Vehicle Escort Ratio Max Manoeuvring */
+            vehicle_escort_ratio_max_manoeuvring: number;
+            /** Escort Pairing Seconds */
+            escort_pairing_seconds: number;
+            /** Adp Validity Months */
+            adp_validity_months: number;
+            /** Adp Theory Pass Pct */
+            adp_theory_pass_pct: number;
+            /** Adp Points Threshold */
+            adp_points_threshold: number;
+            /** Adp Points Window Days */
+            adp_points_window_days: number;
+            /** Adp Suspension Days */
+            adp_suspension_days: number;
+            /** Adp Revoke After Suspensions */
+            adp_revoke_after_suspensions: number;
+            /** Adp Revoke After Suspensions Window Days */
+            adp_revoke_after_suspensions_window_days: number;
+            /** Avp Validity Months */
+            avp_validity_months: number;
+            /** Wap Max Days */
+            wap_max_days: number;
+            /** Wap Exit Grace Minutes */
+            wap_exit_grace_minutes: number;
+            /** Notam Request Lead Days */
+            notam_request_lead_days: number;
+            /** Airac Lead Days */
+            airac_lead_days: number;
+            /** Obstacle Clearance Lead Days */
+            obstacle_clearance_lead_days: number;
+            /**
+             * Obstacle Height Threshold M
+             * @description Decimal number serialised as a string (exact, no float rounding).
+             */
+            obstacle_height_threshold_m: string;
+            /**
+             * Ols Buffer M
+             * @description Decimal number serialised as a string (exact, no float rounding).
+             */
+            ols_buffer_m: string;
+            /** Raised Suspension Max Hours */
+            raised_suspension_max_hours: number;
+            suspended_contractor_gate: components["schemas"]["SuspendedContractorGateMode"];
+            /** Hook Policy */
+            hook_policy: {
+                [key: string]: components["schemas"]["HookPolicy"];
+            };
+            /** Hook Providers */
+            hook_providers: components["schemas"]["HookProviderInfo"][];
+            /** Alert Schedule Long Days */
+            alert_schedule_long_days: number[];
+            /** Alert Schedule Short Hours */
+            alert_schedule_short_hours: number[];
+            /** Gate Log Retention Months */
+            gate_log_retention_months: number;
+            /** Worker Retention Years */
+            worker_retention_years: number;
+            /** Induction Coverage Warning Pct */
+            induction_coverage_warning_pct: number;
+            /**
+             * Hook Requirements By Adp Category
+             * @description HK-2, e.g. manoeuvring → training_course AIRSIDE-DRV.
+             */
+            hook_requirements_by_adp_category: {
+                [key: string]: components["schemas"]["HookRequirementRead"][];
+            };
+            /**
+             * Hook Requirements By Vehicle Category
+             * @description HK-2, e.g. mobile_crane → equipment_certificate CRANE-TPI.
+             */
+            hook_requirements_by_vehicle_category: {
+                [key: string]: components["schemas"]["HookRequirementRead"][];
+            };
+            /**
+             * Hook Requirements By Crew Role
+             * @description HK-2, e.g. banksman → personnel_certificate BANKSMAN.
+             */
+            hook_requirements_by_crew_role: {
+                [key: string]: components["schemas"]["HookRequirementRead"][];
+            };
+            /** Updated At */
+            updated_at: string | null;
+            updated_by: components["schemas"]["UserRef"] | null;
+        };
+        /**
+         * AccessSettingsUpdate
+         * @description Partial update (capability 80, audited). Ranges per §3.22. Switching a hook kind to
+         *     `block` without a registered provider → 422 HOOK_PROVIDER_MISSING (HK-4).
+         */
+        AccessSettingsUpdate: {
+            /** Induction Pass Mark Pct */
+            induction_pass_mark_pct?: number | null;
+            /** Induction Retest Wait Hours */
+            induction_retest_wait_hours?: number | null;
+            /** Induction Max Attempts 30D */
+            induction_max_attempts_30d?: number | null;
+            /**
+             * Reinduction Absence Days
+             * @description null = off.
+             */
+            reinduction_absence_days?: number | null;
+            /** Reinduction Grace Days */
+            reinduction_grace_days?: number | null;
+            /** Id Expiry Blocks Access */
+            id_expiry_blocks_access?: boolean | null;
+            /** Pass Max Validity Months */
+            pass_max_validity_months?: number | null;
+            /** Temp Escorted Pass Max Days */
+            temp_escorted_pass_max_days?: number | null;
+            /** Visitor Pass Max Days */
+            visitor_pass_max_days?: number | null;
+            /** Bg Recheck Months */
+            bg_recheck_months?: number | null;
+            /** Application Stale Days */
+            application_stale_days?: number | null;
+            /** Id Copy Retention Days */
+            id_copy_retention_days?: number | null;
+            /** Pass Return Days */
+            pass_return_days?: number | null;
+            /** Lost Report Hours */
+            lost_report_hours?: number | null;
+            /** Escort Ratio Max Apron */
+            escort_ratio_max_apron?: number | null;
+            /** Escort Ratio Max Manoeuvring */
+            escort_ratio_max_manoeuvring?: number | null;
+            /** Escort Ratio Max Other */
+            escort_ratio_max_other?: number | null;
+            /** Vehicle Escort Ratio Max Apron */
+            vehicle_escort_ratio_max_apron?: number | null;
+            /** Vehicle Escort Ratio Max Manoeuvring */
+            vehicle_escort_ratio_max_manoeuvring?: number | null;
+            /** Escort Pairing Seconds */
+            escort_pairing_seconds?: number | null;
+            /** Adp Validity Months */
+            adp_validity_months?: number | null;
+            /** Adp Theory Pass Pct */
+            adp_theory_pass_pct?: number | null;
+            /** Adp Points Threshold */
+            adp_points_threshold?: number | null;
+            /** Adp Points Window Days */
+            adp_points_window_days?: number | null;
+            /** Adp Suspension Days */
+            adp_suspension_days?: number | null;
+            /** Adp Revoke After Suspensions */
+            adp_revoke_after_suspensions?: number | null;
+            /** Adp Revoke After Suspensions Window Days */
+            adp_revoke_after_suspensions_window_days?: number | null;
+            /** Avp Validity Months */
+            avp_validity_months?: number | null;
+            /** Wap Max Days */
+            wap_max_days?: number | null;
+            /** Wap Exit Grace Minutes */
+            wap_exit_grace_minutes?: number | null;
+            /** Notam Request Lead Days */
+            notam_request_lead_days?: number | null;
+            /** Airac Lead Days */
+            airac_lead_days?: number | null;
+            /** Obstacle Clearance Lead Days */
+            obstacle_clearance_lead_days?: number | null;
+            /** Obstacle Height Threshold M */
+            obstacle_height_threshold_m?: number | string | null;
+            /** Ols Buffer M */
+            ols_buffer_m?: number | string | null;
+            /** Raised Suspension Max Hours */
+            raised_suspension_max_hours?: number | null;
+            suspended_contractor_gate?: components["schemas"]["SuspendedContractorGateMode"] | null;
+            /** Hook Policy */
+            hook_policy?: {
+                [key: string]: components["schemas"]["HookPolicy"];
+            } | null;
+            /** Alert Schedule Long Days */
+            alert_schedule_long_days?: number[] | null;
+            /** Alert Schedule Short Hours */
+            alert_schedule_short_hours?: number[] | null;
+            /** Gate Log Retention Months */
+            gate_log_retention_months?: number | null;
+            /** Worker Retention Years */
+            worker_retention_years?: number | null;
+            /** Induction Coverage Warning Pct */
+            induction_coverage_warning_pct?: number | null;
+            /** Hook Requirements By Adp Category */
+            hook_requirements_by_adp_category?: {
+                [key: string]: components["schemas"]["HookRequirement"][];
+            } | null;
+            /** Hook Requirements By Vehicle Category */
+            hook_requirements_by_vehicle_category?: {
+                [key: string]: components["schemas"]["HookRequirement"][];
+            } | null;
+            /** Hook Requirements By Crew Role */
+            hook_requirements_by_crew_role?: {
+                [key: string]: components["schemas"]["HookRequirement"][];
+            } | null;
+        };
         /** ActionPanelBreakdown */
         ActionPanelBreakdown: {
             engagement: components["schemas"]["EngagementRef"];
@@ -2186,7 +4239,7 @@ export interface components {
          * @description §8.1 item 6.
          * @enum {string}
          */
-        ActionPanelItem: "overdue_cas" | "cas_pending_verification" | "investigations_overdue" | "incidents_unclassified" | "external_notifications_due" | "open_lti_cases" | "missed_inspections" | "missing_daily_returns" | "high_risk_observations_without_ca" | "leading_warnings";
+        ActionPanelItem: "overdue_cas" | "cas_pending_verification" | "investigations_overdue" | "incidents_unclassified" | "external_notifications_due" | "open_lti_cases" | "missed_inspections" | "missing_daily_returns" | "high_risk_observations_without_ca" | "leading_warnings" | "pass_applications_stale" | "raised_suspensions_pending" | "unreturned_overdue" | "lost_without_authority_notice" | "waps_approved_blocked" | "ops_suspensions_active" | "notam_not_issued_48h" | "revoked_token_scans" | "admitted_despite_denial" | "induction_language_mismatch";
         /**
          * ActionPanelResponse
          * @description §8.1 item 6. `overdue_cas.count` equals K-42 for the same filters (AC64).
@@ -2210,6 +4263,209 @@ export interface components {
          * @enum {string}
          */
         Activity: "excavation" | "concrete" | "formwork" | "rebar" | "steel_erection" | "scaffolding" | "lifting" | "work_at_height" | "electrical" | "mep_installation" | "hot_work" | "paving_asphalt" | "airfield_lighting" | "road_works" | "demolition" | "driving_transport" | "material_handling" | "housekeeping" | "survey" | "testing_commissioning" | "maintenance" | "other";
+        /**
+         * AdmittedDespiteDenialRequest
+         * @description GC-14: no override exists; the guard records that a DENIED subject was admitted. Alerts
+         *     the HSE Officer and HSE Manager immediately; counts in K-53b.
+         */
+        AdmittedDespiteDenialRequest: {
+            /** Reason */
+            reason: string;
+        };
+        /**
+         * AdpCreate
+         * @description Apply for an ADP (capability 60) → validity_status pending. One Active ADP per worker per
+         *     project (409 ADP_EXISTS, DP-2). Licence number is not stored (minimisation).
+         */
+        AdpCreate: {
+            /**
+             * Deployment Id
+             * Format: uuid
+             */
+            deployment_id: string;
+            category: components["schemas"]["AreaCategory"];
+            /** Vehicle Classes */
+            vehicle_classes: components["schemas"]["VehicleClass"][];
+            licence_issuer: components["schemas"]["LicenceIssuer"];
+            licence_class: components["schemas"]["LicenceClass"];
+            /**
+             * Licence Expiry Date
+             * Format: date
+             */
+            licence_expiry_date: string;
+        };
+        /**
+         * AdpIssueRequest
+         * @description pending → active (capability 61). Checks DP-3 (ADP_PASS_REQUIRED), DP-4
+         *     (LICENCE_NOT_VALID), DP-5 (RTF_REQUIRED), DP-6 (TESTS_NOT_VALID: theory ≥
+         *     adp_theory_pass_pct and practical passed, both ≤ 90 days before issued_on);
+         *     own_valid_until ≤ issued_on + adp_validity_months.
+         */
+        AdpIssueRequest: {
+            /**
+             * Adp No
+             * @example ADP-OEXX-26-0042
+             */
+            adp_no: string;
+            /**
+             * Issued On
+             * Format: date
+             */
+            issued_on: string;
+            /**
+             * Own Valid Until
+             * Format: date
+             */
+            own_valid_until: string;
+        };
+        /** AdpPage */
+        AdpPage: {
+            /** Items */
+            items: components["schemas"]["AdpRead"][];
+            /**
+             * Total
+             * @description Total number of matching items across all pages.
+             */
+            total: number;
+            /**
+             * Page
+             * @description 1-based page number.
+             */
+            page: number;
+            /**
+             * Page Size
+             * @description Items per page (max 200).
+             */
+            page_size: number;
+        };
+        /**
+         * AdpPoints
+         * @description §6.5: Σ points of recorded/upheld/disputed offences with local date in
+         *     (as_of − adp_points_window_days, as_of].
+         */
+        AdpPoints: {
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /** Points 12M */
+            points_12m: number;
+            /** Threshold */
+            threshold: number;
+            /**
+             * Window Start Exclusive
+             * Format: date
+             */
+            window_start_exclusive: string;
+            /** Offence Ids */
+            offence_ids: string[];
+        };
+        /** AdpRead */
+        AdpRead: {
+            /**
+             * Created At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            updated_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Adp No
+             * @description Null while pending.
+             */
+            adp_no: string | null;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            worker: components["schemas"]["WorkerRef"];
+            /**
+             * Deployment Id
+             * Format: uuid
+             */
+            deployment_id: string;
+            engagement: components["schemas"]["EngagementRef"] | null;
+            category: components["schemas"]["AreaCategory"];
+            /** Vehicle Classes */
+            vehicle_classes: components["schemas"]["VehicleClass"][];
+            licence_issuer: components["schemas"]["LicenceIssuer"];
+            licence_class: components["schemas"]["LicenceClass"];
+            /**
+             * Licence Expiry Date
+             * Format: date
+             */
+            licence_expiry_date: string;
+            /** Theory Test Date */
+            theory_test_date: string | null;
+            /** Theory Score Pct */
+            theory_score_pct: string | null;
+            /** Practical Test Date */
+            practical_test_date: string | null;
+            practical_result: components["schemas"]["PracticalTestResult"] | null;
+            /** Practical Examiner */
+            practical_examiner: string | null;
+            /** Practical Included Manoeuvring */
+            practical_included_manoeuvring: boolean | null;
+            /** Rtf Competence */
+            rtf_competence: boolean | null;
+            /** Issued On */
+            issued_on: string | null;
+            /** Own Valid Until */
+            own_valid_until: string | null;
+            /**
+             * Pass Id
+             * @description The pass the ADP depends on (DP-3).
+             */
+            pass_id: string | null;
+            points: components["schemas"]["AdpPoints"] | null;
+            /**
+             * Suspension Count Window
+             * @description DP-9 suspensions in the revoke window.
+             */
+            suspension_count_window: number;
+            validity: components["schemas"]["ValidityBlock"];
+        };
+        /**
+         * AdpUpdate
+         * @description Pending ADPs: licence data (60) and tests (61).
+         */
+        AdpUpdate: {
+            category?: components["schemas"]["AreaCategory"] | null;
+            /** Vehicle Classes */
+            vehicle_classes?: components["schemas"]["VehicleClass"][] | null;
+            licence_issuer?: components["schemas"]["LicenceIssuer"] | null;
+            licence_class?: components["schemas"]["LicenceClass"] | null;
+            /** Licence Expiry Date */
+            licence_expiry_date?: string | null;
+            /** Theory Test Date */
+            theory_test_date?: string | null;
+            /** Theory Score Pct */
+            theory_score_pct?: string | null;
+            /** Practical Test Date */
+            practical_test_date?: string | null;
+            practical_result?: components["schemas"]["PracticalTestResult"] | null;
+            /** Practical Examiner */
+            practical_examiner?: string | null;
+            /**
+             * Practical Included Manoeuvring
+             * @description DP-5 for manoeuvring.
+             */
+            practical_included_manoeuvring?: boolean | null;
+            /** Rtf Competence */
+            rtf_competence?: boolean | null;
+        };
         /**
          * AgeBand
          * @enum {string}
@@ -2473,7 +4729,7 @@ export interface components {
          * AiTool
          * @enum {string}
          */
-        AiTool: "get_kpis" | "get_kpi_timeseries" | "get_breakdown" | "search_incidents" | "get_incident" | "list_corrective_actions" | "list_observations_summary" | "list_inspections_summary" | "compare_groups" | "get_data_quality" | "get_lti_free" | "get_settings_and_targets" | "get_leading_warnings" | "get_expiring_items" | "propose_chart";
+        AiTool: "get_kpis" | "get_kpi_timeseries" | "get_breakdown" | "search_incidents" | "get_incident" | "list_corrective_actions" | "list_observations_summary" | "list_inspections_summary" | "compare_groups" | "get_data_quality" | "get_lti_free" | "get_settings_and_targets" | "get_leading_warnings" | "get_expiring_items" | "propose_chart" | "get_access_kpis";
         /** AiToolCallLog */
         AiToolCallLog: {
             name: components["schemas"]["AiTool"];
@@ -2529,6 +4785,91 @@ export interface components {
              * Format: date-time
              */
             recorded_at: string;
+        };
+        /** AirportPassPage */
+        AirportPassPage: {
+            /** Items */
+            items: components["schemas"]["AirportPassRead"][];
+            /**
+             * Total
+             * @description Total number of matching items across all pages.
+             */
+            total: number;
+            /**
+             * Page
+             * @description 1-based page number.
+             */
+            page: number;
+            /**
+             * Page Size
+             * @description Items per page (max 200).
+             */
+            page_size: number;
+        };
+        /**
+         * AirportPassRead
+         * @description Validity per §4.5 / §6.2; lifecycle actions via /credentials/airport_pass/{id}/…
+         */
+        AirportPassRead: {
+            /**
+             * Created At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            updated_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Pass No */
+            pass_no: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /**
+             * Application Id
+             * Format: uuid
+             */
+            application_id: string;
+            worker: components["schemas"]["WorkerRef"];
+            /**
+             * Deployment Id
+             * Format: uuid
+             */
+            deployment_id: string;
+            engagement: components["schemas"]["EngagementRef"] | null;
+            /** Pass Category */
+            pass_category: string;
+            /** Area Codes */
+            area_codes: string[];
+            card_colour: components["schemas"]["CardColour"];
+            /** Escorted */
+            escorted: boolean;
+            /**
+             * Issued On
+             * Format: date
+             */
+            issued_on: string;
+            /**
+             * Card Expiry Date
+             * Format: date
+             */
+            card_expiry_date: string;
+            validity: components["schemas"]["ValidityBlock"];
+            /**
+             * Background Recheck Due
+             * @description Sensitive (P2-1): present only for capability 56 (reads audited as sensitive_field_read); the key is absent for other callers (AP-13).
+             */
+            background_recheck_due?: string | null;
         };
         /**
          * AirsideArea
@@ -2665,7 +5006,18 @@ export interface components {
              * @description True when the caller's role scope reduced the request (D-3, AI-4).
              */
             scope_narrowed: boolean;
+            /**
+             * Gate Ids
+             * @description Gate filter (gate KPIs K-52/K-53/K-53b only).
+             */
+            gate_ids?: string[];
         };
+        /**
+         * AreaCategory
+         * @description ADP category / AVP area (DP-1 coverage: manoeuvring ⊇ apron ⊇ airside_roads).
+         * @enum {string}
+         */
+        AreaCategory: "apron" | "manoeuvring" | "airside_roads";
         /**
          * AssetType
          * @enum {string}
@@ -2680,7 +5032,7 @@ export interface components {
          * AttachmentOwner
          * @enum {string}
          */
-        AttachmentOwner: "incident" | "injury_case_medical" | "observation" | "corrective_action_evidence" | "hse_meeting_minutes";
+        AttachmentOwner: "incident" | "injury_case_medical" | "observation" | "corrective_action_evidence" | "hse_meeting_minutes" | "worker_photo" | "pass_application_id_copy" | "induction_signature" | "offence_evidence";
         /** AttachmentRead */
         AttachmentRead: {
             /**
@@ -2838,11 +5190,224 @@ export interface components {
          * @enum {string}
          */
         AuditResult: "success" | "denied" | "failed";
+        /** AuthorityNotifiedRequest */
+        AuthorityNotifiedRequest: {
+            /**
+             * Authority Notified At
+             * Format: date-time
+             */
+            authority_notified_at: string;
+        };
+        /**
+         * AvpChecklistItem
+         * @description §3.13 checklist; n.a. not allowed for amber_beacon, company_marking, fire_extinguisher,
+         *     tyres_brakes, lights (VP-4).
+         * @enum {string}
+         */
+        AvpChecklistItem: "amber_beacon" | "company_marking" | "chequered_flag_or_marking" | "radio_fitted" | "fire_extinguisher" | "spill_kit" | "fod_bin" | "tyres_brakes" | "reverse_alarm" | "lights" | "no_loose_items" | "height_marking";
+        /**
+         * AvpCreate
+         * @description Apply for an AVP (capability 63) → pending. One Active AVP per vehicle (409 AVP_EXISTS);
+         *     areas must correspond to airside sites of the owning engagement (VP-2).
+         */
+        AvpCreate: {
+            /**
+             * Vehicle Id
+             * Format: uuid
+             */
+            vehicle_id: string;
+            /** Areas */
+            areas: components["schemas"]["AreaCategory"][];
+        };
+        /**
+         * AvpIssueRequest
+         * @description pending → active (capability 64). VP-3/VP-4 → 422 AVP_PRECONDITION (inspection passed ≤
+         *     14 days, documents valid, checklist complete, n.a. not allowed for amber_beacon,
+         *     company_marking, fire_extinguisher, tyres_brakes, lights; height_marking when > 3.00 m;
+         *     manoeuvring needs radio_fitted and chequered_flag_or_marking = pass).
+         */
+        AvpIssueRequest: {
+            /**
+             * Avp No
+             * @example AVP-OEXX-26-0118
+             */
+            avp_no: string;
+            /**
+             * Sticker No
+             * @example AVP-S-0118
+             */
+            sticker_no: string;
+            /**
+             * Issued On
+             * Format: date
+             */
+            issued_on: string;
+            /**
+             * Own Valid Until
+             * Format: date
+             */
+            own_valid_until: string;
+        };
+        /** AvpPage */
+        AvpPage: {
+            /** Items */
+            items: components["schemas"]["AvpRead"][];
+            /**
+             * Total
+             * @description Total number of matching items across all pages.
+             */
+            total: number;
+            /**
+             * Page
+             * @description 1-based page number.
+             */
+            page: number;
+            /**
+             * Page Size
+             * @description Items per page (max 200).
+             */
+            page_size: number;
+        };
+        /** AvpRead */
+        AvpRead: {
+            /**
+             * Created At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            updated_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Avp No */
+            avp_no: string | null;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            vehicle: components["schemas"]["VehicleRef"];
+            engagement: components["schemas"]["EngagementRef"];
+            /** Areas */
+            areas: components["schemas"]["AreaCategory"][];
+            /** Inspection Date */
+            inspection_date: string | null;
+            /** Inspector */
+            inspector: string | null;
+            inspection_result: components["schemas"]["InspectionResult"] | null;
+            /** Checklist */
+            checklist: {
+                [key: string]: components["schemas"]["ChecklistOutcome"];
+            };
+            /**
+             * Checklist Problems
+             * @description Items blocking issue.
+             */
+            checklist_problems: components["schemas"]["AvpChecklistItem"][];
+            /** Sticker No */
+            sticker_no: string | null;
+            sticker_token_status: components["schemas"]["QrTokenStatus"] | null;
+            /** Issued On */
+            issued_on: string | null;
+            /** Own Valid Until */
+            own_valid_until: string | null;
+            validity: components["schemas"]["ValidityBlock"];
+            /**
+             * Hook Warnings
+             * @description Equipment-certificate hook results (VP-6), e.g. 'CRANE-TPI: warn'.
+             */
+            hook_warnings: string[];
+        };
+        /** AvpStickerRead */
+        AvpStickerRead: {
+            /**
+             * Avp Id
+             * Format: uuid
+             */
+            avp_id: string;
+            /** Avp No */
+            avp_no: string;
+            /** Sticker No */
+            sticker_no: string;
+            /** Vehicle No */
+            vehicle_no: string;
+            /** Fleet No */
+            fleet_no: string;
+            /**
+             * Qr Payload
+             * @description `HSE2:<AC|VS|WP>:<22-char base64url token>` — no name, ID or other personal data (§3.20). Encode as a QR code; print `printed_ref` beside it for manual fallback.
+             * @example HSE2:VS:Zb1yQm3k9TnP0aL7cX2wRg
+             */
+            qr_payload: string;
+            /**
+             * Printed Ref
+             * @example AVP-S-0118
+             */
+            printed_ref: string;
+            token_status: components["schemas"]["QrTokenStatus"];
+        };
+        /** AvpStickerReissueRequest */
+        AvpStickerReissueRequest: {
+            /** Reason */
+            reason: string;
+        };
+        /**
+         * AvpUpdate
+         * @description Inspection and checklist (capability 64) while pending.
+         */
+        AvpUpdate: {
+            /** Areas */
+            areas?: components["schemas"]["AreaCategory"][] | null;
+            /** Inspection Date */
+            inspection_date?: string | null;
+            /** Inspector */
+            inspector?: string | null;
+            inspection_result?: components["schemas"]["InspectionResult"] | null;
+            /** Checklist */
+            checklist?: {
+                [key: string]: components["schemas"]["ChecklistOutcome"];
+            } | null;
+        };
         /**
          * AxisKind
          * @enum {string}
          */
         AxisKind: "category" | "period";
+        /** BackgroundCheckRead */
+        BackgroundCheckRead: {
+            status: components["schemas"]["BackgroundCheckStatus"];
+            /** Check Date */
+            check_date: string | null;
+            /** Recheck Due */
+            recheck_due: string | null;
+        };
+        /**
+         * BackgroundCheckStatus
+         * @description Sensitive (P2-1): returned only with capability 56.
+         * @enum {string}
+         */
+        BackgroundCheckStatus: "not_required" | "submitted" | "in_progress" | "cleared" | "not_cleared" | "expired";
+        /**
+         * BackgroundCheckUpdate
+         * @description Capability 55 + 56. recheck_due = date + bg_recheck_months (§6.2). Status and dates
+         *     only — never the reason or the authority's report (P2-4).
+         */
+        BackgroundCheckUpdate: {
+            status: components["schemas"]["BackgroundCheckStatus"];
+            /**
+             * Check Date
+             * @description Required for cleared.
+             */
+            check_date?: string | null;
+        };
         /**
          * BandKind
          * @enum {string}
@@ -3330,11 +5895,11 @@ export interface components {
         /**
          * Capability
          * @description Rows of the permission matrix: 1-19 Phase 0 (0-foundation §5.10), 20-45 Phase 1
-         *     (1-dashboard §5.10), numbered in spec order. Rows with two capabilities (23, 32, 33, 41)
-         *     are split into one value per action.
+         *     (1-dashboard §5.10), 46-81 Phase 2 (2-access-permits §5.13), numbered in spec order.
+         *     Rows with two capabilities (23, 32, 33, 41) are split into one value per action.
          * @enum {string}
          */
-        Capability: "project.manage" | "project.view" | "site_zone.manage" | "site_zone.view" | "contractor.create" | "contractor.approve" | "engagement.manage" | "contractor.view" | "contractor.view_contacts" | "user.invite" | "user.view_directory" | "user.view_contacts" | "user.manage_status" | "settings.edit" | "settings.view" | "audit_log.read" | "history.view" | "export.lists" | "profile.edit_own" | "workforce.edit" | "workforce.import" | "workforce.verify" | "workforce.lock" | "workforce.unlock" | "workforce.view" | "incident.report" | "incident.classify" | "investigation.edit" | "investigation.approve" | "injury.identity_view" | "injury.medical_view" | "incident.view" | "observation.create" | "observation.close" | "inspection.plan_manage" | "inspection.record" | "ca.create" | "ca.update_own" | "ca.verify" | "ca.approve_extension" | "dashboard.view" | "breakdown.sensitive_view" | "ai.ask" | "monthly_report.generate" | "monthly_report.review" | "monthly_report.publish" | "monthly_report.view" | "export.kpis" | "export.identity" | "hse_settings.edit" | "observer.identity_view";
+        Capability: "project.manage" | "project.view" | "site_zone.manage" | "site_zone.view" | "contractor.create" | "contractor.approve" | "engagement.manage" | "contractor.view" | "contractor.view_contacts" | "user.invite" | "user.view_directory" | "user.view_contacts" | "user.manage_status" | "settings.edit" | "settings.view" | "audit_log.read" | "history.view" | "export.lists" | "profile.edit_own" | "workforce.edit" | "workforce.import" | "workforce.verify" | "workforce.lock" | "workforce.unlock" | "workforce.view" | "incident.report" | "incident.classify" | "investigation.edit" | "investigation.approve" | "injury.identity_view" | "injury.medical_view" | "incident.view" | "observation.create" | "observation.close" | "inspection.plan_manage" | "inspection.record" | "ca.create" | "ca.update_own" | "ca.verify" | "ca.approve_extension" | "dashboard.view" | "breakdown.sensitive_view" | "ai.ask" | "monthly_report.generate" | "monthly_report.review" | "monthly_report.publish" | "monthly_report.view" | "export.kpis" | "export.identity" | "hse_settings.edit" | "observer.identity_view" | "worker.view" | "worker.edit" | "worker.unmask_id" | "worker.ban" | "induction.course_manage" | "induction.record" | "induction.suspend_revoke" | "pass_application.create" | "pass_application.endorse" | "pass_application.process" | "background_check.view" | "credential.suspend_raise" | "credential.suspend_confirm" | "credential.custody" | "adp.apply" | "adp.issue" | "offence.record" | "vehicle.edit" | "avp.issue" | "wap.edit" | "wap.approve" | "wap.suspend" | "wap.close" | "notam.edit" | "notam.process" | "obstacle.edit" | "obstacle.decide" | "access_works.view" | "gate.check" | "gate.manage" | "gate_log.view" | "access_kpi.view" | "export.access" | "export.access_identity" | "access_settings.edit" | "zone_profile.edit";
         /** CapabilityGrant */
         CapabilityGrant: {
             capability: components["schemas"]["Capability"];
@@ -3348,6 +5913,11 @@ export interface components {
          * @enum {string}
          */
         CapabilityScope: "all" | "project" | "sites" | "contractor_tree" | "own_engagement";
+        /**
+         * CardColour
+         * @enum {string}
+         */
+        CardColour: "red" | "blue" | "green" | "yellow" | "orange" | "white" | "grey";
         /**
          * CaseCategory
          * @description §5.2 rule I-5. Most severe first.
@@ -3494,7 +6064,7 @@ export interface components {
          * @description Dashboard charts §8.1 item 5.
          * @enum {string}
          */
-        ChartId: "C1" | "C2" | "C3" | "C4" | "C5" | "C6" | "C7" | "C8" | "C9";
+        ChartId: "C1" | "C2" | "C3" | "C4" | "C5" | "C6" | "C7" | "C8" | "C9" | "C10" | "C11" | "C12";
         /**
          * ChartKind
          * @enum {string}
@@ -3635,6 +6205,11 @@ export interface components {
             categories: components["schemas"]["ChartCategory"][];
         };
         /**
+         * ChecklistOutcome
+         * @enum {string}
+         */
+        ChecklistOutcome: "pass" | "fail" | "n.a.";
+        /**
          * ClassificationConfirm
          * @description Confirm the case category (HSE Officer/Manager, capability 26). A category different
          *     from the derived one requires HSE Manager and `justification` ≥ 20 chars (I-6) →
@@ -3650,6 +6225,12 @@ export interface components {
          * @enum {string}
          */
         ClassificationStatus: "provisional" | "confirmed";
+        /**
+         * ClearanceReason
+         * @description OB-3, computed. Clearance is required iff the list is not empty.
+         * @enum {string}
+         */
+        ClearanceReason: "zone_height_exceeded" | "ols_penetration" | "within_ols_buffer" | "height_threshold" | "operator_requires";
         /** ComparisonColumn */
         ComparisonColumn: {
             /**
@@ -3725,6 +6306,17 @@ export interface components {
             columns: components["schemas"]["ComparisonColumn"][];
             /** Rows */
             rows: components["schemas"]["ComparisonRow"][];
+        };
+        /**
+         * ConfirmSuspensionRequest
+         * @description Confirm a raised suspension (capability 58; inductions 52).
+         */
+        ConfirmSuspensionRequest: {
+            /**
+             * Reason Text
+             * @description ≥ 10 characters (LC-4). P3 hint: no medical or criminal details.
+             */
+            reason_text: string;
         };
         /**
          * ContractorCategory
@@ -3933,6 +6525,236 @@ export interface components {
          */
         ControlLevel: "elimination" | "substitution" | "engineering" | "administrative" | "ppe";
         /**
+         * CredentialAction
+         * @enum {string}
+         */
+        CredentialAction: "suspend_raised" | "suspend_confirmed" | "reinstated" | "revoked" | "expired" | "return_due" | "returned" | "lost_reported" | "token_rotated" | "auto_suspended" | "auto_reinstated";
+        /**
+         * CredentialBadge
+         * @description Compact credential summary for lists (no sensitive data).
+         */
+        CredentialBadge: {
+            /**
+             * Kind
+             * @example airport_pass
+             * @example adp
+             */
+            kind: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Number
+             * @example ANIA-AP-26-01877
+             */
+            number: string;
+            validity_status: components["schemas"]["ValidityStatus"];
+            /** Effective Valid Until */
+            effective_valid_until: string | null;
+            /**
+             * Detail
+             * @description Category etc.
+             * @example PERM · red · A, M
+             * @example manoeuvring
+             */
+            detail?: string | null;
+        };
+        /** CredentialEventPage */
+        CredentialEventPage: {
+            /** Items */
+            items: components["schemas"]["CredentialEventRead"][];
+            /**
+             * Total
+             * @description Total number of matching items across all pages.
+             */
+            total: number;
+            /**
+             * Page
+             * @description 1-based page number.
+             */
+            page: number;
+            /**
+             * Page Size
+             * @description Items per page (max 200).
+             */
+            page_size: number;
+        };
+        /**
+         * CredentialEventRead
+         * @description §3.18 log entry.
+         */
+        CredentialEventRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            credential_kind: components["schemas"]["CredentialKind"];
+            /**
+             * Credential Id
+             * Format: uuid
+             */
+            credential_id: string;
+            action: components["schemas"]["CredentialAction"];
+            reason_code: components["schemas"]["CredentialReason"];
+            /** Reason Text */
+            reason_text: string | null;
+            /** @description Null = system job. */
+            actor: components["schemas"]["UserRef"] | null;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /** Expires At */
+            expires_at: string | null;
+        };
+        /**
+         * CredentialKind
+         * @description §3.18. `wap` and `worker` events are written by the WAP and worker transitions; the
+         *     /credentials endpoints accept induction, airport_pass, adp, avp and access_card.
+         * @enum {string}
+         */
+        CredentialKind: "induction" | "airport_pass" | "adp" | "avp" | "wap" | "access_card" | "worker";
+        /**
+         * CredentialReason
+         * @description List LC-R (§3.21).
+         * @enum {string}
+         */
+        CredentialReason: "violation" | "investigation_pending" | "contractor_suspended" | "contractor_blacklisted" | "worker_banned" | "id_expired" | "licence_expired" | "vehicle_document_expired" | "dependency_invalid" | "points_threshold" | "security_request" | "ops_suspension" | "demobilised" | "superseded" | "lost_stolen" | "fraud_misuse" | "other";
+        /**
+         * CredentialState
+         * @description Result of every lifecycle call: the credential's validity/custody after the action.
+         */
+        CredentialState: {
+            kind: components["schemas"]["CredentialKind"];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Number
+             * @example ANIA-AP-26-01877
+             * @example IND-ANIA-EXP-2026-03117
+             */
+            number: string;
+            worker: components["schemas"]["WorkerRef"] | null;
+            /** Vehicle No */
+            vehicle_no: string | null;
+            engagement: components["schemas"]["EngagementRef"] | null;
+            /** @description Passes, ADPs, AVPs. */
+            validity_status: components["schemas"]["ValidityStatus"] | null;
+            /** @description Induction records. */
+            induction_status: components["schemas"]["InductionStatus"] | null;
+            /** @description Access cards. */
+            token_status: components["schemas"]["QrTokenStatus"] | null;
+            /** Effective Valid Until */
+            effective_valid_until: string | null;
+            limiting_factor: components["schemas"]["LimitingFactor"] | null;
+            custody_status: components["schemas"]["CustodyStatus"] | null;
+            /** Return Due On */
+            return_due_on: string | null;
+            /** Returned At */
+            returned_at: string | null;
+            received_by: components["schemas"]["UserRef"] | null;
+            /** Lost Reported At */
+            lost_reported_at: string | null;
+            /** Authority Notified At */
+            authority_notified_at: string | null;
+            /** Open Suspensions */
+            open_suspensions: components["schemas"]["CredentialSuspension"][];
+            /**
+             * Events
+             * @description Latest first.
+             */
+            events: components["schemas"]["CredentialEventRead"][];
+        };
+        /**
+         * CredentialSuspension
+         * @description An open suspension on a credential (LC-3, LC-6). A credential returns to active only
+         *     when no open suspension remains.
+         */
+        CredentialSuspension: {
+            state: components["schemas"]["SuspensionState"];
+            reason_code: components["schemas"]["CredentialReason"];
+            /** Reason Text */
+            reason_text: string | null;
+            /** @description Null = system. */
+            raised_by: components["schemas"]["UserRef"] | null;
+            /**
+             * Raised At
+             * Format: date-time
+             */
+            raised_at: string;
+            /**
+             * Expires At
+             * @description Raised suspensions: lifts automatically at this time unless confirmed.
+             */
+            expires_at: string | null;
+            /**
+             * Suspension End
+             * @description DP-8 points suspensions: last day; reinstatement allowed from the next day.
+             */
+            suspension_end?: string | null;
+        };
+        /** CrewInput */
+        CrewInput: {
+            /**
+             * Worker Id
+             * Format: uuid
+             */
+            worker_id: string;
+            crew_role: components["schemas"]["CrewRole"];
+            /**
+             * Escort Worker Id
+             * @description Required for members holding an escorted pass (WA-11).
+             */
+            escort_worker_id?: string | null;
+        };
+        /** CrewMemberRead */
+        CrewMemberRead: {
+            worker: components["schemas"]["WorkerRef"];
+            crew_role: components["schemas"]["CrewRole"];
+            /** Escort Worker Id */
+            escort_worker_id: string | null;
+            status: components["schemas"]["CrewMemberStatus"];
+            /** Exclusion Reasons */
+            exclusion_reasons: components["schemas"]["GateReasonCode"][];
+            /**
+             * Escorted
+             * @description Holds an escorted pass.
+             */
+            escorted: boolean;
+            /**
+             * Eligible Now
+             * @description Last evaluation result.
+             */
+            eligible_now: boolean | null;
+            /** Evaluated At */
+            evaluated_at: string | null;
+        };
+        /**
+         * CrewMemberStatus
+         * @description WA-10/WA-11: ineligible non-supervisors are excluded automatically and re-included at
+         *     the next evaluation once eligible.
+         * @enum {string}
+         */
+        CrewMemberStatus: "included" | "excluded" | "removed";
+        /**
+         * CrewRole
+         * @enum {string}
+         */
+        CrewRole: "worker" | "supervisor" | "escort" | "driver" | "banksman";
+        /**
+         * CustodyStatus
+         * @description §4.9. "Overdue" is derived: return_due and today > return_due_on.
+         * @enum {string}
+         */
+        CustodyStatus: "held" | "return_due" | "returned" | "lost";
+        /**
          * DangerousOccurrenceCategory
          * @enum {string}
          */
@@ -4007,6 +6829,8 @@ export interface components {
             leading: components["schemas"]["KpiTile"][];
             /** Placeholders */
             placeholders: components["schemas"]["KpiPlaceholder"][];
+            /** @description Phase 2 access band; null on non-airport projects. */
+            access_band?: components["schemas"]["AccessBand"] | null;
         };
         /**
          * DataQualityResponse
@@ -4040,10 +6864,219 @@ export interface components {
          */
         DeltaDirection: "better" | "worse" | "same" | "n/a";
         /**
+         * DeploymentCreate
+         * @description New deployment → status pending_induction (§4.2). One non-demobilised deployment per
+         *     worker per project (409 DEPLOYMENT_EXISTS, WK-10); banned worker → 409 WORKER_BANNED.
+         */
+        DeploymentCreate: {
+            /**
+             * Engagement Id
+             * @description Required iff person_type = contractor_worker; engagement on the project with an Approved contractor.
+             */
+            engagement_id?: string | null;
+            /**
+             * Employee No
+             * @description Unique per engagement.
+             */
+            employee_no?: string | null;
+            trade: components["schemas"]["Trade"];
+            /**
+             * Site Ids
+             * @description ⊆ engagement.site_ids (contractor) or project sites.
+             */
+            site_ids: string[];
+            /**
+             * Mobilised On
+             * Format: date
+             * @description ≥ engagement mobilisation_date.
+             */
+            mobilised_on: string;
+            /**
+             * Planned Demob On
+             * @description ≥ mobilised_on; ≤ engagement demobilisation_date if set.
+             */
+            planned_demob_on?: string | null;
+            /**
+             * Worker Id
+             * Format: uuid
+             */
+            worker_id: string;
+        };
+        /** DeploymentPage */
+        DeploymentPage: {
+            /** Items */
+            items: components["schemas"]["DeploymentRead"][];
+            /**
+             * Total
+             * @description Total number of matching items across all pages.
+             */
+            total: number;
+            /**
+             * Page
+             * @description 1-based page number.
+             */
+            page: number;
+            /**
+             * Page Size
+             * @description Items per page (max 200).
+             */
+            page_size: number;
+        };
+        /** DeploymentRead */
+        DeploymentRead: {
+            /**
+             * Created At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            updated_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Worker Id
+             * Format: uuid
+             */
+            worker_id: string;
+            /** Worker No */
+            worker_no: string;
+            /**
+             * Full Name En
+             * @description Null for callers without capability 46.
+             */
+            full_name_en: string | null;
+            /** Full Name Ar */
+            full_name_ar: string | null;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            engagement: components["schemas"]["EngagementRef"] | null;
+            /** Employee No */
+            employee_no: string | null;
+            trade: components["schemas"]["Trade"];
+            /** Sites */
+            sites: components["schemas"]["SiteRef"][];
+            /**
+             * Mobilised On
+             * Format: date
+             */
+            mobilised_on: string;
+            /** Planned Demob On */
+            planned_demob_on: string | null;
+            /** Demobilised On */
+            demobilised_on: string | null;
+            status: components["schemas"]["DeploymentStatus"];
+            access_card: components["schemas"]["AccessCardSummary"];
+            /** Inductions */
+            inductions: components["schemas"]["InductionBadge"][];
+            /** Credentials */
+            credentials: components["schemas"]["CredentialBadge"][];
+            /** Warnings */
+            warnings?: components["schemas"]["ApiWarning"][];
+        };
+        /**
+         * DeploymentStatus
+         * @description §4.2.
+         * @enum {string}
+         */
+        DeploymentStatus: "pending_induction" | "mobilised" | "demobilised";
+        /**
+         * DeploymentTransitionRequest
+         * @description mobilised/pending_induction → demobilised (capability 47): `demobilised_on` (default
+         *     today) — cascades LC-10 (pass + ADP revoked `demobilised`, custody return due, access card
+         *     revoked, WAP crew entries removed). pending_induction → mobilised is system-only (first
+         *     passed general_site induction).
+         */
+        DeploymentTransitionRequest: {
+            to_status: components["schemas"]["DeploymentStatus"];
+            /** Demobilised On */
+            demobilised_on?: string | null;
+            /** Reason */
+            reason?: string | null;
+        };
+        /** DeploymentUpdate */
+        DeploymentUpdate: {
+            /** Employee No */
+            employee_no?: string | null;
+            trade?: components["schemas"]["Trade"] | null;
+            /** Site Ids */
+            site_ids?: string[] | null;
+            /** Mobilised On */
+            mobilised_on?: string | null;
+            /** Planned Demob On */
+            planned_demob_on?: string | null;
+        };
+        /**
          * DigitStyle
          * @enum {string}
          */
         DigitStyle: "western" | "arabic_indic";
+        /**
+         * EligibilityContext
+         * @description ZP-5: where E is evaluated. Only `gate` checks the WAP step (ZP-4 step 7).
+         * @enum {string}
+         */
+        EligibilityContext: "check" | "gate" | "wap" | "application" | "ptw";
+        /**
+         * EligibilityItem
+         * @description One requirement of E(worker, zone, at, context).
+         */
+        EligibilityItem: {
+            kind: components["schemas"]["RequirementKind"];
+            /**
+             * Code
+             * @description Course code, area code, hook code, ADP category…
+             * @example AIR
+             */
+            code: string | null;
+            hook_kind?: components["schemas"]["HookKind"] | null;
+            status: components["schemas"]["RequirementStatus"];
+            /** Valid Until */
+            valid_until: string | null;
+            /**
+             * Ref
+             * @example IND-ANIA-EXP-2025-02210
+             * @example ANIA-AP-26-01877
+             */
+            ref: string | null;
+            /** @description Why not met / warn (GC-6 codes, e.g. INDUCTION_EXPIRED, HOOK_NOT_AVAILABLE). */
+            reason_code: components["schemas"]["GateReasonCode"] | null;
+            /** Message En */
+            message_en?: string | null;
+            /** Message Ar */
+            message_ar?: string | null;
+        };
+        /**
+         * EligibilityResult
+         * @description Eligible iff no item is not_met (and, under `block` hook policy, none not_evaluated).
+         *     Also used by Phase 3 (HK-6, context = ptw).
+         */
+        EligibilityResult: {
+            worker: components["schemas"]["WorkerRef"];
+            zone: components["schemas"]["ZoneRef"];
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            context: components["schemas"]["EligibilityContext"];
+            /** Eligible */
+            eligible: boolean;
+            /** Escort Required */
+            escort_required: boolean;
+            /** Items */
+            items: components["schemas"]["EligibilityItem"][];
+        };
         /**
          * EmployerType
          * @enum {string}
@@ -4213,7 +7246,7 @@ export interface components {
          * @description Entity types referenced by audit entries and change history.
          * @enum {string}
          */
-        EntityType: "project" | "site" | "zone" | "contractor" | "project_engagement" | "user" | "role_assignment" | "project_settings" | "audit_log" | "workforce_return" | "workforce_import_batch" | "workforce_month" | "incident" | "injury_case" | "investigation" | "observation" | "inspection_plan" | "inspection" | "corrective_action" | "hse_meeting" | "hse_settings" | "reference_list_item" | "attachment" | "ai_answer" | "monthly_report" | "kpi";
+        EntityType: "project" | "site" | "zone" | "contractor" | "project_engagement" | "user" | "role_assignment" | "project_settings" | "audit_log" | "workforce_return" | "workforce_import_batch" | "workforce_month" | "incident" | "injury_case" | "investigation" | "observation" | "inspection_plan" | "inspection" | "corrective_action" | "hse_meeting" | "hse_settings" | "reference_list_item" | "attachment" | "ai_answer" | "monthly_report" | "kpi" | "worker" | "worker_deployment" | "induction_course" | "induction_record" | "zone_access_profile" | "airport_pass_category" | "airport_pass_area" | "pass_application" | "airport_pass" | "adp" | "airside_offence" | "vehicle" | "avp" | "notam_request" | "obstacle_clearance" | "wap" | "ops_event" | "credential_event" | "gate" | "gate_device" | "gate_log" | "access_settings";
         /**
          * EnvCategory
          * @enum {string}
@@ -4251,7 +7284,7 @@ export interface components {
          * @description Machine-readable error codes. Stable: the frontend translates these.
          * @enum {string}
          */
-        ErrorCode: "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "ACCOUNT_LOCKED" | "SESSION_EXPIRED" | "PRIVACY_ACK_REQUIRED" | "PRIVACY_NOTICE_VERSION_MISMATCH" | "INVITE_INVALID" | "INVITE_EXPIRED" | "RESET_TOKEN_INVALID" | "WEAK_PASSWORD" | "CURRENT_PASSWORD_INCORRECT" | "FORBIDDEN" | "READ_ONLY_ROLE" | "CONTRACTOR_SUSPENDED" | "SELF_MODIFICATION_FORBIDDEN" | "ROLE_NOT_ASSIGNABLE" | "NOT_FOUND" | "VALIDATION_ERROR" | "DUPLICATE_VALUE" | "INVALID_TRANSITION" | "TRANSITION_CONDITION_NOT_MET" | "PROJECT_CLOSED" | "SITE_INACTIVE" | "ZONE_ARCHIVED" | "CONTRACTOR_NOT_APPROVED" | "LAST_HSE_MANAGER" | "SOD_CONFLICT" | "DUPLICATE_RETURN" | "PERIOD_LOCKED" | "VERIFIER_IS_CREATOR" | "OUTSIDE_MOBILISATION" | "IMPORT_FILE_INVALID" | "IMPORT_HAS_ERRORS" | "IMPORT_EXPIRED" | "IMPORT_NOT_VALIDATED" | "NEAR_MISS_EXCLUSIVE" | "INJURY_CASE_REQUIRED" | "INVESTIGATION_LEVEL_TOO_LOW" | "INVESTIGATION_INCOMPLETE" | "INVESTIGATION_LEAD_NOT_ALLOWED" | "INVESTIGATION_TEAM_INCOMPLETE" | "APPROVER_IS_LEAD" | "CASES_NOT_CONFIRMED" | "HIGHER_CONTROL_REQUIRED" | "JUSTIFICATION_REQUIRED" | "POSSIBLE_ID_NUMBER" | "SAFE_OBSERVATION_IMMUTABLE" | "FINDING_CA_REQUIRED" | "VERIFIER_IS_OWNER" | "VERIFIER_ROLE_NOT_ALLOWED" | "EVIDENCE_REQUIRED" | "EXTENSION_LIMIT_REACHED" | "DUE_DATE_TOO_LATE" | "RESTRICTED_DIMENSION" | "MIXED_PROJECT_SCOPE" | "EXPORT_PURPOSE_REQUIRED" | "FILE_TOO_LARGE" | "FILE_TYPE_NOT_ALLOWED" | "SIGNED_URL_INVALID" | "AI_DISABLED" | "AI_TRANSFER_APPROVAL_REQUIRED" | "AI_UNAVAILABLE" | "AI_RATE_LIMITED" | "NOT_IMPLEMENTED" | "INTERNAL_ERROR";
+        ErrorCode: "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "ACCOUNT_LOCKED" | "SESSION_EXPIRED" | "PRIVACY_ACK_REQUIRED" | "PRIVACY_NOTICE_VERSION_MISMATCH" | "INVITE_INVALID" | "INVITE_EXPIRED" | "RESET_TOKEN_INVALID" | "WEAK_PASSWORD" | "CURRENT_PASSWORD_INCORRECT" | "FORBIDDEN" | "READ_ONLY_ROLE" | "CONTRACTOR_SUSPENDED" | "SELF_MODIFICATION_FORBIDDEN" | "ROLE_NOT_ASSIGNABLE" | "NOT_FOUND" | "VALIDATION_ERROR" | "DUPLICATE_VALUE" | "INVALID_TRANSITION" | "TRANSITION_CONDITION_NOT_MET" | "PROJECT_CLOSED" | "SITE_INACTIVE" | "ZONE_ARCHIVED" | "CONTRACTOR_NOT_APPROVED" | "LAST_HSE_MANAGER" | "SOD_CONFLICT" | "DUPLICATE_RETURN" | "PERIOD_LOCKED" | "VERIFIER_IS_CREATOR" | "OUTSIDE_MOBILISATION" | "IMPORT_FILE_INVALID" | "IMPORT_HAS_ERRORS" | "IMPORT_EXPIRED" | "IMPORT_NOT_VALIDATED" | "NEAR_MISS_EXCLUSIVE" | "INJURY_CASE_REQUIRED" | "INVESTIGATION_LEVEL_TOO_LOW" | "INVESTIGATION_INCOMPLETE" | "INVESTIGATION_LEAD_NOT_ALLOWED" | "INVESTIGATION_TEAM_INCOMPLETE" | "APPROVER_IS_LEAD" | "CASES_NOT_CONFIRMED" | "HIGHER_CONTROL_REQUIRED" | "JUSTIFICATION_REQUIRED" | "POSSIBLE_ID_NUMBER" | "SAFE_OBSERVATION_IMMUTABLE" | "FINDING_CA_REQUIRED" | "VERIFIER_IS_OWNER" | "VERIFIER_ROLE_NOT_ALLOWED" | "EVIDENCE_REQUIRED" | "EXTENSION_LIMIT_REACHED" | "DUE_DATE_TOO_LATE" | "RESTRICTED_DIMENSION" | "MIXED_PROJECT_SCOPE" | "EXPORT_PURPOSE_REQUIRED" | "FILE_TOO_LARGE" | "FILE_TYPE_NOT_ALLOWED" | "SIGNED_URL_INVALID" | "AI_DISABLED" | "AI_TRANSFER_APPROVAL_REQUIRED" | "AI_UNAVAILABLE" | "AI_RATE_LIMITED" | "GATE_DEVICE_FORBIDDEN" | "GATE_DEVICE_REVOKED" | "GATE_RATE_LIMITED" | "PAIRING_NOT_FOUND" | "WORKER_EXISTS" | "WORKER_EXISTS_OUT_OF_SCOPE" | "ADULT_ATTESTATION_REQUIRED" | "DEPLOYMENT_EXISTS" | "WORKER_BANNED" | "PHOTO_REQUIRED" | "DELIVERER_NOT_ALLOWED" | "INDUCTION_PREREQUISITE" | "INDUCTION_ATTEMPTS_EXCEEDED" | "INDUCTION_TOO_SHORT" | "INDUCTION_EDIT_LOCKED" | "PROFILE_LOOSENING" | "HOOK_PROVIDER_MISSING" | "NOT_AIRPORT_PROJECT" | "APPLICATION_OPEN" | "ID_EXPIRES_SOON" | "ID_EXPIRED" | "VALIDITY_EXCEEDS_LIMIT" | "BACKGROUND_NOT_CLEARED" | "ENDORSER_NOT_ALLOWED" | "PREREQUISITES_NOT_MET" | "AREA_NOT_REQUESTED" | "ADP_PASS_REQUIRED" | "ADP_EXISTS" | "LICENCE_NOT_VALID" | "RTF_REQUIRED" | "TESTS_NOT_VALID" | "SUSPENSION_PERIOD_RUNNING" | "AVP_PRECONDITION" | "AVP_EXISTS" | "LATE_JUSTIFICATION_REQUIRED" | "OB_CONDITIONS_REQUIRED" | "CLEARANCE_NOT_LINKABLE" | "WAP_DURATION_EXCEEDED" | "WSP_REQUIRED" | "WAP_BLOCKED" | "CREW_INVALID" | "FOD_HANDBACK_REQUIRED" | "OPS_ZONES_LOCKED" | "SYSTEM_SUSPENSION" | "CREDENTIAL_TERMINAL" | "NOT_IMPLEMENTED" | "INTERNAL_ERROR";
         /** ErrorDetail */
         ErrorDetail: {
             /** @description Stable machine code; map it to EN/AR UI text. */
@@ -4271,6 +7304,13 @@ export interface components {
              * @description Field-level errors (422 validation, 409 duplicates).
              */
             errors?: components["schemas"]["FieldError"][] | null;
+            /**
+             * Meta
+             * @description Machine-readable context for some codes, e.g. WORKER_EXISTS → {worker_id, worker_no}; VALIDITY_EXCEEDS_LIMIT → {limiting_factor, max_date}; WAP_BLOCKED → {blockers}; PREREQUISITES_NOT_MET → {requirements}.
+             */
+            meta?: {
+                [key: string]: unknown;
+            } | null;
         };
         /**
          * ErrorResponse
@@ -4336,12 +7376,14 @@ export interface components {
             engagement: components["schemas"]["EngagementRef"] | null;
             /** Detail Path */
             detail_path: string | null;
+            /** @description Phase 2 credentials: the term giving the effective validity. */
+            limiting_factor?: components["schemas"]["LimitingFactor"] | null;
         };
         /**
          * ExpiringItemKind
          * @enum {string}
          */
-        ExpiringItemKind: "ca_due" | "investigation_due" | "external_notification_due" | "inspection_planned" | "month_lock";
+        ExpiringItemKind: "ca_due" | "investigation_due" | "external_notification_due" | "inspection_planned" | "month_lock" | "induction_expiry" | "reinduction_due" | "worker_id_expiry" | "airport_pass_expiry" | "bg_recheck_due" | "adp_expiry" | "adp_suspension_end" | "avp_expiry" | "vehicle_document_expiry" | "wap_expiry" | "notam_expiry" | "obstacle_clearance_expiry" | "pass_return_due";
         /** ExpiringItemsResponse */
         ExpiringItemsResponse: {
             /**
@@ -4364,7 +7406,7 @@ export interface components {
          * @description Lists that can be exported (§5.8 rule 49, capability 18).
          * @enum {string}
          */
-        ExportDataset: "projects" | "sites" | "zones" | "contractors" | "engagements" | "users" | "audit_log" | "workforce_returns" | "incidents" | "observations" | "inspections" | "corrective_actions" | "hse_meetings";
+        ExportDataset: "projects" | "sites" | "zones" | "contractors" | "engagements" | "users" | "audit_log" | "workforce_returns" | "incidents" | "observations" | "inspections" | "corrective_actions" | "hse_meetings" | "workers" | "deployments" | "inductions" | "pass_applications" | "airport_passes" | "adps" | "airside_offences" | "vehicles" | "avps" | "waps" | "notam_requests" | "obstacle_clearances" | "ops_events" | "gate_log";
         /**
          * ExportFormat
          * @enum {string}
@@ -4372,10 +7414,11 @@ export interface components {
         ExportFormat: "csv" | "xlsx";
         /**
          * ExportPurpose
-         * @description P1-6: purpose recorded when exporting incidents with identity columns.
+         * @description P1-6: purpose recorded when exporting incidents with identity columns; P2-10:
+         *     pass_office / authority_request / legal / other for access exports with full IDs.
          * @enum {string}
          */
-        ExportPurpose: "gosi" | "client_report" | "legal" | "insurance" | "other";
+        ExportPurpose: "gosi" | "client_report" | "legal" | "insurance" | "other" | "pass_office" | "authority_request";
         /**
          * ExtensionStatus
          * @enum {string}
@@ -4490,6 +7533,582 @@ export interface components {
          */
         FindingSeverity: "low" | "medium" | "high" | "critical";
         /**
+         * FodCheckInput
+         * @description WA-17: required to resume or close a WAP with fod_handback_required.
+         */
+        FodCheckInput: {
+            /** Checked By Worker Id */
+            checked_by_worker_id?: string | null;
+            /**
+             * Checked By User Id
+             * @description One of worker / user; default the caller.
+             */
+            checked_by_user_id?: string | null;
+            /**
+             * Checked At
+             * Format: date-time
+             * @description ≤ now.
+             */
+            checked_at: string;
+            result: components["schemas"]["FodCheckResult"];
+        };
+        /** FodCheckRead */
+        FodCheckRead: {
+            checked_by_worker: components["schemas"]["WorkerRef"] | null;
+            checked_by_user: components["schemas"]["UserRef"] | null;
+            /**
+             * Checked At
+             * Format: date-time
+             */
+            checked_at: string;
+            result: components["schemas"]["FodCheckResult"];
+        };
+        /**
+         * FodCheckResult
+         * @enum {string}
+         */
+        FodCheckResult: "clear" | "not_clear";
+        /**
+         * GateCallerContext
+         * @description GET /gate-checks/context: what the scanner screen needs (gates the caller may use).
+         */
+        GateCallerContext: {
+            caller_kind: components["schemas"]["GateCallerKind"];
+            /** Gates */
+            gates: components["schemas"]["GateRead"][];
+            /** Escort Pairing Seconds */
+            escort_pairing_seconds: number;
+            /**
+             * Clear After Seconds
+             * @description GC-7: the result screen clears after 30 s.
+             */
+            clear_after_seconds: number;
+        };
+        /**
+         * GateCallerKind
+         * @enum {string}
+         */
+        GateCallerKind: "user" | "device";
+        /**
+         * GateCheckRequest
+         * @description GC-2. Send `payload` (QR text) or `printed_ref` (manual fallback, e.g.
+         *     "WKR-000002 / ANIA-EXP", "AVP-S-0118", "WAP-ANIA-EXP-2026-0031"). `zone_id` defaults to the
+         *     gate's single protected zone; required when the gate protects several; omitted for a site
+         *     gate. `pairing_id` continues an escort / driver / escort-vehicle pairing started on the
+         *     same device (GC-8, GC-9).
+         */
+        GateCheckRequest: {
+            /**
+             * Gate Id
+             * Format: uuid
+             */
+            gate_id: string;
+            /**
+             * Payload
+             * @example HSE2:AC:q8Xb2mJf0Q9nZr4tYc1wKA
+             */
+            payload?: string | null;
+            /** Printed Ref */
+            printed_ref?: string | null;
+            /** @default in */
+            direction: components["schemas"]["GateDirection"];
+            /** Zone Id */
+            zone_id?: string | null;
+            /** Pairing Id */
+            pairing_id?: string | null;
+        };
+        /**
+         * GateCheckResponse
+         * @description GC-5/GC-6: any DENY reason → DENIED; else any WARN → GRANTED_WITH_WARNING. A subject
+         *     outside a Contractor HSE Rep's scope returns DENIED with only OUT_OF_SCOPE and no card
+         *     (GC-13). `out` direction never denies (EXIT_RECORDED; `late_exit` after the WAP window +
+         *     wap_exit_grace_minutes).
+         */
+        GateCheckResponse: {
+            /**
+             * Check Id
+             * Format: uuid
+             * @description Gate-log row id (use for admitted-despite-denial).
+             */
+            check_id: string;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            gate: components["schemas"]["GateRef"];
+            /** @description Target zone; null at a site gate. */
+            zone: components["schemas"]["ZoneRef"] | null;
+            direction: components["schemas"]["GateDirection"];
+            qr_kind: components["schemas"]["QrKind"] | null;
+            subject_kind: components["schemas"]["GateSubjectKind"];
+            result: components["schemas"]["GateResult"];
+            /** Reasons */
+            reasons: components["schemas"]["GateReason"][];
+            person?: components["schemas"]["GatePersonCard"] | null;
+            vehicle?: components["schemas"]["GateVehicleCard"] | null;
+            wap?: components["schemas"]["GateWapCard"] | null;
+            pairing?: components["schemas"]["GatePairing"] | null;
+            /** Paired Results */
+            paired_results?: components["schemas"]["GatePairedResult"][];
+            /**
+             * Late Exit
+             * @default false
+             */
+            late_exit: boolean;
+            /**
+             * Clear After Seconds
+             * @default 30
+             */
+            clear_after_seconds: number;
+        };
+        /**
+         * GateCreate
+         * @description Capability 75.
+         */
+        GateCreate: {
+            /**
+             * Gate Code
+             * @example G-AAP3
+             */
+            gate_code: string;
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            /**
+             * Site Id
+             * Format: uuid
+             */
+            site_id: string;
+            /**
+             * Protected Zone Ids
+             * @description Zones of that site; empty = whole site (site gate).
+             */
+            protected_zone_ids?: string[];
+            gate_type: components["schemas"]["GateType"];
+        };
+        /**
+         * GateCredentialLine
+         * @description One line on the result screen (GC-7).
+         */
+        GateCredentialLine: {
+            /**
+             * Kind
+             * @example induction
+             * @example airport_pass
+             * @example adp
+             * @example wap
+             * @example avp
+             */
+            kind: string;
+            /**
+             * Label En
+             * @example AIR induction
+             * @example PERM pass
+             * @example WAP-ANIA-EXP-2026-0031
+             */
+            label_en: string;
+            /** Label Ar */
+            label_ar: string;
+            /** Valid Until */
+            valid_until: string | null;
+            /** Ok */
+            ok: boolean;
+            card_colour?: components["schemas"]["CardColour"] | null;
+            /** Area Codes */
+            area_codes?: string[] | null;
+            adp_category?: components["schemas"]["AreaCategory"] | null;
+            /**
+             * Window Today
+             * @example 23:00-05:00
+             */
+            window_today?: string | null;
+        };
+        /** GateDeviceCreate */
+        GateDeviceCreate: {
+            /**
+             * Device Id
+             * @example GATE-TAB-07
+             */
+            device_id: string;
+            /** Label */
+            label: string;
+        };
+        /** GateDeviceLogin */
+        GateDeviceLogin: {
+            /** Device Token */
+            device_token: string;
+        };
+        /** GateDeviceRead */
+        GateDeviceRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Device Id
+             * @example GATE-TAB-07
+             */
+            device_id: string;
+            /** Label */
+            label: string;
+            /**
+             * Registered At
+             * Format: date-time
+             */
+            registered_at: string;
+            registered_by: components["schemas"]["UserRef"] | null;
+            /** Last Seen At */
+            last_seen_at: string | null;
+            /** Revoked At */
+            revoked_at: string | null;
+        };
+        /**
+         * GateDeviceRegistered
+         * @description The device token is shown once; enter it on the tablet (POST /gate-device/login).
+         *     Revoking the device ends its sessions; register again to rotate.
+         */
+        GateDeviceRegistered: {
+            device: components["schemas"]["GateDeviceRead"];
+            /**
+             * Device Token
+             * @description Opaque secret, shown only in this response.
+             */
+            device_token: string;
+        };
+        /**
+         * GateDeviceSession
+         * @description GC-1: a device session can call only the gate-check endpoints (others → 403
+         *     GATE_DEVICE_FORBIDDEN); it expires after 12 h idle and is revoked with the device. Send
+         *     the token as `Authorization: Bearer` (also set as the httpOnly cookie `hse_gate_session`).
+         */
+        GateDeviceSession: {
+            /** Access Token */
+            access_token: string;
+            /**
+             * Token Type
+             * @default bearer
+             */
+            token_type: string;
+            gate: components["schemas"]["GateRead"];
+            device: components["schemas"]["GateDeviceRead"];
+            /**
+             * Idle Timeout Minutes
+             * @example 720
+             */
+            idle_timeout_minutes: number;
+        };
+        /**
+         * GateDirection
+         * @enum {string}
+         */
+        GateDirection: "in" | "out";
+        /** GateList */
+        GateList: {
+            /** Items */
+            items: components["schemas"]["GateRead"][];
+        };
+        /**
+         * GateLogEntry
+         * @description GC-12 immutable row (capability 76). Names only with capability 46.
+         */
+        GateLogEntry: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /**
+             * Gate Id
+             * Format: uuid
+             */
+            gate_id: string;
+            /** Gate Code */
+            gate_code: string;
+            /** Device Id */
+            device_id: string | null;
+            user: components["schemas"]["UserRef"] | null;
+            direction: components["schemas"]["GateDirection"];
+            subject_kind: components["schemas"]["GateSubjectKind"];
+            /**
+             * Subject Ref
+             * @example WKR-000006
+             * @example VEH-0004
+             * @example WAP-ANIA-EXP-2026-0031
+             */
+            subject_ref: string | null;
+            /** Subject Name En */
+            subject_name_en: string | null;
+            /** Subject Name Ar */
+            subject_name_ar: string | null;
+            zone: components["schemas"]["ZoneRef"] | null;
+            result: components["schemas"]["GateResult"];
+            /** Reason Codes */
+            reason_codes: components["schemas"]["GateReasonCode"][];
+            /** Pairing Id */
+            pairing_id: string | null;
+            /** Late Exit */
+            late_exit: boolean;
+            /** Admitted Despite Denial */
+            admitted_despite_denial: boolean;
+            /** Admitted Reason */
+            admitted_reason: string | null;
+            admitted_by: components["schemas"]["UserRef"] | null;
+        };
+        /** GateLogPage */
+        GateLogPage: {
+            /** Items */
+            items: components["schemas"]["GateLogEntry"][];
+            /**
+             * Total
+             * @description Total number of matching items across all pages.
+             */
+            total: number;
+            /**
+             * Page
+             * @description 1-based page number.
+             */
+            page: number;
+            /**
+             * Page Size
+             * @description Items per page (max 200).
+             */
+            page_size: number;
+        };
+        /**
+         * GatePairedResult
+         * @description Final result of another subject of the same pairing (e.g. the escorted person when the
+         *     escort is scanned). Both are GRANTED or both DENIED (GC-8).
+         */
+        GatePairedResult: {
+            /**
+             * Check Id
+             * Format: uuid
+             */
+            check_id: string;
+            subject_kind: components["schemas"]["GateSubjectKind"];
+            /**
+             * Display Ref
+             * @example WKR-000004
+             * @example VEH-0004
+             */
+            display_ref: string;
+            result: components["schemas"]["GateResult"];
+            /** Reasons */
+            reasons: components["schemas"]["GateReason"][];
+        };
+        /** GatePairing */
+        GatePairing: {
+            /**
+             * Pairing Id
+             * Format: uuid
+             */
+            pairing_id: string;
+            waiting_for: components["schemas"]["PairingWaitingFor"];
+            state: components["schemas"]["PairingState"];
+            /**
+             * Expires At
+             * Format: date-time
+             * @description Start + escort_pairing_seconds.
+             */
+            expires_at: string;
+            /**
+             * Started Check Id
+             * Format: uuid
+             */
+            started_check_id: string;
+        };
+        /**
+         * GatePersonCard
+         * @description GC-7: never the ID number, nationality, background status or offence history. The photo
+         *     URL is signed and short-lived; devices must not cache it.
+         */
+        GatePersonCard: {
+            /** Worker No */
+            worker_no: string;
+            /** Full Name En */
+            full_name_en: string;
+            /** Full Name Ar */
+            full_name_ar: string;
+            /** Photo Url */
+            photo_url: string | null;
+            /** Employer Short Code */
+            employer_short_code: string | null;
+            trade: components["schemas"]["Trade"] | null;
+            /** Escort Required */
+            escort_required: boolean;
+            /** Credentials */
+            credentials: components["schemas"]["GateCredentialLine"][];
+        };
+        /** GateRead */
+        GateRead: {
+            /**
+             * Created At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            updated_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Gate Code */
+            gate_code: string;
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            site: components["schemas"]["SiteRef"];
+            /** Protected Zones */
+            protected_zones: components["schemas"]["ZoneRef"][];
+            gate_type: components["schemas"]["GateType"];
+            status: components["schemas"]["GateStatus"];
+            /** Devices */
+            devices: components["schemas"]["GateDeviceRead"][];
+        };
+        /** GateReason */
+        GateReason: {
+            code: components["schemas"]["GateReasonCode"];
+            severity: components["schemas"]["GateReasonSeverity"];
+            /** Message En */
+            message_en: string;
+            /** Message Ar */
+            message_ar: string;
+        };
+        /**
+         * GateReasonCode
+         * @description GC-6, in the order used for K-53 (a check counts under its first DENY reason).
+         *     CONTRACTOR_SUSPENDED is deny or warn per the `suspended_contractor_gate` setting.
+         * @enum {string}
+         */
+        GateReasonCode: "TOKEN_UNKNOWN" | "OUT_OF_SCOPE" | "WORKER_NOT_DEPLOYED" | "WORKER_BANNED" | "CONTRACTOR_SUSPENDED" | "CONTRACTOR_BLACKLISTED" | "ID_EXPIRED" | "INDUCTION_MISSING" | "INDUCTION_EXPIRED" | "INDUCTION_SUSPENDED" | "INDUCTION_ABSENCE" | "PASS_MISSING" | "PASS_AREA_NOT_COVERED" | "PASS_SUSPENDED" | "PASS_EXPIRED" | "CREDENTIAL_REVOKED" | "CREDENTIAL_LOST" | "ESCORT_REQUIRED" | "ESCORT_INVALID" | "ESCORT_RATIO_EXCEEDED" | "WAP_MISSING" | "WAP_NOT_ACTIVE" | "WAP_SUSPENDED" | "WAP_OUTSIDE_WINDOW" | "CREW_EXCLUDED" | "ADP_MISSING" | "ADP_CATEGORY" | "ADP_SUSPENDED" | "AVP_MISSING" | "AVP_AREA" | "AVP_SUSPENDED" | "VEHICLE_DOC_EXPIRED" | "HEIGHT_CLEARANCE_REQUIRED" | "HOOK_NOT_MET" | "EXPIRING_7D" | "HOOK_NOT_AVAILABLE" | "LANGUAGE_MISMATCH";
+        /**
+         * GateReasonSeverity
+         * @enum {string}
+         */
+        GateReasonSeverity: "deny" | "warn";
+        /** GateRef */
+        GateRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Gate Code */
+            gate_code: string;
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            gate_type: components["schemas"]["GateType"];
+        };
+        /**
+         * GateResult
+         * @description GC-5.
+         * @enum {string}
+         */
+        GateResult: "GRANTED" | "GRANTED_WITH_WARNING" | "DENIED" | "PENDING_ESCORT" | "PENDING_DRIVER" | "PENDING_ESCORT_VEHICLE" | "EXIT_RECORDED" | "WAP_VIEW";
+        /**
+         * GateStatus
+         * @enum {string}
+         */
+        GateStatus: "active" | "inactive";
+        /**
+         * GateSubjectKind
+         * @enum {string}
+         */
+        GateSubjectKind: "person" | "vehicle" | "wap" | "unknown";
+        /**
+         * GateType
+         * @enum {string}
+         */
+        GateType: "site_gate" | "zone_entry" | "airside_precheck";
+        /** GateUpdate */
+        GateUpdate: {
+            /** Name En */
+            name_en?: string | null;
+            /** Name Ar */
+            name_ar?: string | null;
+            /** Protected Zone Ids */
+            protected_zone_ids?: string[] | null;
+            gate_type?: components["schemas"]["GateType"] | null;
+            status?: components["schemas"]["GateStatus"] | null;
+        };
+        /** GateVehicleCard */
+        GateVehicleCard: {
+            /** Vehicle No */
+            vehicle_no: string;
+            /** Fleet No */
+            fleet_no: string;
+            /** Category */
+            category: string;
+            /**
+             * Plate Display
+             * @description Arabic letters + LTR digits, e.g. 'ح ط ر 9012'; null without plate.
+             */
+            plate_display: string | null;
+            /** Max Working Height M Agl */
+            max_working_height_m_agl: string;
+            /** Credentials */
+            credentials: components["schemas"]["GateCredentialLine"][];
+        };
+        /**
+         * GateWapCard
+         * @description GC-10: WAP QR at a zone entry; logs `wap_view`, records no individual's entry.
+         */
+        GateWapCard: {
+            /** Wap No */
+            wap_no: string;
+            status: components["schemas"]["WapStatus"];
+            /** In Window Now */
+            in_window_now: boolean;
+            /** Window Today */
+            window_today: string | null;
+            /** Blockers */
+            blockers: components["schemas"]["WapBlocker"][];
+            /** Crew */
+            crew: components["schemas"]["GateWapCrewLine"][];
+            /**
+             * Vehicles
+             * @description vehicle_no list.
+             */
+            vehicles: string[];
+        };
+        /** GateWapCrewLine */
+        GateWapCrewLine: {
+            /** Worker No */
+            worker_no: string;
+            /** Full Name En */
+            full_name_en: string;
+            /** Full Name Ar */
+            full_name_ar: string;
+            /** Crew Role */
+            crew_role: string;
+            /** Eligible Now */
+            eligible_now: boolean;
+            /** Reasons */
+            reasons: components["schemas"]["GateReasonCode"][];
+        };
+        /**
          * Granularity
          * @enum {string}
          */
@@ -4538,10 +8157,107 @@ export interface components {
             end: string;
         };
         /**
+         * HeightFigures
+         * @description §6.4. Metres and feet (÷ 0.3048), 2 dp, half-up (OB-9).
+         */
+        HeightFigures: {
+            /**
+             * Top Elevation M Amsl
+             * @description Decimal number serialised as a string (exact, no float rounding).
+             */
+            top_elevation_m_amsl: string;
+            /**
+             * Top Elevation Ft Amsl
+             * @description Decimal number serialised as a string (exact, no float rounding).
+             */
+            top_elevation_ft_amsl: string;
+            /** Ols Limit M Amsl */
+            ols_limit_m_amsl: string | null;
+            /**
+             * Margin M
+             * @description Negative = penetration.
+             */
+            margin_m: string | null;
+            /** Margin Ft */
+            margin_ft: string | null;
+            /**
+             * Penetration M
+             * @description Decimal number serialised as a string (exact, no float rounding).
+             */
+            penetration_m: string;
+            /**
+             * Penetration Ft
+             * @description Decimal number serialised as a string (exact, no float rounding).
+             */
+            penetration_ft: string;
+            /**
+             * Max Height M Agl
+             * @description Decimal number serialised as a string (exact, no float rounding).
+             */
+            max_height_m_agl: string;
+            /**
+             * Max Height Ft Agl
+             * @description Decimal number serialised as a string (exact, no float rounding).
+             */
+            max_height_ft_agl: string;
+            /** Zone Max Equipment Height M Agl */
+            zone_max_equipment_height_m_agl: string | null;
+            /** Clearance Reasons */
+            clearance_reasons: components["schemas"]["ClearanceReason"][];
+            /** Clearance Required */
+            clearance_required: boolean;
+        };
+        /**
          * HijriCalendar
          * @enum {string}
          */
         HijriCalendar: "umm_al_qura";
+        /**
+         * HookKind
+         * @description HK-1: requirements owned by later phases, evaluated through a provider (HK-3).
+         * @enum {string}
+         */
+        HookKind: "training_course" | "personnel_certificate" | "equipment_certificate" | "medical_fitness";
+        /**
+         * HookPolicy
+         * @description HK-4: warn → not_evaluated becomes warn (HOOK_NOT_AVAILABLE); block → not_met.
+         * @enum {string}
+         */
+        HookPolicy: "warn" | "block";
+        /** HookProviderInfo */
+        HookProviderInfo: {
+            kind: components["schemas"]["HookKind"];
+            /**
+             * Registered
+             * @description False until Phase 4/5/6 registers a provider (HK-3).
+             */
+            registered: boolean;
+            policy: components["schemas"]["HookPolicy"];
+            /**
+             * Available From Phase
+             * @example 5
+             */
+            available_from_phase: number;
+        };
+        /**
+         * HookRequirement
+         * @description HK-2: a requirement owned by a later phase (codes are free text until those modules
+         *     publish their lists).
+         */
+        HookRequirement: {
+            kind: components["schemas"]["HookKind"];
+            /**
+             * Code
+             * @example AVSEC-AWR
+             */
+            code: string;
+        };
+        /** HookRequirementRead */
+        HookRequirementRead: {
+            kind: components["schemas"]["HookKind"];
+            /** Code */
+            code: string;
+        };
         /** HseMeetingCreate */
         HseMeetingCreate: {
             /** Engagement Id */
@@ -4707,6 +8423,11 @@ export interface components {
             /** Injury Identity Retention Years */
             injury_identity_retention_years: number;
             /**
+             * Induction Register From
+             * @description v1.1: K-38 counts passed general_site induction records from this date (daily-return inductions before it; null = daily returns only).
+             */
+            induction_register_from?: string | null;
+            /**
              * Ai Enabled
              * @description Effective: requested AND approval recorded (AI-14).
              */
@@ -4777,6 +8498,11 @@ export interface components {
             month_lock_day?: number | null;
             /** Injury Identity Retention Years */
             injury_identity_retention_years?: number | null;
+            /**
+             * Induction Register From
+             * @description ≥ project start; null switches K-38 back to daily returns.
+             */
+            induction_register_from?: string | null;
             /** Ai Enabled */
             ai_enabled?: boolean | null;
         };
@@ -5216,12 +8942,512 @@ export interface components {
             environmental?: components["schemas"]["EnvironmentalInput"] | null;
             dangerous_occurrence?: components["schemas"]["DangerousOccurrenceInput"] | null;
         };
+        /** InductionAttendee */
+        InductionAttendee: {
+            /**
+             * Worker Id
+             * Format: uuid
+             */
+            worker_id: string;
+            delivery_language: components["schemas"]["WorkerLanguage"];
+            /**
+             * Interpreter Used
+             * @default false
+             */
+            interpreter_used: boolean;
+            /**
+             * Test Score Pct
+             * @description 0-100, 2 dp. Required iff the course has a test.
+             */
+            test_score_pct?: string | null;
+            /**
+             * Privacy Notice Version
+             * @example WPN-1.0
+             */
+            privacy_notice_version: string;
+            /**
+             * Signature Png Base64
+             * @description Drawn signature (attendance + worker privacy notice, P2-9) as base64 PNG; stored as an attachment (induction_signature).
+             */
+            signature_png_base64: string;
+            /**
+             * Helmet Sticker No
+             * @description Unique within the project (IN-13).
+             */
+            helmet_sticker_no?: string | null;
+        };
+        /** InductionBadge */
+        InductionBadge: {
+            /** Course Code */
+            course_code: string;
+            status: components["schemas"]["InductionStatus"];
+            /** Valid Until */
+            valid_until: string | null;
+        };
+        /**
+         * InductionCourseCreate
+         * @description Capability 50. airside courses, and zone_specific courses used by an airside zone
+         *     profile, cannot list contractor_hse_rep (422 DELIVERER_NOT_ALLOWED, IN-3).
+         */
+        InductionCourseCreate: {
+            /**
+             * Code
+             * @example AIR
+             */
+            code: string;
+            induction_type: components["schemas"]["InductionType"];
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            /**
+             * Version
+             * @example 2.0
+             */
+            version: string;
+            /**
+             * Validity Months
+             * @description Required unless visitor.
+             */
+            validity_months?: number | null;
+            /**
+             * Validity Days
+             * @description Visitor only.
+             */
+            validity_days?: number | null;
+            /** Min Duration Minutes */
+            min_duration_minutes: number;
+            /** Test Required */
+            test_required: boolean;
+            /**
+             * Pass Mark Pct
+             * @description Default = setting induction_pass_mark_pct.
+             */
+            pass_mark_pct?: number | null;
+            /** Languages Offered */
+            languages_offered: components["schemas"]["WorkerLanguage"][];
+            /** Prerequisite Codes */
+            prerequisite_codes?: string[];
+            /** Delivered By Roles */
+            delivered_by_roles: components["schemas"]["InductionDelivererRole"][];
+            /**
+             * Active
+             * @default true
+             */
+            active: boolean;
+        };
+        /** InductionCourseList */
+        InductionCourseList: {
+            /** Items */
+            items: components["schemas"]["InductionCourseRead"][];
+        };
+        /** InductionCourseRead */
+        InductionCourseRead: {
+            /**
+             * Created At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            updated_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Code */
+            code: string;
+            induction_type: components["schemas"]["InductionType"];
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            /** Version */
+            version: string;
+            /** Version Published On */
+            version_published_on: string | null;
+            /** Requires Reinduction */
+            requires_reinduction: boolean;
+            /** Validity Months */
+            validity_months: number | null;
+            /** Validity Days */
+            validity_days: number | null;
+            /** Min Duration Minutes */
+            min_duration_minutes: number;
+            /** Test Required */
+            test_required: boolean;
+            /** Pass Mark Pct */
+            pass_mark_pct: number | null;
+            /**
+             * Effective Pass Mark Pct
+             * @description max(course pass mark, setting induction_pass_mark_pct) when a test is set.
+             */
+            effective_pass_mark_pct: number | null;
+            /** Languages Offered */
+            languages_offered: components["schemas"]["WorkerLanguage"][];
+            /** Prerequisite Codes */
+            prerequisite_codes: string[];
+            /** Delivered By Roles */
+            delivered_by_roles: components["schemas"]["InductionDelivererRole"][];
+            /** Active */
+            active: boolean;
+        };
+        /**
+         * InductionCourseUpdate
+         * @description Code and type are immutable. A new version is published with
+         *     POST /induction-courses/{id}/versions.
+         */
+        InductionCourseUpdate: {
+            /** Name En */
+            name_en?: string | null;
+            /** Name Ar */
+            name_ar?: string | null;
+            /** Validity Months */
+            validity_months?: number | null;
+            /** Validity Days */
+            validity_days?: number | null;
+            /** Min Duration Minutes */
+            min_duration_minutes?: number | null;
+            /** Test Required */
+            test_required?: boolean | null;
+            /** Pass Mark Pct */
+            pass_mark_pct?: number | null;
+            /** Languages Offered */
+            languages_offered?: components["schemas"]["WorkerLanguage"][] | null;
+            /** Prerequisite Codes */
+            prerequisite_codes?: string[] | null;
+            /** Delivered By Roles */
+            delivered_by_roles?: components["schemas"]["InductionDelivererRole"][] | null;
+            /** Active */
+            active?: boolean | null;
+        };
+        /**
+         * InductionCourseVersionPublish
+         * @description IN-9: requires_reinduction = true sets reinduction_due_on = publish date +
+         *     reinduction_grace_days on every Valid record of older versions (they expire on that date
+         *     unless superseded).
+         */
+        InductionCourseVersionPublish: {
+            /**
+             * Version
+             * @example 3.0
+             */
+            version: string;
+            /** Requires Reinduction */
+            requires_reinduction: boolean;
+            /**
+             * Published On
+             * @description Default today.
+             */
+            published_on?: string | null;
+        };
+        /**
+         * InductionDelivererRole
+         * @enum {string}
+         */
+        InductionDelivererRole: "hse_manager" | "hse_officer" | "contractor_hse_rep";
+        /**
+         * InductionRecordCreate
+         * @description Capability 51. Rules: deployment on the project (pending_induction or mobilised);
+         *     deliverer role ∈ course.delivered_by_roles (403 DELIVERER_NOT_ALLOWED) and ≠ the worker
+         *     (IN-12); prerequisites Valid at delivered_at (422 INDUCTION_PREREQUISITE); duration ≥
+         *     minimum (422 INDUCTION_TOO_SHORT); attempts within 30 days ≤ setting (422
+         *     INDUCTION_ATTEMPTS_EXCEEDED). Result is derived (IN-5). Language mismatch without
+         *     interpreter saves with warning LANGUAGE_MISMATCH (IN-6). A passed general_site record
+         *     mobilises a pending deployment and issues the access card (IN-1).
+         */
+        InductionRecordCreate: {
+            /**
+             * Worker Id
+             * Format: uuid
+             */
+            worker_id: string;
+            delivery_language: components["schemas"]["WorkerLanguage"];
+            /**
+             * Interpreter Used
+             * @default false
+             */
+            interpreter_used: boolean;
+            /**
+             * Test Score Pct
+             * @description 0-100, 2 dp. Required iff the course has a test.
+             */
+            test_score_pct?: string | null;
+            /**
+             * Privacy Notice Version
+             * @example WPN-1.0
+             */
+            privacy_notice_version: string;
+            /**
+             * Signature Png Base64
+             * @description Drawn signature (attendance + worker privacy notice, P2-9) as base64 PNG; stored as an attachment (induction_signature).
+             */
+            signature_png_base64: string;
+            /**
+             * Helmet Sticker No
+             * @description Unique within the project (IN-13).
+             */
+            helmet_sticker_no?: string | null;
+            /**
+             * Course Id
+             * Format: uuid
+             */
+            course_id: string;
+            /**
+             * Delivered At
+             * Format: date-time
+             * @description UTC; ≤ now.
+             */
+            delivered_at: string;
+            /**
+             * Delivered By User Id
+             * @description Default: the caller.
+             */
+            delivered_by_user_id?: string | null;
+            /** Duration Minutes */
+            duration_minutes: number;
+            /** Session Ref */
+            session_ref?: string | null;
+        };
+        /** InductionRecordPage */
+        InductionRecordPage: {
+            /** Items */
+            items: components["schemas"]["InductionRecordRead"][];
+            /**
+             * Total
+             * @description Total number of matching items across all pages.
+             */
+            total: number;
+            /**
+             * Page
+             * @description 1-based page number.
+             */
+            page: number;
+            /**
+             * Page Size
+             * @description Items per page (max 200).
+             */
+            page_size: number;
+        };
+        /** InductionRecordRead */
+        InductionRecordRead: {
+            /**
+             * Created At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            updated_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Induction No
+             * @example IND-ANIA-EXP-2026-03117
+             */
+            induction_no: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            worker: components["schemas"]["WorkerRef"];
+            engagement: components["schemas"]["EngagementRef"] | null;
+            /**
+             * Course Id
+             * Format: uuid
+             */
+            course_id: string;
+            /** Course Code */
+            course_code: string;
+            induction_type: components["schemas"]["InductionType"];
+            /** Course Version */
+            course_version: string;
+            /** Session Ref */
+            session_ref: string | null;
+            /**
+             * Delivered At
+             * Format: date-time
+             */
+            delivered_at: string;
+            delivered_by: components["schemas"]["UserRef"];
+            delivery_language: components["schemas"]["WorkerLanguage"];
+            /** Interpreter Used */
+            interpreter_used: boolean;
+            /**
+             * Language Mismatch
+             * @description IN-6, counted in the data-quality list.
+             */
+            language_mismatch: boolean;
+            /** Duration Minutes */
+            duration_minutes: number;
+            /**
+             * Test Score Pct
+             * @description 2 dp.
+             */
+            test_score_pct: string | null;
+            /** Attempt No */
+            attempt_no: number;
+            result: components["schemas"]["InductionResult"];
+            /** Privacy Notice Version */
+            privacy_notice_version: string;
+            /** Signature Attachment Id */
+            signature_attachment_id: string | null;
+            /** Valid From */
+            valid_from: string | null;
+            /**
+             * Valid Until
+             * @description §6.1 X1; null if failed.
+             */
+            valid_until: string | null;
+            /**
+             * Reinduction Due On
+             * @description IN-9.
+             */
+            reinduction_due_on: string | null;
+            /** Days Left */
+            days_left: number | null;
+            /** Helmet Sticker No */
+            helmet_sticker_no: string | null;
+            status: components["schemas"]["InductionStatus"];
+            /** Warnings */
+            warnings?: components["schemas"]["ApiWarning"][];
+        };
+        /**
+         * InductionRecordUpdate
+         * @description IN-11: records are never deleted; edits after 24 h only by the HSE Manager with
+         *     `edit_reason` (422 INDUCTION_EDIT_LOCKED otherwise).
+         */
+        InductionRecordUpdate: {
+            delivery_language?: components["schemas"]["WorkerLanguage"] | null;
+            /** Interpreter Used */
+            interpreter_used?: boolean | null;
+            /** Helmet Sticker No */
+            helmet_sticker_no?: string | null;
+            /** Session Ref */
+            session_ref?: string | null;
+            /** Edit Reason */
+            edit_reason?: string | null;
+        };
+        /**
+         * InductionResult
+         * @enum {string}
+         */
+        InductionResult: "passed" | "failed";
+        /**
+         * InductionRetrainingNote
+         * @description IN-5: lets a worker attempt again after reaching induction_max_attempts_30d.
+         */
+        InductionRetrainingNote: {
+            /**
+             * Worker Id
+             * Format: uuid
+             */
+            worker_id: string;
+            /**
+             * Course Id
+             * Format: uuid
+             */
+            course_id: string;
+            /** Note */
+            note: string;
+        };
+        /** InductionRetrainingNoteRead */
+        InductionRetrainingNoteRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Worker Id
+             * Format: uuid
+             */
+            worker_id: string;
+            /**
+             * Course Id
+             * Format: uuid
+             */
+            course_id: string;
+            /** Note */
+            note: string;
+            recorded_by: components["schemas"]["UserRef"];
+            /**
+             * Recorded At
+             * Format: date-time
+             */
+            recorded_at: string;
+        };
+        /**
+         * InductionSessionCreate
+         * @description Record one session for several attendees (capability 51). Each attendee is validated
+         *     like a single record; the response lists per-attendee results (no partial commit: any
+         *     error rejects the whole session with field errors per attendee index).
+         */
+        InductionSessionCreate: {
+            /**
+             * Course Id
+             * Format: uuid
+             */
+            course_id: string;
+            /**
+             * Delivered At
+             * Format: date-time
+             */
+            delivered_at: string;
+            /** Delivered By User Id */
+            delivered_by_user_id?: string | null;
+            /** Duration Minutes */
+            duration_minutes: number;
+            /** Session Ref */
+            session_ref?: string | null;
+            /** Attendees */
+            attendees: components["schemas"]["InductionAttendee"][];
+        };
+        /** InductionSessionResult */
+        InductionSessionResult: {
+            /** Items */
+            items: components["schemas"]["InductionRecordRead"][];
+        };
+        /**
+         * InductionStatus
+         * @description §4.3.
+         * @enum {string}
+         */
+        InductionStatus: "valid" | "failed" | "suspended" | "revoked" | "superseded" | "expired";
+        /**
+         * InductionType
+         * @enum {string}
+         */
+        InductionType: "general_site" | "airside" | "zone_specific" | "visitor";
         /**
          * InjuryCaseCreate
          * @description Add an injured/ill person to an injury_illness incident. The category is derived
          *     (I-5) and stays provisional until confirmed.
          */
         InjuryCaseCreate: {
+            /**
+             * Worker Id
+             * @description v1.1: Phase 2 worker with a deployment on the incident's project; pre-fills person_name, id_type/id_number, employee_no, trade and site_start_date (still editable).
+             */
+            worker_id?: string | null;
             person_type: components["schemas"]["PersonType"];
             /**
              * Employer Engagement Id
@@ -5369,6 +9595,13 @@ export interface components {
              * @description Subset of ['identity', 'medical'].
              */
             redacted_groups: string[];
+            /**
+             * Worker Id
+             * @description v1.1 worker link.
+             */
+            worker_id?: string | null;
+            /** Worker No */
+            worker_no?: string | null;
             /** Person Name */
             person_name?: string | null;
             id_type?: components["schemas"]["IdType"] | null;
@@ -5471,6 +9704,8 @@ export interface components {
          * @description Any change re-derives the category (I-9); a change in a Locked month marks it restated.
          */
         InjuryCaseUpdate: {
+            /** Worker Id */
+            worker_id?: string | null;
             person_type?: components["schemas"]["PersonType"] | null;
             /** Employer Engagement Id */
             employer_engagement_id?: string | null;
@@ -5840,6 +10075,11 @@ export interface components {
             /** Cancel Reason */
             cancel_reason: string | null;
         };
+        /**
+         * InspectionResult
+         * @enum {string}
+         */
+        InspectionResult: "passed" | "failed";
         /**
          * InspectionStatus
          * @enum {string}
@@ -6290,7 +10530,7 @@ export interface components {
          * @description KPI catalogue §6.1. K-26 is split into one id per event type (DO / PD / ENV).
          * @enum {string}
          */
-        KpiMetric: "K-01" | "K-02" | "K-03" | "K-04" | "K-05" | "K-05b" | "K-06" | "K-07" | "K-08" | "K-09" | "K-10" | "K-11" | "K-12" | "K-13" | "K-14" | "K-15" | "K-16" | "K-17" | "K-18" | "K-20" | "K-21" | "K-22" | "K-23" | "K-24" | "K-25" | "K-26a" | "K-26b" | "K-26c" | "K-27" | "K-28" | "K-29" | "K-30" | "K-31" | "K-32" | "K-33" | "K-34" | "K-35" | "K-35b" | "K-36" | "K-37" | "K-38" | "K-39" | "K-40" | "K-41" | "K-42" | "K-42b" | "K-43" | "K-44" | "K-45" | "K-46" | "K-47";
+        KpiMetric: "K-01" | "K-02" | "K-03" | "K-04" | "K-05" | "K-05b" | "K-06" | "K-07" | "K-08" | "K-09" | "K-10" | "K-11" | "K-12" | "K-13" | "K-14" | "K-15" | "K-16" | "K-17" | "K-18" | "K-20" | "K-21" | "K-22" | "K-23" | "K-24" | "K-25" | "K-26a" | "K-26b" | "K-26c" | "K-27" | "K-28" | "K-29" | "K-30" | "K-31" | "K-32" | "K-33" | "K-34" | "K-35" | "K-35b" | "K-36" | "K-37" | "K-38" | "K-39" | "K-40" | "K-41" | "K-42" | "K-42b" | "K-43" | "K-44" | "K-45" | "K-46" | "K-47" | "K-48" | "K-49" | "K-50" | "K-51" | "K-52" | "K-53" | "K-53b" | "K-54" | "K-55" | "K-56" | "K-57" | "K-58" | "K-59" | "K-60";
         /** KpiPlaceholder */
         KpiPlaceholder: {
             metric: components["schemas"]["KpiMetric"];
@@ -6534,7 +10774,23 @@ export interface components {
          * @description §6.9.
          * @enum {string}
          */
-        LeadingWarningCode: "E1" | "E2" | "E3" | "E4";
+        LeadingWarningCode: "E1" | "E2" | "E3" | "E4" | "E5" | "E6" | "E7";
+        /**
+         * LicenceClass
+         * @enum {string}
+         */
+        LicenceClass: "private" | "public_transport" | "heavy_transport" | "heavy_equipment" | "motorcycle";
+        /**
+         * LicenceIssuer
+         * @enum {string}
+         */
+        LicenceIssuer: "ksa" | "gcc" | "international";
+        /**
+         * LimitingFactor
+         * @description §6.2: the term that gives the effective validity.
+         * @enum {string}
+         */
+        LimitingFactor: "card_expiry_date" | "own_valid_until" | "worker.id_expiry_date" | "deployment.planned_demob_on" | "engagement.demobilisation_date" | "project.planned_end_date" | "background.recheck_due" | "pass.effective_valid_until" | "licence_expiry_date" | "istimara_expiry" | "insurance_expiry" | "mvpi_expiry" | "equipment_certificate" | "category.max_validity_days" | "valid_until";
         /** LinkedCaSummary */
         LinkedCaSummary: {
             /**
@@ -6620,6 +10876,27 @@ export interface components {
              */
             idle_timeout_minutes: number;
             user: components["schemas"]["Me"];
+        };
+        /**
+         * LossReportRequest
+         * @description held/return_due → lost (capability 59; terminal). Rotates the access-card token or marks
+         *     the pass/ADP/AVP lost; authority_notified_at must follow within lost_report_hours (LC-12).
+         */
+        LossReportRequest: {
+            /**
+             * Lost Reported At
+             * @description Default now.
+             */
+            lost_reported_at?: string | null;
+            /** Authority Notified At */
+            authority_notified_at?: string | null;
+            /** @default lost_stolen */
+            reason_code: components["schemas"]["CredentialReason"];
+            /**
+             * Reason Text
+             * @description ≥ 10 characters (LC-4). P3 hint: no medical or criminal details.
+             */
+            reason_text: string;
         };
         /**
          * LtiFreeRead
@@ -6951,11 +11228,250 @@ export interface components {
          */
         NotWorkRelatedReason: "off_duty_camp" | "personal_task" | "pre_existing_condition" | "commuting" | "voluntary_wellness" | "other";
         /**
+         * NotamReplaceRequest
+         * @description issued → replaced (70): creates a new Issued record (notam_type R, replaces_ntm_id) that
+         *     is auto-linked to the WAPs of the replaced record (NT-5). Returns the new record (201).
+         */
+        NotamReplaceRequest: {
+            /** Notam Number */
+            notam_number: string;
+            /**
+             * Effective From Utc
+             * Format: date-time
+             */
+            effective_from_utc: string;
+            /**
+             * Effective To Utc
+             * Format: date-time
+             */
+            effective_to_utc: string;
+            /** Item E Text */
+            item_e_text?: string | null;
+            /** Schedule Text */
+            schedule_text?: string | null;
+        };
+        /**
+         * NotamRequestCreate
+         * @description Capability 69 → draft; 422 NOT_AIRPORT_PROJECT. Zones must be airside with
+         *     notam_required_for_works = true.
+         */
+        NotamRequestCreate: {
+            /** Zone Ids */
+            zone_ids: string[];
+            /**
+             * Engagement Id
+             * @description Requesting contractor.
+             */
+            engagement_id?: string | null;
+            /** Works Impact */
+            works_impact: components["schemas"]["WorksImpact"][];
+            /** Description En */
+            description_en: string;
+            /** Description Ar */
+            description_ar: string;
+            /**
+             * Requested Start Utc
+             * Format: date-time
+             * @description UTC (NT-3). Shown as NOTAM format YYMMDDHHMM UTC and local Asia/Riyadh.
+             */
+            requested_start_utc: string;
+            /**
+             * Requested End Utc
+             * Format: date-time
+             * @description UTC (NT-3). Shown as NOTAM format YYMMDDHHMM UTC and local Asia/Riyadh.
+             */
+            requested_end_utc: string;
+            /**
+             * Schedule Text
+             * @description Item D.
+             * @example DAILY 2000-0200
+             */
+            schedule_text?: string | null;
+        };
+        /** NotamRequestPage */
+        NotamRequestPage: {
+            /** Items */
+            items: components["schemas"]["NotamRequestRead"][];
+            /**
+             * Total
+             * @description Total number of matching items across all pages.
+             */
+            total: number;
+            /**
+             * Page
+             * @description 1-based page number.
+             */
+            page: number;
+            /**
+             * Page Size
+             * @description Items per page (max 200).
+             */
+            page_size: number;
+        };
+        /** NotamRequestRead */
+        NotamRequestRead: {
+            /**
+             * Created At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            updated_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Ntm No
+             * @example NTM-ANIA-EXP-2026-0012
+             */
+            ntm_no: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Zones */
+            zones: components["schemas"]["ZoneRef"][];
+            engagement: components["schemas"]["EngagementRef"] | null;
+            /** Works Impact */
+            works_impact: components["schemas"]["WorksImpact"][];
+            /** Description En */
+            description_en: string;
+            /** Description Ar */
+            description_ar: string;
+            /**
+             * Requested Start Utc
+             * Format: date-time
+             */
+            requested_start_utc: string;
+            /**
+             * Requested End Utc
+             * Format: date-time
+             */
+            requested_end_utc: string;
+            /** Schedule Text */
+            schedule_text: string | null;
+            /**
+             * Required Lead Days
+             * @description notam_request_lead_days or airac_lead_days.
+             */
+            required_lead_days: number;
+            /** Submitted To Ops At */
+            submitted_to_ops_at: string | null;
+            /** Late Request */
+            late_request: boolean;
+            /** Late Justification */
+            late_justification: string | null;
+            /** Notam Number */
+            notam_number: string | null;
+            notam_type: components["schemas"]["NotamType"] | null;
+            /** Effective From Utc */
+            effective_from_utc: string | null;
+            /** Effective To Utc */
+            effective_to_utc: string | null;
+            /**
+             * Effective From Notam
+             * @description YYMMDDHHMM.
+             * @example 2610012000
+             */
+            effective_from_notam: string | null;
+            /** Effective To Notam */
+            effective_to_notam: string | null;
+            /** Item E Text */
+            item_e_text: string | null;
+            /** Replaces Ntm Id */
+            replaces_ntm_id: string | null;
+            /** Replaced By Ntm Id */
+            replaced_by_ntm_id: string | null;
+            /**
+             * In Effect
+             * @description Issued and effective_from ≤ now ≤ effective_to.
+             */
+            in_effect: boolean;
+            /** Linked Wap Ids */
+            linked_wap_ids: string[];
+            requested_by: components["schemas"]["UserRef"];
+            status: components["schemas"]["NotamStatus"];
+            /** Warnings */
+            warnings?: components["schemas"]["ApiWarning"][];
+        };
+        /**
+         * NotamRequestUpdate
+         * @description Draft only.
+         */
+        NotamRequestUpdate: {
+            /** Zone Ids */
+            zone_ids?: string[] | null;
+            /** Works Impact */
+            works_impact?: components["schemas"]["WorksImpact"][] | null;
+            /** Description En */
+            description_en?: string | null;
+            /** Description Ar */
+            description_ar?: string | null;
+            /** Requested Start Utc */
+            requested_start_utc?: string | null;
+            /** Requested End Utc */
+            requested_end_utc?: string | null;
+            /** Schedule Text */
+            schedule_text?: string | null;
+        };
+        /**
+         * NotamStatus
+         * @description §4.6. "In effect" is derived (issued and now inside the effective window).
+         * @enum {string}
+         */
+        NotamStatus: "draft" | "submitted_to_ops" | "requested_from_ais" | "issued" | "rejected" | "replaced" | "cancelled" | "expired";
+        /**
+         * NotamTransitionRequest
+         * @description §4.6 transitions:
+         *
+         *     * draft → submitted_to_ops (69): sets submitted_to_ops_at = now; NT-2 lead check — a
+         *       shorter lead needs `late_justification` (else 422 LATE_JUSTIFICATION_REQUIRED) and sets
+         *       late_request = true
+         *     * submitted_to_ops → requested_from_ais (70)
+         *     * requested_from_ais → issued (70): `notam_number` (unique per project), `notam_type`,
+         *       `effective_from_utc`, `effective_to_utc`, optional `item_e_text`
+         *     * submitted_to_ops / requested_from_ais → rejected (70): `reason`
+         *     * issued → cancelled (70): `reason`; suspends linked Active WAPs (NT-5, WA-15)
+         *     * issued → replaced: use POST /notam-requests/{id}/replace.
+         */
+        NotamTransitionRequest: {
+            to_status: components["schemas"]["NotamStatus"];
+            /** Reason */
+            reason?: string | null;
+            /** Late Justification */
+            late_justification?: string | null;
+            /**
+             * Notam Number
+             * @example A0999/26
+             */
+            notam_number?: string | null;
+            notam_type?: components["schemas"]["NotamType"] | null;
+            /** Effective From Utc */
+            effective_from_utc?: string | null;
+            /** Effective To Utc */
+            effective_to_utc?: string | null;
+            /** Item E Text */
+            item_e_text?: string | null;
+        };
+        /**
+         * NotamType
+         * @enum {string}
+         */
+        NotamType: "N" | "R" | "C";
+        /**
          * NotificationKind
          * @description In-app notification kinds (§7).
          * @enum {string}
          */
-        NotificationKind: "account_locked" | "contractor_cr_expiry" | "contractor_submitted" | "contractor_status_changed" | "engagement_parent_blacklisted" | "settings_changed" | "audit_chain_break" | "last_hse_manager_risk" | "role_assignment_ending" | "invite_expired" | "inactive_account" | "incident_reported" | "incident_unclassified" | "external_notification_due" | "investigation_due" | "preliminary_report_missing" | "open_lti_case" | "case_restated" | "ca_assigned" | "ca_due" | "ca_overdue" | "ca_pending_verification" | "high_risk_observation_without_ca" | "daily_return_missing" | "data_completeness_low" | "month_lock_approaching" | "inspection_due" | "inspection_missed" | "leading_warning" | "lti_free_milestone" | "monthly_report_ready" | "import_committed_with_warnings";
+        NotificationKind: "account_locked" | "contractor_cr_expiry" | "contractor_submitted" | "contractor_status_changed" | "engagement_parent_blacklisted" | "settings_changed" | "audit_chain_break" | "last_hse_manager_risk" | "role_assignment_ending" | "invite_expired" | "inactive_account" | "incident_reported" | "incident_unclassified" | "external_notification_due" | "investigation_due" | "preliminary_report_missing" | "open_lti_case" | "case_restated" | "ca_assigned" | "ca_due" | "ca_overdue" | "ca_pending_verification" | "high_risk_observation_without_ca" | "daily_return_missing" | "data_completeness_low" | "month_lock_approaching" | "inspection_due" | "inspection_missed" | "leading_warning" | "lti_free_milestone" | "monthly_report_ready" | "import_committed_with_warnings" | "induction_expiry" | "reinduction_due" | "worker_id_expiry" | "passport_registration" | "airport_pass_expiry" | "bg_recheck_due" | "pass_application_update" | "pass_application_stale" | "adp_expiry" | "avp_expiry" | "vehicle_document_expiry" | "adp_suspended" | "adp_suspension_ended" | "raised_suspension_pending" | "credential_status_changed" | "return_due" | "return_overdue" | "credential_lost" | "lost_authority_not_notified" | "revoked_token_scanned" | "admitted_despite_denial" | "contractor_blacklisted_passes" | "wap_update" | "wap_blocked" | "wap_crew_excluded" | "wap_suspended" | "wap_ending" | "notam_ending" | "notam_late" | "notam_not_issued" | "notam_ended_with_waps" | "obstacle_clearance_update" | "obstacle_clearance_ending" | "ops_suspension";
         /** NotificationPage */
         NotificationPage: {
             /** Items */
@@ -7208,11 +11724,1070 @@ export interface components {
             immediate_action?: string | null;
         };
         /**
+         * ObstacleCondition
+         * @enum {string}
+         */
+        ObstacleCondition: "obstruction_light" | "day_marking" | "lower_when_idle" | "lower_at_night" | "notam_required" | "ats_coordination_each_lift" | "daylight_only";
+        /**
+         * ObstacleCreate
+         * @description Capability 71 → draft (any project, OB-1). The server computes top elevation, margin,
+         *     penetration and reasons (§6.4, OB-3).
+         */
+        ObstacleCreate: {
+            /**
+             * Zone Id
+             * @description Required on airport projects.
+             */
+            zone_id?: string | null;
+            /** Engagement Id */
+            engagement_id?: string | null;
+            /**
+             * Vehicle Id
+             * @description One of vehicle_id / equipment_desc is required.
+             */
+            vehicle_id?: string | null;
+            /** Equipment Desc */
+            equipment_desc?: string | null;
+            equipment_type: components["schemas"]["ObstacleEquipmentType"];
+            /** Location Lat */
+            location_lat: number | string;
+            /** Location Lng */
+            location_lng: number | string;
+            /** Location Desc */
+            location_desc: string;
+            /** Ground Elevation M Amsl */
+            ground_elevation_m_amsl: number | string;
+            /**
+             * Max Height M Agl
+             * @description Highest point in the planned configuration incl. load/rigging (OB-2); ≥ the linked vehicle's max working height.
+             */
+            max_height_m_agl: number | string;
+            /** @description Required on airport projects. */
+            ols_surface?: components["schemas"]["OlsSurface"] | null;
+            /**
+             * Ols Limit M Amsl
+             * @description Default = zone.ols_height_limit_m_amsl.
+             */
+            ols_limit_m_amsl?: number | string | null;
+            /**
+             * Ols Source Ref
+             * @description Required when the limit differs from the zone.
+             */
+            ols_source_ref?: string | null;
+            /**
+             * Requested From
+             * Format: date
+             */
+            requested_from: string;
+            /**
+             * Requested To
+             * Format: date
+             */
+            requested_to: string;
+        };
+        /**
+         * ObstacleDecision
+         * @enum {string}
+         */
+        ObstacleDecision: "approved" | "approved_with_conditions" | "rejected";
+        /**
+         * ObstacleDecisionRequest
+         * @description Capability 72. With `ols_penetration`, an approval must include conditions
+         *     notam_required and obstruction_light and an authority_ref (422 OB_CONDITIONS_REQUIRED,
+         *     OB-4). notam_required needs linked_ntm_ids (OB-7).
+         */
+        ObstacleDecisionRequest: {
+            decision: components["schemas"]["ObstacleDecision"];
+            /** Authority Ref */
+            authority_ref?: string | null;
+            /**
+             * Approved Max Height M Agl
+             * @description ≤ requested.
+             */
+            approved_max_height_m_agl?: number | string | null;
+            /** Approved Top M Amsl */
+            approved_top_m_amsl?: number | string | null;
+            /** Conditions */
+            conditions?: components["schemas"]["ObstacleCondition"][];
+            /** Conditions Text */
+            conditions_text?: string | null;
+            /**
+             * Valid From
+             * @description Within the requested window.
+             */
+            valid_from?: string | null;
+            /** Valid To */
+            valid_to?: string | null;
+            /** Linked Ntm Ids */
+            linked_ntm_ids?: string[];
+        };
+        /**
+         * ObstacleEquipmentType
+         * @enum {string}
+         */
+        ObstacleEquipmentType: "mobile_crane" | "tower_crane" | "crawler_crane" | "piling_rig" | "drilling_rig" | "mewp" | "concrete_pump_boom" | "excavator" | "temporary_structure" | "other";
+        /** ObstaclePage */
+        ObstaclePage: {
+            /** Items */
+            items: components["schemas"]["ObstacleRead"][];
+            /**
+             * Total
+             * @description Total number of matching items across all pages.
+             */
+            total: number;
+            /**
+             * Page
+             * @description 1-based page number.
+             */
+            page: number;
+            /**
+             * Page Size
+             * @description Items per page (max 200).
+             */
+            page_size: number;
+        };
+        /**
+         * ObstaclePreviewRequest
+         * @description Same body as create; nothing is saved.
+         */
+        ObstaclePreviewRequest: {
+            /**
+             * Zone Id
+             * @description Required on airport projects.
+             */
+            zone_id?: string | null;
+            /** Engagement Id */
+            engagement_id?: string | null;
+            /**
+             * Vehicle Id
+             * @description One of vehicle_id / equipment_desc is required.
+             */
+            vehicle_id?: string | null;
+            /** Equipment Desc */
+            equipment_desc?: string | null;
+            equipment_type: components["schemas"]["ObstacleEquipmentType"];
+            /** Location Lat */
+            location_lat: number | string;
+            /** Location Lng */
+            location_lng: number | string;
+            /** Location Desc */
+            location_desc: string;
+            /** Ground Elevation M Amsl */
+            ground_elevation_m_amsl: number | string;
+            /**
+             * Max Height M Agl
+             * @description Highest point in the planned configuration incl. load/rigging (OB-2); ≥ the linked vehicle's max working height.
+             */
+            max_height_m_agl: number | string;
+            /** @description Required on airport projects. */
+            ols_surface?: components["schemas"]["OlsSurface"] | null;
+            /**
+             * Ols Limit M Amsl
+             * @description Default = zone.ols_height_limit_m_amsl.
+             */
+            ols_limit_m_amsl?: number | string | null;
+            /**
+             * Ols Source Ref
+             * @description Required when the limit differs from the zone.
+             */
+            ols_source_ref?: string | null;
+            /**
+             * Requested From
+             * Format: date
+             */
+            requested_from: string;
+            /**
+             * Requested To
+             * Format: date
+             */
+            requested_to: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+        };
+        /** ObstacleRead */
+        ObstacleRead: {
+            /**
+             * Created At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            updated_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Obs No
+             * @example OBS-ANIA-EXP-2026-0004
+             */
+            obs_no: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            zone: components["schemas"]["ZoneRef"] | null;
+            engagement: components["schemas"]["EngagementRef"] | null;
+            vehicle: components["schemas"]["VehicleRef"] | null;
+            /** Equipment Desc */
+            equipment_desc: string | null;
+            equipment_type: components["schemas"]["ObstacleEquipmentType"];
+            /**
+             * Location Lat
+             * @description Decimal number serialised as a string (exact, no float rounding).
+             */
+            location_lat: string;
+            /**
+             * Location Lng
+             * @description Decimal number serialised as a string (exact, no float rounding).
+             */
+            location_lng: string;
+            /** Location Desc */
+            location_desc: string;
+            /**
+             * Ground Elevation M Amsl
+             * @description Decimal number serialised as a string (exact, no float rounding).
+             */
+            ground_elevation_m_amsl: string;
+            ols_surface: components["schemas"]["OlsSurface"] | null;
+            /** Ols Source Ref */
+            ols_source_ref: string | null;
+            heights: components["schemas"]["HeightFigures"];
+            /**
+             * Requested From
+             * Format: date
+             */
+            requested_from: string;
+            /**
+             * Requested To
+             * Format: date
+             */
+            requested_to: string;
+            /** Submitted At */
+            submitted_at: string | null;
+            /** Late Request */
+            late_request: boolean;
+            /** Late Justification */
+            late_justification: string | null;
+            /** Authority Ref */
+            authority_ref: string | null;
+            decision: components["schemas"]["ObstacleDecision"] | null;
+            /** Approved Max Height M Agl */
+            approved_max_height_m_agl: string | null;
+            /** Approved Max Height Ft Agl */
+            approved_max_height_ft_agl: string | null;
+            /** Approved Top M Amsl */
+            approved_top_m_amsl: string | null;
+            /** Conditions */
+            conditions: components["schemas"]["ObstacleCondition"][];
+            /** Conditions Text */
+            conditions_text: string | null;
+            /** Valid From */
+            valid_from: string | null;
+            /** Valid To */
+            valid_to: string | null;
+            /** Linked Ntm Ids */
+            linked_ntm_ids: string[];
+            /**
+             * Active Today
+             * @description Approved* and valid today.
+             */
+            active_today: boolean;
+            /**
+             * System Suspended
+             * @description OB-7 suspension (lifts automatically).
+             */
+            system_suspended: boolean;
+            requested_by: components["schemas"]["UserRef"];
+            status: components["schemas"]["ObstacleStatus"];
+            /** Warnings */
+            warnings?: components["schemas"]["ApiWarning"][];
+        };
+        /**
+         * ObstacleStatus
+         * @description §4.7.
+         * @enum {string}
+         */
+        ObstacleStatus: "draft" | "submitted" | "approved" | "approved_with_conditions" | "rejected" | "suspended" | "withdrawn" | "expired";
+        /**
+         * ObstacleTransitionRequest
+         * @description §4.7 transitions:
+         *
+         *     * draft → submitted (71): OB-5 lead check — shorter lead needs `late_justification`
+         *       (LATE_JUSTIFICATION_REQUIRED), sets late_request; `authority_ref` optional
+         *     * approved* → suspended (72): `reason`; suspended → approved* (72): `reason`
+         *       (system suspensions under OB-7 lift automatically)
+         *     * approved* → withdrawn (71 own / 72): `reason`
+         *     * submitted → approved / approved_with_conditions / rejected: use POST …/decision.
+         */
+        ObstacleTransitionRequest: {
+            to_status: components["schemas"]["ObstacleStatus"];
+            /** Reason */
+            reason?: string | null;
+            /** Late Justification */
+            late_justification?: string | null;
+            /** Authority Ref */
+            authority_ref?: string | null;
+        };
+        /**
+         * ObstacleUpdate
+         * @description Draft only.
+         */
+        ObstacleUpdate: {
+            /** Zone Id */
+            zone_id?: string | null;
+            /** Vehicle Id */
+            vehicle_id?: string | null;
+            /** Equipment Desc */
+            equipment_desc?: string | null;
+            equipment_type?: components["schemas"]["ObstacleEquipmentType"] | null;
+            /** Location Lat */
+            location_lat?: number | string | null;
+            /** Location Lng */
+            location_lng?: number | string | null;
+            /** Location Desc */
+            location_desc?: string | null;
+            /** Ground Elevation M Amsl */
+            ground_elevation_m_amsl?: number | string | null;
+            /** Max Height M Agl */
+            max_height_m_agl?: number | string | null;
+            ols_surface?: components["schemas"]["OlsSurface"] | null;
+            /** Ols Limit M Amsl */
+            ols_limit_m_amsl?: number | string | null;
+            /** Ols Source Ref */
+            ols_source_ref?: string | null;
+            /** Requested From */
+            requested_from?: string | null;
+            /** Requested To */
+            requested_to?: string | null;
+        };
+        /**
+         * OffenceCreate
+         * @description Capability 62. Points come from list OFF at offence time. OFF-05/OFF-06 suspend the ADP
+         *     immediately (`violation`, DP-9); reaching adp_points_threshold auto-suspends (DP-8); the
+         *     n-th suspension in the window revokes (DP-9). Without an Active ADP the offence is recorded
+         *     against the worker (DP-11). Evidence: POST /attachments (owner_type offence_evidence).
+         */
+        OffenceCreate: {
+            /**
+             * Worker Id
+             * Format: uuid
+             */
+            worker_id: string;
+            /**
+             * Offence Code
+             * @example OFF-01
+             */
+            offence_code: string;
+            /**
+             * Offence At
+             * Format: date-time
+             */
+            offence_at: string;
+            /**
+             * Zone Id
+             * Format: uuid
+             */
+            zone_id: string;
+            /** Vehicle Id */
+            vehicle_id?: string | null;
+            /**
+             * Incident Id
+             * @description Phase 1 incident.
+             */
+            incident_id?: string | null;
+            /** Notes */
+            notes?: string | null;
+        };
+        /** OffencePage */
+        OffencePage: {
+            /** Items */
+            items: components["schemas"]["OffenceRead"][];
+            /**
+             * Total
+             * @description Total number of matching items across all pages.
+             */
+            total: number;
+            /**
+             * Page
+             * @description 1-based page number.
+             */
+            page: number;
+            /**
+             * Page Size
+             * @description Items per page (max 200).
+             */
+            page_size: number;
+        };
+        /** OffenceRead */
+        OffenceRead: {
+            /**
+             * Created At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            updated_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Offence No
+             * @example OFF-ANIA-EXP-2026-0031
+             */
+            offence_no: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            worker: components["schemas"]["WorkerRef"];
+            /** Adp Id */
+            adp_id: string | null;
+            /** Adp No */
+            adp_no: string | null;
+            /** Offence Code */
+            offence_code: string;
+            /** Offence Label En */
+            offence_label_en: string;
+            /** Offence Label Ar */
+            offence_label_ar: string;
+            /**
+             * Offence At
+             * Format: date-time
+             */
+            offence_at: string;
+            zone: components["schemas"]["ZoneRef"];
+            vehicle: components["schemas"]["VehicleRef"] | null;
+            /** Points */
+            points: number;
+            /** Immediate Suspension */
+            immediate_suspension: boolean;
+            reported_by: components["schemas"]["UserRef"];
+            /** Incident Id */
+            incident_id: string | null;
+            /** Notes */
+            notes: string | null;
+            status: components["schemas"]["OffenceStatus"];
+            /** Evidence Count */
+            evidence_count: number;
+            /**
+             * Resulting Actions
+             * @description e.g. ['adp_suspended_points', 'adp_revoked'] caused by this offence.
+             */
+            resulting_actions: string[];
+        };
+        /**
+         * OffenceStatus
+         * @description Only recorded/upheld (and disputed until withdrawn, DP-10) count points.
+         * @enum {string}
+         */
+        OffenceStatus: "recorded" | "disputed" | "upheld" | "withdrawn";
+        /**
+         * OffenceTransitionRequest
+         * @description recorded → disputed / upheld / withdrawn; disputed → upheld / withdrawn (capability 58).
+         *     Withdrawing recomputes points but never auto-reinstates (DP-10).
+         */
+        OffenceTransitionRequest: {
+            to_status: components["schemas"]["OffenceStatus"];
+            /** Reason */
+            reason: string;
+        };
+        /**
+         * OlsSurface
+         * @enum {string}
+         */
+        OlsSurface: "approach" | "take_off_climb" | "transitional" | "inner_horizontal" | "conical" | "inner_approach" | "inner_transitional" | "balked_landing" | "none_applicable";
+        /**
+         * OpsEventCreate
+         * @description Capability 67. lvp / dust_sandstorm default to every zone of the site with
+         *     lvp_withdrawal_required (the declarer may add zones, not remove them, WA-16). Starting the
+         *     event suspends every Active WAP in those zones (`ops_suspension`) within 60 s (WA-15).
+         */
+        OpsEventCreate: {
+            type: components["schemas"]["OpsEventType"];
+            /**
+             * Site Id
+             * Format: uuid
+             */
+            site_id: string;
+            /** Zone Ids */
+            zone_ids?: string[];
+            source: components["schemas"]["OpsEventSource"];
+            /** Source Ref */
+            source_ref: string;
+            /**
+             * Started At
+             * @description Default now.
+             */
+            started_at?: string | null;
+            /** Notes */
+            notes?: string | null;
+        };
+        /**
+         * OpsEventEnd
+         * @description Ending does not resume WAPs (each is resumed by capability 66).
+         */
+        OpsEventEnd: {
+            /**
+             * Ended At
+             * @description Default now.
+             */
+            ended_at?: string | null;
+        };
+        /** OpsEventPage */
+        OpsEventPage: {
+            /** Items */
+            items: components["schemas"]["OpsEventRead"][];
+            /**
+             * Total
+             * @description Total number of matching items across all pages.
+             */
+            total: number;
+            /**
+             * Page
+             * @description 1-based page number.
+             */
+            page: number;
+            /**
+             * Page Size
+             * @description Items per page (max 200).
+             */
+            page_size: number;
+        };
+        /** OpsEventRead */
+        OpsEventRead: {
+            /**
+             * Created At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            updated_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Ops No
+             * @example OPS-ANIA-EXP-2026-0009
+             */
+            ops_no: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            site: components["schemas"]["SiteRef"];
+            type: components["schemas"]["OpsEventType"];
+            /** Zones */
+            zones: components["schemas"]["ZoneRef"][];
+            /** Default Zone Ids */
+            default_zone_ids: string[];
+            source: components["schemas"]["OpsEventSource"];
+            /** Source Ref */
+            source_ref: string;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Ended At */
+            ended_at: string | null;
+            /** Active */
+            active: boolean;
+            declared_by: components["schemas"]["UserRef"];
+            /** Notes */
+            notes: string | null;
+            /** Suspended Wap Ids */
+            suspended_wap_ids: string[];
+        };
+        /**
+         * OpsEventSource
+         * @enum {string}
+         */
+        OpsEventSource: "aocc" | "atc" | "airport_security" | "hse";
+        /**
+         * OpsEventType
+         * @enum {string}
+         */
+        OpsEventType: "lvp" | "dust_sandstorm" | "thunderstorm_lightning" | "security_alert" | "aircraft_emergency" | "atc_instruction" | "vip_movement" | "other";
+        /**
+         * OpsEventUpdate
+         * @description Add zones (never remove defaults → 422 OPS_ZONES_LOCKED).
+         */
+        OpsEventUpdate: {
+            /** Zone Ids */
+            zone_ids?: string[] | null;
+            /** Notes */
+            notes?: string | null;
+        };
+        /**
          * OverdueBucket
          * @description K-42 ageing buckets (days overdue).
          * @enum {string}
          */
         OverdueBucket: "1-7" | "8-30" | "31-60" | ">60";
+        /**
+         * PairingRead
+         * @description Poll while PENDING_*: on timeout the started subject is DENIED (ESCORT_REQUIRED for an
+         *     escort pairing) and the final result is listed in `results`.
+         */
+        PairingRead: {
+            pairing: components["schemas"]["GatePairing"];
+            /** Results */
+            results: components["schemas"]["GatePairedResult"][];
+        };
+        /**
+         * PairingState
+         * @enum {string}
+         */
+        PairingState: "waiting" | "completed" | "timed_out" | "cancelled";
+        /**
+         * PairingWaitingFor
+         * @enum {string}
+         */
+        PairingWaitingFor: "escort" | "driver" | "escort_vehicle";
+        /**
+         * PassApplicationCreate
+         * @description Capability 53 → status draft. 422 NOT_AIRPORT_PROJECT (AP-2), 409 APPLICATION_OPEN
+         *     (AP-3), 422 VALIDITY_EXCEEDS_LIMIT with meta.limiting_factor (AP-6). The ID copy is
+         *     uploaded afterwards (POST /attachments, owner_type pass_application_id_copy; required for
+         *     new/renewal before Submit).
+         */
+        PassApplicationCreate: {
+            application_type: components["schemas"]["PassApplicationType"];
+            /**
+             * Deployment Id
+             * Format: uuid
+             */
+            deployment_id: string;
+            /** Sponsor Letter Ref */
+            sponsor_letter_ref: string;
+            /**
+             * Pass Category
+             * @example PERM
+             */
+            pass_category: string;
+            /**
+             * Requested Area Codes
+             * @example [
+             *       "A",
+             *       "M"
+             *     ]
+             */
+            requested_area_codes: string[];
+            /**
+             * Requested Valid Until
+             * Format: date
+             */
+            requested_valid_until: string;
+            /**
+             * Justification
+             * @description P3 hint; ≥ 20 chars when an area maps to no zone in the deployment's sites.
+             */
+            justification: string;
+        };
+        /** PassApplicationPage */
+        PassApplicationPage: {
+            /** Items */
+            items: components["schemas"]["PassApplicationRead"][];
+            /**
+             * Total
+             * @description Total number of matching items across all pages.
+             */
+            total: number;
+            /**
+             * Page
+             * @description 1-based page number.
+             */
+            page: number;
+            /**
+             * Page Size
+             * @description Items per page (max 200).
+             */
+            page_size: number;
+        };
+        /**
+         * PassApplicationRead
+         * @description For callers without capability 56 a refused application shows
+         *     `status_label_en` "Refused by issuing authority" and `background_check` / `outcome_note`
+         *     are absent (AP-13).
+         */
+        PassApplicationRead: {
+            /**
+             * Created At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            updated_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Application No
+             * @example APA-ANIA-EXP-2026-0142
+             */
+            application_no: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            application_type: components["schemas"]["PassApplicationType"];
+            worker: components["schemas"]["WorkerRef"];
+            /**
+             * Deployment Id
+             * Format: uuid
+             */
+            deployment_id: string;
+            sponsor_engagement: components["schemas"]["EngagementRef"] | null;
+            /** Sponsor Letter Ref */
+            sponsor_letter_ref: string;
+            client_sponsor: components["schemas"]["UserRef"] | null;
+            /** Pass Category */
+            pass_category: string;
+            /** Requested Area Codes */
+            requested_area_codes: string[];
+            /**
+             * Requested Valid Until
+             * Format: date
+             */
+            requested_valid_until: string;
+            /**
+             * Max Valid Until
+             * @description AP-6 limit today, for the form.
+             */
+            max_valid_until: string | null;
+            /** Justification */
+            justification: string;
+            /** Has Id Copy */
+            has_id_copy: boolean;
+            /**
+             * Id Copy Attachment Id
+             * @description Present only for capability 48 (opening it is audited).
+             */
+            id_copy_attachment_id?: string | null;
+            /** Prerequisite Snapshot */
+            prerequisite_snapshot: components["schemas"]["EligibilityItem"][] | null;
+            /** Submitted At */
+            submitted_at: string | null;
+            submitted_by: components["schemas"]["UserRef"] | null;
+            /** Lodged At */
+            lodged_at: string | null;
+            /** Authority Ref */
+            authority_ref: string | null;
+            /**
+             * Days Lodged
+             * @description Ageing for the tracker (AP-14).
+             */
+            days_lodged: number | null;
+            /** Stale */
+            stale: boolean;
+            /** @description Sensitive (P2-1): present only for capability 56 (reads audited as sensitive_field_read); the key is absent for other callers (AP-13). */
+            background_check?: components["schemas"]["BackgroundCheckRead"] | null;
+            /**
+             * Outcome Note
+             * @description Sensitive (P2-1): present only for capability 56 (reads audited as sensitive_field_read); the key is absent for other callers (AP-13).
+             */
+            outcome_note?: string | null;
+            status: components["schemas"]["PassApplicationStatus"];
+            /** Status Label En */
+            status_label_en: string;
+            /** Status Label Ar */
+            status_label_ar: string;
+            /** Issued Pass Id */
+            issued_pass_id: string | null;
+            /** Warnings */
+            warnings?: components["schemas"]["ApiWarning"][];
+        };
+        /**
+         * PassApplicationStatus
+         * @description §4.4.
+         * @enum {string}
+         */
+        PassApplicationStatus: "draft" | "submitted" | "endorsed" | "lodged" | "approved" | "refused" | "issued" | "withdrawn" | "cancelled";
+        /**
+         * PassApplicationTransitionRequest
+         * @description §4.4 transitions:
+         *
+         *     * draft → submitted (53): required fields, photo (PHOTO_REQUIRED), ID copy for new/renewal,
+         *       AP-5 (deployment mobilised, ID expiry > today + 30 → ID_EXPIRES_SOON, contractor not
+         *       suspended → CONTRACTOR_SUSPENDED, worker not banned → WORKER_BANNED)
+         *     * submitted → draft (54): `reason` = return comment
+         *     * submitted → endorsed (54): `client_sponsor_user_id` (employer client / pmc_consultant;
+         *       ≠ submitter → ENDORSER_NOT_ALLOWED, AP-8); prerequisites (AP-7) met or hook warn, else
+         *       PREREQUISITES_NOT_MET with meta.requirements; snapshot stored
+         *     * endorsed → lodged (55): `lodged_at`, `authority_ref`
+         *     * lodged → approved (55): background cleared for categories that require it
+         *       (BACKGROUND_NOT_CLEARED, AP-4)
+         *     * lodged → refused (55): optional `outcome_note` (no security reasons, P2-4)
+         *     * draft/submitted/endorsed/lodged → withdrawn (53 own / 54): `reason`
+         *     * approved → cancelled (55): `reason`
+         *     * approved → issued: use POST /pass-applications/{id}/issue.
+         */
+        PassApplicationTransitionRequest: {
+            to_status: components["schemas"]["PassApplicationStatus"];
+            /** Reason */
+            reason?: string | null;
+            /** Client Sponsor User Id */
+            client_sponsor_user_id?: string | null;
+            /** Lodged At */
+            lodged_at?: string | null;
+            /** Authority Ref */
+            authority_ref?: string | null;
+            /**
+             * Outcome Note
+             * @description Do not record security reasons (P2-4).
+             */
+            outcome_note?: string | null;
+        };
+        /**
+         * PassApplicationType
+         * @enum {string}
+         */
+        PassApplicationType: "new" | "renewal" | "replacement_lost" | "replacement_damaged" | "area_change";
+        /**
+         * PassApplicationUpdate
+         * @description Draft only.
+         */
+        PassApplicationUpdate: {
+            /** Sponsor Letter Ref */
+            sponsor_letter_ref?: string | null;
+            /** Pass Category */
+            pass_category?: string | null;
+            /** Requested Area Codes */
+            requested_area_codes?: string[] | null;
+            /** Requested Valid Until */
+            requested_valid_until?: string | null;
+            /** Justification */
+            justification?: string | null;
+        };
+        /** PassAreaCreate */
+        PassAreaCreate: {
+            /**
+             * Code
+             * @example A
+             */
+            code: string;
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            colour: components["schemas"]["CardColour"];
+            area_kind: components["schemas"]["PassAreaKind"];
+            /**
+             * Zone Ids
+             * @description Airside zones.
+             */
+            zone_ids?: string[];
+            /**
+             * Active
+             * @default true
+             */
+            active: boolean;
+        };
+        /**
+         * PassAreaKind
+         * @enum {string}
+         */
+        PassAreaKind: "apron" | "manoeuvring" | "terminal_airside" | "airside_roads" | "other_sra";
+        /** PassAreaList */
+        PassAreaList: {
+            /** Items */
+            items: components["schemas"]["PassAreaRead"][];
+        };
+        /** PassAreaRead */
+        PassAreaRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Code */
+            code: string;
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            colour: components["schemas"]["CardColour"];
+            area_kind: components["schemas"]["PassAreaKind"];
+            /** Zones */
+            zones: components["schemas"]["ZoneRef"][];
+            /** Active */
+            active: boolean;
+        };
+        /** PassAreaUpdate */
+        PassAreaUpdate: {
+            /** Name En */
+            name_en?: string | null;
+            /** Name Ar */
+            name_ar?: string | null;
+            colour?: components["schemas"]["CardColour"] | null;
+            area_kind?: components["schemas"]["PassAreaKind"] | null;
+            /** Zone Ids */
+            zone_ids?: string[] | null;
+            /** Active */
+            active?: boolean | null;
+        };
+        /** PassCategoryCreate */
+        PassCategoryCreate: {
+            /**
+             * Code
+             * @example PERM
+             */
+            code: string;
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            /** Escorted */
+            escorted: boolean;
+            /**
+             * Background Check Required
+             * @description True for unescorted categories (AP-4).
+             */
+            background_check_required: boolean;
+            /**
+             * Max Validity Days
+             * @description ≤ pass_max_validity_months × 31.
+             */
+            max_validity_days: number;
+            card_colour: components["schemas"]["CardColour"];
+            /**
+             * Allows Adp
+             * @description False when escorted (DP-3).
+             */
+            allows_adp: boolean;
+            /**
+             * Hook Requirements
+             * @description Checked at Endorse (HK-2), e.g. AVSEC-AWR.
+             */
+            hook_requirements?: components["schemas"]["HookRequirement"][];
+            /**
+             * Active
+             * @default true
+             */
+            active: boolean;
+        };
+        /** PassCategoryList */
+        PassCategoryList: {
+            /** Items */
+            items: components["schemas"]["PassCategoryRead"][];
+        };
+        /** PassCategoryRead */
+        PassCategoryRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Code */
+            code: string;
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            /** Escorted */
+            escorted: boolean;
+            /** Background Check Required */
+            background_check_required: boolean;
+            /** Max Validity Days */
+            max_validity_days: number;
+            card_colour: components["schemas"]["CardColour"];
+            /** Allows Adp */
+            allows_adp: boolean;
+            /** Hook Requirements */
+            hook_requirements: components["schemas"]["HookRequirementRead"][];
+            /** Active */
+            active: boolean;
+        };
+        /** PassCategoryUpdate */
+        PassCategoryUpdate: {
+            /** Name En */
+            name_en?: string | null;
+            /** Name Ar */
+            name_ar?: string | null;
+            /** Escorted */
+            escorted?: boolean | null;
+            /** Background Check Required */
+            background_check_required?: boolean | null;
+            /** Max Validity Days */
+            max_validity_days?: number | null;
+            card_colour?: components["schemas"]["CardColour"] | null;
+            /** Allows Adp */
+            allows_adp?: boolean | null;
+            /** Hook Requirements */
+            hook_requirements?: components["schemas"]["HookRequirement"][] | null;
+            /** Active */
+            active?: boolean | null;
+        };
+        /**
+         * PassIssueRequest
+         * @description approved → issued (capability 55): creates the pass (§3.9). area_codes ⊆ requested
+         *     (AREA_NOT_REQUESTED, AP-9); dates as printed. A renewal/replacement/area change revokes the
+         *     previous Active pass (`superseded`) with custody return due (AP-11).
+         */
+        PassIssueRequest: {
+            /**
+             * Pass No
+             * @example ANIA-AP-26-01877
+             */
+            pass_no: string;
+            /** Area Codes */
+            area_codes: string[];
+            /**
+             * Issued On
+             * Format: date
+             */
+            issued_on: string;
+            /**
+             * Card Expiry Date
+             * Format: date
+             */
+            card_expiry_date: string;
+        };
         /** PasswordChangeRequest */
         PasswordChangeRequest: {
             /** Current Password */
@@ -7288,6 +12863,16 @@ export interface components {
          * @enum {string}
          */
         PersonType: "contractor_worker" | "client_pmc_staff" | "visitor" | "third_party_public";
+        /**
+         * PlateType
+         * @enum {string}
+         */
+        PlateType: "private" | "transport" | "heavy_equipment" | "none";
+        /**
+         * PracticalTestResult
+         * @enum {string}
+         */
+        PracticalTestResult: "passed" | "failed";
         /** PrivacyAckRequest */
         PrivacyAckRequest: {
             /**
@@ -7628,6 +13213,17 @@ export interface components {
             layers: components["schemas"]["PyramidLayerRead"][];
         };
         /**
+         * QrKind
+         * @description §3.20 payload `HSE2:<kind>:<token>`.
+         * @enum {string}
+         */
+        QrKind: "AC" | "VS" | "WP";
+        /**
+         * QrTokenStatus
+         * @enum {string}
+         */
+        QrTokenStatus: "active" | "rotated" | "revoked";
+        /**
          * Rag
          * @enum {string}
          */
@@ -7652,6 +13248,16 @@ export interface components {
              */
             group?: string | null;
             treatment_class?: components["schemas"]["TreatmentClass"] | null;
+            /**
+             * Points
+             * @description airside_offence: ADP points.
+             */
+            points?: number | null;
+            /**
+             * Immediate Suspension
+             * @description airside_offence: suspends the ADP immediately (OFF-05/06).
+             */
+            immediate_suspension?: boolean | null;
             /** Description En */
             description_en?: string | null;
             /** Description Ar */
@@ -7672,13 +13278,18 @@ export interface components {
             description_en?: string | null;
             /** Description Ar */
             description_ar?: string | null;
+            /**
+             * Points
+             * @description airside_offence only (applies to new offences).
+             */
+            points?: number | null;
         };
         /**
          * ReferenceList
          * @description §3.11 reference lists exposed at GET /reference-lists.
          * @enum {string}
          */
-        ReferenceList: "severity" | "activity" | "trade" | "body_part" | "nature" | "mechanism" | "agency" | "treatment" | "observation_category" | "inspection_type" | "root_cause";
+        ReferenceList: "severity" | "activity" | "trade" | "body_part" | "nature" | "mechanism" | "agency" | "treatment" | "observation_category" | "inspection_type" | "root_cause" | "airside_offence" | "vehicle_category" | "credential_reason";
         /** ReferenceListRead */
         ReferenceListRead: {
             name: components["schemas"]["ReferenceList"];
@@ -7689,6 +13300,20 @@ export interface components {
         ReferenceListsRead: {
             /** Lists */
             lists: components["schemas"]["ReferenceListRead"][];
+        };
+        /**
+         * ReinstateRequest
+         * @description Lift manual suspensions (capability 58). System suspensions lift automatically (409
+         *     SYSTEM_SUSPENSION); DP-8 points suspensions only after suspension_end (422
+         *     SUSPENSION_PERIOD_RUNNING). Inductions: only if valid_until ≥ today.
+         */
+        ReinstateRequest: {
+            reason_code: components["schemas"]["CredentialReason"];
+            /**
+             * Reason Text
+             * @description ≥ 10 characters (LC-4). P3 hint: no medical or criminal details.
+             */
+            reason_text: string;
         };
         /** ReportNarrativeEdit */
         ReportNarrativeEdit: {
@@ -7723,6 +13348,45 @@ export interface components {
             charts: components["schemas"]["ChartSpec"][];
             /** Citations */
             citations: components["schemas"]["AiCitation"][];
+        };
+        /**
+         * RequirementKind
+         * @description ZP-4 steps evaluated by the eligibility function E (ZP-3).
+         * @enum {string}
+         */
+        RequirementKind: "deployment" | "worker_status" | "contractor_status" | "id_validity" | "induction" | "airport_pass" | "escort" | "work_area_permit" | "adp" | "hook";
+        /**
+         * RequirementStatus
+         * @description ZP-3. "expiring" = met with valid_until ≤ local date(at) + 7 days.
+         * @enum {string}
+         */
+        RequirementStatus: "met" | "not_met" | "expiring" | "warn" | "not_evaluated";
+        /**
+         * ReturnRequest
+         * @description return_due → returned (capability 59): returned_at ≤ now, received_by = the caller.
+         *     Late when local date(returned_at) > return_due_on (LC-11).
+         */
+        ReturnRequest: {
+            /**
+             * Returned At
+             * @description Default now.
+             */
+            returned_at?: string | null;
+            /** Notes */
+            notes?: string | null;
+        };
+        /**
+         * RevokeRequest
+         * @description Terminal (LC-5); custody → return_due (passes, ADPs, AVPs). Capability 58; inductions 52
+         *     (re-induction required).
+         */
+        RevokeRequest: {
+            reason_code: components["schemas"]["CredentialReason"];
+            /**
+             * Reason Text
+             * @description ≥ 10 characters (LC-4). P3 hint: no medical or criminal details.
+             */
+            reason_text: string;
         };
         /**
          * RiskRating
@@ -8118,6 +13782,34 @@ export interface components {
             display: string;
         };
         /**
+         * SuspendRequest
+         * @description Holders of capability 57 only *raise* a suspension (lifts automatically after
+         *     raised_suspension_max_hours unless confirmed, LC-3); holders of 58 (52 for inductions)
+         *     suspend with a confirmed suspension. Dependency reason codes (dependency_invalid,
+         *     id_expired, licence_expired, vehicle_document_expired) are system-only → 422.
+         */
+        SuspendRequest: {
+            reason_code: components["schemas"]["CredentialReason"];
+            /**
+             * Reason Text
+             * @description ≥ 10 characters (LC-4). P3 hint: no medical or criminal details.
+             */
+            reason_text: string;
+        };
+        /**
+         * SuspendedContractorGateMode
+         * @description Setting suspended_contractor_gate (§2, LC-7).
+         * @enum {string}
+         */
+        SuspendedContractorGateMode: "deny" | "warn";
+        /**
+         * SuspensionState
+         * @description An open suspension on a credential: raised (≤ raised_suspension_max_hours, LC-3),
+         *     confirmed (until lifted), or system (dependency / points / violation).
+         * @enum {string}
+         */
+        SuspensionState: "raised" | "confirmed" | "system";
+        /**
          * TierClass
          * @description Derived from engagement tier: 1 = direct, ≥ 2 = subcontractor (§3.1, §10 Q1).
          * @enum {string}
@@ -8203,6 +13895,24 @@ export interface components {
             context: components["schemas"]["KpiContext"];
             /** Series */
             series: components["schemas"]["TrendSeries"][];
+        };
+        /**
+         * UnmaskReason
+         * @description WK-5: reason for revealing a full ID number (capability 48).
+         * @enum {string}
+         */
+        UnmaskReason: "pass_application" | "authority_request" | "identity_verification" | "incident_investigation" | "other";
+        /**
+         * UnmaskRequest
+         * @description WK-5 (capability 48). Writes `sensitive_field_read` with the reason.
+         */
+        UnmaskRequest: {
+            reason: components["schemas"]["UnmaskReason"];
+            /**
+             * Reason Text
+             * @description Required when reason = other.
+             */
+            reason_text?: string | null;
         };
         /**
          * UnplannedInspectionCreate
@@ -8398,6 +14108,739 @@ export interface components {
             job_title?: string | null;
             preferred_language?: components["schemas"]["Language"] | null;
         };
+        /**
+         * ValidityBlock
+         * @description Validity summary carried by passes, ADPs and AVPs (§6.2, §4.5, §4.9).
+         */
+        ValidityBlock: {
+            validity_status: components["schemas"]["ValidityStatus"];
+            /**
+             * Effective Valid Until
+             * @description Strictest-wins (§6.2).
+             */
+            effective_valid_until: string | null;
+            limiting_factor: components["schemas"]["LimitingFactor"] | null;
+            /**
+             * Days Left
+             * @description effective_valid_until − today; negative = past.
+             */
+            days_left: number | null;
+            /** @description Null until issued. */
+            custody_status: components["schemas"]["CustodyStatus"] | null;
+            /** Return Due On */
+            return_due_on: string | null;
+            /**
+             * Return Overdue
+             * @description custody return_due and today > return_due_on.
+             */
+            return_overdue: boolean;
+            /** Returned At */
+            returned_at: string | null;
+            received_by: components["schemas"]["UserRef"] | null;
+            /** Lost Reported At */
+            lost_reported_at: string | null;
+            /** Authority Notified At */
+            authority_notified_at: string | null;
+            /** Open Suspensions */
+            open_suspensions: components["schemas"]["CredentialSuspension"][];
+        };
+        /**
+         * ValidityStatus
+         * @description §4.5 for airport passes, ADPs and AVPs. `pending` and `withdrawn` exist only for ADP/AVP
+         *     applications that have not been issued yet (DECISIONS: the spec has no ADP/AVP application
+         *     entity).
+         * @enum {string}
+         */
+        ValidityStatus: "pending" | "active" | "suspended" | "revoked" | "expired" | "withdrawn";
+        /**
+         * VehicleCategory
+         * @description List VC (§3.21).
+         * @enum {string}
+         */
+        VehicleCategory: "light_vehicle" | "pickup" | "van" | "bus" | "truck" | "tipper" | "water_tanker" | "fuel_bowser" | "concrete_mixer" | "mobile_crane" | "crawler_crane" | "mewp" | "forklift" | "telehandler" | "excavator" | "wheel_loader" | "grader" | "roller" | "paver" | "milling_machine" | "line_marking_vehicle" | "sweeper" | "lighting_tower" | "trailer" | "other";
+        /**
+         * VehicleClass
+         * @enum {string}
+         */
+        VehicleClass: "light" | "heavy" | "special_plant";
+        /**
+         * VehicleCreate
+         * @description Capability 63; 422 NOT_AIRPORT_PROJECT on non-airport projects (AP-2). Duplicate plate
+         *     (org-wide) or serial/VIN (project) → 409 DUPLICATE_VALUE (VP-1).
+         */
+        VehicleCreate: {
+            /**
+             * Engagement Id
+             * Format: uuid
+             */
+            engagement_id: string;
+            owner_type: components["schemas"]["VehicleOwnerType"];
+            category: components["schemas"]["VehicleCategory"];
+            plate_type: components["schemas"]["PlateType"];
+            /**
+             * Plate Letters Ar
+             * @description Required iff plate_type ≠ none (3 letters).
+             */
+            plate_letters_ar?: string | null;
+            /** Plate Letters En */
+            plate_letters_en?: string | null;
+            /** Plate Digits */
+            plate_digits?: string | null;
+            /** Fleet No */
+            fleet_no: string;
+            /**
+             * Serial Or Vin
+             * @description VIN ^[A-HJ-NPR-Z0-9]{17}$ for road vehicles.
+             */
+            serial_or_vin: string;
+            /** Make Model */
+            make_model: string;
+            /** Year */
+            year: number;
+            /** Colour */
+            colour: string;
+            /**
+             * Travel Height M
+             * @description 0.5-20 m.
+             */
+            travel_height_m: number | string;
+            /**
+             * Max Working Height M Agl
+             * @description ≥ travel height (OB-2).
+             */
+            max_working_height_m_agl: number | string;
+            /**
+             * Istimara Expiry
+             * @description Required iff plated.
+             */
+            istimara_expiry?: string | null;
+            /** Insurance Policy No */
+            insurance_policy_no: string;
+            /**
+             * Insurance Expiry
+             * Format: date
+             */
+            insurance_expiry: string;
+            /**
+             * Mvpi Expiry
+             * @description Required iff plated (Fahas).
+             */
+            mvpi_expiry?: string | null;
+        };
+        /**
+         * VehicleOwnerType
+         * @enum {string}
+         */
+        VehicleOwnerType: "company" | "rental" | "individual";
+        /** VehiclePage */
+        VehiclePage: {
+            /** Items */
+            items: components["schemas"]["VehicleRead"][];
+            /**
+             * Total
+             * @description Total number of matching items across all pages.
+             */
+            total: number;
+            /**
+             * Page
+             * @description 1-based page number.
+             */
+            page: number;
+            /**
+             * Page Size
+             * @description Items per page (max 200).
+             */
+            page_size: number;
+        };
+        /**
+         * VehicleRead
+         * @description Plates of individually owned vehicles are personal data: plate fields are null for
+         *     callers without capability 46 (and always in Viewer aggregates, KA-4).
+         */
+        VehicleRead: {
+            /**
+             * Created At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            updated_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Vehicle No
+             * @example VEH-0002
+             */
+            vehicle_no: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            engagement: components["schemas"]["EngagementRef"];
+            owner_type: components["schemas"]["VehicleOwnerType"];
+            category: components["schemas"]["VehicleCategory"];
+            plate_type: components["schemas"]["PlateType"];
+            /** Plate Letters Ar */
+            plate_letters_ar: string | null;
+            /** Plate Letters En */
+            plate_letters_en: string | null;
+            /** Plate Digits */
+            plate_digits: string | null;
+            /** Fleet No */
+            fleet_no: string;
+            /** Serial Or Vin */
+            serial_or_vin: string;
+            /** Make Model */
+            make_model: string;
+            /** Year */
+            year: number;
+            /** Colour */
+            colour: string;
+            /**
+             * Travel Height M
+             * @description Decimal number serialised as a string (exact, no float rounding).
+             */
+            travel_height_m: string;
+            /**
+             * Max Working Height M Agl
+             * @description Decimal number serialised as a string (exact, no float rounding).
+             */
+            max_working_height_m_agl: string;
+            /**
+             * Max Working Height Ft
+             * @description m ÷ 0.3048, 2 dp (OB-9).
+             */
+            max_working_height_ft: string;
+            /** Istimara Expiry */
+            istimara_expiry: string | null;
+            /** Insurance Policy No */
+            insurance_policy_no: string;
+            /**
+             * Insurance Expiry
+             * Format: date
+             */
+            insurance_expiry: string;
+            /** Mvpi Expiry */
+            mvpi_expiry: string | null;
+            /** Documents Valid */
+            documents_valid: boolean;
+            /** Earliest Document Expiry */
+            earliest_document_expiry: string | null;
+            status: components["schemas"]["VehicleStatus"];
+            /** Active Avp Id */
+            active_avp_id: string | null;
+            /** Warnings */
+            warnings?: components["schemas"]["ApiWarning"][];
+        };
+        /** VehicleRef */
+        VehicleRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Vehicle No
+             * @example VEH-0002
+             */
+            vehicle_no: string;
+            /**
+             * Fleet No
+             * @example GP-LV-07
+             */
+            fleet_no: string;
+            category: components["schemas"]["VehicleCategory"];
+        };
+        /**
+         * VehicleStatus
+         * @enum {string}
+         */
+        VehicleStatus: "active" | "off_site" | "withdrawn";
+        /** VehicleTransitionRequest */
+        VehicleTransitionRequest: {
+            to_status: components["schemas"]["VehicleStatus"];
+            /** Reason */
+            reason?: string | null;
+        };
+        /**
+         * VehicleUpdate
+         * @description A later document expiry auto-reinstates `vehicle_document_expired` suspensions (VP-5).
+         */
+        VehicleUpdate: {
+            owner_type?: components["schemas"]["VehicleOwnerType"] | null;
+            category?: components["schemas"]["VehicleCategory"] | null;
+            plate_type?: components["schemas"]["PlateType"] | null;
+            /** Plate Letters Ar */
+            plate_letters_ar?: string | null;
+            /** Plate Letters En */
+            plate_letters_en?: string | null;
+            /** Plate Digits */
+            plate_digits?: string | null;
+            /** Fleet No */
+            fleet_no?: string | null;
+            /** Serial Or Vin */
+            serial_or_vin?: string | null;
+            /** Make Model */
+            make_model?: string | null;
+            /** Year */
+            year?: number | null;
+            /** Colour */
+            colour?: string | null;
+            /** Travel Height M */
+            travel_height_m?: number | string | null;
+            /** Max Working Height M Agl */
+            max_working_height_m_agl?: number | string | null;
+            /** Istimara Expiry */
+            istimara_expiry?: string | null;
+            /** Insurance Policy No */
+            insurance_policy_no?: string | null;
+            /** Insurance Expiry */
+            insurance_expiry?: string | null;
+            /** Mvpi Expiry */
+            mvpi_expiry?: string | null;
+        };
+        /**
+         * WapBlocker
+         * @description WA-13 blockers (recomputed on every change and at each window start).
+         * @enum {string}
+         */
+        WapBlocker: "NOTAM_NOT_ISSUED" | "NOTAM_NOT_COVERING_WINDOW" | "ILS_OUTAGE_NOTAM_REQUIRED" | "HEIGHT_CLEARANCE_REQUIRED" | "OBS_NOT_ACTIVE" | "WSP_REQUIRED" | "SUPERVISOR_INELIGIBLE" | "NO_ELIGIBLE_CREW" | "CONTRACTOR_SUSPENDED" | "OPS_SUSPENSION_ACTIVE";
+        /** WapBlockerRead */
+        WapBlockerRead: {
+            code: components["schemas"]["WapBlocker"];
+            /** Detail En */
+            detail_en: string;
+            /** Detail Ar */
+            detail_ar: string;
+            /**
+             * Ref
+             * @example NTM-ANIA-EXP-2026-0014
+             */
+            ref: string | null;
+        };
+        /**
+         * WapBoardResponse
+         * @description Today's WAP board per zone (§8.4).
+         */
+        WapBoardResponse: {
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Zones */
+            zones: components["schemas"]["WapBoardZone"][];
+        };
+        /** WapBoardZone */
+        WapBoardZone: {
+            zone: components["schemas"]["ZoneRef"];
+            /** Waps */
+            waps: components["schemas"]["WapRead"][];
+            /** Ops Suspension Active */
+            ops_suspension_active: boolean;
+        };
+        /**
+         * WapCreate
+         * @description Capability 65 → draft. Contractor suspended/blacklisted → 403 CONTRACTOR_SUSPENDED
+         *     (WA-3).
+         */
+        WapCreate: {
+            /**
+             * Site Id
+             * Format: uuid
+             */
+            site_id: string;
+            /**
+             * Zone Ids
+             * @description All of one site (WA-2).
+             */
+            zone_ids: string[];
+            /**
+             * Engagement Id
+             * Format: uuid
+             */
+            engagement_id: string;
+            /**
+             * Supervisor Worker Id
+             * Format: uuid
+             */
+            supervisor_worker_id: string;
+            /** Scope En */
+            scope_en: string;
+            /** Scope Ar */
+            scope_ar: string;
+            /**
+             * Works Safety Plan Ref
+             * @description Required iff any zone in_movement_area (WA-6).
+             */
+            works_safety_plan_ref?: string | null;
+            /**
+             * Valid From
+             * Format: date
+             */
+            valid_from: string;
+            /**
+             * Valid To
+             * Format: date
+             * @description valid_to − valid_from + 1 ≤ wap_max_days (WA-5).
+             */
+            valid_to: string;
+            /**
+             * Windows
+             * @description Local times (Asia/Riyadh). end ≤ start crosses midnight and belongs to the start date: window on date d = [d + start, d + 1 + end) (WA-9, §6.7).
+             */
+            windows: components["schemas"]["WapWindow"][];
+            /** Crew */
+            crew: components["schemas"]["CrewInput"][];
+            /** Vehicles */
+            vehicles?: components["schemas"]["WapVehicleInput"][];
+            /** Operator Permit Ref */
+            operator_permit_ref?: string | null;
+            /** Linked Ntm Ids */
+            linked_ntm_ids?: string[];
+            /** Linked Obs Ids */
+            linked_obs_ids?: string[];
+            /** Conditions En */
+            conditions_en?: string | null;
+            /** Conditions Ar */
+            conditions_ar?: string | null;
+        };
+        /** WapPage */
+        WapPage: {
+            /** Items */
+            items: components["schemas"]["WapRead"][];
+            /**
+             * Total
+             * @description Total number of matching items across all pages.
+             */
+            total: number;
+            /**
+             * Page
+             * @description 1-based page number.
+             */
+            page: number;
+            /**
+             * Page Size
+             * @description Items per page (max 200).
+             */
+            page_size: number;
+        };
+        /**
+         * WapPrintRead
+         * @description WA-18: crew names and worker_no only — never ID numbers.
+         */
+        WapPrintRead: {
+            /**
+             * Wap Id
+             * Format: uuid
+             */
+            wap_id: string;
+            /** Wap No */
+            wap_no: string;
+            /**
+             * Qr Payload
+             * @description `HSE2:<AC|VS|WP>:<22-char base64url token>` — no name, ID or other personal data (§3.20). Encode as a QR code; print `printed_ref` beside it for manual fallback.
+             */
+            qr_payload: string;
+            /**
+             * Printed Ref
+             * @example WAP-ANIA-EXP-2026-0031
+             */
+            printed_ref: string;
+            token_status: components["schemas"]["QrTokenStatus"];
+            wap: components["schemas"]["WapRead"];
+        };
+        /**
+         * WapRead
+         * @description Crew names (WorkerRef names) only for capability 46; others (e.g. Viewer/Client) get
+         *     `crew: []` and only `crew_count` / `vehicle_count` (WA-19).
+         */
+        WapRead: {
+            /**
+             * Created At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            updated_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Wap No
+             * @example WAP-ANIA-EXP-2026-0031
+             */
+            wap_no: string;
+            /** Revision No */
+            revision_no: number;
+            /** Revision Of Id */
+            revision_of_id: string | null;
+            /** Pending Revision Id */
+            pending_revision_id: string | null;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            site: components["schemas"]["SiteRef"];
+            /** Zones */
+            zones: components["schemas"]["ZoneRef"][];
+            engagement: components["schemas"]["EngagementRef"];
+            requested_by: components["schemas"]["UserRef"];
+            supervisor: components["schemas"]["WorkerRef"] | null;
+            /** Scope En */
+            scope_en: string;
+            /** Scope Ar */
+            scope_ar: string;
+            /** Works Safety Plan Ref */
+            works_safety_plan_ref: string | null;
+            /**
+             * Valid From
+             * Format: date
+             */
+            valid_from: string;
+            /**
+             * Valid To
+             * Format: date
+             */
+            valid_to: string;
+            /** Windows */
+            windows: components["schemas"]["WapWindowRead"][];
+            /** @description Window in force now, if any. */
+            current_window: components["schemas"]["WapWindowInstance"] | null;
+            next_window: components["schemas"]["WapWindowInstance"] | null;
+            /** Crew Count */
+            crew_count: number;
+            /** Vehicle Count */
+            vehicle_count: number;
+            /** Crew */
+            crew: components["schemas"]["CrewMemberRead"][];
+            /** Vehicles */
+            vehicles: components["schemas"]["WapVehicleRead"][];
+            /** Operator Permit Ref */
+            operator_permit_ref: string | null;
+            /** Linked Ntm Ids */
+            linked_ntm_ids: string[];
+            /** Linked Obs Ids */
+            linked_obs_ids: string[];
+            /** Fod Handback Required */
+            fod_handback_required: boolean;
+            fod_check: components["schemas"]["FodCheckRead"] | null;
+            /** Conditions En */
+            conditions_en: string | null;
+            /** Conditions Ar */
+            conditions_ar: string | null;
+            approved_by: components["schemas"]["UserRef"] | null;
+            /** Approved At */
+            approved_at: string | null;
+            /**
+             * Blockers
+             * @description WA-13, recomputed on every read.
+             */
+            blockers: components["schemas"]["WapBlockerRead"][];
+            suspension_reason: components["schemas"]["CredentialReason"] | null;
+            status: components["schemas"]["WapStatus"];
+            /** Warnings */
+            warnings?: components["schemas"]["ApiWarning"][];
+        };
+        /**
+         * WapRevisionCreate
+         * @description WA-14: changing zones, dates, windows or NOTAM/clearance links of an Approved/Active WAP
+         *     creates a revision in Submitted; the current revision stays in force until the new one is
+         *     Approved (then replaced) or Rejected. Returns the revision (201).
+         */
+        WapRevisionCreate: {
+            /** Zone Ids */
+            zone_ids?: string[] | null;
+            /** Valid From */
+            valid_from?: string | null;
+            /** Valid To */
+            valid_to?: string | null;
+            /** Windows */
+            windows?: components["schemas"]["WapWindow"][] | null;
+            /** Linked Ntm Ids */
+            linked_ntm_ids?: string[] | null;
+            /** Linked Obs Ids */
+            linked_obs_ids?: string[] | null;
+            /** Reason */
+            reason: string;
+        };
+        /**
+         * WapStatus
+         * @description §4.8.
+         * @enum {string}
+         */
+        WapStatus: "draft" | "submitted" | "approved" | "rejected" | "active" | "suspended" | "closed" | "cancelled" | "expired";
+        /**
+         * WapTransitionRequest
+         * @description §4.8 transitions (Approved → Active and Approved → Expired are system-only):
+         *
+         *     * draft → submitted (65): crew ≥ 1 incl. a supervisor (CREW_INVALID); WA-5 dates
+         *       (WAP_DURATION_EXCEEDED); WA-6 (WSP_REQUIRED); contractor not suspended; crew evaluated
+         *     * submitted → draft (66): `reason` = return comment
+         *     * submitted → approved (66): approver ≠ requester and not employed by the contractor or an
+         *       ancestor (SOD_CONFLICT, WA-4); blockers allowed and recorded
+         *     * submitted → rejected (66): `reason`
+         *     * active → suspended (67): `reason_code`, `reason`
+         *     * suspended → active (66, "resume"): blockers = [] (WAP_BLOCKED with meta.blockers);
+         *       `fod_check` when fod_handback_required (FOD_HANDBACK_REQUIRED)
+         *     * active/suspended → closed (68): `fod_check` when required
+         *     * draft/submitted/approved → cancelled (68): `reason`
+         */
+        WapTransitionRequest: {
+            to_status: components["schemas"]["WapStatus"];
+            /** Reason */
+            reason?: string | null;
+            reason_code?: components["schemas"]["CredentialReason"] | null;
+            fod_check?: components["schemas"]["FodCheckInput"] | null;
+        };
+        /**
+         * WapUpdate
+         * @description Draft only. On Active/Approved WAPs use the crew/vehicle endpoints or a revision
+         *     (WA-14).
+         */
+        WapUpdate: {
+            /** Zone Ids */
+            zone_ids?: string[] | null;
+            /** Supervisor Worker Id */
+            supervisor_worker_id?: string | null;
+            /** Scope En */
+            scope_en?: string | null;
+            /** Scope Ar */
+            scope_ar?: string | null;
+            /** Works Safety Plan Ref */
+            works_safety_plan_ref?: string | null;
+            /** Valid From */
+            valid_from?: string | null;
+            /** Valid To */
+            valid_to?: string | null;
+            /** Windows */
+            windows?: components["schemas"]["WapWindow"][] | null;
+            /** Crew */
+            crew?: components["schemas"]["CrewInput"][] | null;
+            /** Vehicles */
+            vehicles?: components["schemas"]["WapVehicleInput"][] | null;
+            /** Operator Permit Ref */
+            operator_permit_ref?: string | null;
+            /** Linked Ntm Ids */
+            linked_ntm_ids?: string[] | null;
+            /** Linked Obs Ids */
+            linked_obs_ids?: string[] | null;
+            /** Conditions En */
+            conditions_en?: string | null;
+            /** Conditions Ar */
+            conditions_ar?: string | null;
+        };
+        /** WapVehicleInput */
+        WapVehicleInput: {
+            /**
+             * Vehicle Id
+             * Format: uuid
+             */
+            vehicle_id: string;
+            /**
+             * Escort Vehicle Id
+             * @description Listed vehicle with an AVP for the zone (WA-12, VP-8).
+             */
+            escort_vehicle_id?: string | null;
+            /**
+             * Height Limited To M
+             * @description Only when a height limiter is fitted and locked; ≤ max working height.
+             */
+            height_limited_to_m?: number | string | null;
+        };
+        /** WapVehicleRead */
+        WapVehicleRead: {
+            vehicle: components["schemas"]["VehicleRef"];
+            /** Escort Vehicle Id */
+            escort_vehicle_id: string | null;
+            /** Height Limited To M */
+            height_limited_to_m: string | null;
+            /** Avp No */
+            avp_no: string | null;
+            status: components["schemas"]["CrewMemberStatus"];
+            /** Exclusion Reasons */
+            exclusion_reasons: components["schemas"]["GateReasonCode"][];
+        };
+        /** WapWindow */
+        WapWindow: {
+            /**
+             * Start Local
+             * Format: time
+             * @example 23:00
+             */
+            start_local: string;
+            /**
+             * End Local
+             * Format: time
+             * @example 05:00
+             */
+            end_local: string;
+            /**
+             * Weekdays
+             * @description Sun..Sat.
+             */
+            weekdays: components["schemas"]["Weekday"][];
+        };
+        /**
+         * WapWindowInstance
+         * @description A concrete window: local date it belongs to and its UTC bounds (§6.7).
+         */
+        WapWindowInstance: {
+            /**
+             * Local Date
+             * Format: date
+             */
+            local_date: string;
+            /**
+             * Start Utc
+             * Format: date-time
+             */
+            start_utc: string;
+            /**
+             * End Utc
+             * Format: date-time
+             */
+            end_utc: string;
+        };
+        /** WapWindowRead */
+        WapWindowRead: {
+            /**
+             * Start Local
+             * Format: time
+             */
+            start_local: string;
+            /**
+             * End Local
+             * Format: time
+             */
+            end_local: string;
+            /** Weekdays */
+            weekdays: components["schemas"]["Weekday"][];
+            /** Crosses Midnight */
+            crosses_midnight: boolean;
+        };
         /** WarningInput */
         WarningInput: {
             /**
@@ -8426,6 +14869,388 @@ export interface components {
          * @enum {string}
          */
         Weekday: "sunday" | "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday";
+        /**
+         * WorkerCreate
+         * @description Create a worker (capability 47). A Contractor HSE Rep must include `deployment` for an
+         *     engagement in their C scope (WK-11). Duplicate ID (blind index) → 409 WORKER_EXISTS with
+         *     `meta.worker_no` / `meta.worker_id` if the caller can see that worker, else 409
+         *     WORKER_EXISTS_OUT_OF_SCOPE with no identifying data (WK-2). The photo is uploaded after
+         *     creation via POST /attachments (owner_type worker_photo).
+         */
+        WorkerCreate: {
+            person_type: components["schemas"]["WorkerPersonType"];
+            /**
+             * Full Name En
+             * @description As on the ID.
+             */
+            full_name_en: string;
+            /**
+             * Full Name Ar
+             * @description Arabic script.
+             */
+            full_name_ar: string;
+            id_type: components["schemas"]["WorkerIdType"];
+            /**
+             * Id Number
+             * @description iqama ^2\d{9}$, national_id ^1\d{9}$ (check digit), gcc_id ^[A-Z0-9]{6,15}$, passport ^[A-Z0-9]{6,9}$. Encrypted at rest; never returned except by the unmask endpoint.
+             */
+            id_number: string;
+            /**
+             * Passport Country
+             * @description Required iff id_type = passport.
+             */
+            passport_country?: string | null;
+            /**
+             * Id Expiry Date
+             * Format: date
+             * @description > today at creation (warning only on edit).
+             */
+            id_expiry_date: string;
+            /** Nationality */
+            nationality: string;
+            /**
+             * Adult Attestation
+             * @description Must be true (WK-6 ADULT_ATTESTATION_REQUIRED).
+             */
+            adult_attestation: boolean;
+            primary_language: components["schemas"]["WorkerLanguage"];
+            /**
+             * User Id
+             * @description Link to a platform user.
+             */
+            user_id?: string | null;
+            /** @description Optional first deployment (required for contractor reps). */
+            deployment?: components["schemas"]["WorkerDeploymentInput"] | null;
+        };
+        /**
+         * WorkerDataReport
+         * @description JSON report; sections are lists of records as returned by the detail endpoints.
+         */
+        WorkerDataReport: {
+            worker: components["schemas"]["WorkerRead"];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            /**
+             * Sections
+             * @description deployments, inductions, pass_applications, airport_passes, adps, offences, wap_crew, gate_log (counts only for gate log), credential_events.
+             */
+            sections: {
+                [key: string]: {
+                    [key: string]: unknown;
+                }[];
+            };
+        };
+        /**
+         * WorkerDataReportRequest
+         * @description P2-11 per-worker data report (capability 79): every Phase 2 record of the person.
+         */
+        WorkerDataReportRequest: {
+            /** @description P2-10: pass_office / authority_request / legal / other. */
+            purpose: components["schemas"]["ExportPurpose"];
+            /**
+             * Purpose Text
+             * @description Required when purpose = other.
+             */
+            purpose_text?: string | null;
+        };
+        /** WorkerDeploymentInput */
+        WorkerDeploymentInput: {
+            /**
+             * Engagement Id
+             * @description Required iff person_type = contractor_worker; engagement on the project with an Approved contractor.
+             */
+            engagement_id?: string | null;
+            /**
+             * Employee No
+             * @description Unique per engagement.
+             */
+            employee_no?: string | null;
+            trade: components["schemas"]["Trade"];
+            /**
+             * Site Ids
+             * @description ⊆ engagement.site_ids (contractor) or project sites.
+             */
+            site_ids: string[];
+            /**
+             * Mobilised On
+             * Format: date
+             * @description ≥ engagement mobilisation_date.
+             */
+            mobilised_on: string;
+            /**
+             * Planned Demob On
+             * @description ≥ mobilised_on; ≤ engagement demobilisation_date if set.
+             */
+            planned_demob_on?: string | null;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+        };
+        /** WorkerDeploymentSummary */
+        WorkerDeploymentSummary: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Project Code */
+            project_code: string;
+            engagement: components["schemas"]["EngagementRef"] | null;
+            trade: components["schemas"]["Trade"];
+            status: components["schemas"]["DeploymentStatus"];
+            /**
+             * Mobilised On
+             * Format: date
+             */
+            mobilised_on: string;
+            /** Demobilised On */
+            demobilised_on: string | null;
+        };
+        /**
+         * WorkerIdLookup
+         * @description WK-3: exact full-number match through the blind index; no prefix/partial search.
+         *     Returns at most one worker, only if in the caller's scope (otherwise an empty list).
+         */
+        WorkerIdLookup: {
+            id_type: components["schemas"]["WorkerIdType"];
+            /** Id Number */
+            id_number: string;
+            /** Passport Country */
+            passport_country?: string | null;
+        };
+        /** WorkerIdNumberRead */
+        WorkerIdNumberRead: {
+            /**
+             * Worker Id
+             * Format: uuid
+             */
+            worker_id: string;
+            id_type: components["schemas"]["WorkerIdType"];
+            /** Id Number */
+            id_number: string;
+            /** Passport Country */
+            passport_country: string | null;
+            /**
+             * Revealed At
+             * Format: date-time
+             */
+            revealed_at: string;
+        };
+        /**
+         * WorkerIdType
+         * @description iqama ^2\d{9}$, national_id ^1\d{9}$, gcc_id ^[A-Z0-9]{6,15}$, passport ^[A-Z0-9]{6,9}$.
+         * @enum {string}
+         */
+        WorkerIdType: "iqama" | "national_id" | "gcc_id" | "passport";
+        /**
+         * WorkerLanguage
+         * @enum {string}
+         */
+        WorkerLanguage: "ar" | "en" | "ur" | "hi" | "bn" | "ne" | "tl" | "ml" | "ta" | "other";
+        /** WorkerListItem */
+        WorkerListItem: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Worker No */
+            worker_no: string;
+            person_type: components["schemas"]["WorkerPersonType"];
+            /** Full Name En */
+            full_name_en: string;
+            /** Full Name Ar */
+            full_name_ar: string;
+            id_type: components["schemas"]["WorkerIdType"] | null;
+            /**
+             * Id Number Masked
+             * @description Masked per WK-4: Iqama/National ID first digit + 7 `*` + last 2 (`2*******02`); GCC ID/passport first 2 + `*` per hidden char + last 2 (`TE*****12`). The full value is only returned by POST /workers/{id}/id-number/unmask (capability 48, audited).
+             */
+            id_number_masked: string | null;
+            /** Id Expiry Date */
+            id_expiry_date: string | null;
+            /** Nationality */
+            nationality: string | null;
+            status: components["schemas"]["WorkerStatus"];
+            /** Has Photo */
+            has_photo: boolean;
+            /** @description The deployment on the filtered project (when project_id is given). */
+            deployment: components["schemas"]["DeploymentRead"] | null;
+        };
+        /** WorkerLookupResult */
+        WorkerLookupResult: {
+            /** Items */
+            items: components["schemas"]["WorkerListItem"][];
+        };
+        /** WorkerPage */
+        WorkerPage: {
+            /** Items */
+            items: components["schemas"]["WorkerListItem"][];
+            /**
+             * Total
+             * @description Total number of matching items across all pages.
+             */
+            total: number;
+            /**
+             * Page
+             * @description 1-based page number.
+             */
+            page: number;
+            /**
+             * Page Size
+             * @description Items per page (max 200).
+             */
+            page_size: number;
+        };
+        /**
+         * WorkerPersonType
+         * @enum {string}
+         */
+        WorkerPersonType: "contractor_worker" | "client_pmc_staff" | "visitor";
+        /**
+         * WorkerRead
+         * @description `id_number_masked` per WK-4. Personal fields (names, nationality, photo, ID expiry) are
+         *     returned to holders of capability 46 in scope. Anonymised workers carry
+         *     "Anonymised worker WKR-nnnnnn" and no identity data (P2-7).
+         */
+        WorkerRead: {
+            /**
+             * Created At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            updated_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Worker No
+             * @example WKR-000002
+             */
+            worker_no: string;
+            person_type: components["schemas"]["WorkerPersonType"];
+            /** Full Name En */
+            full_name_en: string;
+            /** Full Name Ar */
+            full_name_ar: string;
+            id_type: components["schemas"]["WorkerIdType"] | null;
+            /**
+             * Id Number Masked
+             * @description Masked per WK-4: Iqama/National ID first digit + 7 `*` + last 2 (`2*******02`); GCC ID/passport first 2 + `*` per hidden char + last 2 (`TE*****12`). The full value is only returned by POST /workers/{id}/id-number/unmask (capability 48, audited).
+             * @example 2*******02
+             */
+            id_number_masked: string | null;
+            /** Passport Country */
+            passport_country: string | null;
+            /** Id Expiry Date */
+            id_expiry_date: string | null;
+            /** Id Expired */
+            id_expired: boolean;
+            /** Nationality */
+            nationality: string | null;
+            /** Adult Attestation */
+            adult_attestation: boolean;
+            primary_language: components["schemas"]["WorkerLanguage"];
+            user: components["schemas"]["UserRef"] | null;
+            /**
+             * Photo Attachment Id
+             * @description Open via POST /attachments/{id}/signed-url (≤ 5 min).
+             */
+            photo_attachment_id: string | null;
+            status: components["schemas"]["WorkerStatus"];
+            /** Ban Reason */
+            ban_reason: string | null;
+            /**
+             * Deployments
+             * @description Only deployments in scope.
+             */
+            deployments: components["schemas"]["WorkerDeploymentSummary"][];
+            /** Warnings */
+            warnings?: components["schemas"]["ApiWarning"][];
+        };
+        /**
+         * WorkerRef
+         * @description A worker as shown in lists of other records. Names are present only for callers with
+         *     capability 46 on the record's project (WA-19, KA-4); otherwise only worker_no.
+         */
+        WorkerRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Worker No
+             * @example WKR-000002
+             */
+            worker_no: string;
+            /** Full Name En */
+            full_name_en?: string | null;
+            /** Full Name Ar */
+            full_name_ar?: string | null;
+            status: components["schemas"]["WorkerStatus"];
+        };
+        /**
+         * WorkerStatus
+         * @description §4.1.
+         * @enum {string}
+         */
+        WorkerStatus: "active" | "banned" | "inactive" | "anonymised";
+        /**
+         * WorkerTransitionRequest
+         * @description active → banned / banned → active (capability 49), reason required. Ban cascades LC-9
+         *     (every credential on every project revoked `worker_banned`); lifting a ban does not restore
+         *     credentials.
+         */
+        WorkerTransitionRequest: {
+            to_status: components["schemas"]["WorkerStatus"];
+            /**
+             * Reason
+             * @description P3 hint: no medical or criminal details.
+             */
+            reason: string;
+        };
+        /**
+         * WorkerUpdate
+         * @description Changing id_type/id_number needs capability 47; the old value is kept encrypted in
+         *     history and audits show masked values only (WK-9).
+         */
+        WorkerUpdate: {
+            /** Full Name En */
+            full_name_en?: string | null;
+            /** Full Name Ar */
+            full_name_ar?: string | null;
+            id_type?: components["schemas"]["WorkerIdType"] | null;
+            /** Id Number */
+            id_number?: string | null;
+            /** Passport Country */
+            passport_country?: string | null;
+            /** Id Expiry Date */
+            id_expiry_date?: string | null;
+            /** Nationality */
+            nationality?: string | null;
+            primary_language?: components["schemas"]["WorkerLanguage"] | null;
+            /** User Id */
+            user_id?: string | null;
+        };
         /** WorkforceImportPage */
         WorkforceImportPage: {
             /** Items */
@@ -8778,6 +15603,80 @@ export interface components {
             to_status: components["schemas"]["WorkforceStatus"];
             /** Reason */
             reason?: string | null;
+        };
+        /**
+         * WorksImpact
+         * @enum {string}
+         */
+        WorksImpact: "taxiway_closure" | "runway_closure" | "declared_distances_change" | "ils_outage" | "lighting_outage" | "stand_closure" | "obstacle" | "other";
+        /** ZoneAccessProfileList */
+        ZoneAccessProfileList: {
+            /** Items */
+            items: components["schemas"]["ZoneAccessProfileRead"][];
+        };
+        /**
+         * ZoneAccessProfileRead
+         * @description Created with defaults when the zone is created (ZP-1).
+         */
+        ZoneAccessProfileRead: {
+            zone: components["schemas"]["ZoneRef"];
+            /**
+             * Site Id
+             * Format: uuid
+             */
+            site_id: string;
+            /**
+             * Required Inductions
+             * @example [
+             *       "GEN",
+             *       "AIR"
+             *     ]
+             */
+            required_inductions: string[];
+            /** Airport Pass Area Code */
+            airport_pass_area_code: string | null;
+            /** Access Permit Required */
+            access_permit_required: boolean;
+            adp_category_required: components["schemas"]["AreaCategory"] | null;
+            avp_area_required: components["schemas"]["AreaCategory"] | null;
+            /** Escort Ratio Max */
+            escort_ratio_max: number | null;
+            /** Lvp Withdrawal Required */
+            lvp_withdrawal_required: boolean;
+            /** Ils Outage Notam Required */
+            ils_outage_notam_required: boolean;
+            /** Hook Requirements */
+            hook_requirements: components["schemas"]["HookRequirementRead"][];
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            updated_by: components["schemas"]["UserRef"] | null;
+        };
+        /**
+         * ZoneAccessProfileUpdate
+         * @description Capability 81. Only tightening is allowed (ZP-2): removing the airside course from an
+         *     airside zone, access_permit_required = false on a movement-area/SRA zone or escort ratio
+         *     above the setting → 422 PROFILE_LOOSENING.
+         */
+        ZoneAccessProfileUpdate: {
+            /** Required Inductions */
+            required_inductions?: string[] | null;
+            /** Airport Pass Area Code */
+            airport_pass_area_code?: string | null;
+            /** Access Permit Required */
+            access_permit_required?: boolean | null;
+            adp_category_required?: components["schemas"]["AreaCategory"] | null;
+            avp_area_required?: components["schemas"]["AreaCategory"] | null;
+            /** Escort Ratio Max */
+            escort_ratio_max?: number | null;
+            /** Lvp Withdrawal Required */
+            lvp_withdrawal_required?: boolean | null;
+            /** Ils Outage Notam Required */
+            ils_outage_notam_required?: boolean | null;
+            /** Hook Requirements */
+            hook_requirements?: components["schemas"]["HookRequirement"][] | null;
         };
         /** ZoneCreate */
         ZoneCreate: {
@@ -12087,7 +18986,7 @@ export interface operations {
                 project_id?: string | null;
                 status?: string | null;
                 q?: string | null;
-                /** @description incidents only: add injured-person identity columns. */
+                /** @description incidents: add injured-person identity columns; Phase 2 registers: full ID numbers (capability 79). */
                 include_identity?: boolean;
                 /** @description Required with include_identity (P1-6). */
                 purpose?: components["schemas"]["ExportPurpose"] | null;
@@ -17020,6 +23919,8 @@ export interface operations {
                 as_of?: string | null;
                 /** @description Comparisons to compute (K-R11). Default: previous. */
                 compare?: components["schemas"]["ComparisonKind"][] | null;
+                /** @description Gate(s): filters gate KPIs (K-52, K-53, K-53b) only. */
+                gate_id?: string[] | null;
             };
             header?: never;
             path?: never;
@@ -17107,6 +24008,8 @@ export interface operations {
                 as_of?: string | null;
                 /** @description Comparisons to compute (K-R11). Default: previous. */
                 compare?: components["schemas"]["ComparisonKind"][] | null;
+                /** @description Gate(s): filters gate KPIs (K-52, K-53, K-53b) only. */
+                gate_id?: string[] | null;
             };
             header?: never;
             path: {
@@ -17195,6 +24098,8 @@ export interface operations {
                 as_of?: string | null;
                 /** @description Comparisons to compute (K-R11). Default: previous. */
                 compare?: components["schemas"]["ComparisonKind"][] | null;
+                /** @description Gate(s): filters gate KPIs (K-52, K-53, K-53b) only. */
+                gate_id?: string[] | null;
                 /** @description 1-based page number. */
                 page?: number;
                 /** @description Items per page. */
@@ -17286,6 +24191,8 @@ export interface operations {
                 as_of?: string | null;
                 /** @description Comparisons to compute (K-R11). Default: previous. */
                 compare?: components["schemas"]["ComparisonKind"][] | null;
+                /** @description Gate(s): filters gate KPIs (K-52, K-53, K-53b) only. */
+                gate_id?: string[] | null;
             };
             header?: never;
             path?: never;
@@ -17371,6 +24278,8 @@ export interface operations {
                 as_of?: string | null;
                 /** @description Comparisons to compute (K-R11). Default: previous. */
                 compare?: components["schemas"]["ComparisonKind"][] | null;
+                /** @description Gate(s): filters gate KPIs (K-52, K-53, K-53b) only. */
+                gate_id?: string[] | null;
             };
             header?: never;
             path?: never;
@@ -17462,6 +24371,8 @@ export interface operations {
                 as_of?: string | null;
                 /** @description Comparisons to compute (K-R11). Default: previous. */
                 compare?: components["schemas"]["ComparisonKind"][] | null;
+                /** @description Gate(s): filters gate KPIs (K-52, K-53, K-53b) only. */
+                gate_id?: string[] | null;
             };
             header?: never;
             path?: never;
@@ -17548,6 +24459,8 @@ export interface operations {
                 as_of?: string | null;
                 /** @description Comparisons to compute (K-R11). Default: previous. */
                 compare?: components["schemas"]["ComparisonKind"][] | null;
+                /** @description Gate(s): filters gate KPIs (K-52, K-53, K-53b) only. */
+                gate_id?: string[] | null;
             };
             header?: never;
             path?: never;
@@ -17636,6 +24549,8 @@ export interface operations {
                 as_of?: string | null;
                 /** @description Comparisons to compute (K-R11). Default: previous. */
                 compare?: components["schemas"]["ComparisonKind"][] | null;
+                /** @description Gate(s): filters gate KPIs (K-52, K-53, K-53b) only. */
+                gate_id?: string[] | null;
             };
             header?: never;
             path?: never;
@@ -17721,6 +24636,8 @@ export interface operations {
                 as_of?: string | null;
                 /** @description Comparisons to compute (K-R11). Default: previous. */
                 compare?: components["schemas"]["ComparisonKind"][] | null;
+                /** @description Gate(s): filters gate KPIs (K-52, K-53, K-53b) only. */
+                gate_id?: string[] | null;
             };
             header?: never;
             path?: never;
@@ -17807,6 +24724,8 @@ export interface operations {
                 as_of?: string | null;
                 /** @description Comparisons to compute (K-R11). Default: previous. */
                 compare?: components["schemas"]["ComparisonKind"][] | null;
+                /** @description Gate(s): filters gate KPIs (K-52, K-53, K-53b) only. */
+                gate_id?: string[] | null;
             };
             header?: never;
             path?: never;
@@ -17894,6 +24813,8 @@ export interface operations {
                 as_of?: string | null;
                 /** @description Comparisons to compute (K-R11). Default: previous. */
                 compare?: components["schemas"]["ComparisonKind"][] | null;
+                /** @description Gate(s): filters gate KPIs (K-52, K-53, K-53b) only. */
+                gate_id?: string[] | null;
             };
             header?: never;
             path?: never;
@@ -17979,6 +24900,8 @@ export interface operations {
                 as_of?: string | null;
                 /** @description Comparisons to compute (K-R11). Default: previous. */
                 compare?: components["schemas"]["ComparisonKind"][] | null;
+                /** @description Gate(s): filters gate KPIs (K-52, K-53, K-53b) only. */
+                gate_id?: string[] | null;
             };
             header?: never;
             path?: never;
@@ -18066,6 +24989,8 @@ export interface operations {
                 as_of?: string | null;
                 /** @description Comparisons to compute (K-R11). Default: previous. */
                 compare?: components["schemas"]["ComparisonKind"][] | null;
+                /** @description Gate(s): filters gate KPIs (K-52, K-53, K-53b) only. */
+                gate_id?: string[] | null;
             };
             header?: never;
             path: {
@@ -18156,6 +25081,8 @@ export interface operations {
                 as_of?: string | null;
                 /** @description Comparisons to compute (K-R11). Default: previous. */
                 compare?: components["schemas"]["ComparisonKind"][] | null;
+                /** @description Gate(s): filters gate KPIs (K-52, K-53, K-53b) only. */
+                gate_id?: string[] | null;
             };
             header?: never;
             path: {
@@ -18173,6 +25100,96 @@ export interface operations {
                 content: {
                     "text/csv": string;
                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": string;
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_access_kpis: {
+        parameters: {
+            query?: {
+                /** @description Default: all access KPIs. */
+                metric?: components["schemas"]["KpiMetric"][] | null;
+                group_by?: components["schemas"]["AccessKpiGroupBy"][] | null;
+                /** @description Project(s). Repeat for several. Required unless all_projects=true. Out-of-scope ids → 404. */
+                project_id?: string[] | null;
+                /** @description HSE Manager only: every project (K-R12 bases banner). */
+                all_projects?: boolean;
+                /** @description Sites (multi). */
+                site_id?: string[] | null;
+                /** @description Zones (multi). */
+                zone_id?: string[] | null;
+                /** @description airside / landside / other. */
+                zone_type?: components["schemas"]["ZoneType"] | null;
+                /** @description Contractor engagement(s); roll-up per include_subcontractors. */
+                engagement_id?: string[] | null;
+                /** @description K-R5: engagement + descendants (default) or this only. */
+                include_subcontractors?: boolean;
+                /** @description Tier 1/2/3. */
+                tier?: number[] | null;
+                /** @description K-R10 preset. */
+                period?: components["schemas"]["PeriodPreset"];
+                /** @description A date inside the wanted day/week/month/quarter/year (default as_of). mtd/qtd/ytd/r12/itd end at as_of. */
+                anchor?: string | null;
+                /** @description period=custom: first day. */
+                start?: string | null;
+                /** @description period=custom: last day (inclusive). */
+                end?: string | null;
+                /** @description Evaluation date; default today (project timezone). */
+                as_of?: string | null;
+                /** @description Comparisons to compute (K-R11). Default: previous. */
+                compare?: components["schemas"]["ComparisonKind"][] | null;
+                /** @description Gate(s): filters gate KPIs (K-52, K-53, K-53b) only. */
+                gate_id?: string[] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessKpiResponse"];
                 };
             };
             /** @description Not authenticated, session expired, or login rejected. */
@@ -18244,6 +25261,8 @@ export interface operations {
                 as_of?: string | null;
                 /** @description Comparisons to compute (K-R11). Default: previous. */
                 compare?: components["schemas"]["ComparisonKind"][] | null;
+                /** @description Gate(s): filters gate KPIs (K-52, K-53, K-53b) only. */
+                gate_id?: string[] | null;
             };
             header?: never;
             path?: never;
@@ -18676,6 +25695,8 @@ export interface operations {
                 as_of?: string | null;
                 /** @description Comparisons to compute (K-R11). Default: previous. */
                 compare?: components["schemas"]["ComparisonKind"][] | null;
+                /** @description Gate(s): filters gate KPIs (K-52, K-53, K-53b) only. */
+                gate_id?: string[] | null;
             };
             header?: never;
             path?: never;
@@ -19119,6 +26140,8221 @@ export interface operations {
             };
             /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_workers: {
+        parameters: {
+            query?: {
+                project_id?: string | null;
+                engagement_id?: string[] | null;
+                include_subcontractors?: boolean;
+                site_id?: string[] | null;
+                status?: components["schemas"]["WorkerStatus"][] | null;
+                deployment_status?: components["schemas"]["DeploymentStatus"][] | null;
+                person_type?: components["schemas"]["WorkerPersonType"] | null;
+                trade?: components["schemas"]["Trade"] | null;
+                q?: string | null;
+                sort?: "worker_no" | "-worker_no" | "name" | "-name";
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkerPage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_worker: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkerCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkerRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    lookup_worker: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkerIdLookup"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkerLookupResult"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_worker: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                worker_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkerRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_worker: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                worker_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkerUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkerRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    transition_worker: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                worker_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkerTransitionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkerRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    unmask_worker_id: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                worker_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UnmaskRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkerIdNumberRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    worker_data_report: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                worker_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkerDataReportRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkerDataReport"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_deployments: {
+        parameters: {
+            query?: {
+                engagement_id?: string[] | null;
+                include_subcontractors?: boolean;
+                site_id?: string[] | null;
+                status?: components["schemas"]["DeploymentStatus"][] | null;
+                trade?: components["schemas"]["Trade"] | null;
+                q?: string | null;
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeploymentPage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_deployment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeploymentCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeploymentRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_deployment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                deployment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeploymentRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_deployment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                deployment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeploymentUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeploymentRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    transition_deployment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                deployment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeploymentTransitionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeploymentRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_access_card: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                deployment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessCardRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    reissue_access_card: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                deployment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccessCardReissueRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessCardRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_induction_courses: {
+        parameters: {
+            query?: {
+                active?: boolean | null;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InductionCourseList"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_induction_course: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InductionCourseCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InductionCourseRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_induction_course: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                course_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InductionCourseRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_induction_course: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                course_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InductionCourseUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InductionCourseRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    publish_induction_course_version: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                course_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InductionCourseVersionPublish"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InductionCourseRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_inductions: {
+        parameters: {
+            query?: {
+                worker_id?: string | null;
+                course_id?: string[] | null;
+                induction_type?: components["schemas"]["InductionType"] | null;
+                status?: components["schemas"]["InductionStatus"][] | null;
+                engagement_id?: string[] | null;
+                include_subcontractors?: boolean;
+                /** @description Action panel: IN-6 records (last 30 days with since). */
+                language_mismatch?: boolean | null;
+                expiring_within_days?: number | null;
+                delivered_from?: string | null;
+                delivered_to?: string | null;
+                session_ref?: string | null;
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InductionRecordPage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_induction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InductionRecordCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InductionRecordRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_induction_session: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InductionSessionCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InductionSessionResult"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_induction_retraining_note: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InductionRetrainingNote"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InductionRetrainingNoteRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_induction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                induction_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InductionRecordRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_induction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                induction_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InductionRecordUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InductionRecordRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_zone_access_profiles: {
+        parameters: {
+            query?: {
+                site_id?: string | null;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ZoneAccessProfileList"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_zone_access_profile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                zone_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ZoneAccessProfileRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_zone_access_profile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                zone_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ZoneAccessProfileUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ZoneAccessProfileRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_worker_eligibility: {
+        parameters: {
+            query: {
+                zone_id: string;
+                /** @description UTC; default now. */
+                at?: string | null;
+                context?: components["schemas"]["EligibilityContext"];
+            };
+            header?: never;
+            path: {
+                worker_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EligibilityResult"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_hook_providers: {
+        parameters: {
+            query: {
+                project_id: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HookProviderInfo"][];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_pass_categories: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PassCategoryList"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_pass_category: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PassCategoryCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PassCategoryRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_pass_category: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                category_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PassCategoryUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PassCategoryRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_pass_areas: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PassAreaList"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_pass_area: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PassAreaCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PassAreaRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_pass_area: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                area_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PassAreaUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PassAreaRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_pass_applications: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["PassApplicationStatus"][] | null;
+                application_type?: components["schemas"]["PassApplicationType"] | null;
+                worker_id?: string | null;
+                engagement_id?: string[] | null;
+                include_subcontractors?: boolean;
+                /** @description Action panel: lodged > stale days. */
+                stale?: boolean | null;
+                q?: string | null;
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PassApplicationPage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_pass_application: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PassApplicationCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PassApplicationRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_pass_application: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PassApplicationRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_pass_application: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PassApplicationUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PassApplicationRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    transition_pass_application: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PassApplicationTransitionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PassApplicationRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    put_background_check: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BackgroundCheckUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PassApplicationRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    issue_airport_pass: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PassIssueRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AirportPassRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_airport_passes: {
+        parameters: {
+            query?: {
+                validity_status?: components["schemas"]["ValidityStatus"][] | null;
+                custody_status?: components["schemas"]["CustodyStatus"][] | null;
+                return_overdue?: boolean | null;
+                pass_category?: string[] | null;
+                area_code?: string[] | null;
+                worker_id?: string | null;
+                engagement_id?: string[] | null;
+                include_subcontractors?: boolean;
+                expiring_within_days?: number | null;
+                q?: string | null;
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AirportPassPage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_airport_pass: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pass_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AirportPassRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_adps: {
+        parameters: {
+            query?: {
+                validity_status?: components["schemas"]["ValidityStatus"][] | null;
+                category?: components["schemas"]["AreaCategory"] | null;
+                worker_id?: string | null;
+                engagement_id?: string[] | null;
+                include_subcontractors?: boolean;
+                expiring_within_days?: number | null;
+                q?: string | null;
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdpPage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_adp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdpCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdpRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_adp: {
+        parameters: {
+            query?: {
+                /** @description Default today. */
+                points_as_of?: string | null;
+            };
+            header?: never;
+            path: {
+                adp_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdpRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_adp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                adp_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdpUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdpRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    issue_adp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                adp_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdpIssueRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdpRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    withdraw_adp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                adp_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdpRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_offences: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["OffenceStatus"][] | null;
+                offence_code?: string[] | null;
+                worker_id?: string | null;
+                zone_id?: string | null;
+                engagement_id?: string[] | null;
+                include_subcontractors?: boolean;
+                date_from?: string | null;
+                date_to?: string | null;
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OffencePage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_offence: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OffenceCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OffenceRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_offence: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                offence_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OffenceRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    transition_offence: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                offence_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OffenceTransitionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OffenceRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_vehicles: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["VehicleStatus"][] | null;
+                category?: components["schemas"]["VehicleCategory"][] | null;
+                engagement_id?: string[] | null;
+                include_subcontractors?: boolean;
+                documents_expiring_within_days?: number | null;
+                /** @description vehicle_no, fleet_no, plate, serial. */
+                q?: string | null;
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VehiclePage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_vehicle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VehicleCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VehicleRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_vehicle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vehicle_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VehicleRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_vehicle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vehicle_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VehicleUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VehicleRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    transition_vehicle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vehicle_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VehicleTransitionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VehicleRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_avps: {
+        parameters: {
+            query?: {
+                validity_status?: components["schemas"]["ValidityStatus"][] | null;
+                area?: components["schemas"]["AreaCategory"] | null;
+                vehicle_id?: string | null;
+                engagement_id?: string[] | null;
+                include_subcontractors?: boolean;
+                expiring_within_days?: number | null;
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvpPage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_avp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AvpCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvpRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_avp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                avp_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvpRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_avp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                avp_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AvpUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvpRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    issue_avp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                avp_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AvpIssueRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvpRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    withdraw_avp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                avp_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvpRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_avp_sticker: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                avp_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvpStickerRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    reissue_avp_sticker: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                avp_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AvpStickerReissueRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvpStickerRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_notam_requests: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["NotamStatus"][] | null;
+                zone_id?: string | null;
+                works_impact?: components["schemas"]["WorksImpact"] | null;
+                in_effect?: boolean | null;
+                late_request?: boolean | null;
+                /** @description Action panel: start within N h, not issued. */
+                not_issued_within_hours?: number | null;
+                date_from?: string | null;
+                date_to?: string | null;
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotamRequestPage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_notam_request: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotamRequestCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotamRequestRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_notam_request: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ntm_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotamRequestRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_notam_request: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ntm_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotamRequestUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotamRequestRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    transition_notam_request: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ntm_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotamTransitionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotamRequestRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    replace_notam_request: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ntm_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotamReplaceRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotamRequestRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_obstacle_clearances: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["ObstacleStatus"][] | null;
+                zone_id?: string | null;
+                reason?: components["schemas"]["ClearanceReason"] | null;
+                active_on?: string | null;
+                expiring_within_days?: number | null;
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ObstaclePage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_obstacle_clearance: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ObstacleCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ObstacleRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    preview_obstacle_clearance: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ObstaclePreviewRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HeightFigures"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_obstacle_clearance: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                obs_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ObstacleRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_obstacle_clearance: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                obs_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ObstacleUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ObstacleRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    transition_obstacle_clearance: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                obs_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ObstacleTransitionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ObstacleRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    decide_obstacle_clearance: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                obs_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ObstacleDecisionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ObstacleRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_waps: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["WapStatus"][] | null;
+                site_id?: string | null;
+                zone_id?: string[] | null;
+                engagement_id?: string[] | null;
+                include_subcontractors?: boolean;
+                active_on?: string | null;
+                /** @description Action panel: Approved, inside validity, not Active. */
+                blocked?: boolean | null;
+                blocker?: components["schemas"]["WapBlocker"] | null;
+                /** @description WAPs listing this worker. */
+                worker_id?: string | null;
+                vehicle_id?: string | null;
+                q?: string | null;
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WapPage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_wap: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WapCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WapRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_wap_board: {
+        parameters: {
+            query?: {
+                /** @description Local date; default today. */
+                on?: string | null;
+                site_id?: string | null;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WapBoardResponse"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_wap: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                wap_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WapRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_wap: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                wap_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WapUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WapRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    transition_wap: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                wap_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WapTransitionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WapRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_wap_revision: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                wap_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WapRevisionCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WapRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    add_wap_crew: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                wap_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CrewInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WapRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    remove_wap_crew: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                wap_id: string;
+                worker_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WapRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    add_wap_vehicle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                wap_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WapVehicleInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WapRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    remove_wap_vehicle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                wap_id: string;
+                vehicle_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WapRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_wap_print: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                wap_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WapPrintRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_ops_events: {
+        parameters: {
+            query?: {
+                active?: boolean | null;
+                type?: components["schemas"]["OpsEventType"][] | null;
+                site_id?: string | null;
+                date_from?: string | null;
+                date_to?: string | null;
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpsEventPage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_ops_event: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpsEventCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpsEventRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_ops_event: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpsEventRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_ops_event: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpsEventUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpsEventRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    end_ops_event: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpsEventEnd"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpsEventRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_credential_state: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description induction | airport_pass | adp | avp | access_card (wap/worker → 404). */
+                kind: components["schemas"]["CredentialKind"];
+                credential_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CredentialState"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_credential_events: {
+        parameters: {
+            query?: {
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                /** @description induction | airport_pass | adp | avp | access_card (wap/worker → 404). */
+                kind: components["schemas"]["CredentialKind"];
+                credential_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CredentialEventPage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    suspend_credential: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description induction | airport_pass | adp | avp | access_card (wap/worker → 404). */
+                kind: components["schemas"]["CredentialKind"];
+                credential_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SuspendRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CredentialState"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    confirm_credential_suspension: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description induction | airport_pass | adp | avp | access_card (wap/worker → 404). */
+                kind: components["schemas"]["CredentialKind"];
+                credential_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConfirmSuspensionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CredentialState"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    reinstate_credential: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description induction | airport_pass | adp | avp | access_card (wap/worker → 404). */
+                kind: components["schemas"]["CredentialKind"];
+                credential_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReinstateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CredentialState"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    revoke_credential: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description induction | airport_pass | adp | avp | access_card (wap/worker → 404). */
+                kind: components["schemas"]["CredentialKind"];
+                credential_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevokeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CredentialState"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    return_credential: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description induction | airport_pass | adp | avp | access_card (wap/worker → 404). */
+                kind: components["schemas"]["CredentialKind"];
+                credential_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReturnRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CredentialState"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    report_credential_loss: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description induction | airport_pass | adp | avp | access_card (wap/worker → 404). */
+                kind: components["schemas"]["CredentialKind"];
+                credential_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LossReportRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CredentialState"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    record_authority_notified: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description induction | airport_pass | adp | avp | access_card (wap/worker → 404). */
+                kind: components["schemas"]["CredentialKind"];
+                credential_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AuthorityNotifiedRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CredentialState"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_gates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateList"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_gate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GateCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_gate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                gate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_gate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                gate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GateUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    register_gate_device: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                gate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GateDeviceCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateDeviceRegistered"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    revoke_gate_device: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                gate_id: string;
+                device_pk: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateDeviceRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    gate_device_login: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GateDeviceLogin"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateDeviceSession"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit reached (AI_RATE_LIMITED); see Retry-After. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    gate_device_logout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_gate_context: {
+        parameters: {
+            query?: {
+                project_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateCallerContext"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    gate_check: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GateCheckRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateCheckResponse"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rate limit reached (AI_RATE_LIMITED); see Retry-After. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_gate_pairing: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pairing_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PairingRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    cancel_gate_pairing: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pairing_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PairingRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    record_admitted_despite_denial: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                check_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdmittedDespiteDenialRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateLogEntry"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_gate_log: {
+        parameters: {
+            query?: {
+                gate_id?: string[] | null;
+                zone_id?: string[] | null;
+                direction?: components["schemas"]["GateDirection"] | null;
+                result?: components["schemas"]["GateResult"][] | null;
+                reason_code?: components["schemas"]["GateReasonCode"][] | null;
+                subject_kind?: components["schemas"]["GateSubjectKind"] | null;
+                worker_id?: string | null;
+                vehicle_id?: string | null;
+                engagement_id?: string[] | null;
+                admitted_despite_denial?: boolean | null;
+                late_exit?: boolean | null;
+                /** @description UTC. */
+                since?: string | null;
+                /** @description UTC. */
+                until?: string | null;
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateLogPage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_access_settings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessSettingsRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_access_settings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccessSettingsUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessSettingsRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

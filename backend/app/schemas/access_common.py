@@ -19,6 +19,7 @@ from app.core.access_enums import (
     VehicleCategory,
     WorkerStatus,
 )
+from app.core.hse_enums import Trade
 from app.schemas.common import ApiModel, StrictInput
 from app.schemas.hse_common import DecimalStr, UserRef
 
@@ -61,11 +62,17 @@ class HookRequirement(StrictInput):
 
     kind: HookKind
     code: str = Field(min_length=1, max_length=40, examples=["AVSEC-AWR"])
+    trades: list[Trade] = Field(
+        default_factory=list,
+        description="Only workers of these trades (zone profiles, e.g. CRANE-OPERATOR for "
+        "crane_operator); empty = everyone.",
+    )
 
 
 class HookRequirementRead(ApiModel):
     kind: HookKind
     code: str
+    trades: list[Trade] = Field(default_factory=list)
 
 
 class CredentialSuspension(ApiModel):
