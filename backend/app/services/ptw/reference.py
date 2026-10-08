@@ -381,6 +381,9 @@ WARNING_TEXT: dict[PermitWarningCode, tuple[str, str]] = {
     W.SIMOPS_CONDITIONAL: ("Conditional SIMOPS conflict (coordinated)", "تعارض مشروط (منسق)"),
     W.ISOLATIONS_STILL_APPLIED: ("Isolations still applied", "العزل ما زال مطبقاً"),
     W.POSSIBLE_ID_NUMBER: ("Possible ID number in free text", "احتمال وجود رقم هوية في النص"),
+    W.HOOK_NOT_MET_WARN: ("Certificate requirement not met (warning stage)", "متطلب الشهادة غير مستوفى (مرحلة التحذير)"),
+    W.CERT_UNVERIFIED: ("Certificate not yet verified with the issuer", "الشهادة لم يتم التحقق منها بعد لدى الجهة المصدرة"),
+    W.CARD_RESTRICTION_REVIEW: ("Card restriction needs HSE review", "قيد على البطاقة يحتاج مراجعة السلامة"),
 }  # fmt: skip
 
 REASON_TEXT: dict[StatusReason, tuple[str, str]] = {

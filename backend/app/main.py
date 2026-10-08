@@ -20,10 +20,16 @@ from app.api.routers import (
     attachments,
     audit,
     auth,
+    cert_checks,
+    cert_config,
+    cert_imports,
     contractors,
     corrective_actions,
     credentials,
     dashboard,
+    defects,
+    equipment,
+    equipment_certificates,
     exports,
     gas,
     gates,
@@ -39,12 +45,15 @@ from app.api.routers import (
     notifications,
     observations,
     permits,
+    personnel_certificates,
     projects,
     ptw_appointments,
     ptw_audits,
     ptw_config,
+    scaffolds,
     simops,
     sites,
+    tpis,
     users,
     waps,
     workers,
@@ -63,9 +72,10 @@ from app.schemas.ai import AiStreamEvent
 
 DESCRIPTION = """
 HSE platform API — Phase 0 Foundation (spec `docs/specs/0-foundation.md` v1.0), Phase 1
-Dashboard & core data with AI (spec `docs/specs/1-dashboard.md` v1.2), Phase 2 Site/Airport
-access permits (spec `docs/specs/2-access-permits.md` v1.1) and Phase 3 Permit to Work (spec
-`docs/specs/3-ptw.md` v1.0).
+Dashboard & core data with AI (spec `docs/specs/1-dashboard.md` v1.3), Phase 2 Site/Airport
+access permits (spec `docs/specs/2-access-permits.md` v1.2), Phase 3 Permit to Work (spec
+`docs/specs/3-ptw.md` v1.1) and Phase 4 Third-party inspection & certification (spec
+`docs/specs/4-third-party-cert.md` v1.0).
 
 * Auth: `POST /api/v1/auth/login` sets the httpOnly SameSite=Lax cookie `hse_session` (JWT) and
   returns `{access_token, user}`. Send the cookie or `Authorization: Bearer <token>`.
@@ -91,6 +101,13 @@ access permits (spec `docs/specs/2-access-permits.md` v1.1) and Phase 3 Permit t
   Permit QR payloads are `HSE2:PT:<token>`. HSE Managers do not prepare, receive, review as
   area authority, issue, isolate or sign SIMOPS coordination unless they also hold that project
   role.
+* Phase 4: equipment and scaffold stickers are `HSE2:EQ:<token>` (printed ref
+  `<project>-<tag>`); gate checks accept them (subject `equipment_deployment`).
+  `POST /certification-checks` is the platform sticker / certificate check. Personnel ID
+  numbers typed for the PC-3 check are never stored or echoed; scans need a reason
+  (`POST /personnel-certificates/{id}/scan-url`). Hook results carry `hard_stop`,
+  `hook_reason_code` and `conditions`; the hook stage per project and kind (warn → transition →
+  block) is `GET /projects/{id}/hook-policy`.
 """
 
 # Schemas used only in non-JSON responses (SSE) and therefore not reachable from any route.
@@ -193,6 +210,16 @@ def create_app() -> FastAPI:
         isolations,
         simops,
         ptw_audits,
+        # Phase 4
+        cert_config,
+        tpis,
+        equipment,
+        equipment_certificates,
+        scaffolds,
+        personnel_certificates,
+        defects,
+        cert_imports,
+        cert_checks,
     ):
         app.include_router(module.router, prefix=API_PREFIX)
     app.include_router(auth.public_router, prefix=API_PREFIX)

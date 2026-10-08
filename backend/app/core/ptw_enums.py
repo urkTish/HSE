@@ -394,6 +394,10 @@ class PermitWarningCode(StrEnum):
     SIMOPS_CONDITIONAL = "SIMOPS_CONDITIONAL"
     ISOLATIONS_STILL_APPLIED = "ISOLATIONS_STILL_APPLIED"
     POSSIBLE_ID_NUMBER = "POSSIBLE_ID_NUMBER"
+    # v1.1 (4-third-party-cert): transition-stage hook result, VF-1 window, PC-13
+    HOOK_NOT_MET_WARN = "HOOK_NOT_MET_WARN"
+    CERT_UNVERIFIED = "CERT_UNVERIFIED"
+    CARD_RESTRICTION_REVIEW = "CARD_RESTRICTION_REVIEW"
 
 
 class ChecklistAnswer(StrEnum):
@@ -765,6 +769,7 @@ class DetectorStatus(StrEnum):
 class QuarantineReason(StrEnum):
     bump_test_failed = "bump_test_failed"
     calibration_overdue = "calibration_overdue"
+    calibration_body_blacklisted = "calibration_body_blacklisted"  # v1.1 (4-third-party BL-7)
 
 
 class BumpTestResult(StrEnum):

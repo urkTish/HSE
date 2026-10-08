@@ -64,7 +64,8 @@ from app.core.ptw_enums import (
 from app.core.ptw_enums import (
     JsaStatus as _JsaStatus,
 )
-from app.schemas.access_common import VehicleRef, WorkerRef
+from app.schemas.access_common import HookCondition, VehicleRef, WorkerRef
+from app.schemas.cert_common import DeploymentRef, EquipmentRef, ScaffoldRef
 from app.schemas.common import ApiModel, Page, PatchInput, StrictInput
 from app.schemas.hse_common import (
     ApiWarning,
@@ -162,11 +163,16 @@ class EquipmentTagInput(StrictInput):
 
 class PermitEquipmentInput(StrictInput):
     """One of vehicle_id (Phase 2 vehicle of the engagement or an ancestor) or equipment_tag
-    (hook subject `equipment_tag` until Phase 4)."""
+    (hook subject `equipment_tag` until Phase 4). v1.1 (4-third-party-cert §11.4): with Phase 4
+    enabled, `equipment_item_id` (optional; resolved from the tag on the project when blank)
+    and `operator_worker_id` — required for categories with an operator code in EQC (HK4-9,
+    422 OPERATOR_REQUIRED)."""
 
     vehicle_id: uuid.UUID | None = None
     equipment_tag: EquipmentTagInput | None = None
     use: EquipmentUse
+    equipment_item_id: uuid.UUID | None = None
+    operator_worker_id: uuid.UUID | None = None
 
 
 class PermitEquipmentRead(ApiModel):
@@ -176,6 +182,21 @@ class PermitEquipmentRead(ApiModel):
     use: EquipmentUse
     max_working_height_m: DecimalStr | None
     hooks: list[EligibilityItem] = Field(description="HK3-2 equipment hooks (e.g. CRANE-TPI).")
+    equipment_item: EquipmentRef | None = Field(
+        default=None, description="v1.1: the Phase 4 item (given or resolved from the tag)."
+    )
+    deployment: DeploymentRef | None = Field(default=None, description="v1.1.")
+    operator: WorkerRef | None = Field(
+        default=None, description="v1.1 (HK4-9); name only with capability 46."
+    )
+    operator_hooks: list[EligibilityItem] = Field(
+        default_factory=list,
+        description="v1.1: operator-code hook results with the HK-3 context (HK4-9).",
+    )
+    conditions: list[HookCondition] = Field(
+        default_factory=list, description="v1.1: limitations from the in-force line."
+    )
+    swl_t: DecimalStr | None = Field(default=None, description="v1.1: SWL of the in-force line.")
 
 
 class PermitDocumentInput(StrictInput):
@@ -314,6 +335,11 @@ class WorkAtHeightSectionInput(StrictInput):
 
 
 class WorkAtHeightSectionRead(WorkAtHeightSectionInput):
+    scaffold: ScaffoldRef | None = Field(
+        default=None,
+        description="v1.1: scaffold_tag_ref resolved on the Phase 4 register of the permit's "
+        "project (SF-1); null before Phase 4 or when not found.",
+    )
     required_clearance_m: DecimalStr | None = Field(description="§6.9, 2 dp.")
     clearance_ok: bool | None
 
@@ -979,6 +1005,11 @@ class PermitRead(ApiModel):
     conditions_ar: str | None
     copied_conditions: list[str] = Field(
         description="Obstacle-clearance conditions copied into the permit (LF-9)."
+    )
+    hook_conditions: list[HookCondition] = Field(
+        default_factory=list,
+        description="v1.1: yellow-tag restrictions and equipment limitations copied from "
+        "Phase 4 hook results (§11.4 item 4).",
     )
     emergency_info: str
     status: PermitStatus

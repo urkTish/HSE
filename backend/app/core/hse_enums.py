@@ -688,6 +688,7 @@ class CaSourceType(StrEnum):
     observation = "observation"
     inspection = "inspection"
     ptw_audit = "ptw_audit"  # 1-dashboard v1.2: source_id = PTW audit (3-ptw §3.15)
+    equipment_defect = "equipment_defect"  # 1-dashboard v1.3: DEF number (manual only, DF-10)
     ai_recommendation = "ai_recommendation"
     other = "other"
 
@@ -768,6 +769,16 @@ class AttachmentOwner(StrEnum):
     ptw_audit_photo = "ptw_audit_photo"
     gas_test_signature = "gas_test_signature"
     crew_briefing_signature = "crew_briefing_signature"
+    # Phase 4 (4-third-party-cert). Personnel card scans and import files with ID columns are
+    # sensitive: personal bucket, signed URL ≤ 5 min with a reason (capability 119, P4-3)
+    tpi_accreditation_certificate = "tpi_accreditation_certificate"
+    equipment_document = "equipment_document"
+    equipment_certificate_scan = "equipment_certificate_scan"
+    personnel_cert_scan = "personnel_cert_scan"
+    verification_evidence = "verification_evidence"
+    defect_photo = "defect_photo"
+    defect_evidence = "defect_evidence"
+    scaffold_inspection_photo = "scaffold_inspection_photo"
 
 
 class ScanStatus(StrEnum):
@@ -877,6 +888,17 @@ class KpiMetric(StrEnum):
     K69 = "K-69"
     K70 = "K-70"
     K71 = "K-71"
+    # Phase 4 certification KPIs (4-third-party-cert §6.7)
+    K72 = "K-72"
+    K73 = "K-73"
+    K74 = "K-74"
+    K75 = "K-75"
+    K76 = "K-76"
+    K77 = "K-77"
+    K78 = "K-78"
+    K79 = "K-79"
+    K80 = "K-80"
+    K81 = "K-81"
 
 
 class KpiKind(StrEnum):
@@ -1067,6 +1089,8 @@ class LeadingWarningCode(StrEnum):
     E7 = "E7"  # ≥ 1 OFF-05 offence or ≥ 3 ADP suspensions in the month
     E8 = "E8"  # 3-ptw §6.12: K-61 below threshold (≥ 10 audits) or K-64 ≥ threshold
     E9 = "E9"  # 3-ptw §6.12: K-69 below threshold (≥ 10 ended) or K-70 spike
+    E10 = "E10"  # 4-third-party-cert §6.9: K-72 / K-76 / K-81 below thresholds
+    E11 = "E11"  # ≥ 1 failed verification or A defects ≥ dangerous_defect_warning_count
 
 
 class ChartId(StrEnum):
@@ -1087,6 +1111,9 @@ class ChartId(StrEnum):
     C13 = "C13"  # 3-ptw §8.1: permits issued by month by primary type + high-risk share
     C14 = "C14"  # K-61 monthly line with K-64 bars
     C15 = "C15"  # non-routine suspensions by reason
+    C16 = "C16"  # 4-third-party-cert §8.1: K-72 and K-76 by month with E10 reference lines
+    C17 = "C17"  # defects raised by month (A/B/C stacked) with K-80 line
+    C18 = "C18"  # certificate expiry profile next 90 days, weekly, equipment / personnel
 
 
 class ChartKind(StrEnum):
@@ -1153,6 +1180,19 @@ class ActionPanelItem(StrEnum):
     quarantined_detectors_on_live_permits = "quarantined_detectors_on_live_permits"
     midday_exemptions_active = "midday_exemptions_active"
     lock_cuts_7d = "lock_cuts_7d"
+    # Phase 4 (4-third-party-cert §8.3)
+    certs_awaiting_review = "certs_awaiting_review"  # > 24 h
+    verifications_overdue = "verifications_overdue"
+    verification_failed_undecided = "verification_failed_undecided"  # VF-6
+    certs_unable_to_verify = "certs_unable_to_verify"
+    a_defects_open = "a_defects_open"
+    b_defects_due_3d = "b_defects_due_3d"
+    unusable_equipment_on_permits = "unusable_equipment_on_permits"
+    arrival_inspections_overdue = "arrival_inspections_overdue"
+    scaffolds_tag_not_valid = "scaffolds_tag_not_valid"  # In Use with expired or red tag
+    trade_cert_missing = "trade_cert_missing"
+    hook_block_soon_not_ready = "hook_block_soon_not_ready"  # ≤ 7 days, readiness < 100 %
+    ban_reviews_due = "ban_reviews_due"
 
 
 class ExpiringItemKind(StrEnum):
@@ -1184,6 +1224,15 @@ class ExpiringItemKind(StrEnum):
     ptw_appointment_expiry = "ptw_appointment_expiry"
     isolation_review_due = "isolation_review_due"
     jsa_template_review_due = "jsa_template_review_due"
+    # Phase 4 (4-third-party-cert §8.2)
+    equipment_cert_expiry = "equipment_cert_expiry"
+    personnel_cert_expiry = "personnel_cert_expiry"
+    scaffold_inspection_due = "scaffold_inspection_due"
+    defect_rectification_due = "defect_rectification_due"
+    tpi_accreditation_expiry = "tpi_accreditation_expiry"
+    tpi_client_approval_expiry = "tpi_client_approval_expiry"
+    certificate_verification_due = "certificate_verification_due"
+    hook_block_date = "hook_block_date"
 
 
 class Severity(StrEnum):
@@ -1222,6 +1271,7 @@ class AiTool(StrEnum):
     propose_chart = "propose_chart"
     get_access_kpis = "get_access_kpis"  # T14 (1-dashboard v1.1)
     get_ptw_kpis = "get_ptw_kpis"  # T15 (1-dashboard v1.2, 3-ptw KP-5)
+    get_certification_kpis = "get_certification_kpis"  # T16 (1-dashboard v1.3, KC-4)
 
 
 class GroundingResult(StrEnum):
@@ -1307,3 +1357,11 @@ class ReferenceList(StrEnum):
     ptw_closure_checklist = "ptw_closure_checklist"
     ptw_audit_item = "ptw_audit_item"
     ptw_blocker = "ptw_blocker"
+    # Phase 4 (4-third-party-cert §3.16)
+    cert_limitation = "cert_limitation"  # LIM
+    cert_personnel_limitation = "cert_personnel_limitation"  # LIM-P
+    cert_arrival_checklist = "cert_arrival_checklist"  # AIC
+    cert_scaffold_checklist = "cert_scaffold_checklist"  # SIC
+    cert_service_status_reason = "cert_service_status_reason"  # SSR
+    cert_ban_reason = "cert_ban_reason"  # BR (HSE Manager / Officer only)
+    cert_equipment_blacklist_reason = "cert_equipment_blacklist_reason"  # EBR

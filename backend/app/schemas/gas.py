@@ -20,6 +20,7 @@ from app.core.ptw_enums import (
     QuarantineReason,
 )
 from app.schemas.access_common import WorkerRef
+from app.schemas.cert_common import TpiRef
 from app.schemas.common import ApiModel, Page, PatchInput, StrictInput
 from app.schemas.hse_common import DecimalStr, EngagementRef, UserRef
 from app.schemas.ptw_common import AppointmentRef, DetectorRef, PermitRef
@@ -43,6 +44,11 @@ class DetectorCreate(StrictInput):
     certificate_due_on: date | None = Field(
         default=None, description="If entered: calibration_due_on = min(interval, this) (§6.10)."
     )
+    calibration_body_id: uuid.UUID | None = Field(
+        default=None,
+        description="v1.1 (4-third-party-cert BL-7): TPI of kind calibration_lab; quarantined "
+        "(calibration_body_blacklisted) when it is blacklisted in scope.",
+    )
 
 
 class DetectorUpdate(PatchInput):
@@ -51,6 +57,7 @@ class DetectorUpdate(PatchInput):
     make_model: str | None = Field(default=None, min_length=1, max_length=80)
     sensors: list[GasSensor] | None = Field(default=None, min_length=1)
     lel_reference_gas: LelReferenceGas | None = None
+    calibration_body_id: uuid.UUID | None = Field(default=None, description="v1.1 (BL-7).")
 
 
 class CalibrationInput(StrictInput):
@@ -104,6 +111,7 @@ class DetectorRead(ApiModel):
     calibrated_on: date
     calibration_cert_ref: str
     certificate_due_on: date | None
+    calibration_body: TpiRef | None = Field(default=None, description="v1.1 (BL-7).")
     calibration_due_on: date = Field(description="§6.10.")
     calibration_days_left: int
     status: DetectorStatus

@@ -20,9 +20,15 @@ from app.core.access_enums import (
     RequirementStatus,
     WorkerLanguage,
 )
-from app.schemas.access_common import HookRequirement, HookRequirementRead, WorkerRef
+from app.core.cert_enums import HookReasonCode, HookStage
+from app.schemas.access_common import (
+    HookCondition,
+    HookRequirement,
+    HookRequirementRead,
+    WorkerRef,
+)
 from app.schemas.common import ApiModel, Page, PatchInput, StrictInput, Timestamps
-from app.schemas.hse_common import ApiWarning, EngagementRef, UserRef, ZoneRef
+from app.schemas.hse_common import ApiWarning, DecimalStr, EngagementRef, UserRef, ZoneRef
 
 VERSION = r"^\d+\.\d+$"
 
@@ -312,6 +318,22 @@ class EligibilityItem(ApiModel):
     )
     message_en: str | None = None
     message_ar: str | None = None
+    # v1.2 (4-third-party-cert HK4-3/HK4-4/HK4-8): Phase 4 provider detail
+    hard_stop: bool = Field(
+        default=False,
+        description="Positive knowledge of danger (HK4-3): blocks in every hook stage.",
+    )
+    hook_reason_code: HookReasonCode | None = Field(
+        default=None,
+        description="Provider detail, e.g. CERT_EXPIRED, CERT_SCOPE_MISMATCH; with "
+        "reason_code HOOK_NOT_MET (block / hard stop) or HOOK_NOT_MET_WARN (transition).",
+    )
+    conditions: list[HookCondition] = Field(
+        default_factory=list, description="Limitations / yellow-tag restrictions (EC-11, SF-6)."
+    )
+    swl_t: DecimalStr | None = Field(
+        default=None, description="Certified (or derated) SWL in t for lifting equipment."
+    )
 
 
 class EligibilityResult(ApiModel):
@@ -332,3 +354,12 @@ class HookProviderInfo(ApiModel):
     registered: bool = Field(description="False until Phase 4/5/6 registers a provider (HK-3).")
     policy: HookPolicy
     available_from_phase: int = Field(examples=[5])
+    # v1.2 (4-third-party-cert §3.14, §4.8): Phase 4 kinds only
+    stage: HookStage | None = Field(
+        default=None,
+        description="Phase 4 kinds: warn (no provider) → transition → block. Null for other "
+        "kinds. Details: GET /projects/{id}/hook-policy.",
+    )
+    provider_registered_on: date | None = None
+    critical_block_from: date | None = None
+    general_block_from: date | None = None

@@ -11,6 +11,8 @@ from datetime import date, datetime
 
 from pydantic import Field
 
+from app.core.access_enums import HookKind
+from app.core.cert_enums import HookStage
 from app.core.enums import EntityType, ZoneType
 from app.core.hse_enums import (
     AxisKind,
@@ -344,6 +346,34 @@ class PtwBand(ApiModel):
     audits_behind_plan: bool
 
 
+class CertBandHookStage(ApiModel):
+    kind: HookKind = Field(description="personnel_certificate or equipment_certificate.")
+    stage: HookStage
+    next_block_date: date | None = Field(
+        description="E.g. 'Critical codes block from 2026-10-08' (§6.5)."
+    )
+    next_block_scope: str | None = Field(default=None, examples=["critical", "general"])
+
+
+class CertBand(ApiModel):
+    """4-third-party-cert §8.1 item 2 (all projects with capability 122). Counts at as_of;
+    aggregates only (KC-5)."""
+
+    project_id: uuid.UUID
+    as_of: date
+    on_site_in_service: int
+    on_site_quarantined: int
+    on_site_out_of_service: int
+    awaiting_review: int
+    awaiting_verification: int
+    verification_overdue: int = Field(description="The overdue chip.")
+    equipment_expiring_30d: KpiValue = Field(description="K-73.")
+    personnel_expiring_30d: KpiValue = Field(description="K-77.")
+    inspections_overdue: KpiValue = Field(description="K-75 (components: equipment, scaffolds).")
+    blacklisted_banned: KpiValue = Field(description="K-78 (components: equipment, persons, tpis).")
+    hook_stages: list[CertBandHookStage]
+
+
 class DashboardResponse(ApiModel):
     """§8.1 items 1-4 in one call. Charts: GET /kpi/charts/{chart_id}; action panel:
     GET /dashboard/action-panel."""
@@ -358,6 +388,11 @@ class DashboardResponse(ApiModel):
     )
     ptw_band: PtwBand | None = Field(
         default=None, description="Phase 3 PTW band (capability 103); null without it."
+    )
+    cert_band: CertBand | None = Field(
+        default=None,
+        description="Phase 4 certification band (capability 122); null without it or before "
+        "Phase 4 is enabled on the project.",
     )
 
 

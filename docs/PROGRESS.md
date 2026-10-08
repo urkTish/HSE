@@ -3,7 +3,7 @@
 ## Current
 - Phase: 4 — Third-party certification
 - Module: third-party certification (spec `docs/specs/4-third-party-cert.md` v1.0)
-- Step: Contract
+- Step: Contract v0.5.0 published (backend stage 1); next: frontend against the contract and backend stage 2 (implementation)
 
 ## Phase log
 - Phase 0 — Foundation: built, e2e green, design pass done (2026-10-05). The user asked to continue phase after phase without per-phase approval; open questions are collected below for a single review.
@@ -12,6 +12,117 @@
 - Phase 3 — Permit to Work: built, e2e green, design pass done (2026-10-08).
 
 ## Done
+
+### Backend — Phase 4 contract v0.5.0 (stage 1)
+- `docs/contracts/openapi.yaml` v0.5.0: 75 new paths / 96 operations. Every one returns 501 `NOT_IMPLEMENTED` until stage 2; the Prism mock serves them now.
+- Operations by tag:
+  - tpis (12), equipment (21), equipment-certificates (9), scaffolds (11)
+  - personnel-certificates (16, including certification bans and the blacklist register), defects (9)
+  - cert-config (10: settings, catalogue, cert types, hook policy, readiness), certificate-imports (6)
+  - `POST /certification-checks`, `GET /kpi/certification`
+- Phase 0–3 paths and schema names are unchanged. All changes are additive (the spec changes in 1-dashboard v1.3, 2-access v1.2 and 3-ptw v1.1):
+  - `EligibilityItem` gains `hard_stop`, `hook_reason_code`, `conditions[]` (`HookCondition {code, value, text_en/ar, source_ref}`) and `swl_t`. `HookProviderInfo` gains `stage`, `provider_registered_on`, `critical_block_from` and `general_block_from`.
+  - Gate check:
+    - `GateCheckResponse.equipment` (`EquipmentCheckCard`).
+    - `printed_ref` also accepts `<project>-<tag>`.
+    - New gate reason codes: deny `EQUIPMENT_BLACKLISTED`, `EQUIPMENT_NOT_DEPLOYED`, `EQUIPMENT_NOT_APPROVED`, `EQUIPMENT_OUT_OF_SERVICE`, `EQUIPMENT_QUARANTINED`; warn `HOOK_NOT_MET_WARN`, `ARRIVAL_INSPECTION_DUE`, `ALSO_SCAN_VEHICLE_STICKER`.
+    - New `GateSubjectKind.equipment_deployment`.
+  - Permit equipment lines:
+    - `PermitEquipmentInput.equipment_item_id` / `operator_worker_id`.
+    - `PermitEquipmentRead.equipment_item`, `deployment`, `operator`, `operator_hooks[]`, `conditions[]`, `swl_t`.
+    - `PermitRead.hook_conditions[]`.
+    - `WorkAtHeightSectionRead.scaffold` (the resolved `scaffold_tag_ref`).
+    - New permit warnings `HOOK_NOT_MET_WARN`, `CERT_UNVERIFIED`, `CARD_RESTRICTION_REVIEW`.
+  - Gas detectors: `calibration_body_id` (input) and `calibration_body` (read). New quarantine reason `calibration_body_blacklisted`.
+  - Obstacle clearances: optional `equipment_item_id` (CF-4).
+  - Dashboard:
+    - `DashboardResponse.cert_band` (`CertBand`; null until stage 2).
+    - `ExpiringItem.cert_limiting_factor`.
+    - KPI query filters `equipment_category` and `cert_type` on every /kpi endpoint; they affect certification KPIs only.
+- Enums extended:
+  - `Capability` 105–124 and `AuditAction.cert_check_view`.
+  - `ErrorCode`: about 95 Phase 4 codes. Every `HookReasonCode` is also an ErrorCode.
+  - `EntityType` (17), `NotificationKind` (25), `ExportDataset` (10 registers; 501 until stage 2).
+  - `AttachmentOwner` (8), `CaSourceType.equipment_defect`, `ReferenceList` (7 cert_* lists).
+  - `KpiMetric` K-72…K-81: catalogued with `available=false` ("—" / `NOT_AVAILABLE_YET`).
+  - `LeadingWarningCode` E10–E11, `ChartId` C16–C18 (501), `ActionPanelItem` (+12), `ExpiringItemKind` (+8), `AiTool.get_certification_kpis`, `QrKind.EQ`.
+  - The new Phase 4 enums are in `app/core/cert_enums.py`. They are named `CertInspectionType` and `CertVerificationMethod` so that they do not clash with the Phase 1 / Phase 3 enums of the same name.
+- Permission matrix rows 105–124 are live, so `Me` capabilities already show them. 115 (blacklist / ban / TPI approve) and 124 (settings / hook switch) are HSE Manager only.
+- Stage-1 shims: until stage 2 persists `equipment_item_id` on obstacle clearances, the obstacle service ignores it. The other new input fields are accepted and not yet used.
+
+#### Phase 4 — what the frontend must know
+- **Registers.**
+  - TPI organisations (`/tpis`, org-wide):
+    - Contractor roles see only `accepted_for_use` ("Not accepted / غير مقبولة") and never a status reason.
+  - Equipment items (`/equipment`, org-wide master):
+    - Use `POST /equipment/lookup` for the duplicate / blacklist check before registering.
+    - Deployments (`/projects/{id}/equipment-deployments`) put an item on a project with a per-project `tag`.
+  - Scaffolds (`/projects/{id}/scaffolds`, per project; tag board at `/scaffold-board`).
+  - Personnel certificates (`/projects/{id}/personnel-certificates`).
+  - Defects (`/projects/{id}/defects`), certification bans (`/certification-bans`), the blacklist register (`/blacklist-register`) and the verification log (`/projects/{id}/verification-log`).
+- **Certificate lifecycle (equipment and personnel alike).**
+  - Create → Draft, then call `POST …/transitions` with `CertTransitionRequest {to_status, reason, reason_code, identity_confirmed_by_tpi, configuration_mismatch_confirmed}`. The actions are:
+    - submit (scan required)
+    - return / accept / reject (107, reviewer ≠ submitter)
+    - suspend / reinstate (116)
+    - revoke (107)
+    - historic (EC-2: attach an already-expired certificate as history)
+  - Show only the buttons in `allowed_actions[]`.
+  - Equipment certificates are multi-line: one line per item, each with result, SWL, limitations and defects. Rows from the same TPI and cert_no form one certificate.
+  - Use `POST …/equipment-certificates/preview` or `…/personnel-certificates/preview` while typing. They return `CertValidity {valid_until, limiting_factor, …}` per line (§6.1/§6.2: the earlier of the printed date, the platform interval and the cap) and the errors and warnings Submit would give. **The UI never computes validity.**
+- **Verification is separate from acceptance.**
+  - `POST …/verifications` (108; verifier ≠ submitter) records `{method, channel_used, outcome, reference, evidence_attachment_id}`.
+  - `channel_used` must be a channel registered on the TPI (`CHANNEL_NOT_REGISTERED`).
+  - A certificate is in force only once `verification_status = verified` (VF-1).
+  - Outcomes `not_found`, `details_differ` and `revoked_by_tpi` make the verification `failed`. `no_response` twice gives `unable_to_verify`.
+  - A TPI QR URL whose host is not on the TPI record gets warning `VERIFICATION_URL_FOREIGN_DOMAIN`. The server never opens external URLs; the verifier opens the TPI page on their own device.
+- **Personnel ID check (PC-3).**
+  - `PersonnelCertCreate.id_on_card` is typed once, matched through the Phase 2 blind index and **never stored or echoed**. Only `id_match_result` comes back.
+  - Name match (`none` / `partial` / `exact`): `none` needs `identity_confirmed_by_tpi` at accept.
+  - `medical_restriction_on_card` and `restriction_reviewed_at` are **absent keys** (not null) for callers without 119.
+  - Scans come only from `POST /personnel-certificates/{id}/scan-url {side, reason}` (119, audited), which returns a ≤ 5 min `SignedUrlRead`.
+- **Stickers and checks.**
+  - An equipment deployment gets an EQ sticker on mobilisation approval: `GET /equipment-deployments/{id}/sticker` returns `qr_payload` = `HSE2:EQ:<22>` and `printed_ref` = `<project>-<tag>`.
+  - Scaffolds use the same token family (`/scaffolds/{id}/sticker`). Reissuing rotates the token, and the old sticker then scans as `CREDENTIAL_REVOKED`.
+  - `POST /certification-checks {payload | printed_ref | cert_no, project_id}` (121) returns `result` (in_service green / restricted amber / not_usable red / revoked_token / unknown) and one card: `equipment`, `scaffold` or `person`.
+  - Cards never carry personal data, except the person card's name, worker_no and photo (VF-9).
+  - At gates, an EQ scan returns `GateCheckResponse.equipment` and the GE-2 reasons. EQ scans never count in K-52/K-53.
+- **Defects → out of service → return to service.**
+  - Raise a defect with `POST /projects/{id}/defects` (110). A category A defect requires `physical_tag_applied: true` and sets the item Out of Service at once.
+  - Then `rectification` (111), followed by `close` (112, SoD), `reopen` or `cancel`.
+  - `destroy` closes an A defect on a lifting accessory or tripod winch; the item is retired.
+  - The item returns with `POST /equipment/{id}/return-to-service` (`DEFECTS_OPEN` until every A and overdue B defect is closed).
+  - `tag-out` (110) is a stop-use action that is never blocked.
+  - Configuration events (`POST /equipment/{id}/configuration-events`) suspend the item's lines and quarantine it until a new inspection clears it.
+- **Hook stages per project and kind** (`GET /projects/{id}/hook-policy`).
+  - `warn` (Phase 4 not enabled): as before, `HOOK_NOT_AVAILABLE` amber.
+  - `transition` (after `POST …/hook-policy/enable`): a not-met hook comes back as `status = warn`, `reason_code = HOOK_NOT_MET_WARN`, with the detail in `hook_reason_code` (e.g. CERT_EXPIRED). It shows amber and never blocks.
+  - `block` (from `critical_block_from` / `general_block_from`, or after an early `switch`): a not-met hook blocks as `HOOK_NOT_MET`.
+  - **`hard_stop = true` blocks in every stage**: out of service, blacklisted, a red or `inspection_required` scaffold tag, revoked / failed / HSE-suspended certificates, a banned holder, a blacklisted TPI.
+  - `conditions[]` (yellow-tag restrictions, equipment limitations) are shown on the permit as `hook_conditions`.
+  - The readiness report is `GET /projects/{id}/hook-readiness?kind=`. A switch back to warn is refused (`HOOK_POLICY_LOOSENING`), and only one deferral is allowed (`DEFERRAL_USED`).
+- **Permits (3-ptw v1.1).** Equipment lines take `equipment_item_id` (optional; resolved from the tag) and `operator_worker_id`. The operator is required for categories that have an operator code (`OPERATOR_REQUIRED`). The line then shows `operator_hooks[]`, `swl_t` and `conditions[]`.
+- **Imports.**
+  - `POST /projects/{id}/certificate-imports` is multipart: `file`, `template`, `source`, `create_items`, `tpi_id`, `scans_zip`, `evidence_file`. It runs the dry-run and returns codes E01–E12 / W01–W06 per row. IDs are masked, and worker_no is shown.
+  - Commit within 60 min. **Unlike the workforce import, commit takes the valid rows and skips the rows with errors** (AC98).
+  - Committed certificates are Submitted (or Draft when no scan was found), never Accepted.
+  - The template is `GET /certificate-imports/template?template=`.
+- **Privacy.**
+  - Suspected-forgery details (verification `differences`), ban reasons and the medical flag are visible only to the HSE Manager and HSE Officer. Everyone else sees "Certificate not accepted / الشهادة غير مقبولة".
+  - Names need capability 46. Viewer/Client get aggregates only.
+  - Exports (123) never contain IDs, scans, the medical flag, ban reasons or verification-failure details.
+- **Dashboard.**
+  - Until stage 2:
+    - K-72…K-81 show "—" with `NOT_AVAILABLE_YET`.
+    - `/kpi/certification` and charts C16–C18 return 501.
+    - `cert_band` is null.
+  - Leading tiles: K-72, K-76, K-74, K-80, K-81.
+  - The action panel gains 12 items and the expiring list 8 kinds (with `cert_limiting_factor`).
+  - Multi-value KPIs use `components`:
+    - K-74: out_of_service, a_defects
+    - K-75: equipment, scaffolds
+    - K-78: equipment, persons, tpis
+    - K-79: pct, failed
 
 ### Backend — Phase 3 implementation (stage 2, contract v0.4.0)
 - Every Phase 3 endpoint is implemented (no 501 left): configuration and zone profiles, appointments, permits (lifecycle, crew, shifts, pause, handover, exemptions, closure, board, print/QR), JSA, gas testing and detectors, isolations and locks, SIMOPS and coordination, PTW audits, PTW KPIs K-46/K-46b/K-61…K-71, charts C13–C15, dashboard band, action panel and expiring items, AI tool T15, exports and change history.

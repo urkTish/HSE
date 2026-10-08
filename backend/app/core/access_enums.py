@@ -684,6 +684,7 @@ class QrKind(StrEnum):
     VS = "VS"
     WP = "WP"
     PT = "PT"  # v1.1: PTW permit print (3-ptw PT-20); read-only at gates (GC-10)
+    EQ = "EQ"  # v1.2: equipment / scaffold sticker (4-third-party-cert §3.5, GE-1, VF-8)
 
 
 class QrTokenStatus(StrEnum):
@@ -754,10 +755,19 @@ class GateReasonCode(StrEnum):
     VEHICLE_DOC_EXPIRED = "VEHICLE_DOC_EXPIRED"
     HEIGHT_CLEARANCE_REQUIRED = "HEIGHT_CLEARANCE_REQUIRED"
     HOOK_NOT_MET = "HOOK_NOT_MET"
+    # v1.2 (4-third-party-cert GE-2): EQ sticker checks, in this order after CREDENTIAL_REVOKED
+    EQUIPMENT_BLACKLISTED = "EQUIPMENT_BLACKLISTED"
+    EQUIPMENT_NOT_DEPLOYED = "EQUIPMENT_NOT_DEPLOYED"
+    EQUIPMENT_NOT_APPROVED = "EQUIPMENT_NOT_APPROVED"
+    EQUIPMENT_OUT_OF_SERVICE = "EQUIPMENT_OUT_OF_SERVICE"
+    EQUIPMENT_QUARANTINED = "EQUIPMENT_QUARANTINED"
     # warn severity
     EXPIRING_7D = "EXPIRING_7D"
     HOOK_NOT_AVAILABLE = "HOOK_NOT_AVAILABLE"
     LANGUAGE_MISMATCH = "LANGUAGE_MISMATCH"
+    HOOK_NOT_MET_WARN = "HOOK_NOT_MET_WARN"  # v1.2 HK-4 transition stage
+    ARRIVAL_INSPECTION_DUE = "ARRIVAL_INSPECTION_DUE"  # v1.2 GE-2
+    ALSO_SCAN_VEHICLE_STICKER = "ALSO_SCAN_VEHICLE_STICKER"  # v1.2 GE-4
 
 
 GATE_WARN_CODES: frozenset[GateReasonCode] = frozenset(
@@ -765,6 +775,9 @@ GATE_WARN_CODES: frozenset[GateReasonCode] = frozenset(
         GateReasonCode.EXPIRING_7D,
         GateReasonCode.HOOK_NOT_AVAILABLE,
         GateReasonCode.LANGUAGE_MISMATCH,
+        GateReasonCode.HOOK_NOT_MET_WARN,
+        GateReasonCode.ARRIVAL_INSPECTION_DUE,
+        GateReasonCode.ALSO_SCAN_VEHICLE_STICKER,
     }
 )
 
@@ -774,6 +787,7 @@ class GateSubjectKind(StrEnum):
     vehicle = "vehicle"
     wap = "wap"
     permit = "permit"
+    equipment_deployment = "equipment_deployment"  # v1.2 GE-6 (excluded from K-52/K-53)
     unknown = "unknown"
 
 

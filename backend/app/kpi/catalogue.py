@@ -30,7 +30,12 @@ PHASE3_METRICS: frozenset[KpiMetric] = frozenset(
 )  # fmt: skip
 PHASE3_PENDING: frozenset[KpiMetric] = frozenset()
 """PTW KPIs not computed yet (none since Phase 3 stage 2)."""
-_PENDING = PHASE2_PENDING | PHASE3_PENDING
+PHASE4_METRICS: frozenset[KpiMetric] = frozenset(
+    {M.K72, M.K73, M.K74, M.K75, M.K76, M.K77, M.K78, M.K79, M.K80, M.K81}
+)
+PHASE4_PENDING: frozenset[KpiMetric] = PHASE4_METRICS
+"""Certification KPIs not computed yet (stage 1: catalogued, value null NOT_AVAILABLE_YET)."""
+_PENDING = PHASE2_PENDING | PHASE3_PENDING | PHASE4_PENDING
 
 
 @dataclass(frozen=True)
@@ -58,6 +63,8 @@ class KpiDef:
             return f"2-access-permits §6.8 {self.metric.value}"
         if self.metric in PHASE3_METRICS:
             return f"3-ptw §6.11 {self.metric.value}"
+        if self.metric in PHASE4_METRICS:
+            return f"4-third-party-cert §6.7 {self.metric.value}"
         return f"1-dashboard §6.1 {self.metric.value}"
 
 
@@ -341,6 +348,55 @@ CATALOGUE: dict[KpiMetric, KpiDef] = {
                "مدة الإصدار", K.hours, G.leading, LOW, "h", "ساعة",
                "median(first issued_at − first requested_at) over permits first issued in "
                "period", 1),
+        # ---- Phase 4 certification (4-third-party-cert §6.7) ----
+        _pct(M.K72, "Equipment certificate compliance", "نسبة المعدات بشهادات سارية",
+             "Equipment certified", "المعدات المعتمدة",
+             "On Site non-scaffold deployments whose item has a valid certificate ÷ On Site "
+             "non-scaffold deployments at as_of × 100; breakdown by category",
+             numerator="With valid certificate", denominator="On Site items"),
+        _count(M.K73, "Equipment certificates expiring ≤ 30 days",
+               "شهادات معدات تنتهي خلال 30 يوماً", "Equipment certs expiring",
+               "شهادات معدات تنتهي", G.leading, LOW,
+               "n(On Site items with a valid certificate, valid_until ∈ [as_of, as_of + 30]) "
+               "by category"),
+        _count(M.K74, "Out-of-service equipment", "المعدات خارج الخدمة", "Out of service",
+               "خارج الخدمة", G.leading, LOW,
+               "n(On Site deployments whose item is Out of Service at as_of); component: "
+               "category A defects raised in period"),
+        _count(M.K75, "Inspections overdue", "الفحوص المتأخرة", "Inspections overdue",
+               "الفحوص المتأخرة", G.leading, LOW,
+               "equipment: On Site deployments whose latest line expired and no line in force; "
+               "scaffolds: In Use with tag expired (components)"),
+        _pct(M.K76, "Personnel certification compliance", "نسبة الأفراد بشهادات سارية",
+             "Personnel certified", "الأفراد المعتمدون",
+             "Mobilised deployments of mapped trades whose worker holds an in-force "
+             "certificate of the mapped type ÷ those deployments × 100; breakdown by type",
+             numerator="With in-force certificate", denominator="Mobilised (mapped trades)"),
+        _count(M.K77, "Personnel certificates expiring ≤ 30 days",
+               "شهادات أفراد تنتهي خلال 30 يوماً", "Personnel certs expiring",
+               "شهادات أفراد تنتهي", G.leading, LOW,
+               "n(in-force certificates of Mobilised workers, valid_until ∈ [as_of, as_of + "
+               "30]) by type"),
+        _count(M.K78, "Blacklisted / banned", "المحظورون", "Blacklisted / banned", "المحظورون",
+               G.leading, NONE,
+               "components at as_of: equipment Blacklisted with a deployment on the project · "
+               "workers with an active certification ban and a deployment · TPIs Blacklisted"),
+        _pct(M.K79, "Verification timeliness", "الالتزام بمهلة التحقق", "Verification on time",
+             "التحقق في الموعد",
+             "certificates submitted in period with a conclusive verification within "
+             "verification_due_days ÷ eligible certificates submitted in period × 100; "
+             "component: failed verifications",
+             numerator="Verified in time", denominator="Submitted (eligible)"),
+        _pct(M.K80, "Defect rectification on time", "إصلاح العيوب في الموعد",
+             "Defects fixed on time", "إصلاح العيوب في الموعد",
+             "B defects due in period (≤ as_of) Closed by due_date ÷ B defects due in period "
+             "(≤ as_of, not Cancelled) × 100",
+             numerator="Closed on time", denominator="B defects due"),
+        _pct(M.K81, "Scaffold tag compliance", "امتثال بطاقات السقالات", "Scaffold tags valid",
+             "بطاقات السقالات السارية",
+             "In Use scaffolds with tag green or yellow ÷ In Use scaffolds (excl. Closed Red, "
+             "Under Erection / Alteration) at as_of × 100",
+             numerator="Green or yellow", denominator="In Use scaffolds"),
     ]
 }  # fmt: skip
 
@@ -352,5 +408,6 @@ LEADING_TILES = [
     M.K30, M.K31, M.K32, M.K34, M.K35, M.K36, M.K37, M.K39, M.K41, M.K42, M.K27,
 ]  # fmt: skip
 PTW_TILES = [M.K46, M.K61, M.K64, M.K66, M.K69]  # 3-ptw §8.1 item 1 (capability 103)
+CERT_TILES = [M.K72, M.K76, M.K74, M.K80, M.K81]  # 4-third-party-cert §8.1 item 1 (cap 122)
 PLACEHOLDERS: list[KpiMetric] = []  # K-46 became a live tile in Phase 3
 RATE_METRICS = frozenset(m for m, d in CATALOGUE.items() if d.kind == K.rate)

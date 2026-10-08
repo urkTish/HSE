@@ -855,7 +855,7 @@ def create_obstacle(
     )
     year = today().year
     seq = next_seq(db, ObstacleClearance, project.id, year)
-    data = body.model_dump()
+    data = body.model_dump(exclude={"equipment_item_id"})  # Phase 4 stage 2 persists it (CF-4)
     o = ObstacleClearance(
         id=uuid.uuid4(),
         year=year,
@@ -905,6 +905,8 @@ def update_obstacle(
     assert project is not None  # noqa: S101
     before = _obs_snapshot(o)
     for k, v in body.changes().items():
+        if k == "equipment_item_id":  # Phase 4 stage 2 persists it (CF-4)
+            continue
         setattr(o, k, v)
     zone, _ = _validate_obstacle(db, project, o)
     _recompute(db, project, o, zone)

@@ -25,6 +25,7 @@ from app.core.access_enums import (
 )
 from app.core.hse_enums import Trade
 from app.core.ptw_enums import GasStatus, PermitBlocker, PermitStatus, PermitType
+from app.schemas.cert_check import EquipmentCheckCard
 from app.schemas.common import ApiModel, Page, PatchInput, StrictInput, Timestamps
 from app.schemas.hse_common import SiteRef, UserRef, ZoneRef
 
@@ -132,7 +133,8 @@ class GateCallerContext(ApiModel):
 
 class GateCheckRequest(StrictInput):
     """GC-2. Send `payload` (QR text) or `printed_ref` (manual fallback, e.g.
-    "WKR-000002 / ANIA-EXP", "AVP-S-0118", "WAP-ANIA-EXP-2026-0031"); a vehicle without an AVP
+    "WKR-000002 / ANIA-EXP", "AVP-S-0118", "WAP-ANIA-EXP-2026-0031", v1.2 equipment
+    `<project>-<tag>` e.g. "RBT-52-TC-01", GE-1); a vehicle without an AVP
     has no sticker, so type its vehicle_no ("VEH-0004": PENDING_ESCORT_VEHICLE, VP-8).
     `zone_id` defaults to the gate's single protected zone; required when the gate protects
     several; omitted for a site gate. `pairing_id` continues an escort / driver /
@@ -270,6 +272,11 @@ class GateCheckResponse(ApiModel):
     vehicle: GateVehicleCard | None = None
     wap: GateWapCard | None = None
     permit: GatePermitCard | None = None
+    equipment: EquipmentCheckCard | None = Field(
+        default=None,
+        description="v1.2 QR kind EQ (GE-1…GE-7): certification decision; no personal data "
+        "(GE-5). Subject kind equipment_deployment; excluded from K-52/K-53 (GE-6).",
+    )
     pairing: GatePairing | None = None
     paired_results: list[GatePairedResult] = Field(default_factory=list)
     late_exit: bool = False

@@ -30,7 +30,7 @@ from app.core.hse_enums import (
     PermanentDisability,
 )
 from app.kpi.cases import day_counts, lost_days_charged
-from app.kpi.catalogue import CATALOGUE, PHASE2_METRICS, PHASE3_METRICS
+from app.kpi.catalogue import CATALOGUE, PHASE2_METRICS, PHASE3_METRICS, PHASE4_METRICS
 from app.kpi.facts import (
     CaseFact,
     EventFact,
@@ -893,6 +893,7 @@ _DISPATCH: dict[KpiMetric, Callable[[Engine, Agg], Result]] = {
     M.K47: _count_fn(M.K47, lambda a: a.late),
     **{m: _not_yet(m) for m in PHASE2_METRICS},  # replaced by app.kpi.access
     **{m: _not_yet(m) for m in PHASE3_METRICS},  # Phase 3 stage 2: app.kpi.ptw
+    **{m: _not_yet(m) for m in PHASE4_METRICS},  # Phase 4 stage 2: app.kpi.cert
 }
 import app.kpi.access  # noqa: E402  (registers K-48…K-60 into _DISPATCH)
 import app.kpi.ptw  # noqa: E402, F401  (registers K-46, K-46b, K-61…K-71 into _DISPATCH)

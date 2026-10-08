@@ -8,6 +8,7 @@ from typing import Annotated
 
 from fastapi import Depends, Query
 
+from app.core.cert_enums import EquipmentCertCategory
 from app.core.enums import ZoneType
 from app.core.hse_enums import ComparisonKind, PeriodPreset
 from app.core.ptw_enums import PermitType
@@ -31,6 +32,8 @@ class KpiQuery:
     compare: list[ComparisonKind] = field(default_factory=list)
     gate_ids: list[uuid.UUID] = field(default_factory=list)
     permit_types: list[PermitType] = field(default_factory=list)
+    equipment_categories: list[EquipmentCertCategory] = field(default_factory=list)
+    cert_types: list[str] = field(default_factory=list)
 
 
 def kpi_query(
@@ -81,6 +84,17 @@ def kpi_query(
         list[PermitType] | None,
         Query(description="Phase 3: filters PTW KPIs (K-46, K-46b, K-61…K-71) only."),
     ] = None,
+    equipment_category: Annotated[
+        list[EquipmentCertCategory] | None,
+        Query(description="Phase 4: filters equipment / scaffold KPIs (K-72…K-75, K-78, K-80)."),
+    ] = None,
+    cert_type: Annotated[
+        list[str] | None,
+        Query(
+            description="Phase 4: personnel certificate type code(s) (PCT); filters K-76, K-77, "
+            "K-78 persons, K-79."
+        ),
+    ] = None,
 ) -> KpiQuery:
     return KpiQuery(
         project_ids=project_id or [],
@@ -99,6 +113,8 @@ def kpi_query(
         compare=[ComparisonKind.previous] if compare is None else compare,
         gate_ids=gate_id or [],
         permit_types=permit_type or [],
+        equipment_categories=equipment_category or [],
+        cert_types=cert_type or [],
     )
 
 

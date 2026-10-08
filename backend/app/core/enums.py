@@ -21,7 +21,7 @@ class Role(StrEnum):
 class Capability(StrEnum):
     """Rows of the permission matrix: 1-19 Phase 0 (0-foundation §5.10), 20-45 Phase 1
     (1-dashboard §5.10), 46-81 Phase 2 (2-access-permits §5.13), 82-104 Phase 3 (3-ptw §5.14),
-    numbered in spec order.
+    numbered in spec order; 105-124 Phase 4 (4-third-party-cert §5.15).
     Rows with two capabilities (23, 32, 33, 41) are split into one value per action."""
 
     project_manage = "project.manage"  # 1
@@ -137,6 +137,31 @@ class Capability(StrEnum):
     ptw_exemption_grant = "ptw_exemption.grant"  # 102 midday ban, energized, impairment, >90 %
     ptw_kpi_view = "ptw_kpi.view"  # 103 PTW KPIs, band, expiring items, action panel
     export_ptw = "export.ptw"  # 104
+    # ---- Phase 4 (4-third-party-cert §5.15) ----
+    cert_register_view = "cert_register.view"  # 105 equipment, deployments, certs, scaffolds,
+    # defects, TPI list (no personal data)
+    equipment_edit = "equipment.edit"  # 106 items, deployments, scaffolds, submit equipment
+    # certificates, configuration events (site engineers: scaffolds + configuration events)
+    cert_review = "cert.review"  # 107 review / accept / return / reject; TPI revocation notice
+    cert_verify = "cert.verify"  # 108 record verification with the TPI
+    equipment_mobilise = "equipment.mobilise"  # 109 approve mobilisation, arrival, demobilise
+    defect_raise = "defect.raise"  # 110 raise defect / tag out (stop use)
+    defect_rectify = "defect.rectify"  # 111
+    defect_close = "defect.close"  # 112 close defect / return to service; retire; require
+    # scaffold re-inspection
+    scaffold_inspect = "scaffold.inspect"  # 113 (inspector must hold SCAFFOLD-INSPECTOR)
+    tpi_edit = "tpi.edit"  # 114 TPI organisations, accreditations, client approvals
+    cert_blacklist = "cert.blacklist"  # 115 approve/suspend/blacklist TPI; blacklist
+    # equipment; certification ban (HSE Manager only)
+    cert_suspend = "cert.suspend"  # 116 suspend / reinstate a certificate
+    personnel_cert_view = "personnel_cert.view"  # 117 (also needs 46)
+    personnel_cert_submit = "personnel_cert.submit"  # 118
+    personnel_cert_scan_view = "personnel_cert.scan_view"  # 119 scans + medical flag (audited)
+    cert_import = "cert.import"  # 120 (tpi_register_file: HSE Officer / Manager only)
+    cert_check = "cert.check"  # 121 EQ sticker, AC card in certificates mode, cert_no lookup
+    cert_kpi_view = "cert_kpi.view"  # 122 KPIs, expiring items, action panel, readiness
+    export_cert = "export.cert"  # 123 (IDs never; names only with 46)
+    cert_settings_edit = "cert_settings.edit"  # 124 settings, lists, early switch, deferral
 
 
 class CapabilityScope(StrEnum):
@@ -321,6 +346,7 @@ class AuditAction(StrEnum):
     audit_chain_verified = "audit_chain_verified"
     retention_purge = "retention_purge"
     privacy_notice_acknowledged = "privacy_notice_acknowledged"
+    cert_check_view = "cert_check_view"  # 4-third-party-cert VF-9 (no entry recorded)
 
 
 AUTH_ACTIONS: frozenset[AuditAction] = frozenset(
@@ -417,6 +443,24 @@ class EntityType(StrEnum):
     simops_coordination = "simops_coordination"
     ptw_audit = "ptw_audit"
     ptw_settings = "ptw_settings"
+    # Phase 4
+    tpi = "tpi"
+    tpi_accreditation = "tpi_accreditation"
+    tpi_client_approval = "tpi_client_approval"
+    equipment_item = "equipment_item"
+    equipment_deployment = "equipment_deployment"
+    equipment_certificate = "equipment_certificate"
+    configuration_event = "configuration_event"
+    scaffold = "scaffold"
+    scaffold_inspection = "scaffold_inspection"
+    personnel_certificate = "personnel_certificate"
+    cert_verification = "cert_verification"
+    equipment_defect = "equipment_defect"
+    certification_ban = "certification_ban"
+    hook_policy_state = "hook_policy_state"
+    cert_import_batch = "cert_import_batch"
+    cert_settings = "cert_settings"
+    cert_type = "cert_type"
 
 
 class ExportDataset(StrEnum):
@@ -462,6 +506,18 @@ class ExportDataset(StrEnum):
     jsa_templates = "jsa_templates"
     simops_conflicts = "simops_conflicts"
     ptw_audits = "ptw_audits"
+    # Phase 4 certification registers (capability 123; never ID numbers, scans, the medical
+    # flag, ban reasons or verification-failure details; names only with capability 46)
+    tpis = "tpis"
+    equipment = "equipment"
+    equipment_deployments = "equipment_deployments"
+    equipment_certificates = "equipment_certificates"
+    scaffolds = "scaffolds"
+    personnel_certificates = "personnel_certificates"
+    cert_verifications = "cert_verifications"
+    equipment_defects = "equipment_defects"
+    blacklist_register = "blacklist_register"
+    cert_imports = "cert_imports"
 
 
 class ExportFormat(StrEnum):
@@ -570,3 +626,29 @@ class NotificationKind(StrEnum):
     crew_eligibility_expiring = "crew_eligibility_expiring"
     ptw_exemption = "ptw_exemption"
     crew_excluded = "crew_excluded"
+    # ---- Phase 4 (4-third-party-cert §7) ----
+    equipment_cert_expiry = "equipment_cert_expiry"
+    equipment_quarantined = "equipment_quarantined"
+    personnel_cert_expiry = "personnel_cert_expiry"
+    personnel_cert_expiring_on_crew = "personnel_cert_expiring_on_crew"
+    tpi_accreditation_expiry = "tpi_accreditation_expiry"
+    tpi_client_approval_expiry = "tpi_client_approval_expiry"
+    certificate_submitted = "certificate_submitted"
+    certificate_review_reminder = "certificate_review_reminder"
+    certificate_returned = "certificate_returned"  # returned or rejected
+    verification_due = "verification_due"
+    verification_unable = "verification_unable"
+    verification_failed = "verification_failed"
+    scaffold_tag_expiry = "scaffold_tag_expiry"
+    scaffold_tag_red = "scaffold_tag_red"  # red or inspection_required
+    equipment_stop_use = "equipment_stop_use"  # A defect raised or tagged out
+    defect_rectification_due = "defect_rectification_due"
+    equipment_out_of_service = "equipment_out_of_service"  # B overdue, failed inspection
+    configuration_event = "configuration_event"
+    arrival_inspection_due = "arrival_inspection_due"
+    blacklist_changed = "blacklist_changed"  # equipment / person / TPI (BL-2)
+    ban_review_due = "ban_review_due"
+    hook_block_approaching = "hook_block_approaching"
+    hook_policy_changed = "hook_policy_changed"
+    trade_cert_missing = "trade_cert_missing"
+    cert_import_update = "cert_import_update"

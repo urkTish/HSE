@@ -6,6 +6,7 @@ from datetime import date, datetime
 from pydantic import Field
 
 from app.core.access_enums import LimitingFactor
+from app.core.cert_enums import CertLimitingFactor
 from app.core.enums import EntityType, ZoneType
 from app.core.hse_enums import (
     ActionPanelItem,
@@ -72,6 +73,10 @@ class ExpiringItem(ApiModel):
     )
     minutes_left: int | None = Field(
         default=None, description="Phase 3 timed kinds: minutes until due_at (negative = past)."
+    )
+    cert_limiting_factor: CertLimitingFactor | None = Field(
+        default=None,
+        description="Phase 4 certificate kinds: the term giving valid_until (§6.1/§6.2).",
     )
 
 

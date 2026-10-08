@@ -33,7 +33,8 @@ MASKED_ID_DOC = (
 )
 
 QR_PAYLOAD_DOC = (
-    "`HSE2:<AC|VS|WP|PT>:<22-char base64url token>` — no name, ID or other personal data (§3.20). "
+    "`HSE2:<AC|VS|WP|PT|EQ>:<22-char base64url token>` — no name, ID or other personal data "
+    "(§3.20). "
     "Encode as a QR code; print `printed_ref` beside it for manual fallback."
 )
 
@@ -73,6 +74,20 @@ class HookRequirementRead(ApiModel):
     kind: HookKind
     code: str
     trades: list[Trade] = Field(default_factory=list)
+
+
+class HookCondition(ApiModel):
+    """v1.2 HK-3 result `conditions[]` (4-third-party-cert EC-11, SF-6, PC-8): equipment
+    limitations (list LIM), personnel limitations (list LIM-P) or the yellow-tag restriction
+    (code SCAFFOLD_YELLOW_TAG). Phase 3 copies them into the permit conditions."""
+
+    code: str = Field(examples=["derated_swl", "max_wind_ms", "SCAFFOLD_YELLOW_TAG"])
+    value: str | None = Field(default=None, description="Decimal as string, e.g. '20.0'.")
+    text_en: str
+    text_ar: str
+    source_ref: str | None = Field(
+        default=None, description="Certificate / scaffold the condition comes from."
+    )
 
 
 class CredentialSuspension(ApiModel):

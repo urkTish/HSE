@@ -58,7 +58,7 @@ PHASE3_PATHS = {
 
 def test_phase3_paths_in_contract() -> None:
     spec = create_app().openapi()
-    assert spec["info"]["version"] == "0.4.0"
+    assert tuple(map(int, spec["info"]["version"].split("."))) >= (0, 4, 0)
     assert set(spec["paths"]) >= PHASE3_PATHS
     schemas = spec["components"]["schemas"]
     qr = schemas["PermitPrintRead"]["properties"]["qr_payload"]

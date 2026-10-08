@@ -147,6 +147,11 @@ class ObstacleFields(StrictInput):
         default=None, description="One of vehicle_id / equipment_desc is required."
     )
     equipment_desc: str | None = Field(default=None, max_length=150)
+    equipment_item_id: uuid.UUID | None = Field(
+        default=None,
+        description="v1.2 (4-third-party-cert CF-4): Phase 4 item whose height changes "
+        "re-check this clearance (OB-6).",
+    )
     equipment_type: ObstacleEquipmentType
     location_lat: DecimalStr = Field(max_digits=9, decimal_places=6)
     location_lng: DecimalStr = Field(max_digits=9, decimal_places=6)
@@ -180,6 +185,7 @@ class ObstacleUpdate(PatchInput):
     zone_id: uuid.UUID | None = None
     vehicle_id: uuid.UUID | None = None
     equipment_desc: str | None = Field(default=None, max_length=150)
+    equipment_item_id: uuid.UUID | None = None
     equipment_type: ObstacleEquipmentType | None = None
     location_lat: DecimalStr | None = Field(default=None, max_digits=9, decimal_places=6)
     location_lng: DecimalStr | None = Field(default=None, max_digits=9, decimal_places=6)
@@ -257,6 +263,7 @@ class ObstacleRead(Timestamps):
     engagement: EngagementRef | None
     vehicle: VehicleRef | None
     equipment_desc: str | None
+    equipment_item_id: uuid.UUID | None = Field(default=None, description="v1.2 (CF-4).")
     equipment_type: ObstacleEquipmentType
     location_lat: DecimalStr
     location_lng: DecimalStr

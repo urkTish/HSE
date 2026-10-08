@@ -7,7 +7,7 @@ from fastapi import APIRouter, Query, Response
 
 from app.api.deps import DB, CurrentUser
 from app.core.enums import ExportDataset, ExportFormat
-from app.core.errors import error_responses
+from app.core.errors import error_responses, not_implemented
 from app.core.hse_enums import ExportPurpose
 from app.services import exports as svc
 from app.services import hse_exports
@@ -29,6 +29,21 @@ PHASE1_DATASETS = frozenset(
 
 PHASE2_DATASETS = access_exports.DATASETS
 
+PHASE4_DATASETS = frozenset(
+    {
+        ExportDataset.tpis,
+        ExportDataset.equipment,
+        ExportDataset.equipment_deployments,
+        ExportDataset.equipment_certificates,
+        ExportDataset.scaffolds,
+        ExportDataset.personnel_certificates,
+        ExportDataset.cert_verifications,
+        ExportDataset.equipment_defects,
+        ExportDataset.blacklist_register,
+        ExportDataset.cert_imports,
+    }
+)
+
 _FILE_RESPONSES: dict[int | str, dict[str, object]] = {
     200: {
         "description": "The exported file (Content-Disposition: attachment).",
@@ -39,7 +54,7 @@ _FILE_RESPONSES: dict[int | str, dict[str, object]] = {
             },
         },
     },
-    **error_responses(401, 403, 404, 422),
+    **error_responses(401, 403, 404, 422, 501),
 }
 
 
@@ -55,7 +70,10 @@ _FILE_RESPONSES: dict[int | str, dict[str, object]] = {
     "full ID numbers with capability 79 and a purpose (pass_office, authority_request, legal, "
     "other + purpose_text) recorded in the audit entry (P2-10); photos and ID copies are never "
     "exported; gate_log needs capability 76. Phase 3 PTW registers need capability 104; person "
-    "names only with capability 46; signatures, gas readings and medical data are never exported.",
+    "names only with capability 46; signatures, gas readings and medical data are never exported. "
+    "Phase 4 certification registers need capability 123; names only with capability 46; ID "
+    "numbers, scans, the medical flag, ban reasons and verification-failure details are never "
+    "exported (§8.4); blacklist_register is HSE Manager only.",
     response_class=Response,
     responses=_FILE_RESPONSES,
 )
@@ -81,6 +99,8 @@ def export_dataset(
         str | None, Query(max_length=200, description="Required when purpose = other.")
     ] = None,
 ) -> Response:
+    if dataset in PHASE4_DATASETS:
+        raise not_implemented()
     if dataset in PHASE2_DATASETS:
         content, media_type, filename = access_exports.export(
             db,

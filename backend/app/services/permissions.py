@@ -310,6 +310,60 @@ PHASE3_MATRIX: dict[Role, dict[Capability, CapabilityScope]] = {
 for _role, _caps in PHASE3_MATRIX.items():
     MATRIX[_role].update(_caps)
 
+# Phase 4 (4-third-party-cert §5.15), rows 105-124. Parenthesised restrictions (site engineers
+# edit only scaffolds / configuration events under 106 and only arrival under 109; contractor
+# reps demobilise only own deployments and import contractor_file only; Viewer/Client read-only,
+# aggregates, no names) are enforced in the services on top of these rows. 115 and 124 are
+# HSE Manager only (the manager holds every capability not in MANAGER_EXCLUDED).
+PHASE4_MATRIX: dict[Role, dict[Capability, CapabilityScope]] = {
+    Role.hse_officer: dict.fromkeys(
+        [
+            C.cert_register_view, C.equipment_edit, C.cert_review, C.cert_verify,
+            C.equipment_mobilise, C.defect_raise, C.defect_rectify, C.defect_close,
+            C.scaffold_inspect, C.tpi_edit, C.cert_suspend, C.personnel_cert_view,
+            C.personnel_cert_submit, C.personnel_cert_scan_view, C.cert_import, C.cert_check,
+            C.cert_kpi_view, C.export_cert,
+        ],
+        S.project,
+    ),
+    Role.site_engineer: dict.fromkeys(
+        [
+            C.cert_register_view, C.equipment_edit, C.equipment_mobilise, C.defect_raise,
+            C.defect_rectify, C.scaffold_inspect, C.personnel_cert_view, C.cert_check,
+            C.cert_kpi_view, C.export_cert,
+        ],
+        S.sites,
+    ),
+    Role.permit_issuer: dict.fromkeys(
+        [
+            C.cert_register_view, C.defect_raise, C.personnel_cert_view, C.cert_check,
+            C.cert_kpi_view,
+        ],
+        S.sites,
+    ),
+    Role.permit_receiver: dict.fromkeys(
+        [
+            C.cert_register_view, C.defect_raise, C.personnel_cert_view, C.cert_check,
+            C.cert_kpi_view,
+        ],
+        S.own_engagement,
+    ),
+    Role.contractor_hse_rep: dict.fromkeys(
+        [
+            C.cert_register_view, C.equipment_edit, C.equipment_mobilise, C.defect_raise,
+            C.defect_rectify, C.scaffold_inspect, C.personnel_cert_view,
+            C.personnel_cert_submit, C.personnel_cert_scan_view, C.cert_import, C.cert_check,
+            C.cert_kpi_view, C.export_cert,
+        ],
+        S.contractor_tree,
+    ),
+    Role.viewer_client: dict.fromkeys(
+        [C.cert_register_view, C.cert_kpi_view, C.export_cert], S.project
+    ),
+}  # fmt: skip
+for _role, _caps in PHASE4_MATRIX.items():
+    MATRIX[_role].update(_caps)
+
 SCOPE_RANK = {S.own_engagement: 1, S.contractor_tree: 2, S.sites: 3, S.project: 4, S.all: 5}
 ROLE_RANK = {r: i for i, r in enumerate(Role)}  # lower index = more senior
 OFFICER_ASSIGNABLE = frozenset(
