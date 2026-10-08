@@ -231,7 +231,7 @@ Computed daily: worker, course, current record and valid_until, refresher_due_fr
 
 **ACB — accreditation / awarding bodies** (`VERIFY` names, registers and URLs): `srca` هيئة الهلال الأحمر السعودي · `aha` جمعية القلب الأمريكية · `erc` المجلس الأوروبي للإنعاش · `gaca_avsec` مركز تدريب أمن طيران معتمد من الهيئة العامة للطيران المدني · `airport_operator` معتمد من مشغل المطار · `nebosh` شريك تعليمي معتمد من NEBOSH · `iosh` مقدم تدريب معتمد من IOSH · `osha_otc` مركز تعليم معهد تدريب OSHA · `tvtc` مرخص من المؤسسة العامة للتدريب التقني والمهني · `client_approved` معتمد من العميل · `other` أخرى.
 
-**MR — matrix roles (designations on the training profile):** `fire_warden` مسؤول إخلاء/حريق · `first_aider` مسعف أولي.
+**MR — matrix roles (designations on the training profile):** `fire_warden` مسؤول إخلاء/حريق · `first_aider` مسعف أولي · `fire_watch` مراقب حريق معيّن (Phase 1 list T has no fire-watch trade; the built seed gives fire watches trade `other`).
 
 **SV — session void reasons:** `trainer_not_competent` المدرب غير مؤهل · `attendance_falsified` تزوير الحضور · `assessment_compromised` الإخلال بالتقييم · `provider_misconduct` مخالفة من الجهة · `other` أخرى.
 
@@ -443,7 +443,7 @@ As Phase 1 §4.1/§3.2: Uploaded → Validated (dry-run) → Committed / Discard
 - TR-2. Provider acceptable for the course on completed_on (PV-3), else 422 `PROVIDER_NOT_ACCEPTABLE`.
 - TR-3. completed_on ≤ today; a record whose computed valid_until < today is rejected `RECORD_ALREADY_EXPIRED`; capability 138 may attach it as `historic` (never in force).
 - TR-4. valid_until per §6.1.
-- TR-5. (provider, course, certificate_no) is unique (`CERT_EXISTS`); the same certificate_no presented for another worker blocks Submit (`CERT_NO_REUSED`) and alerts the HSE Officer.
+- TR-5. (provider, course, certificate_no) is unique (`CERT_EXISTS`); the same certificate_no presented for another worker blocks Submit (409 `CERT_NO_REUSED`, as Phase 4 DECISIONS #91) and alerts the HSE Officer.
 - TR-6. **Identity:** name_as_printed is compared as Phase 4 PC-4 (`NAME_MISMATCH_CONFIRMATION` at Accept when `none`); if the certificate shows an ID number, the submitter types it for a blind-index comparison exactly as Phase 4 PC-3 — never stored; a mismatch is 422 `CERT_ID_MISMATCH` and the attempt is audited with the masked value.
 - TR-7. Reviewer ≠ submitter (`SOD_CONFLICT`, 422 per DECISIONS #43); a Contractor HSE Rep cannot accept records.
 - TR-8. External records are in force only when verified (VR-1).
@@ -660,15 +660,15 @@ refresher_due_from = valid_until − `refresher_planning_days` (HEAT-AWR: min(th
 
 | Metric | ANIA-EXP calculation | ANIA-EXP | RBT-52 calculation | RBT-52 |
 |---|---|---|---|---|
-| K-82 | 10,520 ÷ 10,723 × 100 = 98.1068… | **98.1 %** | 1,916 ÷ 1,982 × 100 = 96.6700… | **96.7 %** |
-| K-83 | 3,241 ÷ 3,412 × 100 = 94.9882… | **95.0 %** | 596 ÷ 654 × 100 = 91.1314… | **91.1 %** |
-| K-84 | gaps 203 · workers 171 · hook-code gaps 34 (WAH 12, LOTO 4, ELEC-QUALIFIED 9, AVSEC-AWR 9) | **203 · 171 · 34** | 66 · 58 · 13 (WAH 8, LOTO 2, ELEC-QUALIFIED 3) | **66 · 58 · 13** |
+| K-82 | 10,826 ÷ 11,019 × 100 = 98.2484… | **98.2 %** | 2,103 ÷ 2,163 × 100 = 97.2260… | **97.2 %** |
+| K-83 | 3,241 ÷ 3,412 × 100 = 94.9882… | **95.0 %** | 600 ÷ 654 × 100 = 91.7431… | **91.7 %** |
+| K-84 | gaps 193 · workers 171 · hook-code gaps 34 (WAH 12, LOTO 4, ELEC-QUALIFIED 9, AVSEC-AWR 9) | **193 · 171 · 34** | 60 · 54 · 10 (WAH 5, LOTO 2, ELEC-QUALIFIED 3) | **60 · 54 · 10** |
 | K-85 | | **64** | | **15** |
 | K-86 | contractor 5,124.00; staff 96.00 | **5,124.00 h · 96.00 h** | 1,038.00; 24.00 | **1,038.00 h · 24.00 h** |
 | K-87 | 1,356 ÷ 1,412 × 100 = 96.0339… | **96.0 %** | 268 ÷ 281 × 100 = 95.3736… | **95.4 %** |
 | K-88 | 41 ÷ 64 × 100 = 64.0625 | **64.1 %** | 12 ÷ 15 × 100 | **80.0 %** |
 
-Expected warnings September 2026: **no E12 ANIA-EXP** (98.1068 ≥ 98.0); **E12 RBT-52** (96.67 < 98.0), raised for the project and for the QIMMA tree. **E13 ANIA-EXP** (verification not_found for Waleed Saleh's QUICKTRAIN FIRST-AID card on 2026-09-21), raised for the project and for the RAWABI tree (SAHARA is a RAWABI subcontractor, Phase 0 seed); no E13 RBT-52.
+Expected warnings September 2026: **no E12 ANIA-EXP** (98.248 ≥ 98.0); **E12 RBT-52** (97.226 < 98.0), raised for the project and for the QIMMA tree. **E13 ANIA-EXP** (verification not_found for Waleed Saleh's QUICKTRAIN FIRST-AID card on 2026-09-21), raised for the project and for the RAWABI tree (SAHARA is a RAWABI subcontractor, Phase 0 seed); no E13 RBT-52.
 
 **TR8 — rounding edges.** K-82 9,795 ÷ 10,000 = 97.95 → displayed **98.0 %** but E12 **raised** (97.95 < 98.0); 9,805 ÷ 10,000 = 98.05 → **98.1 %**, no E12. K-37 1,319.50 ÷ 2,900 = 0.455 → **0.46**; 1,305.00 ÷ 2,900 = **0.45**. K-88 1 ÷ 3 = 33.333… → **33.3 %**.
 
@@ -790,7 +790,7 @@ Users (as Phase 4 §9): Faisal HSE Manager · Noura HSE Officer ANIA-EXP · Lina
 27. **Given** an authorisation expiring on 2026-10-20 with a session on 2026-10-22 **Then** at expiry the session is flagged `TRAINER_NOT_AUTHORISED` and HSE Officers alerted.
 
 **Matrix and profiles**
-28. **Given** ANIA-EXP's WAH line for trades scaffolder, steel_erector and rigger **Then** as of 2026-09-30 it has 416 counted requirements, 404 met or expiring and 12 gaps (TR7).
+28. **Given** ANIA-EXP's WAH line for trades scaffolder, steel_erector and rigger **Then** as of 2026-09-30 it has 519 counted requirements (scaffolder 160, steel_erector 313, rigger 46), 507 met or expiring and 12 gaps (TR7, A.9).
 29. **Given** Phase 2 zone profile Z-APR-21 requires AVSEC-AWR **Then** a read-only `zone` line exists; **when** Noura edits it **Then** 422 `LINE_DERIVED_FROM_HOOK` (MX-2).
 30. **Given** a derived `crew_role` line (standby_person → CSE-ATTENDANT) **Then** it is kpi_counted = false and does not count in K-82 (MX-2).
 31. **Given** a manual line with due_within_days 30 for WAH **Then** 422 `DUE_DAYS_NOT_ALLOWED` (hook code).
@@ -827,14 +827,14 @@ Users (as Phase 4 §9): Faisal HSE Manager · Noura HSE Officer ANIA-EXP · Lina
 58. **Given** a course with pass mark 70 and setting 80 **Then** the effective mark is 80.
 59. **Given** a practical result recorded by a trainer who is not an assessor of the session **Then** 422 (AT-3).
 60. **Given** a worker failed WAH 3 times since 2026-09-10 **When** nominated again on 2026-10-06 **Then** 422 `TRAINING_ATTEMPTS_EXCEEDED` until Noura records a re-training note (AT-5).
-61. **Given** session 00057 is delivered in en with interpreter_languages [ml, hi] **Then** Biju Thomas (primary_language ml) has understood_language = interpreter and can pass; **when** a worker whose primary_language is ne is nominated **Then** warning `LANGUAGE_MISMATCH`, and at Close his result is failed `LANGUAGE_NOT_UNDERSTOOD` regardless of scores (high_risk_task) (AT-6).
+61. **Given** session 00057 is delivered in en with interpreter_languages [ur, hi] **Then** Biju Thomas (primary_language ur) has understood_language = interpreter and can pass; **when** a worker whose primary_language is ne is nominated **Then** warning `LANGUAGE_MISMATCH`, and at Close his result is failed `LANGUAGE_NOT_UNDERSTOOD` regardless of scores (high_risk_task) (AT-6).
 62. **Given** HEAT-AWR (awareness, not in language_block_categories) delivered in ar to an ne-speaking worker **Then** passed with warning `LANGUAGE_MISMATCH`.
 63. **Given** Omar (site engineer) **When** he opens attendance of 00057 **Then** he sees status and result, not scores (AT-7).
 
 **Records and certificates**
 64. **Given** 00057 closed with Biju passed **Then** a record TRR-… is created Accepted, verification verified (session_record), certificate_no TRC-ANIA-EXP-2026-…, valid_until 2028-10-06, a bilingual PDF with QR `HSE2:TR:…` and no ID number, score or photo (TR-14).
 65. **Given** an external record with no scan **When** Ahmed submits **Then** 422 (scan required).
-66. **Given** the same (provider, course, certificate_no) exists **Then** 409 `CERT_EXISTS`; the same certificate_no for another worker of the same provider/course **Then** `CERT_NO_REUSED` and HSE Officers alerted (TR-5).
+66. **Given** the same (provider, course, certificate_no) exists **Then** 409 `CERT_EXISTS`; the same certificate_no for another worker of the same provider/course **Then** 409 `CERT_NO_REUSED` and HSE Officers alerted (TR-5).
 67. **Given** a card showing ID 2000001017 for Biju **Then** `matched`; typed 2000001071 **Then** 422 `CERT_ID_MISMATCH`, nothing stored, audit shows `2*******71` (TR-6).
 68. **Given** name_as_printed "B. Thomas" match partial **When** Noura accepts **Then** allowed with W02-style warning; match none **Then** `NAME_MISMATCH_CONFIRMATION` required.
 69. **Given** Ahmed submitted a record **When** Ahmed tries to accept it **Then** 403; when Noura accepts it after she submitted it herself **Then** `SOD_CONFLICT` (TR-7).
@@ -901,15 +901,15 @@ Users (as Phase 4 §9): Faisal HSE Manager · Noura HSE Officer ANIA-EXP · Lina
 120. **Given** a committed file with an ID column **Then** the stored file is deleted at commit and the audit records only sha256 (IM5-4).
 
 **QR and competence check**
-121. **Given** Omar (capability 142, no capability 46) scans Biju's TR QR **Then** he sees course, "Worker", worker_no, completed_on, valid_until, status green, provider INT-HSE — no ID, score or scan; `training_qr_view` is logged (CK5-1).
+121. **Given** a site engineer with capability 142 and without capability 46 (the seed grants Omar capability 46, so the test removes it, as Phase 4 AC111) scans Biju's TR QR **Then** he sees course, "Worker", worker_no, completed_on, valid_until, status green, provider INT-HSE — no ID, score or scan; `training_qr_view` is logged (CK5-1).
 122. **Given** a revoked record's QR **Then** "REVOKED / ملغاة".
 123. **Given** a TR QR presented at a gate as an access token **Then** DENIED `TOKEN_UNKNOWN` (Phase 2 GC-3: TR is not a gate token kind); the scanner app parses `HSE2:TR:<22>` only in competence mode (§11.3).
 124. **Given** Fahad opens Biju's AC card in competence mode **Then** the Training section lists each applicable requirement with in force yes/no, reason and valid_until, and one `cert_check_view` audit row is written (CK5-2).
 125. **Given** an unauthenticated request to a QR URL **Then** 401; there is no public verification page (CK5-3).
 
 **KPIs, warnings and AI**
-126. **Given** the seed **When** KPIs for ANIA-EXP as of 2026-09-30 are requested **Then** K-82 98.1 %, K-83 95.0 %, K-84 203 · 171 · 34, K-85 64, K-86 5,124.00 h · 96.00 h, K-87 96.0 %, K-88 64.1 % (TR7).
-127. **Given** the seed **When** KPIs for RBT-52 as of 2026-09-30 **Then** K-82 96.7 %, K-83 91.1 %, K-84 66 · 58 · 13, K-85 15, K-86 1,038.00 h · 24.00 h, K-87 95.4 %, K-88 80.0 % (TR7).
+126. **Given** the seed **When** KPIs for ANIA-EXP as of 2026-09-30 are requested **Then** K-82 98.2 %, K-83 95.0 %, K-84 193 · 171 · 34, K-85 64, K-86 5,124.00 h · 96.00 h, K-87 96.0 %, K-88 64.1 % (TR7).
+127. **Given** the seed **When** KPIs for RBT-52 as of 2026-09-30 **Then** K-82 97.2 %, K-83 91.7 %, K-84 60 · 54 · 10, K-85 15, K-86 1,038.00 h · 24.00 h, K-87 95.4 %, K-88 80.0 % (TR7).
 128. **Given** the monthly job on 2026-10-02 **Then** E12 is raised for RBT-52 and the QIMMA tree and not for ANIA-EXP; E13 is raised for ANIA-EXP and the RAWABI tree and not for RBT-52 (§6.9).
 129. **Given** K-82 = 9,795 / 10,000 **Then** displayed 98.0 % and E12 raised; 9,805 / 10,000 **Then** 98.1 % and no E12 (TR8).
 130. **Given** the contractor filter RAWABI with subcontractors on ANIA-EXP **Then** K-82…K-88 equal the project values (all ANIA-EXP engagements are in the RAWABI tree).
@@ -926,7 +926,7 @@ Users (as Phase 4 §9): Faisal HSE Manager · Noura HSE Officer ANIA-EXP · Lina
 
 **PDPL, permissions and audit**
 139. **Given** Yousef (C scope QIMMA) **When** he opens a QIMMA worker's scan with reason `verification` **Then** a signed URL ≤ 5 min and a `sensitive_field_read` audit row (fields_read ["training_scan"]); without a reason **Then** 422 (P5-3, row 139).
-140. **Given** Lina exports the record register **Then** no ID or scan columns; names because she holds capability 46; scores included (HSE Officer). Omar's export has worker_no only and no scores (row 144, P5-5).
+140. **Given** Lina exports the record register **Then** no ID or scan columns; names because she holds capability 46; scores included (HSE Officer). A site engineer without capability 46 gets worker_no only and no scores (row 144, P5-5).
 141. **Given** a suspected-forgery record **When** Ahmed views it **Then** "Training record not accepted / السجل التدريبي غير مقبول" without details (P5-4).
 142. **Given** a record that became Expired more than 2 years ago **Then** the retention job deletes its scan, keeps metadata and audits the deletion; a scan linked to an incident investigation is kept (P5-8).
 143. **Given** Faisal runs a data-subject report for Biju **Then** it lists records, sessions, scores and gaps, and the export is audited with purpose `data_subject_request` (P5-9).
@@ -961,7 +961,7 @@ Each question has a default, so the build can start. The default is the strictes
 19. **Trainers from contractors under the internal provider:** the seed authorises Salem Al-Harthi (RAWABI HSE staff) under INT-HSE. Allowed, or must internal trainers be client/PMC staff only?
 20. **Exemptions:** default ≤ 6 months, HSE Officer may grant, never for IND-GENERAL or hook codes. Confirm.
 
-## 11. Changes required in earlier specs (not applied by this spec; for the HSE Manager to approve)
+## 11. Changes required in earlier specs (applied 2026-10-08: `1-dashboard.md` v1.4, `2-access-permits.md` v1.3, `3-ptw.md` v1.2, `4-third-party-cert.md` v1.1)
 
 ### 11.1 `0-foundation.md` v1.0
 No change. Rules 26–28, 35, 45 and 48 and PDPL P1–P13 are used as they are. Capability rows 125–145 continue the matrix (§5.15).
@@ -979,7 +979,7 @@ No change. Rules 26–28, 35, 45 and 48 and PDPL P1–P13 are used as they are. 
 2. **§3.20 QR kinds:** add `TR` (`HSE2:TR:<22-char token>`, generated by Phase 5 for session-issued certificates). Update the AC64 regex to `^HSE2:(AC|VS|WP|PT|EQ|TR):[A-Za-z0-9_-]{22}$`. GC-3: a TR token presented at a gate is DENIED `TOKEN_UNKNOWN` (not a gate token kind); the scanner app opens it only in competence mode (CK5-1).
 3. **HK-7:** confirm Phase 5 reads induction records (read-only) to answer `induction_link` codes (CC-7).
 4. **HK-3 subjects:** confirm `worker.user_id` (§3.1) is the link Phase 3 uses for appointment holders (HK5-7); no field change.
-5. **Seed:** Appendix A.8 here adds named workers WKR-000024…WKR-000032 within the Phase 2 bulk counts (as Phase 4 did for WKR-000022/023), linked to users Khalid, Majed, Ramesh, Joseph, Sanjay, Faris, Nasser, Ibrahim and Yousef; primary_language fixed for Biju Thomas (ml), Rajesh Nair (ml), Ahmed Raza (ur) and Imran Hussain (ur). K-48 and every Phase 2 KPI example are unchanged.
+5. **Seed:** Appendix A.8 here converts seven unnamed bulk workers into named workers linked to the receiver, isolation-authority and contractor-rep users (as the Phase 3/4 seeds did) and adds two client/PMC staff rows for the issuers; K-48 and every Phase 2 KPI example are unchanged. No deployment is re-traded (DECISIONS #100).
 6. **AC21–AC23** (hook not available / test provider) stay valid on the Phase 2 seed, where no training provider is registered; the Phase 5 behaviour is covered by ACs 92–97 here.
 7. **§10 Q10** (hook transition) is answered for kind training_course by HK5-5 / §10 Q8 here.
 
@@ -992,7 +992,7 @@ No change. Rules 26–28, 35, 45 and 48 and PDPL P1–P13 are used as they are. 
 ### 11.5 `4-third-party-cert.md` v1.0 → v1.1
 1. **§3.14 hook policy state:** `kind` enum adds `training_course`; for that kind the dates come from the Phase 5 settings `training_hook_transition_days`, `training_hook_critical_transition_days` and `training_hook_critical_codes` (§3.16 here); HK4-4…HK4-7 apply unchanged; Phase 5 capability 145 performs the policy actions for that kind.
 2. **VF-9 certificates mode:** the access-card view shows a Training section from Phase 5 (CK5-2), in one `cert_check_view` audit row.
-3. **BD-3:** the PCT code check also rejects codes existing in the Phase 5 catalogue (`CODE_IN_OTHER_CATALOGUE`) — already stated as "both ways" in Phase 4 AC1; add the Phase 5 catalogue as the data source.
+3. **BD-3:** already enforced both ways in the build (DECISIONS #96: PCT codes vs `training_course` codes, induction courses and zone-profile training hooks). Record it in BD-3 and name the Phase 5 catalogue as the data source; no behaviour change.
 4. **§8.2:** `hook_block_date` also covers kind training_course.
 
 ## Appendix A — Seed data (fictional; `seed_fake = true` on every row; all names, IDs, certificate numbers and providers are fake)
@@ -1003,7 +1003,8 @@ No change. Rules 26–28, 35, 45 and 48 and PDPL P1–P13 are used as they are. 
 - Training hooks enabled on both projects on **2026-10-01** (Faisal): stage `transition`, critical_block_from **2026-10-08**, general_block_from **2026-10-31**, no deferral. ACs that expect blocking for a non-hard-stop not_met advance the clock (e.g. 94, 95, 96); hard stops block at the clock.
 - Matrix lines effective **2026-09-01** on both projects.
 - Provider names and domains end in `-test.example`; external certificate numbers contain `TEST`.
-- Bulk records reproduce the KPI values of TR7 exactly (A.9).
+- **No re-trading.** The Phase 5 seed uses the trade populations of the built Phase 0–4 seed as they are (DECISIONS #100; the Phase 4 seed already set crane_operator 14 / 6, rigger 46 / 18 and scaffolder 160 / 24). Phase 1 list T has no fire-watch trade, so fire watches (Ahmed Raza, Rohan Fernando and bulk) carry trade `other` and the matrix role `fire_watch`. Named Phase 3 workers keep the primary_language of the bulk row they were converted from (e.g. Biju Thomas ur, Ahmed Raza hi, Rajesh Nair hi). Gates are named as seeded (S-LAND gate `G-ANIA-01`); Bikash Rai is on RBT-52 and is not used here.
+- Bulk records reproduce the KPI values of TR7 exactly (A.9): the generator only assigns matrix roles, work zones, records, sessions and gaps; it never changes deployments.
 
 ### A.2 Training providers
 
@@ -1025,7 +1026,7 @@ No change. Rules 26–28, 35, 45 and 48 and PDPL P1–P13 are used as they are. 
 | TA-ANIA-EXP-0001 | Noura Al-Qahtani (user noura, WKR-000011) — authorised by Faisal | INT-HSE | WAH, PTW-RECEIVER, FIRE-WATCH · trainer, assessor | 2026-03-01 → 2028-02-29 |
 | TA-ANIA-EXP-0003 | Salem Al-Harthi (WKR-000018) — authorised by Noura | INT-HSE | HEAT-AWR, H2S-AWR, CSE-ENTRANT, CSE-ATTENDANT, GAS-TEST · trainer, assessor | 2026-04-01 → 2027-03-31 |
 | TA-RBT-52-0001 | Hamza Al-Shehri (WKR-000105) — authorised by Lina | INT-HSE | WAH · trainer, assessor | 2026-03-15 → 2027-03-14 |
-| TA-RBT-52-0002 | Yousef (user yousef, WKR-000032) — authorised by Lina | QIMMA-TU | HEAT-AWR · trainer | 2026-06-01 → 2027-05-31 |
+| TA-RBT-52-0002 | Yousef Al-Ghamdi (user, WKR-000032) — authorised by Lina | QIMMA-TU | HEAT-AWR · trainer | 2026-06-01 → 2027-05-31 |
 
 ### A.4 Matrix lines (effective 2026-09-01; manual lines `MXL-<project>-nnn`; hook-derived lines are numbered H (kpi_counted) and E (enforcement-only) + 2 digits)
 
@@ -1040,10 +1041,10 @@ No change. Rules 26–28, 35, 45 and 48 and PDPL P1–P13 are used as they are. 
 | MXL-ANIA-EXP-005 | trade electrician | ELEC-QUALIFIED | 0 | yes |
 | MXL-ANIA-EXP-006 | trade labourer, carpenter, mason, painter, steel_fixer | SCAFF-AWR | 14 | yes |
 | MXL-ANIA-EXP-007 | trade flagman | BANKSMAN-AWR | 7 | yes |
-| MXL-ANIA-EXP-008 | trade fire_watch | FIRE-WATCH | 0 | yes |
-| MXL-ANIA-EXP-009 | trade supervisor | any_of NEBOSH-IGC, NEBOSH-ICC, IOSH-MS, OSHA-30 | 90 | yes |
+| MXL-ANIA-EXP-008 | matrix_role fire_watch | FIRE-WATCH | 0 | yes |
+| MXL-ANIA-EXP-009 | trade supervisor | any_of NEBOSH-IGC, NEBOSH-ICC, IOSH-MS, OSHA-30 | 90 | yes (all `due` until 2026-11-30 in the seed) |
 | MXL-ANIA-EXP-010 | trade hse_staff | any_of NEBOSH-IGC, NEBOSH-ICC, NEBOSH-DIP | 0 | yes |
-| MXL-ANIA-EXP-011 | trade hse_staff | FIRST-AID | 30 | yes |
+| MXL-ANIA-EXP-011 | trade hse_staff | FIRST-AID | 30 | yes (`due` until 2026-10-01 in the seed) |
 | MXL-ANIA-EXP-012 | matrix_role fire_warden | FIRE-WARDEN | 14 | yes |
 | MXL-ANIA-EXP-013 | matrix_role first_aider | FIRST-AID | 0 | yes |
 | MXL-ANIA-EXP-014 | zone Z-MSCP | H2S-AWR | 0 | yes |
@@ -1069,22 +1070,22 @@ No change. Rules 26–28, 35, 45 and 48 and PDPL P1–P13 are used as they are. 
 | WKR-000009 Osman Idris (NAJD rigger) | WAH | INT-HSE (import) | 2025-07-14 → 2027-07-13 | in force |
 | WKR-000011 Noura Al-Qahtani (client staff) | NEBOSH-IGC · WAH · FIRE-WATCH · PTW-ISSUER · AVSEC-AWR | GSA NEB-TEST-19-0515 · INT-HSE · INT-HSE · INT-HSE · ASTA | 2019-05-15 → — · 2026-02-01 → 2028-01-31 · 2026-02-03 → 2028-02-02 · 2025-09-01 → 2027-08-31 · 2026-01-20 → 2027-01-19 | in force (not counted: staff) |
 | WKR-000013 Tariq Mahmood (GULFPAVE supervisor) | OSHA-30 · AVSEC-AWR | OTCME OSHA-TEST-24-0620 · ASTA | 2024-06-20 → — · 2026-05-12 → 2027-05-11 | in force |
-| WKR-000015 Ahmed Raza (NAJD fire_watch) | FIRE-WATCH | INT-HSE (import) | 2024-10-11 → **2026-10-10** | expiring (4 days); nominated 2026-09-15 to 00058 (booked_in_time) |
+| WKR-000015 Ahmed Raza (NAJD, trade other; matrix role fire_watch) | FIRE-WATCH | INT-HSE (import) | 2024-10-11 → **2026-10-10** | expiring (4 days); nominated 2026-09-15 to 00058 (booked_in_time) |
 | WKR-000016 Kamal Hossain | CSE-ENTRANT · H2S-AWR | INT-HSE | 2025-12-08 → 2027-12-07 · 2026-02-15 → 2027-02-14 | in force |
-| WKR-000017 Biju Thomas (primary_language ml) | CSE-ATTENDANT | — | — | **missing**; standby on PTW-0413 → `HOOK_NOT_MET_WARN`; nominated to 00057 |
+| WKR-000017 Biju Thomas (primary_language ur) | CSE-ATTENDANT | — | — | **missing**; standby on PTW-0413 → `HOOK_NOT_MET_WARN`; nominated to 00057 |
 | WKR-000018 Salem Al-Harthi (RAWABI hse_staff) | GAS-TEST · CSE-ENTRANT · CSE-ATTENDANT · H2S-AWR · HEAT-AWR · NEBOSH-ICC · FIRST-AID | INT-HSE ×5 · GSA · HAYAT | 2026-04-15 → 2028-04-14 · 2025-03-10 → 2027-03-09 · 2025-03-11 → 2027-03-10 · 2026-02-15 → 2027-02-14 · 2026-04-01 → 2027-03-31 · 2022-11-30 → — · 2025-07-01 (printed 2027-06-30) → 2027-06-30 | in force (TR1c) |
 | WKR-000019 Zaheer Abbas | AVSEC-AWR | ASTA | 2026-02-20 → 2027-02-19 | in force |
 | WKR-000021 Rafiq Islam (RAWABI supervisor; matrix_role first_aider) | CSE-RESCUE · FIRST-AID · NEBOSH-IGC | INT-HSE · HAYAT HY-FA-TEST-24-1116 · GSA | 2025-11-03 → **2026-11-02** · 2024-11-16 → **2026-11-15** · 2023-04-10 → — | in force; in refresher plan (TR4c, TR4e) |
-| WKR-000024 Khalid (user khalid, client staff) | PTW-ISSUER | INT-HSE | 2025-12-01 → 2027-11-30 | in force |
-| WKR-000025 Majed (user majed, client staff) | PTW-ISSUER | INT-HSE | 2024-10-26 → **2026-10-25** | in force; 14-day alert 2026-10-11 (TR4d) |
-| WKR-000026 Ramesh (user, NAJD) · WKR-000027 Joseph (QIMMA) · WKR-000029 Faris (RAWABI) | PTW-RECEIVER | INT-HSE | 2025-11-20 → 2027-11-19 · 2026-02-08 → 2028-02-07 · 2026-01-12 → 2028-01-11 | in force |
+| WKR-000024 Khalid Al-Otaibi (client staff) | PTW-ISSUER | INT-HSE | 2025-12-01 → 2027-11-30 | in force |
+| WKR-000025 Majed Al-Shammari (PMC staff) | PTW-ISSUER | INT-HSE | 2024-10-26 → **2026-10-25** | in force; 14-day alert 2026-10-11 (TR4d) |
+| WKR-000026 Ramesh Kumar (NAJD) · WKR-000027 Joseph Mathew (QIMMA) · WKR-000029 Faris Al-Anazi (RAWABI) | PTW-RECEIVER | INT-HSE | 2025-11-20 → 2027-11-19 · 2026-02-08 → 2028-02-07 · 2026-01-12 → 2028-01-11 | in force |
 | WKR-000028 Sanjay Verma (GULFPAVE) | PTW-RECEIVER | — | — | **missing** → warn on PTW-0408 (TR5b) |
-| WKR-000030 Nasser (RAWABI) · WKR-000031 Ibrahim (QIMMA) | LOTO-AUTHORITY | INT-HSE | 2025-08-18 → 2027-08-17 · 2026-01-05 → 2028-01-04 | in force |
-| WKR-000032 Yousef (QIMMA hse_staff) | HEAT-AWR · NEBOSH-IGC · FIRST-AID | INT-HSE · GSA · HAYAT | 2026-04-10 → 2027-04-09 · 2021-03-01 → — · 2025-10-20 → 2027-10-19 | in force |
+| WKR-000030 Nasser Al-Shahrani (RAWABI) · WKR-000031 Ibrahim Al-Saleh (QIMMA) | LOTO-AUTHORITY | INT-HSE | 2025-08-18 → 2027-08-17 · 2026-01-05 → 2028-01-04 | in force |
+| WKR-000032 Yousef Al-Ghamdi (QIMMA; trade of the converted row) | HEAT-AWR · NEBOSH-IGC · FIRST-AID | INT-HSE · GSA · HAYAT | 2026-04-10 → 2027-04-09 · 2021-03-01 → — · 2025-10-20 → 2027-10-19 | in force |
 | WKR-000101 Imtiaz Ahmed (QIMMA steel_fixer) | WAH · SCAFF-AWR | INT-HSE · QIMMA-TU | 2026-04-22 → 2028-04-21 · 2026-04-23 → 2028-04-22 | in force |
 | WKR-000103 Ramon Cruz (QIMMA electrician) | LOTO · ELEC-QUALIFIED | INT-HSE (import) · — | 2024-09-30 → 2027-09-29 · — | LOTO in force; **ELEC-QUALIFIED gap** (one of RBT's 3) |
 | WKR-000105 Hamza Al-Shehri | WAH · IOSH-MS | INT-HSE · GSA | 2025-03-02 → 2027-03-01 · 2024-05-05 → 2027-05-04 | in force |
-| WKR-000107 Rohan Fernando (QIMMA fire_watch) | FIRE-WATCH | INT-HSE | 2026-03-15 → 2028-03-14 | in force |
+| WKR-000107 Rohan Fernando (QIMMA, trade other; matrix role fire_watch) | FIRE-WATCH | INT-HSE | 2026-03-15 → 2028-03-14 | in force |
 | WKR-000108 Joel Bautista (QIMMA rigger) | WAH | INT-HSE | 2025-06-02 → 2027-06-01 | in force |
 
 Bulk crew members named on non-terminal Phase 3 permits hold the in-force records their hooks need, so the only training warnings on live permits at the clock are Biju (PTW-0413), Sanjay (PTW-0408) and Ahmed Raza's `expiring` (PTW-0412); no training hard stop exists at the clock.
@@ -1094,9 +1095,9 @@ Bulk crew members named on non-terminal Phase 3 permits hold the in-force record
 | Session | Course · provider | Days | Trainers | Language / interpreters | Nominees | Status at clock |
 |---|---|---|---|---|---|---|
 | TRS-ANIA-EXP-2026-00031 | WAH · INT-HSE | 2026-09-20 07:00–16:00, break 60 (480) | Noura (trainer, assessor) | en / [ur, hi] | 10 (Imran Hussain + 9 NAJD/SAHARA bulk); 9 passed, 1 failed (theory 72.00) | **Closed** 2026-09-21 by Faisal; person-hours 80.00 |
-| TRS-ANIA-EXP-2026-00057 | CSE-ATTENDANT · INT-HSE | 2026-10-07 07:00–16:00, break 60 (480) | Salem (trainer, assessor) | en / [ml, hi] | 10 (Biju Thomas + 9 RAWABI bulk) | Scheduled |
+| TRS-ANIA-EXP-2026-00057 | CSE-ATTENDANT · INT-HSE | 2026-10-07 07:00–16:00, break 60 (480) | Salem (trainer, assessor) | en / [ur, hi] | 10 (Biju Thomas + 9 RAWABI bulk) | Scheduled |
 | TRS-ANIA-EXP-2026-00058 | FIRE-WATCH · INT-HSE | 2026-10-08 07:00–12:00, break 30 (270) | Noura | ur / [hi] | 8 (Ahmed Raza + 7 bulk) | Scheduled |
-| TRS-ANIA-EXP-2026-00061 | AVSEC-AWR · ASTA (external; trainer "M. Al-Ghamdi" as printed) | 2026-10-15 08:00–12:00, break 15 (225) | external_name | ar / [en, ml, ur] | 12 (Rajesh Nair + 11 GULFPAVE bulk) | Scheduled |
+| TRS-ANIA-EXP-2026-00061 | AVSEC-AWR · ASTA (external; trainer "M. Al-Ghamdi" as printed) | 2026-10-15 08:00–12:00, break 15 (225) | external_name | ar / [en, hi, ur] | 12 (Rajesh Nair + 11 GULFPAVE bulk) | Scheduled |
 | TRS-RBT-52-2026-00019 | HEAT-AWR · QIMMA-TU | 2026-09-14 06:00–07:45, break 15 (90) | Yousef | hi / [ne, bn] | 24 QIMMA bulk; 23 passed, 1 failed | **Closed** 2026-09-15 by Lina; person-hours 36.00 |
 | TRS-RBT-52-2026-00022 | WAH · INT-HSE | 2026-10-06 07:00–16:00, break 60 (480) | Hamza (trainer, assessor) | ar / [ur, tl] | 8 QIMMA bulk | **In Progress** |
 
@@ -1105,37 +1106,39 @@ Bulk crew members named on non-terminal Phase 3 permits hold the in-force record
 - No session Voided; no record Suspended or Revoked at the clock.
 - Hook policy state, per project, kind `training_course`: provider_registered_on 2026-10-01, stage transition, critical_block_from 2026-10-08, general_block_from 2026-10-31, deferral_used false, early_switch none.
 
-### A.8 Named worker additions (within Phase 2 bulk counts; K-48 unchanged)
-WKR-000024 Khalid (1000001024, client_pmc_staff, user khalid) · WKR-000025 Majed (1000001025, client_pmc_staff, user majed) · WKR-000026 Ramesh (2000001026, NAJD, user ramesh) · WKR-000027 Joseph Mathew (2000001027, QIMMA, user joseph) · WKR-000028 Sanjay Verma (2000001028, GULFPAVE, user sanjay) · WKR-000029 Faris Al-Anazi (1000001029, RAWABI, user faris) · WKR-000030 Nasser (1000001030, RAWABI, user nasser) · WKR-000031 Ibrahim (1000001031, QIMMA, user ibrahim) · WKR-000032 Yousef (1000001032, QIMMA hse_staff, user yousef). Training profiles: Mahmoud Fathy [fire_warden]; Rafiq Islam and Waleed Saleh [first_aider]; Kamal Hossain, Biju Thomas, Rafiq Islam work zone Z-MSCP. primary_language fixed where the Phase 2 generator chose it: Biju Thomas ml, Rajesh Nair ml, Ahmed Raza ur, Imran Hussain ur.
+### A.8 Named worker additions (K-48 unchanged)
+- **Converted from unnamed bulk workers of the user's engagement** (as the Phase 3/4 seeds do; trade, sites, mobilisation date and language of the converted row are kept; worker.user_id linked): WKR-000026 Ramesh Kumar (NAJD) · WKR-000027 Joseph Mathew (QIMMA) · WKR-000028 Sanjay Verma (GULFPAVE) · WKR-000029 Faris Al-Anazi (RAWABI) · WKR-000030 Nasser Al-Shahrani (RAWABI) · WKR-000031 Ibrahim Al-Saleh (QIMMA) · WKR-000032 Yousef Al-Ghamdi (QIMMA). Fake IDs 2000001026…2000001032.
+- **New client/PMC staff rows** (person_type client_pmc_staff, so not in K-48 or the Phase 5 KPI populations): WKR-000024 Khalid Al-Otaibi (1000001024, user khalid.otaibi) · WKR-000025 Majed Al-Shammari (1000001025, user majed.shammari), each with a Mobilised deployment on the project where they issue permits.
+- **Training profiles:** Mahmoud Fathy [fire_warden]; Rafiq Islam and Waleed Saleh [first_aider]; Ahmed Raza (ANIA-EXP) and Rohan Fernando (RBT-52) [fire_watch]; Kamal Hossain, Biju Thomas and Rafiq Islam work zone Z-MSCP. Bulk role and zone assignments in A.9.
 
 ### A.9 Bulk volumes (as of 2026-09-30, reproducing TR7)
 
-**Counted requirements (applicable · met or expiring · gap; "not due" excluded from all three)**
+**Counted requirements (applicable · met or expiring · gap; "not due" excluded from all three).** Trade populations are those of the Phase 0–4 seed at 2026-09-30 (contractor_worker deployments Mobilised): ANIA-EXP labourer 897, welder 320, steel_erector 313, carpenter 296, steel_fixer 288, mason 267, electrician 251, driver 214, flagman 180, scaffolder 160, plant_operator 158, rigger 46, crane_operator 14, supervisor 4, other 2, engineer 1, hse_staff 1 (= 3,412); RBT-52 labourer 173, carpenter 161, electrician 142, steel_fixer 127, scaffolder 24, rigger 18, crane_operator 6, supervisor 1, other 1, welder 1 (= 654). Mobilised on or after 2026-09-24 (HEAT-AWR not yet due): ANIA-EXP 55, RBT-52 5; SCAFF-AWR trades mobilised on or after 2026-09-17: ANIA-EXP 54, RBT-52 15; flagmen mobilised on or after 2026-09-24: 1.
 
 | Line | ANIA-EXP | RBT-52 |
 |---|---|---|
 | IND-GENERAL | 3,412 · 3,371 · 41 | 654 · 640 · 14 |
-| HEAT-AWR (not yet due: ANIA 38, RBT 6) | 3,374 · 3,320 · 54 | 648 · 630 · 18 |
-| WAH (scaffolder 160, steel_erector 210, rigger 46 · RBT 24, 70, 18) | 416 · 404 · 12 | 112 · 104 · 8 |
-| LOTO (electricians) | 180 · 176 · 4 | 60 · 58 · 2 |
-| ELEC-QUALIFIED | 180 · 171 · 9 | 60 · 57 · 3 (incl. Ramon Cruz) |
-| SCAFF-AWR (not yet due: ANIA 41) | 1,520 · 1,466 · 54 | 300 · 286 · 14 |
-| BANKSMAN-AWR (flagmen) | 40 · 39 · 1 | 10 · 10 · 0 |
-| FIRE-WATCH (trade fire_watch) | 30 · 30 · 0 | 12 · 12 · 0 |
-| Supervisor qualification any_of (not yet due: ANIA 6) | 114 · 105 · 9 | 30 · 27 · 3 |
-| HSE staff qualification any_of | 38 · 38 · 0 | 10 · 10 · 0 |
-| HSE staff FIRST-AID | 38 · 37 · 1 | 10 · 10 · 0 |
+| HEAT-AWR (not yet due: ANIA 55, RBT 5) | 3,357 · 3,303 · 54 | 649 · 631 · 18 |
+| WAH (scaffolder 160, steel_erector 313, rigger 46 · RBT 24, 0, 18) | 519 · 507 · 12 | 42 · 37 · 5 |
+| LOTO (electricians) | 251 · 247 · 4 | 142 · 140 · 2 |
+| ELEC-QUALIFIED | 251 · 242 · 9 | 142 · 139 · 3 (incl. Ramon Cruz) |
+| SCAFF-AWR (labourer, carpenter, mason, painter, steel_fixer; not yet due: ANIA 54, RBT 15) | 1,694 · 1,640 · 54 | 446 · 432 · 14 |
+| BANKSMAN-AWR (flagmen; not yet due 1) | 179 · 178 · 1 | — (no flagmen) |
+| FIRE-WATCH (matrix role fire_watch) | 30 · 30 · 0 | 12 · 12 · 0 |
+| Supervisor qualification any_of | — (4 supervisors, all due 2026-11-30) | — (1, due 2026-12-02) |
+| HSE staff qualification any_of | 1 · 1 · 0 (Salem Al-Harthi) | — |
+| HSE staff FIRST-AID | — (due 2026-10-01) | — |
 | FIRE-WARDEN (matrix role) | 64 · 62 · 2 | 16 · 15 · 1 |
 | FIRST-AID (first_aider role) | 96 · 93 · 3 (incl. Waleed Saleh) | 20 · 19 · 1 |
-| AVSEC-AWR (zones ∪ pass categories) | 900 · 891 · 9 | — |
-| AIRSIDE-DRV | 236 · 236 · 0 | — |
+| AVSEC-AWR (zones ∪ pass categories; = contractor workers with an active PERM or TEMP-U pass; no seeded airside work-zone entry adds anyone) | 844 · 835 · 9 | — |
+| AIRSIDE-DRV (active ADPs apron 88 + manoeuvring 148) | 236 · 236 · 0 | — |
 | H2S-AWR (Z-MSCP · Z-B4) | 85 · 81 · 4 | 40 · 38 · 2 |
-| **Total** | **10,723 · 10,520 · 203** | **1,982 · 1,916 · 66** |
+| **Total** | **11,019 · 10,826 · 193** | **2,163 · 2,103 · 60** |
 
 | Population | ANIA-EXP | RBT-52 |
 |---|---|---|
-| Mobilised contractor_worker deployments (K-83 denominator) · with ≥ 1 gap | 3,412 · 171 | 654 · 58 |
-| Hook-code gaps (K-84) | 34 (WAH 12, LOTO 4, ELEC-QUALIFIED 9, AVSEC-AWR 9) | 13 (WAH 8, LOTO 2, ELEC-QUALIFIED 3) |
+| Mobilised contractor_worker deployments (K-83 denominator) · with ≥ 1 gap | 3,412 · 171 | 654 · 54 |
+| Hook-code gaps (K-84) | 34 (WAH 12, LOTO 4, ELEC-QUALIFIED 9, AVSEC-AWR 9) | 10 (WAH 5, LOTO 2, ELEC-QUALIFIED 3) |
 | K-85 records expiring 2026-09-30…10-30 · of which booked_in_time (K-88) | 64 (incl. Ahmed Raza FIRE-WATCH, Rajesh Nair AVSEC-AWR) · 41 (incl. Ahmed Raza) | 15 · 12 |
 | K-86 Sep person-hours by category: awareness · high_risk_task · ptw_role · electrical · emergency_response · aviation_security · airside_operations | 1,848.00 · 1,736.00 · 496.00 · 384.00 · 448.00 (incl. 48.00 sponsored external FIRST-AID) · 156.00 · 56.00 = **5,124.00**; staff 96.00 | 402.00 · 384.00 · 96.00 · 64.00 · 92.00 · — · — = **1,038.00**; staff 24.00 |
 | K-87 attendances with result passed · passed + failed (sessions Closed in Sep) | 1,356 · 1,412 | 268 · 281 |
@@ -1147,4 +1150,4 @@ All Phase 5 settings at the §3.16 defaults; `training_register_from` = 2026-09-
 
 | Version | Date | Author | Change |
 |---|---|---|---|
-| v1.0 | 2026-10-08 | HSE Consultant Agent | First issue. §1–§11, Appendix A. Course catalogue (31 courses), providers, trainer authorisations, matrix, sessions, records, verification, gaps and refreshers, `training_course` hook provider with the Phase 4 warn → block mechanism, K-37 source switch, imports. Capabilities 125–145, KPIs K-82…K-88 (K-37 source revised), warnings E12–E13, AI tool T17, charts C19–C21, QR kind TR. Earlier-spec changes listed in §11, **not applied** (1-dashboard v1.4, 2-access-permits v1.3, 3-ptw v1.2, 4-third-party-cert v1.1). |
+| v1.0 | 2026-10-08 | HSE Consultant Agent | First issue. §1–§11, Appendix A. Course catalogue (31 courses), providers, trainer authorisations, matrix, sessions, records, verification, gaps and refreshers, `training_course` hook provider with the Phase 4 warn → block mechanism, K-37 source switch, imports. Capabilities 125–145, KPIs K-82…K-88 (K-37 source revised), warnings E12–E13, AI tool T17, charts C19–C21, QR kind TR. Earlier-spec changes in §11 applied the same day (1-dashboard v1.4, 2-access-permits v1.3, 3-ptw v1.2, 4-third-party-cert v1.1). Seed and worked examples aligned with the built Phase 0–4 seed (DECISIONS #87–#101): trade populations as seeded (no re-trading), fire watch as matrix role, seeded languages and user names, 409 `CERT_NO_REUSED`, TR7/A.9 recomputed. |
