@@ -1,0 +1,70 @@
+# Phase 4 design pass: UX findings
+
+Scope: the Phase 4 third-party certification screens:
+- TPIs and client approvals; equipment register, deployments and EQ stickers; equipment certificates and verification.
+- Personnel certificates; scaffolds, the tag board and scaffold stickers; defects; certification bans and the blacklist register.
+- Certification settings, catalogue, hook policy and readiness; certificate imports; the field certification check.
+- The Phase 4 additions elsewhere: gate equipment card, access eligibility (hard stop vs transition warning), PTW crew equipment / operator lines and the WAH scaffold reference, the dashboard certification band, C16–C18 and "limited by" on expiring items.
+
+Shared components were changed only where a Phase 4 screen needed it, and they stay consistent with Phases 0–3.
+
+## Method
+
+- **Setup.** Real backend on a fresh, migrated and seeded database (`hse_design4`, `app.seed` incl. the Phase 4 seed), clock pinned with `HSE_CLOCK_AT=2026-10-06T10:00:00+03:00` (`HSE_CLOCK_MODE=fixed`); every browser page had its clock installed at the same instant. Frontend `next dev`; checks on a production build.
+- **User.** Faisal Al-Harbi (HSE Manager) on ANIA-EXP. Role-dependent rendering was not changed; the e2e role tests cover the other roles.
+- **Records.** RW-MC-03 (in service, certificate in force), RW-MEWP-07 (out of service, open category A defect), the blacklisted telehandler EQP-000031, scaffolds SC-0142 (green), SC-0151 (yellow, harness restriction), SC-0150 (red, closed), SC-0160 (tag expired), personnel cards AICC-OP-TEST-24-0412 (in force) and AICC-OP-TEST-00001 (expired), DEF-ANIA-EXP-2026-0007, deployments EQD-0001 / EQD-0003, permit PTW-0410 (crane + operator hooks).
+- **Screenshots.** 213 "before" shots: equipment detail, tag board, yellow scaffold, personnel card and the field check in all 8 combinations (EN/AR × 1366 / 390 × light/dark); 27 other screens in 4 (EN desktop light, AR desktop dark, AR phone light, EN phone dark); field-check results for four references; sticker screen and print renders; band and C16–C18 as element shots.
+- **Charts.** I loaded the dataviz guidance before touching C17 and ran its palette validator on the new ramp.
+
+**Screenshots** (`docs/screenshots/phase-4/design/`, 12 files):
+
+| Files | Screen |
+|---|---|
+| 01/02 | Equipment out of service (RW-MEWP-07), AR phone light |
+| 03/04 | Scaffold tag board, AR phone light |
+| 05/06 | Yellow-tag scaffold SC-0151, EN phone dark |
+| 07/08 | Field check of RW-MEWP-07, AR phone light |
+| 09/10 | EQ sticker on an Arabic screen, dark |
+| 11/12 | C17 defects by category |
+
+Effort: **S** < 1 h · **M** ≤ 1 day · **L** a redesign that needs the user's approval.
+
+## Ranked findings
+
+| # | Impact | Problem | Where / evidence | Fix | Effort | Status |
+|---|---|---|---|---|---|---|
+| 1 | High | **No one-glance "may it be used today, and why not".** Equipment showed a 12 px service pill in the header and a separate red banner only for some states; an in-service item with no certificate in force looked fine. The deployment page (the crane on *this* project) had no usable verdict unless it failed, and then showed the raw code `defect_a`. The personnel card hid its validity in a side card. A scaffold with a yellow tag showed a **green** "Usable today" box with the restriction in plain text | `01-before`, `05-before`, `eq-*`, `dep-*`, `pc-*`, `scf-*` | New shared **`CertStatePanel`** (the Phase 3 permit state panel pattern: tinted border, 8 px start bar, 36 px icon, 24 px word, one plain sentence, details):<br>• **Equipment:** red "Out of service / Quarantined / Blacklisted" with reason, text and since; red "No certificate in force" when in service without a valid certificate; blue "Awaiting certificate"; grey "Retired"; green "In service — certificate in force" with valid-until and days left, plus a link "Today on ANIA-EXP-RW-MC-03 →" to the deployment page<br>• **Deployment:** green "Usable on this project today" or red "Do not use on this project today" + the first failing check in words (server `usable` / `not_usable_reason`); blue planned, grey demobilised<br>• **Personnel card:** "In force" / "Not in force" + status, with the strictest-wins validity (valid until, days left, limited by, reason) inside it; the side validity card is gone<br>• **Scaffold:** red "DO NOT USE today", amber "Usable today — with restrictions" (yellow tag), green "Usable today"; the restriction is a bordered box in 16 px bold with a warning icon<br>The UI decides nothing: every panel is worded from server fields | M | Done |
+| 2 | High | **Scaffold tags were small tinted pills plus a 12 px square.** In the sun the green / yellow / red read as three pastel pills; the yellow pill truncated ("Yellow — use with restric…"); on phones the square collapsed to a line; "Tag expired" did not say "do not use"; the swatch colours were raw `oklch()` values outside the token file; zones had no summary | `03-before`, `board-*` | New theme-independent **tag tokens** (`--tag-green / yellow / red / none` + `-fg`, contrast 6.6–10:1, identical in light and dark like the gate verdicts). `TagStatusBadge` is now a **solid tag-colour chip** with its own icon (tick / triangle / octagon) and the word; "Tag expired — do not use", "Inspection required — do not use". Board tiles: 18 px tag, a 10 px start bar in the tag colour, the chip, Gregorian date with the Hijri date as a muted second line. Zone headers show the server's counts as chips ("1 do not use", "1 with restrictions", "30 green"). The same chip is used on the scaffold page, the field-check card and the WAH scaffold reference | M | Done |
+| 3 | High | **Field check result below the fold and repeating itself.** On a phone the verdict rendered under the scan and two manual forms; the verdict said "DO NOT USE" and the next line said "DO NOT USE." again; the reason was a raw code (`EQUIPMENT_OUT_OF_SERVICE`); the yellow-tag scaffold card had a **green** border under an amber verdict and the restriction in 14 px | `07-before`, `chk-*` | The result scrolls into view on every new result. The server message is shown only when it adds something; the reason code is shown **in words** in 18 px bold ("Out of service", "Scaffold inspection overdue") with the code small underneath. Scaffold card border follows the tag colour; restrictions are a bordered 16 px bold box with an icon | S | Done |
+| 4 | High | **"Not found" under records that exist.** The change-history panel showed a full-size "Not found — this record does not exist or is outside your access scope" on every equipment item, deployment, scaffold, personnel card and defect (the history endpoint answers 404 for Phase 4 entity types) | `eq-mc03-*`, `scf-*`, `pc-*`, `def-07-*` | `HistoryPanel` shows a 404 as a calm grey note "Change history is not available for this record yet" (Phase 2 rule for things not available yet). Backend gap reported below | S | Done |
+| 5 | Medium | **Raw codes on screen.** Deployment list "service status" column showed `defect_a`; the blacklist register showed status `blacklisted` and reason `all_certificates` untranslated | `deployments-*`, `blacklist-*` | Shared `useReasonLabel()` (hook reason → service-status reason → gate reason → code); deployment rows show the reason in words with an octagon icon; the blacklist register translates equipment / TPI statuses and the TPI blacklist scope | S | Done |
+| 6 | Medium | **Equipment header mixed reversible and irreversible actions.** Tag out, Retire and Blacklist were three equal red outlines in a row; Retire and Blacklist dialogs had no "cannot be undone" warning | `eq-mc03-*` | A divider separates Tag out (stop use) from Retire / Blacklist (cannot be undone); Retire and Blacklist dialogs open with "This cannot be undone. Check the equipment number before you confirm." Test ids unchanged | S | Done |
+| 7 | Medium | **Phase 4 checks still labelled "Later-phase requirement"** on PTW equipment / operator lines and access eligibility; hard stops and transition warnings differed only by a tinted row | `ptw410-crew-*` | Hook rows name what they check ("Equipment certificate", "Personnel certificate"); "Later-phase requirement" stays only for `HOOK_NOT_AVAILABLE` (Phase 5/6). Hard-stop rows get a 4 px red start bar, transition warnings an amber one, on top of the existing lock / shield badges | S | Done |
+| 8 | Medium | **Stickers.** On an Arabic screen the scaffold sticker mirrored (values on the left, labels on the right); the EQ sticker category was in the screen language only and marked `lang="en"`; the issue date was a two-calendar date-time that wrapped; the Arabic label for the equipment tag read "card" (البطاقة); the stacked Arabic footer was left-aligned | `09-before`, `scf-sticker-*` | Both stickers are fixed LTR (English left, Arabic right) like every print; category bilingual ("Mobile crane / رافعة متحركة", generated `certBi.eqc.*`); issue date one Gregorian date ("08 Nov 2025"); "Tag / الوسم"; footer note centred in both languages | S | Done |
+| 9 | Medium | **C17 coloured an ordered severity with unrelated hues.** Category A orange, **B green** (reads "fine"), C yellow: no order, and green for a defect that must be rectified | `11-before` | Ordinal one-hue ramp `--series-defect-a/b/c` (darkest = A = stop use; in dark mode A is the brightest step). Validator `--ordinal`: light PASS (monotone, light end 2.28:1), dark PASS (2.79:1). Legend + table view unchanged | S | Done |
+| 10 | Low | **Defect category A used the same triangle as B** | Defects | A = octagon (stop), B = triangle, C = info, everywhere `StatusBadge` shows a category | S | Done |
+| 11 | Low | **Dashboard certification band: hook stage chips were colour-only borders** | Band | Lock icon for "Block", hourglass for "Transition", info for "Not enabled" | S | Done |
+| 12 | Low | **Equipment "Service status history" empty state read "No records match the current filters"** (there are no filters) | Equipment page | "No changes recorded yet." | S | Done |
+| 13 | Medium | **Registers cannot flag expired / expiring certificates.** The equipment register and the deployments list show only a valid-until date; `EquipmentListItem` has no `in_force` / `days_left` (personnel cards have them) | `equipment-*` | **P15.** Contract request: `in_force`, `expiring`, `days_left` (and `limiting_factor`) on `EquipmentListItem` and the deployment list item, so rows get the same in-force / days-left chips as personnel cards. The UI must not compute it | L | Proposal P15 |
+| 14 | Medium | **The deployment page (the crane on this project) does not show its certificate line.** The engineer has to open the item page for cert no., TPI, SWL and limitations | `dep-*` | **P16.** `current_line` (the `EquipmentLineSummary`) on `EquipmentDeploymentRead`, shown inside the deployment state panel | L | Proposal P16 |
+| 15 | Medium | **Tag board as a field display.** 97 tiles in three zones; the few that cannot be used are spread through the grid | Tag board | **P17.** "Problems only" toggle and a TV / kiosk mode (large tiles, auto-refresh, problems first per zone, no navigation chrome) for site offices | L | Proposal P17 |
+| 16 | Medium | **Long action rows and two-calendar dates on phones** (equipment, scaffold, personnel card); certificate lists 4–5 lines per row | All Phase 4 detail pages | Phase 0 proposals **P2** (sticky phone action bar) and **P1** (two-line dates) apply unchanged | L | Proposals P1, P2 |
+
+## Not changed on purpose
+
+- Business logic, API calls, permissions, KPI values and the data shown are unchanged. No request was added; every state panel is worded from fields the page already loaded (`service_status`, `has_valid_certificate`, `current_line`, `usable`, `not_usable_reason`, `validity`, `usable_today`, `tag_status`, `counts`).
+- Hard stops stay red with a lock; transition warnings stay amber with a shield (`HookSeverity`); `HOOK_NOT_AVAILABLE` stays a neutral note.
+- Gate and field-check verdict colours are unchanged (Phase 2 verdict tokens). The gate equipment card (GE-5, no personal data) is unchanged apart from shared badges.
+- C17 keeps orange as its hue family (the backend's "unsafe" slot for A); only the order and lightness changed. Personnel is orange in C16/C18, in a different chart.
+- The sticker issue date dropped its time of day (a one-calendar date, as on the Phase 2 access card).
+- E2E selectors are unchanged: `equipment-stop` sits on the state panel when the item is out of service / quarantined / blacklisted; `not-usable` on the deployment panel when a live deployment is not usable; `scaffold-usable` (+ `data-usable`) and `scaffold-restrictions` on the scaffold panel; `tag-status`, `board-tag`, `cc-result`, `cc-verdict`, `cert-validity`, `service-status` are kept. The duplicate tag badge in the scaffold header was removed (the panel shows it).
+
+## Design system additions (Phase 4)
+
+- **`CertStatePanel`** (`components/cert/common.tsx`): one-glance "may this be used" panel for equipment, deployments, personnel cards and scaffolds. Tones: green only for usable / in force; amber for usable with restrictions or expiring; red for do-not-use; blue for not yet (planned, awaiting, pending review); grey for ended.
+- **Tag tokens** `--tag-green | yellow | red | none` (+ `-fg`), theme-independent, for scaffold tags only. `TagStatusBadge` = solid chip + icon + word; `size="lg"` on detail pages. `TAG_TONE`, `TAG_FILL`, `TAG_BORDER` map tag statuses (expired / inspection required hang red).
+- **`useReasonLabel()`**: any server reason code in words (hook → service status → gate), code itself as last resort.
+- **`--series-defect-a | b | c`**: ordinal ramp for defect categories (C17), light and dark steps validated separately.
+- **Eligibility rows**: 4 px start bar, red = hard stop, amber = transition warning.
+- **History panel**: a 404 renders as a grey "not available yet" note.
+- Strings: `certDesign.*`, `certBi.eqc.*` (generated "EN|AR"), in `scripts/i18n/p4-design.py`.

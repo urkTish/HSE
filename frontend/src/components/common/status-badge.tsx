@@ -1,4 +1,4 @@
-import { AlertTriangle, Archive, Ban, CheckCircle2, CircleDashed, Clock, FileCheck2, Hourglass, Info, Loader, Lock, PackageCheck, PauseCircle, PlayCircle, Search, ShieldCheck, Undo2, XCircle } from "lucide-react";
+import { AlertTriangle, Archive, Ban, OctagonAlert, CheckCircle2, CircleDashed, Clock, FileCheck2, Hourglass, Info, Loader, Lock, PackageCheck, PauseCircle, PlayCircle, Search, ShieldCheck, Undo2, XCircle } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
 
@@ -164,7 +164,7 @@ const MAP: Record<string, { tone: Tone; Icon: ComponentType<SVGProps<SVGSVGEleme
   scaffold_closed_red: { tone: "danger", Icon: Ban },
   scaffold_under_alteration: { tone: "warning", Icon: Loader },
   scaffold_dismantled: { tone: "neutral", Icon: Archive },
-  defect_A: { tone: "danger", Icon: AlertTriangle },
+  defect_A: { tone: "danger", Icon: OctagonAlert },
   defect_B: { tone: "warning", Icon: AlertTriangle },
   defect_C: { tone: "neutral", Icon: Info },
   hook_warn: { tone: "info", Icon: Info },

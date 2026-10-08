@@ -26,6 +26,8 @@ type Series = Schemas["ChartSeries"];
  *   C13 (permits by type, 9 types): the 8 slots in order plus a neutral grey for "General / cold work" (the
  *   catch-all type), so no hue repeats (the API cycles the 9th type back to series-1); the high-risk share
  *   line is ink, not violet, because violet already means "Lifting" in the same chart.
+ *   C17 (defects by category A/B/C): an ordinal one-hue ramp (--series-defect-a/b/c, darkest = A = stop use)
+ *   instead of three categorical hues, so severity reads as order and B is never "green = fine".
  */
 const ROLE_SLOT: Record<string, string> = {
   target: "var(--muted-foreground)",
@@ -44,8 +46,16 @@ const KEY_SLOT: Record<string, string> = {
   high_risk_share: "var(--foreground)",
 };
 
+/** Defect category series (C17): matched on key + backend slot, so a series that merely happens to be keyed "A" keeps its slot. */
+const DEFECT_SLOT: Record<string, { role: string; color: string }> = {
+  A: { role: "unsafe", color: "var(--series-defect-a)" },
+  B: { role: "series-3", color: "var(--series-defect-b)" },
+  C: { role: "series-4", color: "var(--series-defect-c)" },
+};
+
 export function seriesColor(role: string, key?: string): string {
   if (key && KEY_SLOT[key]) return KEY_SLOT[key];
+  if (key && DEFECT_SLOT[key]?.role === role) return DEFECT_SLOT[key].color;
   if (/^series-[1-8]$/.test(role)) return `var(--${role})`;
   return ROLE_SLOT[role] ?? "var(--series-1)";
 }

@@ -5401,7 +5401,7 @@
     "ptwControlled": "Controlled copy — check the live status by scanning the QR code|نسخة مضبوطة — تحقق من الحالة الفعلية بمسح رمز QR",
     "eqStickerTitle": "Equipment inspection sticker|ملصق فحص المعدة",
     "scanToCheck": "Scan to check certification|امسح للتحقق من الاعتماد",
-    "eqTag": "Tag|البطاقة",
+    "eqTag": "Tag|الوسم",
     "eqCategory": "Category|الفئة",
     "eqOwner": "Owner|المالك",
     "eqIssued": "Issued|الإصدار",
@@ -7649,5 +7649,77 @@
     "notInForce": "غير سارية",
     "until": "حتى {d}",
     "noCertificates": "لا توجد شهادة مسجلة."
+  },
+  "certDesign": {
+    "stateLabel": "حالة الاعتماد",
+    "doNotUse": "ممنوع الاستخدام",
+    "eq": {
+      "inServiceOk": "في الخدمة — الشهادة سارية",
+      "inServiceOkLine": "معتمدة للاستخدام. فحوص اليوم في الموقع (الملصق وفحص الوصول والعيوب) في صفحتها على المشروع.",
+      "noCert": "لا توجد شهادة سارية",
+      "noCertLine": "لا تُستخدم في الأعمال التي تتطلب اعتماداً حتى تُقبل شهادة سارية.",
+      "awaitingLine": "غير قابلة للاستخدام حتى تُقبل شهادة.",
+      "retiredLine": "خارج الخدمة نهائياً. لا تُستخدم في أي مشروع.",
+      "onProject": "اليوم في {ref}"
+    },
+    "dep": {
+      "usable": "قابلة للاستخدام في هذا المشروع اليوم",
+      "usableLine": "فحوص اليوم لهذه المعدة ناجحة.",
+      "notUsable": "ممنوع استخدامها في هذا المشروع اليوم",
+      "plannedLine": "لم تصل إلى الموقع بعد. لا تُستخدم إلا بعد الوصول وفحوصه.",
+      "endedLine": "لم تعد معيّنة في هذا المشروع."
+    },
+    "pc": {
+      "inForceLine": "سارية للنطاق والسعة والقيود المبينة في هذه الصفحة.",
+      "notInForceLine": "لا يجوز لحاملها أداء عمل يتطلب هذه البطاقة.",
+      "pendingLine": "غير سارية حتى تُراجع وتُقبل."
+    },
+    "sc": {
+      "usableRestricted": "قابلة للاستخدام اليوم — بقيود",
+      "restrictedLine": "بطاقة صفراء: لا تُستخدم إلا وفق القيود أدناه.",
+      "usableLine": "بطاقة خضراء: آمنة للاستخدام ضمن فئة الحمل.",
+      "notUsableLine": "لا تصعد على هذه السقالة ولا تحمّلها."
+    },
+    "tag": {
+      "expired": "البطاقة منتهية — ممنوع الاستخدام",
+      "inspection_required": "تتطلب فحصاً — ممنوع الاستخدام"
+    },
+    "zoneDoNotUse": "{n} ممنوع الاستخدام",
+    "zoneRestricted": "{n} بقيود",
+    "zoneGreen": "{n} خضراء",
+    "historyUnavailable": "سجل التغييرات غير متاح لهذا السجل بعد.",
+    "reqHook": {
+      "equipment_certificate": "شهادة المعدة",
+      "personnel_certificate": "شهادة الأفراد",
+      "training_course": "دورة تدريبية",
+      "medical_fitness": "اللياقة الطبية"
+    },
+    "stopGroup": "إيقاف الاستخدام",
+    "irreversible": "لا يمكن التراجع عن هذا الإجراء. تحقق من رقم المعدة قبل التأكيد.",
+    "restrictions": "القيود"
+  },
+  "certBi": {
+    "eqc": {
+      "tower_crane": "Tower crane|رافعة برجية",
+      "mobile_crane": "Mobile crane|رافعة متحركة",
+      "crawler_crane": "Crawler crane|رافعة مجنزرة",
+      "loader_crane": "Lorry loader crane|رافعة محمولة على شاحنة",
+      "overhead_gantry_crane": "Overhead / gantry crane|رافعة علوية / جسرية",
+      "construction_hoist": "Construction hoist|مصعد إنشائي",
+      "mast_climber": "Mast-climbing work platform|منصة صاعدة على صاري",
+      "bmu": "Building maintenance unit|وحدة صيانة المباني",
+      "mewp": "MEWP|منصة رفع أفراد متحركة",
+      "man_basket": "Man-basket|سلة رفع أفراد",
+      "forklift": "Forklift|رافعة شوكية",
+      "telehandler": "Telehandler|رافعة تلسكوبية",
+      "excavator": "Excavator|حفارة",
+      "wheel_loader": "Wheel / backhoe loader|لودر",
+      "piling_rig": "Piling / drilling rig|حفارة خوازيق",
+      "concrete_pump_boom": "Concrete pump boom|مضخة خرسانة بذراع",
+      "lifting_accessory": "Lifting accessory|ملحقات الرفع",
+      "tripod_winch": "CSE rescue tripod / winch|حامل ورافعة إنقاذ",
+      "pressure_vessel": "Pressure vessel|وعاء ضغط",
+      "scaffold": "Scaffold|سقالة"
+    }
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Eye, FileImage, IdCard, Pencil, Plus, Search, ShieldAlert, Trash2 } from "lucide-react";
+import { Archive, CalendarClock, CircleCheck, Clock, Eye, FileImage, IdCard, OctagonX, Pencil, Plus, Search, ShieldAlert, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -37,7 +37,7 @@ import { can, canWrite } from "@/lib/permissions";
 import { useDebounced } from "@/lib/use-debounced";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
-import { CertStatusBadge, CertTransitionButtons, CertValidityView, PersonnelLimitations, PersonnelSubNav, Tick, TpiLabel, TpiSelect, UploadField, UserName, VerificationBadge, VerificationsCard, useCertTypes } from "./common";
+import { CertStatePanel, CertStatusBadge, CertTransitionButtons, CertValidityView, PersonnelLimitations, PersonnelSubNav, Tick, TpiLabel, TpiSelect, UploadField, UserName, VerificationBadge, VerificationsCard, useCertTypes } from "./common";
 
 type S = Schemas;
 const PAGE_SIZE = 50;
@@ -617,6 +617,7 @@ function PersonnelCertView({ project, c }: { project: S["ProjectRead"]; c: S["Pe
           {c.status_reason_text ? ` — ${c.status_reason_text}` : ""}
         </Alert>
       ) : null}
+      <PersonnelCertStatePanel c={c} projectId={project.id} />
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardContent className="pt-5">
@@ -683,14 +684,6 @@ function PersonnelCertView({ project, c }: { project: S["ProjectRead"]; c: S["Pe
           </CardContent>
         </Card>
         <div className="flex flex-col gap-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">{t("validity")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CertValidityView v={c.validity} projectId={project.id} />
-            </CardContent>
-          </Card>
           {/* PC-13 / P4-1: the flag is only in the response for capability 119. */}
           {c.medical_restriction_on_card !== undefined && c.medical_restriction_on_card !== null ? (
             <Card data-testid="medical-flag" data-flag={c.medical_restriction_on_card ? "yes" : "no"}>
@@ -782,6 +775,32 @@ function PersonnelCertView({ project, c }: { project: S["ProjectRead"]; c: S["Pe
 }
 
 /** P4-3: opening a scan needs a reason, is audited (sensitive_field_read) and the URL lives ≤ 5 min. */
+const PENDING: S["CertificateStatus"][] = ["draft", "submitted"];
+const ENDED: S["CertificateStatus"][] = ["superseded", "historic"];
+
+/** In force or not, from the server's validity (strictest wins); the reason and the limiting factor come with it. */
+function PersonnelCertStatePanel({ c, projectId }: { c: S["PersonnelCertRead"]; projectId: string }) {
+  const t = useTranslations("cert");
+  const td = useTranslations("certDesign");
+  const te = useTranslations("enums");
+  const v = c.validity;
+  const pending = !v.in_force && PENDING.includes(c.status);
+  const ended = !v.in_force && ENDED.includes(c.status);
+  return (
+    <CertStatePanel
+      tone={v.in_force ? (v.expiring ? "warning" : "success") : pending ? "info" : ended ? "neutral" : "danger"}
+      Icon={v.in_force ? (v.expiring ? CalendarClock : CircleCheck) : pending ? Clock : ended ? Archive : OctagonX}
+      word={v.in_force ? t("inForce") : t("notInForce")}
+      sub={!v.in_force ? te(`certStatus.${c.status}`) : undefined}
+      line={v.in_force ? td("pc.inForceLine") : pending ? td("pc.pendingLine") : td("pc.notInForceLine")}
+      testId="pcert-state"
+      data={{ "data-in-force": v.in_force ? "yes" : "no" }}
+    >
+      <CertValidityView v={v} projectId={projectId} hideBadge />
+    </CertStatePanel>
+  );
+}
+
 function ScanDialog({ id, side, onClose }: { id: string; side: S["ScanSide"]; onClose: () => void }) {
   const t = useTranslations("pcerts");
   const te = useTranslations("enums");

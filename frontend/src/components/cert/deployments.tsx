@@ -1,6 +1,6 @@
 "use client";
 import { useQueryClient } from "@tanstack/react-query";
-import { ClipboardCheck, Plus, Printer, QrCode, RefreshCw } from "lucide-react";
+import { Archive, CircleCheck, ClipboardCheck, Clock, OctagonX, Plus, Printer, QrCode, RefreshCw } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -33,12 +33,12 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
 import { ck, useCertRefresh, useEquipmentDeployment, useEquipmentDeployments, useEquipmentList, useEquipmentSticker } from "@/lib/api/cert";
 import { ARRIVAL_CHECKLIST_ITEMS, DEFECT_CATEGORIES, EQUIPMENT_CERT_CATEGORIES, EQUIPMENT_DEPLOYMENT_STATUSES, SERVICE_STATUSES } from "@/lib/cert-enums";
-import { todayInZone } from "@/lib/datetime";
+import { formatDate, todayInZone } from "@/lib/datetime";
 import { can, canWrite } from "@/lib/permissions";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
 import { useDebounced } from "@/lib/use-debounced";
-import { EquipmentLabel, EquipmentSubNav, ServiceStatusBadge, UserName } from "./common";
+import { CertStatePanel, EquipmentLabel, EquipmentSubNav, ServiceStatusBadge, UserName, useReasonLabel } from "./common";
 
 type S = Schemas;
 const PAGE_SIZE = 50;
@@ -59,6 +59,7 @@ export function DeploymentListPage() {
 }
 
 function DeploymentList({ project }: { project: S["ProjectRead"] }) {
+  const reasonLabel = useReasonLabel();
   const t = useTranslations("eqDeployments");
   const te = useTranslations("enums");
   const tc = useTranslations("common");
@@ -142,7 +143,12 @@ function DeploymentList({ project }: { project: S["ProjectRead"] }) {
                   </TD>
                   <TD label={t("serviceStatus")}>
                     <ServiceStatusBadge status={d.equipment.service_status} />
-                    {!d.usable && d.not_usable_reason ? <span className="block text-xs text-destructive">{d.not_usable_reason}</span> : null}
+                    {!d.usable && d.not_usable_reason ? (
+                      <span className="mt-0.5 flex items-center gap-1 text-xs font-medium text-destructive" data-reason={d.not_usable_reason}>
+                        <OctagonX aria-hidden className="size-3.5 shrink-0" />
+                        {reasonLabel(d.not_usable_reason)}
+                      </span>
+                    ) : null}
                     {d.status === "on_site" && !d.arrival_inspection ? (
                       <Badge tone="warning" className="mt-1" data-testid="arrival-due">
                         {t("arrivalDue")}
@@ -375,12 +381,7 @@ function DeploymentView({ project, d }: { project: S["ProjectRead"]; d: S["Equip
           }
         />
       </div>
-      {live && !d.usable ? (
-        <Alert tone="danger" data-testid="not-usable">
-          <p className="font-semibold">{t("notUsable")}</p>
-          {d.not_usable_reason ? <p className="text-sm">{d.not_usable_reason}</p> : null}
-        </Alert>
-      ) : null}
+      <DeploymentStatePanel d={d} />
       {d.status === "on_site" && !d.arrival_inspection && d.arrival_inspection_due_at ? <Alert tone="warning">{t("arrivalDueBy", { at: dateTime(d.arrival_inspection_due_at) })}</Alert> : null}
       <ApiWarnings warnings={d.warnings} />
       <Card>
@@ -489,6 +490,47 @@ function DeploymentView({ project, d }: { project: S["ProjectRead"]; d: S["Equip
   );
 }
 
+/**
+ * "May this item be used on this project today?" — the server's `usable` and first failing check
+ * (`not_usable_reason`), in words. Planned items are blue, demobilised / cancelled grey.
+ */
+function DeploymentStatePanel({ d }: { d: S["EquipmentDeploymentRead"] }) {
+  const t = useTranslations("eqDeployments");
+  const td = useTranslations("certDesign");
+  const te = useTranslations("enums");
+  const reasonLabel = useReasonLabel();
+  const live = d.status === "approved" || d.status === "on_site";
+  if (live)
+    return d.usable ? (
+      <CertStatePanel tone="success" Icon={CircleCheck} word={td("dep.usable")} line={td("dep.usableLine")} testId="deployment-state" data={{ "data-usable": "yes" }}>
+        <span className="inline-flex flex-wrap items-center gap-2">
+          {t("serviceStatus")}: <ServiceStatusBadge status={d.equipment.service_status} />
+        </span>
+      </CertStatePanel>
+    ) : (
+      <CertStatePanel
+        tone="danger"
+        Icon={OctagonX}
+        word={td("dep.notUsable")}
+        line={d.not_usable_reason ? reasonLabel(d.not_usable_reason) : t("notUsable")}
+        testId="not-usable"
+        data={{ "data-usable": "no", "data-reason": d.not_usable_reason ?? "" }}
+      >
+        {d.not_usable_reason && reasonLabel(d.not_usable_reason) !== d.not_usable_reason ? <span className="ltr text-xs text-muted-foreground">{d.not_usable_reason}</span> : null}
+      </CertStatePanel>
+    );
+  return (
+    <CertStatePanel
+      tone={d.status === "planned" ? "info" : "neutral"}
+      Icon={d.status === "planned" ? Clock : Archive}
+      word={te(`eqDeploymentStatus.${d.status}`)}
+      line={d.status === "planned" ? td("dep.plannedLine") : td("dep.endedLine")}
+      testId="deployment-state"
+      data={{ "data-usable": "no" }}
+    />
+  );
+}
+
 /** EM-3 arrival inspection: AIC-01…08, each pass / fail / n.a.; a fail can raise a defect A/B/C. */
 function ArrivalInspectionDialog({ d, onClose }: { d: S["EquipmentDeploymentRead"]; onClose: () => void }) {
   const t = useTranslations("eqDeployments");
@@ -562,14 +604,15 @@ function ArrivalInspectionDialog({ d, onClose }: { d: S["EquipmentDeploymentRead
 export function EquipmentStickerPage({ id }: { id: string }) {
   const tc = useTranslations("common");
   const t = useTranslations("eqDeployments");
-  const te = useTranslations("enums");
   const locale = useLocale();
   const d = useEquipmentDeployment(id);
   const q = useEquipmentSticker(id);
-  const { dateTime } = useFormatters(d.data?.project_id);
+  const tb = useTranslations("certBi");
+  const { prefs } = useFormatters(d.data?.project_id);
   if (q.isError) return <ErrorState error={q.error} onRetry={() => q.refetch()} />;
   if (!q.data || !d.data) return <LoadingState />;
   const s = q.data;
+  const [catEn, catAr] = tb(`eqc.${s.category}`).split("|");
   return (
     <div className="flex flex-col items-center gap-4">
       <div className="flex gap-2 print:hidden">
@@ -582,7 +625,8 @@ export function EquipmentStickerPage({ id }: { id: string }) {
         </Button>
       </div>
       {/* 90 mm weatherproof sticker: no personal data (VF-8), labels in both languages, codes LTR. */}
-      <div className="paper flex w-[90mm] flex-col gap-2 rounded-xl border-4 border-black bg-white p-[4mm] text-black" data-testid="eq-sticker-print" lang={locale}>
+      {/* Fixed LTR like every printed document (English left, Arabic right), whatever the screen language. */}
+      <div className="paper flex w-[90mm] flex-col gap-2 rounded-xl border-4 border-black bg-white p-[4mm] text-black" data-testid="eq-sticker-print" lang={locale} dir="ltr">
         <AccessPrintHeader title="eqStickerTitle" projectId={d.data.project_id} variant="narrow" />
         <div className="flex flex-col items-center gap-1">
           <QrImage payload={s.qr_payload} size={220} label={t("stickerQr", { tag: s.tag })} />
@@ -601,9 +645,12 @@ export function EquipmentStickerPage({ id }: { id: string }) {
           <dt>
             <BiLabel k="eqCategory" className="text-[8pt]" />
           </dt>
-          <dd className="text-end font-semibold">
+          <dd className="text-end font-semibold leading-tight">
             <span lang="en" dir="ltr" className="block">
-              {te(`eqc.${s.category}`)}
+              {catEn}
+            </span>
+            <span lang="ar" dir="rtl" className="block text-right text-[9pt]">
+              {catAr}
             </span>
           </dd>
           <dt>
@@ -615,10 +662,10 @@ export function EquipmentStickerPage({ id }: { id: string }) {
           <dt>
             <BiLabel k="eqIssued" className="text-[8pt]" />
           </dt>
-          <dd className="text-end text-xs">{dateTime(s.issued_at)}</dd>
+          <dd className="text-end text-sm font-semibold whitespace-nowrap">{formatDate(s.issued_at, { ...prefs, locale: "en", showHijri: false, digits: "western" })}</dd>
         </dl>
         <p className="border-t border-black pt-1 text-center text-[7pt]">
-          <BiLabel k="eqStickerNote" stack />
+          <BiLabel k="eqStickerNote" stack className="items-center text-center" />
         </p>
       </div>
     </div>

@@ -1,5 +1,5 @@
 "use client";
-import { Camera, CircleAlert, CircleCheck, CircleHelp, CircleX, Fence, Search, Truck, UserRound } from "lucide-react";
+import { Camera, CircleAlert, CircleCheck, CircleHelp, CircleX, Fence, Search, TriangleAlert, Truck, UserRound } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +14,7 @@ import { useCurrentProject } from "@/lib/current-project";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
 import { DEFAULT_TIME_ZONE, formatDate } from "@/lib/datetime";
 import { cn } from "@/lib/utils";
-import { EquipmentLimitations, PersonnelLimitations, ServiceStatusBadge, TagStatusBadge } from "./common";
+import { EquipmentLimitations, PersonnelLimitations, ServiceStatusBadge, TAG_BORDER, TAG_TONE, TagStatusBadge, useReasonLabel } from "./common";
 
 type S = Schemas;
 
@@ -120,16 +120,29 @@ export function CertCheckPage() {
   );
 }
 
+const plain = (x: string) => x.trim().replace(/[.。]$/, "").toLocaleLowerCase();
+
 function CertCheckResult({ res }: { res: S["CertCheckResponse"] }) {
   const te = useTranslations("enums");
   const locale = useLocale();
+  const reasonLabel = useReasonLabel();
+  const ref = useRef<HTMLElement | null>(null);
+  // On a phone the result renders below the scan and manual-entry forms: bring it into view on every new result.
+  useEffect(() => {
+    ref.current?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+  }, [res]);
   const Icon = res.result === "in_service" ? CircleCheck : res.result === "restricted" ? CircleAlert : res.result === "unknown" ? CircleHelp : CircleX;
+  const word = te(`certCheckResult.${res.result}`);
+  const message = locale === "ar" ? res.message_ar : res.message_en;
+  const reason = res.reason_code ? reasonLabel(res.reason_code) : "";
   return (
-    <section className="flex flex-col gap-3" data-testid="cc-result" data-result={res.result} aria-live="assertive">
+    <section ref={ref} className="flex scroll-mt-20 flex-col gap-3" data-testid="cc-result" data-result={res.result} aria-live="assertive">
       <div className={cn("flex flex-col items-center gap-1 rounded-xl p-5 text-center shadow-md", VERDICT[res.result])} data-testid="cc-verdict">
         <Icon aria-hidden className="size-14 stroke-[3]" />
-        <p className="text-3xl leading-tight font-black tracking-tight uppercase">{te(`certCheckResult.${res.result}`)}</p>
-        <p className="text-base font-medium">{locale === "ar" ? res.message_ar : res.message_en}</p>
+        <p className="text-3xl leading-tight font-black tracking-tight uppercase">{word}</p>
+        {/* The server message often repeats the verdict word; then the reason in words is the useful second line. */}
+        {message && plain(message) !== plain(word) ? <p className="text-base font-medium">{message}</p> : null}
+        {reason && reason !== res.reason_code ? <p className="text-lg font-bold">{reason}</p> : null}
         {res.reason_code ? <p className="ltr text-xs opacity-80">{res.reason_code}</p> : null}
       </div>
       {res.equipment ? <EquipmentCheckCardView c={res.equipment} /> : null}
@@ -211,7 +224,7 @@ export function ScaffoldCheckCardView({ c }: { c: S["ScaffoldCheckCard"] }) {
   const date = useLiteDate();
   const restrictions = locale === "ar" ? c.restrictions_ar : c.restrictions_en;
   return (
-    <article className={cn("rounded-xl border-2 bg-surface p-3", c.usable_today ? "border-success" : "border-danger")} data-testid="scaffold-card" data-usable={c.usable_today ? "1" : "0"}>
+    <article className={cn("rounded-xl border-2 border-s-[10px] bg-surface p-3", TAG_BORDER[TAG_TONE[c.tag_status]])} data-testid="scaffold-card" data-usable={c.usable_today ? "1" : "0"}>
       <div className="flex items-start gap-3">
         <Fence aria-hidden className="size-10 shrink-0" />
         <div className="min-w-0 flex-1">
@@ -229,7 +242,12 @@ export function ScaffoldCheckCardView({ c }: { c: S["ScaffoldCheckCard"] }) {
       </div>
       <p className="mt-2 text-sm font-semibold">{c.usable_today ? t("usableToday") : t("notUsableToday")}</p>
       {c.tag_valid_until ? <p className="text-sm">{t("tagValidUntil", { d: date(c.tag_valid_until) })}</p> : null}
-      {restrictions ? <p className="mt-1 rounded bg-warning-bg px-2 py-1 text-sm">{restrictions}</p> : null}
+      {restrictions ? (
+        <p className="mt-2 flex items-start gap-2 rounded-md border-2 border-tag-yellow bg-warning-bg px-2 py-1.5 text-base font-semibold" dir="auto">
+          <TriangleAlert aria-hidden className="mt-0.5 size-5 shrink-0 text-warning" />
+          {restrictions}
+        </p>
+      ) : null}
     </article>
   );
 }

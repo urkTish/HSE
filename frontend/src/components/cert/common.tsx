@@ -1,6 +1,6 @@
 "use client";
 import { useQueryClient } from "@tanstack/react-query";
-import { CircleCheck, CircleX, ShieldCheck } from "lucide-react";
+import { Ban, CircleCheck, CircleX, OctagonX, ShieldCheck, TriangleAlert, type LucideIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
@@ -120,24 +120,127 @@ export function VerificationBadge({ status }: { status: S["VerificationStatus"] 
   );
 }
 
-const TAG_SWATCH: Record<S["ScaffoldTagStatus"], string> = {
-  green: "bg-[oklch(0.62_0.17_150)]",
-  yellow: "bg-[oklch(0.85_0.17_95)]",
-  red: "bg-[oklch(0.58_0.22_27)]",
-  expired: "bg-[oklch(0.58_0.22_27)]",
-  inspection_required: "bg-[oklch(0.58_0.22_27)]",
-  none: "bg-muted-foreground/40",
+/** Physical tag colour per tag status (theme-independent tag tokens): expired / inspection required hang a red tag. */
+export const TAG_TONE: Record<S["ScaffoldTagStatus"], "green" | "yellow" | "red" | "none"> = {
+  green: "green",
+  yellow: "yellow",
+  red: "red",
+  expired: "red",
+  inspection_required: "red",
+  none: "none",
+};
+export const TAG_FILL = {
+  green: "bg-tag-green text-tag-green-fg",
+  yellow: "bg-tag-yellow text-tag-yellow-fg",
+  red: "bg-tag-red text-tag-red-fg",
+  none: "bg-tag-none text-tag-none-fg",
+} as const;
+export const TAG_BORDER = { green: "border-tag-green", yellow: "border-tag-yellow", red: "border-tag-red", none: "border-tag-none" } as const;
+const TAG_ICON: Record<S["ScaffoldTagStatus"], LucideIcon> = {
+  green: CircleCheck,
+  yellow: TriangleAlert,
+  red: OctagonX,
+  expired: OctagonX,
+  inspection_required: OctagonX,
+  none: Ban,
 };
 
-/** Scaffold tag: a coloured swatch plus icon and text (never colour alone). */
-export function TagStatusBadge({ status }: { status: S["ScaffoldTagStatus"] }) {
+/**
+ * Scaffold tag chip: the solid tag colour (identical in light and dark, readable in sun) with its own icon and the
+ * tag word plus what it means ("Green — safe to use", "Tag expired — do not use"). Never colour alone.
+ */
+export function TagStatusBadge({ status, size = "sm" }: { status: S["ScaffoldTagStatus"]; size?: "sm" | "lg" }) {
   const te = useTranslations("enums");
+  const td = useTranslations("certDesign");
+  const Icon = TAG_ICON[status];
+  const label = status === "expired" || status === "inspection_required" ? td(`tag.${status}`) : te(`tagStatus.${status}`);
   return (
-    <span className="inline-flex items-center gap-1.5" data-testid="tag-status" data-status={status}>
-      <span aria-hidden className={cn("inline-block size-3 rounded-sm ring-1 ring-black/20", TAG_SWATCH[status])} />
-      <StatusBadge status={`tag_${status}`} label={te(`tagStatus.${status}`)} />
+    <span
+      className={cn(
+        "inline-flex max-w-full items-center gap-1 rounded-md font-bold",
+        size === "lg" ? "px-2.5 py-1 text-sm" : "px-1.5 py-0.5 text-xs",
+        TAG_FILL[TAG_TONE[status]],
+      )}
+      data-testid="tag-status"
+      data-status={status}
+    >
+      <Icon aria-hidden className={cn("shrink-0", size === "lg" ? "size-4" : "size-3.5")} strokeWidth={2.5} />
+      <span className="min-w-0">{label}</span>
     </span>
   );
+}
+
+/* ───────────── state panel ───────────── */
+
+export type StateTone = "success" | "warning" | "danger" | "info" | "neutral";
+const STATE_TONE_CLS: Record<StateTone, string> = {
+  success: "border-success/40 bg-success-bg [--tone:var(--status-success)]",
+  warning: "border-warning/50 bg-warning-bg [--tone:var(--status-warning)]",
+  danger: "border-danger/40 bg-danger-bg [--tone:var(--status-danger)]",
+  info: "border-info/40 bg-info-bg [--tone:var(--status-info)]",
+  neutral: "border-neutral/40 bg-neutral-bg [--tone:var(--status-neutral)]",
+};
+
+/**
+ * One-glance "may this be used today, and if not why" panel (Phase 3 permit state panel pattern): tinted 2 px border
+ * with an 8 px start bar, a 36 px icon, the state in 24 px bold and one plain sentence; details below.
+ * The state always comes from the server (service status, in_force, usable, usable_today); the UI only words it.
+ */
+export function CertStatePanel({
+  tone,
+  Icon,
+  word,
+  sub,
+  line,
+  children,
+  testId,
+  data,
+}: {
+  tone: StateTone;
+  Icon: LucideIcon;
+  word: ReactNode;
+  sub?: ReactNode;
+  line?: ReactNode;
+  children?: ReactNode;
+  testId?: string;
+  data?: Record<`data-${string}`, string>;
+}) {
+  const t = useTranslations("certDesign");
+  return (
+    <section
+      className={cn("flex flex-col gap-2 rounded-xl border-2 border-s-8 p-4 [border-inline-start-color:var(--tone)]", STATE_TONE_CLS[tone])}
+      aria-label={t("stateLabel")}
+      data-testid={testId}
+      data-tone={tone}
+      {...data}
+    >
+      <div className="flex items-start gap-3">
+        <Icon aria-hidden className="mt-0.5 size-9 shrink-0 text-[var(--tone)]" strokeWidth={2.25} />
+        <div className="min-w-0 flex-1">
+          <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <span className="text-2xl leading-tight font-bold text-[var(--tone)]" data-testid="cert-state-word">
+              {word}
+            </span>
+            {sub ? <span className="text-base font-semibold">{sub}</span> : null}
+          </p>
+          {line ? <p className="mt-0.5 text-sm font-medium">{line}</p> : null}
+          {children ? <div className="mt-2 flex flex-col gap-1.5 text-sm">{children}</div> : null}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/** A server reason code in words: hook reason, service-status reason or gate reason, else the code itself. */
+export function useReasonLabel() {
+  const te = useTranslations("enums");
+  return (code: string | null | undefined): string => {
+    if (!code) return "";
+    if (te.has(`hookReason.${code as S["HookReasonCode"]}`)) return te(`hookReason.${code as S["HookReasonCode"]}`);
+    if (te.has(`serviceStatusReason.${code as S["ServiceStatusReason"]}`)) return te(`serviceStatusReason.${code as S["ServiceStatusReason"]}`);
+    if (te.has(`gateReason.${code as S["GateReasonCode"]}`)) return te(`gateReason.${code as S["GateReasonCode"]}`);
+    return code;
+  };
 }
 
 export function ScaffoldStatusBadge({ status }: { status: S["ScaffoldStatus"] }) {
@@ -179,14 +282,14 @@ export function LineResultBadge({ result }: { result: S["LineResult"] }) {
 /* ───────────── validity ───────────── */
 
 /** Strictest-wins validity as computed by the server (the UI never computes it). */
-export function CertValidityView({ v, projectId, compact }: { v: S["CertValidity"]; projectId?: string | null; compact?: boolean }) {
+export function CertValidityView({ v, projectId, compact, hideBadge }: { v: S["CertValidity"]; projectId?: string | null; compact?: boolean; hideBadge?: boolean }) {
   const t = useTranslations("cert");
   const te = useTranslations("enums");
   const { date, dateTime } = useFormatters(projectId);
   return (
     <div className="flex flex-col gap-1 text-sm" data-testid="cert-validity" data-in-force={v.in_force ? "yes" : "no"} data-valid-until={v.valid_until ?? ""} data-factor={v.limiting_factor ?? ""}>
       <span className="flex flex-wrap items-center gap-2">
-        {v.in_force ? (
+        {hideBadge ? null : v.in_force ? (
           <Badge tone="success">
             <CircleCheck aria-hidden />
             {t("inForce")}

@@ -1,6 +1,6 @@
 "use client";
 import { useQueryClient } from "@tanstack/react-query";
-import { Ban, Pencil, Plus, Search, Tag, Trash2, Undo2, Wrench } from "lucide-react";
+import { Archive, Ban, CircleCheck, Hourglass, OctagonX, Pencil, Plus, Search, Tag, Trash2, Undo2, Wrench } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -38,7 +38,7 @@ import { useErrorMessage } from "@/lib/i18n-helpers";
 import { can, canWrite } from "@/lib/permissions";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
-import { EquipmentLimitations, EquipmentSubNav, ServiceStatusBadge, Tick, UserName, useCertTypes } from "./common";
+import { CertStatePanel, EquipmentLimitations, EquipmentSubNav, ServiceStatusBadge, Tick, UserName, useCertTypes, type StateTone } from "./common";
 
 type S = Schemas;
 const PAGE_SIZE = 50;
@@ -439,6 +439,8 @@ type EqStep = "tagout" | "rts" | "retire" | "blacklist" | "lift" | "edit" | "con
 
 function EquipmentView({ e }: { e: S["EquipmentRead"] }) {
   const t = useTranslations("equipment");
+  const td = useTranslations("certDesign");
+  const th = useTranslations("history");
   const te = useTranslations("enums");
   const tc = useTranslations("common");
   const me = useMeData();
@@ -510,6 +512,7 @@ function EquipmentView({ e }: { e: S["EquipmentRead"] }) {
                   {t("returnToService")}
                 </Button>
               ) : null}
+              {(caps.close && !terminal) || (caps.blacklist && e.service_status !== "blacklisted") ? <span aria-hidden className="mx-1 hidden h-8 w-px self-center bg-border sm:block" /> : null}
               {caps.close && !terminal ? (
                 <Button variant="destructive-outline" onClick={() => setStep("retire")} data-testid="retire-equipment">
                   {t("retire")}
@@ -530,13 +533,7 @@ function EquipmentView({ e }: { e: S["EquipmentRead"] }) {
           }
         />
       </div>
-      {e.service_status === "out_of_service" || e.service_status === "quarantined" || e.service_status === "blacklisted" ? (
-        <Alert tone="danger" data-testid="equipment-stop">
-          <p className="font-semibold">{t(`stop.${e.service_status}`)}</p>
-          {e.service_status_text ? <p className="text-sm">{e.service_status_text}</p> : null}
-          {e.service_status_since ? <p className="text-xs">{t("since", { at: dateTime(e.service_status_since) })}</p> : null}
-        </Alert>
-      ) : null}
+      <EquipmentStatePanel e={e} />
       {e.configuration_suspended ? <Alert tone="warning">{t("configSuspended")}</Alert> : null}
       <Card data-testid="current-line">
         <CardHeader>
@@ -719,7 +716,7 @@ function EquipmentView({ e }: { e: S["EquipmentRead"] }) {
               ))}
             </ol>
           ) : (
-            <p className="text-sm text-muted-foreground">{tc("noResults")}</p>
+            <p className="text-sm text-muted-foreground">{th("empty")}</p>
           )}
         </CardContent>
       </Card>
@@ -775,6 +772,7 @@ function EquipmentView({ e }: { e: S["EquipmentRead"] }) {
           description={t(`${step}Hint`)}
           confirmLabel={t(`${step}Confirm`)}
           destructive={step === "tagout" || step === "retire" || step === "blacklist"}
+          warning={step === "retire" || step === "blacklist" ? td("irreversible") : undefined}
           disabled={reason.trim().length < minReason}
           onClose={() => {
             setStep(null);
@@ -812,6 +810,64 @@ function EquipmentView({ e }: { e: S["EquipmentRead"] }) {
         </StepDialog>
       ) : null}
     </div>
+  );
+}
+
+const STOP: S["ServiceStatus"][] = ["out_of_service", "quarantined", "blacklisted"];
+
+/**
+ * Equipment state at a glance, worded from the server's service status and has_valid_certificate (the UI decides
+ * nothing): red "do not use" for out of service / quarantined / blacklisted or no certificate in force, blue while
+ * awaiting a certificate, grey once retired, green only when in service with a certificate in force.
+ */
+function EquipmentStatePanel({ e }: { e: S["EquipmentRead"] }) {
+  const t = useTranslations("equipment");
+  const td = useTranslations("certDesign");
+  const te = useTranslations("enums");
+  const { project } = useCurrentProject();
+  const { date, dateTime } = useFormatters(project?.id);
+  const stop = STOP.includes(e.service_status);
+  const ok = e.service_status === "in_service" && e.has_valid_certificate;
+  const tone: StateTone = stop || (e.service_status === "in_service" && !e.has_valid_certificate) ? "danger" : ok ? "success" : e.service_status === "retired" ? "neutral" : "info";
+  const Icon = stop ? (e.service_status === "blacklisted" ? Ban : OctagonX) : ok ? CircleCheck : e.service_status === "retired" ? Archive : e.service_status === "awaiting_certificate" ? Hourglass : OctagonX;
+  const word = stop ? te(`serviceStatus.${e.service_status}`) : ok ? td("eq.inServiceOk") : e.service_status === "in_service" ? td("eq.noCert") : te(`serviceStatus.${e.service_status}`);
+  const line = stop ? t(`stop.${e.service_status as "out_of_service" | "quarantined" | "blacklisted"}`) : ok ? td("eq.inServiceOkLine") : e.service_status === "in_service" ? td("eq.noCertLine") : e.service_status === "retired" ? td("eq.retiredLine") : td("eq.awaitingLine");
+  const line_ = e.current_line;
+  const onSite = e.deployments.filter((d) => d.status === "on_site" || d.status === "approved");
+  return (
+    <CertStatePanel
+      tone={tone}
+      Icon={Icon}
+      word={word}
+      sub={stop && e.service_status_reason && e.service_status_reason !== e.service_status ? te(`serviceStatusReason.${e.service_status_reason}`) : undefined}
+      line={line}
+      testId={stop ? "equipment-stop" : "equipment-state"}
+      data={{ "data-status": e.service_status }}
+    >
+      {stop && e.service_status_text ? (
+        <p className="whitespace-pre-line" dir="auto">
+          {e.service_status_text}
+        </p>
+      ) : null}
+      {stop && e.service_status_since ? <p className="text-xs text-muted-foreground">{t("since", { at: dateTime(e.service_status_since) })}</p> : null}
+      {!stop && line_ && line_.in_force && line_.line.valid_until ? (
+        <p className="flex flex-wrap items-center gap-2">
+          <span>
+            {t("validUntil")}: <span className="font-semibold">{date(line_.line.valid_until)}</span>
+          </span>
+          <DaysLeft days={line_.days_left} />
+        </p>
+      ) : null}
+      {onSite.length ? (
+        <p className="flex flex-wrap gap-x-3 gap-y-1">
+          {onSite.map((d) => (
+            <Link key={d.id} href={`/equipment-deployments/${d.id}`} className="font-medium text-primary hover:underline">
+              {td("eq.onProject", { ref: `${d.project_code}-${d.tag}` })} <span aria-hidden className="inline-block rtl:-scale-x-100">→</span>
+            </Link>
+          ))}
+        </p>
+      ) : null}
+    </CertStatePanel>
   );
 }
 

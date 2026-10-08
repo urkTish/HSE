@@ -1,6 +1,6 @@
 "use client";
 import { useMutation } from "@tanstack/react-query";
-import { Download, OctagonAlert, TriangleAlert } from "lucide-react";
+import { Download, Hourglass, Info, Lock, OctagonAlert, TriangleAlert } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
@@ -453,7 +453,8 @@ function CertBandView({ b, show, projectId }: { b: Schemas["CertBand"]; show: Sh
       {b.hook_stages.length ? (
         <ul className="flex flex-wrap gap-2 text-xs" data-testid="cert-band-hooks">
           {b.hook_stages.map((h) => (
-            <li key={h.kind} className={cn("rounded-md border px-2 py-1", h.stage === "block" ? "border-danger/40" : h.stage === "transition" ? "border-warning/50" : undefined)} data-stage={h.stage}>
+            <li key={h.kind} className={cn("flex items-start gap-1.5 rounded-md border px-2 py-1", h.stage === "block" ? "border-danger/40" : h.stage === "transition" ? "border-warning/50" : undefined)} data-stage={h.stage}>
+              {h.stage === "block" ? <Lock aria-hidden className="mt-px size-3.5 shrink-0 text-danger" /> : h.stage === "transition" ? <Hourglass aria-hidden className="mt-px size-3.5 shrink-0 text-warning" /> : <Info aria-hidden className="mt-px size-3.5 shrink-0 text-muted-foreground" />}
               <Link href="/hook-policy" className="hover:underline">
                 {te(`hookKind.${h.kind}`)}: <span className="font-semibold">{te(`hookStage.${h.stage}`)}</span>
                 {h.next_block_date ? <> · {h.next_block_scope === "critical" ? t("certBand.nextBlockCritical", { d: date(h.next_block_date) }) : t("certBand.nextBlockGeneral", { d: date(h.next_block_date) })}</> : null}

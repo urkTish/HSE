@@ -1,6 +1,6 @@
 "use client";
 import { useQueryClient } from "@tanstack/react-query";
-import { ClipboardCheck, CloudLightning, Plus, Printer, QrCode, RefreshCw, X } from "lucide-react";
+import { CircleCheck, ClipboardCheck, CloudLightning, OctagonX, Plus, Printer, QrCode, RefreshCw, TriangleAlert, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -35,7 +35,8 @@ import { can, canWrite } from "@/lib/permissions";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
 import { cn } from "@/lib/utils";
-import { ScaffoldStatusBadge, ScaffoldSubNav, TagStatusBadge, Tick, UserName } from "./common";
+import { CertStatePanel, ScaffoldStatusBadge, ScaffoldSubNav, TAG_BORDER, TAG_TONE, TagStatusBadge, Tick, UserName } from "./common";
+import { formatDate } from "@/lib/datetime";
 
 type S = Schemas;
 const PAGE_SIZE = 50;
@@ -317,6 +318,7 @@ type ScStep = "inspect" | "edit" | "alteration" | "dismantle" | "close_red" | "r
 
 function ScaffoldView({ project, sc }: { project: S["ProjectRead"]; sc: S["ScaffoldRead"] }) {
   const t = useTranslations("scaffolds");
+  const td = useTranslations("certDesign");
   const te = useTranslations("enums");
   const tc = useTranslations("common");
   const me = useMeData();
@@ -357,7 +359,6 @@ function ScaffoldView({ project, sc }: { project: S["ProjectRead"]; sc: S["Scaff
           description={`${sc.scaffold_no} · ${te(`scaffoldType.${sc.scaffold_type}`)} · ${sc.location_desc}`}
           actions={
             <>
-              <TagStatusBadge status={sc.tag_status} />
               <ScaffoldStatusBadge status={sc.status} />
               {inspect && live ? (
                 <Button onClick={() => setStep("inspect")} data-testid="inspect-scaffold">
@@ -403,20 +404,33 @@ function ScaffoldView({ project, sc }: { project: S["ProjectRead"]; sc: S["Scaff
           }
         />
       </div>
-      <div className={cn("rounded-lg border-2 p-4", sc.usable_today ? "border-success/50" : "border-destructive/60 bg-danger-bg/30")} data-testid="scaffold-usable" data-usable={sc.usable_today ? "yes" : "no"}>
-        <p className="text-lg font-semibold">{sc.usable_today ? t("usableToday") : t("notUsableToday")}</p>
-        {sc.tag_valid_until ? <p className="text-sm">{t("tagValidUntil", { date: date(sc.tag_valid_until) })}</p> : null}
+      <CertStatePanel
+        tone={!sc.usable_today ? "danger" : sc.tag_status === "yellow" ? "warning" : "success"}
+        Icon={!sc.usable_today ? OctagonX : sc.tag_status === "yellow" ? TriangleAlert : CircleCheck}
+        word={!sc.usable_today ? t("notUsableToday") : sc.tag_status === "yellow" ? td("sc.usableRestricted") : t("usableToday")}
+        line={!sc.usable_today ? td("sc.notUsableLine") : sc.tag_status === "yellow" ? td("sc.restrictedLine") : td("sc.usableLine")}
+        testId="scaffold-usable"
+        data={{ "data-usable": sc.usable_today ? "yes" : "no" }}
+      >
+        <p className="flex flex-wrap items-center gap-2">
+          <TagStatusBadge status={sc.tag_status} size="lg" />
+          {sc.tag_valid_until ? <span>{t("tagValidUntil", { date: date(sc.tag_valid_until) })}</span> : null}
+        </p>
         {restrictions ? (
-          <p className="mt-1 text-sm" data-testid="scaffold-restrictions">
-            <span className="font-medium">{t("restrictions")}:</span> {restrictions}
+          <p className="flex items-start gap-2 rounded-md border-2 border-tag-yellow bg-surface p-2 text-base font-semibold" data-testid="scaffold-restrictions" dir="auto">
+            <TriangleAlert aria-hidden className="mt-0.5 size-5 shrink-0 text-warning" />
+            <span>
+              <span className="block text-xs font-medium text-muted-foreground">{t("restrictions")}</span>
+              {restrictions}
+            </span>
           </p>
         ) : null}
         {sc.inspection_required_reason ? (
-          <p className="mt-1 text-sm font-medium text-destructive">
+          <p className="font-medium text-destructive">
             {t("inspectionRequired", { reason: te(`reinspectionReason.${sc.inspection_required_reason}`), at: sc.inspection_required_at ? dateTime(sc.inspection_required_at) : "" })}
           </p>
         ) : null}
-      </div>
+      </CertStatePanel>
       {sc.design_required && !sc.design_ref ? <Alert tone="warning">{t("designRequired")}</Alert> : null}
       <Card>
         <CardContent className="pt-5">
@@ -628,7 +642,7 @@ function ScaffoldBoard({ project }: { project: S["ProjectRead"] }) {
   const me = useMeData();
   const locale = useLocale();
   const opts = useProjectOptions(project.id);
-  const { date } = useFormatters(project.id);
+  const { date, hijri, prefs } = useFormatters(project.id);
   const s = useSearchState();
   const [reinspect, setReinspect] = useState(false);
   const q = useScaffoldBoard(project.id, { site_id: s.get("site_id") || null });
@@ -659,30 +673,33 @@ function ScaffoldBoard({ project }: { project: S["ProjectRead"] }) {
         <div className="flex flex-col gap-4" data-testid="scaffold-board">
           {zones.map((z) => (
             <section key={z.zone.id} className="rounded-lg border p-3" data-testid="board-zone" data-zone={z.zone.code}>
-              <h2 className="mb-2 flex flex-wrap items-baseline gap-2 text-sm font-semibold">
+              <h2 className="mb-2 flex flex-wrap items-center gap-2 text-sm font-semibold">
                 <Code>{z.zone.code}</Code>
                 <span>{locale === "ar" ? z.zone.name_ar : z.zone.name_en}</span>
                 <span className="text-xs font-normal text-muted-foreground">{t("countN", { n: z.scaffolds.length })}</span>
+                <ZoneCounts counts={z.counts} />
               </h2>
               <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
                 {z.scaffolds.map((x) => (
                   <li key={x.id}>
                     <Link
                       href={`/scaffolds/${x.id}`}
-                      className={cn(
-                        "flex min-h-touch flex-col gap-1 rounded-md border-2 p-2 hover:shadow",
-                        x.tag_status === "green" && "border-[oklch(0.62_0.17_150)]",
-                        x.tag_status === "yellow" && "border-[oklch(0.8_0.17_95)] bg-warning-bg/40",
-                        (x.tag_status === "red" || x.tag_status === "expired" || x.tag_status === "inspection_required") && "border-destructive bg-danger-bg/40",
-                      )}
+                      className={cn("flex h-full min-h-touch flex-col gap-1.5 rounded-md border-2 border-s-[10px] bg-surface p-2 hover:shadow", TAG_BORDER[TAG_TONE[x.tag_status]])}
                       data-testid="board-tag"
                       data-tag={x.tag}
                       data-tag-status={x.tag_status}
                     >
-                      <span className="ltr text-base font-bold">{x.tag}</span>
+                      <span className="ltr text-lg leading-tight font-bold">{x.tag}</span>
                       <TagStatusBadge status={x.tag_status} />
-                      <span className="text-xs text-muted-foreground">
-                        {x.tag_valid_until ? t("tagValidUntil", { date: date(x.tag_valid_until) }) : te(`scaffoldStatus.${x.status}`)}
+                      <span className="text-xs leading-snug">
+                        {x.tag_valid_until ? (
+                          <>
+                            {t("tagValidUntil", { date: formatDate(x.tag_valid_until, { ...prefs, showHijri: false }) })}
+                            {prefs.showHijri ? <span className="block text-muted-foreground">{hijri(x.tag_valid_until)}</span> : null}
+                          </>
+                        ) : (
+                          <span className="text-muted-foreground">{te(`scaffoldStatus.${x.status}`)}</span>
+                        )}
                       </span>
                     </Link>
                   </li>
@@ -696,6 +713,36 @@ function ScaffoldBoard({ project }: { project: S["ProjectRead"] }) {
       )}
       {reinspect ? <ReinspectionDialog project={project} onClose={() => setReinspect(false)} /> : null}
     </div>
+  );
+}
+
+/** Zone summary from the server's per-tag counts: what cannot be used first, never colour alone. */
+function ZoneCounts({ counts }: { counts: Record<string, number> }) {
+  const td = useTranslations("certDesign");
+  const dnu = (counts.red ?? 0) + (counts.expired ?? 0) + (counts.inspection_required ?? 0);
+  const yellow = counts.yellow ?? 0;
+  const green = counts.green ?? 0;
+  return (
+    <span className="flex flex-wrap items-center gap-1.5 text-xs font-semibold" data-testid="zone-counts">
+      {dnu ? (
+        <span className="inline-flex items-center gap-1 rounded-md bg-tag-red px-1.5 py-0.5 text-tag-red-fg">
+          <OctagonX aria-hidden className="size-3.5" />
+          {td("zoneDoNotUse", { n: dnu })}
+        </span>
+      ) : null}
+      {yellow ? (
+        <span className="inline-flex items-center gap-1 rounded-md bg-tag-yellow px-1.5 py-0.5 text-tag-yellow-fg">
+          <TriangleAlert aria-hidden className="size-3.5" />
+          {td("zoneRestricted", { n: yellow })}
+        </span>
+      ) : null}
+      {green ? (
+        <span className="inline-flex items-center gap-1 rounded-md border border-tag-green px-1.5 py-0.5 text-success">
+          <CircleCheck aria-hidden className="size-3.5" />
+          {td("zoneGreen", { n: green })}
+        </span>
+      ) : null}
+    </span>
   );
 }
 
@@ -777,7 +824,8 @@ export function ScaffoldStickerPage({ id }: { id: string }) {
           <Link href={`/scaffolds/${id}`}>{tc("back")}</Link>
         </Button>
       </div>
-      <div className="paper flex w-[90mm] flex-col gap-2 rounded-xl border-4 border-black bg-white p-[4mm] text-black" data-testid="scaffold-sticker-print" lang={locale}>
+      {/* Fixed LTR like every printed document (English left, Arabic right), whatever the screen language. */}
+      <div className="paper flex w-[90mm] flex-col gap-2 rounded-xl border-4 border-black bg-white p-[4mm] text-black" data-testid="scaffold-sticker-print" lang={locale} dir="ltr">
         <AccessPrintHeader title="scaffoldTagTitle" projectId={sc.data.project_id} variant="narrow" />
         <div className="flex flex-col items-center gap-1">
           <QrImage payload={s.qr_payload} size={220} label={t("stickerQr", { tag: s.tag })} />
@@ -813,7 +861,7 @@ export function ScaffoldStickerPage({ id }: { id: string }) {
           </dd>
         </dl>
         <p className="border-t border-black pt-1 text-center text-[7pt]">
-          <BiLabel k="scStickerNote" stack />
+          <BiLabel k="scStickerNote" stack className="items-center text-center" />
         </p>
       </div>
     </div>

@@ -227,6 +227,8 @@ function BlacklistRegister({ project }: { project: S["ProjectRead"] }) {
     if (!c) return t("notAcceptedOnly");
     if (te.has(`banReason.${c as S["BanReason"]}`)) return te(`banReason.${c as S["BanReason"]}`);
     if (te.has(`equipmentBlacklistReason.${c as S["EquipmentBlacklistReason"]}`)) return te(`equipmentBlacklistReason.${c as S["EquipmentBlacklistReason"]}`);
+    // A TPI row carries its blacklist scope here (e.g. all_certificates).
+    if (te.has(`tpiBlacklistScope.${c as S["TpiBlacklistScope"]}`)) return te(`tpiBlacklistScope.${c as S["TpiBlacklistScope"]}`);
     return c;
   };
   const href = (r: S["BlacklistRegisterRow"]) => (r.subject === "equipment" ? `/equipment/${r.subject_id}` : r.subject === "tpi" ? `/tpis/${r.subject_id}` : `/workers/${r.subject_id}`);
@@ -269,7 +271,7 @@ function BlacklistRegister({ project }: { project: S["ProjectRead"] }) {
                 <TD label={t("from")}>{date(r.from_date)}</TD>
                 <TD label={t("reviewOn")}>{r.review_due_on ? date(r.review_due_on) : "—"}</TD>
                 <TD label={tc("status")}>
-                  <StatusBadge status={r.status === "active" || r.status === "blacklisted" ? "blacklisted" : "lifted"} label={te.has(`banStatus.${r.status as S["BanStatus"]}`) ? te(`banStatus.${r.status as S["BanStatus"]}`) : r.status} />
+                  <StatusBadge status={r.status === "active" || r.status === "blacklisted" ? "blacklisted" : "lifted"} label={te.has(`banStatus.${r.status as S["BanStatus"]}`) ? te(`banStatus.${r.status as S["BanStatus"]}`) : te.has(`serviceStatus.${r.status as S["ServiceStatus"]}`) ? te(`serviceStatus.${r.status as S["ServiceStatus"]}`) : r.status} />
                 </TD>
               </TR>
             ))}

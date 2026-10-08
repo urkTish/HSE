@@ -1,15 +1,16 @@
 # Progress
 
 ## Current
-- Phase: 4 — Third-party certification
-- Module: third-party certification (spec `docs/specs/4-third-party-cert.md` v1.0)
-- Step: Contract v0.5.0 published (backend stage 1); frontend built against the contract and integrated with the stage 2 backend and the Phase 4 seed; next: design pass
+- Phase: 5 — Training certificates
+- Module: training (spec `docs/specs/5-training.md` v1.0)
+- Step: Contract
 
 ## Phase log
 - Phase 0 — Foundation: built, e2e green, design pass done (2026-10-05). The user asked to continue phase after phase without per-phase approval; open questions are collected below for a single review.
 - Phase 1 — Dashboard (with AI): built, e2e green, design pass done (2026-10-06).
 - Phase 2 — Site / Airport access permits: built, e2e green, design pass done (2026-10-07).
 - Phase 3 — Permit to Work: built, e2e green, design pass done (2026-10-08).
+- Phase 4 — Third-party certification: built, e2e green, design pass done (2026-10-08).
 
 ## Done
 
@@ -494,6 +495,17 @@
 - E2E (Playwright, real backend): full suite 71 passed, 2 skipped (screenshot specs, on demand) on a fresh migrated + seeded DB — 35 Phase 0 + 36 Phase 1 tests in `e2e/p1-*.spec.ts` — dashboard (AC55, 59, 60, 61, 62, 63, 64, filters in URL, drill-down, charts, mobile), AI (AC65, 72, 73, 74, 75, insufficient data, errors, Arabic) via a recorded SSE stream in `e2e/fixtures/ai-stream.ts` (typed against the contract, replayed with `page.route`; test-only), workforce/import (AC2, 3, 4, 7, 10), incidents/PDPL (AC13, 19, 20, 21, 29, 30, 31, 33), CAs (AC40, 41, 42, 43), observations (AC35) and create flows for observations, inspections, meetings, settings, reports. Phase 0 specs unchanged except a wait in AC12 (options load asynchronously).
 - Screenshots: `docs/screenshots/phase-1/` (run `SCREENSHOTS=1 npx playwright test e2e/screenshots-p1.spec.ts`).
 
+### Design pass — Phase 4 (UI/UX Designer)
+- Design pass: done (Phase 4).
+  - Findings, ranking and the Phase 4 design-system additions: `docs/design/phase-4-findings.md`.
+  - Before/after screenshots: `docs/screenshots/phase-4/design/`.
+- **"May it be used today, and why not" at a glance.** A shared certification state panel (the Phase 3 permit panel pattern) on the equipment page, the equipment-on-project page, the personnel card and the scaffold page. It words the server's state: red "do not use" (out of service, quarantined, blacklisted, no certificate in force, not usable on this project + the failing check in words), amber "usable with restrictions" (yellow tag, restriction in a bold bordered box), green only when usable / in force, blue for not-yet, grey for ended.
+- **Scaffold tags.** Solid, theme-independent tag tokens (green / yellow / red, readable in sun); every tag chip has its own icon and word ("Tag expired — do not use"). Board tiles have a tag-colour start bar, larger tag numbers, Gregorian date with Hijri as a second line, and zone counts ("1 do not use · 1 with restrictions · 30 green").
+- **Field check.** The result scrolls into view on phones, shows the reason in words instead of repeating the verdict, and the scaffold card follows the tag colour.
+- **Smaller items.** Change history 404 → grey "not available yet" note; raw codes translated (deployment reason, blacklist register status / TPI scope); Retire / Blacklist separated from Tag out with an irreversible warning; Phase 4 hooks named "Equipment / Personnel certificate" instead of "Later-phase requirement", red / amber start bars for hard stops / transition warnings; stickers fixed LTR with bilingual category and a one-calendar issue date; C17 ordinal defect ramp (validated); defect A octagon; hook-stage icons on the band.
+- No business logic, API calls, permissions, KPI values or data shown changed. E2E selectors unchanged. New strings in `scripts/i18n/p4-design.py`.
+- Checks: see the final report of this pass (lint, typecheck, i18n:check, build, full e2e).
+
 ### Design pass — Phase 3 (UI/UX Designer)
 - Design pass: done (Phase 3).
   - Findings, ranking and the Phase 3 design-system additions: `docs/design/phase-3-findings.md`.
@@ -627,6 +639,9 @@
 - (Frontend, low priority, not blocking) `GET /contractors/{id}/engagements` (engagements of one contractor across the caller's projects) so the contractor detail page can list where a firm is engaged. Today that view would need one request per project.
 - (Frontend, Phase 4, low) Document `owner_id` for the Phase 4 attachment owner types in the contract. The backend now accepts the TPI id for `tpi_accreditation_certificate` (uploaded before the accreditation exists). The UI uses the certificate id for `equipment_certificate_scan`, `personnel_cert_scan` and `verification_evidence`, the defect id for `defect_photo`, the scaffold id for `scaffold_inspection_photo` and the item id for `equipment_document`; all work against the stage 2 backend.
 - (Frontend, Phase 4, low) Document that `CertCheckRequest.project_id` is required for `printed_ref` and `cert_no` lookups (optional for QR payloads; 422 otherwise). The UI now sends every check with the current project.
+- (Design, Phase 4, medium) `GET /history/{entity_type}/{entity_id}` answers 404 for the Phase 4 entity types (equipment item, equipment deployment, scaffold, personnel certificate, defect…): `_history_allowed` in `services/audit_read.py` has no Phase 4 branch. The UI now shows "Change history is not available for this record yet"; the backend should add the Phase 4 types (project scope from the record).
+- (Design, Phase 4, low) `in_force`, `expiring`, `days_left`, `limiting_factor` on `EquipmentListItem` and the equipment deployment list item (proposal P15).
+- (Design, Phase 4, low) `current_line` (`EquipmentLineSummary`) on `EquipmentDeploymentRead` (proposal P16).
 
 ## Design proposals
 L items from the Phase 0 design pass, waiting for the user's decision at the phase demo (details in `docs/design/phase-0-findings.md`):
@@ -654,3 +669,9 @@ L items from the Phase 3 design pass (details in `docs/design/phase-3-findings.m
 - **P12. One-page permit print.** A 6-person crew permit now prints on two A4 pages (the authorisation block moves to page 2). Proposal: crew in two columns, conditions and emergency side by side, signatures beside the QR; plus the project logo (P9).
 - **P13. Per-reading gas evaluation in the live preview.** Needs the contract request above. The failing input itself would then turn red; today the UI shows the fail codes, the limits under each input and the worst reading.
 - **P14. Risk matrix direction in Arabic.** This pass mirrors the 5×5 grid in RTL (severity grows to the left, like the rest of the layout). If HSE prefers the matrix identical to printed English standards in both languages, it is a one-line switch back to LTR. Needs the HSE Manager's call.
+
+L items from the Phase 4 design pass (details in `docs/design/phase-4-findings.md`):
+- **P15. In-force / days-left on equipment list rows.** The equipment register and the deployments list show only a valid-until date, so an expired or expiring crane certificate does not stand out. Needs `in_force`, `expiring`, `days_left`, `limiting_factor` on `EquipmentListItem` and the deployment list item (contract change; the UI must not compute validity).
+- **P16. Certificate line on the deployment page.** The equipment-on-project page (the one an engineer opens for "the crane on my site") shows usable / not usable but not the certificate number, TPI, SWL and limitations. Needs `current_line` on `EquipmentDeploymentRead`.
+- **P17. Tag board field display.** A "problems only" toggle and a kiosk / TV mode for site offices (large tiles, problems first per zone, auto-refresh, no navigation chrome).
+- **P1 / P2 also apply to Phase 4.** Two-calendar dates make certificate rows 4–5 lines; equipment, scaffold and personnel-card actions come before the state on phones.

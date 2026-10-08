@@ -161,6 +161,7 @@ export function ValidityLine({ v, projectId }: { v: Schemas["ValidityBlock"]; pr
 /** Eligibility / prerequisite items. Hook "warn" items are amber information, never errors. */
 export function EligibilityItems({ items, projectId }: { items: Schemas["EligibilityItem"][]; projectId?: string | null }) {
   const te = useTranslations("enums");
+  const td = useTranslations("certDesign");
   const ar = useLocale() === "ar";
   const { date } = useFormatters(projectId);
   if (items.length === 0) return null;
@@ -169,9 +170,20 @@ export function EligibilityItems({ items, projectId }: { items: Schemas["Eligibi
       {items.map((i, idx) => {
         const msg = ar ? i.message_ar : i.message_en;
         return (
-          <li key={`${i.kind}-${i.code ?? ""}-${idx}`} className={cn("flex flex-wrap items-center justify-between gap-2 p-2.5 text-sm", i.status === "warn" && i.reason_code !== "HOOK_NOT_AVAILABLE" && "bg-warning-bg/50", i.hard_stop && "bg-danger-bg/50")} data-testid="eligibility-item" data-status={i.status} data-reason={i.reason_code ?? ""}>
+          <li
+            key={`${i.kind}-${i.code ?? ""}-${idx}`}
+            className={cn(
+              "flex flex-wrap items-center justify-between gap-2 border-s-4 border-s-transparent p-2.5 text-sm",
+              i.status === "warn" && i.reason_code !== "HOOK_NOT_AVAILABLE" && "border-s-warning bg-warning-bg/50",
+              i.hard_stop && "border-s-danger bg-danger-bg/50",
+            )}
+            data-testid="eligibility-item"
+            data-status={i.status}
+            data-reason={i.reason_code ?? ""}
+          >
             <span className="min-w-0">
-              <span className="font-medium">{te(`requirementKind.${i.kind}`)}</span>
+              {/* Phase 4+ hooks name what they check ("Equipment certificate"); "Later-phase requirement" stays for hooks not built yet. */}
+              <span className="font-medium">{i.kind === "hook" && i.hook_kind && i.reason_code !== "HOOK_NOT_AVAILABLE" ? td(`reqHook.${i.hook_kind}`) : te(`requirementKind.${i.kind}`)}</span>
               {i.code ? (
                 <>
                   {" · "}

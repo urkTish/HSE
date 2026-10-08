@@ -1,12 +1,12 @@
 "use client";
-import { History } from "lucide-react";
+import { History, Info } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Pagination } from "@/components/common/pagination";
 import { ErrorState, LoadingState } from "@/components/common/states";
 import { useHistory } from "@/lib/api/queries";
-import type { Schemas } from "@/lib/api/client";
+import { ApiError, type Schemas } from "@/lib/api/client";
 import { useFormatters } from "@/lib/use-formatters";
 
 function show(v: unknown): string {
@@ -52,6 +52,7 @@ export function HistoryPanel({
   projectId?: string | null;
 }) {
   const t = useTranslations("history");
+  const td = useTranslations("certDesign");
   const ta = useTranslations("audit.action");
   const { dateTime } = useFormatters(projectId);
   const [page, setPage] = useState(1);
@@ -69,6 +70,13 @@ export function HistoryPanel({
       <CardContent>
         {q.isLoading ? (
           <LoadingState rows={2} />
+        ) : q.isError && q.error instanceof ApiError && q.error.status === 404 ? (
+          // The record itself is on screen, so a 404 here means no history is kept for this record type yet:
+          // a calm grey "not available yet" note, not a full-size "Not found" error under a record that exists.
+          <p className="flex items-center gap-2 text-sm text-muted-foreground" data-testid="history-unavailable">
+            <Info aria-hidden className="size-4 shrink-0" />
+            {td("historyUnavailable")}
+          </p>
         ) : q.isError ? (
           <ErrorState error={q.error} onRetry={() => q.refetch()} />
         ) : items.length === 0 ? (

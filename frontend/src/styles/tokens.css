@@ -69,6 +69,19 @@
   --verdict-neutral: #475569;
   --verdict-neutral-fg: #ffffff;
 
+  /* Scaffold tag colours (Phase 4): the physical tag hung on the scaffold, so solid fills that are identical in
+     light and dark (like the verdicts) and readable in direct sun. Text on each fill (checked): green 7.1:1,
+     yellow 10.0:1 (near-black), red 6.6:1, none 7.6:1. Never colour alone: every tag chip carries an icon and a
+     word ("Green — safe to use"). Use them only for scaffold tags. */
+  --tag-green: #166534;
+  --tag-green-fg: #ffffff;
+  --tag-yellow: #f5b000;
+  --tag-yellow-fg: #111111;
+  --tag-red: #b42318;
+  --tag-red-fg: #ffffff;
+  --tag-none: #475569;
+  --tag-none-fg: #ffffff;
+
   /* Layout */
   --sidebar-width: 16rem;
   --topbar-h: 3.5rem;
@@ -138,6 +151,11 @@
   --series-8: #e34948; /* red */
   /* Neutral series for a catch-all category only (C13 "General / cold work"); deliberately grey, never a 9th hue. */
   --series-neutral: #8f99a8;
+  /* C17 defect categories (Phase 4): ordinal, one orange hue, darkest = most severe (A = stop use).
+     Validated as an ordinal ramp (C→A) on the light surface: monotone lightness, light end 2.28:1. */
+  --series-defect-a: #8a2f0c;
+  --series-defect-b: #d95926;
+  --series-defect-c: #f0956c;
   --chart-grid: #e1e4ea;
   --chart-axis: #b8c0cc;
 
@@ -190,6 +208,10 @@
     --series-7: #9085e9;
     --series-8: #e66767;
     --series-neutral: #6b7686;
+    /* Dark: the ramp runs outward from the dark surface, so A (most severe) is the brightest; C at 2.79:1. */
+    --series-defect-a: #f6a47f;
+    --series-defect-b: #dc6232;
+    --series-defect-c: #a34418;
     --chart-grid: #263247;
     --chart-axis: #3a4860;
     --sidebar: #080d17;
@@ -241,6 +263,9 @@
   --series-7: #9085e9;
   --series-8: #e66767;
   --series-neutral: #6b7686;
+  --series-defect-a: #f6a47f;
+  --series-defect-b: #dc6232;
+  --series-defect-c: #a34418;
   --chart-grid: #263247;
   --chart-axis: #3a4860;
   --sidebar: #080d17;
