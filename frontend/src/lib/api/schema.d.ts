@@ -1991,6 +1991,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/kpi/occupational-health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Occupational health KPIs K-89…K-96 with breakdowns (6a-occupational-health §6.6)
+         * @description Common filters (all /kpi endpoints): `project_id` (repeatable) or `all_projects`, `site_id`, `zone_id`, `zone_type`, `engagement_id` (+ `include_subcontractors`, default true), `tier`, `period` (+ `anchor` or `start`/`end` for custom), `as_of`, `compare`. Role scope is applied first (D-3): a narrower scope is reported in `context.filters.scope_narrowed`. Capability 38. Plus `trade`, `code` and `code_category` (medical KPIs only). Capability 162; Viewer/Client and tier-1 roles get aggregates with cells of 1–4 persons shown as "<5" (MK-3). `group_by` adds breakdown tables (MK-4).
+         */
+        get: operations["get_occupational_health_kpis"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/dashboard/action-panel": {
         parameters: {
             query?: never;
@@ -7948,6 +7968,704 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/{project_id}/medical-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Phase 6a project settings (§3.12; capability 146 to read) */
+        get: operations["get_medical_settings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edit Phase 6a settings (capability 164, HSE Manager; allowed ranges only; tighten-only keys → SETTING_LOOSENING; audited) */
+        patch: operations["update_medical_settings"];
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/medical-hooks/enable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Enable medical hooks → kind medical_fitness in transition (HK6-1; capability 164; MEDICAL_REGISTER_NOT_LIVE / NO_MEDICAL_PROVIDER) */
+        post: operations["enable_medical_hooks"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/medical-imports/template": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download the medical import template (IM6-2) */
+        get: operations["medical_import_template"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/medical-imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Medical import history */
+        get: operations["list_medical_imports"];
+        put?: never;
+        /**
+         * Upload a fitness-status file and run the dry-run validation (capability 161)
+         * @description Validates every row (E01-E10, W01-W04) and writes nothing. Status data only: a column that looks clinical → E10 for the file. `.csv` or `.xlsx`, ≤ 5 MB, ≤ 5,000 rows. `clinic_register_file` needs capability 157 and `provider_id`; its rows are committed as Accepted and verified (method clinic_register_file). `contractor_file` rows are committed as Draft (the scan is still needed), never Accepted. Commit within 60 min.
+         */
+        post: operations["create_medical_import"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/medical-imports/{batch_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Import batch with its validation report (IDs masked) */
+        get: operations["get_medical_import"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/medical-imports/{batch_id}/commit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Commit the valid rows (Submitted; 409 IMPORT_EXPIRED after 60 min) */
+        post: operations["commit_medical_import"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/medical-imports/{batch_id}/discard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Discard a validated batch */
+        post: operations["discard_medical_import"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fitness-reference": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** §3.10 reference lists with EN/AR labels (restrictions with negates / review, exposure groups, outcomes, assessment types, hints) */
+        get: operations["get_fitness_reference"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fitness-codes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Fitness code catalogue (capability 146; org-wide) */
+        get: operations["list_fitness_codes"];
+        put?: never;
+        /** Create a fitness code (capability 147; CODE_IN_OTHER_CATALOGUE, MC-2; MC-4) */
+        post: operations["create_fitness_code"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fitness-codes/{code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One fitness code */
+        get: operations["get_fitness_code"];
+        put?: never;
+        post?: never;
+        /** Delete an unused fitness code (in use → 409 FITNESS_CODE_IN_USE: make inactive) */
+        delete: operations["delete_fitness_code"];
+        options?: never;
+        head?: never;
+        /** Edit a fitness code — tighten only (MC-3: 422 CATALOGUE_LOOSENING); a shorter validity recomputes every line and alerts workers now expiring ≤ 30 days */
+        patch: operations["update_fitness_code"];
+        trace?: never;
+    };
+    "/api/v1/medical-providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Medical provider register (capability 146; org-wide) */
+        get: operations["list_medical_providers"];
+        put?: never;
+        /** Create a medical provider → Draft (capability 148) */
+        post: operations["create_medical_provider"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/medical-providers/{provider_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One medical provider */
+        get: operations["get_medical_provider"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edit a provider (capability 148; Draft / Pending Approval; licence fields any time) */
+        patch: operations["update_medical_provider"];
+        trace?: never;
+    };
+    "/api/v1/medical-providers/{provider_id}/transitions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Provider workflow (§4.1): submit (148; licence_checked_at, MP-2) · approve / return / suspend / reinstate / blacklist / lift_blacklist (149). A blacklist revokes the assessments in scope (MP-6) */
+        post: operations["transition_medical_provider"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/medical-providers/{provider_id}/affected": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Workers whose in-force lines come from the provider (MP-6 re-examination list; capability 157) */
+        get: operations["get_medical_provider_affected"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/medical-examiners": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Examiner registrations (capability 146; licence fields with 148) */
+        get: operations["list_medical_examiners"];
+        put?: never;
+        /** Register an examiner → Active (capability 148; EX-1 licence check) */
+        post: operations["create_medical_examiner"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/medical-examiners/{examiner_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One examiner registration */
+        get: operations["get_medical_examiner"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edit names, providers or the linked user (capability 148; a licence renewal is a new registration, EX-4) */
+        patch: operations["update_medical_examiner"];
+        trace?: never;
+    };
+    "/api/v1/medical-examiners/{examiner_id}/transitions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Suspend / reinstate / withdraw an examiner registration (capability 149, §4.2) */
+        post: operations["transition_medical_examiner"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/medical-plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Requirement plan at as_of: manual, hook-derived (H) and enforcement-only (E) lines with counted / met / gap figures (capability 146) */
+        get: operations["get_medical_plan"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/medical-plan/lines": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add a manual plan line from today (capability 150; DUE_DAYS_NOT_ALLOWED for hook codes) */
+        post: operations["create_medical_plan_line"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/medical-plan-lines/{line_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change a manual line → new version from today (derived lines: 422 LINE_DERIVED_FROM_HOOK; loosening: HSE Manager + reason, else PLAN_LOOSENING) */
+        patch: operations["update_medical_plan_line"];
+        trace?: never;
+    };
+    "/api/v1/medical-plan-lines/{line_id}/remove": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Remove a manual line (HSE Manager, reason ≥ 20 chars: effective_to = yesterday; others 422 PLAN_LOOSENING, MR-5) */
+        post: operations["remove_medical_plan_line"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/medical-plan-lines/{line_id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Every version of a plan line (MR-1) */
+        get: operations["get_medical_plan_line_versions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/medical-exemptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Always 422 EXEMPTION_NOT_ALLOWED: there are no medical exemptions (MR-6) */
+        post: operations["create_medical_exemption"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/deployments/{deployment_id}/health-profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Worker health profile: exposure groups with history (capability 155 or 151) */
+        get: operations["get_health_profile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edit exposure groups from today (capability 151; WP-1, WP-2) */
+        patch: operations["update_health_profile"];
+        trace?: never;
+    };
+    "/api/v1/deployments/{deployment_id}/fitness-requirements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Per-deployment fitness requirements at as_of (§6.3; tiered, capability 155) */
+        get: operations["get_fitness_requirements"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/fitness-gaps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Fitness gap register at as_of (counted requirements in gap; capability 155, C scope; reasons tier 3 only; names only with capability 46) */
+        get: operations["list_fitness_gaps"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/fitness-assessments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Fitness assessment register (capability 156; tier-3 fields with 157; C scope) */
+        get: operations["list_fitness_assessments"];
+        put?: never;
+        /** Record a site-clinic assessment (152; the examiner's linked user signs on save with step-up re-auth) or an external certificate (153 → Draft) */
+        post: operations["create_fitness_assessment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fitness-assessments/{assessment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One assessment (tiered, OH-2; tier-2/3 reads audited sensitive_field_read) */
+        get: operations["get_fitness_assessment"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edit a Draft / Awaiting Sign-off assessment; Accepted > 24 h → 409 ASSESSMENT_LOCKED (FA-14) */
+        patch: operations["update_fitness_assessment"];
+        trace?: never;
+    };
+    "/api/v1/fitness-assessments/{assessment_id}/transitions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** §4.3: sign (linked examiner, re-auth) · return · submit (scan) · accept / reject (154 ≠ submitter; clinical_data_present) · revoke (157, reason ≥ 20) */
+        post: operations["transition_fitness_assessment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fitness-assessments/{assessment_id}/verifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Verification log of an assessment (capability 157) */
+        get: operations["list_fitness_verifications"];
+        put?: never;
+        /** Record a verification with the issuing clinic (154; FV-2…FV-5) */
+        post: operations["create_fitness_verification"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fitness-assessments/{assessment_id}/scan-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Signed URL ≤ 5 min to the certificate scan (capability 160, reason required; audited sensitive_field_read ['fitness_scan']) */
+        post: operations["get_fitness_scan_url"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workers/{worker_id}/fitness": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Worker fitness status per code on a project (HK6-6 at `at`; tiered OH-2) */
+        get: operations["get_worker_fitness"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workers/{worker_id}/fitness-report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Per-worker data-subject report (capability 165; audited export, P6-9) */
+        get: operations["get_worker_fitness_report"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/fitness-holds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Holds register (capability 156; reasons tier 3; C scope) */
+        get: operations["list_fitness_holds"];
+        put?: never;
+        /** Place a manual hold (capability 159; reason_text ≥ 20 chars, FH-1c) */
+        post: operations["create_fitness_hold"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fitness-holds/{hold_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One hold (tier 2: existence and dates; tier 3: reason and source) */
+        get: operations["get_fitness_hold"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fitness-holds/{hold_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel a hold (capability 159, OH Practitioner / HSE Manager; reason ≥ 20 chars) */
+        post: operations["cancel_fitness_hold"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fitness-holds/{hold_id}/release": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Always 422 HOLD_RELEASE_REQUIRES_ASSESSMENT: a hold is released only by an accepted return-to-work / referral assessment (FH-3) */
+        post: operations["release_fitness_hold"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/fitness-referrals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Referrals register (capability 156, or the referrer's own; reasons tier 3) */
+        get: operations["list_fitness_referrals"];
+        put?: never;
+        /** Raise a referral (capability 158 within RF-2 scope); remove_from_work creates a hold (FH-1b); heat_illness_episode warns INCIDENT_RECORD_EXPECTED (RF-6) */
+        post: operations["create_fitness_referral"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fitness-referrals/{referral_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One referral */
+        get: operations["get_fitness_referral"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/fitness-referrals/{referral_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel a referral (referrer before due_at when not removed from work; otherwise capability 159; reason ≥ 20 chars, RF-5) */
+        post: operations["cancel_fitness_referral"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/privacy-notice": {
         parameters: {
             query?: never;
@@ -8291,6 +9009,11 @@ export interface components {
             hook_requirements_by_crew_role: {
                 [key: string]: components["schemas"]["HookRequirementRead"][];
             };
+            /**
+             * Project Hook Requirements
+             * @description v1.4 (6a §11.3): evaluated at site gates and every zone (ZP-4 step 8); 6a seeds medical_fitness GEN-FIT on enable. Edited through the 6a settings.
+             */
+            project_hook_requirements?: components["schemas"]["HookRequirementRead"][];
             /** Updated At */
             updated_at: string | null;
             updated_by: components["schemas"]["UserRef"] | null;
@@ -8561,7 +9284,7 @@ export interface components {
          * @description §8.1 item 6.
          * @enum {string}
          */
-        ActionPanelItem: "overdue_cas" | "cas_pending_verification" | "investigations_overdue" | "incidents_unclassified" | "external_notifications_due" | "open_lti_cases" | "missed_inspections" | "missing_daily_returns" | "high_risk_observations_without_ca" | "leading_warnings" | "pass_applications_stale" | "raised_suspensions_pending" | "unreturned_overdue" | "lost_without_authority_notice" | "waps_approved_blocked" | "ops_suspensions_active" | "notam_not_issued_48h" | "revoked_token_scans" | "admitted_despite_denial" | "induction_language_mismatch" | "permits_requested_unreviewed" | "permits_approved_not_issued" | "permits_suspended_non_routine" | "shift_lapses_today" | "post_expiry_checks_pending" | "gas_tests_failed_24h" | "simops_open_starting_24h" | "ptw_critical_findings_ca_not_started" | "ptw_audits_behind_plan" | "orphan_isolations" | "quarantined_detectors_on_live_permits" | "midday_exemptions_active" | "lock_cuts_7d" | "certs_awaiting_review" | "verifications_overdue" | "verification_failed_undecided" | "certs_unable_to_verify" | "a_defects_open" | "b_defects_due_3d" | "unusable_equipment_on_permits" | "arrival_inspections_overdue" | "scaffolds_tag_not_valid" | "trade_cert_missing" | "hook_block_soon_not_ready" | "ban_reviews_due" | "training_records_awaiting_review" | "training_verifications_overdue" | "training_verification_failed_undecided" | "training_unable_to_verify" | "training_sessions_not_closed" | "training_hook_gaps_on_live_work" | "training_expiring_7d_not_booked" | "training_hook_block_soon_not_ready" | "training_sessions_not_allowed" | "training_holders_not_linked";
+        ActionPanelItem: "overdue_cas" | "cas_pending_verification" | "investigations_overdue" | "incidents_unclassified" | "external_notifications_due" | "open_lti_cases" | "missed_inspections" | "missing_daily_returns" | "high_risk_observations_without_ca" | "leading_warnings" | "pass_applications_stale" | "raised_suspensions_pending" | "unreturned_overdue" | "lost_without_authority_notice" | "waps_approved_blocked" | "ops_suspensions_active" | "notam_not_issued_48h" | "revoked_token_scans" | "admitted_despite_denial" | "induction_language_mismatch" | "permits_requested_unreviewed" | "permits_approved_not_issued" | "permits_suspended_non_routine" | "shift_lapses_today" | "post_expiry_checks_pending" | "gas_tests_failed_24h" | "simops_open_starting_24h" | "ptw_critical_findings_ca_not_started" | "ptw_audits_behind_plan" | "orphan_isolations" | "quarantined_detectors_on_live_permits" | "midday_exemptions_active" | "lock_cuts_7d" | "certs_awaiting_review" | "verifications_overdue" | "verification_failed_undecided" | "certs_unable_to_verify" | "a_defects_open" | "b_defects_due_3d" | "unusable_equipment_on_permits" | "arrival_inspections_overdue" | "scaffolds_tag_not_valid" | "trade_cert_missing" | "hook_block_soon_not_ready" | "ban_reviews_due" | "training_records_awaiting_review" | "training_verifications_overdue" | "training_verification_failed_undecided" | "training_unable_to_verify" | "training_sessions_not_closed" | "training_hook_gaps_on_live_work" | "training_expiring_7d_not_booked" | "training_hook_block_soon_not_ready" | "training_sessions_not_allowed" | "training_holders_not_linked" | "fitness_referrals_overdue" | "fitness_work_during_hold" | "fitness_rtw_before_clearance" | "fitness_certs_awaiting_review" | "fitness_verifications_overdue" | "fitness_verification_failed_undecided" | "fitness_unable_to_verify" | "fitness_signoffs_overdue" | "fitness_hard_stops_on_live_work" | "fitness_expiring_7d_on_crew" | "medical_hook_block_soon_not_ready" | "examiner_expired_signoffs_pending" | "fitness_restriction_text_review";
         /**
          * ActionPanelResponse
          * @description §8.1 item 6. `overdue_cas.count` equals K-42 for the same filters (AC64).
@@ -9051,7 +9774,7 @@ export interface components {
          * AiTool
          * @enum {string}
          */
-        AiTool: "get_kpis" | "get_kpi_timeseries" | "get_breakdown" | "search_incidents" | "get_incident" | "list_corrective_actions" | "list_observations_summary" | "list_inspections_summary" | "compare_groups" | "get_data_quality" | "get_lti_free" | "get_settings_and_targets" | "get_leading_warnings" | "get_expiring_items" | "propose_chart" | "get_access_kpis" | "get_ptw_kpis" | "get_certification_kpis" | "get_training_kpis";
+        AiTool: "get_kpis" | "get_kpi_timeseries" | "get_breakdown" | "search_incidents" | "get_incident" | "list_corrective_actions" | "list_observations_summary" | "list_inspections_summary" | "compare_groups" | "get_data_quality" | "get_lti_free" | "get_settings_and_targets" | "get_leading_warnings" | "get_expiring_items" | "propose_chart" | "get_access_kpis" | "get_ptw_kpis" | "get_certification_kpis" | "get_training_kpis" | "get_occupational_health_kpis";
         /** AiToolCallLog */
         AiToolCallLog: {
             name: components["schemas"]["AiTool"];
@@ -9712,6 +10435,14 @@ export interface components {
             language?: components["schemas"]["WorkerLanguage"] | null;
         };
         /**
+         * AssessmentAction
+         * @description §4.3. `sign` (site clinic: the examiner's linked user, re-auth), `return` (from Awaiting
+         *     Sign-off or Submitted, comment ≥ 10 chars), `submit` (external, 153), `accept` / `reject`
+         *     (154, ≠ submitter), `revoke` (157, reason ≥ 20 chars).
+         * @enum {string}
+         */
+        AssessmentAction: "sign" | "return" | "submit" | "accept" | "reject" | "revoke";
+        /**
          * AssessmentEntry
          * @description theory_score_pct iff course.theory_required and attendance complete; practical_result
          *     iff practical_required, recorded by an assessor of the session (422 ASSESSOR_REQUIRED).
@@ -9734,6 +10465,22 @@ export interface components {
             practical_on: string | null;
             language: components["schemas"]["WorkerLanguage"] | null;
         };
+        /**
+         * AssessmentSource
+         * @enum {string}
+         */
+        AssessmentSource: "site_clinic" | "external_certificate" | "import";
+        /**
+         * AssessmentStatus
+         * @enum {string}
+         */
+        AssessmentStatus: "draft" | "awaiting_signoff" | "submitted" | "accepted" | "rejected" | "revoked";
+        /**
+         * AssessmentType
+         * @description List AT6.
+         * @enum {string}
+         */
+        AssessmentType: "pre_placement" | "periodic" | "return_to_work" | "referral" | "change_of_task" | "post_exposure" | "exit";
         /** AssessmentUpdate */
         AssessmentUpdate: {
             /** Entries */
@@ -9753,7 +10500,7 @@ export interface components {
          * AttachmentOwner
          * @enum {string}
          */
-        AttachmentOwner: "incident" | "injury_case_medical" | "observation" | "corrective_action_evidence" | "hse_meeting_minutes" | "worker_photo" | "pass_application_id_copy" | "induction_signature" | "offence_evidence" | "permit_document" | "permit_attachment" | "ptw_audit_photo" | "gas_test_signature" | "crew_briefing_signature" | "tpi_accreditation_certificate" | "equipment_document" | "equipment_certificate_scan" | "personnel_cert_scan" | "verification_evidence" | "defect_photo" | "defect_evidence" | "scaffold_inspection_photo" | "training_record_scan" | "training_accreditation_certificate" | "trainer_authorisation_evidence" | "training_attendance_sheet" | "training_verification_evidence" | "training_attendance_signature";
+        AttachmentOwner: "incident" | "injury_case_medical" | "observation" | "corrective_action_evidence" | "hse_meeting_minutes" | "worker_photo" | "pass_application_id_copy" | "induction_signature" | "offence_evidence" | "permit_document" | "permit_attachment" | "ptw_audit_photo" | "gas_test_signature" | "crew_briefing_signature" | "tpi_accreditation_certificate" | "equipment_document" | "equipment_certificate_scan" | "personnel_cert_scan" | "verification_evidence" | "defect_photo" | "defect_evidence" | "scaffold_inspection_photo" | "training_record_scan" | "training_accreditation_certificate" | "trainer_authorisation_evidence" | "training_attendance_sheet" | "training_verification_evidence" | "training_attendance_signature" | "fitness_scan";
         /** AttachmentRead */
         AttachmentRead: {
             /**
@@ -10516,6 +11263,18 @@ export interface components {
              */
             evidence_file?: string | null;
         };
+        /** Body_create_medical_import */
+        Body_create_medical_import: {
+            /**
+             * File
+             * @description .csv or .xlsx
+             */
+            file: string;
+            /** @default contractor_file */
+            source: components["schemas"]["MedicalImportSource"];
+            /** Provider Id */
+            provider_id?: string | null;
+        };
         /** Body_create_training_import */
         Body_create_training_import: {
             /**
@@ -11087,11 +11846,11 @@ export interface components {
          * @description Rows of the permission matrix: 1-19 Phase 0 (0-foundation §5.10), 20-45 Phase 1
          *     (1-dashboard §5.10), 46-81 Phase 2 (2-access-permits §5.13), 82-104 Phase 3 (3-ptw §5.14),
          *     numbered in spec order; 105-124 Phase 4 (4-third-party-cert §5.15); 125-145 Phase 5
-         *     (5-training §5.15).
+         *     (5-training §5.15); 146-165 Phase 6a (6a-occupational-health §5.15).
          *     Rows with two capabilities (23, 32, 33, 41) are split into one value per action.
          * @enum {string}
          */
-        Capability: "project.manage" | "project.view" | "site_zone.manage" | "site_zone.view" | "contractor.create" | "contractor.approve" | "engagement.manage" | "contractor.view" | "contractor.view_contacts" | "user.invite" | "user.view_directory" | "user.view_contacts" | "user.manage_status" | "settings.edit" | "settings.view" | "audit_log.read" | "history.view" | "export.lists" | "profile.edit_own" | "workforce.edit" | "workforce.import" | "workforce.verify" | "workforce.lock" | "workforce.unlock" | "workforce.view" | "incident.report" | "incident.classify" | "investigation.edit" | "investigation.approve" | "injury.identity_view" | "injury.medical_view" | "incident.view" | "observation.create" | "observation.close" | "inspection.plan_manage" | "inspection.record" | "ca.create" | "ca.update_own" | "ca.verify" | "ca.approve_extension" | "dashboard.view" | "breakdown.sensitive_view" | "ai.ask" | "monthly_report.generate" | "monthly_report.review" | "monthly_report.publish" | "monthly_report.view" | "export.kpis" | "export.identity" | "hse_settings.edit" | "observer.identity_view" | "worker.view" | "worker.edit" | "worker.unmask_id" | "worker.ban" | "induction.course_manage" | "induction.record" | "induction.suspend_revoke" | "pass_application.create" | "pass_application.endorse" | "pass_application.process" | "background_check.view" | "credential.suspend_raise" | "credential.suspend_confirm" | "credential.custody" | "adp.apply" | "adp.issue" | "offence.record" | "vehicle.edit" | "avp.issue" | "wap.edit" | "wap.approve" | "wap.suspend" | "wap.close" | "notam.edit" | "notam.process" | "obstacle.edit" | "obstacle.decide" | "access_works.view" | "gate.check" | "gate.manage" | "gate_log.view" | "access_kpi.view" | "export.access" | "export.access_identity" | "access_settings.edit" | "zone_profile.edit" | "permit.view" | "permit.prepare" | "permit.receive" | "permit.area_review" | "permit.hse_review" | "permit.issue" | "permit.suspend" | "permit.cancel" | "gas_test.record" | "gas_detector.manage" | "isolation.manage" | "personal_lock.record" | "deisolation.authorise" | "lock_cut.approve" | "jsa_template.manage" | "simops.coordinate" | "ptw_zone_profile.edit" | "ptw_settings.edit" | "ptw_appointment.manage" | "ptw_audit.conduct" | "ptw_exemption.grant" | "ptw_kpi.view" | "export.ptw" | "cert_register.view" | "equipment.edit" | "cert.review" | "cert.verify" | "equipment.mobilise" | "defect.raise" | "defect.rectify" | "defect.close" | "scaffold.inspect" | "tpi.edit" | "cert.blacklist" | "cert.suspend" | "personnel_cert.view" | "personnel_cert.submit" | "personnel_cert.scan_view" | "cert.import" | "cert.check" | "cert_kpi.view" | "export.cert" | "cert_settings.edit" | "training_catalogue.view" | "training_course.edit" | "training_provider.edit" | "training_provider.decide" | "training_matrix.edit" | "training_profile.edit" | "trainer.authorise" | "training_session.manage" | "training.nominate" | "training_attendance.record" | "training_session.close" | "training_record.view" | "training_record.submit" | "training_record.review" | "training_scan.view" | "training_record.suspend" | "training.import" | "training.check" | "training_kpi.view" | "export.training" | "training_settings.edit";
+        Capability: "project.manage" | "project.view" | "site_zone.manage" | "site_zone.view" | "contractor.create" | "contractor.approve" | "engagement.manage" | "contractor.view" | "contractor.view_contacts" | "user.invite" | "user.view_directory" | "user.view_contacts" | "user.manage_status" | "settings.edit" | "settings.view" | "audit_log.read" | "history.view" | "export.lists" | "profile.edit_own" | "workforce.edit" | "workforce.import" | "workforce.verify" | "workforce.lock" | "workforce.unlock" | "workforce.view" | "incident.report" | "incident.classify" | "investigation.edit" | "investigation.approve" | "injury.identity_view" | "injury.medical_view" | "incident.view" | "observation.create" | "observation.close" | "inspection.plan_manage" | "inspection.record" | "ca.create" | "ca.update_own" | "ca.verify" | "ca.approve_extension" | "dashboard.view" | "breakdown.sensitive_view" | "ai.ask" | "monthly_report.generate" | "monthly_report.review" | "monthly_report.publish" | "monthly_report.view" | "export.kpis" | "export.identity" | "hse_settings.edit" | "observer.identity_view" | "worker.view" | "worker.edit" | "worker.unmask_id" | "worker.ban" | "induction.course_manage" | "induction.record" | "induction.suspend_revoke" | "pass_application.create" | "pass_application.endorse" | "pass_application.process" | "background_check.view" | "credential.suspend_raise" | "credential.suspend_confirm" | "credential.custody" | "adp.apply" | "adp.issue" | "offence.record" | "vehicle.edit" | "avp.issue" | "wap.edit" | "wap.approve" | "wap.suspend" | "wap.close" | "notam.edit" | "notam.process" | "obstacle.edit" | "obstacle.decide" | "access_works.view" | "gate.check" | "gate.manage" | "gate_log.view" | "access_kpi.view" | "export.access" | "export.access_identity" | "access_settings.edit" | "zone_profile.edit" | "permit.view" | "permit.prepare" | "permit.receive" | "permit.area_review" | "permit.hse_review" | "permit.issue" | "permit.suspend" | "permit.cancel" | "gas_test.record" | "gas_detector.manage" | "isolation.manage" | "personal_lock.record" | "deisolation.authorise" | "lock_cut.approve" | "jsa_template.manage" | "simops.coordinate" | "ptw_zone_profile.edit" | "ptw_settings.edit" | "ptw_appointment.manage" | "ptw_audit.conduct" | "ptw_exemption.grant" | "ptw_kpi.view" | "export.ptw" | "cert_register.view" | "equipment.edit" | "cert.review" | "cert.verify" | "equipment.mobilise" | "defect.raise" | "defect.rectify" | "defect.close" | "scaffold.inspect" | "tpi.edit" | "cert.blacklist" | "cert.suspend" | "personnel_cert.view" | "personnel_cert.submit" | "personnel_cert.scan_view" | "cert.import" | "cert.check" | "cert_kpi.view" | "export.cert" | "cert_settings.edit" | "training_catalogue.view" | "training_course.edit" | "training_provider.edit" | "training_provider.decide" | "training_matrix.edit" | "training_profile.edit" | "trainer.authorise" | "training_session.manage" | "training.nominate" | "training_attendance.record" | "training_session.close" | "training_record.view" | "training_record.submit" | "training_record.review" | "training_scan.view" | "training_record.suspend" | "training.import" | "training.check" | "training_kpi.view" | "export.training" | "training_settings.edit" | "fitness_catalogue.view" | "fitness_code.edit" | "medical_provider.edit" | "medical_provider.decide" | "medical_plan.edit" | "health_profile.edit" | "fitness.record_clinic" | "fitness.submit_external" | "fitness.review" | "fitness.status_view" | "fitness.functional_view" | "fitness.clinical_view" | "fitness_referral.raise" | "fitness_hold.manage" | "fitness_scan.view" | "fitness.import" | "medical_kpi.view" | "export.medical" | "medical_settings.edit" | "fitness.subject_report";
         /** CapabilityGrant */
         CapabilityGrant: {
             capability: components["schemas"]["Capability"];
@@ -15107,7 +15866,7 @@ export interface components {
          * @description Entity types referenced by audit entries and change history.
          * @enum {string}
          */
-        EntityType: "project" | "site" | "zone" | "contractor" | "project_engagement" | "user" | "role_assignment" | "project_settings" | "audit_log" | "workforce_return" | "workforce_import_batch" | "workforce_month" | "incident" | "injury_case" | "investigation" | "observation" | "inspection_plan" | "inspection" | "corrective_action" | "hse_meeting" | "hse_settings" | "reference_list_item" | "attachment" | "ai_answer" | "monthly_report" | "kpi" | "worker" | "worker_deployment" | "induction_course" | "induction_record" | "zone_access_profile" | "airport_pass_category" | "airport_pass_area" | "pass_application" | "airport_pass" | "adp" | "airside_offence" | "vehicle" | "avp" | "notam_request" | "obstacle_clearance" | "wap" | "ops_event" | "credential_event" | "gate" | "gate_device" | "gate_log" | "access_settings" | "permit" | "permit_shift" | "permit_handover" | "permit_suspension" | "permit_exemption" | "permit_type_config" | "zone_ptw_profile" | "zone_adjacency" | "ptw_appointment" | "jsa" | "gas_detector" | "bump_test" | "gas_test" | "isolation_certificate" | "lock" | "personal_lock_event" | "simops_rule" | "simops_conflict" | "simops_coordination" | "ptw_audit" | "ptw_settings" | "tpi" | "tpi_accreditation" | "tpi_client_approval" | "equipment_item" | "equipment_deployment" | "equipment_certificate" | "configuration_event" | "scaffold" | "scaffold_inspection" | "personnel_certificate" | "cert_verification" | "equipment_defect" | "certification_ban" | "hook_policy_state" | "cert_import_batch" | "cert_settings" | "cert_type" | "training_course" | "training_provider" | "training_provider_accreditation" | "trainer_authorisation" | "training_matrix_line" | "training_profile" | "training_exemption" | "training_session" | "training_nomination" | "training_record" | "training_verification" | "training_import_batch" | "training_settings" | "training_retraining_note";
+        EntityType: "project" | "site" | "zone" | "contractor" | "project_engagement" | "user" | "role_assignment" | "project_settings" | "audit_log" | "workforce_return" | "workforce_import_batch" | "workforce_month" | "incident" | "injury_case" | "investigation" | "observation" | "inspection_plan" | "inspection" | "corrective_action" | "hse_meeting" | "hse_settings" | "reference_list_item" | "attachment" | "ai_answer" | "monthly_report" | "kpi" | "worker" | "worker_deployment" | "induction_course" | "induction_record" | "zone_access_profile" | "airport_pass_category" | "airport_pass_area" | "pass_application" | "airport_pass" | "adp" | "airside_offence" | "vehicle" | "avp" | "notam_request" | "obstacle_clearance" | "wap" | "ops_event" | "credential_event" | "gate" | "gate_device" | "gate_log" | "access_settings" | "permit" | "permit_shift" | "permit_handover" | "permit_suspension" | "permit_exemption" | "permit_type_config" | "zone_ptw_profile" | "zone_adjacency" | "ptw_appointment" | "jsa" | "gas_detector" | "bump_test" | "gas_test" | "isolation_certificate" | "lock" | "personal_lock_event" | "simops_rule" | "simops_conflict" | "simops_coordination" | "ptw_audit" | "ptw_settings" | "tpi" | "tpi_accreditation" | "tpi_client_approval" | "equipment_item" | "equipment_deployment" | "equipment_certificate" | "configuration_event" | "scaffold" | "scaffold_inspection" | "personnel_certificate" | "cert_verification" | "equipment_defect" | "certification_ban" | "hook_policy_state" | "cert_import_batch" | "cert_settings" | "cert_type" | "training_course" | "training_provider" | "training_provider_accreditation" | "trainer_authorisation" | "training_matrix_line" | "training_profile" | "training_exemption" | "training_session" | "training_nomination" | "training_record" | "training_verification" | "training_import_batch" | "training_settings" | "training_retraining_note" | "fitness_code" | "medical_provider" | "medical_examiner" | "medical_plan_line" | "health_profile" | "fitness_assessment" | "fitness_verification" | "fitness_hold" | "fitness_referral" | "medical_import_batch" | "medical_settings";
         /**
          * EntryDirection
          * @enum {string}
@@ -16251,7 +17010,7 @@ export interface components {
          * @description Machine-readable error codes. Stable: the frontend translates these.
          * @enum {string}
          */
-        ErrorCode: "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "ACCOUNT_LOCKED" | "SESSION_EXPIRED" | "PRIVACY_ACK_REQUIRED" | "PRIVACY_NOTICE_VERSION_MISMATCH" | "INVITE_INVALID" | "INVITE_EXPIRED" | "RESET_TOKEN_INVALID" | "WEAK_PASSWORD" | "CURRENT_PASSWORD_INCORRECT" | "FORBIDDEN" | "READ_ONLY_ROLE" | "CONTRACTOR_SUSPENDED" | "SELF_MODIFICATION_FORBIDDEN" | "ROLE_NOT_ASSIGNABLE" | "NOT_FOUND" | "VALIDATION_ERROR" | "DUPLICATE_VALUE" | "INVALID_TRANSITION" | "TRANSITION_CONDITION_NOT_MET" | "PROJECT_CLOSED" | "SITE_INACTIVE" | "ZONE_ARCHIVED" | "CONTRACTOR_NOT_APPROVED" | "LAST_HSE_MANAGER" | "SOD_CONFLICT" | "DUPLICATE_RETURN" | "PERIOD_LOCKED" | "VERIFIER_IS_CREATOR" | "OUTSIDE_MOBILISATION" | "IMPORT_FILE_INVALID" | "IMPORT_HAS_ERRORS" | "IMPORT_EXPIRED" | "IMPORT_NOT_VALIDATED" | "NEAR_MISS_EXCLUSIVE" | "INJURY_CASE_REQUIRED" | "INVESTIGATION_LEVEL_TOO_LOW" | "INVESTIGATION_INCOMPLETE" | "INVESTIGATION_LEAD_NOT_ALLOWED" | "INVESTIGATION_TEAM_INCOMPLETE" | "APPROVER_IS_LEAD" | "CASES_NOT_CONFIRMED" | "HIGHER_CONTROL_REQUIRED" | "JUSTIFICATION_REQUIRED" | "POSSIBLE_ID_NUMBER" | "SAFE_OBSERVATION_IMMUTABLE" | "FINDING_CA_REQUIRED" | "VERIFIER_IS_OWNER" | "VERIFIER_ROLE_NOT_ALLOWED" | "EVIDENCE_REQUIRED" | "EXTENSION_LIMIT_REACHED" | "DUE_DATE_TOO_LATE" | "RESTRICTED_DIMENSION" | "MIXED_PROJECT_SCOPE" | "EXPORT_PURPOSE_REQUIRED" | "FILE_TOO_LARGE" | "FILE_TYPE_NOT_ALLOWED" | "SIGNED_URL_INVALID" | "AI_DISABLED" | "AI_TRANSFER_APPROVAL_REQUIRED" | "AI_UNAVAILABLE" | "AI_RATE_LIMITED" | "GATE_DEVICE_FORBIDDEN" | "GATE_DEVICE_REVOKED" | "GATE_RATE_LIMITED" | "PAIRING_NOT_FOUND" | "WORKER_EXISTS" | "WORKER_EXISTS_OUT_OF_SCOPE" | "ADULT_ATTESTATION_REQUIRED" | "DEPLOYMENT_EXISTS" | "WORKER_BANNED" | "PHOTO_REQUIRED" | "DELIVERER_NOT_ALLOWED" | "INDUCTION_PREREQUISITE" | "INDUCTION_ATTEMPTS_EXCEEDED" | "INDUCTION_TOO_SHORT" | "INDUCTION_EDIT_LOCKED" | "PROFILE_LOOSENING" | "HOOK_PROVIDER_MISSING" | "NOT_AIRPORT_PROJECT" | "APPLICATION_OPEN" | "ID_EXPIRES_SOON" | "ID_EXPIRED" | "VALIDITY_EXCEEDS_LIMIT" | "BACKGROUND_NOT_CLEARED" | "ENDORSER_NOT_ALLOWED" | "PREREQUISITES_NOT_MET" | "AREA_NOT_REQUESTED" | "ADP_PASS_REQUIRED" | "ADP_EXISTS" | "LICENCE_NOT_VALID" | "RTF_REQUIRED" | "TESTS_NOT_VALID" | "SUSPENSION_PERIOD_RUNNING" | "AVP_PRECONDITION" | "AVP_EXISTS" | "LATE_JUSTIFICATION_REQUIRED" | "OB_CONDITIONS_REQUIRED" | "CLEARANCE_NOT_LINKABLE" | "WAP_DURATION_EXCEEDED" | "WSP_REQUIRED" | "WAP_BLOCKED" | "CREW_INVALID" | "FOD_HANDBACK_REQUIRED" | "OPS_ZONES_LOCKED" | "SYSTEM_SUSPENSION" | "CREDENTIAL_TERMINAL" | "REAUTH_REQUIRED" | "COSIGNER_INVALID" | "CONTRACTOR_BLACKLISTED" | "MIXED_SIDE_ZONES" | "ZONES_NOT_SAME_SITE" | "RECEIVER_LIMIT" | "CREW_NOT_IN_TREE" | "DURATION_EXCEEDS_LIMIT" | "BACKDATED_PERMIT" | "PERMIT_READ_ONLY" | "KEY_ROLE_BUSY" | "APPOINTMENT_INVALID" | "ISSUER_APPOINTMENT_MANAGER_ONLY" | "JSA_MISSING" | "JSA_NOT_APPROVED" | "JSA_TYPE_MISMATCH" | "JSA_MANDATORY_HAZARD_MISSING" | "JSA_RESIDUAL_EXTREME" | "JSA_FROZEN" | "RESIDUAL_ACCEPTANCE_MISSING" | "RESIDUAL_ABOVE_INITIAL" | "PPE_ONLY_CONTROLS" | "TEMPLATE_REVIEW_DUE" | "HSE_REVIEW_MISSING" | "DOCUMENT_MISSING" | "CHECKLIST_INCOMPLETE" | "ROLE_MISSING" | "KEY_ROLE_INELIGIBLE" | "NO_ELIGIBLE_CREW" | "HOOK_NOT_MET" | "GAS_TEST_REQUIRED" | "GAS_TEST_FAILED" | "GAS_TEST_EXPIRED" | "DETECTOR_CALIBRATION_OVERDUE" | "DETECTOR_NOT_IN_SERVICE" | "BUMP_TEST_MISSING" | "DETECTOR_SENSOR_MISSING" | "BACKDATED_TEST" | "CSE_POINTS_REQUIRED" | "TESTER_SIGNATURE_REQUIRED" | "ISOLATION_NOT_VERIFIED" | "VERIFIER_IS_APPLIER" | "PERSONAL_LOCKS_MISSING" | "DEISOLATION_BLOCKED" | "LOCK_NOT_AVAILABLE" | "SIMOPS_PROHIBITED" | "SIMOPS_COORDINATION_REQUIRED" | "SIMOPS_RULE_LOCKED" | "WAP_NOT_ACTIVE" | "WAP_CREW_MISSING" | "OUTSIDE_WAP_WINDOW" | "NOTAM_NOT_IN_EFFECT" | "OBS_CLEARANCE_REQUIRED" | "AIRCRAFT_PROXIMITY" | "WIND_LIMIT_EXCEEDED" | "MIDDAY_BAN" | "MIDDAY_BAN_WINDOW" | "OUTSIDE_WINDOW" | "LICENCE_INVALID" | "BARRIER_TOO_SMALL" | "BARRIER_NOT_VERIFIED" | "FIRE_IMPAIRMENT_NOT_APPROVED" | "UTILITY_CLEARANCE_MISSING" | "FALL_CLEARANCE_INSUFFICIENT" | "HAZARDOUS_AREA_PROHIBITED" | "FIRE_WATCH_RUNNING" | "ENTRANTS_INSIDE" | "HEAT_CONTROLS_REQUIRED" | "HANDOVER_LIMIT" | "HANDOVER_TOO_EARLY" | "MECHANICAL_NEAR_SERVICE" | "INSPECTION_REQUIRED" | "ENERGIZED_HV_PROHIBITED" | "EXEMPTION_REQUIRED" | "CAPACITY_EXCEEDED" | "REVALIDATION_NOT_ALLOWED" | "CREW_NOT_BRIEFED" | "CAUSE_NOT_CLEARED" | "PAUSE_NOT_ALLOWED" | "CLOSURE_INCOMPLETE" | "POST_EXPIRY_CHECK_PENDING" | "CA_REQUIRED" | "AUDIT_LOCKED" | "CODE_IN_OTHER_CATALOGUE" | "TPI_NOT_ACCEPTABLE" | "TPI_NOT_APPROVED" | "TPI_SUSPENDED" | "TPI_BLACKLISTED" | "TPI_ACCREDITATION_INVALID" | "TPI_SCOPE_NOT_COVERED" | "TPI_NOT_CLIENT_APPROVED" | "TPI_NOT_INDEPENDENT" | "TPI_ACCREDITATION_REQUIRED" | "STANDARD_KIND_MISMATCH" | "SCOPE_EXCEEDS_ACCREDITATION" | "EQUIPMENT_EXISTS" | "EQUIPMENT_EXISTS_OUT_OF_SCOPE" | "EQUIPMENT_BLACKLISTED" | "CATEGORY_MISMATCH" | "VEHICLE_ALREADY_LINKED" | "USE_DETECTOR_REGISTER" | "ATTRIBUTE_REQUIRED" | "RELIEF_ABOVE_MAWP" | "EQUIPMENT_NOT_IN_SERVICE" | "EQUIPMENT_DEPLOYED_ELSEWHERE" | "TAG_EXISTS" | "EQUIPMENT_RETIRED" | "EQUIPMENT_NOT_REGISTERED" | "EQUIPMENT_NOT_DEPLOYED" | "OPERATOR_REQUIRED" | "EQUIPMENT_NOT_APPROVED" | "EQUIPMENT_OUT_OF_SERVICE" | "EQUIPMENT_QUARANTINED" | "ARRIVAL_INSPECTION_MISSING" | "CERT_EXISTS" | "CERT_NO_REUSED" | "CERT_ALREADY_EXPIRED" | "SCAN_REQUIRED" | "SERIAL_MISMATCH" | "LOAD_TEST_REQUIRED" | "SWL_ABOVE_RATING" | "LIFTING_DUTY_NOT_CERTIFIED" | "LIMITATION_CONFLICT" | "COLOUR_CODE_OUT_OF_PERIOD" | "CONFIGURATION_MISMATCH" | "CONFIGURATION_CHANGED" | "INSPECTION_BEFORE_EVENT" | "BACKDATED_EVENT" | "CONFIGURATION_EVENT_NOT_ALLOWED" | "SCAFFOLD_DESIGN_REQUIRED" | "CREW_NOT_CERTIFIED" | "INSPECTOR_NOT_CERTIFIED" | "BACKDATED_INSPECTION" | "RESTRICTIONS_REQUIRED" | "SCAFFOLD_NOT_REGISTERED" | "SCAFFOLD_INSPECTION_OVERDUE" | "SCAFFOLD_TAG_RED" | "SCAFFOLD_INSPECTION_REQUIRED" | "SCAFFOLD_YELLOW_TAG" | "CERT_ID_MISMATCH" | "NAME_MISMATCH_CONFIRMATION" | "LEVEL_NOT_ACCEPTED" | "LEVEL_REQUIRED" | "CERT_SCOPE_MISMATCH" | "CERT_LIMITATION" | "CARD_RESTRICTION_REVIEW" | "TRADE_CERT_MISSING" | "HOLDER_BANNED" | "CERT_HOLDER_BANNED" | "CERT_MISSING" | "CERT_EXPIRED" | "CERT_UNVERIFIED" | "CERT_SUSPENDED" | "CERT_REVOKED" | "SWL_LIMITATION" | "WORKER_NOT_IN_SCOPE" | "CHANNEL_NOT_REGISTERED" | "VERIFICATION_URL_FOREIGN_DOMAIN" | "EVIDENCE_REQUIRED_FOR_METHOD" | "VERIFICATION_CLOSED" | "ACCESSORY_REPAIR_NOT_ALLOWED" | "TPI_REINSPECTION_REQUIRED" | "DEFECTS_OPEN" | "PHYSICAL_TAG_REQUIRED" | "TPI_DEFECT_NOT_CANCELLABLE" | "PHASE4_NOT_ENABLED" | "HOOK_POLICY_LOOSENING" | "CRITICAL_CODE_NO_DEFERRAL" | "DEFERRAL_USED" | "DEFERRAL_TOO_LONG" | "HOOK_NOT_MET_WARN" | "EXPIRING_7D" | "UNKNOWN_CODE" | "TOKEN_UNKNOWN" | "CREDENTIAL_REVOKED" | "OUT_OF_SCOPE" | "SETTING_LOOSENING" | "EVIDENCE_DOMAIN_MISMATCH" | "IMPORT_SOURCE_NOT_ALLOWED" | "TPI_BLACKLIST_SCOPE_REQUIRED" | "INDUCTION_OWNED_BY_PHASE2" | "CATALOGUE_LOOSENING" | "ACCREDITED_PROVIDER_REQUIRED" | "PRACTICAL_REQUIRED" | "PREREQUISITE_CYCLE" | "COURSE_IN_USE" | "COURSE_INACTIVE" | "PROVIDER_NOT_ACCEPTABLE" | "PROVIDER_NOT_APPROVED" | "PROVIDER_SUSPENDED" | "PROVIDER_BLACKLISTED" | "ACCREDITATION_INVALID" | "ACCREDITATION_SCOPE" | "INTERNAL_NOT_ALLOWED" | "CONTRACTOR_DELIVERY_NOT_ALLOWED" | "NOT_OWN_TREE" | "PROVIDER_ACCREDITATION_REQUIRED" | "PROVIDER_BLACKLIST_SCOPE_REQUIRED" | "TRAINER_NOT_AUTHORISED" | "TRAINER_NOT_TRAINED" | "TRAINER_EVIDENCE_REQUIRED" | "AUTHORISATION_TOO_LONG" | "LINE_DERIVED_FROM_HOOK" | "DUE_DAYS_NOT_ALLOWED" | "ANY_OF_NOT_ALLOWED" | "MATRIX_LOOSENING" | "EXEMPTION_NOT_ALLOWED" | "ZONE_NOT_IN_DEPLOYMENT_SITES" | "SESSION_TOO_SHORT" | "SESSION_DAY_TOO_LONG" | "SESSION_FULL" | "SESSION_IN_PAST" | "BACKDATED_SESSION" | "SCHEDULE_CLASH" | "TRAINING_PREREQUISITE" | "TRAINING_ATTEMPTS_EXCEEDED" | "NOMINATIONS_INCOMPLETE" | "ATTENDANCE_SHEET_REQUIRED" | "ATTENDANCE_INSUFFICIENT" | "ATTENDANCE_DAY_NOT_REACHED" | "ASSESSOR_REQUIRED" | "LANGUAGE_NOT_UNDERSTOOD" | "LANGUAGE_MISMATCH" | "RECORD_ALREADY_EXPIRED" | "REFRESHER_NOT_ELIGIBLE" | "RECORD_EDIT_LOCKED" | "TRAINING_REGISTER_NOT_LIVE" | "TRAINING_REGISTER_LATER" | "TRAINING_HOOKS_NOT_ENABLED" | "TRAINING_MISSING" | "TRAINING_EXPIRED" | "TRAINING_PENDING_REVIEW" | "TRAINING_UNVERIFIED" | "TRAINING_SUSPENDED" | "TRAINING_REVOKED" | "TRAINING_VERIFICATION_FAILED" | "INDUCTION_NOT_VALID" | "HOLDER_NOT_LINKED" | "SESSION_NOT_EDITABLE" | "NOT_IMPLEMENTED" | "INTERNAL_ERROR";
+        ErrorCode: "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "ACCOUNT_LOCKED" | "SESSION_EXPIRED" | "PRIVACY_ACK_REQUIRED" | "PRIVACY_NOTICE_VERSION_MISMATCH" | "INVITE_INVALID" | "INVITE_EXPIRED" | "RESET_TOKEN_INVALID" | "WEAK_PASSWORD" | "CURRENT_PASSWORD_INCORRECT" | "FORBIDDEN" | "READ_ONLY_ROLE" | "CONTRACTOR_SUSPENDED" | "SELF_MODIFICATION_FORBIDDEN" | "ROLE_NOT_ASSIGNABLE" | "NOT_FOUND" | "VALIDATION_ERROR" | "DUPLICATE_VALUE" | "INVALID_TRANSITION" | "TRANSITION_CONDITION_NOT_MET" | "PROJECT_CLOSED" | "SITE_INACTIVE" | "ZONE_ARCHIVED" | "CONTRACTOR_NOT_APPROVED" | "LAST_HSE_MANAGER" | "SOD_CONFLICT" | "DUPLICATE_RETURN" | "PERIOD_LOCKED" | "VERIFIER_IS_CREATOR" | "OUTSIDE_MOBILISATION" | "IMPORT_FILE_INVALID" | "IMPORT_HAS_ERRORS" | "IMPORT_EXPIRED" | "IMPORT_NOT_VALIDATED" | "NEAR_MISS_EXCLUSIVE" | "INJURY_CASE_REQUIRED" | "INVESTIGATION_LEVEL_TOO_LOW" | "INVESTIGATION_INCOMPLETE" | "INVESTIGATION_LEAD_NOT_ALLOWED" | "INVESTIGATION_TEAM_INCOMPLETE" | "APPROVER_IS_LEAD" | "CASES_NOT_CONFIRMED" | "HIGHER_CONTROL_REQUIRED" | "JUSTIFICATION_REQUIRED" | "POSSIBLE_ID_NUMBER" | "SAFE_OBSERVATION_IMMUTABLE" | "FINDING_CA_REQUIRED" | "VERIFIER_IS_OWNER" | "VERIFIER_ROLE_NOT_ALLOWED" | "EVIDENCE_REQUIRED" | "EXTENSION_LIMIT_REACHED" | "DUE_DATE_TOO_LATE" | "RESTRICTED_DIMENSION" | "MIXED_PROJECT_SCOPE" | "EXPORT_PURPOSE_REQUIRED" | "FILE_TOO_LARGE" | "FILE_TYPE_NOT_ALLOWED" | "SIGNED_URL_INVALID" | "AI_DISABLED" | "AI_TRANSFER_APPROVAL_REQUIRED" | "AI_UNAVAILABLE" | "AI_RATE_LIMITED" | "GATE_DEVICE_FORBIDDEN" | "GATE_DEVICE_REVOKED" | "GATE_RATE_LIMITED" | "PAIRING_NOT_FOUND" | "WORKER_EXISTS" | "WORKER_EXISTS_OUT_OF_SCOPE" | "ADULT_ATTESTATION_REQUIRED" | "DEPLOYMENT_EXISTS" | "WORKER_BANNED" | "PHOTO_REQUIRED" | "DELIVERER_NOT_ALLOWED" | "INDUCTION_PREREQUISITE" | "INDUCTION_ATTEMPTS_EXCEEDED" | "INDUCTION_TOO_SHORT" | "INDUCTION_EDIT_LOCKED" | "PROFILE_LOOSENING" | "HOOK_PROVIDER_MISSING" | "NOT_AIRPORT_PROJECT" | "APPLICATION_OPEN" | "ID_EXPIRES_SOON" | "ID_EXPIRED" | "VALIDITY_EXCEEDS_LIMIT" | "BACKGROUND_NOT_CLEARED" | "ENDORSER_NOT_ALLOWED" | "PREREQUISITES_NOT_MET" | "AREA_NOT_REQUESTED" | "ADP_PASS_REQUIRED" | "ADP_EXISTS" | "LICENCE_NOT_VALID" | "RTF_REQUIRED" | "TESTS_NOT_VALID" | "SUSPENSION_PERIOD_RUNNING" | "AVP_PRECONDITION" | "AVP_EXISTS" | "LATE_JUSTIFICATION_REQUIRED" | "OB_CONDITIONS_REQUIRED" | "CLEARANCE_NOT_LINKABLE" | "WAP_DURATION_EXCEEDED" | "WSP_REQUIRED" | "WAP_BLOCKED" | "CREW_INVALID" | "FOD_HANDBACK_REQUIRED" | "OPS_ZONES_LOCKED" | "SYSTEM_SUSPENSION" | "CREDENTIAL_TERMINAL" | "REAUTH_REQUIRED" | "COSIGNER_INVALID" | "CONTRACTOR_BLACKLISTED" | "MIXED_SIDE_ZONES" | "ZONES_NOT_SAME_SITE" | "RECEIVER_LIMIT" | "CREW_NOT_IN_TREE" | "DURATION_EXCEEDS_LIMIT" | "BACKDATED_PERMIT" | "PERMIT_READ_ONLY" | "KEY_ROLE_BUSY" | "APPOINTMENT_INVALID" | "ISSUER_APPOINTMENT_MANAGER_ONLY" | "JSA_MISSING" | "JSA_NOT_APPROVED" | "JSA_TYPE_MISMATCH" | "JSA_MANDATORY_HAZARD_MISSING" | "JSA_RESIDUAL_EXTREME" | "JSA_FROZEN" | "RESIDUAL_ACCEPTANCE_MISSING" | "RESIDUAL_ABOVE_INITIAL" | "PPE_ONLY_CONTROLS" | "TEMPLATE_REVIEW_DUE" | "HSE_REVIEW_MISSING" | "DOCUMENT_MISSING" | "CHECKLIST_INCOMPLETE" | "ROLE_MISSING" | "KEY_ROLE_INELIGIBLE" | "NO_ELIGIBLE_CREW" | "HOOK_NOT_MET" | "GAS_TEST_REQUIRED" | "GAS_TEST_FAILED" | "GAS_TEST_EXPIRED" | "DETECTOR_CALIBRATION_OVERDUE" | "DETECTOR_NOT_IN_SERVICE" | "BUMP_TEST_MISSING" | "DETECTOR_SENSOR_MISSING" | "BACKDATED_TEST" | "CSE_POINTS_REQUIRED" | "TESTER_SIGNATURE_REQUIRED" | "ISOLATION_NOT_VERIFIED" | "VERIFIER_IS_APPLIER" | "PERSONAL_LOCKS_MISSING" | "DEISOLATION_BLOCKED" | "LOCK_NOT_AVAILABLE" | "SIMOPS_PROHIBITED" | "SIMOPS_COORDINATION_REQUIRED" | "SIMOPS_RULE_LOCKED" | "WAP_NOT_ACTIVE" | "WAP_CREW_MISSING" | "OUTSIDE_WAP_WINDOW" | "NOTAM_NOT_IN_EFFECT" | "OBS_CLEARANCE_REQUIRED" | "AIRCRAFT_PROXIMITY" | "WIND_LIMIT_EXCEEDED" | "MIDDAY_BAN" | "MIDDAY_BAN_WINDOW" | "OUTSIDE_WINDOW" | "LICENCE_INVALID" | "BARRIER_TOO_SMALL" | "BARRIER_NOT_VERIFIED" | "FIRE_IMPAIRMENT_NOT_APPROVED" | "UTILITY_CLEARANCE_MISSING" | "FALL_CLEARANCE_INSUFFICIENT" | "HAZARDOUS_AREA_PROHIBITED" | "FIRE_WATCH_RUNNING" | "ENTRANTS_INSIDE" | "HEAT_CONTROLS_REQUIRED" | "HANDOVER_LIMIT" | "HANDOVER_TOO_EARLY" | "MECHANICAL_NEAR_SERVICE" | "INSPECTION_REQUIRED" | "ENERGIZED_HV_PROHIBITED" | "EXEMPTION_REQUIRED" | "CAPACITY_EXCEEDED" | "REVALIDATION_NOT_ALLOWED" | "CREW_NOT_BRIEFED" | "CAUSE_NOT_CLEARED" | "PAUSE_NOT_ALLOWED" | "CLOSURE_INCOMPLETE" | "POST_EXPIRY_CHECK_PENDING" | "CA_REQUIRED" | "AUDIT_LOCKED" | "CODE_IN_OTHER_CATALOGUE" | "TPI_NOT_ACCEPTABLE" | "TPI_NOT_APPROVED" | "TPI_SUSPENDED" | "TPI_BLACKLISTED" | "TPI_ACCREDITATION_INVALID" | "TPI_SCOPE_NOT_COVERED" | "TPI_NOT_CLIENT_APPROVED" | "TPI_NOT_INDEPENDENT" | "TPI_ACCREDITATION_REQUIRED" | "STANDARD_KIND_MISMATCH" | "SCOPE_EXCEEDS_ACCREDITATION" | "EQUIPMENT_EXISTS" | "EQUIPMENT_EXISTS_OUT_OF_SCOPE" | "EQUIPMENT_BLACKLISTED" | "CATEGORY_MISMATCH" | "VEHICLE_ALREADY_LINKED" | "USE_DETECTOR_REGISTER" | "ATTRIBUTE_REQUIRED" | "RELIEF_ABOVE_MAWP" | "EQUIPMENT_NOT_IN_SERVICE" | "EQUIPMENT_DEPLOYED_ELSEWHERE" | "TAG_EXISTS" | "EQUIPMENT_RETIRED" | "EQUIPMENT_NOT_REGISTERED" | "EQUIPMENT_NOT_DEPLOYED" | "OPERATOR_REQUIRED" | "EQUIPMENT_NOT_APPROVED" | "EQUIPMENT_OUT_OF_SERVICE" | "EQUIPMENT_QUARANTINED" | "ARRIVAL_INSPECTION_MISSING" | "CERT_EXISTS" | "CERT_NO_REUSED" | "CERT_ALREADY_EXPIRED" | "SCAN_REQUIRED" | "SERIAL_MISMATCH" | "LOAD_TEST_REQUIRED" | "SWL_ABOVE_RATING" | "LIFTING_DUTY_NOT_CERTIFIED" | "LIMITATION_CONFLICT" | "COLOUR_CODE_OUT_OF_PERIOD" | "CONFIGURATION_MISMATCH" | "CONFIGURATION_CHANGED" | "INSPECTION_BEFORE_EVENT" | "BACKDATED_EVENT" | "CONFIGURATION_EVENT_NOT_ALLOWED" | "SCAFFOLD_DESIGN_REQUIRED" | "CREW_NOT_CERTIFIED" | "INSPECTOR_NOT_CERTIFIED" | "BACKDATED_INSPECTION" | "RESTRICTIONS_REQUIRED" | "SCAFFOLD_NOT_REGISTERED" | "SCAFFOLD_INSPECTION_OVERDUE" | "SCAFFOLD_TAG_RED" | "SCAFFOLD_INSPECTION_REQUIRED" | "SCAFFOLD_YELLOW_TAG" | "CERT_ID_MISMATCH" | "NAME_MISMATCH_CONFIRMATION" | "LEVEL_NOT_ACCEPTED" | "LEVEL_REQUIRED" | "CERT_SCOPE_MISMATCH" | "CERT_LIMITATION" | "CARD_RESTRICTION_REVIEW" | "TRADE_CERT_MISSING" | "HOLDER_BANNED" | "CERT_HOLDER_BANNED" | "CERT_MISSING" | "CERT_EXPIRED" | "CERT_UNVERIFIED" | "CERT_SUSPENDED" | "CERT_REVOKED" | "SWL_LIMITATION" | "WORKER_NOT_IN_SCOPE" | "CHANNEL_NOT_REGISTERED" | "VERIFICATION_URL_FOREIGN_DOMAIN" | "EVIDENCE_REQUIRED_FOR_METHOD" | "VERIFICATION_CLOSED" | "ACCESSORY_REPAIR_NOT_ALLOWED" | "TPI_REINSPECTION_REQUIRED" | "DEFECTS_OPEN" | "PHYSICAL_TAG_REQUIRED" | "TPI_DEFECT_NOT_CANCELLABLE" | "PHASE4_NOT_ENABLED" | "HOOK_POLICY_LOOSENING" | "CRITICAL_CODE_NO_DEFERRAL" | "DEFERRAL_USED" | "DEFERRAL_TOO_LONG" | "HOOK_NOT_MET_WARN" | "EXPIRING_7D" | "UNKNOWN_CODE" | "TOKEN_UNKNOWN" | "CREDENTIAL_REVOKED" | "OUT_OF_SCOPE" | "SETTING_LOOSENING" | "EVIDENCE_DOMAIN_MISMATCH" | "IMPORT_SOURCE_NOT_ALLOWED" | "TPI_BLACKLIST_SCOPE_REQUIRED" | "INDUCTION_OWNED_BY_PHASE2" | "CATALOGUE_LOOSENING" | "ACCREDITED_PROVIDER_REQUIRED" | "PRACTICAL_REQUIRED" | "PREREQUISITE_CYCLE" | "COURSE_IN_USE" | "COURSE_INACTIVE" | "PROVIDER_NOT_ACCEPTABLE" | "PROVIDER_NOT_APPROVED" | "PROVIDER_SUSPENDED" | "PROVIDER_BLACKLISTED" | "ACCREDITATION_INVALID" | "ACCREDITATION_SCOPE" | "INTERNAL_NOT_ALLOWED" | "CONTRACTOR_DELIVERY_NOT_ALLOWED" | "NOT_OWN_TREE" | "PROVIDER_ACCREDITATION_REQUIRED" | "PROVIDER_BLACKLIST_SCOPE_REQUIRED" | "TRAINER_NOT_AUTHORISED" | "TRAINER_NOT_TRAINED" | "TRAINER_EVIDENCE_REQUIRED" | "AUTHORISATION_TOO_LONG" | "LINE_DERIVED_FROM_HOOK" | "DUE_DAYS_NOT_ALLOWED" | "ANY_OF_NOT_ALLOWED" | "MATRIX_LOOSENING" | "EXEMPTION_NOT_ALLOWED" | "ZONE_NOT_IN_DEPLOYMENT_SITES" | "SESSION_TOO_SHORT" | "SESSION_DAY_TOO_LONG" | "SESSION_FULL" | "SESSION_IN_PAST" | "BACKDATED_SESSION" | "SCHEDULE_CLASH" | "TRAINING_PREREQUISITE" | "TRAINING_ATTEMPTS_EXCEEDED" | "NOMINATIONS_INCOMPLETE" | "ATTENDANCE_SHEET_REQUIRED" | "ATTENDANCE_INSUFFICIENT" | "ATTENDANCE_DAY_NOT_REACHED" | "ASSESSOR_REQUIRED" | "LANGUAGE_NOT_UNDERSTOOD" | "LANGUAGE_MISMATCH" | "RECORD_ALREADY_EXPIRED" | "REFRESHER_NOT_ELIGIBLE" | "RECORD_EDIT_LOCKED" | "TRAINING_REGISTER_NOT_LIVE" | "TRAINING_REGISTER_LATER" | "TRAINING_HOOKS_NOT_ENABLED" | "TRAINING_MISSING" | "TRAINING_EXPIRED" | "TRAINING_PENDING_REVIEW" | "TRAINING_UNVERIFIED" | "TRAINING_SUSPENDED" | "TRAINING_REVOKED" | "TRAINING_VERIFICATION_FAILED" | "INDUCTION_NOT_VALID" | "HOLDER_NOT_LINKED" | "SESSION_NOT_EDITABLE" | "FITNESS_CODE_IN_USE" | "MEDICAL_PROVIDER_NOT_ACCEPTABLE" | "PROVIDER_KIND_NOT_ALLOWED" | "NOT_PROJECT_CLINIC" | "LICENCE_CHECK_REQUIRED" | "EXAMINER_LICENCE_INVALID" | "EXAMINER_NOT_QUALIFIED" | "EXAMINER_NOT_LINKED" | "PLAN_LOOSENING" | "BACKDATED_ASSESSMENT" | "FITNESS_ALREADY_EXPIRED" | "DUPLICATE_CODE_LINE" | "RESTRICTIONS_NOT_ALLOWED" | "REVIEW_DATE_INVALID" | "HOLD_REFERENCE_INVALID" | "PURPOSE_NOTICE_REQUIRED" | "SECOND_OPINION_REQUIRED" | "ASSESSMENT_LOCKED" | "CLINICAL_DATA_IN_SCAN" | "HOLD_RELEASE_REQUIRES_ASSESSMENT" | "MEDICAL_REGISTER_NOT_LIVE" | "MEDICAL_REGISTER_LATER" | "NO_MEDICAL_PROVIDER" | "MEDICAL_HOOKS_NOT_ENABLED" | "INCIDENT_RECORD_EXPECTED" | "RTW_BEFORE_CLEARANCE" | "PROHIBITED_DATA_HINT" | "MEDICAL_HOLD" | "MEDICAL_UNFIT" | "MEDICAL_PENDING_REVIEW" | "MEDICAL_UNVERIFIED" | "MEDICAL_REVOKED" | "MEDICAL_VERIFICATION_FAILED" | "MEDICAL_MISSING" | "RESTRICTION_CONFLICT" | "MEDICAL_REVIEW_DUE" | "MEDICAL_EXPIRED" | "WORKER_UNKNOWN" | "NOT_IMPLEMENTED" | "INTERNAL_ERROR";
         /** ErrorDetail */
         ErrorDetail: {
             /** @description Stable machine code; map it to EN/AR UI text. */
@@ -16285,6 +17044,138 @@ export interface components {
          */
         ErrorResponse: {
             detail: components["schemas"]["ErrorDetail"];
+        };
+        /**
+         * ExaminerAction
+         * @description §4.2 (capability 149).
+         * @enum {string}
+         */
+        ExaminerAction: "suspend" | "reinstate" | "withdraw";
+        /**
+         * ExaminerClass
+         * @description List EXC. A nurse may record but never signs a line (EX-3).
+         * @enum {string}
+         */
+        ExaminerClass: "occupational_physician" | "physician" | "nurse";
+        /**
+         * ExaminerCreate
+         * @description Capability 148; licence_checked_at required (EX-1); ≥ 1 approved provider.
+         */
+        ExaminerCreate: {
+            /** Full Name En */
+            full_name_en: string;
+            /** Full Name Ar */
+            full_name_ar: string;
+            /** Scfhs Licence No */
+            scfhs_licence_no: string;
+            classification: components["schemas"]["ExaminerClass"];
+            /**
+             * Licence Valid Until
+             * Format: date
+             */
+            licence_valid_until: string;
+            /**
+             * Licence Checked At
+             * Format: date-time
+             */
+            licence_checked_at: string;
+            /** Provider Ids */
+            provider_ids: string[];
+            /**
+             * User Id
+             * @description An oh_practitioner user (unique): a signing physician.
+             */
+            user_id?: string | null;
+        };
+        /** ExaminerPage */
+        ExaminerPage: {
+            /** Items */
+            items: components["schemas"]["ExaminerRead"][];
+            /**
+             * Total
+             * @description Total number of matching items across all pages.
+             */
+            total: number;
+            /**
+             * Page
+             * @description 1-based page number.
+             */
+            page: number;
+            /**
+             * Page Size
+             * @description Items per page (max 200).
+             */
+            page_size: number;
+        };
+        /**
+         * ExaminerRead
+         * @description Licence fields only for capability 148 holders (row 146: "no licences of examiners").
+         */
+        ExaminerRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Examiner No */
+            examiner_no: string;
+            /** Full Name En */
+            full_name_en: string;
+            /** Full Name Ar */
+            full_name_ar: string;
+            classification: components["schemas"]["ExaminerClass"];
+            /** Scfhs Licence No */
+            scfhs_licence_no?: string | null;
+            /** Licence Valid Until */
+            licence_valid_until?: string | null;
+            /** Licence Checked At */
+            licence_checked_at?: string | null;
+            /** Provider Ids */
+            provider_ids: string[];
+            user: components["schemas"]["UserRef"] | null;
+            status: components["schemas"]["ExaminerStatus"];
+            /** Status Reason */
+            status_reason?: string | null;
+        };
+        /** ExaminerRef */
+        ExaminerRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Examiner No
+             * @example EXR-0001
+             */
+            examiner_no: string;
+            /** Full Name En */
+            full_name_en: string;
+            /** Full Name Ar */
+            full_name_ar: string;
+            classification: components["schemas"]["ExaminerClass"];
+        };
+        /**
+         * ExaminerStatus
+         * @enum {string}
+         */
+        ExaminerStatus: "active" | "suspended" | "withdrawn" | "expired";
+        /** ExaminerTransition */
+        ExaminerTransition: {
+            action: components["schemas"]["ExaminerAction"];
+            /** Reason */
+            reason: string;
+        };
+        /** ExaminerUpdate */
+        ExaminerUpdate: {
+            /** Full Name En */
+            full_name_en?: string | null;
+            /** Full Name Ar */
+            full_name_ar?: string | null;
+            /** Provider Ids */
+            provider_ids?: string[] | null;
+            /** User Id */
+            user_id?: string | null;
         };
         /**
          * ExcavationInspectionInput
@@ -16582,7 +17473,7 @@ export interface components {
          * ExpiringItemKind
          * @enum {string}
          */
-        ExpiringItemKind: "ca_due" | "investigation_due" | "external_notification_due" | "inspection_planned" | "month_lock" | "induction_expiry" | "reinduction_due" | "worker_id_expiry" | "airport_pass_expiry" | "bg_recheck_due" | "adp_expiry" | "adp_suspension_end" | "avp_expiry" | "vehicle_document_expiry" | "wap_expiry" | "notam_expiry" | "obstacle_clearance_expiry" | "pass_return_due" | "ptw_valid_to" | "ptw_shift_end" | "gas_retest_due" | "fire_watch_end" | "gas_detector_calibration_due" | "ptw_appointment_expiry" | "isolation_review_due" | "jsa_template_review_due" | "equipment_cert_expiry" | "personnel_cert_expiry" | "scaffold_inspection_due" | "defect_rectification_due" | "tpi_accreditation_expiry" | "tpi_client_approval_expiry" | "certificate_verification_due" | "hook_block_date" | "training_record_expiry" | "training_refresher_due" | "trainer_authorisation_expiry" | "training_provider_accreditation_expiry" | "training_verification_due" | "training_session_close_due";
+        ExpiringItemKind: "ca_due" | "investigation_due" | "external_notification_due" | "inspection_planned" | "month_lock" | "induction_expiry" | "reinduction_due" | "worker_id_expiry" | "airport_pass_expiry" | "bg_recheck_due" | "adp_expiry" | "adp_suspension_end" | "avp_expiry" | "vehicle_document_expiry" | "wap_expiry" | "notam_expiry" | "obstacle_clearance_expiry" | "pass_return_due" | "ptw_valid_to" | "ptw_shift_end" | "gas_retest_due" | "fire_watch_end" | "gas_detector_calibration_due" | "ptw_appointment_expiry" | "isolation_review_due" | "jsa_template_review_due" | "equipment_cert_expiry" | "personnel_cert_expiry" | "scaffold_inspection_due" | "defect_rectification_due" | "tpi_accreditation_expiry" | "tpi_client_approval_expiry" | "certificate_verification_due" | "hook_block_date" | "training_record_expiry" | "training_refresher_due" | "trainer_authorisation_expiry" | "training_provider_accreditation_expiry" | "training_verification_due" | "training_session_close_due" | "fitness_expiry" | "fitness_restriction_review" | "fitness_unfit_review" | "referral_assessment_due" | "fitness_signoff_due" | "fitness_verification_due" | "examiner_licence_expiry" | "medical_provider_licence_expiry";
         /** ExpiringItemsResponse */
         ExpiringItemsResponse: {
             /**
@@ -16605,7 +17496,7 @@ export interface components {
          * @description Lists that can be exported (§5.8 rule 49, capability 18).
          * @enum {string}
          */
-        ExportDataset: "projects" | "sites" | "zones" | "contractors" | "engagements" | "users" | "audit_log" | "workforce_returns" | "incidents" | "observations" | "inspections" | "corrective_actions" | "hse_meetings" | "workers" | "deployments" | "inductions" | "pass_applications" | "airport_passes" | "adps" | "airside_offences" | "vehicles" | "avps" | "waps" | "notam_requests" | "obstacle_clearances" | "ops_events" | "gate_log" | "permits" | "permit_suspensions" | "gas_tests" | "gas_detectors" | "isolations" | "locks" | "ptw_appointments" | "jsa_templates" | "simops_conflicts" | "ptw_audits" | "tpis" | "equipment" | "equipment_deployments" | "equipment_certificates" | "scaffolds" | "personnel_certificates" | "cert_verifications" | "equipment_defects" | "blacklist_register" | "cert_imports" | "training_courses" | "training_providers" | "trainer_authorisations" | "training_matrix" | "training_sessions" | "training_attendance" | "training_records" | "training_verifications" | "training_gaps" | "refresher_plan" | "training_hours" | "training_imports";
+        ExportDataset: "projects" | "sites" | "zones" | "contractors" | "engagements" | "users" | "audit_log" | "workforce_returns" | "incidents" | "observations" | "inspections" | "corrective_actions" | "hse_meetings" | "workers" | "deployments" | "inductions" | "pass_applications" | "airport_passes" | "adps" | "airside_offences" | "vehicles" | "avps" | "waps" | "notam_requests" | "obstacle_clearances" | "ops_events" | "gate_log" | "permits" | "permit_suspensions" | "gas_tests" | "gas_detectors" | "isolations" | "locks" | "ptw_appointments" | "jsa_templates" | "simops_conflicts" | "ptw_audits" | "tpis" | "equipment" | "equipment_deployments" | "equipment_certificates" | "scaffolds" | "personnel_certificates" | "cert_verifications" | "equipment_defects" | "blacklist_register" | "cert_imports" | "training_courses" | "training_providers" | "trainer_authorisations" | "training_matrix" | "training_sessions" | "training_attendance" | "training_records" | "training_verifications" | "training_gaps" | "refresher_plan" | "training_hours" | "training_imports" | "fitness_codes" | "medical_providers" | "medical_examiners" | "medical_plan" | "fitness_status" | "fitness_gaps" | "fitness_holds" | "fitness_referrals" | "fitness_verifications" | "medical_imports";
         /**
          * ExportFormat
          * @enum {string}
@@ -16623,6 +17514,12 @@ export interface components {
          * @enum {string}
          */
         Exposure: "outdoor_direct_sun" | "outdoor_shaded" | "indoor";
+        /**
+         * ExposureGroup
+         * @description List EG (describes the job, not the person's health: personal, not sensitive).
+         * @enum {string}
+         */
+        ExposureGroup: "noise_85" | "silica_rcs" | "ionising_radiation" | "heat_outdoor";
         /**
          * ExtensionStatus
          * @enum {string}
@@ -16773,6 +17670,831 @@ export interface components {
          * @enum {string}
          */
         FindingSeverity: "low" | "medium" | "high" | "critical";
+        /**
+         * FitnessAssessmentCreate
+         * @description Site clinic (152): saved by the examiner's linked user (with step-up re-auth) → Accepted
+         *     and verified; by another recorder → Awaiting Sign-off. External certificate (153): Draft,
+         *     then Submit with the scan. `id_on_card` is checked through the blind index and never stored
+         *     (FA-10). `historic` (157 only) attaches an already-expired external certificate that is never
+         *     in force (FA-2).
+         */
+        FitnessAssessmentCreate: {
+            /**
+             * Worker Id
+             * Format: uuid
+             */
+            worker_id: string;
+            assessment_type: components["schemas"]["AssessmentType"];
+            /** @default site_clinic */
+            source: components["schemas"]["AssessmentSource"];
+            /**
+             * Provider Id
+             * Format: uuid
+             */
+            provider_id: string;
+            /**
+             * Examiner Id
+             * Format: uuid
+             */
+            examiner_id: string;
+            /**
+             * Examined On
+             * Format: date
+             */
+            examined_on: string;
+            /**
+             * Certificate No
+             * @description External: as printed; site clinic: system.
+             */
+            certificate_no?: string | null;
+            /** Lines */
+            lines: components["schemas"]["FitnessLineInput"][];
+            /** Related Hold Id */
+            related_hold_id?: string | null;
+            /** Related Referral Id */
+            related_referral_id?: string | null;
+            /** Purpose Notice Given */
+            purpose_notice_given: boolean;
+            /** Name As Printed */
+            name_as_printed?: string | null;
+            /**
+             * Id On Card
+             * @description Never stored.
+             */
+            id_on_card?: string | null;
+            /**
+             * Historic
+             * @default false
+             */
+            historic: boolean;
+        };
+        /** FitnessAssessmentPage */
+        FitnessAssessmentPage: {
+            /** Items */
+            items: components["schemas"]["FitnessAssessmentRead"][];
+            /**
+             * Total
+             * @description Total number of matching items across all pages.
+             */
+            total: number;
+            /**
+             * Page
+             * @description 1-based page number.
+             */
+            page: number;
+            /**
+             * Page Size
+             * @description Items per page (max 200).
+             */
+            page_size: number;
+        };
+        /** FitnessAssessmentRead */
+        FitnessAssessmentRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** @description OH-2 tier the caller received for this record. */
+            tier: components["schemas"]["FitnessTier"];
+            /** Assessment No */
+            assessment_no: string;
+            worker: components["schemas"]["WorkerRef"];
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Engagement Short Code */
+            engagement_short_code: string | null;
+            source: components["schemas"]["AssessmentSource"];
+            status: components["schemas"]["AssessmentStatus"];
+            /**
+             * Examined On
+             * Format: date
+             */
+            examined_on: string;
+            /** Certificate No */
+            certificate_no: string;
+            /** Lines */
+            lines: components["schemas"]["FitnessLineRead"][];
+            /** Purpose Notice Given */
+            purpose_notice_given: boolean;
+            /** Historic */
+            historic: boolean;
+            /** Accepted At */
+            accepted_at: string | null;
+            signed_by?: components["schemas"]["UserRef"] | null;
+            /** Signed At */
+            signed_at?: string | null;
+            recorded_by?: components["schemas"]["UserRef"] | null;
+            submitted_by?: components["schemas"]["UserRef"] | null;
+            /** Submitted At */
+            submitted_at?: string | null;
+            /** Has Scan */
+            has_scan: boolean;
+            assessment_type?: components["schemas"]["AssessmentType"] | null;
+            provider?: components["schemas"]["MedicalProviderRef"] | null;
+            examiner?: components["schemas"]["ExaminerRef"] | null;
+            verification_status?: components["schemas"]["VerificationStatus"] | null;
+            /** Verification Due On */
+            verification_due_on?: string | null;
+            /** Related Hold No */
+            related_hold_no?: string | null;
+            /** Related Referral No */
+            related_referral_no?: string | null;
+            /** Name As Printed */
+            name_as_printed?: string | null;
+            name_match?: components["schemas"]["NameMatch"] | null;
+            id_match_result?: components["schemas"]["IdMatchResult"] | null;
+            /** Clinical Data Present */
+            clinical_data_present?: boolean | null;
+            /** Status Reason */
+            status_reason?: string | null;
+            reviewed_by?: components["schemas"]["UserRef"] | null;
+            /** Reviewed At */
+            reviewed_at?: string | null;
+            revoke?: components["schemas"]["RevokeInfo"] | null;
+            /** Allowed Actions */
+            allowed_actions?: components["schemas"]["AssessmentAction"][];
+            /** Warnings */
+            warnings?: components["schemas"]["ApiWarning"][];
+        };
+        /**
+         * FitnessAssessmentTransition
+         * @description §4.3. `reason`: return ≥ 10 chars, revoke ≥ 20 chars, reject required.
+         *     `clinical_data_present` must be answered on accept / reject of an external certificate
+         *     (FA-9; true → Rejected CLINICAL_DATA_IN_SCAN).
+         */
+        FitnessAssessmentTransition: {
+            action: components["schemas"]["AssessmentAction"];
+            /** Reason */
+            reason?: string | null;
+            /** Clinical Data Present */
+            clinical_data_present?: boolean | null;
+        };
+        /**
+         * FitnessAssessmentUpdate
+         * @description Draft / Awaiting Sign-off: any field. Accepted: tier 3 within 24 h only; later → 409
+         *     ASSESSMENT_LOCKED (revoke + new, FA-14).
+         */
+        FitnessAssessmentUpdate: {
+            /** Examined On */
+            examined_on?: string | null;
+            /** Certificate No */
+            certificate_no?: string | null;
+            /** Lines */
+            lines?: components["schemas"]["FitnessLineInput"][] | null;
+            /** Name As Printed */
+            name_as_printed?: string | null;
+        };
+        /**
+         * FitnessCategory
+         * @description List FCAT.
+         * @enum {string}
+         */
+        FitnessCategory: "general" | "task" | "surveillance";
+        /**
+         * FitnessCheckStatus
+         * @description HK6-6 result status (raw provider result, before the hook-policy stage).
+         * @enum {string}
+         */
+        FitnessCheckStatus: "met" | "expiring" | "not_met" | "unknown_code";
+        /**
+         * FitnessCodeCreate
+         * @description Capability 147. Code disjoint from Phase 4 PCT and the Phase 5 catalogue (422
+         *     CODE_IN_OTHER_CATALOGUE, MC-2); contractor_clinic only for category general (MC-4).
+         */
+        FitnessCodeCreate: {
+            /**
+             * Code
+             * @example SCBA-FIT
+             */
+            code: string;
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            category: components["schemas"]["FitnessCategory"];
+            /** Validity Months */
+            validity_months: number;
+            /** Examiner Classes */
+            examiner_classes: components["schemas"]["ExaminerClass"][];
+            /** Provider Kinds */
+            provider_kinds: components["schemas"]["MedicalProviderKind"][];
+            /** Typical Tests */
+            typical_tests?: components["schemas"]["TypicalTest"][];
+            /**
+             * Active
+             * @default true
+             */
+            active: boolean;
+        };
+        /** FitnessCodeList */
+        FitnessCodeList: {
+            /** Items */
+            items: components["schemas"]["FitnessCodeRead"][];
+        };
+        /** FitnessCodeRead */
+        FitnessCodeRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Code */
+            code: string;
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            category: components["schemas"]["FitnessCategory"];
+            /** Validity Months */
+            validity_months: number;
+            /** Examiner Classes */
+            examiner_classes: components["schemas"]["ExaminerClass"][];
+            /** Provider Kinds */
+            provider_kinds: components["schemas"]["MedicalProviderKind"][];
+            /** Typical Tests */
+            typical_tests: components["schemas"]["TypicalTest"][];
+            /** Negated By */
+            negated_by: components["schemas"]["RestrictionCode"][];
+            /**
+             * Hook Code
+             * @description Used by any Phase 2/3 attach point (HK6-2).
+             */
+            hook_code: boolean;
+            /**
+             * In Use
+             * @description Has assessment or plan lines (delete → 409).
+             */
+            in_use: boolean;
+            /** Active */
+            active: boolean;
+            /**
+             * Effective Validity Months
+             * @description With ?project_id: after the project override (MC-5).
+             */
+            effective_validity_months?: number | null;
+            /** Critical On Project */
+            critical_on_project?: boolean | null;
+        };
+        /**
+         * FitnessCodeUpdate
+         * @description Tighten only (MC-3): shorter validity, fewer examiner classes / provider kinds, an added
+         *     negating restriction; anything else → 422 CATALOGUE_LOOSENING. Labels are free.
+         */
+        FitnessCodeUpdate: {
+            /** Name En */
+            name_en?: string | null;
+            /** Name Ar */
+            name_ar?: string | null;
+            /** Validity Months */
+            validity_months?: number | null;
+            /** Examiner Classes */
+            examiner_classes?: components["schemas"]["ExaminerClass"][] | null;
+            /** Provider Kinds */
+            provider_kinds?: components["schemas"]["MedicalProviderKind"][] | null;
+            /** Typical Tests */
+            typical_tests?: components["schemas"]["TypicalTest"][] | null;
+            /** Negated By */
+            negated_by?: components["schemas"]["RestrictionCode"][] | null;
+            /** Active */
+            active?: boolean | null;
+        };
+        /**
+         * FitnessDataSubjectReport
+         * @description P6-9 (capability 165): handed over by the OH Practitioner; audited `export` with purpose
+         *     data_subject_request.
+         */
+        FitnessDataSubjectReport: {
+            worker: components["schemas"]["WorkerRef"];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            /** Assessments */
+            assessments: components["schemas"]["FitnessAssessmentRead"][];
+            /** Holds */
+            holds: components["schemas"]["FitnessHoldBrief"][];
+            /** Referrals */
+            referrals: components["schemas"]["FitnessReferralBrief"][];
+        };
+        /** FitnessGapPage */
+        FitnessGapPage: {
+            /** Items */
+            items: components["schemas"]["FitnessGapRow"][];
+            /**
+             * Total
+             * @description Total number of matching items across all pages.
+             */
+            total: number;
+            /**
+             * Page
+             * @description 1-based page number.
+             */
+            page: number;
+            /**
+             * Page Size
+             * @description Items per page (max 200).
+             */
+            page_size: number;
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            tier: components["schemas"]["FitnessTier"];
+        };
+        /** FitnessGapRow */
+        FitnessGapRow: {
+            /**
+             * Deployment Id
+             * Format: uuid
+             */
+            deployment_id: string;
+            worker: components["schemas"]["WorkerRef"];
+            /** Engagement Short Code */
+            engagement_short_code: string | null;
+            trade: components["schemas"]["Trade"];
+            /** Code */
+            code: string;
+            /**
+             * Due Date
+             * Format: date
+             */
+            due_date: string;
+            /** Hook Code */
+            hook_code: boolean;
+            /** Critical */
+            critical: boolean;
+            /**
+             * Outcome Category
+             * @description Tier 2+: missing / expired / unfit / restriction / hold …
+             */
+            outcome_category?: string | null;
+            /** @description Tier 3 only. */
+            reason_code?: components["schemas"]["HookReasonCode"] | null;
+        };
+        /** FitnessHoldBrief */
+        FitnessHoldBrief: {
+            /** Hold No */
+            hold_no: string;
+            status: components["schemas"]["HoldStatus"];
+            reason: components["schemas"]["HoldReason"];
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Released At */
+            released_at: string | null;
+        };
+        /** FitnessHoldCancel */
+        FitnessHoldCancel: {
+            /** Reason */
+            reason: string;
+        };
+        /**
+         * FitnessHoldCreate
+         * @description Manual hold (capability 159): reason_text ≥ 20 chars in functional wording.
+         */
+        FitnessHoldCreate: {
+            /**
+             * Worker Id
+             * Format: uuid
+             */
+            worker_id: string;
+            /** Reason Text */
+            reason_text: string;
+        };
+        /** FitnessHoldPage */
+        FitnessHoldPage: {
+            /** Items */
+            items: components["schemas"]["FitnessHoldRead"][];
+            /**
+             * Total
+             * @description Total number of matching items across all pages.
+             */
+            total: number;
+            /**
+             * Page
+             * @description 1-based page number.
+             */
+            page: number;
+            /**
+             * Page Size
+             * @description Items per page (max 200).
+             */
+            page_size: number;
+        };
+        /**
+         * FitnessHoldRead
+         * @description Tier 2: existence, dates, work during hold; tier 3: + reason, source and texts.
+         */
+        FitnessHoldRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** @description OH-2 tier the caller received for this record. */
+            tier: components["schemas"]["FitnessTier"];
+            /** Hold No */
+            hold_no: string;
+            worker: components["schemas"]["WorkerRef"];
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            status: components["schemas"]["HoldStatus"];
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Released At */
+            released_at: string | null;
+            /** Cancelled At */
+            cancelled_at: string | null;
+            /**
+             * Hold Hours
+             * @description (released_at or now) − started_at, 1 dp (§6.4).
+             */
+            hold_hours: string;
+            /**
+             * Compliant
+             * @description Released holds: no work during the hold.
+             */
+            compliant: boolean | null;
+            /** Work During Hold */
+            work_during_hold: components["schemas"]["WorkDuringHoldRead"][];
+            reason?: components["schemas"]["HoldReason"] | null;
+            source_type?: components["schemas"]["HoldSourceType"] | null;
+            /** Source Ref */
+            source_ref?: string | null;
+            /** Reason Text */
+            reason_text?: string | null;
+            /** Release Assessment No */
+            release_assessment_no?: string | null;
+            cancel_code?: components["schemas"]["HoldCancelCode"] | null;
+            /** Cancel Reason */
+            cancel_reason?: string | null;
+        };
+        /**
+         * FitnessLimitingFactor
+         * @description §6.1 (ties: restriction_review, printed_next_due, code_validity, project_override).
+         * @enum {string}
+         */
+        FitnessLimitingFactor: "restriction_review" | "printed_next_due" | "code_validity" | "project_override";
+        /** FitnessLineInput */
+        FitnessLineInput: {
+            /** Code */
+            code: string;
+            outcome: components["schemas"]["FitnessOutcome"];
+            /** Restrictions */
+            restrictions?: components["schemas"]["RestrictionInput"][];
+            /** Restriction Review Date */
+            restriction_review_date?: string | null;
+            /** Unfit Review Date */
+            unfit_review_date?: string | null;
+            /** Printed Next Due */
+            printed_next_due?: string | null;
+        };
+        /**
+         * FitnessLineRead
+         * @description Tier 2+: outcome, restrictions and review dates. Tier 1 sees code and validity only.
+         */
+        FitnessLineRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Code */
+            code: string;
+            outcome?: components["schemas"]["FitnessOutcome"] | null;
+            /** Restrictions */
+            restrictions?: components["schemas"]["RestrictionRead"][] | null;
+            /** Restriction Review Date */
+            restriction_review_date?: string | null;
+            /** Unfit Review Date */
+            unfit_review_date?: string | null;
+            /** Printed Next Due */
+            printed_next_due?: string | null;
+            /**
+             * Valid Until
+             * @description Stored org default (§6.1).
+             */
+            valid_until: string | null;
+            /**
+             * Effective Valid Until
+             * @description On the assessment's project (override applied on read).
+             */
+            effective_valid_until: string | null;
+            limiting_factor?: components["schemas"]["FitnessLimitingFactor"] | null;
+            line_state: components["schemas"]["FitnessLineState"];
+        };
+        /**
+         * FitnessLineState
+         * @description §3.6a line_state (derived on save of any assessment of the worker, §6.2).
+         * @enum {string}
+         */
+        FitnessLineState: "pending" | "governing" | "superseded" | "revoked" | "rejected";
+        /**
+         * FitnessOutcome
+         * @description List OUT (per fitness code).
+         * @enum {string}
+         */
+        FitnessOutcome: "fit" | "fit_with_restrictions" | "temporarily_unfit" | "permanently_unfit";
+        /**
+         * FitnessReference
+         * @description §3.10 lists with EN/AR labels (codes immutable).
+         */
+        FitnessReference: {
+            /** Restrictions */
+            restrictions: components["schemas"]["RestrictionInfo"][];
+            /** Exposure Groups */
+            exposure_groups: components["schemas"]["LabelledCode"][];
+            /** Outcomes */
+            outcomes: components["schemas"]["LabelledCode"][];
+            /** Assessment Types */
+            assessment_types: components["schemas"]["LabelledCode"][];
+            /** Examiner Classes */
+            examiner_classes: components["schemas"]["LabelledCode"][];
+            /** Categories */
+            categories: components["schemas"]["LabelledCode"][];
+            /** Hold Reasons */
+            hold_reasons: components["schemas"]["LabelledCode"][];
+            /** Referral Reasons */
+            referral_reasons: components["schemas"]["LabelledCode"][];
+            /** Typical Tests */
+            typical_tests: components["schemas"]["LabelledCode"][];
+            /**
+             * Hints
+             * @description P6-2 / FA-4 / RF-1 free-text hints (code functional_only, referral_note, no_diagnosis_form).
+             */
+            hints: components["schemas"]["LabelledCode"][];
+        };
+        /** FitnessReferralBrief */
+        FitnessReferralBrief: {
+            /** Referral No */
+            referral_no: string;
+            status: components["schemas"]["ReferralStatus"];
+            reason: components["schemas"]["ReferralReason"];
+            /**
+             * Raised At
+             * Format: date-time
+             */
+            raised_at: string;
+            /** Assessed At */
+            assessed_at: string | null;
+        };
+        /** FitnessReferralCancel */
+        FitnessReferralCancel: {
+            /** Reason */
+            reason: string;
+        };
+        /**
+         * FitnessReferralCreate
+         * @description Capability 158 within RF-2 scope. `note`: describe what you saw, not a diagnosis.
+         */
+        FitnessReferralCreate: {
+            /**
+             * Worker Id
+             * Format: uuid
+             */
+            worker_id: string;
+            reason: components["schemas"]["ReferralReason"];
+            /** Note */
+            note?: string | null;
+            /** Remove From Work */
+            remove_from_work: boolean;
+        };
+        /** FitnessReferralPage */
+        FitnessReferralPage: {
+            /** Items */
+            items: components["schemas"]["FitnessReferralRead"][];
+            /**
+             * Total
+             * @description Total number of matching items across all pages.
+             */
+            total: number;
+            /**
+             * Page
+             * @description 1-based page number.
+             */
+            page: number;
+            /**
+             * Page Size
+             * @description Items per page (max 200).
+             */
+            page_size: number;
+        };
+        /**
+         * FitnessReferralRead
+         * @description Existence and raiser are personal (tier 1 context); reason and note tier 3.
+         */
+        FitnessReferralRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** @description OH-2 tier the caller received for this record. */
+            tier: components["schemas"]["FitnessTier"];
+            /** Referral No */
+            referral_no: string;
+            worker: components["schemas"]["WorkerRef"];
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            status: components["schemas"]["ReferralStatus"];
+            /** Remove From Work */
+            remove_from_work: boolean;
+            raised_by: components["schemas"]["UserRef"] | null;
+            /**
+             * Raised At
+             * Format: date-time
+             */
+            raised_at: string;
+            /**
+             * Due At
+             * Format: date-time
+             */
+            due_at: string;
+            /** Overdue */
+            overdue: boolean;
+            /** Assessed At */
+            assessed_at: string | null;
+            /** On Time */
+            on_time: boolean | null;
+            /** Hold No */
+            hold_no?: string | null;
+            /** Assessment No */
+            assessment_no?: string | null;
+            reason?: components["schemas"]["ReferralReason"] | null;
+            /** Note */
+            note?: string | null;
+            /** Cancel Reason */
+            cancel_reason?: string | null;
+            /**
+             * Incident Draft Link
+             * @description RF-6: Phase 1 incident draft link (heat_illness_episode).
+             */
+            incident_draft_link?: string | null;
+            /** Warnings */
+            warnings?: components["schemas"]["ApiWarning"][];
+        };
+        /** FitnessRequirementList */
+        FitnessRequirementList: {
+            /**
+             * Deployment Id
+             * Format: uuid
+             */
+            deployment_id: string;
+            worker: components["schemas"]["WorkerRef"];
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /** @description OH-2 tier the caller received for this record. */
+            tier: components["schemas"]["FitnessTier"];
+            /** Items */
+            items: components["schemas"]["FitnessRequirementRead"][];
+        };
+        /** FitnessRequirementRead */
+        FitnessRequirementRead: {
+            /** Code */
+            code: string;
+            /** Line Nos */
+            line_nos: string[];
+            /** Kpi Counted */
+            kpi_counted: boolean;
+            /** Hook Code */
+            hook_code: boolean;
+            /** Critical */
+            critical: boolean;
+            /**
+             * Applies From
+             * Format: date
+             */
+            applies_from: string;
+            /**
+             * Due Date
+             * Format: date
+             */
+            due_date: string;
+            state: components["schemas"]["FitnessRequirementState"];
+            /** Counted */
+            counted: boolean;
+            /** Valid Until */
+            valid_until: string | null;
+            outcome?: components["schemas"]["FitnessOutcome"] | null;
+            reason_code?: components["schemas"]["HookReasonCode"] | null;
+        };
+        /**
+         * FitnessRequirementState
+         * @description §6.3 (first match wins: met / expiring, due, gap).
+         * @enum {string}
+         */
+        FitnessRequirementState: "met" | "expiring" | "due" | "gap";
+        /**
+         * FitnessScanReason
+         * @description P6-5 reason to open a certificate scan (capability 160).
+         * @enum {string}
+         */
+        FitnessScanReason: "verification" | "authority_request" | "gosi_claim" | "legal" | "other";
+        /**
+         * FitnessScanUrlRequest
+         * @description P6-5 (capability 160): a reason is required (422 without).
+         */
+        FitnessScanUrlRequest: {
+            reason: components["schemas"]["FitnessScanReason"];
+            /**
+             * Reason Text
+             * @description For `other`.
+             */
+            reason_text?: string | null;
+        };
+        /**
+         * FitnessTier
+         * @description OH-2 access tier of the caller for the record (each includes the one before it).
+         * @enum {string}
+         */
+        FitnessTier: "status" | "functional" | "clinical_admin";
+        /**
+         * FitnessVerificationCreate
+         * @description Capability 154; verifier ≠ submitter and not employed by the worker's employer (422
+         *     SOD_CONFLICT, FV-2). `channel_used` must be the provider's registered portal, a domain
+         *     email or phone (422 CHANNEL_NOT_REGISTERED); the server never fetches URLs (FV-3).
+         */
+        FitnessVerificationCreate: {
+            method: components["schemas"]["FitnessVerificationMethod"];
+            /** Channel Used */
+            channel_used: string;
+            outcome: components["schemas"]["FitnessVerificationOutcome"];
+            /** Reference */
+            reference: string;
+            /**
+             * Performed At
+             * @description UTC; default now.
+             */
+            performed_at?: string | null;
+        };
+        /** FitnessVerificationList */
+        FitnessVerificationList: {
+            /** Items */
+            items: components["schemas"]["FitnessVerificationRead"][];
+        };
+        /**
+         * FitnessVerificationMethod
+         * @description FV-3 channels; `site_clinic_record` (FV-6) and `clinic_register_file` (IM6-3) are set by
+         *     the system.
+         * @enum {string}
+         */
+        FitnessVerificationMethod: "clinic_portal" | "clinic_email" | "clinic_phone" | "site_clinic_record" | "clinic_register_file";
+        /**
+         * FitnessVerificationOutcome
+         * @description FV-4 / FV-5.
+         * @enum {string}
+         */
+        FitnessVerificationOutcome: "confirmed" | "not_found" | "details_differ" | "revoked_by_clinic" | "no_response";
+        /** FitnessVerificationRead */
+        FitnessVerificationRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Assessment Id
+             * Format: uuid
+             */
+            assessment_id: string;
+            /** Assessment No */
+            assessment_no: string;
+            method: components["schemas"]["FitnessVerificationMethod"];
+            /** Channel Used */
+            channel_used: string;
+            outcome: components["schemas"]["FitnessVerificationOutcome"];
+            /** Reference */
+            reference: string;
+            performed_by: components["schemas"]["UserRef"] | null;
+            /**
+             * Performed At
+             * Format: date-time
+             */
+            performed_at: string;
+            /** Counts As Verification */
+            counts_as_verification: boolean;
+            verification_status_after: components["schemas"]["VerificationStatus"];
+        };
         /**
          * FodCheckInput
          * @description WA-17: required to resume or close a WAP with fod_handback_required.
@@ -17910,6 +19632,50 @@ export interface components {
          * @enum {string}
          */
         HazardousAreaClass: "none" | "zone_0" | "zone_1" | "zone_2";
+        /** HealthProfileHistory */
+        HealthProfileHistory: {
+            /** Value */
+            value: components["schemas"]["ExposureGroup"][];
+            /**
+             * From Date
+             * Format: date
+             */
+            from_date: string;
+            /** To Date */
+            to_date: string | null;
+            by: components["schemas"]["UserRef"] | null;
+        };
+        /** HealthProfileRead */
+        HealthProfileRead: {
+            /**
+             * Deployment Id
+             * Format: uuid
+             */
+            deployment_id: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            worker: components["schemas"]["WorkerRef"];
+            trade: components["schemas"]["Trade"];
+            deployment_status: components["schemas"]["DeploymentStatus"];
+            /** Exposure Groups */
+            exposure_groups: components["schemas"]["ExposureGroup"][];
+            /** History */
+            history: components["schemas"]["HealthProfileHistory"][];
+        };
+        /**
+         * HealthProfileUpdate
+         * @description Capability 151 (Contractor HSE Rep: C scope). Applies from today. Removing a group whose
+         *     surveillance line is in gap needs a reason ≥ 20 chars (WP-2).
+         */
+        HealthProfileUpdate: {
+            /** Exposure Groups */
+            exposure_groups: components["schemas"]["ExposureGroup"][];
+            /** Reason */
+            reason?: string | null;
+        };
         /** HealthResponse */
         HealthResponse: {
             /**
@@ -18004,6 +19770,34 @@ export interface components {
          * @enum {string}
          */
         HijriCalendar: "umm_al_qura";
+        /**
+         * HoldCancelCode
+         * @description FH-4 system cancellation codes.
+         * @enum {string}
+         */
+        HoldCancelCode: "source_voided" | "source_reclassified";
+        /**
+         * HoldReason
+         * @description List HR.
+         * @enum {string}
+         */
+        HoldReason: "rtw_after_injury" | "heat_illness" | "referral" | "manual";
+        /**
+         * HoldSourceType
+         * @enum {string}
+         */
+        HoldSourceType: "injury_case" | "referral" | "manual";
+        /**
+         * HoldStatus
+         * @enum {string}
+         */
+        HoldStatus: "active" | "released" | "cancelled";
+        /**
+         * HookBand
+         * @description Display band of a medical hook result for callers below tier 2 (HK6-7).
+         * @enum {string}
+         */
+        HookBand: "cleared" | "not_eligible" | "check_due" | "restriction_applies";
         /**
          * HookCodePolicy
          * @description Effective policy of one code today: `transition` = not_met without hard stop is
@@ -18161,6 +19955,12 @@ export interface components {
              */
             training_enabled: boolean;
             /**
+             * Medical Enabled
+             * @description 6a HK6-1: medical hooks enabled (POST /projects/{id}/medical-hooks/enable); `kinds` then includes medical_fitness.
+             * @default false
+             */
+            medical_enabled: boolean;
+            /**
              * As Of
              * Format: date
              */
@@ -18241,7 +20041,7 @@ export interface components {
          *     the frontend translates one list.
          * @enum {string}
          */
-        HookReasonCode: "EQUIPMENT_NOT_REGISTERED" | "CATEGORY_MISMATCH" | "EQUIPMENT_BLACKLISTED" | "EQUIPMENT_RETIRED" | "EQUIPMENT_OUT_OF_SERVICE" | "EQUIPMENT_QUARANTINED" | "EQUIPMENT_NOT_DEPLOYED" | "ARRIVAL_INSPECTION_MISSING" | "CERT_MISSING" | "CERT_EXPIRED" | "CERT_UNVERIFIED" | "CERT_SUSPENDED" | "CERT_REVOKED" | "CONFIGURATION_CHANGED" | "SWL_LIMITATION" | "LIMITATION_CONFLICT" | "LIFTING_DUTY_NOT_CERTIFIED" | "COLOUR_CODE_OUT_OF_PERIOD" | "TPI_BLACKLISTED" | "SCAFFOLD_NOT_REGISTERED" | "SCAFFOLD_INSPECTION_OVERDUE" | "SCAFFOLD_TAG_RED" | "SCAFFOLD_INSPECTION_REQUIRED" | "SCAFFOLD_YELLOW_TAG" | "CERT_HOLDER_BANNED" | "CERT_SCOPE_MISMATCH" | "CERT_LIMITATION" | "CARD_RESTRICTION_REVIEW" | "EXPIRING_7D" | "UNKNOWN_CODE" | "TRAINING_MISSING" | "TRAINING_EXPIRED" | "TRAINING_PENDING_REVIEW" | "TRAINING_UNVERIFIED" | "TRAINING_SUSPENDED" | "TRAINING_REVOKED" | "TRAINING_VERIFICATION_FAILED" | "INDUCTION_NOT_VALID" | "HOLDER_NOT_LINKED";
+        HookReasonCode: "EQUIPMENT_NOT_REGISTERED" | "CATEGORY_MISMATCH" | "EQUIPMENT_BLACKLISTED" | "EQUIPMENT_RETIRED" | "EQUIPMENT_OUT_OF_SERVICE" | "EQUIPMENT_QUARANTINED" | "EQUIPMENT_NOT_DEPLOYED" | "ARRIVAL_INSPECTION_MISSING" | "CERT_MISSING" | "CERT_EXPIRED" | "CERT_UNVERIFIED" | "CERT_SUSPENDED" | "CERT_REVOKED" | "CONFIGURATION_CHANGED" | "SWL_LIMITATION" | "LIMITATION_CONFLICT" | "LIFTING_DUTY_NOT_CERTIFIED" | "COLOUR_CODE_OUT_OF_PERIOD" | "TPI_BLACKLISTED" | "SCAFFOLD_NOT_REGISTERED" | "SCAFFOLD_INSPECTION_OVERDUE" | "SCAFFOLD_TAG_RED" | "SCAFFOLD_INSPECTION_REQUIRED" | "SCAFFOLD_YELLOW_TAG" | "CERT_HOLDER_BANNED" | "CERT_SCOPE_MISMATCH" | "CERT_LIMITATION" | "CARD_RESTRICTION_REVIEW" | "EXPIRING_7D" | "UNKNOWN_CODE" | "TRAINING_MISSING" | "TRAINING_EXPIRED" | "TRAINING_PENDING_REVIEW" | "TRAINING_UNVERIFIED" | "TRAINING_SUSPENDED" | "TRAINING_REVOKED" | "TRAINING_VERIFICATION_FAILED" | "INDUCTION_NOT_VALID" | "HOLDER_NOT_LINKED" | "MEDICAL_HOLD" | "MEDICAL_UNFIT" | "MEDICAL_PENDING_REVIEW" | "MEDICAL_UNVERIFIED" | "MEDICAL_REVOKED" | "MEDICAL_VERIFICATION_FAILED" | "MEDICAL_MISSING" | "RESTRICTION_CONFLICT" | "MEDICAL_REVIEW_DUE" | "MEDICAL_EXPIRED" | "WORKER_UNKNOWN";
         /**
          * HookRequirement
          * @description HK-2: a requirement owned by a later phase (codes are free text until those modules
@@ -21371,7 +23171,7 @@ export interface components {
          * @description KPI catalogue §6.1. K-26 is split into one id per event type (DO / PD / ENV).
          * @enum {string}
          */
-        KpiMetric: "K-01" | "K-02" | "K-03" | "K-04" | "K-05" | "K-05b" | "K-06" | "K-07" | "K-08" | "K-09" | "K-10" | "K-11" | "K-12" | "K-13" | "K-14" | "K-15" | "K-16" | "K-17" | "K-18" | "K-20" | "K-21" | "K-22" | "K-23" | "K-24" | "K-25" | "K-26a" | "K-26b" | "K-26c" | "K-27" | "K-28" | "K-29" | "K-30" | "K-31" | "K-32" | "K-33" | "K-34" | "K-35" | "K-35b" | "K-36" | "K-37" | "K-38" | "K-39" | "K-40" | "K-41" | "K-42" | "K-42b" | "K-43" | "K-44" | "K-45" | "K-46" | "K-47" | "K-48" | "K-49" | "K-50" | "K-51" | "K-52" | "K-53" | "K-53b" | "K-54" | "K-55" | "K-56" | "K-57" | "K-58" | "K-59" | "K-60" | "K-46b" | "K-61" | "K-62" | "K-63" | "K-64" | "K-65" | "K-66" | "K-67" | "K-68" | "K-69" | "K-70" | "K-71" | "K-72" | "K-73" | "K-74" | "K-75" | "K-76" | "K-77" | "K-78" | "K-79" | "K-80" | "K-81" | "K-82" | "K-83" | "K-84" | "K-85" | "K-86" | "K-87" | "K-88";
+        KpiMetric: "K-01" | "K-02" | "K-03" | "K-04" | "K-05" | "K-05b" | "K-06" | "K-07" | "K-08" | "K-09" | "K-10" | "K-11" | "K-12" | "K-13" | "K-14" | "K-15" | "K-16" | "K-17" | "K-18" | "K-20" | "K-21" | "K-22" | "K-23" | "K-24" | "K-25" | "K-26a" | "K-26b" | "K-26c" | "K-27" | "K-28" | "K-29" | "K-30" | "K-31" | "K-32" | "K-33" | "K-34" | "K-35" | "K-35b" | "K-36" | "K-37" | "K-38" | "K-39" | "K-40" | "K-41" | "K-42" | "K-42b" | "K-43" | "K-44" | "K-45" | "K-46" | "K-47" | "K-48" | "K-49" | "K-50" | "K-51" | "K-52" | "K-53" | "K-53b" | "K-54" | "K-55" | "K-56" | "K-57" | "K-58" | "K-59" | "K-60" | "K-46b" | "K-61" | "K-62" | "K-63" | "K-64" | "K-65" | "K-66" | "K-67" | "K-68" | "K-69" | "K-70" | "K-71" | "K-72" | "K-73" | "K-74" | "K-75" | "K-76" | "K-77" | "K-78" | "K-79" | "K-80" | "K-81" | "K-82" | "K-83" | "K-84" | "K-85" | "K-86" | "K-87" | "K-88" | "K-89" | "K-90" | "K-91" | "K-92" | "K-93" | "K-94" | "K-95" | "K-96";
         /** KpiPlaceholder */
         KpiPlaceholder: {
             metric: components["schemas"]["KpiMetric"];
@@ -21582,6 +23382,18 @@ export interface components {
          */
         KpiWarning: "PARTIAL_EXPOSURE" | "LOW_EXPOSURE" | "INCOMPLETE_DATA" | "PROVISIONAL_CASES" | "RESTATED" | "MIXED_BASES" | "CAPPED_CASES" | "TRAINING_REGISTER_DIFFERS" | "SESSIONS_NOT_CLOSED";
         /**
+         * LabelledCode
+         * @description A reference-list code with its current EN/AR label (§3.11).
+         */
+        LabelledCode: {
+            /** Code */
+            code: string;
+            /** Label En */
+            label_en: string;
+            /** Label Ar */
+            label_ar: string;
+        };
+        /**
          * Language
          * @enum {string}
          */
@@ -21629,7 +23441,7 @@ export interface components {
          * @description §6.9.
          * @enum {string}
          */
-        LeadingWarningCode: "E1" | "E2" | "E3" | "E4" | "E5" | "E6" | "E7" | "E8" | "E9" | "E10" | "E11" | "E12" | "E13";
+        LeadingWarningCode: "E1" | "E2" | "E3" | "E4" | "E5" | "E6" | "E7" | "E8" | "E9" | "E10" | "E11" | "E12" | "E13" | "E14" | "E15";
         /**
          * LelReferenceGas
          * @enum {string}
@@ -22489,6 +24301,654 @@ export interface components {
          */
         Mechanism: "fall_from_height" | "slip_trip_same_level" | "struck_by_falling_object" | "struck_by_moving_object" | "struck_against" | "caught_in_between" | "contact_electricity" | "contact_hot_fire" | "contact_chemical" | "overexertion_manual_handling" | "repetitive_motion" | "vehicle_plant_collision" | "vehicle_overturn" | "exposure_heat" | "exposure_noise" | "bite_sting" | "assault" | "other";
         /**
+         * MedicalAppliesTo
+         * @enum {string}
+         */
+        MedicalAppliesTo: "all_workers" | "trade" | "exposure_group" | "adp_category" | "zone" | "project_hook" | "crew_role" | "operator_binding";
+        /**
+         * MedicalBlacklistScope
+         * @description MP-6.
+         * @enum {string}
+         */
+        MedicalBlacklistScope: "all_records" | "issued_from";
+        /** MedicalBreakdown */
+        MedicalBreakdown: {
+            /**
+             * Metric
+             * @example K-89
+             */
+            metric: string;
+            group_by: components["schemas"]["MedicalKpiGroupBy"];
+            /** Rows */
+            rows: components["schemas"]["MedicalBreakdownRow"][];
+        };
+        /**
+         * MedicalBreakdownRow
+         * @description Codes, categories, contractor short codes, trades, months or gap reasons as keys; cells
+         *     of 1–4 persons are shown as "<5" (MK-3).
+         */
+        MedicalBreakdownRow: {
+            /** Key */
+            key: string;
+            /** Label En */
+            label_en: string;
+            /** Label Ar */
+            label_ar: string;
+            /** Value */
+            value: string | null;
+            /** Display */
+            display: string;
+            /** Numerator */
+            numerator?: string | null;
+            /** Denominator */
+            denominator?: string | null;
+            /**
+             * Suppressed
+             * @default false
+             */
+            suppressed: boolean;
+        };
+        /**
+         * MedicalCheckItem
+         * @description §8.5 / AC133: the tier-1 Fitness section of the Phase 4 VF-9 and Phase 5 CK5-2 views.
+         */
+        MedicalCheckItem: {
+            /** Code */
+            code: string;
+            /** Cleared */
+            cleared: boolean;
+        };
+        /**
+         * MedicalExemptionRequest
+         * @description MR-6: there are no medical exemptions (always 422 EXEMPTION_NOT_ALLOWED).
+         */
+        MedicalExemptionRequest: {
+            /** Deployment Id */
+            deployment_id?: string | null;
+            /** Line Id */
+            line_id?: string | null;
+            /** Reason */
+            reason?: string | null;
+        };
+        /**
+         * MedicalHooksEnableRequest
+         * @description HK6-1 (capability 164): needs medical_register_from ≤ today (422
+         *     MEDICAL_REGISTER_NOT_LIVE) and an Approved site or external clinic serving the project (422
+         *     NO_MEDICAL_PROVIDER). Show `GET /projects/{id}/hook-readiness?kind=medical_fitness` first.
+         */
+        MedicalHooksEnableRequest: {
+            /**
+             * Registered On
+             * @description Default today (local).
+             */
+            registered_on?: string | null;
+        };
+        /** MedicalImportBatchPage */
+        MedicalImportBatchPage: {
+            /** Items */
+            items: components["schemas"]["MedicalImportBatchRead"][];
+            /**
+             * Total
+             * @description Total number of matching items across all pages.
+             */
+            total: number;
+            /**
+             * Page
+             * @description 1-based page number.
+             */
+            page: number;
+            /**
+             * Page Size
+             * @description Items per page (max 200).
+             */
+            page_size: number;
+        };
+        /** MedicalImportBatchRead */
+        MedicalImportBatchRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            source: components["schemas"]["MedicalImportSource"];
+            /** Provider Id */
+            provider_id: string | null;
+            /** File Name */
+            file_name: string;
+            /** File Sha256 */
+            file_sha256: string;
+            status: components["schemas"]["MedicalImportStatus"];
+            /** Counts */
+            counts: {
+                [key: string]: number;
+            };
+            /** File Issues */
+            file_issues: components["schemas"]["MedicalImportIssue"][];
+            /** Rows */
+            rows: components["schemas"]["MedicalImportRow"][];
+            uploaded_by: components["schemas"]["UserRef"] | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Committed At */
+            committed_at: string | null;
+            /** Committed Assessment Nos */
+            committed_assessment_nos: string[];
+        };
+        /**
+         * MedicalImportCode
+         * @description IM6-5 validation codes.
+         * @enum {string}
+         */
+        MedicalImportCode: "E01" | "E02" | "E03" | "E04" | "E05" | "E06" | "E07" | "E08" | "E09" | "E10" | "W01" | "W02" | "W03" | "W04";
+        /** MedicalImportIssue */
+        MedicalImportIssue: {
+            code: components["schemas"]["MedicalImportCode"];
+            /**
+             * Level
+             * @example error
+             * @example warning
+             */
+            level: string;
+            /** Message En */
+            message_en: string;
+            /** Message Ar */
+            message_ar: string;
+            /** Field */
+            field?: string | null;
+            /** Meta */
+            meta?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** MedicalImportRow */
+        MedicalImportRow: {
+            /** Row No */
+            row_no: number;
+            /** Worker No */
+            worker_no: string | null;
+            /** Id Masked */
+            id_masked: string | null;
+            /** Certificate No */
+            certificate_no: string | null;
+            /** Code */
+            code: string | null;
+            /**
+             * Status
+             * @example ok
+             * @example warning
+             * @example error
+             */
+            status: string;
+            /** Issues */
+            issues: components["schemas"]["MedicalImportIssue"][];
+        };
+        /**
+         * MedicalImportSource
+         * @description §3.11: clinic_register_file (157 holders) or contractor_file (Contractor HSE Rep).
+         * @enum {string}
+         */
+        MedicalImportSource: "clinic_register_file" | "contractor_file";
+        /**
+         * MedicalImportStatus
+         * @enum {string}
+         */
+        MedicalImportStatus: "uploaded" | "validated" | "committed" | "discarded" | "expired";
+        /**
+         * MedicalKpiGroupBy
+         * @description MK-4 / §6.6 breakdowns (cells of 1–4 persons shown as "<5", MK-3).
+         * @enum {string}
+         */
+        MedicalKpiGroupBy: "code" | "code_category" | "contractor" | "trade" | "month" | "gap_reason";
+        /**
+         * MedicalKpiResponse
+         * @description GET /kpi/occupational-health: K-89…K-96 for the /kpi filters plus `trade`, `code` and
+         *     `code_category`. Multi-value metrics use `components` (K-91 gaps · workers · hook_gaps; K-93
+         *     active · overdue). Viewer/Client and tier-1 roles get MK-3 suppression ("<5").
+         */
+        MedicalKpiResponse: {
+            context: components["schemas"]["KpiContext"];
+            /** Metrics */
+            metrics: components["schemas"]["KpiValue"][];
+            /** Breakdowns */
+            breakdowns: components["schemas"]["MedicalBreakdown"][];
+        };
+        /**
+         * MedicalLineSource
+         * @description `manual` (capability 150), `hook` (H lines, kpi_counted) or `enforcement` (E lines,
+         *     enforcement-only, kpi_counted = false). Derived lines are read-only (MR-2).
+         * @enum {string}
+         */
+        MedicalLineSource: "manual" | "hook" | "enforcement";
+        /**
+         * MedicalPlanLineCreate
+         * @description Capability 150. Manual kinds: all_workers, trade, exposure_group, adp_category. Applies
+         *     from today (no back-dating, MR-1). due_within_days 0…medical_line_max_due_days and 0 for a
+         *     hook code (422 DUE_DAYS_NOT_ALLOWED).
+         */
+        MedicalPlanLineCreate: {
+            applies_to_kind: components["schemas"]["MedicalAppliesTo"];
+            /** Applies To Values */
+            applies_to_values?: string[];
+            /** Code */
+            code: string;
+            /**
+             * Due Within Days
+             * @default 0
+             */
+            due_within_days: number;
+        };
+        /** MedicalPlanLineRead */
+        MedicalPlanLineRead: {
+            /**
+             * Id
+             * Format: uuid
+             * @description This version.
+             */
+            id: string;
+            /**
+             * Line Id
+             * Format: uuid
+             * @description Stable across versions.
+             */
+            line_id: string;
+            /**
+             * Line No
+             * @example MRL-ANIA-EXP-002
+             * @example MRL-ANIA-EXP-H01
+             */
+            line_no: string;
+            applies_to_kind: components["schemas"]["MedicalAppliesTo"];
+            /** Applies To Values */
+            applies_to_values: string[];
+            /** Trades */
+            trades: components["schemas"]["Trade"][];
+            /** Code */
+            code: string;
+            /** Due Within Days */
+            due_within_days: number;
+            source: components["schemas"]["MedicalLineSource"];
+            /** Kpi Counted */
+            kpi_counted: boolean;
+            /** Read Only */
+            read_only: boolean;
+            /** Hook Key */
+            hook_key: string | null;
+            /**
+             * Effective From
+             * Format: date
+             */
+            effective_from: string;
+            /** Effective To */
+            effective_to: string | null;
+            /** Reason */
+            reason: string | null;
+            /**
+             * Counted
+             * @description Counted requirements at as_of.
+             */
+            counted?: number | null;
+            /** Met */
+            met?: number | null;
+            /** Gaps */
+            gaps?: number | null;
+        };
+        /** MedicalPlanLineRemove */
+        MedicalPlanLineRemove: {
+            /** Reason */
+            reason: string;
+        };
+        /**
+         * MedicalPlanLineUpdate
+         * @description A new version from today. Raising due_within_days or dropping values is loosening: HSE
+         *     Manager with a reason ≥ 20 chars (else 422 PLAN_LOOSENING, MR-5).
+         */
+        MedicalPlanLineUpdate: {
+            /** Applies To Values */
+            applies_to_values?: string[] | null;
+            /** Due Within Days */
+            due_within_days?: number | null;
+            /** Reason */
+            reason?: string | null;
+        };
+        /** MedicalPlanLineVersions */
+        MedicalPlanLineVersions: {
+            /** Items */
+            items: components["schemas"]["MedicalPlanLineRead"][];
+        };
+        /** MedicalPlanRead */
+        MedicalPlanRead: {
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /** Lines */
+            lines: components["schemas"]["MedicalPlanLineRead"][];
+            /** Hook Codes */
+            hook_codes: string[];
+        };
+        /**
+         * MedicalProviderAction
+         * @description §4.1: submit (148); approve / return / suspend / reinstate / blacklist / lift_blacklist
+         *     (149).
+         * @enum {string}
+         */
+        MedicalProviderAction: "submit" | "approve" | "return" | "suspend" | "reinstate" | "blacklist" | "lift_blacklist";
+        /** MedicalProviderCreate */
+        MedicalProviderCreate: {
+            /** Provider Code */
+            provider_code: string;
+            /** Legal Name En */
+            legal_name_en: string;
+            /** Legal Name Ar */
+            legal_name_ar: string;
+            kind: components["schemas"]["MedicalProviderKind"];
+            /**
+             * Project Ids
+             * @description Iff site_clinic.
+             */
+            project_ids?: string[];
+            /**
+             * Contractor Id
+             * @description Iff contractor_clinic.
+             */
+            contractor_id?: string | null;
+            /** Moh Licence No */
+            moh_licence_no: string;
+            /**
+             * Licence Valid Until
+             * Format: date
+             */
+            licence_valid_until: string;
+            /**
+             * Licence Checked At
+             * @description MP-2: set when the MOH register was checked (by = caller).
+             */
+            licence_checked_at?: string | null;
+            /** Verification Domains */
+            verification_domains?: string[];
+            /** Verification Email */
+            verification_email?: string | null;
+            /** Verification Phone */
+            verification_phone?: string | null;
+            /** Verification Portal Url */
+            verification_portal_url?: string | null;
+        };
+        /**
+         * MedicalProviderKind
+         * @description §3.2 kind; also the `provider_kinds` a fitness code allows (MC-4).
+         * @enum {string}
+         */
+        MedicalProviderKind: "site_clinic" | "external_clinic" | "contractor_clinic";
+        /** MedicalProviderPage */
+        MedicalProviderPage: {
+            /** Items */
+            items: components["schemas"]["MedicalProviderRead"][];
+            /**
+             * Total
+             * @description Total number of matching items across all pages.
+             */
+            total: number;
+            /**
+             * Page
+             * @description 1-based page number.
+             */
+            page: number;
+            /**
+             * Page Size
+             * @description Items per page (max 200).
+             */
+            page_size: number;
+        };
+        /** MedicalProviderRead */
+        MedicalProviderRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Provider Code */
+            provider_code: string;
+            /** Legal Name En */
+            legal_name_en: string;
+            /** Legal Name Ar */
+            legal_name_ar: string;
+            kind: components["schemas"]["MedicalProviderKind"];
+            /** Project Ids */
+            project_ids: string[];
+            /** Contractor Id */
+            contractor_id: string | null;
+            /** Moh Licence No */
+            moh_licence_no: string;
+            /**
+             * Licence Valid Until
+             * Format: date
+             */
+            licence_valid_until: string;
+            /** Licence Checked At */
+            licence_checked_at: string | null;
+            licence_checked_by: components["schemas"]["UserRef"] | null;
+            /** Verification Domains */
+            verification_domains: string[];
+            /** Verification Email */
+            verification_email: string | null;
+            /** Verification Phone */
+            verification_phone: string | null;
+            /** Verification Portal Url */
+            verification_portal_url: string | null;
+            status: components["schemas"]["MedicalProviderStatus"];
+            /** Status Reason */
+            status_reason: string | null;
+            /** Approved On */
+            approved_on: string | null;
+            blacklist_scope: components["schemas"]["MedicalBlacklistScope"] | null;
+            /** Blacklist From */
+            blacklist_from: string | null;
+            /** Allowed Actions */
+            allowed_actions: components["schemas"]["MedicalProviderAction"][];
+        };
+        /** MedicalProviderRef */
+        MedicalProviderRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Provider Code
+             * @example SHIFA-ANIA
+             */
+            provider_code: string;
+            /** Legal Name En */
+            legal_name_en: string;
+            /** Legal Name Ar */
+            legal_name_ar: string;
+            kind: components["schemas"]["MedicalProviderKind"];
+        };
+        /**
+         * MedicalProviderStatus
+         * @enum {string}
+         */
+        MedicalProviderStatus: "draft" | "pending_approval" | "approved" | "suspended" | "blacklisted";
+        /**
+         * MedicalProviderTransition
+         * @description §4.1: submit (148); approve / return / suspend / reinstate / blacklist / lift_blacklist
+         *     (149). Suspend and blacklist need a reason; blacklist needs a scope (MP-6).
+         */
+        MedicalProviderTransition: {
+            action: components["schemas"]["MedicalProviderAction"];
+            /** Reason */
+            reason?: string | null;
+            blacklist_scope?: components["schemas"]["MedicalBlacklistScope"] | null;
+            /** Blacklist From */
+            blacklist_from?: string | null;
+        };
+        /** MedicalProviderUpdate */
+        MedicalProviderUpdate: {
+            /** Legal Name En */
+            legal_name_en?: string | null;
+            /** Legal Name Ar */
+            legal_name_ar?: string | null;
+            /** Project Ids */
+            project_ids?: string[] | null;
+            /** Moh Licence No */
+            moh_licence_no?: string | null;
+            /** Licence Valid Until */
+            licence_valid_until?: string | null;
+            /** Licence Checked At */
+            licence_checked_at?: string | null;
+            /** Verification Domains */
+            verification_domains?: string[] | null;
+            /** Verification Email */
+            verification_email?: string | null;
+            /** Verification Phone */
+            verification_phone?: string | null;
+            /** Verification Portal Url */
+            verification_portal_url?: string | null;
+        };
+        /** MedicalSettingsRead */
+        MedicalSettingsRead: {
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Medical Register From */
+            medical_register_from: string | null;
+            /** Fitness Validity Months */
+            fitness_validity_months: {
+                [key: string]: number;
+            };
+            /** Medical Hook Transition Days */
+            medical_hook_transition_days: number;
+            /** Medical Hook Critical Transition Days */
+            medical_hook_critical_transition_days: number;
+            /** Medical Hook Critical Codes */
+            medical_hook_critical_codes: string[];
+            /** Unverified Fitness Acceptance Hours */
+            unverified_fitness_acceptance_hours: number;
+            /** Fitness Verification Due Days */
+            fitness_verification_due_days: number;
+            /** Referral Assessment Hours */
+            referral_assessment_hours: number;
+            /** Signoff Due Hours */
+            signoff_due_hours: number;
+            /** Assessment Backdate Max Days */
+            assessment_backdate_max_days: number;
+            /** Restriction Review Max Days */
+            restriction_review_max_days: number;
+            /** Unfit Review Max Days */
+            unfit_review_max_days: number;
+            /** Medical Line Max Due Days */
+            medical_line_max_due_days: number;
+            /** Rtw Hold Case Categories */
+            rtw_hold_case_categories: string[];
+            /** Heat Illness Natures */
+            heat_illness_natures: string[];
+            /** Exposure Group Trade Defaults */
+            exposure_group_trade_defaults: {
+                [key: string]: string[];
+            };
+            /** Medical Compliance Warning Pct */
+            medical_compliance_warning_pct: string;
+            /** Health Cell Min */
+            health_cell_min: number;
+            /** Fitness Scan Retention Months */
+            fitness_scan_retention_months: number;
+            /** Fitness Record Retention Years */
+            fitness_record_retention_years: number;
+            /** Surveillance Record Retention Years */
+            surveillance_record_retention_years: number;
+            /** Worker Purpose Notice Version */
+            worker_purpose_notice_version: string;
+            /** Alert Schedule Long Days */
+            alert_schedule_long_days: number[];
+            /** Medical Hooks Enabled */
+            medical_hooks_enabled: boolean;
+            /** Updated At */
+            updated_at: string | null;
+        };
+        /**
+         * MedicalSettingsUpdate
+         * @description Capability 164; "Allowed" ranges only (§3.12; tighten-only keys → 422
+         *     SETTING_LOOSENING; medical_register_from may only move earlier → 422
+         *     MEDICAL_REGISTER_LATER).
+         */
+        MedicalSettingsUpdate: {
+            /** Medical Register From */
+            medical_register_from?: string | null;
+            /** Fitness Validity Months */
+            fitness_validity_months?: {
+                [key: string]: number;
+            } | null;
+            /** Medical Hook Transition Days */
+            medical_hook_transition_days?: number | null;
+            /** Medical Hook Critical Transition Days */
+            medical_hook_critical_transition_days?: number | null;
+            /** Medical Hook Critical Codes */
+            medical_hook_critical_codes?: string[] | null;
+            /** Unverified Fitness Acceptance Hours */
+            unverified_fitness_acceptance_hours?: number | null;
+            /** Fitness Verification Due Days */
+            fitness_verification_due_days?: number | null;
+            /** Referral Assessment Hours */
+            referral_assessment_hours?: number | null;
+            /** Signoff Due Hours */
+            signoff_due_hours?: number | null;
+            /** Assessment Backdate Max Days */
+            assessment_backdate_max_days?: number | null;
+            /** Restriction Review Max Days */
+            restriction_review_max_days?: number | null;
+            /** Unfit Review Max Days */
+            unfit_review_max_days?: number | null;
+            /** Medical Line Max Due Days */
+            medical_line_max_due_days?: number | null;
+            /** Rtw Hold Case Categories */
+            rtw_hold_case_categories?: string[] | null;
+            /** Heat Illness Natures */
+            heat_illness_natures?: string[] | null;
+            /** Exposure Group Trade Defaults */
+            exposure_group_trade_defaults?: {
+                [key: string]: string[];
+            } | null;
+            /** Medical Compliance Warning Pct */
+            medical_compliance_warning_pct?: string | null;
+            /** Health Cell Min */
+            health_cell_min?: number | null;
+            /** Fitness Scan Retention Months */
+            fitness_scan_retention_months?: number | null;
+            /** Fitness Record Retention Years */
+            fitness_record_retention_years?: number | null;
+            /** Surveillance Record Retention Years */
+            surveillance_record_retention_years?: number | null;
+            /** Worker Purpose Notice Version */
+            worker_purpose_notice_version?: string | null;
+        };
+        /** MedicalSettingsUpdateResult */
+        MedicalSettingsUpdateResult: {
+            settings: components["schemas"]["MedicalSettingsRead"];
+            /** Changed */
+            changed: string[];
+        };
+        /**
          * MeetingType
          * @enum {string}
          */
@@ -23071,7 +25531,7 @@ export interface components {
          * @description In-app notification kinds (§7).
          * @enum {string}
          */
-        NotificationKind: "account_locked" | "contractor_cr_expiry" | "contractor_submitted" | "contractor_status_changed" | "engagement_parent_blacklisted" | "settings_changed" | "audit_chain_break" | "last_hse_manager_risk" | "role_assignment_ending" | "invite_expired" | "inactive_account" | "incident_reported" | "incident_unclassified" | "external_notification_due" | "investigation_due" | "preliminary_report_missing" | "open_lti_case" | "case_restated" | "ca_assigned" | "ca_due" | "ca_overdue" | "ca_pending_verification" | "high_risk_observation_without_ca" | "daily_return_missing" | "data_completeness_low" | "month_lock_approaching" | "inspection_due" | "inspection_missed" | "leading_warning" | "lti_free_milestone" | "monthly_report_ready" | "import_committed_with_warnings" | "induction_expiry" | "reinduction_due" | "worker_id_expiry" | "passport_registration" | "airport_pass_expiry" | "bg_recheck_due" | "pass_application_update" | "pass_application_stale" | "adp_expiry" | "avp_expiry" | "vehicle_document_expiry" | "adp_suspended" | "adp_suspension_ended" | "raised_suspension_pending" | "credential_status_changed" | "return_due" | "return_overdue" | "credential_lost" | "lost_authority_not_notified" | "revoked_token_scanned" | "admitted_despite_denial" | "contractor_blacklisted_passes" | "wap_update" | "wap_blocked" | "wap_crew_excluded" | "wap_suspended" | "wap_ending" | "notam_ending" | "notam_late" | "notam_not_issued" | "notam_ended_with_waps" | "obstacle_clearance_update" | "obstacle_clearance_ending" | "ops_suspension" | "permit_requested" | "permit_review_reminder" | "permit_reviewed" | "permit_update" | "permit_not_issued" | "permit_issue_lapsed" | "shift_end_approaching" | "shift_lapsed" | "gas_retest_due" | "gas_test_failed" | "permit_suspended" | "midday_ban" | "fire_watch_ended" | "permit_ending" | "permit_expired" | "post_expiry_check_pending" | "simops_conflict" | "ptw_critical_finding" | "ptw_audits_behind_plan" | "gas_detector_calibration_due" | "gas_detector_quarantined" | "ptw_appointment_expiry" | "jsa_template_review_due" | "isolation_review_due" | "isolation_orphan" | "lock_cut" | "crew_eligibility_expiring" | "ptw_exemption" | "crew_excluded" | "equipment_cert_expiry" | "equipment_quarantined" | "personnel_cert_expiry" | "personnel_cert_expiring_on_crew" | "tpi_accreditation_expiry" | "tpi_client_approval_expiry" | "certificate_submitted" | "certificate_review_reminder" | "certificate_returned" | "verification_due" | "verification_unable" | "verification_failed" | "scaffold_tag_expiry" | "scaffold_tag_red" | "equipment_stop_use" | "defect_rectification_due" | "equipment_out_of_service" | "configuration_event" | "arrival_inspection_due" | "blacklist_changed" | "ban_review_due" | "hook_block_approaching" | "hook_policy_changed" | "trade_cert_missing" | "cert_import_update" | "training_record_expiry" | "training_expiring_on_crew" | "training_refresher_due" | "training_refresher_booked_late" | "training_gap_on_live_work" | "training_gap_at_mobilisation" | "training_session_update" | "training_session_reminder" | "training_session_close_due" | "training_session_voided" | "training_record_submitted" | "training_verification_due" | "training_verification_unable" | "training_verification_failed" | "training_record_status" | "training_cert_no_reused" | "trainer_authorisation_expiry" | "trainer_authorisation_lapsed_sessions" | "training_provider_accreditation_expiry" | "training_provider_status" | "training_attempts_exceeded" | "training_import_update";
+        NotificationKind: "account_locked" | "contractor_cr_expiry" | "contractor_submitted" | "contractor_status_changed" | "engagement_parent_blacklisted" | "settings_changed" | "audit_chain_break" | "last_hse_manager_risk" | "role_assignment_ending" | "invite_expired" | "inactive_account" | "incident_reported" | "incident_unclassified" | "external_notification_due" | "investigation_due" | "preliminary_report_missing" | "open_lti_case" | "case_restated" | "ca_assigned" | "ca_due" | "ca_overdue" | "ca_pending_verification" | "high_risk_observation_without_ca" | "daily_return_missing" | "data_completeness_low" | "month_lock_approaching" | "inspection_due" | "inspection_missed" | "leading_warning" | "lti_free_milestone" | "monthly_report_ready" | "import_committed_with_warnings" | "induction_expiry" | "reinduction_due" | "worker_id_expiry" | "passport_registration" | "airport_pass_expiry" | "bg_recheck_due" | "pass_application_update" | "pass_application_stale" | "adp_expiry" | "avp_expiry" | "vehicle_document_expiry" | "adp_suspended" | "adp_suspension_ended" | "raised_suspension_pending" | "credential_status_changed" | "return_due" | "return_overdue" | "credential_lost" | "lost_authority_not_notified" | "revoked_token_scanned" | "admitted_despite_denial" | "contractor_blacklisted_passes" | "wap_update" | "wap_blocked" | "wap_crew_excluded" | "wap_suspended" | "wap_ending" | "notam_ending" | "notam_late" | "notam_not_issued" | "notam_ended_with_waps" | "obstacle_clearance_update" | "obstacle_clearance_ending" | "ops_suspension" | "permit_requested" | "permit_review_reminder" | "permit_reviewed" | "permit_update" | "permit_not_issued" | "permit_issue_lapsed" | "shift_end_approaching" | "shift_lapsed" | "gas_retest_due" | "gas_test_failed" | "permit_suspended" | "midday_ban" | "fire_watch_ended" | "permit_ending" | "permit_expired" | "post_expiry_check_pending" | "simops_conflict" | "ptw_critical_finding" | "ptw_audits_behind_plan" | "gas_detector_calibration_due" | "gas_detector_quarantined" | "ptw_appointment_expiry" | "jsa_template_review_due" | "isolation_review_due" | "isolation_orphan" | "lock_cut" | "crew_eligibility_expiring" | "ptw_exemption" | "crew_excluded" | "equipment_cert_expiry" | "equipment_quarantined" | "personnel_cert_expiry" | "personnel_cert_expiring_on_crew" | "tpi_accreditation_expiry" | "tpi_client_approval_expiry" | "certificate_submitted" | "certificate_review_reminder" | "certificate_returned" | "verification_due" | "verification_unable" | "verification_failed" | "scaffold_tag_expiry" | "scaffold_tag_red" | "equipment_stop_use" | "defect_rectification_due" | "equipment_out_of_service" | "configuration_event" | "arrival_inspection_due" | "blacklist_changed" | "ban_review_due" | "hook_block_approaching" | "hook_policy_changed" | "trade_cert_missing" | "cert_import_update" | "training_record_expiry" | "training_expiring_on_crew" | "training_refresher_due" | "training_refresher_booked_late" | "training_gap_on_live_work" | "training_gap_at_mobilisation" | "training_session_update" | "training_session_reminder" | "training_session_close_due" | "training_session_voided" | "training_record_submitted" | "training_verification_due" | "training_verification_unable" | "training_verification_failed" | "training_record_status" | "training_cert_no_reused" | "trainer_authorisation_expiry" | "trainer_authorisation_lapsed_sessions" | "training_provider_accreditation_expiry" | "training_provider_status" | "training_attempts_exceeded" | "training_import_update" | "fitness_expiry" | "fitness_expiring_on_crew" | "fitness_review_due" | "fitness_hold_created" | "fitness_referral_raised" | "fitness_referral_overdue" | "fitness_work_during_hold" | "fitness_rtw_before_clearance" | "fitness_restricted_days_prompt" | "fitness_signoff_due" | "fitness_certificate_submitted" | "fitness_verification_due" | "fitness_verification_unable" | "fitness_verification_failed" | "fitness_clinical_data_rejected" | "fitness_cert_no_reused" | "fitness_permanently_unfit" | "fitness_second_opinion" | "medical_licence_expiry" | "medical_provider_status" | "medical_reexamination_list" | "exposure_group_removed" | "fitness_catalogue_shortened" | "medical_import_update";
         /** NotificationPage */
         NotificationPage: {
             /** Items */
@@ -25884,6 +28344,11 @@ export interface components {
              * @description 5-training CK5-2 Training section (capability 142); null without it.
              */
             training?: components["schemas"]["PersonCheckTraining"][] | null;
+            /**
+             * Fitness
+             * @description 6a §8.5 Fitness section (tier 1: code and cleared only; capability 155); null without it or before medical hooks are enabled.
+             */
+            fitness?: components["schemas"]["MedicalCheckItem"][] | null;
         };
         /**
          * PersonCheckCertificate
@@ -28198,7 +30663,10 @@ export interface components {
              * @description Names only with capability 46.
              */
             label: string | null;
-            reason_code: components["schemas"]["HookReasonCode"];
+            /** @description Kind medical_fitness: only with capability 157 (tier 3, OH-2); else null and `band` is set. */
+            reason_code: components["schemas"]["HookReasonCode"] | null;
+            /** @description Kind medical_fitness: display band (HK6-7) for every caller. */
+            band?: components["schemas"]["HookBand"] | null;
             /** Hard Stop */
             hard_stop: boolean;
         };
@@ -28375,6 +30843,17 @@ export interface components {
             /** Lists */
             lists: components["schemas"]["ReferenceListRead"][];
         };
+        /**
+         * ReferralReason
+         * @description List RR.
+         * @enum {string}
+         */
+        ReferralReason: "observed_unwell" | "heat_illness_episode" | "self_reported" | "return_after_absence" | "post_incident_no_injury" | "certificate_restriction" | "supervisor_concern" | "other";
+        /**
+         * ReferralStatus
+         * @enum {string}
+         */
+        ReferralStatus: "open" | "assessed" | "cancelled";
         /** RefresherPlanItem */
         RefresherPlanItem: {
             record: components["schemas"]["TrainingRecordRef"];
@@ -28537,6 +31016,60 @@ export interface components {
             accepted_at: string;
             /** Alarp Justification */
             alarp_justification: string | null;
+        };
+        /**
+         * RestrictionCode
+         * @description List RC — functional restrictions (what the person must not do, never why).
+         * @enum {string}
+         */
+        RestrictionCode: "no_work_at_height" | "no_confined_space" | "no_driving" | "no_plant_operation" | "no_respirator_use" | "no_heat_exposure" | "no_noise_exposure" | "no_radiation_work" | "lifting_limit_kg" | "no_night_work" | "no_lone_work" | "light_duties_only" | "requires_corrective_lenses" | "other_functional";
+        /** RestrictionInfo */
+        RestrictionInfo: {
+            code: components["schemas"]["RestrictionCode"];
+            /** Label En */
+            label_en: string;
+            /** Label Ar */
+            label_ar: string;
+            /**
+             * Value Kind
+             * @description `int_kg` (5–25) for lifting_limit_kg, `text` (≤ 100) for other_functional, else null.
+             */
+            value_kind: string | null;
+            /**
+             * Negates
+             * @description Fitness codes the restriction makes not_met.
+             */
+            negates: string[];
+            /** Review Required */
+            review_required: boolean;
+        };
+        /** RestrictionInput */
+        RestrictionInput: {
+            code: components["schemas"]["RestrictionCode"];
+            /**
+             * Value
+             * @description lifting_limit_kg only: 5–25.
+             */
+            value?: number | null;
+            /**
+             * Text
+             * @description other_functional only: functional wording.
+             */
+            text?: string | null;
+        };
+        /** RestrictionRead */
+        RestrictionRead: {
+            code: components["schemas"]["RestrictionCode"];
+            /** Value */
+            value: number | null;
+            /** Text */
+            text: string | null;
+            /** Label En */
+            label_en: string;
+            /** Label Ar */
+            label_ar: string;
+            /** Review Required */
+            review_required: boolean;
         };
         /**
          * RestrictionReviewRequest
@@ -28704,6 +31237,19 @@ export interface components {
          * @enum {string}
          */
         RevalidationRule: "each_shift" | "one_handover" | "none";
+        /** RevokeInfo */
+        RevokeInfo: {
+            /** Reason */
+            reason?: string | null;
+            /** Code */
+            code?: string | null;
+            by: components["schemas"]["UserRef"] | null;
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+        };
         /**
          * RevokeRequest
          * @description Terminal (LC-5); custody → return_due (passes, ADPs, AVPs). Capability 58; inductions 52
@@ -28772,7 +31318,7 @@ export interface components {
          * @description Platform roles (§3.8). hse_manager is organisation-wide; all others are per project.
          * @enum {string}
          */
-        Role: "hse_manager" | "hse_officer" | "site_engineer" | "permit_issuer" | "permit_receiver" | "contractor_hse_rep" | "viewer_client";
+        Role: "hse_manager" | "hse_officer" | "site_engineer" | "permit_issuer" | "permit_receiver" | "contractor_hse_rep" | "viewer_client" | "oh_practitioner";
         /** RoleAssignmentCreate */
         RoleAssignmentCreate: {
             role: components["schemas"]["Role"];
@@ -32803,6 +35349,12 @@ export interface components {
             series: components["schemas"]["TrendSeries"][];
         };
         /**
+         * TypicalTest
+         * @description List TST (informational only; results are never stored, P6-2).
+         * @enum {string}
+         */
+        TypicalTest: "history_questionnaire" | "vision_acuity" | "colour_vision" | "depth_perception" | "audiometry" | "spirometry" | "chest_xray" | "cardio_exam" | "blood_pressure" | "balance_vertigo_screen" | "claustrophobia_screen" | "respirator_questionnaire" | "blood_count" | "musculoskeletal_exam";
+        /**
          * UnderstoodLanguage
          * @description AT-6.
          * @enum {string}
@@ -34168,6 +36720,23 @@ export interface components {
          * @enum {string}
          */
         WorkCondition: "electrically_safe" | "energized";
+        /** WorkDuringHoldRead */
+        WorkDuringHoldRead: {
+            event_type: components["schemas"]["WorkDuringHoldType"];
+            /** Ref */
+            ref: string | null;
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+        };
+        /**
+         * WorkDuringHoldType
+         * @description FH-8 detections.
+         * @enum {string}
+         */
+        WorkDuringHoldType: "gate_entry" | "crew_present" | "rtw_before_clearance";
         /**
          * WorkStatus
          * @description CL-1 closure request.
@@ -34377,6 +36946,68 @@ export interface components {
             mobilised_on: string;
             /** Demobilised On */
             demobilised_on: string | null;
+        };
+        /**
+         * WorkerFitnessItem
+         * @description HK6-6 result per code at `as_of`. Tier 1: status, valid_until and the generic text;
+         *     tier 2: + outcome, restrictions / conditions, review dates; tier 3: + reason_code and the
+         *     governing assessment.
+         */
+        WorkerFitnessItem: {
+            /** Code */
+            code: string;
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            /**
+             * Required
+             * @description Required by the plan for the deployment.
+             */
+            required: boolean;
+            status: components["schemas"]["FitnessCheckStatus"];
+            band: components["schemas"]["HookBand"];
+            /** Text En */
+            text_en: string;
+            /** Text Ar */
+            text_ar: string;
+            /** Valid Until */
+            valid_until: string | null;
+            /** Hard Stop */
+            hard_stop?: boolean | null;
+            outcome?: components["schemas"]["FitnessOutcome"] | null;
+            /** Restrictions */
+            restrictions?: components["schemas"]["RestrictionRead"][] | null;
+            /** Restriction Review Date */
+            restriction_review_date?: string | null;
+            /** Unfit Review Date */
+            unfit_review_date?: string | null;
+            reason_code?: components["schemas"]["HookReasonCode"] | null;
+            /** Assessment No */
+            assessment_no?: string | null;
+        };
+        /** WorkerFitnessRead */
+        WorkerFitnessRead: {
+            worker: components["schemas"]["WorkerRef"];
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            /** @description OH-2 tier the caller received for this record. */
+            tier: components["schemas"]["FitnessTier"];
+            /**
+             * On Hold
+             * @description Tier 2+ (FH-6).
+             */
+            on_hold?: boolean | null;
+            /** Items */
+            items: components["schemas"]["WorkerFitnessItem"][];
         };
         /**
          * WorkerIdLookup
@@ -45432,6 +48063,111 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TrainingKpiResponse"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_occupational_health_kpis: {
+        parameters: {
+            query?: {
+                /** @description Default: K-89…K-96. */
+                metric?: components["schemas"]["KpiMetric"][] | null;
+                group_by?: components["schemas"]["MedicalKpiGroupBy"][] | null;
+                /** @description Fitness code(s). */
+                code?: string[] | null;
+                code_category?: components["schemas"]["FitnessCategory"][] | null;
+                /** @description Project(s). Repeat for several. Required unless all_projects=true. Out-of-scope ids → 404. */
+                project_id?: string[] | null;
+                /** @description HSE Manager only: every project (K-R12 bases banner). */
+                all_projects?: boolean;
+                /** @description Sites (multi). */
+                site_id?: string[] | null;
+                /** @description Zones (multi). */
+                zone_id?: string[] | null;
+                /** @description airside / landside / other. */
+                zone_type?: components["schemas"]["ZoneType"] | null;
+                /** @description Contractor engagement(s); roll-up per include_subcontractors. */
+                engagement_id?: string[] | null;
+                /** @description K-R5: engagement + descendants (default) or this only. */
+                include_subcontractors?: boolean;
+                /** @description Tier 1/2/3. */
+                tier?: number[] | null;
+                /** @description K-R10 preset. */
+                period?: components["schemas"]["PeriodPreset"];
+                /** @description A date inside the wanted day/week/month/quarter/year (default as_of). mtd/qtd/ytd/r12/itd end at as_of. */
+                anchor?: string | null;
+                /** @description period=custom: first day. */
+                start?: string | null;
+                /** @description period=custom: last day (inclusive). */
+                end?: string | null;
+                /** @description Evaluation date; default today (project timezone). */
+                as_of?: string | null;
+                /** @description Comparisons to compute (K-R11). Default: previous. */
+                compare?: components["schemas"]["ComparisonKind"][] | null;
+                /** @description Gate(s): filters gate KPIs (K-52, K-53, K-53b) only. */
+                gate_id?: string[] | null;
+                /** @description Phase 3: filters PTW KPIs (K-46, K-46b, K-61…K-71) only. */
+                permit_type?: components["schemas"]["PermitType"][] | null;
+                /** @description Phase 4: filters equipment / scaffold KPIs (K-72…K-75, K-78, K-80). */
+                equipment_category?: components["schemas"]["EquipmentCertCategory"][] | null;
+                /** @description Phase 4: personnel certificate type code(s) (PCT); filters K-76, K-77, K-78 persons, K-79. */
+                cert_type?: string[] | null;
+                /** @description Phase 5: deployment trade(s); filters training KPIs (K-82…K-88) only. */
+                trade?: components["schemas"]["Trade"][] | null;
+                /** @description Phase 5: course code(s); filters training KPIs (K-82…K-88) only. */
+                course_code?: string[] | null;
+                /** @description Phase 5: course category (CAT-C); filters training KPIs only. */
+                course_category?: components["schemas"]["CourseCategory"][] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MedicalKpiResponse"];
                 };
             };
             /** @description Not authenticated, session expired, or login rejected. */
@@ -74448,6 +77184,3431 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TrainingImportRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_medical_settings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MedicalSettingsRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_medical_settings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MedicalSettingsUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MedicalSettingsUpdateResult"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    enable_medical_hooks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MedicalHooksEnableRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HookPolicyRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    medical_import_template: {
+        parameters: {
+            query?: {
+                format?: components["schemas"]["ExportFormat"];
+                headers?: "en" | "ar";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Medical import template (EN or AR headers). */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": string;
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_medical_imports: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["MedicalImportStatus"] | null;
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MedicalImportBatchPage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_medical_import: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_create_medical_import"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MedicalImportBatchRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_medical_import: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                batch_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MedicalImportBatchRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    commit_medical_import: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                batch_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MedicalImportBatchRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    discard_medical_import: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                batch_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MedicalImportBatchRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_fitness_reference: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitnessReference"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_fitness_codes: {
+        parameters: {
+            query?: {
+                /** @description Adds the project's effective validity (MC-5). */
+                project_id?: string | null;
+                include_inactive?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitnessCodeList"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_fitness_code: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FitnessCodeCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitnessCodeRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_fitness_code: {
+        parameters: {
+            query?: {
+                project_id?: string | null;
+            };
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitnessCodeRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    delete_fitness_code: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_fitness_code: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FitnessCodeUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitnessCodeRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_medical_providers: {
+        parameters: {
+            query?: {
+                q?: string | null;
+                kind?: components["schemas"]["MedicalProviderKind"][] | null;
+                status?: components["schemas"]["MedicalProviderStatus"][] | null;
+                project_id?: string | null;
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MedicalProviderPage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_medical_provider: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MedicalProviderCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MedicalProviderRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_medical_provider: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MedicalProviderRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_medical_provider: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MedicalProviderUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MedicalProviderRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    transition_medical_provider: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MedicalProviderTransition"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MedicalProviderRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_medical_provider_affected: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkerRef"][];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_medical_examiners: {
+        parameters: {
+            query?: {
+                q?: string | null;
+                provider_id?: string | null;
+                status?: components["schemas"]["ExaminerStatus"][] | null;
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExaminerPage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_medical_examiner: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExaminerCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExaminerRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_medical_examiner: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                examiner_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExaminerRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_medical_examiner: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                examiner_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExaminerUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExaminerRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    transition_medical_examiner: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                examiner_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExaminerTransition"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExaminerRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_medical_plan: {
+        parameters: {
+            query?: {
+                as_of?: string | null;
+                with_counts?: boolean;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MedicalPlanRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_medical_plan_line: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MedicalPlanLineCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MedicalPlanLineRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_medical_plan_line: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                line_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MedicalPlanLineUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MedicalPlanLineRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    remove_medical_plan_line: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                line_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MedicalPlanLineRemove"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MedicalPlanLineRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_medical_plan_line_versions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                line_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MedicalPlanLineVersions"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_medical_exemption: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MedicalExemptionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_health_profile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                deployment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HealthProfileRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_health_profile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                deployment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HealthProfileUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HealthProfileRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_fitness_requirements: {
+        parameters: {
+            query?: {
+                as_of?: string | null;
+            };
+            header?: never;
+            path: {
+                deployment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitnessRequirementList"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_fitness_gaps: {
+        parameters: {
+            query?: {
+                as_of?: string | null;
+                code?: string[] | null;
+                engagement_id?: string | null;
+                hook_codes_only?: boolean;
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitnessGapPage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_fitness_assessments: {
+        parameters: {
+            query?: {
+                /** @description worker_no, numbers. */
+                q?: string | null;
+                status?: components["schemas"]["AssessmentStatus"][] | null;
+                source?: components["schemas"]["AssessmentSource"][] | null;
+                assessment_type?: components["schemas"]["AssessmentType"][] | null;
+                verification_status?: components["schemas"]["VerificationStatus"][] | null;
+                worker_id?: string | null;
+                awaiting_signoff_mine?: boolean;
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitnessAssessmentPage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_fitness_assessment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FitnessAssessmentCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitnessAssessmentRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_fitness_assessment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assessment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitnessAssessmentRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_fitness_assessment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assessment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FitnessAssessmentUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitnessAssessmentRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    transition_fitness_assessment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assessment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FitnessAssessmentTransition"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitnessAssessmentRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_fitness_verifications: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assessment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitnessVerificationList"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_fitness_verification: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assessment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FitnessVerificationCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitnessVerificationRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_fitness_scan_url: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assessment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FitnessScanUrlRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SignedUrlRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_worker_fitness: {
+        parameters: {
+            query: {
+                project_id: string;
+                at?: string | null;
+            };
+            header?: never;
+            path: {
+                worker_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkerFitnessRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_worker_fitness_report: {
+        parameters: {
+            query?: {
+                purpose?: components["schemas"]["ExportPurpose"];
+            };
+            header?: never;
+            path: {
+                worker_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitnessDataSubjectReport"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_fitness_holds: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["HoldStatus"][] | null;
+                worker_id?: string | null;
+                with_work_during_hold?: boolean | null;
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitnessHoldPage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_fitness_hold: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FitnessHoldCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitnessHoldRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_fitness_hold: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                hold_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitnessHoldRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    cancel_fitness_hold: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                hold_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FitnessHoldCancel"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitnessHoldRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    release_fitness_hold: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                hold_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitnessHoldRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_fitness_referrals: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["ReferralStatus"][] | null;
+                overdue?: boolean | null;
+                worker_id?: string | null;
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitnessReferralPage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_fitness_referral: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FitnessReferralCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitnessReferralRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_fitness_referral: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                referral_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitnessReferralRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    cancel_fitness_referral: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                referral_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FitnessReferralCancel"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FitnessReferralRead"];
                 };
             };
             /** @description Not authenticated, session expired, or login rejected. */

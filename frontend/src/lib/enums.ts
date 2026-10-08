@@ -49,6 +49,7 @@ export const ROLES = [
   "permit_receiver",
   "contractor_hse_rep",
   "viewer_client",
+  "oh_practitioner",
 ] as const satisfies readonly Schemas["Role"][];
 /** Roles an HSE Officer may assign (rule 14). */
 export const OFFICER_ASSIGNABLE_ROLES: readonly Schemas["Role"][] = [
