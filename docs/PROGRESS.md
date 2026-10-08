@@ -3,7 +3,7 @@
 ## Current
 - Phase: 6a — Occupational health & medical fitness (Phase 5 Training is PARKED, see below)
 - Module: occupational health (spec `docs/specs/6a-occupational-health.md` v1.0)
-- Step: Backend done (contract v0.7.0, stage 2 services, migration 0008, seed, tests); frontend next
+- Step: Frontend done (screens against contract v0.7.0 and the stage 2 backend, p6a e2e green, EN/AR screenshots); design pass next
 
 ## Phase log
 - Phase 0 — Foundation: built, e2e green, design pass done (2026-10-05). The user asked to continue phase after phase without per-phase approval; open questions are collected below for a single review.
@@ -13,6 +13,16 @@
 - Phase 4 — Third-party certification: built, e2e green, design pass done (2026-10-08).
 
 ## Done
+
+### Frontend — Phase 6a occupational health (contract v0.7.0, integrated with the stage 2 backend)
+- Screens (EN/AR, RTL), all under the new "Occupational health" nav section:
+  - Fitness catalogue: codes (tighten-only edit, delete when unused), clinics with approval / suspend / blacklist (affected workers, history), examiners (licence shown to tier 3 only, suspend / reinstate / withdraw).
+  - Medical plan (manual / hook / enforcement lines, counted · met · gaps as of a date, versions, remove with reason), fitness gaps (code, contractor, as-of, hook-only filters), worker health (fitness by tier, requirements, health profile with exposure-group edits, refer / hold / data-subject report).
+  - Fitness assessments: list, new (site clinic record or external certificate, lines with restrictions and review dates, purpose notice), detail with sign / return / submit / accept / reject / revoke (signing with re-auth), scan upload, audited scan view with a reason, verifications.
+  - Holds and referrals (tier columns, work during hold, overdue filter, place hold, raise referral with remove-from-work, cancel with reason).
+  - Medical settings with hook enablement, the `medical_fitness` hook card and readiness; medical imports (dry run with masked IDs and E/W codes, commit / discard, CSV templates); occupational health KPIs K-89…K-96 with breakdowns (server `display` only, "<5" suppression).
+- e2e: `p6a-catalogue`, `p6a-health`, `p6a-assessments`, `p6a-holds`, `p6a-settings`, `p6a-kpi` (13 tests, green on a fresh seed). Screenshots: `docs/screenshots/phase-6a/` (15 screens × EN/AR, `SCREENSHOTS=1 npx playwright test e2e/screenshots-p6a`).
+- Defaults: DECISIONS #135–#142.
 
 ### Backend — Phase 6a occupational health (contract v0.7.0, stage 2)
 - Services under `app/services/med/`: fitness catalogue (tighten-only, MC-1…MC-5), providers and examiners (approval, suspend / blacklist with affected list and revocation, licence checks), requirement plan (manual, hook-derived H and enforcement E lines, versions, removal), health profiles (WP-1/WP-2), assessments (site clinic with sign-off, external certificates, verification, SoD, ID match never stored, scans in the `medical` bucket), the requirement engine and the `medical_fitness` hook provider (HK6-2…HK6-10), holds and referrals (FH, RF, RW), settings and enable (HK6-1, RF-7), readiness (HK6-9), imports (IM6), worker fitness views by tier, data-subject report.
@@ -753,6 +763,9 @@
 - (Frontend, Phase 5, low) Document `owner_id` for the six Phase 5 attachment owners. The UI uses: record id for `training_record_scan` and `training_verification_evidence`, provider id for `training_accreditation_certificate`, authorisation id (project id before it exists) for `trainer_authorisation_evidence`, session id for `training_attendance_sheet`, nomination id for `training_attendance_signature`. All work against the stage 2 backend.
 - (Frontend, Phase 5, low) A dedicated passport read (`GET /workers/{id}/training-passport?project_id=`) with in-force state per course; today the UI uses `GET /workers/{id}/training-records?project_id=`.
 - (Frontend, Phase 5, low) Schema names: several Phase 5 schemas are exported as `app__schemas__training_matrix__RequirementStatus`-style names (duplicate class names in the backend). Unique names would keep the generated client stable.
+- (Frontend, Phase 6a, medium) A worker lookup for 6a roles without capability 46 (OH Practitioner): e.g. `GET /projects/{id}/fitness-workers?q=<worker_no>` returning the worker ref and deployment id (status-tier data only). Today the UI resolves an exact worker number through `GET /projects/{id}/fitness-assessments?q=` (fails for a worker with no fitness record) and cannot load requirements / health profile without a deployment id (D-137).
+- (Frontend, Phase 6a, low) `deployment_id` on `WorkerFitnessRead` (and on hold / referral reads), so the worker health page can always show requirements and the health profile.
+- (Frontend, Phase 6a, low) `has_scan` (or the attachment id) right after a `fitness_scan` upload to a Draft; today it turns true only when the scan is linked on submit.
 - (Frontend, Phase 5, low) `GET /projects/{id}/training-gaps/summary` has no `course_code` / `trade` filters; the gaps page shows the full summary while the row list is filtered.
 - ~~(Frontend, Phase 5, medium) `SessionRead.warnings` missing from the contract.~~ Done: the contract (still v0.6.0) now carries it, and the session page shows it.
 
