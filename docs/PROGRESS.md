@@ -36,7 +36,8 @@
 - E2E (Playwright, real backend, fresh DB with the Phase 0–3 seed):
   - New shared e2e clock: `e2e/clock.ts` + `e2e/fixtures/test.ts`. The tests, every browser page and the API (`HSE_CLOCK_AT` from `E2E_CLOCK_OFFSET_MS` in `start-backend.sh`) run at 2026-10-06 10:00 Riyadh with time moving on, so the Appendix A live permits are live. Every spec now imports `test`/`expect` from `./fixtures/test`. Database-side ageing in specs uses the shared clock, not SQL `now()`.
   - Phase 3 specs: `p3-smoke` (23 PTW pages, EN and AR), `p3-config` (AC1, AC2 ×2, AC9, AC50), `p3-permits` (AC10, AC11, draft readiness), `p3-jsa` (AC26, AC28/AC29), `p3-gas` (detector register, bump test, quarantine and return to service), `p3-gas-test` (AC31 live preview, AC33 quarantined detector not offered, save), `p3-locks`, `p3-audits` (AC90), `p3-seed` (AC19/AC96, AC25, AC40, AC46, dashboard band, phone AR), `p3-lifecycle` (AC59, AC86 + AC8 re-auth).
-  - Phase 0–2 spec changes: `scoping` AC10 accepts extra S-AIR zones (p3-config AC1 adds one); `invite` AC4 ages the token on the shared clock.
+  - Phase 0–2 spec changes: `scoping` AC10 accepts extra S-AIR zones (p3-config AC1 adds one); `invite` AC4 ages the token on the shared clock; `contractors` AC20 takes the first match of the blacklist reason (it now also shows in the history panel).
+  - Full suite on a fresh seed: 129 passed, 3 skipped (the on-demand screenshot specs). That is 25 Phase 3 tests plus all 104 Phase 0–2 tests. lint, typecheck, i18n:check (5105 keys) and build are green.
   - Screenshots (`SCREENSHOTS=1`, `screenshots-p3.spec.ts`) in `docs/screenshots/phase-3/`.
 - Not covered by UI e2e (backend tests cover them): AC3–AC7 SoD variants, AC12–AC18 (contractor suspension, hooks), AC20–AC24, AC27, AC30, AC32/AC34–AC37, AC38/AC39/AC41–AC43, AC44/AC45/AC47–AC49, the work-type rules AC51–AC85 beyond what the forms show, AC87–AC89, KPI values AC91–AC95, AC97–AC99.
 
