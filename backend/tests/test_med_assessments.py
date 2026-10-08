@@ -12,6 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.cert_enums import HookReasonCode
+from app.core.clock import set_now
 from app.models import (
     AuditEntry,
     FitnessAssessment,
@@ -217,6 +218,7 @@ def test_AC44_edit_lock_and_revoke(api: Api, db: Session) -> None:
 
 def test_AC15_AC16_AC17_AC18_AC20_acceptability(api: Api, db: Session) -> None:
     grace = api.as_("grace.villanueva")
+    huda = api.as_("huda.mansour")
     ahmed = api.as_("ahmed.zahrani")
     ext = {"source": "external_certificate", "certificate_no": "X-TEST-1"}
     res = post(
@@ -257,7 +259,9 @@ def test_AC15_AC16_AC17_AC18_AC20_acceptability(api: Api, db: Session) -> None:
     res = post(huda, db, body(db, "WKR-000020", [fit("RAD-WORKER-FIT")], examiner=2, **ext))
     assert err(res) == "EXAMINER_NOT_QUALIFIED", res.text
     set_now(riyadh(2026, 10, 21))
-    res = post(huda, db, body(db, "WKR-000015", [fit()], examiner=2, examined=date(2026, 10, 21), **ext))
+    res = post(
+        huda, db, body(db, "WKR-000015", [fit()], examiner=2, examined=date(2026, 10, 21), **ext)
+    )
     assert err(res) == "EXAMINER_LICENCE_INVALID", res.text
 
 
@@ -462,14 +466,14 @@ def test_AC57_sod_submitter_cannot_accept(api: Api, db: Session) -> None:
 
 def test_AC58_already_expired_and_historic(api: Api, db: Session) -> None:
     huda = api.as_("huda.mansour")
-    old = date(2024, 10, 1)
+    old = date(2026, 9, 15)
     res = post(
         huda,
         db,
         body(
             db,
             "WKR-000016",
-            [fit()],
+            [fit(printed_next_due="2026-09-30")],
             prov="SALAMA",
             examiner=3,
             source="external_certificate",
@@ -485,7 +489,7 @@ def test_AC58_already_expired_and_historic(api: Api, db: Session) -> None:
             body(
                 db,
                 "WKR-000016",
-                [fit()],
+                [fit(printed_next_due="2026-09-30")],
                 prov="SALAMA",
                 examiner=3,
                 source="external_certificate",

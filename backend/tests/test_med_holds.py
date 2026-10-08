@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.core.clock import set_now
 from app.core.ptw_enums import PermitStatus
 from app.models import (
+    Deployment,
     FitnessHold,
     FitnessReferral,
     Incident,
@@ -19,7 +20,6 @@ from app.models import (
     Permit,
     PersonnelCertificate,
     User,
-    WorkerDeployment,
 )
 from tests.conftest import Api, Ids
 from tests.hse_helpers import add_case, create_incident, transition
@@ -132,7 +132,7 @@ def test_AC65_AC69_release_only_by_assessment(api: Api, db: Session) -> None:
     h = hold(db, "MFH-ANIA-EXP-2026-00027")
     res = api.as_("faisal.harbi").post(f"{API}/fitness-holds/{h.id}/release")
     assert res.status_code == 422 and err(res) == "HOLD_RELEASE_REQUIRES_ASSESSMENT", res.text
-    dep = db.scalar(select(WorkerDeployment).where(WorkerDeployment.worker_id == h.worker_id))
+    dep = db.scalar(select(Deployment).where(Deployment.worker_id == h.worker_id))
     assert dep is not None and dep.status.value == "mobilised"
     assert worker(db, "WKR-000034").status.value == "active"
 
@@ -146,7 +146,7 @@ def test_AC66_AC80_rtw_reference_and_restricted_days_prompt(
     assert transition(noura, inc["id"], "reported").status_code == 200
     (h,) = _holds(db, "WKR-000016")
     huda = api.as_("huda.mansour")
-    rtw = {"typ": "return_to_work", "related_hold_id": str(h.id)}
+    rtw: dict[str, Any] = {"typ": "return_to_work", "related_hold_id": str(h.id)}
     res = post(huda, db, body(db, "WKR-000016", [fit("WAH-FIT")], **rtw))
     assert err(res) == "HOLD_REFERENCE_INVALID", res.text
     line = fit(
@@ -177,7 +177,7 @@ def test_AC67_AC68_manual_hold_then_unfit_rtw(api: Api, db: Session) -> None:
     res = noura.post(f"{API}/fitness-holds/{h['id']}/cancel", json={"reason": "x" * 30})
     assert res.status_code == 403, res.text
     line = fit("GEN-FIT", "temporarily_unfit", unfit_review_date="2026-11-05")
-    rtw = {"typ": "return_to_work", "related_hold_id": h["id"]}
+    rtw: dict[str, Any] = {"typ": "return_to_work", "related_hold_id": h["id"]}
     ok(post(api.as_("huda.mansour"), db, body(db, "WKR-000014", [line], **rtw)))
     assert _holds(db, "WKR-000014")[-1].status.value == "released"
     for code in ("GEN-FIT", "NOISE-SURV"):
@@ -190,7 +190,7 @@ def test_AC67_AC68_manual_hold_then_unfit_rtw(api: Api, db: Session) -> None:
 
 def test_AC70_admitted_despite_denial_logged(db: Session) -> None:
     h = hold(db, "MFH-ANIA-EXP-2026-00016")  # MF3c seed: gate entry during the hold
-    assert h.status.value == "released" and h.compliant is False
+    assert h.status.value == "released" and h.work_during_hold
     assert [x["event_type"] for x in h.work_during_hold] == ["gate_entry"]
 
 
