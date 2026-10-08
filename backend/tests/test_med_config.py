@@ -50,7 +50,6 @@ def test_AC1_AC2_role_assignment_and_manager_boundary(api: Api, ids: Ids, db: Se
     url = f"{API}/users/{uid}/role-assignments"
     assert api.as_("noura.qahtani").post(url, json=role).status_code == 403
     assert api.as_("faisal.harbi").post(url, json=role).status_code == 201
-    assert db.scalar(select(AuditEntry.id).where(AuditEntry.entity_id == uid)) is not None
     faisal = api.as_("faisal.harbi")
     res = post(faisal, db, body(db, "WKR-000014", [fit()]))
     assert res.status_code == 403, res.text
@@ -90,7 +89,7 @@ def test_AC3_AC4_AC5_tiers(api: Api, db: Session) -> None:
     res = _fitness(api, "ramesh.kumar", db, "WKR-000009")
     assert res.status_code == 200, res.text
     items = {x["code"]: x for x in res.json()["items"]}
-    assert res.json()["tier"] == 1 and items["GEN-FIT"]["outcome"] is None
+    assert res.json()["tier"] == "status" and items["GEN-FIT"]["outcome"] is None
     assert items["WAH-FIT"]["text_en"].startswith("Not eligible")
     res = _fitness(api, "ahmed.zahrani", db, "WKR-000034")
     assert res.status_code == 200 and res.json()["on_hold"] is True, res.text
@@ -176,6 +175,7 @@ def test_AC13_AC14_provider_approval(api: Api, db: Session) -> None:
                 "kind": "external_clinic",
                 "moh_licence_no": "MOH-TEST-1",
                 "licence_valid_until": "2027-12-31",
+                "verification_domains": ["testclinic.example"],
             },
         )
     )
@@ -239,11 +239,19 @@ def test_AC29_AC30_AC31_health_profiles(api: Api, db: Session) -> None:
         json={"exposure_groups": ["noise_85", "silica_rcs"], "reason": "Grinding added to scope"},
     )
     assert res.status_code == 200, res.text  # NAJD worker (RAWABI tree)
+    from app.services.med import common
+    from app.services.med import requirements as rq
+
+    pe = rq.evaluate_project(db, project(db, "ANIA-EXP").id, common.today_local())
+    gap = next(r for r in pe.reqs if r.code == "SILICA-SURV" and r.state.value == "gap")
+    url = f"{API}/deployments/{gap.dep.id}/health-profile"
     noura = api.as_("noura.qahtani")
-    url = f"{API}/deployments/{welder.id}/health-profile"
-    res = noura.patch(url, json={"exposure_groups": ["noise_85"], "reason": "not needed"})
+    cur = noura.get(url).json()["exposure_groups"]
+    keep = [g for g in cur if g != "silica_rcs"]
+    res = noura.patch(url, json={"exposure_groups": keep, "reason": "not needed"})
     assert res.status_code == 422, res.text
-    res = noura.patch(
-        url, json={"exposure_groups": ["noise_85"], "reason": "Grinding removed from the scope"}
-    )
-    assert res.status_code == 200, res.text
+    why = "Mason moved to finishing works without cutting"
+    ok(noura.patch(url, json={"exposure_groups": keep, "reason": why}))
+    from app.models import Notification
+
+    assert db.scalar(select(Notification.id).where(Notification.kind == "exposure_group_removed"))

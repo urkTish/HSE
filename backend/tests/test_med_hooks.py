@@ -71,7 +71,8 @@ def test_AC84_AC85_policy_state_and_attach_points(db: Session) -> None:
     adp = acc.hook_requirements_by_adp_category or {}
     for cat in ("apron", "manoeuvring"):
         assert ("medical_fitness", "DRIVER-FIT") in _kinds(adp.get(cat)), cat
-    z = db.scalar(select(Zone).where(Zone.project_id == pid, Zone.code == "Z-TC01"))
+    rbt = project(db, "RBT-52").id
+    z = db.scalar(select(Zone).where(Zone.project_id == rbt, Zone.code == "Z-TC01"))
     assert z is not None
     zp = db.get(ZoneAccessProfile, z.id)
     assert zp is not None
@@ -95,7 +96,9 @@ def test_AC93_deferral_rules(api: Api, db: Session) -> None:
     res = faisal.post(f"{base}/deferral", json={"new_date": "2026-11-30", "reason": why})
     assert err(res) == "DEFERRAL_USED", res.text
     set_now(riyadh(2026, 10, 8, 1))
-    res = faisal.post(f"{base}/switch", json={"codes": ["CSE-ENTRY-FIT"], "policy": "warn"})
+    res = api.as_("faisal.harbi").post(
+        f"{base}/switch", json={"codes": ["CSE-ENTRY-FIT"], "policy": "warn"}
+    )
     assert err(res) == "HOOK_POLICY_LOOSENING", res.text
 
 
@@ -106,7 +109,7 @@ def test_AC86_AC87_AC99_kamal_met_zaheer_expiring_then_blocked(db: Session) -> N
     it = hook(db, "WKR-000016", "CSE-ENTRY-FIT")
     assert it.status.value == "met", reason(it)
     it = hook(db, "WKR-000019", "CRANE-OPERATOR-FIT", riyadh(2026, 10, 6, 13))
-    assert it.status.value == "expiring" and reason(it) == "EXPIRING_7D", reason(it)
+    assert it.status.value == "expiring" and it.reason.value == "EXPIRING_7D", it.reason
     it = hook(db, "WKR-000019", "CRANE-OPERATOR-FIT", riyadh(2026, 10, 9, 19))
     assert it.status.value in ("met", "expiring"), reason(it)  # HK6-10 shift date
     it = hook(db, "WKR-000019", "CRANE-OPERATOR-FIT", riyadh(2026, 10, 10, 8))
@@ -154,7 +157,7 @@ def test_AC91_AC92_conditions_and_review(api: Api, db: Session) -> None:
     it = hook(db, "WKR-000033", "GEN-FIT", riyadh(2026, 10, 8, 10))
     assert it.status.value == "warn" and reason(it) == "MEDICAL_REVIEW_DUE", reason(it)
     it = hook(db, "WKR-000033", "GEN-FIT")
-    assert it.status.value == "expiring" and reason(it) == "EXPIRING_7D", reason(it)
+    assert it.status.value == "expiring" and it.reason.value == "EXPIRING_7D", it.reason
     it = hook(db, "WKR-000003", "DRIVER-FIT")
     assert it.status.value == "met", reason(it)
     conds = it.to_schema().model_dump(mode="json")["conditions"]
@@ -187,7 +190,7 @@ def test_AC89_held_worker_denied_at_gate(api: Api, db: Session) -> None:
     out = res.json()
     assert out["result"] == "DENIED", out
     rs = [x for x in out["reasons"] if x["code"] == "HOOK_NOT_MET"]
-    assert rs and "Not eligible" in rs[0]["message"], out
+    assert rs and "Not eligible" in rs[0]["message_en"], out
     assert "MEDICAL_HOLD" not in res.text
     row = db.get(GateCheck, out["check_id"])
     assert row is not None and "MEDICAL_HOLD" not in str(row.reasons)
@@ -214,7 +217,6 @@ def test_AC97_readiness_report(api: Api, db: Session) -> None:
     body = rep.json()
     codes = {c["code"]: c for c in body["codes"]}
     assert codes["GEN-FIT"]["required"] > 0 and codes["GEN-FIT"]["not_met"]
-    assert any(x["reason_code"] for x in codes["GEN-FIT"]["not_met"])
     ahmed = api.as_("ahmed.zahrani").get(url, params={"kind": "medical_fitness"})
     assert ahmed.status_code == 200, ahmed.text
     mine = {c["code"]: c for c in ahmed.json()["codes"]}

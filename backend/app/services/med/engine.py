@@ -276,7 +276,7 @@ def _cond(x: dict[str, Any]) -> dict[str, Any]:
     en, ar = ref.RESTRICTIONS[RestrictionCode(x["code"])][:2]
     out: dict[str, Any] = {"code": x["code"], "text_en": en, "text_ar": ar}
     if x.get("value") is not None:
-        out["value"] = x["value"]
+        out["value"] = str(x["value"])
     return out
 
 

@@ -3,7 +3,7 @@
 ## Current
 - Phase: 6a — Occupational health & medical fitness (Phase 5 Training is PARKED, see below)
 - Module: occupational health (spec `docs/specs/6a-occupational-health.md` v1.0)
-- Step: Backend stage 1 (contract v0.7.0, 501 stubs) done; stage 2 in progress
+- Step: Backend done (contract v0.7.0, stage 2 services, migration 0008, seed, tests); frontend next
 
 ## Phase log
 - Phase 0 — Foundation: built, e2e green, design pass done (2026-10-05). The user asked to continue phase after phase without per-phase approval; open questions are collected below for a single review.
@@ -13,6 +13,15 @@
 - Phase 4 — Third-party certification: built, e2e green, design pass done (2026-10-08).
 
 ## Done
+
+### Backend — Phase 6a occupational health (contract v0.7.0, stage 2)
+- Services under `app/services/med/`: fitness catalogue (tighten-only, MC-1…MC-5), providers and examiners (approval, suspend / blacklist with affected list and revocation, licence checks), requirement plan (manual, hook-derived H and enforcement E lines, versions, removal), health profiles (WP-1/WP-2), assessments (site clinic with sign-off, external certificates, verification, SoD, ID match never stored, scans in the `medical` bucket), the requirement engine and the `medical_fitness` hook provider (HK6-2…HK6-10), holds and referrals (FH, RF, RW), settings and enable (HK6-1, RF-7), readiness (HK6-9), imports (IM6), worker fitness views by tier, data-subject report.
+- Hooks into earlier phases: injury cases / incident status → holds and RTW warnings; gate checks → work-during-hold; permit shift start → crew-present detection; Phase 4 card restriction review needs capability 156 once medical hooks are on.
+- Migration 0008: `project_access_settings.project_hook_requirements` (project-level hook, v1.4).
+- KPIs K-89…K-96 in the engine (`app/kpi/medical.py`), `GET /kpi/occupational-health` with breakdowns and MK-3 small-cell suppression.
+- Jobs: `medical_daily` 00:06:30, `medical_alerts` 07:03, `medical_minute` every 60 s.
+- Seed `app/seed_med.py` (Appendix A; MF2/MF3/MF4 verified at the end of the seed run, about 13 s).
+- Tests: `test_med_assessments`, `test_med_holds`, `test_med_hooks`, `test_med_config`, `test_med_imports`, `test_med_kpis` (plus the stage 1 contract test).
 
 ### Frontend — Phase 5 training (contract v0.6.0, integrated with the stage 2 backend)
 - Screens (EN/AR, RTL, phone-first where used in the field):
@@ -677,6 +686,7 @@
 - Phase 1 demo; then Phase 2 per the roadmap
 
 ## Parked
+- **Phase 6a backend (2026-10-08):** not built or not tested yet: AI tools T18 / T9 `medical_gap_at_event` (AC106/107/108), the monthly E14 / E15 warning wiring (AC103/104), register exports with tier columns (AC124), retention / anonymisation of scans and fitness lines (AC126/127, untested), action-panel items for 6a, charts C22–C24 data, the field-check / competence Fitness section (AC133). ACs 19, 34, 45, 49, 56, 96, 98, 110, 112-113, 115, 125, 130-132, 134-135 have no dedicated backend test (several are frontend or covered by shared Phase 4 mechanisms).
 - **Phase 5 Training (parked 2026-10-08 at the HSE Manager's request, to resume after Phase 6):** backend and frontend built against contract v0.6.0; remaining: ~47 ACs without backend tests, 2 action-panel items, dashboard cold-load speed (~7 s), frontend e2e not yet green (dashboard timeouts), and the Phase 5 design pass.
 - (Phase 1, D-10) PDF export of the dashboard/monthly report: deferred by the coordinator. The frontend print view covers it for now.
 - (Phase 1, I-15) The check that the supervisor named on an incident holds a supervisor role on that site is not implemented; the field is free text.
@@ -688,6 +698,8 @@
 - Per-entity retention/anonymisation (P7) — no personal-data entities with retention defaults in Phase 0 beyond the audit log.
 
 ## Open questions for the HSE Manager
+- (Backend, Phase 6a, AC59) A held worker who is a non-key crew member (Kamal, entrant on PTW-0413) is excluded from the crew by the 3-ptw rule; the permit is not suspended (D-126). Should a medical hard stop on any crew member suspend the permit?
+- (Backend, Phase 6a, A.9) The Phase 2–5 bulk population gives ANIA-EXP 5,105 counted requirements, not the A.9 split; K-89…K-96 displays match MF4 (D-121). Accept, or re-base A.9 on the seed?
 - (Backend, Phase 5, AC15) The seeded QUICKTRAIN SRCA accreditation was never found on the SRCA register (Appendix A.3), so a QUICKTRAIN FIRST-AID record completed 2026-09-21 is refused for `ACCREDITATION_INVALID`, not accepted as AC15 says. The suspension date rule itself works (09-22 → `PROVIDER_SUSPENDED`). Mark the accreditation as register-checked in the seed, or change AC15?
 - (Backend, Phase 5, AC49) Salem (the trainer of 00057) is a worker without a user account, so he cannot try to close the session. Close SoD (closer ≠ trainer / assessor) is enforced for user trainers. Give Salem a user, or keep AC49 for user trainers only?
 - (Backend, Phase 5, AC5 / AC38) Imran's WAH dates moved with D-105 (valid_until with validity 18 is 2028-03-28; met from 2026-09-29). Update the ACs.

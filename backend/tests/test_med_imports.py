@@ -14,11 +14,9 @@ from app.core.enums import AuditAction
 from app.models import (
     AuditEntry,
     Contractor,
-    Deployment,
     FitnessAssessment,
     MedicalImportBatch,
     Notification,
-    ProjectEngagement,
     User,
 )
 from tests.conftest import Api
@@ -77,27 +75,13 @@ def test_AC116_AC121_clinic_register_commit(api: Api, db: Session) -> None:
     assert a.status.value == "accepted" and a.verification_status.value == "verified"
     row = db.get(MedicalImportBatch, b["id"])
     assert row is not None and row.rows_enc is None
-    audits = db.scalars(select(AuditEntry).where(AuditEntry.entity_id == row.id))
+    audits = list(db.scalars(select(AuditEntry).where(AuditEntry.entity_id == row.id)))
     assert all("SAL-TEST" not in str(x.details) for x in audits)
     assert any("sha256" in (x.details or {}) for x in audits)
 
 
 def test_AC117_AC118_AC120_contractor_file(api: Api, db: Session) -> None:
-    qimma = db.scalar(
-        select(Deployment)
-        .join(ProjectEngagement, ProjectEngagement.id == Deployment.engagement_id)
-        .join(Contractor, Contractor.id == ProjectEngagement.contractor_id)
-        .where(
-            Contractor.short_code == "QIMMA", Deployment.project_id == project(db, "ANIA-EXP").id
-        )
-        .limit(1)
-    )
-    assert qimma is not None
-    from app.models import Worker
-
-    qw = db.get(Worker, qimma.worker_id)
-    assert qw is not None
-    qno = qw.worker_no
+    qno = "WKR-000013"  # Tariq Mahmood, GULFPAVE: outside the RAWABI tree
     ahmed = api.as_("ahmed.zahrani")
     rows = [
         "WKR-000016,SALAMA,EXR-0003,periodic,2026-10-01,SAL-TEST-26-7101,GEN-FIT,fit",
@@ -132,8 +116,9 @@ def test_AC119_commit_after_60_minutes(api: Api, db: Session) -> None:
 def test_AC122_AC123_scan_url(api: Api, db: Session) -> None:
     a = db.scalar(
         select(FitnessAssessment)
-        .where(FitnessAssessment.worker_id == worker(db, "WKR-000003").id)
         .where(FitnessAssessment.scan_attachment_id.is_not(None))
+        .where(FitnessAssessment.project_id == project(db, "ANIA-EXP").id)
+        .limit(1)
     )
     assert a is not None
     url = f"{API}/fitness-assessments/{a.id}/scan-url"
