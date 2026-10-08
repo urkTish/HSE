@@ -1,6 +1,6 @@
 # Module Spec — Phase 1: Dashboard & Core Data (with AI)
 
-**Version:** v1.2 · **Date:** 2026-10-07 · **Author:** HSE Consultant Agent · **Status:** Draft for HSE Manager review
+**Version:** v1.3 · **Date:** 2026-10-08 · **Author:** HSE Consultant Agent · **Status:** Draft for HSE Manager review
 **Builds on:** `0-foundation.md` v1.0 — reuses its entities (Project, Site, Zone, Contractor, Project engagement, User, Role assignment, Audit log), role codes (§3.8), settings (§3.9, incl. `ltifr_base_hours` default 1,000,000 and `rate_base_hours` default 200,000), calculation K1, roll-up rule (§8.3) and PDPL baseline P1–P13.
 **Covers (in build order):** 1.1 Workforce & man-hours (entry + CSV/Excel import) · 1.2 Incident register · 1.3 Observations · 1.4 Inspections · 1.5 Corrective actions · 1.6 KPI engine · 1.7 Dashboard · 1.8 AI assistant.
 **Out of scope:** training records/matrix (Phase 5), inspection checklists, toolbox-talk module, WBGT heat-stress module, GOSI e-filing (Phase 6). Placeholders are named where the dashboard will later consume them.
@@ -268,7 +268,7 @@ Ref `CA-<project>-<YYYY>-<seq5>`.
 
 | Field | AR label | Type | Req | Validation | Example | PDPL |
 |---|---|---|---|---|---|---|
-| source_type, source_id | المصدر | enum / FK | Y | `incident`, `observation`, `inspection`, `ptw_audit` (v1.2; source_id = PTW audit, `3-ptw.md` §3.15), `ai_recommendation` (after human confirmation), `other` | incident / INC-…-0147 | none |
+| source_type, source_id | المصدر | enum / FK | Y | `incident`, `observation`, `inspection`, `ptw_audit` (v1.2; source_id = PTW audit, `3-ptw.md` §3.15), `equipment_defect` (v1.3; source_id = Phase 4 defect, `4-third-party-cert.md` §3.11, raised manually only, DF-10), `ai_recommendation` (after human confirmation), `other` | incident / INC-…-0147 | none |
 | project_id, site_id, zone_id | — | FK | Y/Y/N | from source by default | — | none |
 | responsible_engagement_id | المقاول المسؤول | FK | Y | — | NAJD@ANIA-EXP | none |
 | title / description | العنوان / الوصف | string(150) / text(2000) | Y | — | Install toe-boards and double guardrails on all Pier B platforms | none |
@@ -529,9 +529,10 @@ Model: default `claude-sonnet-5-5`; `claude-opus-5-5` for monthly report draftin
 | T10 | `get_data_quality` | period, filters | completeness % and missing engagement-days, provisional cases, late reports, restated periods, investigations overdue |
 | T11 | `get_lti_free` | filters, as_of | days, man-hours, last LTI date and ref, run start basis |
 | T12 | `get_settings_and_targets` | project_id | bases, thresholds, targets, heat season, new_starter_days |
-| T13 | `get_leading_warnings` | project_id, months | backend-computed warnings E1–E4 (§6.9) and, v1.1, E5–E7 (`2-access-permits.md` §6.9) and, v1.2, E8–E9 (`3-ptw.md` §6.12) with inputs |
+| T13 | `get_leading_warnings` | project_id, months | backend-computed warnings E1–E4 (§6.9) and, v1.1, E5–E7 (`2-access-permits.md` §6.9) and, v1.2, E8–E9 (`3-ptw.md` §6.12) and, v1.3, E10–E11 (`4-third-party-cert.md` §6.9) with inputs |
 | T14 | `get_access_kpis` (v1.1) | project_ids, period, filters {site_ids, zone_ids, engagement_ids, include_descendants, gate_ids}, metrics[] (K-38, K-48…K-60, K-53b), group_by {kind, reason_code, contractor, zone, gate, month} | aggregates only, per `2-access-permits.md` §6.8 and KA-5: value, numerator, denominator, breakdown rows; no names, ID numbers, worker_no, photos or plates |
 | T15 | `get_ptw_kpis` (v1.2) | project_ids, period, filters {site, zone, engagement, include_descendants, type}, metrics[] (K-46, K-46b, K-61…K-71), group_by {type, contractor, zone, month, week, suspension_reason, audit_item, simops_rule} | aggregates only, per `3-ptw.md` §6.11 and KP-5: value, numerator, denominator, breakdown rows; no names, worker_no, signatures or appointment holders |
+| T16 | `get_certification_kpis` (v1.3) | project_ids, period, filters {site, zone, engagement, include_descendants, category, cert_type}, metrics[] (K-72…K-81), group_by {category, cert_type, contractor, tpi, defect_category, reason_code, month} | aggregates only, per `4-third-party-cert.md` §6.7 and KC-4: value, numerator, denominator, breakdown rows; equipment tags and TPI codes may appear; no names, worker_no, cert numbers, ID data, ban reasons or verification-failure details |
 
 **Rules:**
 - AI-1. Every numeric statement (count, rate, %, date, delta) in an answer must come verbatim (after display rounding) from a tool result in the same conversation turn. The model does not do its own arithmetic; derived comparisons must be requested from tools (T1/T2/T9 return deltas and ratios).
@@ -552,13 +553,13 @@ Model: default `claude-sonnet-5-5`; `claude-opus-5-5` for monthly report draftin
 - AI-16. Logging: question, tool calls (name, params), tool result hashes, answer, grounding-check result, model, tokens and latency are logged per turn; retention 12 months ASSUMPTION; visible to hse_manager.
 - AI-17. Rate limit: 60 questions/user/day; monthly report generation 10/project/month ASSUMPTION.
 - AI-18. If the AI provider is unavailable the dashboard is unaffected; the assistant shows "AI unavailable" — never cached or fabricated answers.
-- AI-19. **Monthly report draft** (EN and AR versions; opus model) — numeric tables are rendered by the backend from T1–T15 outputs (v1.2), the model writes narrative only; structure:
+- AI-19. **Monthly report draft** (EN and AR versions; opus model) — numeric tables are rendered by the backend from T1–T16 outputs (v1.3), the model writes narrative only; structure:
   1. Cover: project, month, bases, prepared by (user), status "DRAFT — AI-assisted".
   2. Executive summary (≤ 150 words): headline numbers, LTI-free days/hours, top 3 issues, top 3 positives.
   3. KPI table: each K-metric for month, previous month, SPLY, YTD, R12, target, with Δ.
   4. Manpower & exposure: man-hours and average/peak headcount by contractor and tier; direct vs subcontractor; data completeness.
   5. Lagging indicators: safety pyramid; de-identified list of recordable cases and HiPo events (ref, date, contractor, category, mechanism, short description).
-  6. Leading indicators: observations, inspections compliance, toolbox talks, training h/worker, HSE meetings, CA closure; access indicators (K-49, K-53, K-54, K-59, K-57) on projects with `induction_register_from` set; v1.2 PTW indicators K-46, K-46b, K-61, K-64, K-66, K-69 (`3-ptw.md` §6.11); warnings E1–E9.
+  6. Leading indicators: observations, inspections compliance, toolbox talks, training h/worker, HSE meetings, CA closure; access indicators (K-49, K-53, K-54, K-59, K-57) on projects with `induction_register_from` set; v1.2 PTW indicators K-46, K-46b, K-61, K-64, K-66, K-69 (`3-ptw.md` §6.11); v1.3 certification indicators K-72, K-74, K-76, K-80, K-81 (`4-third-party-cert.md` §6.7, aggregates only); warnings E1–E11.
   7. Contractor performance table (MH, TRI, TRIR, LTIFR, NM, unsafe obs, overdue CAs) — ranking only if each contractor's man-hours ≥ low_exposure_hours, else flagged.
   8. Investigations & root-cause themes (counts by ICAM level/code; overdue investigations).
   9. Corrective actions: raised/closed/on-time %, overdue ageing, control-level mix (% engineering-or-higher).
@@ -699,6 +700,7 @@ Evaluated for each complete month M per project (and per tier-1 contractor tree)
 - **E4** ≥ 2 HiPo events in M, or a repeat event (same mechanism + same contractor tree within 90 days).
 - **E5–E7** (v1.1, defined in `2-access-permits.md` §6.9): E5 induction coverage K-49 below `induction_coverage_warning_pct`; E6 gate denial rate K-53 ≥ 2 × prior-3-month mean and ≥ 1.00 %; E7 ≥ 1 OFF-05 runway-incursion driving offence or ≥ 3 ADP suspensions in M. Same job, scope (project and tier-1 tree) and alert as E1–E4.
 - **E8–E9** (v1.2, defined in `3-ptw.md` §6.12): E8 PTW audit compliance K-61 below `ptw_audit_warning_pct` (≥ 10 field audits) or critical PTW findings K-64 ≥ `ptw_critical_findings_warning`; E9 closure compliance K-69 below `ptw_closure_warning_pct` (≥ 10 ended permits) or a shift-lapse spike K-70. Same job, scope and alert as E1–E4.
+- **E10–E11** (v1.3, defined in `4-third-party-cert.md` §6.9): E10 equipment certificate compliance K-72 < `equipment_cert_warning_pct` or personnel certification compliance K-76 < `personnel_cert_warning_pct` or scaffold tag compliance K-81 < `scaffold_tag_warning_pct` (unrounded); E11 ≥ 1 failed certificate verification or category A equipment defects ≥ `dangerous_defect_warning_count` in M. Same job, scope and alert as E1–E4.
 
 ### 6.10 Worked examples (exact expected values — backend unit tests must match)
 
@@ -898,7 +900,7 @@ Expected: K-41 = 1 ÷ 4 = **25.0 %**; K-42 = **2** (both in the 8–30 bucket); 
 | Data completeness < threshold for previous month | HSE Officer; HSE Manager | 3rd day of month | In-app |
 | Month lock approaching | HSE Officers; Contractor HSE Reps | 3 days before month_lock_day | In-app |
 | Inspection due / missed | assignee; HSE Officer on Missed | On planned date 07:00; at Missed | In-app |
-| Leading-indicator warning E1–E9 raised | HSE Manager; HSE Officers; Contractor HSE Rep of affected tree | Monthly job on 2nd day of month | In-app + email |
+| Leading-indicator warning E1–E11 raised | HSE Manager; HSE Officers; Contractor HSE Rep of affected tree | Monthly job on 2nd day of month | In-app + email |
 | LTI-free milestone (1, 2, 5, 10 million h; 100/365 days) | HSE Manager; HSE Officers | On reaching | In-app |
 | Monthly report draft ready | HSE Officer; HSE Manager | When generated | In-app |
 | Import committed with warnings | HSE Officers (verifiers) | On commit | In-app |
@@ -911,8 +913,9 @@ Alert texts never contain injured names (P6); they contain the incident ref and 
 1. **Filter bar** (D-2) + period/comparison selector + data completeness chip + "provisional n" chip.
 2. **Headline band:** LTI-free days and man-hours (K-28/K-29), man-hours period and ITD (K-01), average/peak headcount (K-03/K-04), direct/sub split (K-02).
 3. **Lagging tiles** (value, comparison Δ, sparkline 12 months): FAT (K-05), LTI (K-06), LTIFR (K-20), TRI (K-10), TRIR (K-21), DART (K-22), LTISR (K-23), MTC (K-09), FAC + FA rate (K-12/K-24), NM + NM rate (K-13/K-25), DO (K-14), PD (K-15 incl. SAR), ENV (K-16), HiPo (K-44).
-4. **Leading tiles:** observations total + safe % (K-30/K-31), observation rate (K-32), inspection compliance (K-34/K-35), toolbox talks & attendance (K-36), training h/worker (K-37), HSE meeting attendance (K-39), CA on-time closure (K-41), overdue CAs (K-42), NM ratio (K-27); v1.2 PTW tiles per `3-ptw.md` §8.1: K-46 PTW field audits with K-46b coverage chip, K-61, K-64, K-66, K-69.
+4. **Leading tiles:** observations total + safe % (K-30/K-31), observation rate (K-32), inspection compliance (K-34/K-35), toolbox talks & attendance (K-36), training h/worker (K-37), HSE meeting attendance (K-39), CA on-time closure (K-41), overdue CAs (K-42), NM ratio (K-27); v1.2 PTW tiles per `3-ptw.md` §8.1: K-46 PTW field audits with K-46b coverage chip, K-61, K-64, K-66, K-69; v1.3 certification tiles per `4-third-party-cert.md` §8.1: K-72, K-76, K-74 (with A-defects chip), K-80, K-81.
    **PTW band** (v1.2): live permit board per `3-ptw.md` §8.1 (2).
+   **Certification band** (v1.3): per `4-third-party-cert.md` §8.1 (2).
 5. **Charts:**
    - C1 Man-hours by month, stacked tier 1/2/3, with average headcount line.
    - C2 Monthly TRIR (bars) + R12 TRIR and R12 LTIFR (lines) + target line if set.
@@ -924,12 +927,13 @@ Alert texts never contain injured names (P6); they contain the incident ref and 
    - C8 Heat-season view: injury cases and heat-related cases by month with heat_season band shading.
    - C9 CA ageing (buckets) and control-level mix.
    - C13–C15 (v1.2, `3-ptw.md` §8.1): permits issued by month by type; K-61 with K-64; non-routine suspensions by reason.
-6. **Action panel** (counts, each opens a pre-filtered list): overdue CAs (by contractor); CAs pending verification > 3 days; investigations overdue; incidents unclassified > 24 h; external notifications due/overdue; open LTI cases without rtw_date; missed inspections (last 7 days); missing daily returns (yesterday); high-risk unsafe observations without CA; leading warnings E1–E9 active; v1.1: Phase 2 access items (`2-access-permits.md` §8.3); v1.2: Phase 3 PTW items (`3-ptw.md` §8.3).
-   **Expiring-items panel** (`GET /dashboard/expiring-items`): kinds ca_due, investigation_due, external_notification_due, inspection_planned, month_lock and, v1.1, induction_expiry, reinduction_due, worker_id_expiry, airport_pass_expiry, bg_recheck_due (hse_manager/hse_officer only), adp_expiry, adp_suspension_end, avp_expiry, vehicle_document_expiry, wap_expiry, notam_expiry, obstacle_clearance_expiry, pass_return_due and, v1.2, ptw_valid_to, ptw_shift_end, gas_retest_due, fire_watch_end, gas_detector_calibration_due, ptw_appointment_expiry, isolation_review_due, jsa_template_review_due (`3-ptw.md` §8.2); item fields and name rules per `2-access-permits.md` §8.2.
+   - C16–C18 (v1.3, `4-third-party-cert.md` §8.1): K-72 and K-76 by month with E10 reference lines; defects by month A/B/C with K-80; certificate expiry profile next 90 days.
+6. **Action panel** (counts, each opens a pre-filtered list): overdue CAs (by contractor); CAs pending verification > 3 days; investigations overdue; incidents unclassified > 24 h; external notifications due/overdue; open LTI cases without rtw_date; missed inspections (last 7 days); missing daily returns (yesterday); high-risk unsafe observations without CA; leading warnings E1–E11 active; v1.1: Phase 2 access items (`2-access-permits.md` §8.3); v1.2: Phase 3 PTW items (`3-ptw.md` §8.3); v1.3: Phase 4 certification items (`4-third-party-cert.md` §8.3).
+   **Expiring-items panel** (`GET /dashboard/expiring-items`): kinds ca_due, investigation_due, external_notification_due, inspection_planned, month_lock and, v1.1, induction_expiry, reinduction_due, worker_id_expiry, airport_pass_expiry, bg_recheck_due (hse_manager/hse_officer only), adp_expiry, adp_suspension_end, avp_expiry, vehicle_document_expiry, wap_expiry, notam_expiry, obstacle_clearance_expiry, pass_return_due and, v1.2, ptw_valid_to, ptw_shift_end, gas_retest_due, fire_watch_end, gas_detector_calibration_due, ptw_appointment_expiry, isolation_review_due, jsa_template_review_due (`3-ptw.md` §8.2) and, v1.3, equipment_cert_expiry, personnel_cert_expiry, scaffold_inspection_due, defect_rectification_due, tpi_accreditation_expiry, tpi_client_approval_expiry, certificate_verification_due, hook_block_date (`4-third-party-cert.md` §8.2); item fields and name rules per `2-access-permits.md` §8.2.
 7. **AI panel:** "Ask about your HSE data" input, suggested questions, and "Draft monthly report" button (capability 41).
 
 ### 8.2 Feeds to later phases
-Incidents' ptw_ids (v1.2: Phase 3 links PTW; "PTW audit performance vs incidents" via T9 `ptw_audit_band`); trade/days_on_site (Phase 5 training gaps); contractor KPIs (Phase 6 contractor scoring); heat cases (Phase 6 heat stress).
+Incidents with agency crane_lifting_gear, mewp or scaffold prompt the investigator to link or raise a Phase 4 defect (v1.3, `4-third-party-cert.md` DF-9; no Phase 1 field changes, the defect stores the incident ref); incidents' ptw_ids (v1.2: Phase 3 links PTW; "PTW audit performance vs incidents" via T9 `ptw_audit_band`); trade/days_on_site (Phase 5 training gaps); contractor KPIs (Phase 6 contractor scoring); heat cases (Phase 6 heat stress).
 
 ## 9. Acceptance criteria
 
@@ -1107,3 +1111,4 @@ Use the W3 table for MH and case counts. Contractor man-hour share per month: RA
 - v1.0 (2026-10-05) — first issue.
 - v1.1 (2026-10-06) — changes required by Phase 2 (`2-access-permits.md` v1.0); no existing rule, formula or worked example changes value: (1) §3.4 optional `worker_id` on injury case; (2) §3.10 new setting `induction_register_from` and §6.1 K-38 counts passed `general_site` induction-register records from that date (daily returns before it; null = daily returns only, so W-examples are unchanged); (3) §8.1 expiring-items panel gains 13 Phase 2 kinds and the action panel Phase 2 items; (4) §5.9 AI tool T14 `get_access_kpis`, T13 returns E5–E7, monthly report uses T1–T14; (5) §6.9/§7/§8.1 warnings E5–E7.
 - v1.2 (2026-10-07) — changes required by Phase 3 (`3-ptw.md` v1.0 §11); no existing rule, formula or worked example changes value: (1) §6.1 K-46 defined as PTW field audits and K-46b coverage added (both per `3-ptw.md` §6.11); §1 out-of-scope no longer lists PTW audits; (2) §3.5 investigation `ptw_ids`, `ptw_involved` derived from it, `ptw_ref` legacy read-only; §8.2 updated; (3) §3.8 CA source_type `ptw_audit`; (4) §5.9 AI tool T15 `get_ptw_kpis`, T13 returns E8–E9, T9 dimension `ptw_audit_band`, T4/T5 linked permit numbers and types, AI-10 (5) PTW audit band vs incident rate, AI-19 PTW indicators and T1–T15; (5) §6.9 warnings E8–E9, §7 alert row E1–E9; (6) §8.1 PTW tiles replace the K-46 placeholder, PTW band, charts C13–C15, Phase 3 expiring-item kinds and action-panel items.
+- v1.3 (2026-10-08) — changes required by Phase 4 (`4-third-party-cert.md` v1.0 §11.2); no existing rule, formula or worked example changes value: (1) §3.8 CA source_type `equipment_defect` (manual only); (2) §5.9 AI tool T16 `get_certification_kpis`, T13 returns E10–E11, AI-19 certification indicators and T1–T16; (3) §6.9 warnings E10–E11, §7 alert row E1–E11; (4) §8.1 certification tiles and band, charts C16–C18, Phase 4 expiring-item kinds and action-panel items; (5) §8.2 incident → defect prompt.

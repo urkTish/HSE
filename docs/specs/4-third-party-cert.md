@@ -1,7 +1,7 @@
 # Module Spec — Phase 4: Third-Party Certification (equipment, personnel, TPIs)
 
 **Version:** v1.0 · **Date:** 2026-10-08 · **Author:** HSE Consultant Agent · **Status:** Draft for HSE Manager review
-**Builds on:** `0-foundation.md` v1.0 (projects/sites/zones, contractors & engagement tree, rule 27 blacklisting, rule 28 "later phases additionally block permits", rule 45 Arabic search normalisation, matrix rows 1–19, PDPL P1–P13) · `1-dashboard.md` v1.2 (matrix rows 20–45, KPI catalogue K-01…K-47, rounding K-R8, CA entity, incidents, warnings E1–E9, expiring-items endpoint, action panel, AI tools T1–T15, import-batch pattern §3.2) · `2-access-permits.md` v1.1 (worker register, deployments, ID encryption/blind index/masking WK-4/WK-5, vehicle register §3.12, AVP effective validity X3, obstacle clearances, QR tokens §3.20, gate check GC-x, **hook interface HK-1…HK-8 with `warn` policy**, matrix rows 46–81, KPIs K-48…K-60, alert schedules, P2-x) · `3-ptw.md` v1.0 (crew roles CR, equipment lines with `equipment_tag`, gas detector register §3.9, appointments §3.4, **HK3-1…HK3-5 incl. LF-4 "a permit cannot use an expired operator or uncertified crane"**, blockers list B, matrix rows 82–104, KPIs K-61…K-71, warnings E8–E9) · `docs/DECISIONS.md` #1–#62.
+**Builds on:** `0-foundation.md` v1.0 (projects/sites/zones, contractors & engagement tree, rule 27 blacklisting, rule 28 "later phases additionally block permits", rule 45 Arabic search normalisation, matrix rows 1–19, PDPL P1–P13) · `1-dashboard.md` v1.3 (matrix rows 20–45, KPI catalogue K-01…K-47, rounding K-R8, CA entity, incidents, warnings E1–E9, expiring-items endpoint, action panel, AI tools T1–T15, import-batch pattern §3.2) · `2-access-permits.md` v1.2 (worker register, deployments, ID encryption/blind index/masking WK-4/WK-5, vehicle register §3.12, AVP effective validity X3, obstacle clearances, QR tokens §3.20, gate check GC-x, **hook interface HK-1…HK-8 with `warn` policy**, matrix rows 46–81, KPIs K-48…K-60, alert schedules, P2-x) · `3-ptw.md` v1.1 (crew roles CR, equipment lines with `equipment_tag`, gas detector register §3.9, appointments §3.4, **HK3-1…HK3-5 incl. LF-4 "a permit cannot use an expired operator or uncertified crane"**, blockers list B, matrix rows 82–104, KPIs K-61…K-71, warnings E8–E9) · `docs/DECISIONS.md` #1–#62.
 **Covers (build order):** 4.1 TPI organisations, accreditations, client approvals · 4.2 Equipment register & project deployment (links to Phase 2 vehicles and Phase 3 gas detectors) · 4.3 Equipment inspection certificates, configuration events, stickers · 4.4 Scaffold register & tagging · 4.5 Personnel certifications · 4.6 Verification (QR / sticker check, manual verification with the TPI) · 4.7 Defects → out-of-service → return to service · 4.8 Suspension & blacklisting (equipment, persons, TPIs) · 4.9 Hook providers and the warn → block transition · 4.10 Gate equipment check · 4.11 Certificate imports (CSV/Excel, dry-run) · 4.12 KPIs, alerts, dashboard and AI feeds.
 **Not in Phase 4:** training courses, training matrix, refreshers (Phase 5 — boundary in §5.1); induction (Phase 2); gas-detector calibration and bump tests (stay in Phase 3, §5.2 EQ-3); vehicle road documents, AVP and ADP (Phase 2); medical fitness (Phase 6).
 
@@ -845,7 +845,7 @@ Exports (capability 123) never contain ID numbers, scans, the medical flag, ban 
 
 Fixtures:
 - Appendix A seed.
-- "Today" is 2026-10-06 10:00 Asia/Riyadh unless a clock time is given.
+- "Today" is the shared e2e/demo clock `HSE_CLOCK_AT` = 2026-10-06 10:00 Asia/Riyadh unless another date or time is given (Appendix A.1).
 - Phase 2 and Phase 3 seed state are as in their Appendix A.
 - Phase 4 providers were registered 2026-10-01 on both projects, so both are in hook stage `transition`. Critical codes block from 2026-10-08 and the others from 2026-10-31.
 
@@ -1028,7 +1028,7 @@ Each question has a default, so the build can start. The default is the strictes
 17. **Warning thresholds:** E10 triggers below 98.0 % for equipment and below 95.0 % for personnel and scaffolds. E11 triggers on ≥ 1 failed verification or ≥ 3 A defects per month. Confirm.
 18. **Load-test percentages:** ≥ 100 % SWL is required on initial, after-configuration-change and after-structural-repair inspections for cranes, hoists, man-baskets, mast climbers and BMUs. Should it be 110 % or 125 % by category? `VERIFY` R1/R10.
 
-## 11. Changes required in earlier specs (not applied by this spec; to be applied by the HSE Manager / spec owner)
+## 11. Changes required in earlier specs (applied 2026-10-08: `1-dashboard.md` v1.3, `2-access-permits.md` v1.2, `3-ptw.md` v1.1)
 
 ### 11.1 `0-foundation.md` v1.0
 No change. Phase 0 rules 26–28 (contractor approval, blacklisting, "later phases additionally block permits"), rule 35 (audit), rule 45 (normalisation) and rule 48 (stable codes) are used as they are.
@@ -1043,7 +1043,7 @@ No change. Phase 0 rules 26–28 (contractor approval, blacklisting, "later phas
    - `ExpiringItemKind` values from §8.2 here.
    - Action panel items from §8.3 here.
 4. **CA entity:** new `source_type` value `equipment_defect` (source_ref = DEF number). No automatic creation. The Phase 1 W-examples are unchanged.
-5. **Incident form:** an optional link from incident to defect (DF-9). No new mandatory field.
+5. **Incident → defect:** the investigator is prompted to link or raise a defect (DF-9). No Phase 1 field is added; the defect stores the incident ref.
 
 ### 11.3 `2-access-permits.md` v1.1 → v1.2
 1. **HK-3 interface:** add an optional `context` {project_id (required for subject equipment_tag), zone_id, permit_id, critical, use, equipment_ref, rated_capacity_t, operator_worker_id}. Add result fields `hard_stop` (bool), `conditions[]` (text and code) and `swl_t`. Callers treat hard_stop not_met as not_met in every policy stage.
@@ -1082,7 +1082,8 @@ No change. Phase 0 rules 26–28 (contractor approval, blacklisting, "later phas
 ## Appendix A — Seed data (fictional; `seed_fake = true` on every row; all names, IDs, numbers, licences, TPIs and references are fake)
 
 ### A.1 Principles
-- The seed builds on the Phase 0–3 seeds; no earlier seed row changes. Seed clock: 2026-10-06 10:00 Asia/Riyadh.
+- The seed builds on the Phase 0–3 seeds; no earlier seed row changes. **Seed clock = the shared e2e/demo clock `HSE_CLOCK_AT` = 2026-10-06T10:00:00+03:00 (Asia/Riyadh)**, the same instant used by the Phase 1–3 seeds; every "today" in §6.10 and §9 is this clock.
+- **Block-switch dates relative to the clock:** providers were registered 2026-10-01 (5 days before the clock), so at the clock both projects are in the `transition` stage. Critical codes switch to block at 2026-10-08 00:00:30 (clock + 2 days) and the other codes at 2026-10-31 00:00:30 (clock + 25 days). ACs that expect blocking for a non-hard-stop not_met (e.g. 50, 58, 86, 87) advance the clock to the stated date; every AC at the clock itself expects `HOOK_NOT_MET_WARN`, except hard stops, which block at once.
 - Phase 4 was enabled on both projects on **2026-10-01**: providers registered, hook stage `transition`, critical_block_from 2026-10-08 and general_block_from 2026-10-31, no deferral used.
 - TPI names and domains are invented and end in `-test.example`. Certificate numbers contain `TEST`. Serials start `TESTSN-`.
 - Named workers are the Phase 2 workers. WKR-000022 and WKR-000023 are added as named rows **within** the Phase 2 bulk counts (SAHARA), so Phase 2 K-48 is unchanged.
@@ -1197,4 +1198,4 @@ All Phase 4 settings are at the defaults in §3.17. `require_client_approved_tpi
 
 | Version | Date | Author | Change |
 |---|---|---|---|
-| v1.0 | 2026-10-08 | HSE Consultant Agent | First issue. §1–§11, Appendix A. Capabilities 105–124, KPIs K-72…K-81, warnings E10–E11, AI tool T16, charts C16–C18, QR kind EQ. Requires the earlier-spec changes in §11 (not applied). |
+| v1.0 | 2026-10-08 | HSE Consultant Agent | First issue. §1–§11, Appendix A. Capabilities 105–124, KPIs K-72…K-81, warnings E10–E11, AI tool T16, charts C16–C18, QR kind EQ. Earlier-spec changes in §11 applied the same day (1-dashboard v1.3, 2-access-permits v1.2, 3-ptw v1.1); seed clock tied to the shared `HSE_CLOCK_AT` 2026-10-06 10:00 Riyadh. |
