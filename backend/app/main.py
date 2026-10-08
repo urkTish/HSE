@@ -31,6 +31,8 @@ from app.api.routers import (
     equipment,
     equipment_certificates,
     exports,
+    fitness_assessments,
+    fitness_holds,
     gas,
     gates,
     health,
@@ -41,6 +43,9 @@ from app.api.routers import (
     isolations,
     jsa,
     kpi,
+    medical_catalogue,
+    medical_config,
+    medical_plan,
     meetings,
     notifications,
     observations,
@@ -82,8 +87,9 @@ HSE platform API — Phase 0 Foundation (spec `docs/specs/0-foundation.md` v1.0)
 Dashboard & core data with AI (spec `docs/specs/1-dashboard.md` v1.4), Phase 2 Site/Airport
 access permits (spec `docs/specs/2-access-permits.md` v1.3), Phase 3 Permit to Work (spec
 `docs/specs/3-ptw.md` v1.2), Phase 4 Third-party inspection & certification (spec
-`docs/specs/4-third-party-cert.md` v1.1) and Phase 5 Training certificates (spec
-`docs/specs/5-training.md` v1.0).
+`docs/specs/4-third-party-cert.md` v1.1), Phase 5 Training certificates (spec
+`docs/specs/5-training.md` v1.0) and Phase 6a Occupational health & medical fitness (spec
+`docs/specs/6a-occupational-health.md` v1.0).
 
 * Auth: `POST /api/v1/auth/login` sets the httpOnly SameSite=Lax cookie `hse_session` (JWT) and
   returns `{access_token, user}`. Send the cookie or `Authorization: Bearer <token>`.
@@ -121,6 +127,12 @@ access permits (spec `docs/specs/2-access-permits.md` v1.3), Phase 3 Permit to W
   142), never an access token (gates answer TOKEN_UNKNOWN). Training hooks use the shared hook
   policy (kind `training_course`; enable with `POST /projects/{id}/training-hooks/enable`).
   Scores are visible per AT-7; scans need a reason (`POST /training-records/{id}/scan-url`).
+* Phase 6a: fitness data is tiered (OH-2): tier 1 status (fit / not fit / due) for gate and
+  crew roles, tier 2 functional (restrictions, dates) with capability 156, tier 3
+  clinical-administrative (outcome details, hold reasons, verification) with capability 157.
+  No diagnosis, test result or clinical note is ever stored (P6-1). Medical hooks use the shared
+  hook policy (kind `medical_fitness`; enable with `POST /projects/{id}/medical-hooks/enable`);
+  gate texts never say "medical". Site-clinic sign-off needs step-up re-auth.
 """
 
 # Schemas used only in non-JSON responses (SSE) and therefore not reachable from any route.
@@ -241,6 +253,12 @@ def create_app() -> FastAPI:
         training_sessions,
         training_records,
         training_imports,
+        # Phase 6a
+        medical_config,
+        medical_catalogue,
+        medical_plan,
+        fitness_assessments,
+        fitness_holds,
     ):
         app.include_router(module.router, prefix=API_PREFIX)
     app.include_router(auth.public_router, prefix=API_PREFIX)

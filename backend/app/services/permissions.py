@@ -43,6 +43,8 @@ MANAGER_EXCLUDED: frozenset[Capability] = frozenset(
         C.personal_lock_record,
         C.deisolation_authorise,
         C.simops_coordinate,
+        # 6a OH-3 (DECISIONS #55): the manager never records clinical assessments
+        C.fitness_record_clinic,
     }
 )
 MANAGER_CAPABILITIES: tuple[Capability, ...] = tuple(
@@ -414,6 +416,81 @@ PHASE5_MATRIX: dict[Role, dict[Capability, CapabilityScope]] = {
     ),
 }  # fmt: skip
 for _role, _caps in PHASE5_MATRIX.items():
+    MATRIX[_role].update(_caps)
+
+# 6a-occupational-health §5.15 (capabilities 146-165) and §11.1 (Phase 0/1 rows of the new
+# Occupational Health Practitioner role). Parenthesised narrowing (HSE Officer 159 place only,
+# Contractor HSE Rep contractor_file imports only, Viewer/Client aggregates only) is enforced in
+# the services. 147, 149 and 164 are HSE Manager only.
+MATRIX[Role.oh_practitioner] = {
+    C.project_view: S.project,
+    C.site_zone_view: S.project,
+    C.contractor_view: S.project,
+    C.user_view_directory: S.project,
+    C.user_view_contacts: S.project,
+    C.settings_view: S.project,
+    C.history_view: S.project,
+    C.profile_edit_own: S.all,
+    C.injury_identity_view: S.project,
+    C.injury_medical_view: S.project,
+    C.incident_view: S.project,
+}
+PHASE6A_MATRIX: dict[Role, dict[Capability, CapabilityScope]] = {
+    Role.hse_officer: dict.fromkeys(
+        [
+            C.fitness_catalogue_view, C.medical_provider_edit, C.medical_plan_edit,
+            C.health_profile_edit, C.fitness_submit_external, C.fitness_status_view,
+            C.fitness_functional_view, C.fitness_referral_raise, C.fitness_hold_manage,
+            C.medical_kpi_view, C.export_medical,
+        ],
+        S.project,
+    ),
+    Role.site_engineer: dict.fromkeys(
+        [
+            C.fitness_catalogue_view, C.health_profile_edit, C.fitness_status_view,
+            C.fitness_functional_view, C.fitness_referral_raise, C.medical_kpi_view,
+            C.export_medical,
+        ],
+        S.sites,
+    ),
+    Role.permit_issuer: dict.fromkeys(
+        [
+            C.fitness_catalogue_view, C.fitness_status_view, C.fitness_referral_raise,
+            C.medical_kpi_view,
+        ],
+        S.sites,
+    ),
+    Role.permit_receiver: dict.fromkeys(
+        [
+            C.fitness_catalogue_view, C.fitness_status_view, C.fitness_referral_raise,
+            C.medical_kpi_view,
+        ],
+        S.own_engagement,
+    ),
+    Role.contractor_hse_rep: dict.fromkeys(
+        [
+            C.fitness_catalogue_view, C.health_profile_edit, C.fitness_submit_external,
+            C.fitness_status_view, C.fitness_functional_view, C.fitness_referral_raise,
+            C.fitness_import, C.medical_kpi_view, C.export_medical,
+        ],
+        S.contractor_tree,
+    ),
+    Role.viewer_client: dict.fromkeys(
+        [C.fitness_catalogue_view, C.medical_kpi_view, C.export_medical], S.project
+    ),
+    Role.oh_practitioner: dict.fromkeys(
+        [
+            C.fitness_catalogue_view, C.medical_provider_edit, C.medical_plan_edit,
+            C.health_profile_edit, C.fitness_record_clinic, C.fitness_submit_external,
+            C.fitness_review, C.fitness_status_view, C.fitness_functional_view,
+            C.fitness_clinical_view, C.fitness_referral_raise, C.fitness_hold_manage,
+            C.fitness_scan_view, C.fitness_import, C.medical_kpi_view, C.export_medical,
+            C.fitness_subject_report,
+        ],
+        S.project,
+    ),
+}  # fmt: skip
+for _role, _caps in PHASE6A_MATRIX.items():
     MATRIX[_role].update(_caps)
 
 SCOPE_RANK = {S.own_engagement: 1, S.contractor_tree: 2, S.sites: 3, S.project: 4, S.all: 5}

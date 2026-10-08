@@ -21,12 +21,14 @@ from app.core.hse_enums import (
     KpiExportTable,
     KpiMetric,
 )
+from app.core.med_enums import FitnessCategory, MedicalKpiGroupBy
 from app.core.ptw_enums import PtwKpiGroupBy
 from app.core.train_enums import TrainingKpiGroupBy
 from app.kpi import (
     access_views,
     cert_views,
     charts,
+    med_views,
     ptw_views,
     scope,
     service,
@@ -51,6 +53,7 @@ from app.schemas.kpi import (
     SourceRecordPage,
     TrendsResponse,
 )
+from app.schemas.medical import MedicalKpiResponse
 from app.schemas.ptw_kpi import PtwKpiResponse
 from app.schemas.training_kpi import TrainingKpiResponse
 
@@ -433,3 +436,25 @@ def get_training_kpis(
 ) -> TrainingKpiResponse:
     sc = scope.build(db, user, q, Capability.training_kpi_view)
     return train_views.training_kpis(db, sc, metric, group_by)
+
+
+@router.get(
+    "/occupational-health",
+    response_model=MedicalKpiResponse,
+    summary="Occupational health KPIs K-89…K-96 with breakdowns (6a-occupational-health §6.6)",
+    description=FILTERS + " Plus `trade`, `code` and `code_category` (medical KPIs only). "
+    "Capability 162; Viewer/Client and tier-1 roles get aggregates with cells of 1–4 persons "
+    'shown as "<5" (MK-3). `group_by` adds breakdown tables (MK-4).',
+    responses=KPI_ERRORS,
+)
+def get_occupational_health_kpis(
+    user: CurrentUser,
+    db: DB,
+    q: KpiParams,
+    metric: Annotated[list[KpiMetric] | None, Query(description="Default: K-89…K-96.")] = None,
+    group_by: Annotated[list[MedicalKpiGroupBy] | None, Query()] = None,
+    code: Annotated[list[str] | None, Query(description="Fitness code(s).")] = None,
+    code_category: Annotated[list[FitnessCategory] | None, Query()] = None,
+) -> MedicalKpiResponse:
+    sc = scope.build(db, user, q, Capability.medical_kpi_view)
+    return med_views.medical_kpis(db, sc, metric, group_by, code or [], code_category or [])

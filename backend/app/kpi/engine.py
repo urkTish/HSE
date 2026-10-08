@@ -36,6 +36,7 @@ from app.kpi.catalogue import (
     PHASE3_METRICS,
     PHASE4_METRICS,
     PHASE5_METRICS,
+    PHASE6A_METRICS,
 )
 from app.kpi.facts import (
     CaseFact,
@@ -905,6 +906,7 @@ _DISPATCH: dict[KpiMetric, Callable[[Engine, Agg], Result]] = {
     **{m: _not_yet(m) for m in PHASE3_METRICS},  # Phase 3 stage 2: app.kpi.ptw
     **{m: _not_yet(m) for m in PHASE4_METRICS},  # Phase 4 stage 2: app.kpi.cert
     **{m: _not_yet(m) for m in PHASE5_METRICS},  # Phase 5 stage 2: app.kpi.training
+    **{m: _not_yet(m) for m in PHASE6A_METRICS},  # Phase 6a stage 2: app.kpi.medical
 }
 import app.kpi.access  # noqa: E402  (registers K-48…K-60 into _DISPATCH)
 import app.kpi.cert  # noqa: E402  (registers K-72…K-81 into _DISPATCH)

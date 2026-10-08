@@ -20,6 +20,7 @@ from app.core.cert_enums import (
     LiftingGearColour,
 )
 from app.core.hse_enums import Trade
+from app.core.med_enums import HookBand
 from app.core.ptw_enums import EquipmentCategory
 from app.schemas.cert_common import CERT_TYPE_CODE
 from app.schemas.common import ApiModel, PatchInput, StrictInput
@@ -261,6 +262,11 @@ class HookPolicyRead(ApiModel):
         description="5-training HK5-1: training hooks enabled (POST /projects/{id}/training-hooks"
         "/enable); `kinds` then includes training_course.",
     )
+    medical_enabled: bool = Field(
+        default=False,
+        description="6a HK6-1: medical hooks enabled (POST /projects/{id}/medical-hooks/enable); "
+        "`kinds` then includes medical_fitness.",
+    )
     as_of: date
     kinds: list[HookPolicyStateRead]
 
@@ -301,7 +307,13 @@ class ReadinessSubject(ApiModel):
     subject_id: uuid.UUID
     ref: str = Field(examples=["WKR-000104", "FX-ACC-0219"])
     label: str | None = Field(description="Names only with capability 46.")
-    reason_code: HookReasonCode
+    reason_code: HookReasonCode | None = Field(
+        description="Kind medical_fitness: only with capability 157 (tier 3, OH-2); else null "
+        "and `band` is set."
+    )
+    band: HookBand | None = Field(
+        default=None, description="Kind medical_fitness: display band (HK6-7) for every caller."
+    )
     hard_stop: bool
 
 

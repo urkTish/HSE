@@ -38,7 +38,12 @@ PHASE4_PENDING: frozenset[KpiMetric] = frozenset()
 PHASE5_METRICS: frozenset[KpiMetric] = frozenset({M.K82, M.K83, M.K84, M.K85, M.K86, M.K87, M.K88})
 PHASE5_PENDING: frozenset[KpiMetric] = frozenset()
 """Training KPIs not computed yet (stage 1: catalogued, value null NOT_AVAILABLE_YET)."""
-_PENDING = PHASE2_PENDING | PHASE3_PENDING | PHASE4_PENDING | PHASE5_PENDING
+PHASE6A_METRICS: frozenset[KpiMetric] = frozenset(
+    {M.K89, M.K90, M.K91, M.K92, M.K93, M.K94, M.K95, M.K96}
+)
+PHASE6A_PENDING: frozenset[KpiMetric] = PHASE6A_METRICS
+"""Occupational health KPIs not computed yet (stage 1: catalogued, value null)."""
+_PENDING = PHASE2_PENDING | PHASE3_PENDING | PHASE4_PENDING | PHASE5_PENDING | PHASE6A_PENDING
 
 
 @dataclass(frozen=True)
@@ -70,6 +75,8 @@ class KpiDef:
             return f"4-third-party-cert §6.7 {self.metric.value}"
         if self.metric in PHASE5_METRICS:
             return f"5-training §6.8 {self.metric.value}"
+        if self.metric in PHASE6A_METRICS:
+            return f"6a-occupational-health §6.6 {self.metric.value}"
         return f"1-dashboard §6.1 {self.metric.value}"
 
 
@@ -436,6 +443,43 @@ CATALOGUE: dict[KpiMetric, KpiDef] = {
              "Booked in time", "محجوزة في الوقت",
              "K-85 records with plan state booked_in_time ÷ K-85 × 100; K-85 = 0 → '—'",
              numerator="Booked in time", denominator="Expiring ≤ 30 days"),
+        # ---- Phase 6a occupational health (6a-occupational-health §6.6) ----
+        _pct(M.K89, "Medical fitness compliance", "نسبة الامتثال للياقة الطبية",
+             "Fitness compliance", "امتثال اللياقة",
+             "counted requirements at as_of met or expiring ÷ counted requirements at as_of × "
+             "100; breakdown by code, trade, contractor",
+             numerator="Met or expiring", denominator="Counted requirements"),
+        _pct(M.K90, "Workers medically cleared", "العمال المستوفون للياقة",
+             "Medically cleared", "مستوفون للياقة",
+             "Mobilised contractor_worker deployments with ≥ 1 counted requirement and no gap ÷ "
+             "those with ≥ 1 counted requirement × 100",
+             numerator="Without gap", denominator="Workers with requirements"),
+        _count(M.K91, "Fitness gaps", "فجوات اللياقة", "Fitness gaps", "فجوات اللياقة",
+               G.leading, LOW,
+               "at as_of: counted requirements in gap; components: workers with ≥ 1 gap · gaps "
+               "on hook codes"),
+        _count(M.K92, "Fitness expiring ≤ 30 days", "شهادات لياقة تنتهي خلال 30 يوماً",
+               "Fitness expiring", "لياقة تنتهي", G.leading, LOW,
+               "distinct lines in force at as_of with valid_until ∈ [as_of, as_of + 30] "
+               "satisfying a counted requirement"),
+        _count(M.K93, "Active fitness holds", "حالات الإيقاف لأسباب اللياقة", "Active holds",
+               "حالات الإيقاف", G.leading, LOW,
+               "at as_of: Active holds of contractor_worker deployments; component: referral or "
+               "manual holds past referral_assessment_hours (MK-3)"),
+        _pct(M.K94, "Holds cleared before work", "حالات الإيقاف المرفوعة قبل العودة للعمل",
+             "Cleared before work", "مرفوعة قبل العمل",
+             "holds Released in period and compliant (no work during hold) ÷ holds Released in "
+             "period × 100",
+             numerator="Compliant", denominator="Released holds"),
+        _pct(M.K95, "Referrals assessed on time", "الإحالات المقيمة في الموعد",
+             "Referrals on time", "إحالات في الموعد",
+             "counted referrals assessed by due_at ÷ counted referrals (raised in period, not "
+             "cancelled, window closed) × 100",
+             numerator="On time", denominator="Counted referrals"),
+        _count(M.K96, "Workers on work restrictions", "عمال عليهم قيود عمل",
+               "On restrictions", "عليهم قيود", G.leading, NONE,
+               "at as_of: Mobilised contractor_worker deployments whose worker has ≥ 1 "
+               "restriction in force with review_required (MK-3)"),
     ]
 }  # fmt: skip
 

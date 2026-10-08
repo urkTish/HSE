@@ -16,13 +16,14 @@ class Role(StrEnum):
     permit_receiver = "permit_receiver"
     contractor_hse_rep = "contractor_hse_rep"
     viewer_client = "viewer_client"
+    oh_practitioner = "oh_practitioner"  # 6a §3.0 (assigned by the HSE Manager only, OH-1)
 
 
 class Capability(StrEnum):
     """Rows of the permission matrix: 1-19 Phase 0 (0-foundation §5.10), 20-45 Phase 1
     (1-dashboard §5.10), 46-81 Phase 2 (2-access-permits §5.13), 82-104 Phase 3 (3-ptw §5.14),
     numbered in spec order; 105-124 Phase 4 (4-third-party-cert §5.15); 125-145 Phase 5
-    (5-training §5.15).
+    (5-training §5.15); 146-165 Phase 6a (6a-occupational-health §5.15).
     Rows with two capabilities (23, 32, 33, 41) are split into one value per action."""
 
     project_manage = "project.manage"  # 1
@@ -189,6 +190,32 @@ class Capability(StrEnum):
     export_training = "export.training"  # 144 (IDs and scans never; names only with 46)
     training_settings_edit = "training_settings.edit"  # 145 settings, hooks enable / switch /
     # deferral, void a session (HSE Manager only)
+    # ---- Phase 6a (6a-occupational-health §5.15) ----
+    fitness_catalogue_view = "fitness_catalogue.view"  # 146 catalogue, providers, plan
+    fitness_code_edit = "fitness_code.edit"  # 147 catalogue (tighten only, MC-3)
+    medical_provider_edit = "medical_provider.edit"  # 148 providers, examiners, submit
+    medical_provider_decide = "medical_provider.decide"  # 149 approve / suspend / blacklist;
+    # suspend / withdraw examiner registrations
+    medical_plan_edit = "medical_plan.edit"  # 150 manual plan lines (loosening: Manager, MR-5)
+    health_profile_edit = "health_profile.edit"  # 151 exposure groups
+    fitness_record_clinic = "fitness.record_clinic"  # 152 site-clinic assessments; sign as
+    # the linked examiner (not in the HSE Manager's org-wide grant, OH-3)
+    fitness_submit_external = "fitness.submit_external"  # 153 external certificates
+    fitness_review = "fitness.review"  # 154 review / accept / return / reject; verification
+    fitness_status_view = "fitness.status_view"  # 155 tier 1 (OH-2)
+    fitness_functional_view = "fitness.functional_view"  # 156 tier 2: outcome, restrictions
+    fitness_clinical_view = "fitness.clinical_view"  # 157 tier 3: reasons, provider, examiner,
+    # verification outcomes; revoke assessments
+    fitness_referral_raise = "fitness_referral.raise"  # 158
+    fitness_hold_manage = "fitness_hold.manage"  # 159 manual hold; cancel holds and referrals
+    # with holds (HSE Officer: place only)
+    fitness_scan_view = "fitness_scan.view"  # 160 open scans (reason, audited)
+    fitness_import = "fitness.import"  # 161 (clinic_register_file: Manager / OH; contractor_file)
+    medical_kpi_view = "medical_kpi.view"  # 162 KPIs, expiring, action panel, readiness
+    export_medical = "export.medical"  # 163 (tier rules; never scans)
+    medical_settings_edit = "medical_settings.edit"  # 164 settings, enable hooks, switch,
+    # deferral (HSE Manager only)
+    fitness_subject_report = "fitness.subject_report"  # 165 per-worker data-subject report
 
 
 class CapabilityScope(StrEnum):
@@ -504,6 +531,18 @@ class EntityType(StrEnum):
     training_import_batch = "training_import_batch"
     training_settings = "training_settings"
     training_retraining_note = "training_retraining_note"
+    # Phase 6a
+    fitness_code = "fitness_code"
+    medical_provider = "medical_provider"
+    medical_examiner = "medical_examiner"
+    medical_plan_line = "medical_plan_line"
+    health_profile = "health_profile"
+    fitness_assessment = "fitness_assessment"
+    fitness_verification = "fitness_verification"
+    fitness_hold = "fitness_hold"
+    fitness_referral = "fitness_referral"
+    medical_import_batch = "medical_import_batch"
+    medical_settings = "medical_settings"
 
 
 class ExportDataset(StrEnum):
@@ -575,6 +614,18 @@ class ExportDataset(StrEnum):
     refresher_plan = "refresher_plan"
     training_hours = "training_hours"
     training_imports = "training_imports"
+    # Phase 6a registers (capability 163; tier-aware columns; never scans, ID numbers or reason
+    # texts below tier 3; Viewer/Client aggregates only)
+    fitness_codes = "fitness_codes"
+    medical_providers = "medical_providers"
+    medical_examiners = "medical_examiners"
+    medical_plan = "medical_plan"
+    fitness_status = "fitness_status"
+    fitness_gaps = "fitness_gaps"
+    fitness_holds = "fitness_holds"
+    fitness_referrals = "fitness_referrals"
+    fitness_verifications = "fitness_verifications"
+    medical_imports = "medical_imports"
 
 
 class ExportFormat(StrEnum):
@@ -733,3 +784,28 @@ class NotificationKind(StrEnum):
     training_provider_status = "training_provider_status"  # suspended / blacklisted
     training_attempts_exceeded = "training_attempts_exceeded"
     training_import_update = "training_import_update"
+    # ---- Phase 6a (6a-occupational-health §7; texts per P6-7, never outcomes to tier 1) ----
+    fitness_expiry = "fitness_expiry"
+    fitness_expiring_on_crew = "fitness_expiring_on_crew"
+    fitness_review_due = "fitness_review_due"  # restriction / temporarily-unfit review
+    fitness_hold_created = "fitness_hold_created"
+    fitness_referral_raised = "fitness_referral_raised"
+    fitness_referral_overdue = "fitness_referral_overdue"
+    fitness_work_during_hold = "fitness_work_during_hold"
+    fitness_rtw_before_clearance = "fitness_rtw_before_clearance"
+    fitness_restricted_days_prompt = "fitness_restricted_days_prompt"
+    fitness_signoff_due = "fitness_signoff_due"
+    fitness_certificate_submitted = "fitness_certificate_submitted"
+    fitness_verification_due = "fitness_verification_due"
+    fitness_verification_unable = "fitness_verification_unable"
+    fitness_verification_failed = "fitness_verification_failed"
+    fitness_clinical_data_rejected = "fitness_clinical_data_rejected"
+    fitness_cert_no_reused = "fitness_cert_no_reused"
+    fitness_permanently_unfit = "fitness_permanently_unfit"
+    fitness_second_opinion = "fitness_second_opinion"
+    medical_licence_expiry = "medical_licence_expiry"  # provider or examiner licence
+    medical_provider_status = "medical_provider_status"
+    medical_reexamination_list = "medical_reexamination_list"  # MP-6 affected workers
+    exposure_group_removed = "exposure_group_removed"  # WP-2
+    fitness_catalogue_shortened = "fitness_catalogue_shortened"  # MC-3
+    medical_import_update = "medical_import_update"

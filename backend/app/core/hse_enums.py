@@ -788,6 +788,9 @@ class AttachmentOwner(StrEnum):
     training_attendance_sheet = "training_attendance_sheet"
     training_verification_evidence = "training_verification_evidence"
     training_attendance_signature = "training_attendance_signature"
+    # Phase 6a (6a-occupational-health P6-5): fitness certificate scans live in the separate
+    # medical bucket, signed URL ≤ 5 min with a reason (capability 160); never exported
+    fitness_scan = "fitness_scan"
 
 
 class ScanStatus(StrEnum):
@@ -917,6 +920,15 @@ class KpiMetric(StrEnum):
     K86 = "K-86"
     K87 = "K-87"
     K88 = "K-88"
+    # Phase 6a occupational-health KPIs (6a-occupational-health §6.6)
+    K89 = "K-89"
+    K90 = "K-90"
+    K91 = "K-91"
+    K92 = "K-92"
+    K93 = "K-93"
+    K94 = "K-94"
+    K95 = "K-95"
+    K96 = "K-96"
 
 
 class KpiKind(StrEnum):
@@ -1079,6 +1091,7 @@ class CompareDimension(StrEnum):
     ca_overdue_at_event = "ca_overdue_at_event"
     ptw_audit_band = "ptw_audit_band"  # 1-dashboard v1.2 (3-ptw KP-5)
     training_gap_at_event = "training_gap_at_event"  # 1-dashboard v1.4 (5-training TR9)
+    medical_gap_at_event = "medical_gap_at_event"  # 1-dashboard v1.5 (6a MF8)
     ramadan = "ramadan"
 
 
@@ -1114,6 +1127,8 @@ class LeadingWarningCode(StrEnum):
     E11 = "E11"  # ≥ 1 failed verification or A defects ≥ dangerous_defect_warning_count
     E12 = "E12"  # 5-training §6.9: K-82 < training_matrix_warning_pct (month end, unrounded)
     E13 = "E13"  # ≥ 1 failed training verification or ≥ 1 voided session in the month
+    E14 = "E14"  # 6a §6.7: K-89 < medical_compliance_warning_pct (month end, unrounded)
+    E15 = "E15"  # 6a §6.7: ≥ 1 hold with work during the hold (K-94 < 100 %)
 
 
 class ChartId(StrEnum):
@@ -1230,6 +1245,20 @@ class ActionPanelItem(StrEnum):
     training_hook_block_soon_not_ready = "training_hook_block_soon_not_ready"
     training_sessions_not_allowed = "training_sessions_not_allowed"  # trainer / provider lapsed
     training_holders_not_linked = "training_holders_not_linked"  # HK5-7
+    # Phase 6a (6a-occupational-health §8.3)
+    fitness_referrals_overdue = "fitness_referrals_overdue"
+    fitness_work_during_hold = "fitness_work_during_hold"
+    fitness_rtw_before_clearance = "fitness_rtw_before_clearance"
+    fitness_certs_awaiting_review = "fitness_certs_awaiting_review"  # > 24 h
+    fitness_verifications_overdue = "fitness_verifications_overdue"
+    fitness_verification_failed_undecided = "fitness_verification_failed_undecided"
+    fitness_unable_to_verify = "fitness_unable_to_verify"
+    fitness_signoffs_overdue = "fitness_signoffs_overdue"
+    fitness_hard_stops_on_live_work = "fitness_hard_stops_on_live_work"
+    fitness_expiring_7d_on_crew = "fitness_expiring_7d_on_crew"
+    medical_hook_block_soon_not_ready = "medical_hook_block_soon_not_ready"
+    examiner_expired_signoffs_pending = "examiner_expired_signoffs_pending"
+    fitness_restriction_text_review = "fitness_restriction_text_review"  # AC45 ASSUMPTION
 
 
 class ExpiringItemKind(StrEnum):
@@ -1277,6 +1306,15 @@ class ExpiringItemKind(StrEnum):
     training_provider_accreditation_expiry = "training_provider_accreditation_expiry"
     training_verification_due = "training_verification_due"
     training_session_close_due = "training_session_close_due"
+    # Phase 6a (6a-occupational-health §8.2); hook_block_date also covers medical_fitness
+    fitness_expiry = "fitness_expiry"
+    fitness_restriction_review = "fitness_restriction_review"
+    fitness_unfit_review = "fitness_unfit_review"
+    referral_assessment_due = "referral_assessment_due"
+    fitness_signoff_due = "fitness_signoff_due"
+    fitness_verification_due = "fitness_verification_due"
+    examiner_licence_expiry = "examiner_licence_expiry"
+    medical_provider_licence_expiry = "medical_provider_licence_expiry"
 
 
 class Severity(StrEnum):
@@ -1317,6 +1355,7 @@ class AiTool(StrEnum):
     get_ptw_kpis = "get_ptw_kpis"  # T15 (1-dashboard v1.2, 3-ptw KP-5)
     get_certification_kpis = "get_certification_kpis"  # T16 (1-dashboard v1.3, KC-4)
     get_training_kpis = "get_training_kpis"  # T17 (1-dashboard v1.4, 5-training TK-4)
+    get_occupational_health_kpis = "get_occupational_health_kpis"  # T18 (6a MK-4)
 
 
 class GroundingResult(StrEnum):

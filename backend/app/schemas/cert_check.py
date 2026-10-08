@@ -24,6 +24,7 @@ from app.core.train_enums import TrainingCheckStatus
 from app.schemas.cert_common import EquipmentLimitationRead, PersonnelLimitationRead
 from app.schemas.common import ApiModel, StrictInput
 from app.schemas.hse_common import DecimalStr
+from app.schemas.medical import MedicalCheckItem
 
 
 class CertCheckRequest(StrictInput):
@@ -143,6 +144,11 @@ class PersonCheckCard(ApiModel):
     training: list[PersonCheckTraining] | None = Field(
         default=None,
         description="5-training CK5-2 Training section (capability 142); null without it.",
+    )
+    fitness: list[MedicalCheckItem] | None = Field(
+        default=None,
+        description="6a §8.5 Fitness section (tier 1: code and cleared only; capability 155); "
+        "null without it or before medical hooks are enabled.",
     )
 
 
