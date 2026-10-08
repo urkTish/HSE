@@ -3,7 +3,7 @@
 ## Current
 - Phase: 5 — Training certificates
 - Module: training (spec `docs/specs/5-training.md` v1.0)
-- Step: Contract
+- Step: Contract v0.6.0 published (backend stage 1); next: backend stage 2 (implementation)
 
 ## Phase log
 - Phase 0 — Foundation: built, e2e green, design pass done (2026-10-05). The user asked to continue phase after phase without per-phase approval; open questions are collected below for a single review.
@@ -13,6 +13,47 @@
 - Phase 4 — Third-party certification: built, e2e green, design pass done (2026-10-08).
 
 ## Done
+
+### Backend — Phase 5 contract v0.6.0 (stage 1)
+- `docs/contracts/openapi.yaml` v0.6.0: 57 new paths / 74 operations. Every one returns 501 `NOT_IMPLEMENTED` until stage 2; the Prism mock serves them now.
+- Operations by tag:
+  - training-catalogue (15: courses by `{code}`, providers, accreditations, acceptability, affected holders)
+  - trainer-authorisations (5), training-matrix (15: lines and versions, training profiles, requirement status, exemptions, gap register and summary, refresher plan, re-training notes)
+  - training-sessions (14: sessions, from-plan, transitions, close, void, nominations, attendance, assessments, signatures)
+  - training-records (14: external records, preview, transitions, verifications, verification log, scan URL, certificate print / reissue, worker passport, data-subject report)
+  - training-settings (4: settings, enable training hooks, training hours report), training-imports (6), `GET /kpi/training`
+- Phase 0–4 paths and schema names are unchanged. All changes are additive (1-dashboard v1.4, 2-access v1.3, 3-ptw v1.2, 4-third-party-cert v1.1):
+  - `HseSettingsRead/Update.training_register_from` (K-37 source switch, TH-6). Stage-1 shim: `null` is accepted; a date answers 501 until stage 2 stores it.
+  - `KpiValue.data_source` (K-37: `register` / `daily_returns` / `mixed`) and `KpiValue.notes[]` (`Banner`; K-37 `TRAINING_REGISTER_DIFFERS {pct}` and `SESSIONS_NOT_CLOSED {count}`).
+  - `DashboardResponse.training_band` (`TrainingBand`; null until stage 2). KPI query filters `trade`, `course_code`, `course_category` on every /kpi endpoint (training KPIs only).
+  - `HookPolicyRead.training_enabled`; `HookKind.training_course` now documented on the hook-policy switch / deferral / readiness endpoints (501 for that kind until stage 2; capability 145 / 143).
+  - `CertCheckResponse.training_record` (`TrainingCheckCard`, QR kind TR) and `PersonCheckCard.training[]` (competence mode, CK5-2).
+  - `HookReasonCode` gains the training detail reasons (`TRAINING_MISSING`, `TRAINING_EXPIRED`, `TRAINING_PENDING_REVIEW`, `TRAINING_UNVERIFIED`, `TRAINING_SUSPENDED`, `TRAINING_REVOKED`, `TRAINING_VERIFICATION_FAILED`, `INDUCTION_NOT_VALID`, `HOLDER_NOT_LINKED`), so `EligibilityItem.hook_reason_code` covers training hooks.
+  - `QrKind.TR`; QR payload doc now `HSE2:<AC|VS|WP|PT|EQ|TR>:<token>`.
+- Enums extended:
+  - `Capability` 125–145 and `AuditAction.training_qr_view`.
+  - `ErrorCode`: about 58 Phase 5 codes (every `ProviderUnacceptableReason` and training `HookReasonCode` is also an ErrorCode).
+  - `EntityType` (14), `NotificationKind` (22), `ExportDataset` (12 registers; 501 until stage 2), `ExportPurpose.data_subject_request`.
+  - `AttachmentOwner` (6: training_record_scan, training_accreditation_certificate, trainer_authorisation_evidence, training_attendance_sheet, training_verification_evidence, training_attendance_signature), `ImportCode.W07`, `ReferenceList` (4 training lists).
+  - `KpiMetric` K-82…K-88: catalogued with `available=false`. `KpiWarning` TRAINING_REGISTER_DIFFERS, SESSIONS_NOT_CLOSED.
+  - `LeadingWarningCode` E12–E13, `ChartId` C19–C21 (501), `ActionPanelItem` (+10), `ExpiringItemKind` (+6), `AiTool.get_training_kpis`, `CompareDimension.training_gap_at_event`.
+  - The Phase 5 enums are in `app/core/train_enums.py`.
+- Permission matrix rows 125–145 are live (`Me` shows them). 126 (catalogue), 128 (provider decisions) and 145 (settings, hook enable / switch / deferral, session void) are HSE Manager only.
+- Fix (Phase 4 design pass): `GET /history/{entity_type}/{id}` now serves the 16 Phase 4 entity types (visibility through each record's own service; `cert_type` has no per-record history and stays 404). Phase 5 types answer 501 until stage 2. Tests: `tests/test_cert_history.py`.
+
+#### Phase 5 — what the frontend must know
+- **Catalogue and providers (org-wide).** Courses are keyed by their code: `/training-courses/{code}` (the read model also has `id`, for `/history/training_course/{id}`). Edits may only tighten (422 `CATALOGUE_LOOSENING`); a course in use cannot be deleted (409 `COURSE_IN_USE`) — offer "make inactive". With `?project_id` the course read adds `effective_validity_months`, `effective_pass_mark_pct` and `critical_on_project`. Providers follow the TPI pattern: `POST /training-providers/{id}/transitions {action: submit|approve|return|suspend|reinstate|blacklist|lift_blacklist, reason, blacklist_scope, blacklist_from, effective_on}`; contractor roles see only `accepted_for_use` ("Not accepted"). `GET /training-providers/{id}/acceptability?course_code=&on_date=…&worker_id=…` is the PV-3 helper for the session and record forms.
+- **Trainer authorisations** are per project (`/projects/{id}/trainer-authorisations`); exactly one of `trainer_user_id` / `trainer_worker_id`; transitions suspend / reinstate / withdraw.
+- **Matrix.** `GET /projects/{id}/training-matrix?as_of=` returns manual and hook-derived lines (`source = hook` lines are read-only, `kpi_counted = false` for crew_role / appointment_function). Adding / changing / removing a manual line always applies from today (new version); loosening needs the HSE Manager and a reason (422 `MATRIX_LOOSENING`). Versions: `GET /training-matrix-lines/{id}/versions`.
+- **Profiles and requirements.** The training profile hangs off the Phase 2 deployment: `GET/PATCH /deployments/{id}/training-profile` (matrix roles, work zones; history rows). `GET /deployments/{id}/training-requirements?as_of=` is the per-person competence profile (state met / expiring / due / gap / exempt, `counted`, satisfying record or induction, booked session).
+- **Gaps and refreshers.** Gap register `GET /projects/{id}/training-gaps` (rows, C scope; Viewer/Client get 403 and use `/training-gaps/summary`, counts only). Refresher plan `GET /projects/{id}/refresher-plan`; "Create session from plan" is `POST /projects/{id}/training-sessions/from-plan`.
+- **Sessions.** Create → Draft; `POST /training-sessions/{id}/transitions {action: schedule | record_delivered | cancel}`; In Progress / Delivered are set by the system. Close is its own call (`POST …/close`, capability 135, closer ≠ trainer/assessor; attendance sheet unless all signed on device) and issues the records. Void (`POST …/void`, HSE Manager) revokes them. Nominating is batch and all-or-nothing: `POST /training-sessions/{id}/nominations {worker_ids}`; a refusal is 422 with `detail.meta.errors = [{worker_id, code, course_code?}]`. Attendance and assessments are `PUT` batches (`/attendance`, `/assessments`); per-day minutes are keyed by `day_no` (1-based). Scores and practical results are null for callers outside AT-7.
+- **Records.** External records: create (Draft, with `id_on_card` exactly as Phase 4 — never stored), `POST /projects/{id}/training-records/preview` for the form, then `POST /training-records/{id}/transitions {action: submit|return|accept|reject|suspend|reinstate|revoke, reason, reason_code, identity_confirmed_by_provider}`. Read with `response_model_exclude_unset` like Phase 4: role-restricted keys may be absent. `validity` (`TrainingValidity`) is the effective validity on `?project_id`. Verification: `POST /training-records/{id}/verifications` (method `session_record` is system-only). Scan: `POST /training-records/{id}/scan-url {reason, reason_text}` (capability 139, ≤ 5 min URL).
+- **Certificates and QR.** `GET /training-records/{id}/certificate` gives the bilingual print data with `qr_payload` `HSE2:TR:<22 chars>` (session records only; external → 404); `POST …/certificate/reissue` rotates the token. A TR QR is checked with `POST /certification-checks` (`training_record` card); gates answer `TOKEN_UNKNOWN`. Worker passport: `GET /workers/{id}/training-records?project_id=`. Data-subject report: `GET /workers/{id}/training-report?purpose=data_subject_request` (HSE Manager).
+- **Settings and hooks.** `GET/PATCH /projects/{id}/training-settings` (§3.16; `training_register_from` is read-only there and edited in hse-settings). Enable training hooks: `POST /projects/{id}/training-hooks/enable` (422 `TRAINING_REGISTER_NOT_LIVE` until `training_register_from` ≤ today); show `GET /projects/{id}/hook-readiness?kind=training_course` first. Early switch and the one deferral reuse `/projects/{id}/hook-policy/training_course/switch|deferral`.
+- **KPIs.** `GET /kpi/training` (K-37 revised, K-82…K-88; `group_by` course / course_category / contractor / trade / provider / source / month). Multi-value: K-84 gaps · workers · hook_gaps; K-86 contractor · staff · voided. Charts C19–C21. The K-37 tile shows `data_source` and `notes[]`. Training hours report: `GET /projects/{id}/training-hours?date_from=&date_to=`.
+- **Imports.** As Phase 4: template `GET /training-imports/template?template=training_records|session_attendance`; upload (multipart, `session_id` for session_attendance, `provider_id` + `evidence_file` for provider_register_file) → dry-run report → `commit` (valid rows only) or `discard`.
+- **Exports** (`/exports/{dataset}`): training_courses, training_providers, trainer_authorisations, training_matrix, training_sessions, training_attendance, training_records, training_verifications, training_gaps, refresher_plan, training_hours, training_imports (capability 144; 501 until stage 2).
 
 ### Frontend — Phase 4 third-party certification (against contract v0.5.0 and the stage 2 backend)
 - Screens (EN/AR + RTL, phone layout; the UI never computes validity, it shows the server preview and `limiting_factor`):
@@ -639,7 +680,7 @@
 - (Frontend, low priority, not blocking) `GET /contractors/{id}/engagements` (engagements of one contractor across the caller's projects) so the contractor detail page can list where a firm is engaged. Today that view would need one request per project.
 - (Frontend, Phase 4, low) Document `owner_id` for the Phase 4 attachment owner types in the contract. The backend now accepts the TPI id for `tpi_accreditation_certificate` (uploaded before the accreditation exists). The UI uses the certificate id for `equipment_certificate_scan`, `personnel_cert_scan` and `verification_evidence`, the defect id for `defect_photo`, the scaffold id for `scaffold_inspection_photo` and the item id for `equipment_document`; all work against the stage 2 backend.
 - (Frontend, Phase 4, low) Document that `CertCheckRequest.project_id` is required for `printed_ref` and `cert_no` lookups (optional for QR payloads; 422 otherwise). The UI now sends every check with the current project.
-- (Design, Phase 4, medium) `GET /history/{entity_type}/{entity_id}` answers 404 for the Phase 4 entity types (equipment item, equipment deployment, scaffold, personnel certificate, defect…): `_history_allowed` in `services/audit_read.py` has no Phase 4 branch. The UI now shows "Change history is not available for this record yet"; the backend should add the Phase 4 types (project scope from the record).
+- ~~(Design, Phase 4, medium) `GET /history/{entity_type}/{entity_id}` answers 404 for the Phase 4 entity types (equipment item, equipment deployment, scaffold, personnel certificate, defect…): `_history_allowed` in `services/audit_read.py` has no Phase 4 branch. The UI now shows "Change history is not available for this record yet"; the backend should add the Phase 4 types (project scope from the record).~~ Done in 0.6.0 (16 Phase 4 types; D-104).
 - (Design, Phase 4, low) `in_force`, `expiring`, `days_left`, `limiting_factor` on `EquipmentListItem` and the equipment deployment list item (proposal P15).
 - (Design, Phase 4, low) `current_line` (`EquipmentLineSummary`) on `EquipmentDeploymentRead` (proposal P16).
 

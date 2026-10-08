@@ -51,9 +51,7 @@ def test_phase4_history_endpoints(cert_seed: None, clock: None, db: Session, api
     assert c.get(f"{API}/history/cert_type/{pid}").status_code == 404
 
 
-def test_phase4_history_respects_scope(
-    cert_seed: None, clock: None, db: Session, api: Api
-) -> None:
+def test_phase4_history_respects_scope(cert_seed: None, clock: None, db: Session, api: Api) -> None:
     """Rule 38: history only for records the caller can already see. Viewer/Client reads the
     org-wide TPI register (capabilities 17 and 105) but never personnel certificates (P4-1:
     no capability 117) — 404/403, not an empty history."""
