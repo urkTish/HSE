@@ -739,3 +739,13 @@ PHASE4_KINDS = (HookKind.personnel_certificate, HookKind.equipment_certificate)
 def eqc_label(code: str) -> tuple[str, str]:
     e = EQC.get(Q(code)) if code in Q.__members__ else None
     return (e.label_en, e.label_ar) if e else (code, code)
+
+
+def _merge_training_reasons() -> None:
+    """5-training HK5-6 reason texts (the shared Phase 4 stage logic formats the messages)."""
+    from app.services.train.reference import REASON_TEXT as TRAINING_REASON_TEXT  # noqa: PLC0415
+
+    REASON_TEXT.update({str(k): v for k, v in TRAINING_REASON_TEXT.items()})
+
+
+_merge_training_reasons()

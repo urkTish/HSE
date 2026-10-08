@@ -6,6 +6,7 @@ export function entityRoute(type: Schemas["EntityType"] | string | null | undefi
   if (!id) {
     if (type === "cert_settings") return "/cert-settings";
     if (type === "hook_policy_state") return "/hook-policy";
+    if (type === "training_settings") return "/training-settings";
     if (type === "project_settings" && projectId) return `/projects/${projectId}/settings`;
     if (type === "hse_settings" && projectId) return `/hse-settings?project=${projectId}`;
     return null;
@@ -150,6 +151,33 @@ export function entityRoute(type: Schemas["EntityType"] | string | null | undefi
       return `/cert-settings`;
     case "cert_type":
       return `/cert-catalogue`;
+    // Phase 5 — training
+    case "training_course":
+      return /^[0-9a-f-]{36}$/.test(id) ? `/training-courses` : `/training-courses/${encodeURIComponent(id)}`;
+    case "training_provider":
+      return `/training-providers/${id}`;
+    case "training_provider_accreditation":
+      return null;
+    case "trainer_authorisation":
+      return `/trainer-authorisations/${id}`;
+    case "training_matrix_line":
+      return `/training-matrix`;
+    case "training_exemption":
+      return `/training-exemptions`;
+    case "training_session":
+      return `/training-sessions/${id}`;
+    case "training_record":
+      return `/training-records/${id}`;
+    case "training_verification":
+      return `/training-verification-log`;
+    case "training_import_batch":
+      return `/training-imports/${id}`;
+    case "training_settings":
+      return `/training-settings`;
+    case "training_profile":
+    case "training_nomination":
+    case "training_retraining_note":
+      return null;
     default:
       return null;
   }
@@ -210,6 +238,14 @@ const DETAIL: [RegExp, string][] = [
   [/^\/api\/v1\/blacklist-register$/, "/blacklist-register"],
   [/^\/api\/v1\/projects\/[0-9a-f-]{36}\/(?:hook-policy|hook-readiness)$/, "/hook-policy"],
   [/^\/api\/v1\/projects\/[0-9a-f-]{36}\/cert-settings$/, "/cert-settings"],
+  [/^\/api\/v1\/training-courses\/([^/]+)$/, "/training-courses/$1"],
+  [/^\/api\/v1\/training-providers\/([0-9a-f-]{36})(?:\/(?:affected|acceptability))?$/, "/training-providers/$1"],
+  [/^\/api\/v1\/trainer-authorisations\/([0-9a-f-]{36})$/, "/trainer-authorisations/$1"],
+  [/^\/api\/v1\/training-sessions\/([0-9a-f-]{36})(?:\/nominations)?$/, "/training-sessions/$1"],
+  [/^\/api\/v1\/training-records\/([0-9a-f-]{36})(?:\/verifications)?$/, "/training-records/$1"],
+  [/^\/api\/v1\/training-records\/([0-9a-f-]{36})\/certificate$/, "/training-records/$1/certificate"],
+  [/^\/api\/v1\/training-imports\/([0-9a-f-]{36})$/, "/training-imports/$1"],
+  [/^\/api\/v1\/projects\/[0-9a-f-]{36}\/training-settings$/, "/training-settings"],
 ];
 
 /** Map an API record path (`detail_path`) to the UI page; null when there is none. */
@@ -268,6 +304,17 @@ const LISTS: [RegExp, string][] = [
   [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/certificate-imports$/, "/certificate-imports"],
   [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/hook-readiness$/, "/hook-policy"],
   [/^\/api\/v1\/certification-bans$/, "/certification-bans"],
+  [/^\/api\/v1\/training-courses$/, "/training-courses"],
+  [/^\/api\/v1\/training-providers$/, "/training-providers"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/trainer-authorisations$/, "/trainer-authorisations"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/training-matrix$/, "/training-matrix"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/training-exemptions$/, "/training-exemptions"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/training-gaps(?:\/summary)?$/, "/training-gaps"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/refresher-plan$/, "/refresher-plan"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/training-sessions$/, "/training-sessions"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/training-records$/, "/training-records"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/training-verification-log$/, "/training-verification-log"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/training-imports$/, "/training-imports"],
 ];
 
 /** Map an action-panel `ListLink` to the UI list with the same filters in the URL. */

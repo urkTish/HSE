@@ -244,20 +244,147 @@ def _eq_subject(db: Session, t: QrToken) -> tuple[EquipmentDeployment | None, Sc
 
 
 def _scope(
-    db: Session, p: Principal, project_id: uuid.UUID, eng: uuid.UUID | None, sites: list[uuid.UUID]
+    db: Session,
+    p: Principal,
+    project_id: uuid.UUID,
+    eng: uuid.UUID | None,
+    sites: list[uuid.UUID],
+    cap: Capability = C.cert_check,
 ) -> bool:
-    return acommon.grant_covers(p.grant(project_id, C.cert_check), sites, eng)
+    return acommon.grant_covers(p.grant(project_id, cap), sites, eng)
+
+
+def training_qr(db: Session, p: Principal, t: QrToken, at: datetime) -> CertCheckResponse:
+    """5-training CK5-1: a TR QR (capability 142). Names only with 46; never ID numbers,
+    scores, scans or verification details. Logs `training_qr_view`; records no entry."""
+    from app.core.train_enums import TrainingCheckStatus  # noqa: PLC0415
+    from app.models import TrainingProvider, TrainingRecord  # noqa: PLC0415
+    from app.schemas.cert_check import TrainingCheckCard  # noqa: PLC0415
+    from app.services.train import common as tcommon  # noqa: PLC0415
+    from app.services.train import records as trec  # noqa: PLC0415
+
+    r = db.get(TrainingRecord, t.subject_id)
+    if r is None:
+        return _unknown(qr_kind=QrKind.TR)
+    dep = tcommon.deployment(db, r.worker_id, t.project_id)
+    g = p.grant(t.project_id, C.training_check)
+    if g is None or not tcommon.covers_dep(g, dep):
+        return _unknown(ErrorCode.OUT_OF_SCOPE, QrKind.TR)
+    audit.record(
+        db,
+        AuditAction.training_qr_view,
+        p.actor(t.project_id),
+        entity_type=EntityType.training_record,
+        entity_id=r.id,
+        project_id=t.project_id,
+    )
+    if t.status != QrTokenStatus.active:
+        return _resp(
+            CertCheckResult.revoked_token,
+            "REVOKED",
+            "ملغاة",
+            qr_kind=QrKind.TR,
+            subject=CertCheckSubject.training_record,
+            reason_code=ErrorCode.CREDENTIAL_REVOKED,
+        )
+    w = db.get(Worker, r.worker_id)
+    c = tcommon.course_or_404(db, r.course_code)
+    pv = db.get(TrainingProvider, r.provider_id)
+    st, colour = trec.qr_status(db, r, t)
+    v = trec.validity_read(db, r, t.project_id)
+    names = tcommon.names(p, t.project_id)
+    card = TrainingCheckCard(
+        record_no=r.record_no,
+        course_code=c.code,
+        course_name_en=c.name_en,
+        course_name_ar=c.name_ar,
+        worker_no=w.worker_no if w else None,
+        worker_name_en=(w.full_name_en if names else "Worker") if w else None,
+        worker_name_ar=(w.full_name_ar if names else "عامل") if w else None,
+        completed_on=r.completed_on,
+        valid_until=v.valid_until,
+        status=TrainingCheckStatus(st),
+        colour=colour,
+        provider_code=pv.provider_code if pv else "",
+    )
+    res = {
+        "in_force": CertCheckResult.in_service,
+        "expired": CertCheckResult.restricted,
+        "revoked": CertCheckResult.revoked_token,
+    }.get(st, CertCheckResult.not_usable)
+    en, ar = {
+        "in_force": ("Training in force.", "التدريب ساري."),
+        "expired": ("Training expired.", "التدريب منتهٍ."),
+        "revoked": ("REVOKED", "ملغاة"),
+    }.get(st, ("Training not in force.", "التدريب غير ساري."))
+    return _resp(
+        res,
+        en,
+        ar,
+        qr_kind=QrKind.TR,
+        subject=CertCheckSubject.training_record,
+        reason_code=None
+        if st == "in_force" or v.not_in_force_reason is None
+        else ErrorCode.__members__.get(v.not_in_force_reason.value),
+        training_record=card,
+    )
+
+
+def training_section(
+    db: Session, p: Principal, w: Worker, project_id: uuid.UUID, at: datetime
+) -> list[Any] | None:
+    """5-training CK5-2 competence mode: per applicable requirement (capability 142)."""
+    from app.schemas.cert_check import PersonCheckTraining  # noqa: PLC0415
+    from app.services.train import requirements as reqs  # noqa: PLC0415
+
+    if p.grant(project_id, C.training_check) is None:
+        return None
+    dep = db.scalar(
+        select(Deployment)
+        .where(Deployment.worker_id == w.id, Deployment.project_id == project_id)
+        .order_by(Deployment.mobilised_on.desc())
+        .limit(1)
+    )
+    if dep is None:
+        return []
+    d = acommon.local_day(at)
+    f = reqs.load(
+        db, project_id, d, deployment_ids=[dep.id], mobilised_only=False, enforcement=True
+    )
+    out = []
+    for x in reqs.evaluate_dep(f, dep, include_enforcement=True):
+        code = x.course_code or sorted(x.codes)[0]
+        c = f.ctx.courses.get(code)
+        met = x.state.value in ("met", "expiring", "exempt")
+        out.append(
+            PersonCheckTraining(
+                course_code=code,
+                course_name_en=c.name_en if c else code,
+                course_name_ar=c.name_ar if c else code,
+                in_force=met,
+                not_in_force_reason=None
+                if met
+                else (x.reason.value if x.reason is not None else "TRAINING_MISSING"),
+                valid_until=x.valid_until,
+                state=x.state,
+                hook_code=x.hook_code,
+            )
+        )
+    return out
 
 
 def check(db: Session, p: Principal, body: CertCheckRequest) -> CertCheckResponse:
     given = [x for x in (body.payload, body.printed_ref, body.cert_no) if x]
     if len(given) != 1:
         raise validation_error("payload", "Send exactly one of payload, printed_ref or cert_no.")
-    if not p.has_any(C.cert_check):
-        from app.services.permissions import forbidden_error  # noqa: PLC0415
+    from app.services.permissions import forbidden_error  # noqa: PLC0415
 
+    certs = p.has_any(C.cert_check)
+    if not certs and not p.has_any(C.training_check):
         raise forbidden_error()
     at = now()
+    if not certs and (body.cert_no or body.printed_ref):
+        raise forbidden_error()
     if body.cert_no:
         if body.project_id is None:
             raise validation_error("project_id", "Choose the project.")
@@ -298,13 +425,20 @@ def check(db: Session, p: Principal, body: CertCheckRequest) -> CertCheckRespons
         )
         active = [c for c in cands if c.status == QrTokenStatus.active]
         t = (active or cands)[0] if (active or cands) else None
+    if t is not None and t.kind == QrKind.TR:
+        return training_qr(db, p, t, at)
     if t is None or t.kind not in (QrKind.EQ, QrKind.AC):
         return _unknown(qr_kind=t.kind if t else None)
+    if t.kind == QrKind.EQ and not certs:
+        raise forbidden_error()
     if t.kind == QrKind.AC:
         dep = db.get(Deployment, t.subject_id)
         if dep is None:
             return _unknown(qr_kind=t.kind)
-        if not _scope(db, p, dep.project_id, dep.engagement_id, list(dep.site_ids or [])):
+        sites = list(dep.site_ids or [])
+        if not _scope(db, p, dep.project_id, dep.engagement_id, sites) and not _scope(
+            db, p, dep.project_id, dep.engagement_id, sites, C.training_check
+        ):
             return _unknown(ErrorCode.OUT_OF_SCOPE, QrKind.AC)
         if t.status != QrTokenStatus.active:
             return _resp(
@@ -422,7 +556,12 @@ def _person(
     if (
         w is None
         or dep is None
-        or not _scope(db, p, project_id, dep.engagement_id, list(dep.site_ids or []))
+        or not (
+            _scope(db, p, project_id, dep.engagement_id, list(dep.site_ids or []))
+            or _scope(
+                db, p, project_id, dep.engagement_id, list(dep.site_ids or []), C.training_check
+            )
+        )
     ):
         return _unknown(ErrorCode.OUT_OF_SCOPE, qr)
     audit.record(
@@ -434,6 +573,7 @@ def _person(
         project_id=project_id,
     )
     card = person_card(db, w, project_id, at)
+    card.training = training_section(db, p, w, project_id, at)
     ok = any(c.in_force for c in card.certificates)
     res = CertCheckResult.in_service if ok else CertCheckResult.not_usable
     return _resp(

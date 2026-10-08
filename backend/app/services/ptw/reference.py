@@ -163,6 +163,7 @@ CRANE_CATEGORIES = frozenset(
     {EquipmentCategory.tower_crane, EquipmentCategory.mobile_crane, EquipmentCategory.crawler_crane}
 )
 WAH_ARREST_HOOK = (HK.training_course, "WAH")
+RESCUE_FIRST_AID_HOOK = (HK.training_course, "FIRST-AID")  # 3-ptw v1.2 §11.4
 APPOINTMENT_HOOKS: dict[AppointmentFunction, tuple[tuple[HookKind, str], ...]] = {
     AppointmentFunction.issuer: ((HK.training_course, "PTW-ISSUER"),),
     AppointmentFunction.isolation_authority: ((HK.training_course, "LOTO-AUTHORITY"),),

@@ -117,6 +117,7 @@ export function HseSettingsPage({ project }: { project: Schemas["ProjectRead"] }
             kpi_targets: targets,
             month_lock_day: d.month_lock_day,
             injury_identity_retention_years: d.injury_identity_retention_years,
+            ...("training_register_from" in edits ? { training_register_from: d.training_register_from || null } : {}),
           },
         }),
       );
@@ -175,6 +176,9 @@ export function HseSettingsPage({ project }: { project: Schemas["ProjectRead"] }
         {num("completeness_threshold_pct")}
         {num("month_lock_day")}
         {num("new_starter_days")}
+        <FormField id="hs-trf" label={t("fields.training_register_from")} hint={t("trainingRegisterHint")}>
+          <Input id="hs-trf" type="date" className="ltr" disabled={!editable} value={d.training_register_from ?? ""} onChange={(e) => set("training_register_from", e.target.value || null)} data-testid="hs-training-register-from" />
+        </FormField>
         <FormField id="hs-heat-start" label={t("fields.heat_season_start")} error={errors.heat_start}>
           <Input className="ltr" disabled={!editable} value={d.heat_season.start} onChange={(e) => set("heat_season", { ...d.heat_season, start: e.target.value })} placeholder="06-01" />
         </FormField>

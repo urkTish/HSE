@@ -52,7 +52,7 @@ class ExternalRecordFields(StrictInput):
         min_length=1,
         max_length=40,
         description="Unique per (provider, course) (409 CERT_EXISTS); same number for another "
-        "worker → 409 CERT_NO_REUSED at Submit (TR-5).",
+        "worker → 409 CERT_NO_REUSED on save and at Submit, HSE Officers alerted (TR-5).",
     )
     completed_on: date = Field(description="≤ today (TR-3).")
     printed_expiry: date | None = Field(default=None, description="> completed_on.")

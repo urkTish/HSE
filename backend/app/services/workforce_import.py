@@ -148,6 +148,10 @@ MESSAGES: dict[ImportCode, tuple[str, str]] = {
         "Both an 'all' shift and a day/night row exist for this key",
         "يوجد سجل وردية كاملة وسجل نهاري/ليلي لنفس المفتاح",
     ),
+    Code.W07: (
+        "Training hours from the training register are used for this date",
+        "تُستخدم ساعات التدريب من سجل التدريب لهذا التاريخ",
+    ),
 }
 
 
@@ -333,6 +337,9 @@ def validate(
         )
     }
     W = WorkforceReturn  # noqa: N806
+    from app.services.train.common import register_from as _register_from  # noqa: PLC0415
+
+    register_from = _register_from(db, project.id)
     sha_committed = db.scalar(
         select(func.count())
         .select_from(WorkforceImportBatch)
@@ -493,6 +500,9 @@ def validate(
         shifts = shifts_by_key.get(k4, set()) | file_shifts.get(k4, set())
         if "all" in shifts and ({"day", "night"} & shifts):
             add(Code.W06, "shift")
+        th = Decimal(r["training_hours"]) if r.get("training_hours") is not None else None
+        if d and th and th > 0 and register_from is not None and d >= register_from:
+            add(Code.W07, "training_hours")  # 5-training TH-6
         r["issues"] = issues
         r["codes"] = sorted(codes)
         errors = any(c.startswith("E") for c in codes)

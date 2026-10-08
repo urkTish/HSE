@@ -30,6 +30,9 @@ class WfFact:
     tbt_att: int = 0
     ind: int = 0
     trn: Decimal = Decimal(0)
+    # 5-training TH-6: daily-return training_hours of register days (excluded from trn; kept for
+    # the TH-7 reconciliation)
+    trn_reg: Decimal = Decimal(0)
     reported: bool = True
     project: UUID | None = None
     ids: tuple[UUID, ...] = ()  # return ids (drill-down only)
@@ -251,6 +254,23 @@ class Facts:
     @cert.setter
     def cert(self, value: Any) -> None:
         self._cert = value
+
+    # 5-training TH-6: training_register_from per project (set ones only)
+    train_from: dict[UUID, date] = field(default_factory=dict)
+    # app.kpi.train_facts.TrainFacts (5-training §6.8), loaded on first use.
+    train_loader: Any = None
+    _train: Any = None
+
+    @property
+    def train(self) -> Any:
+        if self._train is None and self.train_loader is not None:
+            self._train = self.train_loader()
+            self.train_loader = None
+        return self._train
+
+    @train.setter
+    def train(self, value: Any) -> None:
+        self._train = value
 
     def sort(self) -> "Facts":
         self.wf.sort(key=lambda r: r.d)

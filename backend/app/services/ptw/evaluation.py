@@ -988,6 +988,7 @@ def _roles_checks(
                 f"{a.appointment_no} {a.valid_to.isoformat()}",
                 a.appointment_no,
             )
+    _training_role_checks(db, permit, f, ctx, res)
     # electrical authorised person (EL-2)
     if f.has(T.electrical_isolation):
         el = f.sec(T.electrical_isolation)
@@ -1011,6 +1012,47 @@ def _roles_checks(
             is None
         ):
             res.add(B.APPOINTMENT_INVALID, "authorised person (electrical)")
+
+
+def _training_role_checks(
+    db: Session, permit: Permit, f: facts_mod.Facts, ctx: Ctx, res: Result
+) -> None:
+    """3-ptw v1.2 §11.4 / 5-training HK5-7: PTW-RECEIVER for the receiver and PTW-ISSUER for
+    the issuer through the holder's linked worker (worker.user_id), once Phase 5 registered its
+    provider on the project. not_met → KEY_ROLE_INELIGIBLE; transition → HOOK_NOT_MET_WARN."""
+    from app.services.ptw import config as pcfg  # noqa: PLC0415
+
+    if not pcfg.training_registered(db, permit.project_id):
+        return
+    access = acommon.settings(db, permit.project_id)
+    checks: list[tuple[str, uuid.UUID, tuple[HookKind, str]]] = []
+    if permit.receiver_user_id:
+        checks.append(("receiver", permit.receiver_user_id, ref.RECEIVER_HOOK))
+    if permit.issuer_user_id and permit.status not in (
+        PermitStatus.draft,
+        PermitStatus.requested,
+        PermitStatus.reviewed,
+    ):
+        for hk in ref.APPOINTMENT_HOOKS.get(AppointmentFunction.issuer, ()):
+            checks.append(("issuer", permit.issuer_user_id, hk))
+    for label, uid, (kind, code) in checks:
+        wid = db.scalar(select(Worker.id).where(Worker.user_id == uid).limit(1))
+        hctx = hook_context(permit, f, extra={"role": label})
+        it = elig.hook_item(
+            db, HookSubjectType.worker, wid or uid, kind, code, ctx.at, access, hctx
+        )
+        row = _item_json(it, None)
+        if (
+            it.status in (RS.not_met, RS.not_evaluated)
+            and it.reason != GateReasonCode.HOOK_NOT_MET_WARN
+        ):
+            res.add(B.KEY_ROLE_INELIGIBLE, f"{label} ({_warn_detail(row)})", label)
+        elif it.reason == GateReasonCode.HOOK_NOT_MET_WARN:
+            res.warn(W.HOOK_NOT_MET_WARN, f"{_warn_detail(row)} {label}", label)
+        elif it.reason == GateReasonCode.HOOK_NOT_AVAILABLE:
+            res.warn(W.HOOK_NOT_AVAILABLE, code, label)
+        elif it.status == RS.expiring:
+            res.warn(W.EXPIRING_7D, code, label)
 
 
 def _covers_zone_sites(db: Session, permit: Permit, user_id: uuid.UUID, day: date) -> bool:

@@ -132,6 +132,7 @@ export function KpiTile({ tile, show }: { tile: Tile; show: (v: string) => strin
         <p className="text-xs text-muted-foreground">{tile.components.map((c) => `${ar ? c.label_ar : c.label_en} ${show(c.display)}`).join(" · ")}</p>
       ) : null}
       {tile.target_display ? <p className="text-[11px] text-muted-foreground">{t("target", { value: show(tile.target_display) })}</p> : null}
+      <TileSourceNotes v={tile} />
       {tile.warnings.length > 0 ? (
         <ul className="flex flex-wrap gap-1">
           {tile.warnings.map((w) => (
@@ -165,6 +166,34 @@ export function HeadlineValue({ v, show, big, caption, inline }: { v: Value; sho
         <p className="text-xs text-muted-foreground">{v.components.map((c) => `${ar ? c.label_ar : c.label_en} ${show(c.display)}`).join(" · ")}</p>
       ) : null}
       {v.comparisons[0] ? <Comparison c={v.comparisons[0]} show={show} /> : null}
+      <TileSourceNotes v={v} />
+    </div>
+  );
+}
+
+/** K-37 (5-training TH-6/TH-7): the hours source label and per-tile notes (register vs daily returns, sessions not closed). */
+export function TileSourceNotes({ v }: { v: Pick<Tile, "data_source" | "notes"> }) {
+  const t = useTranslations("dashboard");
+  const te = useTranslations("enums");
+  const ar = useLocale() === "ar";
+  const notes = v.notes ?? [];
+  if (!v.data_source && !notes.length) return null;
+  return (
+    <div className="flex flex-col gap-1">
+      {v.data_source ? (
+        <p className="text-[11px] text-muted-foreground" data-testid="tile-source" data-source={v.data_source}>
+          {t("dataSource", { source: te(`trainingHoursSource.${v.data_source}`) })}
+        </p>
+      ) : null}
+      {notes.length ? (
+        <ul className="flex flex-wrap gap-1">
+          {notes.map((n) => (
+            <li key={n.code} className={cn("rounded px-1.5 py-0.5 text-[10px]", n.severity === "info" ? "bg-muted text-muted-foreground" : "bg-warning-bg text-warning")} data-testid="tile-note" data-code={n.code}>
+              {ar ? n.message_ar : n.message_en}
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </div>
   );
 }

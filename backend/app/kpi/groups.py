@@ -37,6 +37,7 @@ REFERENCE = {
     CD.new_starter: "experienced",
     CD.ptw_involved: "no",
     CD.ca_overdue_at_event: "no",
+    CD.training_gap_at_event: "no",
 }
 NONE_KEY = breakdowns.NONE_KEY
 
@@ -74,6 +75,8 @@ def _units(
                         "activity": c.activity,
                         "days_on_site": c.days_on_site,
                         "ptw": c.ptw_involved,
+                        "incident": c.incident_id,
+                        "project": c.project,
                     },
                 )
             )
@@ -92,6 +95,8 @@ def _units(
                         "hour": ev.hour,
                         "activity": ev.activity,
                         "ptw": ev.ptw_involved,
+                        "incident": ev.id,
+                        "project": ev.project,
                     },
                 )
             )
@@ -108,6 +113,46 @@ def _ca_overdue(engine: Engine, eng: uuid.UUID | None, d: date) -> bool:
     return False
 
 
+def _training_gap(engine: Engine, u: Unit) -> str:
+    """TR9 (5-training): yes if a worker linked to the incident (injury case worker) had a
+    counted requirement in state gap on the event's local date on the incident's project; no if
+    none did; unknown (excluded) without a linked worker or before training_register_from."""
+    from sqlalchemy import select  # noqa: PLC0415
+
+    from app.core.train_enums import RequirementState  # noqa: PLC0415
+    from app.kpi import training as kt  # noqa: PLC0415
+    from app.models import InjuryCase  # noqa: PLC0415
+
+    tf = kt.tfacts(engine)
+    inc, pid = u.attrs.get("incident"), u.attrs.get("project")
+    if tf is None or tf.db is None or not isinstance(inc, uuid.UUID):
+        return NONE_KEY
+    if not isinstance(pid, uuid.UUID):
+        return NONE_KEY
+    start = engine.facts.train_from.get(pid)
+    if start is None or u.d < start:
+        return NONE_KEY
+    cache: dict[uuid.UUID, set[uuid.UUID]] = tf.db.info.setdefault("tr9_workers", {})
+    workers = cache.get(inc)
+    if workers is None:
+        workers = set(
+            tf.db.scalars(
+                select(InjuryCase.worker_id).where(
+                    InjuryCase.incident_id == inc, InjuryCase.worker_id.is_not(None)
+                )
+            )
+        )
+        cache[inc] = workers
+    if not workers:
+        return NONE_KEY
+    pe = tf.peval(pid, u.d)
+    gap = any(
+        r.counted and r.state == RequirementState.gap and r.dep.worker_id in workers
+        for r in pe.reqs
+    )
+    return "yes" if gap else "no"
+
+
 def _key(scope: Scope, engine: Engine, dim: CompareDimension, u: Unit) -> str:
     if dim == CD.new_starter:
         days = u.attrs.get("days_on_site")
@@ -120,7 +165,9 @@ def _key(scope: Scope, engine: Engine, dim: CompareDimension, u: Unit) -> str:
         return NONE_KEY if v is None else ("yes" if v else "no")
     if dim == CD.ca_overdue_at_event:
         return "yes" if _ca_overdue(engine, u.eng, u.d) else "no"
-    attrs = {k: v for k, v in u.attrs.items() if k != "ptw"}
+    if dim == CD.training_gap_at_event:
+        return _training_gap(engine, u)
+    attrs = {k: v for k, v in u.attrs.items() if k not in ("ptw", "incident", "project")}
     return breakdowns._keys(
         scope, AS_BREAKDOWN[dim], d=u.d, site=u.site, zone=u.zone, eng=u.eng, attrs=attrs
     )[0]
@@ -153,7 +200,12 @@ def compare_groups(
             exposure[k] += r.mh
         exposure.pop(NONE_KEY, None)
         basis = "man_hours"
-    elif dim in (CD.new_starter, CD.ptw_involved, CD.ca_overdue_at_event):
+    elif dim in (
+        CD.new_starter,
+        CD.ptw_involved,
+        CD.ca_overdue_at_event,
+        CD.training_gap_at_event,
+    ):
         for k in ("yes", "no") if dim != CD.new_starter else ("new_starter", "experienced"):
             counts.setdefault(k, 0)
     keys = sorted(set(counts) | set(exposure or {}))

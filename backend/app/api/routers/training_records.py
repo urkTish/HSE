@@ -1,6 +1,5 @@
 """Training records, verification, certificate print / QR, the worker passport and the
-per-worker data-subject report (spec 5-training §3.8, §3.9, §4.6, TR, VR, CK5, P5-3…P5-9).
-Stage 1 contract: handlers answer 501 until Phase 5 stage 2."""
+per-worker data-subject report (spec 5-training §3.8, §3.9, §4.6, TR, VR, CK5, P5-3…P5-9)."""
 
 import uuid
 from datetime import date
@@ -10,7 +9,7 @@ from fastapi import APIRouter, Query, status
 
 from app.api.deps import DB, CurrentUser, PageParams
 from app.core.cert_enums import VerificationStatus
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.core.train_enums import (
     DataSubjectPurpose,
     TrainingRecordSource,
@@ -36,6 +35,7 @@ from app.schemas.training_records import (
     TrainingVerificationLogPage,
     TrainingVerificationRead,
 )
+from app.services.train import records
 
 router = APIRouter(tags=["training-records"])
 
@@ -70,7 +70,28 @@ def list_training_records(
     verification_overdue: bool | None = None,
     historic: bool | None = None,
 ) -> TrainingRecordPage:
-    raise not_implemented()
+    return records.list_records(
+        db,
+        user,
+        project_id,
+        pg.page,
+        pg.page_size,
+        q,
+        course_code,
+        status_,
+        verification_status,
+        source,
+        provider_id,
+        worker_id,
+        session_id,
+        engagement_id,
+        include_subcontractors,
+        in_force,
+        expiring_days,
+        awaiting_review,
+        verification_overdue,
+        historic,
+    )
 
 
 @router.post(
@@ -85,7 +106,7 @@ def list_training_records(
 def create_training_record(
     project_id: uuid.UUID, body: TrainingRecordCreate, user: CurrentUser, db: DB
 ) -> TrainingRecordRead:
-    raise not_implemented()
+    return records.create(db, user, project_id, body)
 
 
 @router.post(
@@ -98,7 +119,7 @@ def create_training_record(
 def preview_training_record(
     project_id: uuid.UUID, body: TrainingRecordPreviewRequest, user: CurrentUser, db: DB
 ) -> TrainingRecordPreview:
-    raise not_implemented()
+    return records.preview(db, user, project_id, body)
 
 
 @router.get(
@@ -116,7 +137,7 @@ def get_training_record(
         uuid.UUID | None, Query(description="Apply this project's validity override (§6.1).")
     ] = None,
 ) -> TrainingRecordRead:
-    raise not_implemented()
+    return records.read(db, user, record_id, project_id)
 
 
 @router.patch(
@@ -130,7 +151,7 @@ def get_training_record(
 def update_training_record(
     record_id: uuid.UUID, body: TrainingRecordUpdate, user: CurrentUser, db: DB
 ) -> TrainingRecordRead:
-    raise not_implemented()
+    return records.update(db, user, record_id, body)
 
 
 @router.post(
@@ -143,7 +164,7 @@ def update_training_record(
 def transition_training_record(
     record_id: uuid.UUID, body: TrainingRecordTransition, user: CurrentUser, db: DB
 ) -> TrainingRecordRead:
-    raise not_implemented()
+    return records.transition(db, user, record_id, body)
 
 
 @router.get(
@@ -155,7 +176,7 @@ def transition_training_record(
 def list_training_record_verifications(
     record_id: uuid.UUID, user: CurrentUser, db: DB
 ) -> TrainingVerificationList:
-    raise not_implemented()
+    return records.verifications(db, user, record_id)
 
 
 @router.post(
@@ -168,7 +189,7 @@ def list_training_record_verifications(
 def verify_training_record(
     record_id: uuid.UUID, body: TrainingVerificationCreate, user: CurrentUser, db: DB
 ) -> TrainingVerificationRead:
-    raise not_implemented()
+    return records.verify(db, user, record_id, body)
 
 
 @router.get(
@@ -187,7 +208,9 @@ def list_training_verification_log(
     date_from: date | None = None,
     date_to: date | None = None,
 ) -> TrainingVerificationLogPage:
-    raise not_implemented()
+    return records.verification_log(
+        db, user, project_id, pg.page, pg.page_size, method, failed_only, date_from, date_to
+    )
 
 
 @router.post(
@@ -199,7 +222,7 @@ def list_training_verification_log(
 def get_training_record_scan_url(
     record_id: uuid.UUID, body: TrainingScanUrlRequest, user: CurrentUser, db: DB
 ) -> SignedUrlRead:
-    raise not_implemented()
+    return records.scan_url(db, user, record_id, body)
 
 
 @router.get(
@@ -212,7 +235,7 @@ def get_training_record_scan_url(
 def get_training_certificate(
     record_id: uuid.UUID, user: CurrentUser, db: DB
 ) -> TrainingCertificatePrint:
-    raise not_implemented()
+    return records.certificate(db, user, record_id)
 
 
 @router.post(
@@ -224,7 +247,7 @@ def get_training_certificate(
 def reissue_training_certificate(
     record_id: uuid.UUID, body: CertificateReissue, user: CurrentUser, db: DB
 ) -> TrainingCertificatePrint:
-    raise not_implemented()
+    return records.reissue(db, user, record_id, body)
 
 
 @router.get(
@@ -240,7 +263,7 @@ def get_worker_training_passport(
     project_id: uuid.UUID | None = None,
     as_of: date | None = None,
 ) -> TrainingPassport:
-    raise not_implemented()
+    return records.passport(db, user, worker_id, project_id, as_of)
 
 
 @router.get(
@@ -256,4 +279,4 @@ def get_worker_training_report(
     db: DB,
     purpose: DataSubjectPurpose,
 ) -> DataSubjectReport:
-    raise not_implemented()
+    return records.data_subject_report(db, user, worker_id, purpose)

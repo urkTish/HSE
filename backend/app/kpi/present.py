@@ -18,8 +18,8 @@ def decimals(defn: KpiDef) -> int:
         return max(1, defn.decimals)  # 1 dp, K-53 2 dp (2-access-permits §6.8)
     if k == KpiKind.ratio:
         return 1
-    if k == KpiKind.average:
-        return defn.decimals
+    if k in (KpiKind.average, KpiKind.hours):
+        return defn.decimals  # hours: K-86 2 dp (5-training), K-71 1 dp (3-ptw), others 0
     return 0
 
 

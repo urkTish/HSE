@@ -1,5 +1,4 @@
-"""Trainer authorisations (spec 5-training §3.3, §4.2, TA-1…TA-6). Stage 1 contract: handlers
-answer 501 until Phase 5 stage 2."""
+"""Trainer authorisations (spec 5-training §3.3, §4.2, TA-1…TA-6)."""
 
 import uuid
 from typing import Annotated
@@ -7,7 +6,7 @@ from typing import Annotated
 from fastapi import APIRouter, Query, status
 
 from app.api.deps import DB, CurrentUser, PageParams
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.core.train_enums import TrainerAuthorisationStatus, TrainerRole
 from app.schemas.trainer_authorisations import (
     TrainerAuthorisationCreate,
@@ -17,6 +16,7 @@ from app.schemas.trainer_authorisations import (
     TrainerAuthorisationUpdate,
 )
 from app.schemas.training_common import COURSE_CODE
+from app.services.train import trainers
 
 router = APIRouter(tags=["trainer-authorisations"])
 
@@ -38,7 +38,18 @@ def list_trainer_authorisations(
     provider_id: uuid.UUID | None = None,
     expiring_days: Annotated[int | None, Query(ge=0, le=365)] = None,
 ) -> TrainerAuthorisationPage:
-    raise not_implemented()
+    return trainers.list_authorisations(
+        db,
+        user,
+        project_id,
+        pg.page,
+        pg.page_size,
+        status_,
+        course_code,
+        role,
+        provider_id,
+        expiring_days,
+    )
 
 
 @router.post(
@@ -51,7 +62,7 @@ def list_trainer_authorisations(
 def create_trainer_authorisation(
     project_id: uuid.UUID, body: TrainerAuthorisationCreate, user: CurrentUser, db: DB
 ) -> TrainerAuthorisationRead:
-    raise not_implemented()
+    return trainers.create_authorisation(db, user, project_id, body)
 
 
 @router.get(
@@ -63,7 +74,7 @@ def create_trainer_authorisation(
 def get_trainer_authorisation(
     authorisation_id: uuid.UUID, user: CurrentUser, db: DB
 ) -> TrainerAuthorisationRead:
-    raise not_implemented()
+    return trainers.get_authorisation(db, user, authorisation_id)
 
 
 @router.patch(
@@ -75,7 +86,7 @@ def get_trainer_authorisation(
 def update_trainer_authorisation(
     authorisation_id: uuid.UUID, body: TrainerAuthorisationUpdate, user: CurrentUser, db: DB
 ) -> TrainerAuthorisationRead:
-    raise not_implemented()
+    return trainers.update_authorisation(db, user, authorisation_id, body)
 
 
 @router.post(
@@ -87,4 +98,4 @@ def update_trainer_authorisation(
 def transition_trainer_authorisation(
     authorisation_id: uuid.UUID, body: TrainerAuthorisationTransition, user: CurrentUser, db: DB
 ) -> TrainerAuthorisationRead:
-    raise not_implemented()
+    return trainers.transition(db, user, authorisation_id, body)

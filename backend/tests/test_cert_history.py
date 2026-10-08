@@ -72,11 +72,10 @@ def test_phase4_history_respects_scope(cert_seed: None, clock: None, db: Session
     assert officer.get(f"{API}/history/cert_settings/{rbt}").status_code in (403, 404)
 
 
-def test_phase5_history_types_answer_501_until_stage2(
-    cert_seed: None, clock: None, db: Session, api: Api
-) -> None:
+def test_phase5_history_types_served(cert_seed: None, clock: None, db: Session, api: Api) -> None:
+    """Stage 2: Phase 5 types are served; an id that is no such record answers 404."""
     c = api.as_("faisal.harbi")
     pid = project(db, "ANIA-EXP").id
     for et in ("training_course", "training_record", "training_session", "training_provider"):
         res = c.get(f"{API}/history/{et}/{pid}")
-        assert res.status_code == 501, (et, res.text)
+        assert res.status_code == 404, (et, res.text)

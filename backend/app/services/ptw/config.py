@@ -83,6 +83,17 @@ def _cfg(db: Session, project_id: uuid.UUID, t: PermitType) -> PermitTypeConfig 
     return db.get(PermitTypeConfig, (project_id, t))
 
 
+def training_registered(db: Session, project_id: uuid.UUID) -> bool:
+    """Phase 5 registered its `training_course` provider on the project (HK5-1)."""
+    from app.services.cert import policy as cpolicy  # noqa: PLC0415
+
+    cache: dict[Any, Any] = db.info.setdefault("hook_states", {})
+    key = ("registered", project_id, HookKind.training_course)
+    if key not in cache:
+        cache[key] = cpolicy.state(db, project_id, HookKind.training_course) is not None
+    return bool(cache[key])
+
+
 def type_lists(db: Session, project_id: uuid.UUID, t: PermitType) -> dict[str, Any]:
     """Defaults + per-project additions of one type."""
     info = ref.TYPES[t]
@@ -102,6 +113,21 @@ def type_lists(db: Session, project_id: uuid.UUID, t: PermitType) -> dict[str, A
     if t == PermitType.work_at_height:
         for r in PtwCrewRole:
             crew.setdefault(r, [])
+    if training_registered(db, project_id):
+        # 3-ptw v1.2 §11.4 (5-training): WAH for every crew member on a WAH section; rescue
+        # lead also needs FIRST-AID — from the day Phase 5 registers its provider
+        if t == PermitType.work_at_height:
+            for r in PtwCrewRole:
+                if ref.WAH_ARREST_HOOK not in crew[r]:
+                    crew[r].append(ref.WAH_ARREST_HOOK)
+        if (
+            PtwCrewRole.rescue_lead in crew
+            and ref.RESCUE_FIRST_AID_HOOK not in crew[PtwCrewRole.rescue_lead]
+        ):
+            crew[PtwCrewRole.rescue_lead] = [
+                *crew[PtwCrewRole.rescue_lead],
+                ref.RESCUE_FIRST_AID_HOOK,
+            ]
     for role, items in ((cfg.extra_crew_hooks if cfg else None) or {}).items():
         lst = crew.setdefault(PtwCrewRole(role), [])
         for h in items:

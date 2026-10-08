@@ -167,7 +167,7 @@ def hook_item(
 ) -> Item:
     """HK-3/HK-4. v1.2: kinds answered by Phase 4 on the project (HK4-1) go to the Phase 4
     provider with the context (HK4-8) and the project's stage (HK4-4)."""
-    if kind in PHASE4_KINDS:
+    if kind in PHASE4_KINDS or kind == HookKind.training_course:
         from app.services.cert import policy as cpolicy  # noqa: PLC0415
 
         st = cpolicy.active_state(db, s.project_id, kind, common.local_day(at))
@@ -210,15 +210,18 @@ def phase4_hook_item(
     from app.services.cert import policy as cpolicy  # noqa: PLC0415
     from app.services.cert import providers  # noqa: PLC0415
     from app.services.cert import reference as cref  # noqa: PLC0415
-    from app.services.cert import settings as cset  # noqa: PLC0415
 
     if ctx is None:
         ctx = hooks.HookContext(project_id=s.project_id)
-    cs = cset.get(db, s.project_id)
+    cs = cpolicy.cfg(db, s.project_id, kind)
     if not cpolicy.implemented(db, kind, code):
         res = hooks.HookCheck(
             HookProviderStatus.not_met, reason_code=HookReasonCode.UNKNOWN_CODE.value
         )
+    elif kind == HookKind.training_course:
+        from app.services.train import hook as thook  # noqa: PLC0415
+
+        res = thook.check(db, subject_type, subject_id, code, at, ctx, s.project_id)
     else:
         res = providers.check(db, subject_type, subject_id, kind, code, at, ctx, s.project_id)
     reason = HookReasonCode(res.reason_code) if res.reason_code else None

@@ -265,6 +265,36 @@ def cert_seed(_fresh_data: None, _cert_template: str) -> None:
     _clone(_cert_template)
 
 
+# ---- Phase 5: training Appendix A on top of the Phase 4 world -----------------------------------
+
+TRAIN_TEMPLATE = "hse_test_train_tpl"
+
+
+@pytest.fixture(scope="session")
+def _train_template(_cert_template: str) -> str:
+    """Phase 0-4 template + the 5-training Appendix A seed (verified against TR7)."""
+    from app.seed_train import seed_train_data
+
+    _clone(_cert_template)
+    with get_sessionmaker()() as db:
+        seed_train_data(db)
+        db.commit()
+    get_engine().dispose()
+    name = _db_name()
+    _admin_exec(
+        _terminate(name),
+        f"DROP DATABASE IF EXISTS {TRAIN_TEMPLATE}",
+        f"CREATE DATABASE {TRAIN_TEMPLATE} TEMPLATE {name}",
+    )
+    return TRAIN_TEMPLATE
+
+
+@pytest.fixture
+def train_seed(_fresh_data: None, _train_template: str) -> None:
+    """Replace the test database with a copy of the Phase 5 template."""
+    _clone(_train_template)
+
+
 @pytest.fixture
 def noon() -> Iterator[None]:
     """Pin the clock to Appendix A "today" (2026-10-06 12:00 Asia/Riyadh = 09:00Z)."""

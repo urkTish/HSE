@@ -32,6 +32,7 @@ from app.kpi.catalogue import (
     LEADING_TILES,
     PLACEHOLDERS,
     PTW_TILES,
+    TRAINING_TILES,
     KpiDef,
 )
 from app.kpi.engine import Agg, Component, Engine, LtiFree, Result
@@ -399,6 +400,8 @@ def kpi_value(
         warnings=list(dict.fromkeys(res.warnings)),
         one_case_changes_rate_by=fmt.dec_str(res.one_case_changes_rate_by, 2),
         sources=sources,
+        data_source=res.data_source,
+        notes=list(res.notes),
     )
 
 
@@ -501,6 +504,11 @@ def dashboard(scope: Scope, db: Session | None = None) -> DashboardResponse:
     cert = cert_views.has_cert(scope)
     if cert:
         cert_views.cert_engine(scope)
+    from app.kpi import train_views  # noqa: PLC0415 (cycle)
+
+    train = train_views.has_training(scope)
+    if train:
+        train_views.train_engine(scope)
     headline = DashboardHeadline(
         lti_free=lti_free_read(scope),
         man_hours_period=kpi_value(scope, M.K01),
@@ -516,10 +524,12 @@ def dashboard(scope: Scope, db: Session | None = None) -> DashboardResponse:
         leading=[tile(scope, m) for m in LEADING_TILES]
         + ([tile(scope, m) for m in access_views.ACCESS_TILES] if access else [])
         + ([tile(scope, m) for m in PTW_TILES] if ptw else [])
-        + ([tile(scope, m) for m in CERT_TILES] if cert else []),
+        + ([tile(scope, m) for m in CERT_TILES] if cert else [])
+        + ([tile(scope, m) for m in TRAINING_TILES] if train else []),
         access_band=access_views.access_band(db, scope) if access and db is not None else None,
         ptw_band=ptw_views.ptw_band(db, scope) if ptw and db is not None else None,
         cert_band=cert_views.cert_band(db, scope) if cert and db is not None else None,
+        training_band=train_views.training_band(db, scope) if train and db is not None else None,
         placeholders=[
             KpiPlaceholder(
                 metric=m,

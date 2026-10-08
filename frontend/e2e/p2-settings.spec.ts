@@ -25,11 +25,11 @@ test.describe.serial("Phase 2 — access settings and dashboard", () => {
   test("HK-4: switching a hook to block without a registered provider is refused with a clear message", async ({ page }) => {
     await login(page, USERS.faisal);
     await page.goto("/en/access-settings");
-    await page.getByTestId("hook-policy-training_course").selectOption("block");
+    await page.getByTestId("hook-policy-medical_fitness").selectOption("block");
     await page.getByTestId("save-access-settings").click();
     await expect(page.getByTestId("form-error")).toBeVisible();
     await page.reload();
-    await expect(page.getByTestId("hook-policy-training_course")).toHaveValue("warn");
+    await expect(page.getByTestId("hook-policy-medical_fitness")).toHaveValue("warn");
   });
 
   test("§3.22: a contractor rep cannot open access settings", async ({ page }) => {

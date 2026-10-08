@@ -30,4 +30,5 @@ if [ -n "${E2E_CLOCK_OFFSET_MS:-}" ]; then
   HSE_CLOCK_AT="$(python3 -c "import datetime,os; print((datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(milliseconds=int(os.environ['E2E_CLOCK_OFFSET_MS']))).isoformat())")"
   export HSE_CLOCK_AT
 fi
-exec uv run uvicorn app.main:app --host 127.0.0.1 --port "${E2E_BACKEND_PORT:-8000}"
+# A keep-alive longer than the Next proxy's socket reuse avoids sporadic ECONNRESET on reused connections.
+exec uv run uvicorn app.main:app --host 127.0.0.1 --port "${E2E_BACKEND_PORT:-8000}" --timeout-keep-alive 75

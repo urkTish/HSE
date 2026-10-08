@@ -1,5 +1,5 @@
 """Course catalogue, training providers and accreditations (spec 5-training §3.1, §3.2, §4.1,
-CC-1…CC-7, PV-1…PV-8). Stage 1 contract: handlers answer 501 until Phase 5 stage 2."""
+CC-1…CC-7, PV-1…PV-8)."""
 
 import uuid
 from datetime import date
@@ -8,7 +8,7 @@ from typing import Annotated
 from fastapi import APIRouter, Query, Response, status
 
 from app.api.deps import DB, CurrentUser, PageParams
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.core.train_enums import (
     AccreditationBodyCode,
     CourseCategory,
@@ -33,6 +33,7 @@ from app.schemas.training_courses import (
     ProviderUpdate,
     RegisterCheckInput,
 )
+from app.services.train import courses, providers
 
 router = APIRouter(tags=["training-catalogue"])
 
@@ -58,7 +59,7 @@ def list_training_courses(
     q: Annotated[str | None, Query(max_length=100, description="Code or name.")] = None,
     project_id: uuid.UUID | None = None,
 ) -> CourseList:
-    raise not_implemented()
+    return courses.list_courses(db, user, category, active, hook_code, q, project_id)
 
 
 @router.post(
@@ -70,7 +71,7 @@ def list_training_courses(
     responses=error_responses(401, 403, 409, 422),
 )
 def create_training_course(body: CourseCreate, user: CurrentUser, db: DB) -> CourseRead:
-    raise not_implemented()
+    return courses.create_course(db, user, body)
 
 
 @router.get(
@@ -82,7 +83,7 @@ def create_training_course(body: CourseCreate, user: CurrentUser, db: DB) -> Cou
 def get_training_course(
     code: str, user: CurrentUser, db: DB, project_id: uuid.UUID | None = None
 ) -> CourseRead:
-    raise not_implemented()
+    return courses.get_course(db, user, code, project_id)
 
 
 @router.patch(
@@ -92,7 +93,7 @@ def get_training_course(
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def update_training_course(code: str, body: CourseUpdate, user: CurrentUser, db: DB) -> CourseRead:
-    raise not_implemented()
+    return courses.update_course(db, user, code, body)
 
 
 @router.delete(
@@ -104,7 +105,8 @@ def update_training_course(code: str, body: CourseUpdate, user: CurrentUser, db:
     responses=error_responses(401, 403, 404, 409),
 )
 def delete_training_course(code: str, user: CurrentUser, db: DB) -> Response:
-    raise not_implemented()
+    courses.delete_course(db, user, code)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 # ---- providers ------------------------------------------------------------------------------
@@ -128,7 +130,18 @@ def list_training_providers(
     accreditation_body: Annotated[list[AccreditationBodyCode] | None, Query()] = None,
     accreditation_expiring_days: Annotated[int | None, Query(ge=0, le=365)] = None,
 ) -> ProviderPage:
-    raise not_implemented()
+    return providers.list_providers(
+        db,
+        user,
+        pg.page,
+        pg.page_size,
+        q,
+        status_,
+        kind,
+        course_code,
+        accreditation_body,
+        accreditation_expiring_days,
+    )
 
 
 @router.post(
@@ -139,7 +152,7 @@ def list_training_providers(
     responses=error_responses(401, 403, 409, 422),
 )
 def create_training_provider(body: ProviderCreate, user: CurrentUser, db: DB) -> ProviderRead:
-    raise not_implemented()
+    return providers.create_provider(db, user, body)
 
 
 @router.get(
@@ -149,7 +162,7 @@ def create_training_provider(body: ProviderCreate, user: CurrentUser, db: DB) ->
     responses=error_responses(401, 403, 404),
 )
 def get_training_provider(provider_id: uuid.UUID, user: CurrentUser, db: DB) -> ProviderRead:
-    raise not_implemented()
+    return providers.get_provider(db, user, provider_id)
 
 
 @router.patch(
@@ -161,7 +174,7 @@ def get_training_provider(provider_id: uuid.UUID, user: CurrentUser, db: DB) -> 
 def update_training_provider(
     provider_id: uuid.UUID, body: ProviderUpdate, user: CurrentUser, db: DB
 ) -> ProviderRead:
-    raise not_implemented()
+    return providers.update_provider(db, user, provider_id, body)
 
 
 @router.post(
@@ -174,7 +187,7 @@ def update_training_provider(
 def transition_training_provider(
     provider_id: uuid.UUID, body: ProviderTransitionRequest, user: CurrentUser, db: DB
 ) -> ProviderRead:
-    raise not_implemented()
+    return providers.transition(db, user, provider_id, body)
 
 
 @router.get(
@@ -186,7 +199,7 @@ def transition_training_provider(
 def get_training_provider_impact(
     provider_id: uuid.UUID, user: CurrentUser, db: DB
 ) -> ProviderImpact:
-    raise not_implemented()
+    return providers.impact(db, user, provider_id)
 
 
 @router.get(
@@ -205,7 +218,9 @@ def get_training_provider_acceptability(
     project_id: uuid.UUID | None = None,
     worker_id: Annotated[list[uuid.UUID] | None, Query(max_length=60)] = None,
 ) -> ProviderAcceptability:
-    raise not_implemented()
+    return providers.acceptability(
+        db, user, provider_id, course_code, on_date, project_id, worker_id
+    )
 
 
 @router.post(
@@ -218,7 +233,7 @@ def get_training_provider_acceptability(
 def create_training_provider_accreditation(
     provider_id: uuid.UUID, body: ProviderAccreditationCreate, user: CurrentUser, db: DB
 ) -> ProviderAccreditationRead:
-    raise not_implemented()
+    return providers.create_accreditation(db, user, provider_id, body)
 
 
 @router.patch(
@@ -231,7 +246,7 @@ def create_training_provider_accreditation(
 def update_training_provider_accreditation(
     accreditation_id: uuid.UUID, body: ProviderAccreditationUpdate, user: CurrentUser, db: DB
 ) -> ProviderAccreditationRead:
-    raise not_implemented()
+    return providers.update_accreditation(db, user, accreditation_id, body)
 
 
 @router.post(
@@ -243,4 +258,4 @@ def update_training_provider_accreditation(
 def register_check_training_accreditation(
     accreditation_id: uuid.UUID, body: RegisterCheckInput, user: CurrentUser, db: DB
 ) -> ProviderAccreditationRead:
-    raise not_implemented()
+    return providers.register_check(db, user, accreditation_id, body)

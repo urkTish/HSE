@@ -913,7 +913,7 @@ function AccessSettingsView({ project }: { project: Schemas["ProjectRead"] }) {
                 <Select
                   aria-label={t("policyFor", { kind: te(`hookKind.${k}`) })}
                   data-testid={`hook-policy-${k}`}
-                  disabled={!editable}
+                  disabled={!editable || (k === "training_course" && !!prov?.registered)}
                   value={policy}
                   onChange={(e) => set("hook_policy", { ...(d.hook_policy as Record<string, Schemas["HookPolicy"]>), [k]: e.target.value as Schemas["HookPolicy"] })}
                   className="w-auto"
@@ -925,6 +925,11 @@ function AccessSettingsView({ project }: { project: Schemas["ProjectRead"] }) {
                   ))}
                 </Select>
                 {prov ? prov.registered ? <StatusBadge status="active" label={t("providerLive")} /> : <StatusBadge status="warn" label={t("providerFrom", { phase: prov.available_from_phase })} /> : null}
+                {k === "training_course" && prov?.registered ? (
+                  <Link href="/hook-policy" className="text-xs text-primary hover:underline" data-testid="training-hook-superseded">
+                    {t("supersededByHookPolicy")}
+                  </Link>
+                ) : null}
               </div>
             );
           })}

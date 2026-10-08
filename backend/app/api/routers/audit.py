@@ -80,5 +80,10 @@ def get_change_history(
     stmt = svc.history_query(db, user, entity_type, entity_id)
     items, total = paginate(db, stmt, pg.page, pg.page_size)
     return ChangeHistoryPage(
-        items=svc.history_reads(db, list(items)), total=total, page=pg.page, page_size=pg.page_size
+        items=svc.history_reads(
+            db, list(items), svc.hidden_fields(db, user, entity_type, entity_id)
+        ),
+        total=total,
+        page=pg.page,
+        page_size=pg.page_size,
     )

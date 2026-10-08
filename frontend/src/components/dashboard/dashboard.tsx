@@ -132,6 +132,7 @@ function DashboardBody({ query, projectId }: { query: KpiQuery; projectId: strin
           {d.data.access_band ? <AccessBandView b={d.data.access_band} show={show} /> : null}
           {d.data.ptw_band ? <PtwBandView b={d.data.ptw_band} show={show} /> : null}
           {d.data.cert_band ? <CertBandView b={d.data.cert_band} show={show} projectId={projectId} /> : null}
+          {d.data.training_band ? <TrainingBandView b={d.data.training_band} show={show} projectId={projectId} /> : null}
           <section aria-labelledby="needs-h" className="flex flex-col gap-2">
             <h2 id="needs-h" className="sr-only">
               {t("needsToday")}
@@ -172,6 +173,7 @@ function DashboardBody({ query, projectId }: { query: KpiQuery; projectId: strin
           {can(me, "access_kpi.view", projectId) ? <AccessCharts query={query} projectId={projectId} show={show} /> : null}
           {can(me, "ptw_kpi.view", projectId) ? <PtwCharts query={query} projectId={projectId} show={show} /> : null}
           {can(me, "cert_kpi.view", projectId) ? <CertCharts query={query} projectId={projectId} show={show} /> : null}
+          {can(me, "training_kpi.view", projectId) ? <TrainingCharts query={query} projectId={projectId} show={show} /> : null}
           <Panel title={t("league")} testId="league-card" actions={canExport ? <ExportButton table="contractors" query={query} label={t("exportContractors")} /> : null}>
             <LeagueTable query={query} show={show} />
           </Panel>
@@ -463,6 +465,108 @@ function CertBandView({ b, show, projectId }: { b: Schemas["CertBand"]; show: Sh
           ))}
         </ul>
       ) : null}
+    </section>
+  );
+}
+
+/** 5-training §8.1 item 2: training band — sessions this week, review / verification queues, K-85, hook-code gaps on live work, hook stage. */
+function TrainingBandView({ b, show, projectId }: { b: Schemas["TrainingBand"]; show: Show; projectId: string | null }) {
+  const t = useTranslations("dashboard");
+  const te = useTranslations("enums");
+  const { date } = useFormatters(projectId);
+  const items: { key: string; label: string; value: number; href: string; tone?: "danger" | "warning"; chip?: string | null }[] = [
+    { key: "scheduled", label: t("trainingBand.scheduledThisWeek"), value: b.sessions_this_week_scheduled, href: "/training-sessions?status=scheduled" },
+    { key: "in-progress", label: t("trainingBand.inProgress"), value: b.sessions_in_progress, href: "/training-sessions?status=in_progress" },
+    {
+      key: "awaiting-close",
+      label: t("trainingBand.awaitingClose"),
+      value: b.sessions_awaiting_close,
+      href: "/training-sessions?status=delivered",
+      tone: b.sessions_close_overdue ? "warning" : undefined,
+      chip: b.sessions_close_overdue ? t("trainingBand.closeOverdue", { n: b.sessions_close_overdue }) : null,
+    },
+    { key: "review", label: t("trainingBand.awaitingReview"), value: b.records_awaiting_review, href: "/training-records?status=submitted" },
+    {
+      key: "verification",
+      label: t("trainingBand.awaitingVerification"),
+      value: b.records_awaiting_verification,
+      href: "/training-records?verification_status=not_verified",
+      chip: b.verification_overdue ? t("trainingBand.overdue", { n: b.verification_overdue }) : null,
+    },
+    { key: "hook-gaps", label: t("trainingBand.hookGapsLive"), value: b.hook_gaps_on_live_work, href: "/training-gaps?hook_code=true&on_live_work=true", tone: b.hook_gaps_on_live_work ? "danger" : undefined },
+  ];
+  const h = b.hook_stage;
+  return (
+    <section aria-labelledby="training-band-h" className="flex flex-col gap-3 rounded-xl border bg-surface p-4 shadow-xs" data-testid="training-band">
+      <h2 id="training-band-h" className="text-sm font-semibold">
+        {t("trainingBand.title")}
+      </h2>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3 lg:grid-cols-7">
+        {items.map((i) => (
+          <div key={i.key} className="flex min-w-0 flex-col gap-1" data-testid={`training-band-${i.key}`}>
+            <p className="text-xs font-medium text-muted-foreground">{i.label}</p>
+            <Link href={i.href} className={cn("inline-flex items-center gap-1 text-xl leading-tight font-semibold hover:underline", i.tone === "danger" ? "text-danger" : i.tone === "warning" ? "text-warning" : "text-primary")}>
+              {i.tone === "danger" ? <OctagonAlert aria-hidden className="size-4 shrink-0" /> : i.tone === "warning" ? <TriangleAlert aria-hidden className="size-4 shrink-0" /> : null}
+              {show(i.value)}
+            </Link>
+            {i.chip ? (
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-warning" data-testid={`training-band-${i.key}-chip`}>
+                <TriangleAlert aria-hidden className="size-3.5 shrink-0" />
+                {i.chip}
+              </span>
+            ) : null}
+          </div>
+        ))}
+        <HeadlineValue v={b.expiring_30d} show={show} />
+      </div>
+      {h ? (
+        <p className="text-xs" data-testid="training-band-hook" data-stage={h.stage}>
+          <Link href="/hook-policy" className={cn("inline-flex items-start gap-1.5 rounded-md border px-2 py-1 hover:underline", h.stage === "block" ? "border-danger/40" : h.stage === "transition" ? "border-warning/50" : undefined)}>
+            {h.stage === "block" ? <Lock aria-hidden className="mt-px size-3.5 shrink-0 text-danger" /> : h.stage === "transition" ? <Hourglass aria-hidden className="mt-px size-3.5 shrink-0 text-warning" /> : <Info aria-hidden className="mt-px size-3.5 shrink-0 text-muted-foreground" />}
+            <span>
+              {te("hookKind.training_course")}: <span className="font-semibold">{te(`hookStage.${h.stage}`)}</span>
+              {h.next_block_date ? <> · {h.next_block_scope === "critical" ? t("trainingBand.nextBlockCritical", { d: date(h.next_block_date) }) : t("trainingBand.nextBlockGeneral", { d: date(h.next_block_date) })}</> : null}
+            </span>
+          </Link>
+        </p>
+      ) : (
+        <p className="text-xs text-muted-foreground" data-testid="training-band-hook-off">
+          {t("trainingBand.hooksOff")}
+        </p>
+      )}
+    </section>
+  );
+}
+
+/** C19–C21 training charts (5-training §8.1 item 3), loaded when scrolled into view. */
+function TrainingCharts({ query, projectId, show }: { query: KpiQuery; projectId: string | null; show: Show }) {
+  const t = useTranslations("dashboard");
+  const ref = useRef<HTMLElement | null>(null);
+  const [inView, setInView] = useState(() => typeof IntersectionObserver === "undefined");
+  useEffect(() => {
+    const el = ref.current;
+    if (inView || !el) return;
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) setInView(true);
+    }, { rootMargin: "200px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [inView]);
+  return (
+    <section ref={ref} aria-labelledby="training-charts-h" className="flex flex-col gap-3" data-testid="training-charts">
+      <h2 id="training-charts-h" className="text-sm font-semibold">
+        {t("trainingCharts")}
+      </h2>
+      {inView ? (
+        <div className="grid gap-4 lg:grid-cols-2">
+          {(["C19", "C20"] as const).map((id) => (
+            <ChartCard key={id} id={id} query={query} projectId={projectId} show={show} />
+          ))}
+          <ChartCard id="C21" query={query} projectId={projectId} show={show} className="lg:col-span-2" />
+        </div>
+      ) : (
+        <div className="min-h-64" aria-hidden />
+      )}
     </section>
   );
 }

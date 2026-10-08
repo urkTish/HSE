@@ -1,7 +1,6 @@
-"""Leading-indicator warnings E1-E4 (spec 1-dashboard §6.9), E5-E7 (2-access-permits §6.9)
-E8-E9 (3-ptw §6.12) and E10-E11
-(4-third-party-cert §6.9), evaluated per complete month per project and per tier-1 contractor tree.
-Means use unrounded values."""
+"""Leading-indicator warnings E1-E4 (spec 1-dashboard §6.9), E5-E7 (2-access-permits §6.9),
+E8-E9 (3-ptw §6.12), E10-E11 (4-third-party-cert §6.9) and E12-E13 (5-training §6.9), evaluated
+per complete month per project and per tier-1 contractor tree. Means use unrounded values."""
 
 import uuid
 from dataclasses import dataclass, field
@@ -181,6 +180,7 @@ def evaluate_engine(
         out += access_warnings(engine, project_id, tree, m, label_en, label_ar, who_en, who_ar)
         out += ptw_warnings(engine, project_id, tree, m, label_en, label_ar, who_en, who_ar)
         out += cert_warnings(engine, project_id, tree, m, label_en, label_ar, who_en, who_ar)
+        out += training_warnings(engine, project_id, tree, m, label_en, label_ar, who_en, who_ar)
     return out
 
 
@@ -247,6 +247,62 @@ def cert_warnings(
                  Input("a_defects", "Category A defects raised", "عيوب الفئة A", Decimal(a_def), 0),
                  Input("a_defects_threshold", "A defects threshold", "حد عيوب الفئة A",
                        Decimal(limit), 0)],
+            )
+        )  # fmt: skip
+    return out
+
+
+def training_warnings(
+    engine: Engine,
+    project_id: uuid.UUID,
+    tree: EngFact | None,
+    m: Window,
+    label_en: str,
+    label_ar: str,
+    who_en: str,
+    who_ar: str,
+) -> list[Warn]:
+    """E12-E13 (5-training §6.9); K-82 unrounded at the month end, denominator 0 → no E12."""
+    from app.kpi import training as kt  # noqa: PLC0415
+
+    tf = kt.tfacts(engine)
+    if tf is None:
+        return []
+    for attr in ("trades", "course_codes", "course_categories"):
+        if not hasattr(engine, attr):
+            setattr(engine, attr, None)
+    out: list[Warn] = []
+    st = tf.settings.get(project_id)
+    t = Decimal(st.training_matrix_warning_pct) if st is not None else Decimal("98.0")
+    a = engine.aggregate(m)
+    r = kt.req_kpis(engine, a)
+    if r.counted > 0:
+        k82 = Decimal(r.met) / Decimal(r.counted) * HUNDRED
+        if k82 < t:
+            out.append(
+                Warn(
+                    E.E12, m, project_id, tree,
+                    f"Training matrix compliance below threshold in {label_en}{who_en}",
+                    f"انخفاض الامتثال لمصفوفة التدريب عن الحد في {label_ar}{who_ar}",
+                    [Input("k82", "Training matrix compliance", "امتثال مصفوفة التدريب", k82, 1,
+                           " %"),
+                     Input("k82_numerator", "Met or expiring", "مستوفاة أو قريبة الانتهاء",
+                           Decimal(r.met), 0),
+                     Input("k82_denominator", "Counted requirements", "المتطلبات المحتسبة",
+                           Decimal(r.counted), 0),
+                     Input("threshold_pct", "Threshold", "الحد", t, 1, " %")],
+                )
+            )  # fmt: skip
+    ver, void = kt.failures(engine, a)
+    if ver or void:
+        out.append(
+            Warn(
+                E.E13, m, project_id, tree,
+                f"Failed training verification or voided session in {label_en}{who_en}",
+                f"تحقق فاشل من شهادة تدريب أو جلسة ملغاة في {label_ar}{who_ar}",
+                [Input("failed_verifications", "Failed training verifications",
+                       "تحقق فاشل من شهادات التدريب", Decimal(ver), 0),
+                 Input("voided_sessions", "Voided sessions", "جلسات ملغاة", Decimal(void), 0)],
             )
         )  # fmt: skip
     return out

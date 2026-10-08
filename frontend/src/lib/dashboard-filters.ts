@@ -5,7 +5,7 @@ import type { KpiQuery } from "@/lib/api/kpi";
 import { useSearchState, type ParamValue } from "@/lib/url-state";
 
 /** URL keys of the dashboard filter bar (D-2). Short so shared links stay readable. */
-export const DASH_KEYS = ["all", "site", "zone", "zt", "eng", "subs", "tier", "period", "anchor", "start", "end", "as_of", "cmp", "gate", "eqc", "ctype"] as const;
+export const DASH_KEYS = ["all", "site", "zone", "zt", "eng", "subs", "tier", "period", "anchor", "start", "end", "as_of", "cmp", "gate", "eqc", "ctype", "trade", "course", "ccat"] as const;
 
 export interface DashFilters {
   allProjects: boolean;
@@ -26,6 +26,10 @@ export interface DashFilters {
   /** Phase 4 (§8.1 item 4): equipment category and personnel certificate type. Not saved in preferences. */
   equipmentCategories: Schemas["EquipmentCertCategory"][];
   certTypes: string[];
+  /** Phase 5 (5-training §8.1 item 4): trade, course and course category (training KPIs only). Not saved in preferences. */
+  trades: Schemas["Trade"][];
+  courseCodes: string[];
+  courseCategories: Schemas["CourseCategory"][];
 }
 
 export function toKpiQuery(projectId: string | null, f: DashFilters): KpiQuery {
@@ -47,6 +51,9 @@ export function toKpiQuery(projectId: string | null, f: DashFilters): KpiQuery {
     gate_id: f.gateIds.length ? f.gateIds : null,
     equipment_category: f.equipmentCategories.length ? f.equipmentCategories : null,
     cert_type: f.certTypes.length ? f.certTypes : null,
+    trade: f.trades.length ? f.trades : null,
+    course_code: f.courseCodes.length ? f.courseCodes : null,
+    course_category: f.courseCategories.length ? f.courseCategories : null,
   };
 }
 
@@ -107,6 +114,9 @@ export function useDashFilters() {
       gateIds: s.getAll("gate"),
       equipmentCategories: s.getAll("eqc") as Schemas["EquipmentCertCategory"][],
       certTypes: s.getAll("ctype"),
+      trades: s.getAll("trade") as Schemas["Trade"][],
+      courseCodes: s.getAll("course"),
+      courseCategories: s.getAll("ccat") as Schemas["CourseCategory"][],
     }),
     [s],
   );

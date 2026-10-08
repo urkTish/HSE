@@ -55,6 +55,9 @@ def main() -> None:
     sched.add_job(_job, "cron", hour=0, minute=5, second=45, args=["cert_daily"])
     sched.add_job(_job, "cron", hour=7, minute=1, args=["cert_alerts"])
     sched.add_job(_job, "interval", minutes=1, args=["cert_minute"])
+    sched.add_job(_job, "cron", hour=0, minute=6, second=0, args=["training_daily"])
+    sched.add_job(_job, "cron", hour=7, minute=2, args=["training_alerts"])
+    sched.add_job(_job, "interval", minutes=1, args=["training_minute"])
     sched.start()
 
 

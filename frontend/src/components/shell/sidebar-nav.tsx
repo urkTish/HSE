@@ -1,6 +1,10 @@
 "use client";
 import {
   Award,
+  BookOpenCheck,
+  Grid3x3,
+  Library,
+  Presentation,
   Ban,
   Forklift,
   Upload,
@@ -207,6 +211,25 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
       ]
     : [];
 
+  // Phase 5 — training (5-training §8).
+  const trainingItems: Item[] = pid
+    ? [
+        ...(ac("training_record.view", "training_session.manage", "training.nominate", "training_attendance.record")
+          ? [{ href: "/training-sessions", label: t("trainingSessions"), Icon: Presentation, testId: "nav-training-sessions" }]
+          : []),
+        ...(ac("training_record.view", "training_record.submit")
+          ? [{ href: "/training-records", label: t("trainingRecords"), Icon: BookOpenCheck, testId: "nav-training-records" }]
+          : []),
+        ...(ac("training_record.view", "training_matrix.edit", "training_kpi.view")
+          ? [{ href: "/training-matrix", label: t("trainingMatrix"), Icon: Grid3x3, testId: "nav-training-matrix" }]
+          : []),
+        ...(ac("training_catalogue.view") ? [{ href: "/training-courses", label: t("trainingCatalogue"), Icon: Library, testId: "nav-training-catalogue" }] : []),
+        ...(ac("training.check") && !ac("cert.check") ? [{ href: "/cert-check", label: t("certCheck"), Icon: ScanSearch, testId: "nav-training-check" }] : []),
+        ...(ac("training.import") ? [{ href: "/training-imports", label: t("trainingImports"), Icon: Upload, testId: "nav-training-imports" }] : []),
+        ...(ac("training_settings.edit", "training_catalogue.view") ? [{ href: "/training-settings", label: t("trainingSettings"), Icon: Cog, testId: "nav-training-settings" }] : []),
+      ]
+    : [];
+
   return (
     <nav aria-label={t("main")} className="flex flex-1 flex-col gap-5 p-3">
       <ul className="flex flex-col gap-1">
@@ -264,6 +287,18 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
               <p className="px-3 pt-1 pb-1 text-xs font-medium text-sidebar-muted">{t("cert")}</p>
               <ul className="mb-3 flex flex-col gap-1" data-testid="nav-cert">
                 {certItems.map((i) => (
+                  <li key={i.href}>
+                    <NavLink item={i} onNavigate={onNavigate} />
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : null}
+          {trainingItems.length > 0 ? (
+            <>
+              <p className="px-3 pt-1 pb-1 text-xs font-medium text-sidebar-muted">{t("training")}</p>
+              <ul className="mb-3 flex flex-col gap-1" data-testid="nav-training">
+                {trainingItems.map((i) => (
                   <li key={i.href}>
                     <NavLink item={i} onNavigate={onNavigate} />
                   </li>

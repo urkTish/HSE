@@ -22,7 +22,7 @@ from app.core.enums import (
     EntityType,
     NotificationKind,
 )
-from app.core.errors import not_found, not_implemented
+from app.core.errors import not_found
 from app.models import AuditEntry, RoleAssignment, User
 from app.schemas.audit import AuditChainVerification, AuditEntryRead, ChangeHistoryEntry
 from app.services import audit, contractors, notify, org, projects, users
@@ -210,7 +210,8 @@ def _history_allowed(
         pid = _phase3_project(db, p, entity_type, entity_id)
         ok = p.grant(pid, cap) is not None
     elif entity_type.value in PHASE5_HISTORY:
-        raise not_implemented()  # 5-training records: Phase 5 stage 2
+        pid = _phase5_project(db, p, entity_type, entity_id)
+        ok = p.has_any(cap) if pid is None else p.grant(pid, cap) is not None
     elif entity_type.value in PHASE4_HISTORY:
         pid = _phase4_project(db, p, entity_type, entity_id)
         ok = p.has_any(cap) if pid is None else p.grant(pid, cap) is not None
@@ -530,6 +531,75 @@ def _phase4_project(
     raise not_found("History")
 
 
+def _phase5_project(
+    db: Session, p: Principal, entity_type: EntityType, entity_id: uuid.UUID
+) -> uuid.UUID | None:
+    """Phase 5 records: visible through their own service rules (404 when unknown or out of
+    scope). Courses, providers and accreditations are org-wide (None; capability 125 anywhere);
+    records, verifications, nominations and retraining notes follow the worker (TR-16, 136);
+    sessions, authorisations, matrix lines, profiles, exemptions and settings need 125 on the
+    project; import batches follow the import history rules."""
+    from app import models as m  # noqa: PLC0415
+    from app.services.train import imports as timports  # noqa: PLC0415
+    from app.services.train import records as trecords  # noqa: PLC0415
+
+    et = EntityType
+    cat = Capability.training_catalogue_view
+    org: dict[EntityType, Any] = {
+        et.training_course: m.TrainingCourse,
+        et.training_provider: m.TrainingProvider,
+        et.training_provider_accreditation: m.TrainingProviderAccreditation,
+    }
+    if entity_type in org:
+        if db.get(org[entity_type], entity_id) is None:
+            raise not_found("History")
+        if not p.has_any(cat):
+            raise forbidden_error()
+        return None
+    if entity_type == et.training_record:
+        return trecords.get_visible(db, p, entity_id).project_id
+    if entity_type == et.training_verification:
+        v = db.get(m.TrainingVerification, entity_id)
+        if v is None:
+            raise not_found("History")
+        return trecords.get_visible(db, p, v.record_id).project_id or v.project_id
+    if entity_type == et.training_import_batch:
+        return timports.get_batch(db, p, entity_id).project_id
+    if entity_type in (et.training_nomination, et.training_retraining_note):
+        nmodel: Any = (
+            m.TrainingNomination
+            if entity_type == et.training_nomination
+            else m.TrainingRetrainingNote
+        )
+        nrow = db.get(nmodel, entity_id)
+        if nrow is None:
+            raise not_found("History")
+        if not p.has_any(Capability.training_record_view):
+            raise forbidden_error()
+        trecords._visible_worker(db, p, nrow.worker_id)
+        if isinstance(nrow, m.TrainingNomination):
+            ts = db.get(m.TrainingSession, nrow.session_id)
+            return ts.project_id if ts is not None else None
+        return nrow.project_id  # type: ignore[no-any-return]
+    models: dict[EntityType, Any] = {
+        et.trainer_authorisation: m.TrainerAuthorisation,
+        et.training_matrix_line: m.TrainingMatrixLine,
+        et.training_profile: m.TrainingProfile,
+        et.training_exemption: m.TrainingExemption,
+        et.training_session: m.TrainingSession,
+        et.training_settings: m.TrainingSettings,
+    }
+    model = models.get(entity_type)
+    row: Any = db.get(model, entity_id) if model is not None else None
+    if row is None:
+        raise not_found("History")
+    pid: uuid.UUID = row.project_id
+    projects.get_visible(db, p, pid)
+    if p.grant(pid, cat) is None:
+        raise forbidden_error()
+    return pid
+
+
 def history_query(
     db: Session, p: Principal, entity_type: EntityType, entity_id: uuid.UUID
 ) -> Select[AuditEntry]:
@@ -547,7 +617,38 @@ def history_query(
     )
 
 
-def history_reads(db: Session, entries: list[AuditEntry]) -> list[ChangeHistoryEntry]:
+# P5-4 / AT-7: reasons, verification details and scores of training records are for HSE
+# reviewers (capability 138) only; other callers get the history without these keys.
+P5_SENSITIVE_KEYS = frozenset(
+    {
+        "status_reason", "status_reason_text", "theory_score_pct", "practical_result",
+        "reason", "reason_text", "void_reason_text", "differences", "differences_text",
+        "reference", "note", "withdraw_reason", "blacklist_reason",
+    }
+)  # fmt: skip
+
+
+def hidden_fields(
+    db: Session, p: Principal, entity_type: EntityType, entity_id: uuid.UUID
+) -> frozenset[str]:
+    """Keys removed from before / after for this caller (Phase 5 records only)."""
+    if entity_type.value not in PHASE5_HISTORY:
+        return frozenset()
+    pid = _phase5_project(db, p, entity_type, entity_id)
+    review = Capability.training_record_review
+    ok = p.has_any(review) if pid is None else p.grant(pid, review) is not None
+    return frozenset() if ok else P5_SENSITIVE_KEYS
+
+
+def _strip(d: dict[str, Any] | None, hidden: frozenset[str]) -> dict[str, Any] | None:
+    if d is None or not hidden:
+        return d
+    return {k: v for k, v in d.items() if k not in hidden}
+
+
+def history_reads(
+    db: Session, entries: list[AuditEntry], hidden: frozenset[str] = frozenset()
+) -> list[ChangeHistoryEntry]:
     names = _names(db, {e.actor_user_id for e in entries})
     return [
         ChangeHistoryEntry(
@@ -556,8 +657,8 @@ def history_reads(db: Session, entries: list[AuditEntry]) -> list[ChangeHistoryE
             actor_user_id=e.actor_user_id,
             actor_name=names.get(e.actor_user_id) if e.actor_user_id else None,
             action=e.action,
-            before=e.before,
-            after=e.after,
+            before=_strip(e.before, hidden),
+            after=_strip(e.after, hidden),
         )
         for e in entries
     ]

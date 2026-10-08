@@ -184,6 +184,10 @@ def _cached(db: Session, key: tuple[uuid.UUID, ...], ttl: float) -> Facts | None
         facts.ptw_loader = _ptw_loader(db, key, shared)
     if shared._cert is None:
         facts.cert_loader = _cert_loader(db, key, shared)
+    if shared._train is None:
+        facts.train_loader = _train_loader(db, key, shared)
+    else:
+        facts._train = shared._train.with_db(db)
     return facts
 
 
@@ -226,6 +230,20 @@ def _cert_loader(db: Session, pids: tuple[uuid.UUID, ...], shared: Facts) -> Any
     from app.kpi.cert_facts import load_cert  # noqa: PLC0415
 
     return _lazy(db, pids, shared, "cert", load_cert)
+
+
+def _train_loader(db: Session, pids: tuple[uuid.UUID, ...], shared: Facts) -> Any:
+    from app.kpi.train_facts import load_train  # noqa: PLC0415
+
+    def run() -> Any:
+        with _flight(pids, "train"):
+            cur = shared._train
+            if cur is None:
+                cur = load_train(db, list(pids), shared)
+                shared._train = cur
+            return cur.with_db(db)
+
+    return run
 
 
 def _load(
@@ -336,6 +354,22 @@ def _load(
             IndFact(d=r[1], eng=r[2], site=r[3][0] if r[3] else None, project=r[0])
             for r in ind_rows
             if r[1] >= reg_from[r[0]]
+        ]
+
+    # 5-training TH-6: from training_register_from the register replaces the daily-return
+    # training_hours (kept in trn_reg for the TH-7 reconciliation)
+    facts.train_from = {
+        pid: rf
+        for pid in pids
+        if pid in hse and (rf := hse[pid].training_register_from) is not None
+    }
+    if facts.train_from:
+        tf = facts.train_from
+        facts.wf = [
+            replace(r, trn=Decimal(0), trn_reg=r.trn)
+            if r.project in tf and r.d >= tf[r.project] and r.trn
+            else r
+            for r in facts.wf
         ]
 
     # incidents (counted events) + their investigation attributes
@@ -564,6 +598,7 @@ def _load(
     facts.access_loader = _access_loader(db, tuple(sorted(pids)), facts)
     facts.ptw_loader = _ptw_loader(db, tuple(sorted(pids)), facts)
     facts.cert_loader = _cert_loader(db, tuple(sorted(pids)), facts)
+    facts.train_loader = _train_loader(db, tuple(sorted(pids)), facts)
     return facts.sort()
 
 

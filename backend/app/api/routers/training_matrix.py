@@ -1,6 +1,5 @@
 """Training matrix, training profiles, requirement status, exemptions, the gap register and the
-refresher plan (spec 5-training §3.4, §3.5, §3.10, §3.11, §3.14, §6.2, §6.7, MX, GP). Stage 1
-contract: handlers answer 501 until Phase 5 stage 2."""
+refresher plan (spec 5-training §3.4, §3.5, §3.10, §3.11, §3.14, §6.2, §6.7, MX, GP)."""
 
 import uuid
 from datetime import date
@@ -9,7 +8,7 @@ from typing import Annotated
 from fastapi import APIRouter, Query, status
 
 from app.api.deps import DB, CurrentUser, PageParams
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.core.hse_enums import Trade
 from app.core.train_enums import (
     ExemptionStatus,
@@ -40,6 +39,7 @@ from app.schemas.training_matrix import (
     TrainingProfileRead,
     TrainingProfileUpdate,
 )
+from app.services.train import gaps, matrix
 
 router = APIRouter(tags=["training-matrix"])
 
@@ -65,7 +65,9 @@ def get_training_matrix(
         bool, Query(description="Adds applicable_deployments per kpi_counted line.")
     ] = False,
 ) -> MatrixRead:
-    raise not_implemented()
+    return matrix.read_matrix(
+        db, user, project_id, as_of, applies_to_kind, level, source, course_code, include_counts
+    )
 
 
 @router.post(
@@ -78,7 +80,7 @@ def get_training_matrix(
 def create_training_matrix_line(
     project_id: uuid.UUID, body: MatrixLineCreate, user: CurrentUser, db: DB
 ) -> MatrixLineRead:
-    raise not_implemented()
+    return matrix.create_line(db, user, project_id, body)
 
 
 @router.patch(
@@ -91,7 +93,7 @@ def create_training_matrix_line(
 def update_training_matrix_line(
     line_id: uuid.UUID, body: MatrixLineUpdate, user: CurrentUser, db: DB
 ) -> MatrixLineRead:
-    raise not_implemented()
+    return matrix.update_line(db, user, line_id, body)
 
 
 @router.post(
@@ -103,7 +105,7 @@ def update_training_matrix_line(
 def remove_training_matrix_line(
     line_id: uuid.UUID, body: MatrixLineRemove, user: CurrentUser, db: DB
 ) -> MatrixLineRead:
-    raise not_implemented()
+    return matrix.remove_line(db, user, line_id, body)
 
 
 @router.get(
@@ -115,7 +117,7 @@ def remove_training_matrix_line(
 def get_training_matrix_line_versions(
     line_id: uuid.UUID, user: CurrentUser, db: DB
 ) -> MatrixLineVersions:
-    raise not_implemented()
+    return matrix.versions(db, user, line_id)
 
 
 # ---- profiles and requirements --------------------------------------------------------------
@@ -130,7 +132,7 @@ def get_training_matrix_line_versions(
 def get_training_profile(
     deployment_id: uuid.UUID, user: CurrentUser, db: DB
 ) -> TrainingProfileRead:
-    raise not_implemented()
+    return matrix.get_profile(db, user, deployment_id)
 
 
 @router.patch(
@@ -143,7 +145,7 @@ def get_training_profile(
 def update_training_profile(
     deployment_id: uuid.UUID, body: TrainingProfileUpdate, user: CurrentUser, db: DB
 ) -> TrainingProfileRead:
-    raise not_implemented()
+    return matrix.update_profile(db, user, deployment_id, body)
 
 
 @router.get(
@@ -155,7 +157,7 @@ def update_training_profile(
 def get_training_requirements(
     deployment_id: uuid.UUID, user: CurrentUser, db: DB, as_of: AsOf = None
 ) -> DeploymentRequirements:
-    raise not_implemented()
+    return gaps.get_requirements(db, user, deployment_id, as_of)
 
 
 # ---- exemptions -----------------------------------------------------------------------------
@@ -175,7 +177,9 @@ def list_training_exemptions(
     status_: Annotated[list[ExemptionStatus] | None, Query(alias="status")] = None,
     deployment_id: uuid.UUID | None = None,
 ) -> ExemptionPage:
-    raise not_implemented()
+    return matrix.list_exemptions(
+        db, user, project_id, pg.page, pg.page_size, status_, deployment_id
+    )
 
 
 @router.post(
@@ -189,7 +193,7 @@ def list_training_exemptions(
 def create_training_exemption(
     project_id: uuid.UUID, body: ExemptionCreate, user: CurrentUser, db: DB
 ) -> ExemptionRead:
-    raise not_implemented()
+    return matrix.create_exemption(db, user, project_id, body)
 
 
 @router.post(
@@ -201,7 +205,7 @@ def create_training_exemption(
 def withdraw_training_exemption(
     exemption_id: uuid.UUID, body: ExemptionWithdraw, user: CurrentUser, db: DB
 ) -> ExemptionRead:
-    raise not_implemented()
+    return matrix.withdraw_exemption(db, user, exemption_id, body)
 
 
 # ---- gap register and refresher plan --------------------------------------------------------
@@ -233,7 +237,22 @@ def list_training_gaps(
     ] = None,
     counted_only: bool = False,
 ) -> GapPage:
-    raise not_implemented()
+    return gaps.list_gaps(
+        db,
+        user,
+        project_id,
+        pg.page,
+        pg.page_size,
+        as_of,
+        state,
+        engagement_id,
+        include_subcontractors,
+        trade,
+        course_code,
+        hook_code,
+        on_live_work,
+        counted_only,
+    )
 
 
 @router.get(
@@ -250,7 +269,7 @@ def get_training_gap_summary(
     engagement_id: uuid.UUID | None = None,
     include_subcontractors: bool = True,
 ) -> GapSummary:
-    raise not_implemented()
+    return gaps.gap_summary(db, user, project_id, as_of, engagement_id, include_subcontractors)
 
 
 @router.get(
@@ -270,7 +289,18 @@ def get_refresher_plan(
     engagement_id: uuid.UUID | None = None,
     due_within_days: Annotated[int | None, Query(ge=0, le=365)] = None,
 ) -> RefresherPlanPage:
-    raise not_implemented()
+    return gaps.refresher_plan(
+        db,
+        user,
+        project_id,
+        pg.page,
+        pg.page_size,
+        as_of,
+        state,
+        course_code,
+        engagement_id,
+        due_within_days,
+    )
 
 
 @router.post(
@@ -283,4 +313,4 @@ def get_refresher_plan(
 def create_training_retraining_note(
     worker_id: uuid.UUID, body: RetrainingNoteCreate, user: CurrentUser, db: DB
 ) -> RetrainingNoteRead:
-    raise not_implemented()
+    return gaps.create_note(db, user, worker_id, body)

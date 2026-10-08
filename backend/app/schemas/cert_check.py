@@ -142,8 +142,7 @@ class PersonCheckCard(ApiModel):
     certificates: list[PersonCheckCertificate]
     training: list[PersonCheckTraining] | None = Field(
         default=None,
-        description="5-training CK5-2 Training section (capability 142); null without it or "
-        "until Phase 5 stage 2.",
+        description="5-training CK5-2 Training section (capability 142); null without it.",
     )
 
 

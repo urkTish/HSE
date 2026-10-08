@@ -1,5 +1,5 @@
-"""Phase 5 contract surface (stage 1): paths, schemas, enums, error codes, capability matrix and
-501 stubs (spec 5-training)."""
+"""Phase 5 contract surface: paths, schemas, enums, error codes, capability matrix and the
+former stage-1 stubs now answering (spec 5-training)."""
 
 from app.core.access_enums import HookKind, QrKind
 from app.core.cert_enums import HookReasonCode
@@ -141,7 +141,7 @@ def test_phase5_enums_and_codes() -> None:
     assert EntityType.training_record.value == "training_record"
     assert len(PHASE5_METRICS) == 7
     for m in PHASE5_METRICS:
-        assert not CATALOGUE[m].available  # stage 1: catalogued, computed in stage 2
+        assert CATALOGUE[m].available  # computed since stage 2
         assert CATALOGUE[m].spec_ref.startswith("5-training §6.8")
     assert ExportDataset.training_records.value == "training_records"
 
@@ -182,7 +182,7 @@ def test_phase5_capabilities_in_matrix() -> None:
     assert Capability.training_check in MATRIX[Role.permit_receiver]
 
 
-def test_phase5_stubs_answer_501(cert_seed: None, clock: None, db: object, api: Api) -> None:
+def test_phase5_endpoints_implemented(train_seed: None, clock: None, db: object, api: Api) -> None:
     from sqlalchemy.orm import Session
 
     assert isinstance(db, Session)
@@ -198,13 +198,14 @@ def test_phase5_stubs_answer_501(cert_seed: None, clock: None, db: object, api: 
         f"/projects/{pid}/training-gaps/summary",
         f"/kpi/training?project_id={pid}",
         f"/kpi/charts/C19?project_id={pid}",
-        "/exports/training_records",
+        f"/exports/training_records?project_id={pid}",
         f"/projects/{pid}/hook-readiness?kind=training_course",
     ):
         res = c.get(API + url)
-        assert res.status_code == 501, (url, res.text)
-        assert res.json()["detail"]["code"] == "NOT_IMPLEMENTED"
-    # earlier contracts keep working: null training_register_from is accepted
+        assert res.status_code < 500, (url, res.text)
+        assert res.status_code in (200, 409), (url, res.text)
+    # earlier contracts keep working: null training_register_from is accepted (ignored; the
+    # seeded date stays, since the date may only move earlier, TH-6)
     res = c.patch(f"{API}/projects/{pid}/hse-settings", json={"training_register_from": None})
     assert res.status_code == 200, res.text
-    assert res.json()["training_register_from"] is None
+    assert res.json()["training_register_from"] == "2026-09-01"

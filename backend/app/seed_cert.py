@@ -14,6 +14,7 @@ bulk worker and Bikash is RBT-52's; VEH-0110 does not exist (DL-MC-01 has no veh
 
 from __future__ import annotations
 
+import os
 import random
 import uuid
 from datetime import UTC, date, datetime, timedelta
@@ -380,6 +381,10 @@ def _seed_policy(ctx: Ctx) -> None:
     policy.clear_cache(db)
 
 
+# Re-trade picks are a fixed-seed shuffle of the worker-seq order, so every build gives the same
+# world (the Phase 5 seed reproduces 5-training A.9 / TR7 on it).
+RETRADE_SEED = int(os.environ.get("HSE_RETRADE_SEED", "1"))
+
 # ---- workers: WKR-000022 / 000023 and the mapped-trade populations (A.1, A.10) ----
 
 
@@ -447,15 +452,24 @@ def _seed_workers(ctx: Ctx) -> None:
     }
     mapped = set(targets["ANIA-EXP"])
     for pcode, want in targets.items():
-        deps = [
-            d
-            for d in db.scalars(
-                select(Deployment)
+        # ordered by worker seq (not the random uuid) so the world is the same on every build
+        seq_of = dict(
+            db.execute(
+                select(Worker.id, Worker.seq)
+                .join(Deployment, Deployment.worker_id == Worker.id)
                 .where(Deployment.project_id == ctx.pid(pcode))
-                .order_by(Deployment.id)
-            )
-            if _live(d)
-        ]
+            ).all()
+        )
+        deps = sorted(
+            (
+                d
+                for d in db.scalars(
+                    select(Deployment).where(Deployment.project_id == ctx.pid(pcode))
+                )
+                if _live(d)
+            ),
+            key=lambda d: (seq_of.get(d.worker_id, 0), str(d.id)),
+        )
         spare = [
             d
             for d in deps
@@ -463,11 +477,14 @@ def _seed_workers(ctx: Ctx) -> None:
             and d.trade in (Trade.labourer, Trade.other, Trade.carpenter, Trade.mason,
                             Trade.painter, Trade.steel_fixer)
         ]  # fmt: skip
-        spare.sort(key=lambda d: (d.trade != Trade.labourer, str(d.id)))
+        spare.sort(key=lambda d: seq_of.get(d.worker_id, 0))
+        random.Random(f"{RETRADE_SEED}:{pcode}").shuffle(spare)
+        spare.sort(key=lambda d: d.trade != Trade.labourer)  # stable: labourers first
         for trade, want_n in want.items():
             have = [d for d in deps if d.trade == trade]
             if len(have) > want_n:
                 movable = [d for d in have if d.worker_id not in protected]
+                random.Random(f"{RETRADE_SEED}:{pcode}:{trade.value}").shuffle(movable)
                 for d in movable[: len(have) - want_n]:
                     d.trade = Trade.labourer
             elif len(have) < want_n:
@@ -1502,8 +1519,9 @@ def _seed_bulk_personnel(ctx: Ctx, eq_certs: dict[str, list[EquipmentCertificate
             d
             for d in db.scalars(
                 select(Deployment)
+                .join(Worker, Worker.id == Deployment.worker_id)
                 .where(Deployment.project_id == ctx.pid(pcode))
-                .order_by(Deployment.mobilised_on, Deployment.id)
+                .order_by(Deployment.mobilised_on, Worker.seq)
             )
             if _live(d) and d.trade in TRADE_CODE and d.worker_id not in named_ids
         ]

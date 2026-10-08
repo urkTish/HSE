@@ -1,5 +1,5 @@
 """Training imports: CSV/XLSX dry-run → commit valid rows (spec 5-training §3.13, §4.8,
-IM5-1…IM5-7). Stage 1 contract: handlers answer 501 until Phase 5 stage 2."""
+IM5-1…IM5-7)."""
 
 import uuid
 from typing import Annotated, Literal
@@ -7,14 +7,15 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, File, Form, Query, Response, UploadFile, status
 
 from app.api.deps import DB, CurrentUser, PageParams
-from app.core.enums import ExportFormat
-from app.core.errors import error_responses, not_implemented
+from app.core.enums import Capability, ExportFormat
+from app.core.errors import error_responses
 from app.core.train_enums import (
     TrainingImportSource,
     TrainingImportStatus,
     TrainingImportTemplate,
 )
 from app.schemas.training_imports import TrainingImportPage, TrainingImportRead
+from app.services.train import imports
 
 router = APIRouter(tags=["training-imports"])
 
@@ -44,7 +45,13 @@ def training_import_template(
     format_: Annotated[ExportFormat, Query(alias="format")] = ExportFormat.xlsx,
     headers: Annotated[Literal["en", "ar"], Query()] = "en",
 ) -> Response:
-    raise not_implemented()
+    user.require_any(Capability.training_import)
+    content, media_type, filename = imports.template(template, format_, headers)
+    return Response(
+        content,
+        media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @router.post(
@@ -79,7 +86,18 @@ def create_training_import(
         UploadFile | None, File(description="PDF / EML of the provider's email")
     ] = None,
 ) -> TrainingImportRead:
-    raise not_implemented()
+    return imports.upload(
+        db,
+        user,
+        project_id,
+        file,
+        template,
+        source,
+        session_id,
+        provider_id,
+        scans_zip,
+        evidence_file,
+    )
 
 
 @router.get(
@@ -96,7 +114,7 @@ def list_training_imports(
     status_: Annotated[TrainingImportStatus | None, Query(alias="status")] = None,
     template: TrainingImportTemplate | None = None,
 ) -> TrainingImportPage:
-    raise not_implemented()
+    return imports.list_batches(db, user, project_id, pg.page, pg.page_size, status_, template)
 
 
 @router.get(
@@ -108,7 +126,7 @@ def list_training_imports(
 def get_training_import(
     batch_id: uuid.UUID, user: CurrentUser, db: DB, include_ok_rows: bool = False
 ) -> TrainingImportRead:
-    raise not_implemented()
+    return imports.get(db, user, batch_id, include_ok_rows)
 
 
 @router.post(
@@ -123,7 +141,7 @@ def get_training_import(
     responses=error_responses(401, 403, 404, 409),
 )
 def commit_training_import(batch_id: uuid.UUID, user: CurrentUser, db: DB) -> TrainingImportRead:
-    raise not_implemented()
+    return imports.commit(db, user, batch_id)
 
 
 @router.post(
@@ -133,4 +151,4 @@ def commit_training_import(batch_id: uuid.UUID, user: CurrentUser, db: DB) -> Tr
     responses=error_responses(401, 403, 404, 409),
 )
 def discard_training_import(batch_id: uuid.UUID, user: CurrentUser, db: DB) -> TrainingImportRead:
-    raise not_implemented()
+    return imports.discard(db, user, batch_id)

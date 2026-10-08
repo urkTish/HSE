@@ -7,6 +7,7 @@ The Phase 4 providers are registered **per project** (HK4-1): a `HookPolicyState
 (HOOK_NOT_AVAILABLE under `warn`) is unchanged."""
 
 import uuid
+from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from typing import Any
 
@@ -17,7 +18,7 @@ from app.core.access_enums import HookKind
 from app.core.cert_enums import HookCodePolicy, HookStage
 from app.core.clock import now, today
 from app.core.enums import AuditAction, Capability, EntityType, NotificationKind, Role
-from app.core.errors import ApiError, ErrorCode, not_implemented, validation_error
+from app.core.errors import ApiError, ErrorCode, validation_error
 from app.models import CertSettings, HookPolicyState
 from app.schemas.cert_config import (
     HookCodeState,
@@ -38,7 +39,48 @@ from app.services.permissions import Principal, forbidden_error
 
 C = Capability
 KINDS = ref.PHASE4_KINDS
+"""Phase 4 kinds: `enabled(db, project)` without a kind keeps meaning "Phase 4 is enabled"."""
+ALL_KINDS: tuple[HookKind, ...] = (*KINDS, HookKind.training_course)
+"""v1.1 §3.14: the state entity is shared with Phase 5 kind training_course (5-training §3.12)."""
 MAX_DEFERRAL_DAYS = 30
+
+
+@dataclass(frozen=True)
+class Cfg:
+    """The per-kind dates and critical codes: Phase 4 settings for the Phase 4 kinds, the
+    Phase 5 `training_hook_*` settings for training_course (5-training §3.16, §6.5)."""
+
+    critical: frozenset[str]
+    transition_days: int
+    critical_days: int
+
+    @classmethod
+    def of(cls, s: "CertSettings | Cfg") -> "Cfg":
+        if isinstance(s, Cfg):
+            return s
+        return cls(
+            frozenset(cset.critical_codes(s)),
+            s.hook_transition_days,
+            s.hook_critical_transition_days,
+        )
+
+
+def cfg(db: Session, project_id: uuid.UUID, kind: HookKind) -> Cfg:
+    if kind == HookKind.training_course:
+        from app.services.train import common as tcommon  # noqa: PLC0415
+
+        ts = tcommon.settings(db, project_id)
+        return Cfg(
+            frozenset(tcommon.critical_codes(ts)),
+            ts.training_hook_transition_days,
+            ts.training_hook_critical_transition_days,
+        )
+    return Cfg.of(cset.get(db, project_id))
+
+
+def cap_for(kind: HookKind) -> Capability:
+    """Capability routing per kind: 145 for training_course, 124 for the Phase 4 kinds."""
+    return C.training_settings_edit if kind == HookKind.training_course else C.cert_settings_edit
 
 
 def state(db: Session, project_id: uuid.UUID, kind: HookKind) -> HookPolicyState | None:
@@ -53,7 +95,7 @@ def active_state(
     db: Session, project_id: uuid.UUID | None, kind: HookKind, d: date
 ) -> HookPolicyState | None:
     """The state when Phase 4 answers this project's hooks of `kind` on local date d."""
-    if project_id is None or kind not in KINDS:
+    if project_id is None or kind not in ALL_KINDS:
         return None
     cache: dict[tuple[Any, ...], HookPolicyState] = db.info.setdefault("hook_states", {})
     key = (project_id, kind)
@@ -77,6 +119,10 @@ def enabled(db: Session, project_id: uuid.UUID, kind: HookKind | None = None) ->
 
 
 def codes_of(db: Session, kind: HookKind) -> list[str]:
+    if kind == HookKind.training_course:
+        from app.services.train import hook as thook  # noqa: PLC0415
+
+        return thook.codes(db)
     if kind == HookKind.equipment_certificate:
         return list(ref.EQUIPMENT_HOOK_CODE_LIST)
     return list(ref.PERSONNEL_HOOK_CODES) + sorted(
@@ -85,16 +131,22 @@ def codes_of(db: Session, kind: HookKind) -> list[str]:
 
 
 def implemented(db: Session, kind: HookKind, code: str) -> bool:
+    if kind == HookKind.training_course:
+        from app.services.train import hook as thook  # noqa: PLC0415
+
+        return thook.implemented(db, code)
     if kind == HookKind.equipment_certificate:
         return code in ref.EQUIPMENT_HOOK_CODES
     return code in ref.PERSONNEL_HOOK_CODES or cset.is_type(db, code)
 
 
-def block_from(st: HookPolicyState, s: CertSettings, code: str) -> date:
-    return st.critical_block_from if code in cset.critical_codes(s) else st.general_block_from
+def block_from(st: HookPolicyState, s: "CertSettings | Cfg", code: str) -> date:
+    return st.critical_block_from if code in Cfg.of(s).critical else st.general_block_from
 
 
-def code_policy(st: HookPolicyState, s: CertSettings, code: str, at: datetime) -> HookCodePolicy:
+def code_policy(
+    st: HookPolicyState, s: "CertSettings | Cfg", code: str, at: datetime
+) -> HookCodePolicy:
     """HK4-4/HK4-5: block from the code's block date (00:00 local) or an early switch."""
     if st.all_switched_at is not None and st.all_switched_at <= at:
         return HookCodePolicy.block
@@ -110,11 +162,12 @@ def code_policy(st: HookPolicyState, s: CertSettings, code: str, at: datetime) -
     return HookCodePolicy.transition
 
 
-def compute_dates(registered_on: date, s: CertSettings) -> tuple[date, date]:
+def compute_dates(registered_on: date, s: "CertSettings | Cfg") -> tuple[date, date]:
     """§6.5."""
+    c = Cfg.of(s)
     return (
-        registered_on + timedelta(days=s.hook_critical_transition_days),
-        registered_on + timedelta(days=s.hook_transition_days),
+        registered_on + timedelta(days=c.critical_days),
+        registered_on + timedelta(days=c.transition_days),
     )
 
 
@@ -122,15 +175,23 @@ def compute_dates(registered_on: date, s: CertSettings) -> tuple[date, date]:
 
 
 def _view(p: Principal, project_id: uuid.UUID) -> None:
-    for cap in (C.cert_register_view, C.cert_kpi_view, C.cert_settings_edit, C.settings_view):
+    for cap in (
+        C.cert_register_view,
+        C.cert_kpi_view,
+        C.cert_settings_edit,
+        C.settings_view,
+        C.training_catalogue_view,
+        C.training_kpi_view,
+    ):
         if p.grant(project_id, cap) is not None:
             return
     raise forbidden_error()
 
 
 def stage_read(
-    db: Session, st: HookPolicyState | None, kind: HookKind, s: CertSettings
+    db: Session, st: HookPolicyState | None, kind: HookKind, s: "CertSettings | Cfg"
 ) -> HookPolicyStateRead:
+    s = Cfg.of(s)
     refs = Refs(db)
     at = now()
     d = today()
@@ -147,7 +208,7 @@ def stage_read(
             codes=[
                 HookCodeState(
                     code=c,
-                    critical=c in cset.critical_codes(s),
+                    critical=c in s.critical,
                     policy=HookCodePolicy.warn,
                     block_from=None,
                     switched_early_at=None,
@@ -167,7 +228,7 @@ def stage_read(
         codes.append(
             HookCodeState(
                 code=c,
-                critical=c in cset.critical_codes(s),
+                critical=c in s.critical,
                 policy=code_policy(st, s, c, at)
                 if st.provider_registered_on <= d
                 else HookCodePolicy.warn,
@@ -214,7 +275,7 @@ def _system_user() -> Any:
     return UserRef(id=uuid.UUID(int=0), full_name_en="System", full_name_ar="النظام")
 
 
-def current_stage(st: HookPolicyState, s: CertSettings, at: datetime) -> HookStage:
+def current_stage(st: HookPolicyState, s: "CertSettings | Cfg", at: datetime) -> HookStage:
     d = acommon.local_day(at)
     if d < st.provider_registered_on:
         return HookStage.warn
@@ -224,11 +285,19 @@ def current_stage(st: HookPolicyState, s: CertSettings, at: datetime) -> HookSta
 
 
 def policy_read(db: Session, project_id: uuid.UUID) -> HookPolicyRead:
-    s = cset.get(db, project_id)
-    kinds = [stage_read(db, state(db, project_id, k), k, s) for k in KINDS]
+    """Phase 4 kinds always; kind training_course once Phase 5 registered it (HK5-1)."""
+    kinds = [stage_read(db, state(db, project_id, k), k, cfg(db, project_id, k)) for k in KINDS]
+    tst = state(db, project_id, HookKind.training_course)
+    training = None
+    if tst is not None:
+        training = stage_read(
+            db, tst, HookKind.training_course, cfg(db, project_id, HookKind.training_course)
+        )
+        kinds.append(training)
     return HookPolicyRead(
         project_id=project_id,
-        enabled=any(k.provider_registered_on is not None for k in kinds),
+        enabled=any(k.provider_registered_on is not None for k in kinds if k.kind in KINDS),
+        training_enabled=training is not None,
         as_of=today(),
         kinds=kinds,
     )
@@ -249,11 +318,11 @@ def enable_project(
     registered_on: date,
     actor: Any = audit.SYSTEM,
     seed: bool = False,
+    kinds: tuple[HookKind, ...] = KINDS,
 ) -> list[HookPolicyState]:
-    s = cset.get(db, project_id)
     out = []
-    crit, gen = compute_dates(registered_on, s)
-    for kind in KINDS:
+    for kind in kinds:
+        crit, gen = compute_dates(registered_on, cfg(db, project_id, kind))
         st = state(db, project_id, kind)
         if st is not None:
             out.append(st)
@@ -313,11 +382,18 @@ def enable(
 
 
 def _require_state(db: Session, project_id: uuid.UUID, kind: HookKind) -> HookPolicyState:
-    if kind == HookKind.training_course:
-        raise not_implemented()  # 5-training §4.7 (Phase 5 stage 2, capability 145)
-    if kind not in KINDS:
-        raise validation_error("kind", "Only personnel_certificate and equipment_certificate.")
+    if kind not in ALL_KINDS:
+        raise validation_error(
+            "kind", "Only personnel_certificate, equipment_certificate and training_course."
+        )
     st = state(db, project_id, kind)
+    if st is None and kind == HookKind.training_course:
+        raise ApiError(
+            409,
+            ErrorCode.TRAINING_HOOKS_NOT_ENABLED,
+            "Training hooks are not enabled on this project.",
+            "متطلبات التدريب غير مفعلة في هذا المشروع.",
+        )
     if st is None:
         raise ApiError(
             409,
@@ -343,9 +419,9 @@ def switch(
     db: Session, p: Principal, project_id: uuid.UUID, kind: HookKind, body: HookSwitchRequest
 ) -> HookPolicyRead:
     project = projects.get_visible(db, p, project_id)
-    p.require(project.id, C.cert_settings_edit)
+    p.require(project.id, cap_for(kind))
     st = _require_state(db, project.id, kind)
-    s = cset.get(db, project.id)
+    s = cfg(db, project.id, kind)
     at = now()
     codes = codes_of(db, kind) if body.all_codes else list(body.codes)
     if not codes:
@@ -391,11 +467,12 @@ def switch(
     )
     scope_en = "all codes" if body.all_codes else ", ".join(codes)
     scope_ar = "كل الرموز" if body.all_codes else "، ".join(codes)
+    en, ar = _label(kind)
     _alert_change(
         db,
         project.id,
-        f"Certificate checks now block ({kind.value}: {scope_en})",
-        f"فحوص الشهادات أصبحت مانعة ({scope_ar})",
+        f"{en} now block ({kind.value}: {scope_en})",
+        f"{ar} أصبحت مانعة ({scope_ar})",
     )
     clear_cache(db)
     from app.services.cert import events  # noqa: PLC0415
@@ -408,10 +485,10 @@ def defer(
     db: Session, p: Principal, project_id: uuid.UUID, kind: HookKind, body: HookDeferralRequest
 ) -> HookPolicyRead:
     project = projects.get_visible(db, p, project_id)
-    p.require(project.id, C.cert_settings_edit)
+    p.require(project.id, cap_for(kind))
     st = _require_state(db, project.id, kind)
-    s = cset.get(db, project.id)
-    crit = [c for c in body.codes if c in cset.critical_codes(s)]
+    s = cfg(db, project.id, kind)
+    crit = [c for c in body.codes if c in s.critical]
     if crit:
         raise ApiError(
             422,
@@ -470,14 +547,21 @@ def defer(
         after=_snap(st),
         details={"deferral": True, "kind": kind.value},
     )
+    en, ar = _label(kind)
     _alert_change(
         db,
         project.id,
-        f"General certificate block date deferred to {body.new_date}",
-        f"تم تأجيل تاريخ الحظر العام للشهادات إلى {body.new_date}",
+        f"{en}: general block date deferred to {body.new_date}",
+        f"{ar}: تم تأجيل تاريخ الحظر العام إلى {body.new_date}",
     )
     clear_cache(db)
     return policy_read(db, project.id)
+
+
+def _label(kind: HookKind) -> tuple[str, str]:
+    if kind == HookKind.training_course:
+        return "Training checks", "فحوص التدريب"
+    return "Certificate checks", "فحوص الشهادات"
 
 
 def _alert_change(db: Session, project_id: uuid.UUID, en: str, ar: str) -> None:
@@ -503,7 +587,7 @@ def switch_due(db: Session, at: datetime | None = None) -> dict[str, int]:
     d = acommon.local_day(at)
     switched = 0
     for st in db.scalars(select(HookPolicyState)):
-        s = cset.get(db, st.project_id)
+        s = cfg(db, st.project_id, st.kind)
         before = _snap(st)
         changed: list[str] = []
         if st.critical_switched_at is None and d >= st.critical_block_from:
@@ -540,12 +624,13 @@ def switch_due(db: Session, at: datetime | None = None) -> dict[str, int]:
             )
             scope_en = "critical codes" if changed == ["critical"] else "all codes"
             scope_ar = "الرموز الحرجة" if changed == ["critical"] else "كل الرموز"
+            en, ar = _label(st.kind)
             notify.notify(
                 db,
                 users,
                 NotificationKind.hook_block_approaching,
-                f"Certificate checks now block ({st.kind.value}, {scope_en})",
-                f"فحوص الشهادات أصبحت مانعة ({scope_ar})",
+                f"{en} now block ({st.kind.value}, {scope_en})",
+                f"{ar} أصبحت مانعة ({scope_ar})",
                 entity_type=EntityType.hook_policy_state,
                 entity_id=st.id,
                 project_id=st.project_id,

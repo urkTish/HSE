@@ -178,6 +178,24 @@ const MAP: Record<string, { tone: Tone; Icon: ComponentType<SVGProps<SVGSVGEleme
   line_pass: { tone: "success", Icon: CheckCircle2 },
   line_pass_with_conditions: { tone: "warning", Icon: AlertTriangle },
   line_fail: { tone: "danger", Icon: XCircle },
+  // Phase 5 — training. A gap is a hard stop (red); exempt is a recorded decision (neutral).
+  scheduled: { tone: "info", Icon: Clock },
+  delivered: { tone: "info", Icon: PackageCheck },
+  nominated: { tone: "info", Icon: CircleDashed },
+  attended: { tone: "success", Icon: CheckCircle2 },
+  partial: { tone: "warning", Icon: AlertTriangle },
+  absent: { tone: "danger", Icon: XCircle },
+  passed: { tone: "success", Icon: CheckCircle2 },
+  incomplete: { tone: "warning", Icon: Hourglass },
+  gap: { tone: "danger", Icon: AlertTriangle },
+  exempt: { tone: "neutral", Icon: ShieldCheck },
+  not_booked: { tone: "danger", Icon: AlertTriangle },
+  booked_in_time: { tone: "success", Icon: CheckCircle2 },
+  booked_late: { tone: "warning", Icon: Clock },
+  in_force: { tone: "success", Icon: CheckCircle2 },
+  not_in_force: { tone: "neutral", Icon: CircleDashed },
+  mandatory: { tone: "danger", Icon: Lock },
+  recommended: { tone: "info", Icon: Info },
 };
 
 /** Status shown with colour + icon + text (never colour alone). */

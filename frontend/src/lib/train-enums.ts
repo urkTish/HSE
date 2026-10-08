@@ -1,0 +1,40 @@
+import type { Schemas } from "@/lib/api/client";
+
+type S = Schemas;
+
+/** Phase 5 (training) enum values in display order (spec 5-training §3, §4). */
+export const COURSE_CATEGORIES = ["induction_link", "awareness", "high_risk_task", "ptw_role", "emergency_response", "aviation_security", "airside_operations", "electrical", "professional_qualification"] as const satisfies readonly S["CourseCategory"][];
+export const DELIVERY_MODES = ["classroom", "practical", "blended", "e_learning"] as const satisfies readonly S["DeliveryMode"][];
+export const ACB_CODES = ["srca", "aha", "erc", "gaca_avsec", "airport_operator", "nebosh", "iosh", "osha_otc", "tvtc", "client_approved", "other"] as const satisfies readonly S["AccreditationBodyCode"][];
+export const WORKER_LANGUAGES = ["ar", "en", "ur", "hi", "bn", "ne", "tl", "ml", "ta", "other"] as const satisfies readonly S["WorkerLanguage"][];
+export const INDUCTION_TYPES = ["general_site", "airside", "zone_specific", "visitor"] as const satisfies readonly S["InductionType"][];
+export const PROVIDER_KINDS = ["internal", "contractor_internal", "external"] as const satisfies readonly S["TrainingProviderKind"][];
+export const PROVIDER_STATUSES = ["draft", "pending_approval", "approved", "suspended", "blacklisted"] as const satisfies readonly S["TrainingProviderStatus"][];
+export const PROVIDER_BLACKLIST_SCOPES = ["all_records", "issued_from"] as const satisfies readonly S["ProviderBlacklistScope"][];
+export const TRAINER_ROLES = ["trainer", "assessor"] as const satisfies readonly S["TrainerRole"][];
+export const TRAINER_STATUSES = ["active", "suspended", "withdrawn", "expired"] as const satisfies readonly S["TrainerAuthorisationStatus"][];
+export const MATRIX_APPLIES_TO = ["all_workers", "trade", "matrix_role", "zone", "pass_category", "adp_category", "crew_role", "appointment_function"] as const satisfies readonly S["MatrixAppliesTo"][];
+export const MANUAL_APPLIES_TO = ["all_workers", "trade", "matrix_role", "zone"] as const satisfies readonly S["MatrixAppliesTo"][];
+export const MATRIX_LEVELS = ["mandatory", "recommended"] as const satisfies readonly S["MatrixLevel"][];
+export const MATRIX_ROLES = ["fire_warden", "first_aider", "fire_watch"] as const satisfies readonly S["MatrixRole"][];
+export const REQUIREMENT_STATES = ["met", "expiring", "due", "gap", "exempt"] as const satisfies readonly S["RequirementState"][];
+export const PLAN_STATES = ["not_booked", "booked_in_time", "booked_late"] as const satisfies readonly S["RefresherPlanState"][];
+export const SESSION_STATUSES = ["draft", "scheduled", "in_progress", "delivered", "closed", "cancelled", "voided"] as const satisfies readonly S["SessionStatus"][];
+export const SESSION_VOID_REASONS = ["trainer_not_competent", "attendance_falsified", "assessment_compromised", "provider_misconduct", "other"] as const satisfies readonly S["SessionVoidReason"][];
+export const NOMINATION_STATUSES = ["nominated", "attended", "partial", "absent", "withdrawn"] as const satisfies readonly S["NominationStatus"][];
+export const ATTENDANCE_RESULTS = ["pending", "passed", "failed", "incomplete"] as const satisfies readonly S["AttendanceResult"][];
+export const PRACTICAL_RESULTS = ["pass", "fail"] as const satisfies readonly S["PracticalResult"][];
+export const RECORD_STATUSES = ["draft", "submitted", "accepted", "rejected", "superseded", "suspended", "revoked", "expired"] as const satisfies readonly S["TrainingRecordStatus"][];
+export const RECORD_SOURCES = ["session", "external_certificate", "import"] as const satisfies readonly S["TrainingRecordSource"][];
+export const VERIFICATION_STATUSES = ["not_verified", "verified", "failed", "unable_to_verify"] as const satisfies readonly S["VerificationStatus"][];
+export const TRAINING_VERIFICATION_METHODS = ["provider_portal", "provider_qr_url", "provider_email", "provider_phone", "provider_register_file", "awarding_body_portal", "original_sighted"] as const satisfies readonly S["TrainingVerificationMethod"][];
+export const TRAINING_VERIFICATION_OUTCOMES = ["confirmed", "not_found", "details_differ", "revoked_by_provider", "no_response"] as const satisfies readonly S["TrainingVerificationOutcome"][];
+export const VERIFICATION_DIFFERENCES = ["holder", "serial", "dates", "scope", "swl", "result", "other"] as const satisfies readonly S["VerificationDifference"][];
+export const TRAINING_IMPORT_TEMPLATES = ["training_records", "session_attendance"] as const satisfies readonly S["TrainingImportTemplate"][];
+export const TRAINING_IMPORT_SOURCES = ["contractor_file", "provider_register_file"] as const satisfies readonly S["TrainingImportSource"][];
+export const TRAINING_IMPORT_STATUSES = ["validated", "committed", "discarded", "expired"] as const satisfies readonly S["TrainingImportStatus"][];
+export const TRAINING_IMPORT_CODES = ["E01", "E02", "E03", "E04", "E05", "E06", "E07", "E08", "E09", "E10", "E11", "E12", "W01", "W02", "W03", "W04", "W05", "W06"] as const satisfies readonly S["TrainingImportCode"][];
+export const TRAINING_STATUS_REASONS = ["verification_failed", "provider_blacklisted", "session_voided", "hse_suspension", "hse_revocation", "document_review", "newer_record", "other"] as const satisfies readonly S["TrainingStatusReason"][];
+export const TRAINING_KPI_GROUP_BY = ["course", "course_category", "contractor", "trade", "provider", "source", "month"] as const satisfies readonly S["TrainingKpiGroupBy"][];
+export const TRAINING_KPIS = ["K-37", "K-82", "K-83", "K-84", "K-85", "K-86", "K-87", "K-88"] as const satisfies readonly S["KpiMetric"][];
+export const ADP_CATEGORIES = ["apron", "manoeuvring", "airside_roads"] as const;

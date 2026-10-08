@@ -14,7 +14,7 @@ from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 from decimal import Decimal
-from typing import TypeVar
+from typing import Any, TypeVar
 
 from app.core.enums import EntityType
 from app.core.hse_enums import (
@@ -108,6 +108,7 @@ class Agg:
     tbt_att: int = 0
     ind: int = 0
     trn: Decimal = ZERO
+    trn_reg: Decimal = ZERO  # 5-training TH-7: daily-return hours of register days
     # cases (eligible per I-4)
     cats: dict[CaseCategory, int] = field(default_factory=lambda: dict.fromkeys(C, 0))
     perm: int = 0
@@ -202,6 +203,8 @@ class Result:
     components: list[Component] = field(default_factory=list)
     warnings: list[KpiWarning] = field(default_factory=list)
     one_case_changes_rate_by: Decimal | None = None
+    data_source: Any = None  # K-37 (5-training TH-6)
+    notes: list[Any] = field(default_factory=list)  # K-37 Banners (TH-1, TH-7)
 
 
 @dataclass(frozen=True)
@@ -331,6 +334,7 @@ class Engine:
             a.tbt_att += r.tbt_att
             a.ind += r.ind
             a.trn += r.trn
+            a.trn_reg += r.trn_reg
         a.ind += len(_slice(self.inds, self._ind_keys, w))
         a.hc_dates = sum(1 for v in per_day.values() if v > 0)
         a.hc_peak = max(per_day.values(), default=0)
@@ -904,6 +908,7 @@ _DISPATCH: dict[KpiMetric, Callable[[Engine, Agg], Result]] = {
 }
 import app.kpi.access  # noqa: E402  (registers K-48…K-60 into _DISPATCH)
 import app.kpi.cert  # noqa: E402  (registers K-72…K-81 into _DISPATCH)
-import app.kpi.ptw  # noqa: E402, F401  (registers K-46, K-46b, K-61…K-71 into _DISPATCH)
+import app.kpi.ptw  # noqa: E402  (registers K-46, K-46b, K-61…K-71 into _DISPATCH)
+import app.kpi.training  # noqa: E402, F401  (registers K-37 (rev.), K-82…K-88 into _DISPATCH)
 
 assert set(_DISPATCH) == set(KpiMetric) == set(CATALOGUE)  # noqa: S101

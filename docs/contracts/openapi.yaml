@@ -3147,7 +3147,8 @@ paths:
         ban reasons and verification-failure details are never exported (§8.4); blacklist_register is
         HSE Manager and HSE Officers only (decision 8). Phase 5 training registers need capability 144;
         ID numbers and scans never; names only with capability 46; scores (training_attendance, training_records)
-        only for HSE Manager / Officer; Viewer/Client get no names (501 until Phase 5 stage 2).'
+        only for HSE Manager / Officer; Viewer/Client get no names; verification-failure details are never
+        exported.'
       operationId: export_dataset
       security:
       - sessionCookie: []
@@ -11985,8 +11986,7 @@ paths:
         `tier`, `period` (+ `anchor` or `start`/`end` for custom), `as_of`, `compare`. Role scope is applied
         first (D-3): a narrower scope is reported in `context.filters.scope_narrowed`. Capability 38.
         C7 needs `dimension` (and optional `measure`, default injury_cases). Monthly charts cover the
-        12 months ending at the period end. C19-C21 (training, capability 143) answer 501 until Phase
-        5 stage 2.'
+        12 months ending at the period end. C19-C21 (training) need capability 143.'
       operationId: get_chart
       security:
       - sessionCookie: []
@@ -32371,8 +32371,8 @@ paths:
     post:
       tags:
       - cert-config
-      summary: 'Early switch of codes to block (HK4-5; 124 — kind training_course: 145, HK5-5, 501 until
-        Phase 5 stage 2); never back to warn'
+      summary: 'Early switch of codes to block (HK4-5; 124 — kind training_course: 145, HK5-5); never
+        back to warn'
       operationId: switch_hook_policy
       security:
       - sessionCookie: []
@@ -32438,8 +32438,7 @@ paths:
     post:
       tags:
       - cert-config
-      summary: 'Defer the general block date once, ≤ 30 days (HK4-6; 124 — kind training_course: 145,
-        501 until Phase 5 stage 2)'
+      summary: 'Defer the general block date once, ≤ 30 days (HK4-6; 124 — kind training_course: 145)'
       operationId: defer_hook_policy
       security:
       - sessionCookie: []
@@ -32506,7 +32505,7 @@ paths:
       tags:
       - cert-config
       summary: 'Readiness report per code before the block date (HK4-7, §6.8; capability 122 — kind training_course:
-        143, HK5-9, 501 until Phase 5 stage 2)'
+        143, HK5-9)'
       operationId: get_hook_readiness
       security:
       - sessionCookie: []
@@ -54385,8 +54384,7 @@ components:
           anyOf:
           - $ref: '#/components/schemas/TrainingBand'
           - type: 'null'
-          description: Phase 5 training band (capability 143); null without it (and until Phase 5 stage
-            2 ships).
+          description: Phase 5 training band (capability 143); null without it.
       type: object
       required:
       - context
@@ -58893,6 +58891,7 @@ components:
       - RECORD_EDIT_LOCKED
       - TRAINING_REGISTER_NOT_LIVE
       - TRAINING_REGISTER_LATER
+      - TRAINING_HOOKS_NOT_ENABLED
       - TRAINING_MISSING
       - TRAINING_EXPIRED
       - TRAINING_PENDING_REVIEW
@@ -62326,8 +62325,7 @@ components:
       properties:
         kind:
           $ref: '#/components/schemas/HookKind'
-          description: personnel_certificate, equipment_certificate or (5-training §3.12, from Phase 5
-            stage 2) training_course.
+          description: personnel_certificate, equipment_certificate or (5-training §3.12) training_course.
         stage:
           $ref: '#/components/schemas/HookStage'
         provider_registered_on:
@@ -76867,8 +76865,7 @@ components:
             type: array
           - type: 'null'
           title: Training
-          description: 5-training CK5-2 Training section (capability 142); null without it or until Phase
-            5 stage 2.
+          description: 5-training CK5-2 Training section (capability 142); null without it.
       type: object
       required:
       - worker_id
@@ -87713,7 +87710,7 @@ components:
           minLength: 1
           title: Certificate No
           description: Unique per (provider, course) (409 CERT_EXISTS); same number for another worker
-            → 409 CERT_NO_REUSED at Submit (TR-5).
+            → 409 CERT_NO_REUSED on save and at Submit, HSE Officers alerted (TR-5).
         completed_on:
           type: string
           format: date
@@ -87981,7 +87978,7 @@ components:
           minLength: 1
           title: Certificate No
           description: Unique per (provider, course) (409 CERT_EXISTS); same number for another worker
-            → 409 CERT_NO_REUSED at Submit (TR-5).
+            → 409 CERT_NO_REUSED on save and at Submit, HSE Officers alerted (TR-5).
         completed_on:
           type: string
           format: date

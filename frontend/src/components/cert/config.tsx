@@ -1,5 +1,6 @@
 "use client";
 import { Lock, Plus, ShieldAlert, ShieldCheck } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { Fragment, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -617,6 +618,8 @@ export function HookPolicyPage() {
 }
 
 const P4_KINDS = ["equipment_certificate", "personnel_certificate"] as const;
+/** Kinds shown on the hook policy page: Phase 4 kinds plus training_course (5-training HK5-1). */
+const POLICY_KINDS = [...P4_KINDS, "training_course"] as const;
 
 function HookPolicy({ project }: { project: Project }) {
   const t = useTranslations("hookPolicy");
@@ -625,6 +628,7 @@ function HookPolicy({ project }: { project: Project }) {
   const q = useHookPolicy(project.id);
   const refresh = useCertRefresh();
   const editable = canWrite(me, "cert_settings.edit", project.id);
+  const trainingEditable = canWrite(me, "training_settings.edit", project.id);
   const [enable, setEnable] = useState(false);
   const [regOn, setRegOn] = useState("");
   const p = q.data;
@@ -660,14 +664,22 @@ function HookPolicy({ project }: { project: Project }) {
             </div>
           </Alert>
           {!p.enabled ? <Alert tone="warning">{t("notEnabled")}</Alert> : null}
+          {!p.training_enabled ? (
+            <Alert tone="info" data-testid="training-hooks-off">
+              {t("trainingNotEnabled")}{" "}
+              <Link href="/training-settings" className="text-primary hover:underline">
+                {t("openTrainingSettings")}
+              </Link>
+            </Alert>
+          ) : null}
           <div className="grid gap-4 xl:grid-cols-2">
             {p.kinds
-              .filter((k) => (P4_KINDS as readonly string[]).includes(k.kind))
+              .filter((k) => (POLICY_KINDS as readonly string[]).includes(k.kind))
               .map((k) => (
-                <HookKindCard key={k.kind} project={project} k={k} editable={editable && p.enabled} asOf={p.as_of} />
+                <HookKindCard key={k.kind} project={project} k={k} editable={k.kind === "training_course" ? trainingEditable && !!p.training_enabled : editable && p.enabled} asOf={p.as_of} />
               ))}
           </div>
-          {p.enabled ? <Readiness project={project} /> : null}
+          {p.enabled || p.training_enabled || trainingEditable ? <Readiness project={project} kinds={p.enabled ? POLICY_KINDS : ["training_course"]} /> : null}
           <p className="text-xs text-muted-foreground">{t("asOf", { d: date(p.as_of) })}</p>
         </div>
       ) : null}
@@ -844,12 +856,14 @@ function addDays(iso: string, n: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-function Readiness({ project }: { project: Project }) {
+function Readiness({ project, kinds }: { project: Project; kinds: readonly S["HookKind"][] }) {
   const t = useTranslations("hookPolicy");
   const te = useTranslations("enums");
   const tc = useTranslations("common");
   const { date } = useFormatters(project.id);
-  const [kind, setKind] = useState<S["HookKind"]>("equipment_certificate");
+  const params = useSearchParams();
+  const wanted = params.get("kind") as S["HookKind"] | null;
+  const [kind, setKind] = useState<S["HookKind"]>(wanted && kinds.includes(wanted) ? wanted : (kinds[0] ?? "equipment_certificate"));
   const [onDate, setOnDate] = useState("");
   const [open, setOpen] = useState<string | null>(null);
   const q = useHookReadiness(project.id, { kind, on_date: onDate || null });
@@ -864,7 +878,7 @@ function Readiness({ project }: { project: Project }) {
         <div className="flex flex-wrap items-end gap-3">
           <FormField id="rd-kind" label={t("kind")}>
             <Select id="rd-kind" value={kind} onChange={(e) => setKind(e.target.value as S["HookKind"])} data-testid="rd-kind">
-              {P4_KINDS.map((k) => (
+              {kinds.map((k) => (
                 <option key={k} value={k}>
                   {te(`hookKind.${k}`)}
                 </option>

@@ -1,6 +1,7 @@
 """Phase 4 events (spec 4-third-party-cert HK4-10): `cert.status_changed`,
 `equipment.status_changed`, `scaffold.tag_changed`, `holder.ban_changed`,
-`tpi.status_changed`, `hook_policy.changed`.
+`tpi.status_changed`, `hook_policy.changed`; Phase 5 (5-training HK5-8) adds
+`training.record_changed`, `training.session_voided` and `training.provider_changed`.
 
 Delivery is in the publishing transaction (at least once, before commit): the provider cache is
 cleared, Phase 3 permits naming the subject are marked for re-evaluation (`ptw.hooks.process`
@@ -28,6 +29,10 @@ EVENTS = frozenset(
         "holder.ban_changed",
         "tpi.status_changed",
         "hook_policy.changed",
+        # Phase 5 (5-training HK5-8)
+        "training.record_changed",
+        "training.session_voided",
+        "training.provider_changed",
     }
 )
 LOG_KEY = "cert_events"
@@ -104,6 +109,10 @@ def publish(
     from app.services.cert import policy  # noqa: PLC0415
 
     policy.clear_cache(db)
+    if event.startswith("training.") or event == "hook_policy.changed":
+        from app.services.train import hook as thook  # noqa: PLC0415
+
+        thook.clear_cache(db)
     db.info.setdefault(LOG_KEY, []).append(event)
     workers = _ids(worker_ids)
     items = _ids(item_ids)

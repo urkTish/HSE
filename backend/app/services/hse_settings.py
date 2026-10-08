@@ -7,9 +7,9 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.clock import now
+from app.core.clock import now, today
 from app.core.enums import AuditAction, Capability, EntityType
-from app.core.errors import ApiError, ErrorCode, not_found, not_implemented, validation_error
+from app.core.errors import ApiError, ErrorCode, not_found, validation_error
 from app.core.hse_enums import CaPriority, ReferenceList, TreatmentClass
 from app.data.reference import OFF_POINTS, REFERENCE
 from app.models import HseSettings, ReferenceItem, User
@@ -101,6 +101,7 @@ def to_read(db: Session, s: HseSettings) -> HseSettingsRead:
         month_lock_day=s.month_lock_day,
         injury_identity_retention_years=s.injury_identity_retention_years,
         induction_register_from=s.induction_register_from,
+        training_register_from=s.training_register_from,
         ai_enabled=s.ai_enabled,
         ai_requested=s.ai_requested,
         ai_transfer_approval=approval,
@@ -154,9 +155,23 @@ def update(
                 "يجب تسجيل موافقة العميل على نقل البيانات قبل تفعيل المساعد الذكي.",
             )
         s.ai_requested = want
-    if data.pop("training_register_from", None) is not None:
-        # 5-training TH-6: stored from Phase 5 stage 2 (contract v0.6.0 stage 1: null is a no-op).
-        raise not_implemented()
+    trf = data.pop("training_register_from", None)
+    if trf is not None:  # 5-training §3.16 / TH-6 (null is a no-op: it cannot be unset)
+        if project.start_date is not None and trf < project.start_date:
+            raise validation_error(
+                "training_register_from", "The date must be on or after the project start date."
+            )
+        if trf > today():
+            raise validation_error("training_register_from", "The date cannot be in the future.")
+        if s.training_register_from is not None and trf > s.training_register_from:
+            raise ApiError(
+                422,
+                ErrorCode.TRAINING_REGISTER_LATER,
+                "The training register date may only move earlier once set.",
+                "لا يجوز تأخير تاريخ بدء سجل التدريب بعد تحديده.",
+                meta={"field": "training_register_from"},
+            )
+        s.training_register_from = trf
     reg = data.get("induction_register_from")
     if reg is not None and project.start_date is not None and reg < project.start_date:
         raise validation_error(

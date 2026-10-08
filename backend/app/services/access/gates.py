@@ -585,6 +585,8 @@ def _resolve(db: Session, g: Gate, body: GateCheckRequest) -> QrToken | None:
         m = common.QR_RE.match(body.payload.strip())
         if not m:
             return None
+        if m.group(1) == QrKind.TR.value:
+            return None  # 2-access-permits v1.3 GC-3: TR is not a gate token kind (CK5-1)
         t = db.scalar(select(QrToken).where(QrToken.token == m.group(2)))
         if t is None or t.kind.value != m.group(1):
             return None
@@ -610,6 +612,7 @@ def _resolve(db: Session, g: Gate, body: GateCheckRequest) -> QrToken | None:
                     .order_by(QrToken.created_at.desc())
                 )
             )
+        cands = [t for t in cands if t.kind != QrKind.TR]
         active = [t for t in cands if t.status == QrTokenStatus.active]
         return (active or cands)[0] if (active or cands) else None
     raise validation_error("payload", "Send the QR payload or the printed reference.")

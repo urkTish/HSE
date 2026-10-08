@@ -386,7 +386,7 @@ def record(
         action,
         actor,
         entity_type=entity_type,
-        entity_id=obj.id,
+        entity_id=getattr(obj, "id", None) or obj.project_id,  # settings rows: keyed by project
         project_id=project_id,
         before=b,
         after=a,

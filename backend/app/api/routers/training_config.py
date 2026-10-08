@@ -1,6 +1,5 @@
 """Phase 5 project settings, enabling training hooks and the training hours report (spec
-5-training §3.16, §4.7, HK5-1, TH-1…TH-9). Stage 1 contract: handlers answer 501 until Phase 5
-stage 2."""
+5-training §3.16, §4.7, HK5-1, TH-1…TH-9)."""
 
 import uuid
 from datetime import date
@@ -8,7 +7,7 @@ from datetime import date
 from fastapi import APIRouter
 
 from app.api.deps import DB, CurrentUser
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.schemas.cert_config import HookPolicyRead
 from app.schemas.training_config import (
     TrainingHooksEnableRequest,
@@ -16,6 +15,7 @@ from app.schemas.training_config import (
     TrainingSettingsRead,
     TrainingSettingsUpdate,
 )
+from app.services.train import config as tconfig
 
 router = APIRouter(tags=["training-settings"])
 
@@ -27,7 +27,7 @@ router = APIRouter(tags=["training-settings"])
     responses=error_responses(401, 403, 404),
 )
 def get_training_settings(project_id: uuid.UUID, user: CurrentUser, db: DB) -> TrainingSettingsRead:
-    raise not_implemented()
+    return tconfig.get_settings(db, user, project_id)
 
 
 @router.patch(
@@ -39,7 +39,7 @@ def get_training_settings(project_id: uuid.UUID, user: CurrentUser, db: DB) -> T
 def update_training_settings(
     project_id: uuid.UUID, body: TrainingSettingsUpdate, user: CurrentUser, db: DB
 ) -> TrainingSettingsRead:
-    raise not_implemented()
+    return tconfig.update_settings(db, user, project_id, body)
 
 
 @router.post(
@@ -52,7 +52,7 @@ def update_training_settings(
 def enable_training_hooks(
     project_id: uuid.UUID, body: TrainingHooksEnableRequest, user: CurrentUser, db: DB
 ) -> HookPolicyRead:
-    raise not_implemented()
+    return tconfig.enable_hooks(db, user, project_id, body)
 
 
 @router.get(
@@ -71,4 +71,6 @@ def get_training_hours_report(
     engagement_id: uuid.UUID | None = None,
     include_subcontractors: bool = True,
 ) -> TrainingHoursReport:
-    raise not_implemented()
+    return tconfig.hours_report(
+        db, user, project_id, date_from, date_to, engagement_id, include_subcontractors
+    )

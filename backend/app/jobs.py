@@ -31,6 +31,7 @@ from app.ptw_jobs import PHASE3_JOBS
 from app.services import audit, notify
 from app.services.audit import SYSTEM
 from app.services.users import _active_manager_ids, deactivate
+from app.train_jobs import PHASE5_JOBS
 
 CR_THRESHOLDS = (30, 14, 7, 0)
 
@@ -298,6 +299,7 @@ JOBS: dict[str, Callable[[Session], dict[str, Any]]] = {
     **PHASE2_JOBS,
     **PHASE3_JOBS,
     **PHASE4_JOBS,
+    **PHASE5_JOBS,
 }
 
 

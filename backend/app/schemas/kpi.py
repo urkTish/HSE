@@ -436,8 +436,7 @@ class DashboardResponse(ApiModel):
     )
     training_band: TrainingBand | None = Field(
         default=None,
-        description="Phase 5 training band (capability 143); null without it (and until "
-        "Phase 5 stage 2 ships).",
+        description="Phase 5 training band (capability 143); null without it.",
     )
 
 

@@ -376,7 +376,7 @@ export function ExemptionsPanel({ permit }: { permit: Permit }) {
   const signed = useSigned();
   const { date, dateTime } = useFormatters(permit.project_id);
   const [req, setReq] = useState(false);
-  const [decide, setDecide] = useState<{ ex: S["ExemptionRead"]; d: "granted" | "refused" } | null>(null);
+  const [decide, setDecide] = useState<{ ex: S["PermitRead"]["exemptions"][number]; d: "granted" | "refused" } | null>(null);
   const [note, setNote] = useState("");
   const grant = can(me, "ptw_exemption.grant", permit.project_id);
   const mayRequest = !["closed", "cancelled", "expired"].includes(permit.status) && (can(me, "permit.prepare", permit.project_id) || can(me, "permit.receive", permit.project_id) || can(me, "permit.issue", permit.project_id));

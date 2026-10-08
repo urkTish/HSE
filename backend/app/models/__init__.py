@@ -110,6 +110,22 @@ from app.models.ptw import (
     ZoneAdjacency,
     ZonePtwProfile,
 )
+from app.models.train import (
+    TrainerAuthorisation,
+    TrainingCourse,
+    TrainingExemption,
+    TrainingImportBatch,
+    TrainingMatrixLine,
+    TrainingNomination,
+    TrainingProfile,
+    TrainingProvider,
+    TrainingProviderAccreditation,
+    TrainingRecord,
+    TrainingRetrainingNote,
+    TrainingSession,
+    TrainingSettings,
+    TrainingVerification,
+)
 from app.models.users import RoleAssignment, TokenKind, User, UserSession, UserToken
 
 __all__ = [
@@ -211,6 +227,20 @@ __all__ = [
     "Tpi",
     "TpiAccreditation",
     "TpiClientApproval",
+    "TrainerAuthorisation",
+    "TrainingCourse",
+    "TrainingExemption",
+    "TrainingImportBatch",
+    "TrainingMatrixLine",
+    "TrainingNomination",
+    "TrainingProfile",
+    "TrainingProvider",
+    "TrainingProviderAccreditation",
+    "TrainingRecord",
+    "TrainingRetrainingNote",
+    "TrainingSession",
+    "TrainingSettings",
+    "TrainingVerification",
     "User",
     "UserSession",
     "UserToken",

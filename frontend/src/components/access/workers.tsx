@@ -45,6 +45,7 @@ import { useSearchState } from "@/lib/url-state";
 import { AccessPrintHeader, BiLabel, Code, EligibilityItems, MaskedIdNumber, QrImage, SubNav, WorkerPhoto, personName } from "./common";
 import { CredentialPanel } from "./credential-actions";
 import { WorkerCertificatesPanel } from "@/components/cert/personnel";
+import { DeploymentTrainingCard, WorkerTrainingPanel } from "@/components/training/passport";
 
 const PAGE_SIZE = 50;
 
@@ -671,6 +672,8 @@ export function WorkerDetail({ id }: { id: string }) {
           {current && pid ? <DeploymentCard id={current.id} worker={w} /> : <Alert tone="info">{t("notOnProject")}</Alert>}
           {pid ? <EligibilityChecker workerId={w.id} projectId={pid} /> : null}
           {pid && can(me, "personnel_cert.view", pid) ? <WorkerCertificatesPanel workerId={w.id} projectId={pid} /> : null}
+          {pid && can(me, "training_record.view", pid) ? <WorkerTrainingPanel workerId={w.id} projectId={pid} deploymentId={current?.id ?? null} /> : null}
+          {pid && current && can(me, "training_record.view", pid) ? <DeploymentTrainingCard deploymentId={current.id} projectId={pid} /> : null}
           {pid && current ? <WorkerInductions workerId={w.id} deploymentId={current.id} projectId={pid} /> : null}
           <Card>
             <CardHeader>

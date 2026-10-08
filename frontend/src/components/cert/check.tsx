@@ -1,5 +1,5 @@
 "use client";
-import { Camera, CircleAlert, CircleCheck, CircleHelp, CircleX, Fence, Search, TriangleAlert, Truck, UserRound } from "lucide-react";
+import { Camera, CircleAlert, CircleCheck, CircleHelp, CircleX, Fence, GraduationCap, Search, TriangleAlert, Truck, UserRound } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,7 @@ import { useCurrentProject } from "@/lib/current-project";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
 import { DEFAULT_TIME_ZONE, formatDate } from "@/lib/datetime";
 import { cn } from "@/lib/utils";
+import { RequirementStateBadge } from "@/components/training/common";
 import { EquipmentLimitations, PersonnelLimitations, ServiceStatusBadge, TAG_BORDER, TAG_TONE, TagStatusBadge, useReasonLabel } from "./common";
 
 type S = Schemas;
@@ -26,7 +27,7 @@ const VERDICT: Record<S["CertCheckResult"], string> = {
   unknown: "bg-verdict-neutral text-verdict-neutral-fg",
 };
 
-/** Field check of an EQ / scaffold sticker or a worker's AC card (capability 121; VF-8, VF-9). Records nothing but the audit view. */
+/** Field check of an EQ / scaffold sticker, a worker's AC card (capability 121; VF-8, VF-9) or a TR training certificate QR (capability 142; CK5-1). Records nothing but the audit view. */
 export function CertCheckPage() {
   const t = useTranslations("certCheck");
   const { projectId } = useCurrentProject();
@@ -148,6 +149,7 @@ function CertCheckResult({ res }: { res: S["CertCheckResponse"] }) {
       {res.equipment ? <EquipmentCheckCardView c={res.equipment} /> : null}
       {res.scaffold ? <ScaffoldCheckCardView c={res.scaffold} /> : null}
       {res.person ? <PersonCheckCardView c={res.person} /> : null}
+      {res.training_record ? <TrainingCheckCardView c={res.training_record} /> : null}
     </section>
   );
 }
@@ -313,6 +315,92 @@ export function PersonCheckCardView({ c }: { c: S["PersonCheckCard"] }) {
       ) : (
         <p className="mt-2 text-sm text-muted-foreground">{t("noCertificates")}</p>
       )}
+      {c.training ? <PersonTrainingSection items={c.training} /> : null}
+    </article>
+  );
+}
+
+/** CK5-2 competence mode: the worker's applicable training requirements (no ID, scan, score or verification detail). */
+function PersonTrainingSection({ items }: { items: S["PersonCheckTraining"][] }) {
+  const t = useTranslations("certCheck");
+  const te = useTranslations("enums");
+  const locale = useLocale();
+  const date = useLiteDate();
+  return (
+    <section className="mt-3" data-testid="person-training">
+      <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
+        <GraduationCap aria-hidden className="size-4" />
+        {t("training")}
+      </h3>
+      {items.length ? (
+        <ul className="flex flex-col gap-2">
+          {items.map((x) => (
+            <li key={x.course_code} className={cn("rounded-lg border-2 p-2", x.in_force ? "border-success/60" : "border-danger/60 bg-danger-bg")} data-testid="person-training-item" data-code={x.course_code} data-in-force={x.in_force ? "1" : "0"}>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-semibold">
+                  {locale === "ar" ? x.course_name_ar : x.course_name_en} <span className="ltr text-xs text-muted-foreground">{x.course_code}</span>
+                </span>
+                <RequirementStateBadge state={x.state} />
+              </div>
+              <p className="text-sm">
+                {x.in_force ? t("inForce") : t("notInForce")}
+                {x.valid_until ? <> · {t("until", { d: date(x.valid_until) })}</> : null}
+              </p>
+              {!x.in_force && x.not_in_force_reason ? (
+                <p className="text-sm font-medium">{te.has(`hookReason.${x.not_in_force_reason as S["HookReasonCode"]}`) ? te(`hookReason.${x.not_in_force_reason as S["HookReasonCode"]}`) : x.not_in_force_reason}</p>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm text-muted-foreground">{t("noTraining")}</p>
+      )}
+    </section>
+  );
+}
+
+/** TR QR on a session-issued training certificate (CK5-1): names only with capability 46, never IDs, scores or scans. */
+export function TrainingCheckCardView({ c }: { c: S["TrainingCheckCard"] }) {
+  const t = useTranslations("certCheck");
+  const te = useTranslations("enums");
+  const locale = useLocale();
+  const date = useLiteDate();
+  const name = locale === "ar" ? (c.worker_name_ar ?? c.worker_name_en) : (c.worker_name_en ?? c.worker_name_ar);
+  return (
+    <article className={cn("rounded-xl border-2 bg-surface p-3", COLOUR[c.colour] ?? "border-border")} data-testid="training-card" data-colour={c.colour} data-status={c.status}>
+      <div className="flex items-start gap-3">
+        <GraduationCap aria-hidden className="size-10 shrink-0" />
+        <div className="min-w-0 flex-1">
+          <p className="text-xl font-bold">{locale === "ar" ? c.course_name_ar : c.course_name_en}</p>
+          <p className="text-sm text-muted-foreground">
+            <span className="ltr">{c.course_code}</span> · <span className="ltr">{c.provider_code}</span>
+          </p>
+          <div className="mt-1">
+            <Badge tone={c.status === "in_force" ? "success" : c.status === "expired" ? "warning" : "danger"}>{te(`trainingCheckStatus.${c.status}`)}</Badge>
+          </div>
+        </div>
+      </div>
+      <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
+        <div>
+          <dt className="text-xs text-muted-foreground">{t("trainee")}</dt>
+          <dd>
+            {name ?? t("worker")}
+            {c.worker_no ? <span className="ltr block font-mono text-xs">{c.worker_no}</span> : null}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-xs text-muted-foreground">{t("recordNo")}</dt>
+          <dd className="ltr font-mono">{c.record_no}</dd>
+        </div>
+        <div>
+          <dt className="text-xs text-muted-foreground">{t("completedOn")}</dt>
+          <dd>{date(c.completed_on)}</dd>
+        </div>
+        <div>
+          <dt className="text-xs text-muted-foreground">{t("validUntil")}</dt>
+          <dd data-testid="tr-valid-until">{c.valid_until ? date(c.valid_until) : t("noExpiry")}</dd>
+        </div>
+      </dl>
     </article>
   );
 }

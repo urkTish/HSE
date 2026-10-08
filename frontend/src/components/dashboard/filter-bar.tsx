@@ -12,6 +12,9 @@ import { useProjectOptions } from "@/components/common/pickers";
 import { useMeData } from "@/components/shell/me-context";
 import { useGates } from "@/lib/api/access";
 import { useCertCatalogue } from "@/lib/api/cert";
+import { useTrainingCourses } from "@/lib/api/training";
+import { TRADES } from "@/lib/access-enums";
+import { COURSE_CATEGORIES } from "@/lib/train-enums";
 import type { Schemas } from "@/lib/api/client";
 import { ANCHORED_PERIODS, DASH_KEYS, shiftAnchor, type DashFilters } from "@/lib/dashboard-filters";
 import { COMPARISON_KINDS, PERIOD_PRESETS } from "@/lib/enums";
@@ -42,6 +45,8 @@ export function FilterBar({
   const gateOptions = (gates.data?.items ?? []).map((g) => ({ value: g.id, label: g.gate_code }));
   const certKpi = Boolean(projectId) && !f.allProjects && can(me, "cert_kpi.view", projectId);
   const catalogue = useCertCatalogue(projectId ?? "", { enabled: certKpi });
+  const trainingKpi = Boolean(projectId) && !f.allProjects && can(me, "training_kpi.view", projectId);
+  const courses = useTrainingCourses({ project_id: projectId || null }, { enabled: trainingKpi });
   const zones = opts.zones.filter((z) => f.siteIds.length === 0 || f.siteIds.includes(z.siteId)).filter((z) => !f.zoneType || z.zoneType === f.zoneType);
   const anchored = ANCHORED_PERIODS.includes(f.period);
   const anchor = f.anchor ?? context?.period.as_of ?? null;
@@ -50,7 +55,7 @@ export function FilterBar({
   // Period controls are always shown on desktop; scope filters (sites, zones, contractors, tiers, as-of) fold
   // behind "More filters" so the figures start above the fold. Phones fold everything behind one toggle.
   const [open, setOpen] = useState(false);
-  const scopeCount = f.siteIds.length + f.zoneIds.length + f.engagementIds.length + f.tiers.length + f.gateIds.length + f.equipmentCategories.length + f.certTypes.length + (f.zoneType ? 1 : 0) + (f.includeSubs ? 0 : 1) + (f.asOf ? 1 : 0);
+  const scopeCount = f.siteIds.length + f.zoneIds.length + f.engagementIds.length + f.tiers.length + f.gateIds.length + f.equipmentCategories.length + f.certTypes.length + f.trades.length + f.courseCodes.length + f.courseCategories.length + (f.zoneType ? 1 : 0) + (f.includeSubs ? 0 : 1) + (f.asOf ? 1 : 0);
   const active = scopeCount + (f.allProjects ? 1 : 0);
   const [scopeOpen, setScopeOpen] = useState(scopeCount > 0);
 
@@ -227,6 +232,27 @@ export function FilterBar({
                     value={f.certTypes}
                     onChange={(v) => set({ ctype: v })}
                     testId="filter-ctype"
+                  />
+                </>
+              ) : null}
+              {trainingKpi ? (
+                <>
+                  <MultiSelect id="f-trade" label={t("trades")} options={TRADES.map((x) => ({ value: x, label: te(`trade.${x}`) }))} value={f.trades} onChange={(v) => set({ trade: v })} testId="filter-trade" />
+                  <MultiSelect
+                    id="f-course"
+                    label={t("courses")}
+                    options={(courses.data?.items ?? []).map((c) => ({ value: c.code, label: `${c.code} · ${locale === "ar" ? c.name_ar : c.name_en}` }))}
+                    value={f.courseCodes}
+                    onChange={(v) => set({ course: v })}
+                    testId="filter-course"
+                  />
+                  <MultiSelect
+                    id="f-ccat"
+                    label={t("courseCategories")}
+                    options={COURSE_CATEGORIES.map((c) => ({ value: c, label: te(`courseCategory.${c}`) }))}
+                    value={f.courseCategories}
+                    onChange={(v) => set({ ccat: v })}
+                    testId="filter-course-category"
                   />
                 </>
               ) : null}

@@ -7,13 +7,14 @@ from fastapi import APIRouter, Query, Response
 
 from app.api.deps import DB, CurrentUser
 from app.core.enums import ExportDataset, ExportFormat
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.core.hse_enums import ExportPurpose
 from app.services import exports as svc
 from app.services import hse_exports
 from app.services.access import exports as access_exports
 from app.services.cert import exports as cert_exports
 from app.services.ptw import exports as ptw_exports
+from app.services.train import exports as train_exports
 
 router = APIRouter(prefix="/exports", tags=["exports"])
 
@@ -32,22 +33,7 @@ PHASE2_DATASETS = access_exports.DATASETS
 
 PHASE4_DATASETS = cert_exports.DATASETS
 
-PHASE5_DATASETS = frozenset(
-    {
-        ExportDataset.training_courses,
-        ExportDataset.training_providers,
-        ExportDataset.trainer_authorisations,
-        ExportDataset.training_matrix,
-        ExportDataset.training_sessions,
-        ExportDataset.training_attendance,
-        ExportDataset.training_records,
-        ExportDataset.training_verifications,
-        ExportDataset.training_gaps,
-        ExportDataset.refresher_plan,
-        ExportDataset.training_hours,
-        ExportDataset.training_imports,
-    }
-)
+PHASE5_DATASETS = train_exports.DATASETS
 
 _FILE_RESPONSES: dict[int | str, dict[str, object]] = {
     200: {
@@ -81,7 +67,7 @@ _FILE_RESPONSES: dict[int | str, dict[str, object]] = {
     "exported (§8.4); blacklist_register is HSE Manager and HSE Officers only (decision 8). "
     "Phase 5 training registers need capability 144; ID numbers and scans never; names only "
     "with capability 46; scores (training_attendance, training_records) only for HSE Manager / "
-    "Officer; Viewer/Client get no names (501 until Phase 5 stage 2).",
+    "Officer; Viewer/Client get no names; verification-failure details are never exported.",
     response_class=Response,
     responses=_FILE_RESPONSES,
 )
@@ -108,8 +94,10 @@ def export_dataset(
     ] = None,
 ) -> Response:
     if dataset in PHASE5_DATASETS:
-        raise not_implemented()  # 5-training §8.4 (stage 2)
-    if dataset in PHASE4_DATASETS:
+        content, media_type, filename = train_exports.export(
+            db, user, dataset, format_, project_id, status_, q
+        )
+    elif dataset in PHASE4_DATASETS:
         content, media_type, filename = cert_exports.export(
             db, user, dataset, format_, project_id, status_, q
         )

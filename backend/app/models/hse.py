@@ -114,6 +114,7 @@ class HseSettings(Base):
     month_lock_day: Mapped[int] = mapped_column(Integer, default=10)
     injury_identity_retention_years: Mapped[int] = mapped_column(Integer, default=10)
     induction_register_from: Mapped[date | None] = mapped_column(Date)  # v1.1 K-38 (KA-2)
+    training_register_from: Mapped[date | None] = mapped_column(Date)  # v1.4 K-37 (TH-6)
     ai_requested: Mapped[bool] = mapped_column(Boolean, default=True)
     ai_approved_on: Mapped[date | None] = mapped_column(Date)
     ai_approver_name: Mapped[str | None] = mapped_column(String(120))

@@ -12,7 +12,7 @@ from app.api.kpi_params import KpiParams
 from app.core.access_enums import AccessKpiGroupBy
 from app.core.cert_enums import CertKpiGroupBy
 from app.core.enums import Capability, ExportFormat
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.core.hse_enums import (
     BreakdownDimension,
     BreakdownMeasure,
@@ -23,7 +23,16 @@ from app.core.hse_enums import (
 )
 from app.core.ptw_enums import PtwKpiGroupBy
 from app.core.train_enums import TrainingKpiGroupBy
-from app.kpi import access_views, cert_views, charts, ptw_views, scope, service, views
+from app.kpi import (
+    access_views,
+    cert_views,
+    charts,
+    ptw_views,
+    scope,
+    service,
+    train_views,
+    views,
+)
 from app.schemas.access_kpi import AccessKpiResponse
 from app.schemas.cert_kpi import CertKpiResponse
 from app.schemas.kpi import (
@@ -270,7 +279,7 @@ def get_data_quality(user: CurrentUser, db: DB, q: KpiParams) -> DataQualityResp
     summary="Dashboard chart C1-C21 as a renderer-agnostic ChartSpec",
     description=FILTERS + " C7 needs `dimension` (and optional `measure`, default "
     "injury_cases). Monthly charts cover the 12 months ending at the period end. C19-C21 "
-    "(training, capability 143) answer 501 until Phase 5 stage 2.",
+    "(training) need capability 143.",
     responses=KPI_ERRORS,
 )
 def get_chart(
@@ -285,7 +294,8 @@ def get_chart(
     ] = None,
 ) -> ChartResponse:
     if chart_id in PHASE5_CHARTS:
-        raise not_implemented()  # 5-training §8.1 item 3 (stage 2)
+        sc = scope.build(db, user, q, Capability.training_kpi_view)
+        return ChartResponse(context=service.context(sc), chart=train_views.chart(sc, chart_id))
     if chart_id in PHASE4_CHARTS:
         sc = scope.build(db, user, q, Capability.cert_kpi_view)
         return ChartResponse(context=service.context(sc), chart=cert_views.chart(sc, chart_id))
@@ -421,4 +431,5 @@ def get_training_kpis(
     ] = None,
     group_by: Annotated[list[TrainingKpiGroupBy] | None, Query()] = None,
 ) -> TrainingKpiResponse:
-    raise not_implemented()
+    sc = scope.build(db, user, q, Capability.training_kpi_view)
+    return train_views.training_kpis(db, sc, metric, group_by)

@@ -1,5 +1,5 @@
 """Training sessions, nominations, attendance and assessment (spec 5-training §3.6, §3.7, §4.4,
-§4.5, SS-1…SS-10, AT-1…AT-7). Stage 1 contract: handlers answer 501 until Phase 5 stage 2."""
+§4.5, SS-1…SS-10, AT-1…AT-7)."""
 
 import uuid
 from datetime import date
@@ -8,7 +8,7 @@ from typing import Annotated
 from fastapi import APIRouter, Query, status
 
 from app.api.deps import DB, CurrentUser, PageParams
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.core.train_enums import SessionStatus
 from app.schemas.training_common import COURSE_CODE
 from app.schemas.training_sessions import (
@@ -28,6 +28,7 @@ from app.schemas.training_sessions import (
     SessionUpdate,
     SessionVoid,
 )
+from app.services.train import sessions
 
 router = APIRouter(tags=["training-sessions"])
 
@@ -51,7 +52,20 @@ def list_training_sessions(
     close_overdue: bool | None = None,
     trainer_user_id: uuid.UUID | None = None,
 ) -> SessionPage:
-    raise not_implemented()
+    return sessions.list_sessions(
+        db,
+        user,
+        project_id,
+        pg.page,
+        pg.page_size,
+        status_,
+        course_code,
+        provider_id,
+        date_from,
+        date_to,
+        close_overdue,
+        trainer_user_id,
+    )
 
 
 @router.post(
@@ -64,7 +78,7 @@ def list_training_sessions(
 def create_training_session(
     project_id: uuid.UUID, body: SessionCreate, user: CurrentUser, db: DB
 ) -> SessionRead:
-    raise not_implemented()
+    return sessions.create_session(db, user, project_id, body)
 
 
 @router.post(
@@ -77,7 +91,7 @@ def create_training_session(
 def create_training_session_from_plan(
     project_id: uuid.UUID, body: SessionFromPlan, user: CurrentUser, db: DB
 ) -> SessionRead:
-    raise not_implemented()
+    return sessions.create_from_plan(db, user, project_id, body)
 
 
 @router.get(
@@ -87,7 +101,7 @@ def create_training_session_from_plan(
     responses=error_responses(401, 403, 404),
 )
 def get_training_session(session_id: uuid.UUID, user: CurrentUser, db: DB) -> SessionRead:
-    raise not_implemented()
+    return sessions.get_session(db, user, session_id)
 
 
 @router.patch(
@@ -99,7 +113,7 @@ def get_training_session(session_id: uuid.UUID, user: CurrentUser, db: DB) -> Se
 def update_training_session(
     session_id: uuid.UUID, body: SessionUpdate, user: CurrentUser, db: DB
 ) -> SessionRead:
-    raise not_implemented()
+    return sessions.update_session(db, user, session_id, body)
 
 
 @router.post(
@@ -111,7 +125,7 @@ def update_training_session(
 def transition_training_session(
     session_id: uuid.UUID, body: SessionTransitionRequest, user: CurrentUser, db: DB
 ) -> SessionRead:
-    raise not_implemented()
+    return sessions.transition(db, user, session_id, body)
 
 
 @router.post(
@@ -124,7 +138,7 @@ def transition_training_session(
 def close_training_session(
     session_id: uuid.UUID, body: SessionClose, user: CurrentUser, db: DB
 ) -> SessionRead:
-    raise not_implemented()
+    return sessions.close(db, user, session_id, body)
 
 
 @router.post(
@@ -136,7 +150,7 @@ def close_training_session(
 def void_training_session(
     session_id: uuid.UUID, body: SessionVoid, user: CurrentUser, db: DB
 ) -> SessionRead:
-    raise not_implemented()
+    return sessions.void(db, user, session_id, body)
 
 
 # ---- nominations and attendance -------------------------------------------------------------
@@ -149,7 +163,7 @@ def void_training_session(
     responses=error_responses(401, 403, 404),
 )
 def list_training_nominations(session_id: uuid.UUID, user: CurrentUser, db: DB) -> NominationList:
-    raise not_implemented()
+    return sessions.list_nominations(db, user, session_id)
 
 
 @router.post(
@@ -162,7 +176,7 @@ def list_training_nominations(session_id: uuid.UUID, user: CurrentUser, db: DB) 
 def create_training_nominations(
     session_id: uuid.UUID, body: NominationCreate, user: CurrentUser, db: DB
 ) -> NominationList:
-    raise not_implemented()
+    return sessions.create_nominations(db, user, session_id, body)
 
 
 @router.post(
@@ -174,7 +188,7 @@ def create_training_nominations(
 def withdraw_training_nomination(
     nomination_id: uuid.UUID, body: NominationWithdraw, user: CurrentUser, db: DB
 ) -> NominationRead:
-    raise not_implemented()
+    return sessions.withdraw(db, user, nomination_id, body)
 
 
 @router.put(
@@ -186,7 +200,7 @@ def withdraw_training_nomination(
 def record_training_attendance(
     session_id: uuid.UUID, body: AttendanceUpdate, user: CurrentUser, db: DB
 ) -> NominationList:
-    raise not_implemented()
+    return sessions.record_attendance(db, user, session_id, body)
 
 
 @router.put(
@@ -199,7 +213,7 @@ def record_training_attendance(
 def record_training_assessments(
     session_id: uuid.UUID, body: AssessmentUpdate, user: CurrentUser, db: DB
 ) -> NominationList:
-    raise not_implemented()
+    return sessions.record_assessments(db, user, session_id, body)
 
 
 @router.post(
@@ -211,4 +225,4 @@ def record_training_assessments(
 def sign_training_nomination(
     nomination_id: uuid.UUID, body: AttendanceSignature, user: CurrentUser, db: DB
 ) -> NominationRead:
-    raise not_implemented()
+    return sessions.sign(db, user, nomination_id, body)

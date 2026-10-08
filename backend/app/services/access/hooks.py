@@ -95,4 +95,4 @@ def registered_on_project(db: Any, project_id: Any, kind: HookKind) -> bool:
         return True
     from app.services.cert import policy as cpolicy  # noqa: PLC0415
 
-    return kind in cpolicy.KINDS and cpolicy.enabled(db, project_id, kind)
+    return kind in cpolicy.ALL_KINDS and cpolicy.enabled(db, project_id, kind)

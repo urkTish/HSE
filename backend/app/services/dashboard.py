@@ -58,6 +58,7 @@ from app.services.cert import dashboard_items as cert_items
 from app.services.hse_common import Refs, project_today
 from app.services.permissions import Principal, forbidden_error
 from app.services.ptw import dashboard_items as ptw_items
+from app.services.train import dashboard_items as train_items
 
 LABELS: dict[ActionPanelItem, tuple[str, str]] = {
     ActionPanelItem.overdue_cas: ("Overdue corrective actions", "إجراءات تصحيحية متأخرة"),
@@ -109,6 +110,7 @@ def _link(resource: str, path: str, query: dict[str, Any]) -> ListLink:
 LABELS.update(access_items.LABELS)
 LABELS.update(ptw_items.LABELS)
 LABELS.update(cert_items.LABELS)
+LABELS.update(train_items.LABELS)
 
 
 def _ok(f: Filter, site: uuid.UUID, eng: uuid.UUID | None) -> bool:
@@ -341,6 +343,8 @@ def action_panel(db: Session, p: Principal, q: KpiQuery) -> ActionPanelResponse:
     ptw_items.action_items(db, p, project, day, f.engs, f.sites, f.zones, add, _link, flt)
     # 9. Phase 4 certification items (4-third-party-cert §8.3; capability 122)
     cert_items.action_items(db, p, project, day, f.engs, f.sites, add, _link, flt)
+    # 10. Phase 5 training items (5-training §8.3; capability 143)
+    train_items.action_items(db, p, project, day, f.engs, f.sites, add, _link, flt)
     return ActionPanelResponse(project_id=pid, as_of=day, items=entries)
 
 
@@ -507,6 +511,7 @@ def expiring_items(
     items.extend(access_items.expiring(db, p, project, day, horizon, include_overdue))
     items.extend(ptw_items.expiring(db, p, project, day, horizon, include_overdue))
     items.extend(cert_items.expiring(db, p, project, day, horizon, include_overdue))
+    items.extend(train_items.expiring(db, p, project, day, horizon, include_overdue))
     items.sort(key=lambda x: (x.due_date, x.kind.value, x.ref or ""))
     return ExpiringItemsResponse(
         project_id=project.id, as_of=day, within_days=within_days, items=items

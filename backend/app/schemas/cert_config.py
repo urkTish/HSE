@@ -239,8 +239,8 @@ class HookEarlySwitchRead(ApiModel):
 
 class HookPolicyStateRead(ApiModel):
     kind: HookKind = Field(
-        description="personnel_certificate, equipment_certificate or (5-training §3.12, from "
-        "Phase 5 stage 2) training_course."
+        description="personnel_certificate, equipment_certificate or (5-training §3.12) "
+        "training_course."
     )
     stage: HookStage
     provider_registered_on: date | None
