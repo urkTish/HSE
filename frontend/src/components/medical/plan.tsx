@@ -29,7 +29,7 @@ import { TRADES } from "@/lib/access-enums";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
 import { DateFilter } from "@/components/training/common";
-import { FitnessCodeLabel, FitnessCodeSelect, MedicalPlanSubNav, TierNote, useFitnessCatalogue, useMedCaps } from "./common";
+import { FitnessCodeLabel, FitnessCodeSelect, MedicalPlanSubNav, TierNote, useFitnessCatalogue, useMedCaps, workerHealthHref } from "./common";
 
 type S = Schemas;
 type Project = S["ProjectRead"];
@@ -386,7 +386,7 @@ function Gaps({ project }: { project: Project }) {
               {items.map((g) => (
                 <TR key={`${g.deployment_id}-${g.code}`} data-testid="gap-row" data-worker={g.worker.worker_no} data-code={g.code}>
                   <TD label={t("worker")}>
-                    <Link href={`/worker-health/${g.deployment_id}`} className="text-primary hover:underline">
+                    <Link href={workerHealthHref(g.worker.id, g.deployment_id)} className="text-primary hover:underline">
                       <WorkerLabel w={g.worker} />
                     </Link>
                   </TD>

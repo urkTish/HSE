@@ -9215,7 +9215,10 @@
         "status": "You see fitness status only.",
         "functional": "You see status, outcomes and restrictions.",
         "clinical_admin": "You see the full fitness record (clinical administration)."
-      }
+      },
+      "workerNoHint": "Enter the worker number, e.g. WKR-000015.",
+      "find": "Find",
+      "workerNotFound": "No worker with this number has fitness records on this project."
     },
     "codes": {
       "title": "Fitness codes",
@@ -9406,7 +9409,8 @@
       "exposureHint": "Changes apply from today and are kept in the history.",
       "removeReason": "Reason",
       "removeReasonHint": "Needed when removing a group with overdue surveillance (at least 20 characters, {n} so far).",
-      "current": "now"
+      "current": "now",
+      "requirementsFromGaps": "Open this worker from the fitness gaps list to see requirements and the health profile."
     },
     "assessments": {
       "title": "Fitness assessments",

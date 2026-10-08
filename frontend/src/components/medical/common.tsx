@@ -1,14 +1,18 @@
 "use client";
-import { ShieldAlert } from "lucide-react";
+import { Search, ShieldAlert } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { FormField } from "@/components/common/form-field";
 import { StatusBadge } from "@/components/common/status-badge";
-import { Code, SubNav } from "@/components/access/common";
+import { Code, DeploymentPicker, SubNav, WorkerLabel } from "@/components/access/common";
+import { useDeployments } from "@/lib/api/access";
 import { useMeData } from "@/components/shell/me-context";
-import type { Schemas } from "@/lib/api/client";
-import { useFitnessCodes, useMedicalExaminers, useMedicalProviders } from "@/lib/api/medical";
+import { api, unwrap, type Schemas } from "@/lib/api/client";
+import { useFitnessAssessments, useFitnessCodes, useMedicalExaminers, useMedicalProviders } from "@/lib/api/medical";
 import { can, canWrite } from "@/lib/permissions";
 import { useFormatters } from "@/lib/use-formatters";
 
@@ -386,4 +390,158 @@ export function NoDiagnosisHint() {
 export function DateCell({ d, projectId }: { d: string | null | undefined; projectId?: string | null }) {
   const { date } = useFormatters(projectId);
   return <span className="ltr">{d ? date(d) : "—"}</span>;
+}
+
+/* ───────────── worker lookup (with or without capability 46) ───────────── */
+
+/** A worker as the 6a screens need it; deployment_id is known only from a deployment read (capability 46) or a gap row. */
+export interface MedWorker {
+  worker_id: string;
+  worker_no: string;
+  full_name_en?: string | null;
+  full_name_ar?: string | null;
+  deployment_id?: string | null;
+}
+
+/** Worker health page URL; the deployment id (for requirements and the health profile) rides along when known. */
+export function workerHealthHref(workerId: string, deploymentId?: string | null): string {
+  return `/worker-health/${workerId}${deploymentId ? `?dep=${deploymentId}` : ""}`;
+}
+
+export function fromDeployment(d: S["DeploymentRead"]): MedWorker {
+  return { worker_id: d.worker_id, worker_no: d.worker_no, full_name_en: d.full_name_en, full_name_ar: d.full_name_ar, deployment_id: d.id };
+}
+
+/**
+ * Resolve an exact worker_no on a project. Capability 46 holders search deployments; everyone else (OH Practitioner)
+ * has no worker search in the API, so the worker is found through their fitness assessments (contract request in PROGRESS).
+ */
+export function useMedWorkerByNo(projectId: string, workerNo: string): { worker: MedWorker | null; loading: boolean; searched: boolean } {
+  const caps = useMedCaps(projectId);
+  const no = workerNo.trim().toUpperCase();
+  const deps = useDeployments(projectId, { q: no || null, page_size: 5 }, { enabled: caps.names && !!no });
+  const fas = useFitnessAssessments(projectId, { q: no || null, page_size: 5 }, { enabled: !caps.names && !!no });
+  if (caps.names) {
+    const d = deps.data?.items.find((x) => x.worker_no === no);
+    return { worker: d ? fromDeployment(d) : null, loading: deps.isFetching, searched: !!no && deps.isFetched };
+  }
+  const a = fas.data?.items.find((x) => x.worker.worker_no === no);
+  return {
+    worker: a ? { worker_id: a.worker.id, worker_no: a.worker.worker_no, full_name_en: a.worker.full_name_en, full_name_ar: a.worker.full_name_ar } : null,
+    loading: fas.isFetching,
+    searched: !!no && fas.isFetched,
+  };
+}
+
+/** Pick a worker: the deployment search for capability 46 holders, an exact worker number for everyone else. */
+export function MedWorkerPicker({
+  id,
+  projectId,
+  value,
+  onChange,
+  label,
+  required,
+  status,
+}: {
+  id: string;
+  projectId: string;
+  value: MedWorker | null;
+  onChange: (w: MedWorker | null) => void;
+  label: string;
+  required?: boolean;
+  status?: S["DeploymentStatus"][];
+}) {
+  const caps = useMedCaps(projectId);
+  if (caps.names) {
+    return <DeploymentPickerBridge id={id} projectId={projectId} value={value} onChange={onChange} label={label} required={required} status={status} />;
+  }
+  return <WorkerNoLookup id={id} projectId={projectId} value={value} onChange={onChange} label={label} required={required} />;
+}
+
+function DeploymentPickerBridge({ id, projectId, value, onChange, label, required, status }: { id: string; projectId: string; value: MedWorker | null; onChange: (w: MedWorker | null) => void; label: string; required?: boolean; status?: S["DeploymentStatus"][] }) {
+  const [d, setD] = useState<S["DeploymentRead"] | null>(null);
+  const shown = d && value && d.worker_id === value.worker_id ? d : null;
+  return (
+    <>
+      <DeploymentPicker
+        id={id}
+        projectId={projectId}
+        value={shown}
+        onChange={(x) => {
+          setD(x);
+          onChange(x ? fromDeployment(x) : null);
+        }}
+        label={label}
+        required={required}
+        status={status}
+      />
+      {value && !shown ? (
+        <span className="text-sm" data-testid={`${id}-found`}>
+          <WorkerLabel w={{ id: value.worker_id, worker_no: value.worker_no, full_name_en: value.full_name_en, full_name_ar: value.full_name_ar }} />
+        </span>
+      ) : null}
+    </>
+  );
+}
+
+function WorkerNoLookup({ id, projectId, value, onChange, label, required }: { id: string; projectId: string; value: MedWorker | null; onChange: (w: MedWorker | null) => void; label: string; required?: boolean }) {
+  const t = useTranslations("medical.common");
+  const [text, setText] = useState(value?.worker_no ?? "");
+  const [busy, setBusy] = useState(false);
+  const [miss, setMiss] = useState(false);
+  async function find() {
+    const no = text.trim().toUpperCase();
+    if (!no) return;
+    setBusy(true);
+    setMiss(false);
+    try {
+      const res = await unwrap(api.GET("/api/v1/projects/{project_id}/fitness-assessments", { params: { path: { project_id: projectId }, query: { q: no, page_size: 5 } } }));
+      const a = res.items.find((x) => x.worker.worker_no === no);
+      if (a) onChange({ worker_id: a.worker.id, worker_no: a.worker.worker_no, full_name_en: a.worker.full_name_en, full_name_ar: a.worker.full_name_ar });
+      else setMiss(true);
+    } catch {
+      setMiss(true);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <FormField id={id} label={label} required={required} hint={t("workerNoHint")}>
+      <div className="flex flex-col gap-1">
+        <div className="flex gap-2">
+          <Input
+            id={id}
+            dir="ltr"
+            value={text}
+            placeholder="WKR-000000"
+            onChange={(e) => {
+              setText(e.target.value);
+              setMiss(false);
+              if (value) onChange(null);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                void find();
+              }
+            }}
+            data-testid={`${id}-no`}
+          />
+          <Button type="button" variant="outline" onClick={() => void find()} disabled={!text.trim() || busy} data-testid={`${id}-find`}>
+            <Search aria-hidden />
+            {t("find")}
+          </Button>
+        </div>
+        {value ? (
+          <span className="text-sm" data-testid={`${id}-found`}>
+            <WorkerLabel w={{ id: value.worker_id, worker_no: value.worker_no, full_name_en: value.full_name_en, full_name_ar: value.full_name_ar }} />
+          </span>
+        ) : miss ? (
+          <span className="text-sm text-destructive" data-testid={`${id}-not-found`}>
+            {t("workerNotFound")}
+          </span>
+        ) : null}
+      </div>
+    </FormField>
+  );
 }

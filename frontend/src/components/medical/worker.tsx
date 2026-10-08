@@ -13,19 +13,20 @@ import { Breadcrumbs } from "@/components/common/breadcrumbs";
 import { CheckboxGroup } from "@/components/common/checkbox-group";
 import { FormField } from "@/components/common/form-field";
 import { PageHeader } from "@/components/common/page-header";
-import { ProjectGate, ProjectById } from "@/components/common/project-gate";
+import { ProjectGate } from "@/components/common/project-gate";
 import { ErrorState, LoadingState } from "@/components/common/states";
-import { Code, DeploymentPicker, StepDialog, WorkerLabel } from "@/components/access/common";
+import { Code, StepDialog, WorkerLabel } from "@/components/access/common";
 import { UserName } from "@/components/cert/common";
 import { Link, useRouter } from "@/i18n/navigation";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
-import { useDeployment } from "@/lib/api/access";
+import { useDeployments } from "@/lib/api/access";
 import { useFitnessRequirements, useHealthProfile, useMedicalRefresh, useWorkerFitness } from "@/lib/api/medical";
 import { EXPOSURE_GROUPS } from "@/lib/med-enums";
 import { useErrorMessage } from "@/lib/i18n-helpers";
 import { useFormatters } from "@/lib/use-formatters";
+import { useSearchState } from "@/lib/url-state";
 import { PlaceHoldDialog, RaiseReferralDialog } from "./holds";
-import { FitnessCodeLabel, HookBandBadge, MedicalPlanSubNav, OutcomeBadge, RequirementStateBadge, RestrictionList, TierNote, useFitnessCatalogue, useMedCaps } from "./common";
+import { FitnessCodeLabel, HookBandBadge, MedicalPlanSubNav, MedWorkerPicker, OutcomeBadge, RequirementStateBadge, RestrictionList, TierNote, useFitnessCatalogue, useMedCaps, workerHealthHref, type MedWorker } from "./common";
 
 type S = Schemas;
 type Project = S["ProjectRead"];
@@ -39,20 +40,20 @@ export function WorkerHealthLookupPage() {
 function Lookup({ project }: { project: Project }) {
   const t = useTranslations("medical.worker");
   const router = useRouter();
-  const [d, setD] = useState<S["DeploymentRead"] | null>(null);
+  const [w, setW] = useState<MedWorker | null>(null);
   return (
     <div>
       <PageHeader title={t("lookupTitle")} description={t("lookupHint")} />
       <MedicalPlanSubNav />
       <Card>
         <CardContent className="flex flex-col gap-3 pt-5">
-          <DeploymentPicker
+          <MedWorkerPicker
             id="wh-worker"
             projectId={project.id}
-            value={d}
+            value={w}
             onChange={(x) => {
-              setD(x);
-              if (x) router.push(`/worker-health/${x.id}`);
+              setW(x);
+              if (x) router.push(workerHealthHref(x.worker_id, x.deployment_id));
             }}
             label={t("worker")}
           />
@@ -64,15 +65,11 @@ function Lookup({ project }: { project: Project }) {
 
 /* ═════════════ worker health page (WP, fitness status, requirements) ═════════════ */
 
-export function WorkerHealthPage({ deploymentId }: { deploymentId: string }) {
-  const q = useDeployment(deploymentId);
-  if (q.isError) return <ErrorState error={q.error} onRetry={() => q.refetch()} />;
-  if (!q.data) return <LoadingState />;
-  const d = q.data;
-  return <ProjectById id={d.project_id}>{(p) => <WorkerHealth project={p} d={d} />}</ProjectById>;
+export function WorkerHealthPage({ workerId }: { workerId: string }) {
+  return <ProjectGate>{(p) => <WorkerHealth project={p} workerId={workerId} />}</ProjectGate>;
 }
 
-function WorkerHealth({ project, d }: { project: Project; d: S["DeploymentRead"] }) {
+function WorkerHealth({ project, workerId }: { project: Project; workerId: string }) {
   const t = useTranslations("medical.worker");
   const te = useTranslations("enums");
   const locale = useLocale();
@@ -80,15 +77,24 @@ function WorkerHealth({ project, d }: { project: Project; d: S["DeploymentRead"]
   const { date } = useFormatters(project.id);
   const { label } = useFitnessCatalogue(project.id);
   const msg = useErrorMessage();
-  const fitness = useWorkerFitness(d.worker_id, project.id, { enabled: caps.status });
-  const reqs = useFitnessRequirements(d.id, {}, { enabled: caps.status });
-  const profile = useHealthProfile(d.id, { enabled: caps.status || caps.profileEdit });
+  const s = useSearchState();
+  const fitness = useWorkerFitness(workerId, project.id, { enabled: caps.status });
+  const f = fitness.data;
+  // Without ?dep=, capability 46 holders resolve the deployment by worker number.
+  const byNo = useDeployments(project.id, { q: f?.worker.worker_no ?? null, page_size: 5 }, { enabled: caps.names && !s.get("dep") && !!f });
+  const depId = s.get("dep") || byNo.data?.items.find((x) => x.worker_id === workerId)?.id || "";
+  const reqs = useFitnessRequirements(depId, {}, { enabled: caps.status && !!depId });
+  const profile = useHealthProfile(depId, { enabled: (caps.status || caps.profileEdit) && !!depId });
   const [editProfile, setEditProfile] = useState(false);
   const [refer, setRefer] = useState(false);
   const [hold, setHold] = useState(false);
-  const f = fitness.data;
   const tier2 = f?.tier === "functional" || f?.tier === "clinical_admin";
   const tier3 = f?.tier === "clinical_admin";
+  if (!caps.status) return <Alert tone="info">{t("noAccess")}</Alert>;
+  if (fitness.isError) return <ErrorState error={fitness.error} onRetry={() => fitness.refetch()} />;
+  if (!f) return <LoadingState />;
+  const d: MedWorker = { worker_id: workerId, worker_no: f.worker.worker_no, full_name_en: f.worker.full_name_en, full_name_ar: f.worker.full_name_ar, deployment_id: depId || null };
+  const trade = profile.data?.trade;
   async function report() {
     try {
       const r = await unwrap(api.GET("/api/v1/workers/{worker_id}/fitness-report", { params: { path: { worker_id: d.worker_id }, query: { purpose: "data_subject_request" } } }));
@@ -112,10 +118,10 @@ function WorkerHealth({ project, d }: { project: Project; d: S["DeploymentRead"]
         title={
           <span className="inline-flex items-center gap-2">
             <HeartPulse aria-hidden className="size-6 text-primary" />
-            <WorkerLabel w={{ id: d.worker_id, worker_no: d.worker_no, full_name_en: d.full_name_en, full_name_ar: d.full_name_ar }} />
+            <WorkerLabel w={{ id: d.worker_id, worker_no: d.worker_no, full_name_en: d.full_name_en, full_name_ar: d.full_name_ar }} link={caps.names} />
           </span>
         }
-        description={`${project.code} · ${te(`trade.${d.trade}`)}${d.engagement ? ` · ${d.engagement.short_code}` : ""}`}
+        description={`${project.code}${trade ? ` · ${te(`trade.${trade}`)}` : ""}`}
         badge={f?.on_hold ? (
           <Badge tone="danger" data-testid="on-hold">
             <UserX aria-hidden />
@@ -152,7 +158,6 @@ function WorkerHealth({ project, d }: { project: Project; d: S["DeploymentRead"]
           </>
         }
       />
-      {!caps.status ? <Alert tone="info">{t("noAccess")}</Alert> : null}
       <div className="flex flex-col gap-4">
         {caps.status ? (
           <Card data-testid="worker-fitness">
@@ -160,11 +165,7 @@ function WorkerHealth({ project, d }: { project: Project; d: S["DeploymentRead"]
               <CardTitle className="text-base">{t("fitnessTitle")}</CardTitle>
             </CardHeader>
             <CardContent>
-              {fitness.isLoading ? (
-                <LoadingState rows={2} />
-              ) : fitness.isError ? (
-                <ErrorState error={fitness.error} onRetry={() => fitness.refetch()} />
-              ) : f ? (
+              {f ? (
                 <>
                   <TierNote tier={f.tier} />
                   <Table>
@@ -229,7 +230,11 @@ function WorkerHealth({ project, d }: { project: Project; d: S["DeploymentRead"]
               <CardTitle className="text-base">{t("requirementsTitle")}</CardTitle>
             </CardHeader>
             <CardContent>
-              {reqs.isLoading ? (
+              {!depId ? (
+                <p className="text-sm text-muted-foreground" data-testid="req-no-deployment">
+                  {t("requirementsFromGaps")}
+                </p>
+              ) : reqs.isLoading ? (
                 <LoadingState rows={2} />
               ) : reqs.isError ? (
                 <ErrorState error={reqs.error} onRetry={() => reqs.refetch()} />
@@ -318,8 +323,8 @@ function WorkerHealth({ project, d }: { project: Project; d: S["DeploymentRead"]
         ) : null}
       </div>
       {editProfile && profile.data ? <ExposureDialog profile={profile.data} onClose={() => setEditProfile(false)} /> : null}
-      {refer ? <RaiseReferralDialog project={project} deployment={d} onClose={() => setRefer(false)} /> : null}
-      {hold ? <PlaceHoldDialog project={project} deployment={d} onClose={() => setHold(false)} /> : null}
+      {refer ? <RaiseReferralDialog project={project} worker={d} onClose={() => setRefer(false)} /> : null}
+      {hold ? <PlaceHoldDialog project={project} worker={d} onClose={() => setHold(false)} /> : null}
     </div>
   );
 }

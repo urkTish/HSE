@@ -22,12 +22,11 @@ import { PageHeader } from "@/components/common/page-header";
 import { Pagination } from "@/components/common/pagination";
 import { ProjectById, ProjectGate } from "@/components/common/project-gate";
 import { EmptyState, ErrorState, LoadingState, MutationError } from "@/components/common/states";
-import { Code, DeploymentPicker, StepDialog, WorkerLabel } from "@/components/access/common";
+import { Code, StepDialog, WorkerLabel } from "@/components/access/common";
 import { Tick, UploadField, UserName } from "@/components/cert/common";
 import { useSigned } from "@/components/ptw/signing";
 import { Link, useRouter } from "@/i18n/navigation";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
-import { useDeployments } from "@/lib/api/access";
 import { mk, useFitnessAssessment, useFitnessAssessments, useFitnessHolds, useFitnessReferrals, useFitnessVerifications, useMedicalRefresh } from "@/lib/api/medical";
 import { todayInZone } from "@/lib/datetime";
 import { ASSESSMENT_SOURCES, ASSESSMENT_STATUSES, ASSESSMENT_TYPES, FITNESS_OUTCOMES, FITNESS_SCAN_REASONS, FITNESS_VERIF_METHODS, FITNESS_VERIF_OUTCOMES, MED_VERIFICATION_STATUSES, RESTRICTION_CODES, RESTRICTION_WITH_TEXT, RESTRICTION_WITH_VALUE } from "@/lib/med-enums";
@@ -49,6 +48,9 @@ import {
   TierNote,
   useFitnessCatalogue,
   useMedCaps,
+  useMedWorkerByNo,
+  MedWorkerPicker,
+  type MedWorker,
 } from "./common";
 
 type S = Schemas;
@@ -204,10 +206,10 @@ function NewAssessment({ project }: { project: Project }) {
   const warn = useWarningToasts();
   const s = useSearchState();
   const workerNo = s.get("worker_no") ?? "";
-  const pre = useDeployments(project.id, { q: workerNo || null, page_size: 5 }, { enabled: Boolean(workerNo) });
+  const pre = useMedWorkerByNo(project.id, workerNo);
   const [source, setSource] = useState<S["AssessmentSource"]>(caps.recordClinic ? "site_clinic" : "external_certificate");
   // undefined = not picked yet: fall back to the ?worker_no= prefill.
-  const [picked, setD] = useState<S["DeploymentRead"] | null | undefined>(undefined);
+  const [picked, setD] = useState<MedWorker | null | undefined>(undefined);
   const [type, setType] = useState<S["AssessmentType"] | "">((s.get("type") as S["AssessmentType"]) ?? "");
   const [holdId, setHoldId] = useState(s.get("hold") ?? "");
   const [referralPick, setReferralId] = useState(s.get("referral") ?? "");
@@ -222,7 +224,7 @@ function NewAssessment({ project }: { project: Project }) {
   const [lines, setLines] = useState<LineDraft[]>([emptyLine("GEN-FIT")]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
-  const d = picked !== undefined ? picked : (pre.data?.items.find((x) => x.worker_no === workerNo) ?? null);
+  const d = picked !== undefined ? picked : pre.worker;
   const holds = useFitnessHolds(project.id, { worker_id: d?.worker_id ?? null, status: ["active"], page_size: 20 }, { enabled: Boolean(d) && type === "return_to_work" });
   const referrals = useFitnessReferrals(project.id, { worker_id: d?.worker_id ?? null, status: ["open"], page_size: 20 }, { enabled: Boolean(d) && type === "referral" });
   // A referral picked from the referrals list also releases its hold (FH-3), so a single referral is pre-selected.
@@ -303,7 +305,7 @@ function NewAssessment({ project }: { project: Project }) {
               </Select>
             </FormField>
             <div className="sm:col-span-2">
-              <DeploymentPicker id="fa-worker" projectId={project.id} value={d} onChange={setD} label={t("worker")} required status={["mobilised", "pending_induction"]} />
+              <MedWorkerPicker id="fa-worker" projectId={project.id} value={d} onChange={setD} label={t("worker")} required status={["mobilised", "pending_induction"]} />
             </div>
             {type === "return_to_work" ? (
               <FormField id="fa-hold" label={t("relatedHold")} required hint={t("relatedHint")}>
@@ -530,6 +532,8 @@ function AssessmentView({ project, a }: { project: Project; a: S["FitnessAssessm
   const [action, setAction] = useState<AAction | null>(null);
   const [scan, setScan] = useState(false);
   const [verify, setVerify] = useState(false);
+  // The read model reports has_scan once the scan is linked (on submit); until then the upload is tracked here.
+  const [scanId, setScanId] = useState<string | null>(null);
   const tier2 = a.tier !== "status";
   const tier3 = a.tier === "clinical_admin";
   const actions = a.allowed_actions ?? [];
@@ -634,7 +638,7 @@ function AssessmentView({ project, a }: { project: Project; a: S["FitnessAssessm
                 </FieldItem>
               ) : null}
               <FieldItem label={t("purposeNoticeShort")}>{a.purpose_notice_given ? tc("yes") : tc("no")}</FieldItem>
-              <FieldItem label={t("scan")}>{a.has_scan ? t("scanAttached") : t("noScan")}</FieldItem>
+              <FieldItem label={t("scan")}>{a.has_scan || scanId ? t("scanAttached") : t("noScan")}</FieldItem>
             </FieldList>
           </CardContent>
         </Card>
@@ -650,8 +654,9 @@ function AssessmentView({ project, a }: { project: Project; a: S["FitnessAssessm
                 ownerType="fitness_scan"
                 ownerId={a.id}
                 accept="application/pdf,image/jpeg,image/png"
-                value={null}
-                onChange={async () => {
+                value={scanId}
+                onChange={async (id) => {
+                  setScanId(id);
                   await qc.invalidateQueries({ queryKey: mk.assessment(a.id) });
                   toast.success(t("scanUploaded"));
                 }}

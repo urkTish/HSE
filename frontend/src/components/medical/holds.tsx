@@ -18,7 +18,7 @@ import { PageHeader } from "@/components/common/page-header";
 import { Pagination } from "@/components/common/pagination";
 import { ProjectGate } from "@/components/common/project-gate";
 import { EmptyState, ErrorState, LoadingState } from "@/components/common/states";
-import { Code, DeploymentPicker, StepDialog, WorkerLabel } from "@/components/access/common";
+import { Code, StepDialog, WorkerLabel } from "@/components/access/common";
 import { Tick, UserName } from "@/components/cert/common";
 import { Link } from "@/i18n/navigation";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
@@ -26,7 +26,7 @@ import { useFitnessHolds, useFitnessReferrals, useMedicalRefresh } from "@/lib/a
 import { HOLD_STATUSES, REFERRAL_REASONS, REFERRAL_STATUSES } from "@/lib/med-enums";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
-import { FitnessCasesSubNav, HoldStatusBadge, NoDiagnosisHint, ReferralStatusBadge, TierNote, useMedCaps } from "./common";
+import { FitnessCasesSubNav, HoldStatusBadge, MedWorkerPicker, NoDiagnosisHint, ReferralStatusBadge, TierNote, useMedCaps, type MedWorker } from "./common";
 
 type S = Schemas;
 type Project = S["ProjectRead"];
@@ -231,11 +231,11 @@ export function ReasonDialog({
   );
 }
 
-export function PlaceHoldDialog({ project, deployment, onClose }: { project: Project; deployment?: S["DeploymentRead"] | null; onClose: () => void }) {
+export function PlaceHoldDialog({ project, worker, onClose }: { project: Project; worker?: MedWorker | null; onClose: () => void }) {
   const t = useTranslations("medical.holds");
   const tc = useTranslations("common");
   const refresh = useMedicalRefresh();
-  const [d, setD] = useState<S["DeploymentRead"] | null>(deployment ?? null);
+  const [d, setD] = useState<MedWorker | null>(worker ?? null);
   const [text, setText] = useState("");
   return (
     <StepDialog
@@ -253,7 +253,7 @@ export function PlaceHoldDialog({ project, deployment, onClose }: { project: Pro
       }}
       onClose={onClose}
     >
-      {deployment ? null : <DeploymentPicker id="hold-worker" projectId={project.id} value={d} onChange={setD} label={t("worker")} required status={["mobilised", "pending_induction"]} />}
+      {worker ? null : <MedWorkerPicker id="hold-worker" projectId={project.id} value={d} onChange={setD} label={t("worker")} required status={["mobilised", "pending_induction"]} />}
       <FormField id="hold-text" label={t("reasonText")} required hint={t("reasonTextHint", { n: text.trim().length })}>
         <Textarea value={text} onChange={(e) => setText(e.target.value)} maxLength={300} data-testid="hold-text" />
       </FormField>
@@ -404,12 +404,12 @@ function Referrals({ project }: { project: Project }) {
   );
 }
 
-export function RaiseReferralDialog({ project, deployment, onClose }: { project: Project; deployment?: S["DeploymentRead"] | null; onClose: () => void }) {
+export function RaiseReferralDialog({ project, worker, onClose }: { project: Project; worker?: MedWorker | null; onClose: () => void }) {
   const t = useTranslations("medical.referrals");
   const te = useTranslations("enums");
   const tc = useTranslations("common");
   const refresh = useMedicalRefresh();
-  const [d, setD] = useState<S["DeploymentRead"] | null>(deployment ?? null);
+  const [d, setD] = useState<MedWorker | null>(worker ?? null);
   const [reason, setReason] = useState<S["ReferralReason"] | "">("");
   const [note, setNote] = useState("");
   const [remove, setRemove] = useState(false);
@@ -452,7 +452,7 @@ export function RaiseReferralDialog({ project, deployment, onClose }: { project:
       }}
       onClose={() => (shown.current ? setResult(shown.current) : onClose())}
     >
-      {deployment ? null : <DeploymentPicker id="ref-worker" projectId={project.id} value={d} onChange={setD} label={t("worker")} required status={["mobilised"]} />}
+      {worker ? null : <MedWorkerPicker id="ref-worker" projectId={project.id} value={d} onChange={setD} label={t("worker")} required status={["mobilised"]} />}
       <FormField id="ref-reason" label={t("reason")} required>
         <Select value={reason} onChange={(e) => setReason(e.target.value as S["ReferralReason"])} data-testid="ref-reason">
           <option value="">{tc("select")}</option>
