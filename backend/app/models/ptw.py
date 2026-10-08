@@ -287,6 +287,10 @@ class Permit(Audited, Numbered, Base):
     conditions_en: Mapped[str | None] = mapped_column(String(1000))
     conditions_ar: Mapped[str | None] = mapped_column(String(1000))
     copied_conditions: Mapped[list[str]] = mapped_column(STRS, default=list)
+    # v1.1 (4-third-party-cert §11.4 item 4): SCAFFOLD-TAG results of the WAH scaffold_tag_ref
+    # and the conditions copied from Phase 4 hook results (yellow tags, limitations)
+    scaffold_hooks: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list)
+    hook_conditions: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list)
     emergency_info: Mapped[str] = mapped_column(String(300))
     sections: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
     checklists: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
@@ -348,6 +352,13 @@ class PermitEquipment(UUIDPk, Base):
     max_working_height_m: Mapped[Decimal | None] = mapped_column(Numeric(7, 2))
     use: Mapped[EquipmentUse] = enum_col(EquipmentUse)
     hooks: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list)
+    # v1.1 (4-third-party-cert §11.4): Phase 4 item, operator binding (HK4-9), conditions
+    equipment_item_id: Mapped[uuid.UUID | None] = mapped_column(PG_UUID(as_uuid=True))
+    deployment_id: Mapped[uuid.UUID | None] = mapped_column(PG_UUID(as_uuid=True))
+    operator_worker_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("workers.id"))
+    operator_hooks: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list)
+    conditions: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list)
+    swl_t: Mapped[Decimal | None] = mapped_column(Numeric(8, 3))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
 
@@ -550,6 +561,8 @@ class GasDetector(Audited, Base):
     quarantined_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     retired_reason: Mapped[str | None] = mapped_column(String(300))
     alerts_sent: Mapped[list[str]] = mapped_column(STRS, default=list)
+    # v1.1 (4-third-party-cert EQ-3, BL-7): calibration lab registered as a TPI
+    calibration_body_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("tpis.id"))
 
 
 class BumpTest(UUIDPk, Base):

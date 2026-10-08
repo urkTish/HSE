@@ -137,7 +137,13 @@ def test_AC39_personal_locks_missing(n: Any) -> None:
     n.end_shift(p, "faris.anazi", at(2026, 10, 6, 16, 55))
     crew = [c["worker_id"] for c in n.crew_present(p)]
     assert len(crew) == 3
-    for wid, lk in zip(crew[:2], ("P-ANIA-1101", "P-ANIA-1102"), strict=True):
+    # each personal lock has one holder (one holder, one key): pair locks with their holders
+    # first so the test does not depend on the crew's uuid order
+    locks = ("P-ANIA-1101", "P-ANIA-1102")
+    held = {lk: str(n.ctx.locks[lk].holder_worker_id or "") for lk in locks}
+    free = [w for w in crew if w not in held.values()]
+    pairs = [(held[lk] or free.pop(0), lk) for lk in locks]
+    for wid, lk in pairs:
         set_now(at(2026, 10, 7, 7, 0))
         isolations.apply_personal(
             n.db,

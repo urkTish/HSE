@@ -33,7 +33,7 @@ PHASE3_PENDING: frozenset[KpiMetric] = frozenset()
 PHASE4_METRICS: frozenset[KpiMetric] = frozenset(
     {M.K72, M.K73, M.K74, M.K75, M.K76, M.K77, M.K78, M.K79, M.K80, M.K81}
 )
-PHASE4_PENDING: frozenset[KpiMetric] = PHASE4_METRICS
+PHASE4_PENDING: frozenset[KpiMetric] = frozenset()
 """Certification KPIs not computed yet (stage 1: catalogued, value null NOT_AVAILABLE_YET)."""
 _PENDING = PHASE2_PENDING | PHASE3_PENDING | PHASE4_PENDING
 

@@ -30,11 +30,11 @@ PLAIN = [
 ]
 
 
-def _providers(s: AccessSettings) -> list[HookProviderInfo]:
+def _providers(db: Session, s: AccessSettings) -> list[HookProviderInfo]:
     return [
         HookProviderInfo(
             kind=k,
-            registered=hooks.is_registered(k),
+            registered=hooks.registered_on_project(db, s.project_id, k),
             policy=HookPolicy((s.hook_policy or {}).get(k.value, HookPolicy.warn.value)),
             available_from_phase=hooks.AVAILABLE_FROM_PHASE[k],
         )
@@ -55,7 +55,7 @@ def to_read(db: Session, s: AccessSettings) -> AccessSettingsRead:
             k: HookPolicy((s.hook_policy or {}).get(k.value, HookPolicy.warn.value))
             for k in HookKind
         },
-        hook_providers=_providers(s),
+        hook_providers=_providers(db, s),
         hook_requirements_by_adp_category=_map(s.hook_requirements_by_adp_category),
         hook_requirements_by_vehicle_category=_map(s.hook_requirements_by_vehicle_category),
         hook_requirements_by_crew_role=_map(s.hook_requirements_by_crew_role),
@@ -97,7 +97,8 @@ def update(
             getattr(k, "value", k): getattr(v, "value", v) for k, v in ch.pop("hook_policy").items()
         }
         for k, v in policy.items():
-            if v == HookPolicy.block.value and not hooks.is_registered(HookKind(k)):
+            registered = hooks.registered_on_project(db, project.id, HookKind(k))
+            if v == HookPolicy.block.value and not registered:
                 raise ApiError(
                     422,
                     ErrorCode.HOOK_PROVIDER_MISSING,

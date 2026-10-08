@@ -1039,7 +1039,7 @@ def hook_providers(db: Session, p: Principal, project_id: uuid.UUID) -> list[Hoo
     return [
         HookProviderInfo(
             kind=k,
-            registered=hooks.is_registered(k),
+            registered=hooks.registered_on_project(db, project.id, k),
             policy=HookPolicy((s.hook_policy or {}).get(k.value, HookPolicy.warn.value)),
             available_from_phase=hooks.AVAILABLE_FROM_PHASE[k],
         )

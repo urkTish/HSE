@@ -3,6 +3,7 @@ import { CircleCheck, OctagonX, Plus, Trash2, TriangleAlert } from "lucide-react
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { TpiLabel, TpiSelect } from "@/components/cert/common";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -860,6 +861,7 @@ function DetectorCreateDialog({ project, onClose }: { project: S["ProjectRead"];
   const [calOn, setCalOn] = useState("");
   const [cert, setCert] = useState("");
   const [certDue, setCertDue] = useState("");
+  const [calBody, setCalBody] = useState("");
   return (
     <StepDialog
       title={t("newDetector")}
@@ -872,7 +874,7 @@ function DetectorCreateDialog({ project, onClose }: { project: S["ProjectRead"];
         const d = await unwrap(
           api.POST("/api/v1/projects/{project_id}/gas-detectors", {
             params: { path: { project_id: project.id } },
-            body: { engagement_id: eng, make_model: model.trim(), serial: serial.trim(), sensors, lel_reference_gas: lel || null, calibrated_on: calOn, calibration_cert_ref: cert.trim(), certificate_due_on: certDue || null },
+            body: { engagement_id: eng, make_model: model.trim(), serial: serial.trim(), sensors, lel_reference_gas: lel || null, calibrated_on: calOn, calibration_cert_ref: cert.trim(), certificate_due_on: certDue || null, calibration_body_id: calBody || null },
           }),
         );
         toast.success(t("detectorCreated", { no: d.detector_no }));
@@ -916,6 +918,7 @@ function DetectorCreateDialog({ project, onClose }: { project: S["ProjectRead"];
         <FormField id="dc-certdue" label={t("certDue")} hint={t("certDueHint")}>
           <Input id="dc-certdue" type="date" className="ltr" value={certDue} onChange={(e) => setCertDue(e.target.value)} />
         </FormField>
+        <TpiSelect id="dc-calbody" label={t("calibrationBody")} value={calBody} onChange={setCalBody} kind="calibration_lab" projectId={project.id} />
       </div>
     </StepDialog>
   );
@@ -989,6 +992,7 @@ export function DetectorDetail({ id }: { id: string }) {
             <FieldItem label={t("calibratedOn")}>
               <span className="ltr">{date(d.calibrated_on)}</span> · <bdi className="ltr">{d.calibration_cert_ref}</bdi>
             </FieldItem>
+            <FieldItem label={t("calibrationBody")}>{d.calibration_body ? <TpiLabel tpi={d.calibration_body} /> : "—"}</FieldItem>
             <FieldItem label={t("calDue")}>
               <span className={cn("ltr", d.calibration_days_left < 0 ? "text-danger" : d.calibration_days_left <= 30 ? "text-warning" : undefined)}>{date(d.calibration_due_on)}</span>{" "}
               <span className="text-xs text-muted-foreground">{t("daysLeft", { n: d.calibration_days_left })}</span>

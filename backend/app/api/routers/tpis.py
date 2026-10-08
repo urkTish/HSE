@@ -8,7 +8,7 @@ from fastapi import APIRouter, Query, status
 
 from app.api.deps import DB, CurrentUser, PageParams
 from app.core.cert_enums import ClientApprovalStatus, EquipmentCertCategory, TpiKind, TpiStatus
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.schemas.tpi import (
     AccreditationCreate,
     AccreditationRead,
@@ -25,6 +25,7 @@ from app.schemas.tpi import (
     TpiTransitionRequest,
     TpiUpdate,
 )
+from app.services.cert import tpis as svc
 
 router = APIRouter(tags=["tpis"])
 
@@ -54,7 +55,19 @@ def list_tpis(
     ] = None,
     accreditation_expiring_days: Annotated[int | None, Query(ge=0, le=365)] = None,
 ) -> TpiPage:
-    raise not_implemented()
+    return svc.list_tpis(
+        db,
+        user,
+        pg.page,
+        pg.page_size,
+        q,
+        status_,
+        kind,
+        category,
+        cert_type,
+        project_id,
+        accreditation_expiring_days,
+    )
 
 
 @router.post(
@@ -65,7 +78,7 @@ def list_tpis(
     responses=error_responses(401, 403, 409, 422),
 )
 def create_tpi(body: TpiCreate, user: CurrentUser, db: DB) -> TpiRead:
-    raise not_implemented()
+    return svc.create(db, user, body)
 
 
 @router.get(
@@ -75,7 +88,7 @@ def create_tpi(body: TpiCreate, user: CurrentUser, db: DB) -> TpiRead:
     responses=error_responses(401, 403, 404),
 )
 def get_tpi(tpi_id: uuid.UUID, user: CurrentUser, db: DB) -> TpiRead:
-    raise not_implemented()
+    return svc.read(db, user, tpi_id)
 
 
 @router.patch(
@@ -85,7 +98,7 @@ def get_tpi(tpi_id: uuid.UUID, user: CurrentUser, db: DB) -> TpiRead:
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def update_tpi(tpi_id: uuid.UUID, body: TpiUpdate, user: CurrentUser, db: DB) -> TpiRead:
-    raise not_implemented()
+    return svc.update(db, user, tpi_id, body)
 
 
 @router.post(
@@ -97,7 +110,7 @@ def update_tpi(tpi_id: uuid.UUID, body: TpiUpdate, user: CurrentUser, db: DB) ->
 def transition_tpi(
     tpi_id: uuid.UUID, body: TpiTransitionRequest, user: CurrentUser, db: DB
 ) -> TpiRead:
-    raise not_implemented()
+    return svc.transition(db, user, tpi_id, body)
 
 
 @router.get(
@@ -107,7 +120,7 @@ def transition_tpi(
     responses=error_responses(401, 403, 404),
 )
 def get_tpi_impact(tpi_id: uuid.UUID, user: CurrentUser, db: DB) -> TpiImpact:
-    raise not_implemented()
+    return svc.impact(db, user, tpi_id)
 
 
 @router.post(
@@ -120,7 +133,7 @@ def get_tpi_impact(tpi_id: uuid.UUID, user: CurrentUser, db: DB) -> TpiImpact:
 def create_tpi_accreditation(
     tpi_id: uuid.UUID, body: AccreditationCreate, user: CurrentUser, db: DB
 ) -> AccreditationRead:
-    raise not_implemented()
+    return svc.create_accreditation(db, user, tpi_id, body)
 
 
 @router.patch(
@@ -132,7 +145,7 @@ def create_tpi_accreditation(
 def update_tpi_accreditation(
     accreditation_id: uuid.UUID, body: AccreditationUpdate, user: CurrentUser, db: DB
 ) -> AccreditationRead:
-    raise not_implemented()
+    return svc.update_accreditation(db, user, accreditation_id, body)
 
 
 @router.post(
@@ -144,7 +157,7 @@ def update_tpi_accreditation(
 def record_accreditation_register_check(
     accreditation_id: uuid.UUID, body: RegisterCheckInput, user: CurrentUser, db: DB
 ) -> AccreditationRead:
-    raise not_implemented()
+    return svc.register_check(db, user, accreditation_id, body)
 
 
 @router.get(
@@ -160,7 +173,7 @@ def list_tpi_client_approvals(
     status_: Annotated[list[ClientApprovalStatus] | None, Query(alias="status")] = None,
     tpi_id: uuid.UUID | None = None,
 ) -> ClientApprovalList:
-    raise not_implemented()
+    return svc.list_approvals(db, user, project_id, status_, tpi_id)
 
 
 @router.post(
@@ -173,7 +186,7 @@ def list_tpi_client_approvals(
 def create_tpi_client_approval(
     project_id: uuid.UUID, body: ClientApprovalCreate, user: CurrentUser, db: DB
 ) -> ClientApprovalRead:
-    raise not_implemented()
+    return svc.create_approval(db, user, project_id, body)
 
 
 @router.patch(
@@ -185,4 +198,4 @@ def create_tpi_client_approval(
 def update_tpi_client_approval(
     approval_id: uuid.UUID, body: ClientApprovalUpdate, user: CurrentUser, db: DB
 ) -> ClientApprovalRead:
-    raise not_implemented()
+    return svc.update_approval(db, user, approval_id, body)

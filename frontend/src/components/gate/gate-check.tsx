@@ -9,6 +9,7 @@ import { Camera, CameraOff, Check, CircleAlert, CircleCheck, Clock, Info, KeyRou
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { EquipmentCheckCardView } from "@/components/cert/check";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -587,7 +588,7 @@ function Scanner({ ctx, onSessionLost }: { ctx: Ctx; onSessionLost: () => void }
 
 /* ───────────────────────────── Camera (zxing) ───────────────────────────── */
 
-function CameraScanner({ onResult, onClose, paused }: { onResult: (payload: string) => void; onClose: () => void; paused: boolean }) {
+export function CameraScanner({ onResult, onClose, paused }: { onResult: (payload: string) => void; onClose: () => void; paused: boolean }) {
   const t = useTranslations("gate");
   const videoRef = useRef<HTMLVideoElement>(null);
   const [failed, setFailed] = useState(false);
@@ -752,6 +753,7 @@ function ResultView({
 
       {res.person ? <PersonCard p={res.person} /> : null}
       {res.vehicle ? <VehicleCard v={res.vehicle} /> : null}
+      {res.equipment ? <EquipmentCheckCardView c={res.equipment} /> : null}
       {res.wap ? <WapCard w={res.wap} /> : null}
       {res.permit ? <PermitCard w={res.permit} /> : null}
 

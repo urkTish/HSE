@@ -3,7 +3,7 @@
 ## Current
 - Phase: 4 — Third-party certification
 - Module: third-party certification (spec `docs/specs/4-third-party-cert.md` v1.0)
-- Step: Contract v0.5.0 published (backend stage 1); next: frontend against the contract and backend stage 2 (implementation)
+- Step: Contract v0.5.0 published (backend stage 1); frontend built against the contract and integrated with the stage 2 backend and the Phase 4 seed; next: design pass
 
 ## Phase log
 - Phase 0 — Foundation: built, e2e green, design pass done (2026-10-05). The user asked to continue phase after phase without per-phase approval; open questions are collected below for a single review.
@@ -12,6 +12,31 @@
 - Phase 3 — Permit to Work: built, e2e green, design pass done (2026-10-08).
 
 ## Done
+
+### Frontend — Phase 4 third-party certification (against contract v0.5.0 and the stage 2 backend)
+- Screens (EN/AR + RTL, phone layout; the UI never computes validity, it shows the server preview and `limiting_factor`):
+  - TPI organisations (five kinds, no training-provider kind; CR number required for Saudi TPIs, foreign registration otherwise), accreditations with the certificate PDF and "register checked", client approvals per project, approve / suspend / blacklist / lift; TPI approvals queue.
+  - Equipment register: duplicate lookup (EQ-1), create / edit, documents, tag-out, return to service, retire, blacklist (20+ chars), configuration events, status history. Equipment deployments: plan, approve mobilisation, arrival, eight-item arrival inspection, demobilise, EQ sticker print (QR + printed ref).
+  - Equipment certificates: multi-line form with live strictest-wins preview per line (valid_until, limiting factor, W/E codes), scan upload after the Draft is saved, submit / return / reject / accept (SoD: the submitter sees no accept), verification dialog (method, channel, reference, evidence upload; phone method needs a 20+ char reference), verification log.
+  - Personnel certificates: holder by name or by the ID on the card (ID matched and never stored or shown), scope / cap / level / limitations / medical flag, preview, scans behind a reason (`sensitive_field_read`), restriction review, worker page certificates panel (trade requirement, ban banner).
+  - Scaffolds: register, create with crew, inspection with the 11-item checklist and inspector picker, tag board by zone (phone grid), re-inspection request after an ops event, sticker print, alteration / close red / dismantle.
+  - Defects: register, raise (equipment or scaffold, A/B/C), rectify, close (TPI line or HSE verification), destroy, reopen, cancel; incident page prompt (DF-9).
+  - Certification bans and blacklist register; certification settings (only changed keys sent, add-only critical codes, client-approval impact list), catalogue (cert types, equipment categories), hook policy (enable, switch early, one deferral with the max date, readiness report), certificate imports (template download EN/AR, dry-run report with E/W codes, commit valid rows, discard), field certification check (camera, printed ref, cert no + TPI).
+  - Integrations: gate screen equipment card (GE-5, no personal data), access eligibility shows hook reason / hard stop / transition warning, PTW crew equipment line (registered item, SWL, operator and operator hooks; operator required when the category has an operator code), WAH scaffold tag status, permit hook conditions, gas detector calibration body (TPI), dashboard certification band + C16–C18 + equipment-category and certificate-type filters, expiring items "limited by".
+- E2E (Playwright, real backend, fresh DB with the Phase 0–4 seed, shared clock 2026-10-06 10:00):
+  - `p4-smoke` (19 certification pages EN and AR, navigation), `p4-tpis` (AC2, AC4, AC5), `p4-equipment` (register → AC13 lookup → deployment → certificate preview and validity → AC36 SoD → verification → mobilisation and arrival inspection → sticker → field check; AC71), `p4-personnel` (AC53, AC82, AC62/BL-4, AC72, AC107), `p4-scaffolds` (AC42–AC45, AC114 phone AR board), `p4-defects` (AC73, AC74, AC77, AC78, AC79), `p4-gate` (AC94, AC95), `p4-hooks` (AC85/AC93, AC88, AC89), `p4-imports` (AC98/AC99 on a 10-row file, AC101, AC102), `p4-dashboard` (AC103 Z11 values for both projects, band, filters).
+  - FULL_SUITE_RESULT
+  - Screenshots (`SCREENSHOTS=1`, `screenshots-p4.spec.ts`, 8 images) in `docs/screenshots/phase-4/`.
+- Not covered by UI e2e (backend tests cover them): AC1, AC3, AC6–AC12, AC14–AC20, AC22–AC35, AC37–AC41, AC46–AC52, AC54–AC61, AC63–AC70, AC75, AC76, AC80, AC81, AC83, AC84, AC86, AC87, AC90–AC92, AC96, AC97, AC100, AC104–AC106, AC108–AC113.
+
+#### Phase 4 — backend issues found by the frontend
+- Fixed by the backend during the run: chicken-and-egg owner for the accreditation upload; Contractor HSE Rep 403 on equipment-certificate preview/create; seeded scaffold inspection checklists and defect rectification/closure JSON in the wrong shape (500 on detail and list); SH-TH-02 had no revoked sticker (AC94).
+- Spec / seed doubts for the HSE Manager:
+  - AC71 names Omar, but Omar's site-engineer grant covers another site, so RW-MC-03 (S-LAND) returns `OUT_OF_SCOPE`. The e2e uses Fahad (S-LAND). Should the field check (capability 121) be project-wide for site engineers?
+  - The S-LAND gate is `G-ANIA-01` in the seed; the spec says G-LAND-1 (AC21/AC94).
+  - Tag-out does not set `service_status_text`, so the equipment page shows "Out of service" without the tag-out reason (it is on the A defect).
+  - The defect close dialog offers only the item's current certificate line; there is no list of other after-repair lines to choose.
+  - The certificate preview reports `SCAN_REQUIRED` before a Draft exists; the UI hides it and asks for the scan after saving.
 
 ### Backend — Phase 4 contract v0.5.0 (stage 1)
 - `docs/contracts/openapi.yaml` v0.5.0: 75 new paths / 96 operations. Every one returns 501 `NOT_IMPLEMENTED` until stage 2; the Prism mock serves them now.
@@ -558,6 +583,8 @@
 - ~~(Frontend, Phase 2, low) The WAP read should omit the supervisor `worker_no` / name for callers without `worker.view`, like the crew.~~ Done in 0.3.1 (`supervisor: null`).
 - ~~(Frontend, Phase 2, low) Arabic text for `FieldError` messages (or a stable message code the UI can translate).~~ Done in 0.3.1 (`FieldError.msg_ar`).
 - (Frontend, low priority, not blocking) `GET /contractors/{id}/engagements` (engagements of one contractor across the caller's projects) so the contractor detail page can list where a firm is engaged. Today that view would need one request per project.
+- (Frontend, Phase 4, low) Document `owner_id` for the Phase 4 attachment owner types in the contract. The backend now accepts the TPI id for `tpi_accreditation_certificate` (uploaded before the accreditation exists). The UI uses the certificate id for `equipment_certificate_scan`, `personnel_cert_scan` and `verification_evidence`, the defect id for `defect_photo`, the scaffold id for `scaffold_inspection_photo` and the item id for `equipment_document`; all work against the stage 2 backend.
+- (Frontend, Phase 4, low) `CertCheckRequest.project_id` is required by the server (422 "Choose the project" without it); the contract marks it nullable. Please document it, or make it optional for QR payloads. The UI now sends a check only once the current project is known.
 
 ## Design proposals
 L items from the Phase 0 design pass, waiting for the user's decision at the phase demo (details in `docs/design/phase-0-findings.md`):

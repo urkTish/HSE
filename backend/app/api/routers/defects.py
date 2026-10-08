@@ -7,7 +7,7 @@ from fastapi import APIRouter, Query, status
 
 from app.api.deps import DB, CurrentUser, PageParams
 from app.core.cert_enums import DefectCategory, DefectSource, DefectStatus, EquipmentCertCategory
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.schemas.defects import (
     DefectCancelInput,
     DefectCloseInput,
@@ -19,6 +19,7 @@ from app.schemas.defects import (
     IncidentDefectPrompt,
     RectificationInput,
 )
+from app.services.cert import defects as svc
 
 router = APIRouter(tags=["defects"])
 
@@ -45,7 +46,23 @@ def list_defects(
     overdue: bool | None = None,
     due_within_days: Annotated[int | None, Query(ge=0, le=365)] = None,
 ) -> DefectPage:
-    raise not_implemented()
+    return svc.list_defects(
+        db,
+        user,
+        project_id,
+        pg.page,
+        pg.page_size,
+        status_,
+        category,
+        source,
+        equipment_category,
+        equipment_id,
+        scaffold_id,
+        engagement_id,
+        include_subcontractors,
+        overdue,
+        due_within_days,
+    )
 
 
 @router.post(
@@ -58,7 +75,7 @@ def list_defects(
 def create_defect(
     project_id: uuid.UUID, body: DefectCreate, user: CurrentUser, db: DB
 ) -> DefectRead:
-    raise not_implemented()
+    return svc.create(db, user, project_id, body)
 
 
 @router.get(
@@ -68,7 +85,7 @@ def create_defect(
     responses=error_responses(401, 403, 404),
 )
 def get_defect(defect_id: uuid.UUID, user: CurrentUser, db: DB) -> DefectRead:
-    raise not_implemented()
+    return svc.read(db, user, defect_id)
 
 
 @router.post(
@@ -80,7 +97,7 @@ def get_defect(defect_id: uuid.UUID, user: CurrentUser, db: DB) -> DefectRead:
 def rectify_defect(
     defect_id: uuid.UUID, body: RectificationInput, user: CurrentUser, db: DB
 ) -> DefectRead:
-    raise not_implemented()
+    return svc.rectify(db, user, defect_id, body)
 
 
 @router.post(
@@ -92,7 +109,7 @@ def rectify_defect(
 def close_defect(
     defect_id: uuid.UUID, body: DefectCloseInput, user: CurrentUser, db: DB
 ) -> DefectRead:
-    raise not_implemented()
+    return svc.close(db, user, defect_id, body)
 
 
 @router.post(
@@ -104,7 +121,7 @@ def close_defect(
 def reopen_defect(
     defect_id: uuid.UUID, body: DefectReopenInput, user: CurrentUser, db: DB
 ) -> DefectRead:
-    raise not_implemented()
+    return svc.reopen(db, user, defect_id, body)
 
 
 @router.post(
@@ -116,7 +133,7 @@ def reopen_defect(
 def destroy_defect_item(
     defect_id: uuid.UUID, body: DefectDestroyInput, user: CurrentUser, db: DB
 ) -> DefectRead:
-    raise not_implemented()
+    return svc.destroy(db, user, defect_id, body)
 
 
 @router.post(
@@ -128,7 +145,7 @@ def destroy_defect_item(
 def cancel_defect(
     defect_id: uuid.UUID, body: DefectCancelInput, user: CurrentUser, db: DB
 ) -> DefectRead:
-    raise not_implemented()
+    return svc.cancel(db, user, defect_id, body)
 
 
 @router.get(
@@ -140,4 +157,4 @@ def cancel_defect(
 def get_incident_defect_prompt(
     incident_id: uuid.UUID, user: CurrentUser, db: DB
 ) -> IncidentDefectPrompt:
-    raise not_implemented()
+    return svc.incident_prompt(db, user, incident_id)

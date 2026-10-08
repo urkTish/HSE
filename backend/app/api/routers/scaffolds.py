@@ -9,7 +9,7 @@ from fastapi import APIRouter, Query, status
 
 from app.api.deps import DB, CurrentUser, PageParams
 from app.core.cert_enums import ScaffoldStatus, ScaffoldTagStatus, ScaffoldType
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.schemas.equipment import EquipmentStickerRead, StickerReissueRequest
 from app.schemas.scaffolds import (
     ScaffoldBoard,
@@ -24,6 +24,7 @@ from app.schemas.scaffolds import (
     ScaffoldTransitionRequest,
     ScaffoldUpdate,
 )
+from app.services.cert import scaffolds as svc
 
 router = APIRouter(tags=["scaffolds"])
 
@@ -49,7 +50,22 @@ def list_scaffolds(
     include_subcontractors: bool = True,
     inspection_due_by: date | None = None,
 ) -> ScaffoldPage:
-    raise not_implemented()
+    return svc.list_scaffolds(
+        db,
+        user,
+        project_id,
+        pg.page,
+        pg.page_size,
+        q,
+        status_,
+        tag_status,
+        scaffold_type,
+        site_id,
+        zone_id,
+        engagement_id,
+        include_subcontractors,
+        inspection_due_by,
+    )
 
 
 @router.post(
@@ -62,7 +78,7 @@ def list_scaffolds(
 def create_scaffold(
     project_id: uuid.UUID, body: ScaffoldCreate, user: CurrentUser, db: DB
 ) -> ScaffoldRead:
-    raise not_implemented()
+    return svc.create(db, user, project_id, body)
 
 
 @router.get(
@@ -78,7 +94,7 @@ def get_scaffold_board(
     site_id: uuid.UUID | None = None,
     as_of: date | None = None,
 ) -> ScaffoldBoard:
-    raise not_implemented()
+    return svc.board(db, user, project_id, site_id, as_of)
 
 
 @router.post(
@@ -90,7 +106,7 @@ def get_scaffold_board(
 def request_scaffold_reinspection(
     project_id: uuid.UUID, body: ScaffoldReinspectionRequest, user: CurrentUser, db: DB
 ) -> ScaffoldReinspectionResult:
-    raise not_implemented()
+    return svc.request_reinspection(db, user, project_id, body)
 
 
 @router.get(
@@ -100,7 +116,7 @@ def request_scaffold_reinspection(
     responses=error_responses(401, 403, 404),
 )
 def get_scaffold(scaffold_id: uuid.UUID, user: CurrentUser, db: DB) -> ScaffoldRead:
-    raise not_implemented()
+    return svc.read(db, user, scaffold_id)
 
 
 @router.patch(
@@ -113,7 +129,7 @@ def get_scaffold(scaffold_id: uuid.UUID, user: CurrentUser, db: DB) -> ScaffoldR
 def update_scaffold(
     scaffold_id: uuid.UUID, body: ScaffoldUpdate, user: CurrentUser, db: DB
 ) -> ScaffoldRead:
-    raise not_implemented()
+    return svc.update(db, user, scaffold_id, body)
 
 
 @router.post(
@@ -125,7 +141,7 @@ def update_scaffold(
 def transition_scaffold(
     scaffold_id: uuid.UUID, body: ScaffoldTransitionRequest, user: CurrentUser, db: DB
 ) -> ScaffoldRead:
-    raise not_implemented()
+    return svc.transition(db, user, scaffold_id, body)
 
 
 @router.get(
@@ -137,7 +153,7 @@ def transition_scaffold(
 def list_scaffold_inspections(
     scaffold_id: uuid.UUID, user: CurrentUser, db: DB
 ) -> ScaffoldInspectionList:
-    raise not_implemented()
+    return svc.inspections(db, user, scaffold_id)
 
 
 @router.post(
@@ -150,7 +166,7 @@ def list_scaffold_inspections(
 def create_scaffold_inspection(
     scaffold_id: uuid.UUID, body: ScaffoldInspectionCreate, user: CurrentUser, db: DB
 ) -> ScaffoldInspectionRead:
-    raise not_implemented()
+    return svc.inspect(db, user, scaffold_id, body)
 
 
 @router.get(
@@ -160,7 +176,7 @@ def create_scaffold_inspection(
     responses=error_responses(401, 403, 404, 409),
 )
 def get_scaffold_sticker(scaffold_id: uuid.UUID, user: CurrentUser, db: DB) -> EquipmentStickerRead:
-    raise not_implemented()
+    return svc.get_sticker(db, user, scaffold_id)
 
 
 @router.post(
@@ -172,4 +188,4 @@ def get_scaffold_sticker(scaffold_id: uuid.UUID, user: CurrentUser, db: DB) -> E
 def reissue_scaffold_sticker(
     scaffold_id: uuid.UUID, body: StickerReissueRequest, user: CurrentUser, db: DB
 ) -> EquipmentStickerRead:
-    raise not_implemented()
+    return svc.reissue_sticker(db, user, scaffold_id, body)

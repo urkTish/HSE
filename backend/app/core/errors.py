@@ -302,6 +302,10 @@ class ErrorCode(StrEnum):
     HOOK_NOT_MET_WARN = "HOOK_NOT_MET_WARN"  # HK4-4 transition-stage warning
     EXPIRING_7D = "EXPIRING_7D"  # §6.6 expiring (met, valid_until ≤ d + 7)
     UNKNOWN_CODE = "UNKNOWN_CODE"  # HK4-2 hook code not implemented (configuration error)
+    # certification check (VF-8 / VF-9) result reasons (v0.5.1, additive)
+    TOKEN_UNKNOWN = "TOKEN_UNKNOWN"
+    CREDENTIAL_REVOKED = "CREDENTIAL_REVOKED"
+    OUT_OF_SCOPE = "OUT_OF_SCOPE"
     SETTING_LOOSENING = "SETTING_LOOSENING"  # §3.17 "shorten / tighten only"
     EVIDENCE_DOMAIN_MISMATCH = "EVIDENCE_DOMAIN_MISMATCH"  # IM-6
     IMPORT_SOURCE_NOT_ALLOWED = "IMPORT_SOURCE_NOT_ALLOWED"  # IM-6 tpi_register_file (403)

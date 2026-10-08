@@ -7,12 +7,12 @@ the result on the permit (blockers, warnings, high_risk, critical_lift) and susp
 Issued/Active permit whose new blockers include an AUTO_SUSPEND code."""
 
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.access_enums import (
@@ -75,6 +75,7 @@ from app.models import (
 )
 from app.services.access import common as acommon
 from app.services.access import eligibility as elig
+from app.services.access import hooks as ahooks
 from app.services.access import waps as wap_svc
 from app.services.access import windows as wnd
 from app.services.ptw import common, rules
@@ -520,9 +521,10 @@ def evaluate_line(
         and ref.WAH_ARREST_HOOK not in extra
     ):
         extra.append(ref.WAH_ARREST_HOOK)
+    ctx = hook_context(permit, f, crew_role=line.crew_role.value)
     for kind, code in extra:
         items.append(
-            (None, elig.hook_item(db, HookSubjectType.worker, w.id, kind, code, at, access))
+            (None, elig.hook_item(db, HookSubjectType.worker, w.id, kind, code, at, access, ctx))
         )
     deny: list[str] = []
     for _z, it in items:
@@ -560,25 +562,198 @@ def evaluate_line(
             line.status = CrewLineStatus.listed
 
 
+def hook_context(permit: Permit, f: facts_mod.Facts, **kw: Any) -> ahooks.HookContext:
+    """HK4-8 / 3-ptw v1.1 §11.4: the context passed on every crew and equipment hook call."""
+    return ahooks.HookContext(
+        project_id=permit.project_id,
+        zone_id=f.zones[0].id if f.zones else None,
+        permit_id=permit.id,
+        critical=f.critical,
+        **kw,
+    )
+
+
+def _lift_capacity(f: facts_mod.Facts) -> Decimal | None:
+    sec = f.sec(T.lifting) if f.has(T.lifting) else {}
+    v = sec.get("rated_capacity_t")
+    return Decimal(str(v)) if v not in (None, "") else None
+
+
+def _line_eqc(db: Session, line: PermitEquipment, item: Any) -> Any:
+    """The Phase 4 category (EQC) of an equipment line: the item's, else mapped from the
+    Phase 3 EQ category or the Phase 2 vehicle category (single mapping only)."""
+    from app.services.cert import reference as cref  # noqa: PLC0415
+
+    if item is not None:
+        return item.category
+    if line.category is not None:
+        return cref.PTW_TO_EQC.get(line.category)
+    if line.vehicle_id is not None:
+        v = db.get(Vehicle, line.vehicle_id)
+        allowed = cref.VC_TO_EQC.get(v.category) if v else None
+        if allowed and len(allowed) == 1:
+            return next(iter(allowed))
+    return None
+
+
+def operator_code(db: Session, line: PermitEquipment) -> str | None:
+    """HK4-9: the EQC operator code of the line's category (None when it has none)."""
+    from app.models import EquipmentItem  # noqa: PLC0415
+    from app.services.cert import reference as cref  # noqa: PLC0415
+
+    item = db.get(EquipmentItem, line.equipment_item_id) if line.equipment_item_id else None
+    q = _line_eqc(db, line, item)
+    e = cref.EQC.get(q) if q is not None else None
+    return e.operator_code if e else None
+
+
+def resolve_line_item(db: Session, permit: Permit, line: PermitEquipment) -> None:
+    """§11.4 item 1: equipment_item_id resolved from the tag (or vehicle link) when blank."""
+    from app.core.cert_enums import EquipmentDeploymentStatus as Eds  # noqa: PLC0415
+    from app.models import EquipmentDeployment, EquipmentItem  # noqa: PLC0415
+
+    if line.equipment_item_id is None:
+        item_id = None
+        if line.vehicle_id is not None:
+            item_id = db.scalar(
+                select(EquipmentItem.id).where(EquipmentItem.vehicle_id == line.vehicle_id)
+            )
+        elif line.tag:
+            dep = db.scalar(
+                select(EquipmentDeployment)
+                .where(
+                    EquipmentDeployment.project_id == permit.project_id,
+                    func.upper(EquipmentDeployment.tag) == line.tag.strip().upper(),
+                    EquipmentDeployment.status.notin_([Eds.demobilised, Eds.cancelled]),
+                )
+                .limit(1)
+            )
+            if dep is not None:
+                item_id = dep.equipment_id
+                line.deployment_id = dep.id
+        line.equipment_item_id = item_id
+    if line.equipment_item_id is not None and line.deployment_id is None:
+        line.deployment_id = db.scalar(
+            select(EquipmentDeployment.id)
+            .where(
+                EquipmentDeployment.equipment_id == line.equipment_item_id,
+                EquipmentDeployment.project_id == permit.project_id,
+                EquipmentDeployment.status.notin_([Eds.demobilised, Eds.cancelled]),
+            )
+            .limit(1)
+        )
+
+
+def _merge_conditions(dst: list[dict[str, Any]], items: list[dict[str, Any]]) -> None:
+    for it in items:
+        for c in it.get("conditions") or []:
+            if c not in dst:
+                dst.append(c)
+
+
 def evaluate_equipment(
     db: Session,
     line: PermitEquipment,
     at: datetime,
     hooks: dict[EquipmentCategory, list[tuple[HookKind, str]]],
     access: AccessSettings,
+    permit: Permit | None = None,
+    f: facts_mod.Facts | None = None,
 ) -> None:
+    """HK3-2 equipment hooks with the HK-3 context (HK4-8) and the operator binding (HK4-9).
+    Results, limitations and the certified SWL are kept on the line (§11.4)."""
     cat = line.category
     subject = HookSubjectType.equipment_tag
     sid = line.id
+    v = db.get(Vehicle, line.vehicle_id) if line.vehicle_id is not None else None
     if line.vehicle_id is not None:
-        v = db.get(Vehicle, line.vehicle_id)
         cat = VEHICLE_EQUIPMENT.get(v.category.value) if v else None
         subject = HookSubjectType.vehicle
         sid = line.vehicle_id
+    ctx = None
+    p4 = False
+    if permit is not None and f is not None:
+        from app.services.cert import policy as cpolicy  # noqa: PLC0415
+
+        p4 = cpolicy.enabled(db, permit.project_id)
+        if p4:
+            resolve_line_item(db, permit, line)
+        use = line.use.value
+        if (
+            line.use == EquipmentUse.lifting_appliance
+            and f.has(T.lifting)
+            and f.sec(T.lifting).get("personnel_lift")
+        ):
+            use = "personnel_lift"
+        ctx = hook_context(
+            permit,
+            f,
+            use=use,
+            vehicle_id=line.vehicle_id,
+            equipment_category=line.category.value if line.category else None,
+            equipment_tag=line.tag,
+            equipment_item_id=line.equipment_item_id,
+            rated_capacity_t=_lift_capacity(f)
+            if line.use == EquipmentUse.lifting_appliance
+            else None,
+            operator_worker_id=line.operator_worker_id,
+        )
     out = []
     for kind, code in hooks.get(cat, []) if cat else []:
-        out.append(_item_json(elig.hook_item(db, subject, sid, kind, code, at, access), None))
+        out.append(_item_json(elig.hook_item(db, subject, sid, kind, code, at, access, ctx), None))
     line.hooks = out
+    ops: list[dict[str, Any]] = []
+    op = operator_code(db, line) if p4 else None
+    if op and line.operator_worker_id is not None and ctx is not None:
+        octx = replace(ctx, crew_role="crane_operator" if op == "CRANE-OPERATOR" else "driver")
+        ops.append(
+            _item_json(
+                elig.hook_item(
+                    db,
+                    HookSubjectType.worker,
+                    line.operator_worker_id,
+                    HookKind.personnel_certificate,
+                    op,
+                    at,
+                    access,
+                    octx,
+                ),
+                None,
+            )
+        )
+    line.operator_hooks = ops
+    conds: list[dict[str, Any]] = []
+    _merge_conditions(conds, out)
+    _merge_conditions(conds, ops)
+    line.conditions = conds
+    swl = next((it.get("swl_t") for it in out if it.get("swl_t") is not None), None)
+    line.swl_t = Decimal(str(swl)) if swl is not None else None
+
+
+def evaluate_scaffold(
+    db: Session, permit: Permit, f: facts_mod.Facts, at: datetime, access: AccessSettings
+) -> None:
+    """SF-1 / §11.4 item 4: the WAH scaffold_tag_ref resolved on the Phase 4 scaffold register
+    of the permit's project; yellow-tag restrictions are copied into permit conditions."""
+    from app.services.cert import policy as cpolicy  # noqa: PLC0415
+
+    tag = f.sec(T.work_at_height).get("scaffold_tag_ref") if f.has(T.work_at_height) else None
+    if not tag or not cpolicy.enabled(db, permit.project_id, HookKind.equipment_certificate):
+        permit.scaffold_hooks = []
+        return
+    ctx = hook_context(permit, f, equipment_category=EquipmentCategory.scaffold.value,
+                       equipment_tag=str(tag), use=EquipmentUse.access_equipment.value)  # fmt: skip
+    it = elig.hook_item(
+        db,
+        HookSubjectType.equipment_tag,
+        permit.id,
+        HookKind.equipment_certificate,
+        "SCAFFOLD-TAG",
+        at,
+        access,
+        ctx,
+    )
+    permit.scaffold_hooks = [_item_json(it, None)]
 
 
 def _crew_checks(
@@ -592,8 +767,15 @@ def _crew_checks(
         for line in lines:
             evaluate_line(db, permit, f, line, ctx.at, ctx.shift_end, hooks, access)
         eh = equipment_hooks(db, permit, f)
+        conds: list[dict[str, Any]] = []
         for e in equipment_lines(db, permit.id):
-            evaluate_equipment(db, e, ctx.at, eh, access)
+            evaluate_equipment(db, e, ctx.at, eh, access, permit, f)
+            _merge_conditions(conds, [{"conditions": e.conditions or []}])
+        evaluate_scaffold(db, permit, f, ctx.at, access)
+        _merge_conditions(conds, list(permit.scaffold_hooks or []))
+        for line in lines:
+            _merge_conditions(conds, [i for i in line.eligibility or [] if i.get("conditions")])
+        permit.hook_conditions = conds
         db.flush()
     evaluated = [x for x in lines if x.eligible is not None]
     for line in lines:
@@ -601,6 +783,8 @@ def _crew_checks(
         for it in line.eligibility or []:
             if it.get("reason_code") == "HOOK_NOT_AVAILABLE":
                 res.warn(W.HOOK_NOT_AVAILABLE, it.get("code"), wno)
+            elif it.get("reason_code") == "HOOK_NOT_MET_WARN":
+                res.warn(W.HOOK_NOT_MET_WARN, _warn_detail(it), wno)
             elif it.get("status") == RS.expiring.value:
                 res.warn(W.EXPIRING_7D, it.get("code") or it.get("kind"), wno)
         if line.eligible is False:
@@ -629,13 +813,28 @@ def _crew_checks(
         if e.vehicle_id:
             v = db.get(Vehicle, e.vehicle_id)
             label = v.vehicle_no if v else label
-        for it in e.hooks or []:
-            if it.get("reason_code") == "HOOK_NOT_AVAILABLE":
-                res.warn(W.HOOK_NOT_AVAILABLE, it.get("code"), label)
-            elif it.get("status") in (RS.not_met.value, RS.not_evaluated.value):
-                res.add(B.HOOK_NOT_MET, f"{it.get('code')} {label}", label)
-            elif it.get("status") == RS.expiring.value:
-                res.warn(W.EXPIRING_7D, it.get("code"), label)
+        _hook_results(res, list(e.hooks or []), label)
+        if e.operator_worker_id is not None:
+            _hook_results(res, list(e.operator_hooks or []), worker_no(db, e.operator_worker_id))
+    _hook_results(res, list(permit.scaffold_hooks or []), "scaffold")
+
+
+def _warn_detail(it: dict[str, Any]) -> str:
+    return f"{it.get('code')} ({it.get('hook_reason_code') or 'HOOK_NOT_MET'})"
+
+
+def _hook_results(res: Result, items: list[dict[str, Any]], label: str | None) -> None:
+    """HK4-4: not_met (block stage or hard stop) → blocker HOOK_NOT_MET; transition-stage
+    warn → warning HOOK_NOT_MET_WARN; expiring → EXPIRING_7D."""
+    for it in items:
+        if it.get("reason_code") == "HOOK_NOT_AVAILABLE":
+            res.warn(W.HOOK_NOT_AVAILABLE, it.get("code"), label)
+        elif it.get("status") in (RS.not_met.value, RS.not_evaluated.value):
+            res.add(B.HOOK_NOT_MET, f"{it.get('code')} {label}", label)
+        elif it.get("reason_code") == "HOOK_NOT_MET_WARN":
+            res.warn(W.HOOK_NOT_MET_WARN, f"{_warn_detail(it)} {label}", label)
+        elif it.get("status") == RS.expiring.value:
+            res.warn(W.EXPIRING_7D, it.get("code"), label)
 
 
 # ---- roles and appointments (PR-2…PR-4, §3.1) ------------------------------------------------------

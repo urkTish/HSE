@@ -200,6 +200,11 @@ def _source_ref(db: Session, ca: CorrectiveAction) -> CaSourceRef:
 
         pa = db.get(PtwAudit, ca.source_id)
         ref = pa.audit_no if pa else None
+    elif ca.source_type == CaSourceType.equipment_defect and ca.source_id:
+        from app.models import EquipmentDefect  # noqa: PLC0415
+
+        dfx = db.get(EquipmentDefect, ca.source_id)
+        ref = dfx.defect_no if dfx else None
     return CaSourceRef(type=ca.source_type, id=ca.source_id, ref=ref)
 
 
@@ -367,6 +372,14 @@ def _resolve_source(
         from app.services.ptw import audits  # noqa: PLC0415
 
         return audits.ca_source(db, project.id, source_id)
+    if source_type == CaSourceType.equipment_defect:
+        # 1-dashboard v1.3 (4-third-party-cert DF-10): raised manually from a defect
+        from app.models import EquipmentDefect  # noqa: PLC0415
+
+        dfx = db.get(EquipmentDefect, source_id)
+        if dfx is None or dfx.project_id != project.id:
+            raise validation_error("source_id", "The source record is not on this project.")
+        return dfx
     model: Any = {
         CaSourceType.incident: Incident,
         CaSourceType.observation: Observation,

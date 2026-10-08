@@ -5,6 +5,7 @@ import uuid
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
+from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import func, select
@@ -31,6 +32,7 @@ from app.core.access_enums import (
     WorkerPersonType,
     WorkerStatus,
 )
+from app.core.cert_enums import HookReasonCode
 from app.core.clock import now
 from app.core.enums import ContractorStatus
 from app.models import (
@@ -48,12 +50,14 @@ from app.models import (
     Worker,
     Zone,
 )
+from app.schemas.access_common import HookCondition
 from app.schemas.inductions import EligibilityItem, EligibilityResult
 from app.services.access import common, hooks, lifecycle, profiles, windows
 from app.services.access.reasons import GATE_TEXT, hook_message
 from app.services.hse_common import Refs
 
 G = GateReasonCode
+PHASE4_KINDS = frozenset({HookKind.personnel_certificate, HookKind.equipment_certificate})
 RS = RequirementStatus
 RK = RequirementKind
 
@@ -68,6 +72,11 @@ class Item:
     ref: str | None = None
     hook_kind: HookKind | None = None
     message: tuple[str, str] | None = None
+    # v1.2 (4-third-party-cert HK4-3/HK4-4/HK4-8)
+    hard_stop: bool = False
+    hook_reason: HookReasonCode | None = None
+    conditions: tuple[dict[str, Any], ...] = ()
+    swl_t: Decimal | None = None
 
     def to_schema(self) -> EligibilityItem:
         en, ar = self.message or (GATE_TEXT[self.reason] if self.reason else (None, None))
@@ -81,6 +90,10 @@ class Item:
             reason_code=self.reason,
             message_en=en,
             message_ar=ar,
+            hard_stop=self.hard_stop,
+            hook_reason_code=self.hook_reason,
+            conditions=[HookCondition(**c) for c in self.conditions],
+            swl_t=self.swl_t,
         )
 
 
@@ -150,8 +163,16 @@ def hook_item(
     code: str,
     at: datetime,
     s: AccessSettings,
+    ctx: hooks.HookContext | None = None,
 ) -> Item:
-    """HK-3/HK-4."""
+    """HK-3/HK-4. v1.2: kinds answered by Phase 4 on the project (HK4-1) go to the Phase 4
+    provider with the context (HK4-8) and the project's stage (HK4-4)."""
+    if kind in PHASE4_KINDS:
+        from app.services.cert import policy as cpolicy  # noqa: PLC0415
+
+        st = cpolicy.active_state(db, s.project_id, kind, common.local_day(at))
+        if st is not None:
+            return phase4_hook_item(db, subject_type, subject_id, kind, code, at, s, ctx, st)
     policy = HookPolicy((s.hook_policy or {}).get(kind.value, HookPolicy.warn.value))
     provider = hooks.provider_for(kind)
     if provider is None:
@@ -170,6 +191,70 @@ def hook_item(
     if res.status == HookProviderStatus.expiring:
         return Item(RK.hook, code, RS.expiring, G.EXPIRING_7D, res.valid_until, res.ref, kind)
     return Item(RK.hook, code, RS.not_met, G.HOOK_NOT_MET, res.valid_until, res.ref, kind)
+
+
+def phase4_hook_item(
+    db: Session,
+    subject_type: HookSubjectType,
+    subject_id: uuid.UUID,
+    kind: HookKind,
+    code: str,
+    at: datetime,
+    s: AccessSettings,
+    ctx: hooks.HookContext | None,
+    st: Any,
+) -> Item:
+    """HK4-3/HK4-4: hard stops block in every stage; in `transition` a not_met becomes warn
+    HOOK_NOT_MET_WARN with the detail reason; `block` passes not_met through."""
+    from app.core.cert_enums import HookCodePolicy  # noqa: PLC0415
+    from app.services.cert import policy as cpolicy  # noqa: PLC0415
+    from app.services.cert import providers  # noqa: PLC0415
+    from app.services.cert import reference as cref  # noqa: PLC0415
+    from app.services.cert import settings as cset  # noqa: PLC0415
+
+    if ctx is None:
+        ctx = hooks.HookContext(project_id=s.project_id)
+    cs = cset.get(db, s.project_id)
+    if not cpolicy.implemented(db, kind, code):
+        res = hooks.HookCheck(
+            HookProviderStatus.not_met, reason_code=HookReasonCode.UNKNOWN_CODE.value
+        )
+    else:
+        res = providers.check(db, subject_type, subject_id, kind, code, at, ctx, s.project_id)
+    reason = HookReasonCode(res.reason_code) if res.reason_code else None
+    detail = cref.REASON_TEXT.get(reason) if reason else None
+    extra: dict[str, Any] = {
+        "hook_kind": kind,
+        "hard_stop": res.hard_stop,
+        "hook_reason": reason,
+        "conditions": res.conditions,
+        "swl_t": res.swl_t,
+    }
+
+    def msg(g: GateReasonCode) -> tuple[str, str]:
+        en, ar = GATE_TEXT[g]
+        return (f"{en}: {detail[0]}", f"{ar}: {detail[1]}") if detail else (en, ar)
+
+    if res.status == HookProviderStatus.met:
+        return Item(
+            RK.hook, code, RS.met, None, res.valid_until, res.ref,
+            message=detail, **extra,
+        )  # fmt: skip
+    if res.status == HookProviderStatus.expiring:
+        return Item(
+            RK.hook, code, RS.expiring, G.EXPIRING_7D, res.valid_until, res.ref,
+            message=msg(G.EXPIRING_7D), **extra,
+        )  # fmt: skip
+    blocked = res.hard_stop or cpolicy.code_policy(st, cs, code, at) == HookCodePolicy.block
+    if blocked:
+        return Item(
+            RK.hook, code, RS.not_met, G.HOOK_NOT_MET, res.valid_until, res.ref,
+            message=msg(G.HOOK_NOT_MET), **extra,
+        )  # fmt: skip
+    return Item(
+        RK.hook, code, RS.warn, G.HOOK_NOT_MET_WARN, res.valid_until, res.ref,
+        message=msg(G.HOOK_NOT_MET_WARN), **extra,
+    )  # fmt: skip
 
 
 def _expiring(until: date | None, d: date) -> bool:
@@ -514,9 +599,12 @@ def evaluate(
     ]  # fmt: skip
     if crew_role:
         reqs += list((s.hook_requirements_by_crew_role or {}).get(crew_role, []))
+    hctx = hooks.HookContext(project_id=s.project_id, zone_id=zone.id, crew_role=crew_role)
     for h in reqs:
         items.append(
-            hook_item(db, HookSubjectType.worker, worker.id, HookKind(h["kind"]), h["code"], at, s)
+            hook_item(
+                db, HookSubjectType.worker, worker.id, HookKind(h["kind"]), h["code"], at, s, hctx
+            )
         )
     return ev
 

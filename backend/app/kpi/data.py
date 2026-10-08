@@ -144,6 +144,8 @@ def load(
             facts.access_loader = _access_loader(db, key, shared)
         if shared._ptw is None:
             facts.ptw_loader = _ptw_loader(db, key, shared)
+        if shared._cert is None:
+            facts.cert_loader = _cert_loader(db, key, shared)
         return facts
     facts = _load(db, plist, hse)
     with _CACHE_LOCK:
@@ -170,6 +172,17 @@ def _ptw_loader(db: Session, pids: tuple[uuid.UUID, ...], shared: Facts) -> Any:
         pf = load_ptw(db, list(pids))
         shared.ptw = pf
         return pf
+
+    return run
+
+
+def _cert_loader(db: Session, pids: tuple[uuid.UUID, ...], shared: Facts) -> Any:
+    def run() -> Any:
+        from app.kpi.cert_facts import load_cert  # noqa: PLC0415
+
+        cf = load_cert(db, list(pids))
+        shared.cert = cf
+        return cf
 
     return run
 
@@ -509,6 +522,7 @@ def _load(
         )
     facts.access_loader = lambda: load_access(db, pids)
     facts.ptw_loader = _ptw_loader(db, tuple(pids), facts)
+    facts.cert_loader = _cert_loader(db, tuple(pids), facts)
     return facts.sort()
 
 

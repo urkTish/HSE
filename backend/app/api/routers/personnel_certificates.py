@@ -15,7 +15,7 @@ from app.core.cert_enums import (
     CertSource,
     VerificationStatus,
 )
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.schemas.attachments import SignedUrlRead
 from app.schemas.cert_common import (
     CertTransitionRequest,
@@ -39,6 +39,8 @@ from app.schemas.personnel_certs import (
     ScanUrlRequest,
     WorkerCertificates,
 )
+from app.services.cert import bans as bsvc
+from app.services.cert import personnel as svc
 
 router = APIRouter(tags=["personnel-certificates"])
 
@@ -67,7 +69,25 @@ def list_personnel_certificates(
     expiring_days: Annotated[int | None, Query(ge=0, le=365)] = None,
     verification_overdue: bool | None = None,
 ) -> PersonnelCertPage:
-    raise not_implemented()
+    return svc.list_certificates(
+        db,
+        user,
+        project_id,
+        pg.page,
+        pg.page_size,
+        q,
+        cert_type,
+        status_,
+        verification_status,
+        tpi_id,
+        worker_id,
+        engagement_id,
+        include_subcontractors,
+        source,
+        in_force,
+        expiring_days,
+        verification_overdue,
+    )
 
 
 @router.post(
@@ -82,7 +102,7 @@ def list_personnel_certificates(
 def create_personnel_certificate(
     project_id: uuid.UUID, body: PersonnelCertCreate, user: CurrentUser, db: DB
 ) -> PersonnelCertRead:
-    raise not_implemented()
+    return svc.create(db, user, project_id, body)
 
 
 @router.post(
@@ -94,7 +114,7 @@ def create_personnel_certificate(
 def preview_personnel_certificate(
     project_id: uuid.UUID, body: PersonnelCertPreviewRequest, user: CurrentUser, db: DB
 ) -> PersonnelCertPreview:
-    raise not_implemented()
+    return svc.preview(db, user, project_id, body)
 
 
 @router.get(
@@ -107,7 +127,7 @@ def preview_personnel_certificate(
 def get_personnel_certificate(
     certificate_id: uuid.UUID, user: CurrentUser, db: DB
 ) -> PersonnelCertRead:
-    raise not_implemented()
+    return svc.read(db, user, certificate_id)
 
 
 @router.patch(
@@ -120,7 +140,7 @@ def get_personnel_certificate(
 def update_personnel_certificate(
     certificate_id: uuid.UUID, body: PersonnelCertUpdate, user: CurrentUser, db: DB
 ) -> PersonnelCertRead:
-    raise not_implemented()
+    return svc.update(db, user, certificate_id, body)
 
 
 @router.post(
@@ -133,7 +153,7 @@ def update_personnel_certificate(
 def transition_personnel_certificate(
     certificate_id: uuid.UUID, body: CertTransitionRequest, user: CurrentUser, db: DB
 ) -> PersonnelCertRead:
-    raise not_implemented()
+    return svc.transition(db, user, certificate_id, body)
 
 
 @router.get(
@@ -145,7 +165,7 @@ def transition_personnel_certificate(
 def list_personnel_certificate_verifications(
     certificate_id: uuid.UUID, user: CurrentUser, db: DB
 ) -> VerificationList:
-    raise not_implemented()
+    return svc.verifications(db, user, certificate_id)
 
 
 @router.post(
@@ -158,7 +178,7 @@ def list_personnel_certificate_verifications(
 def verify_personnel_certificate(
     certificate_id: uuid.UUID, body: VerificationCreate, user: CurrentUser, db: DB
 ) -> VerificationRead:
-    raise not_implemented()
+    return svc.verify(db, user, certificate_id, body)
 
 
 @router.post(
@@ -170,7 +190,7 @@ def verify_personnel_certificate(
 def get_personnel_certificate_scan_url(
     certificate_id: uuid.UUID, body: ScanUrlRequest, user: CurrentUser, db: DB
 ) -> SignedUrlRead:
-    raise not_implemented()
+    return svc.scan_url(db, user, certificate_id, body)
 
 
 @router.post(
@@ -183,7 +203,7 @@ def get_personnel_certificate_scan_url(
 def review_personnel_certificate_restriction(
     certificate_id: uuid.UUID, body: RestrictionReviewRequest, user: CurrentUser, db: DB
 ) -> PersonnelCertRead:
-    raise not_implemented()
+    return svc.review_restriction(db, user, certificate_id, body)
 
 
 @router.get(
@@ -198,7 +218,7 @@ def get_worker_certificates(
     db: DB,
     project_id: uuid.UUID | None = None,
 ) -> WorkerCertificates:
-    raise not_implemented()
+    return svc.worker_certificates(db, user, worker_id, project_id)
 
 
 # ---- certification bans and blacklist register ----------------------------------------------
@@ -218,7 +238,7 @@ def list_certification_bans(
     worker_id: uuid.UUID | None = None,
     review_due: bool | None = None,
 ) -> CertificationBanPage:
-    raise not_implemented()
+    return bsvc.list_bans(db, user, pg.page, pg.page_size, status_, worker_id, review_due)
 
 
 @router.post(
@@ -231,7 +251,7 @@ def list_certification_bans(
 def create_certification_ban(
     body: CertificationBanCreate, user: CurrentUser, db: DB
 ) -> CertificationBanRead:
-    raise not_implemented()
+    return bsvc.create(db, user, body)
 
 
 @router.get(
@@ -241,7 +261,7 @@ def create_certification_ban(
     responses=error_responses(401, 403, 404),
 )
 def get_certification_ban(ban_id: uuid.UUID, user: CurrentUser, db: DB) -> CertificationBanRead:
-    raise not_implemented()
+    return bsvc.get(db, user, ban_id)
 
 
 @router.post(
@@ -253,7 +273,7 @@ def get_certification_ban(ban_id: uuid.UUID, user: CurrentUser, db: DB) -> Certi
 def lift_certification_ban(
     ban_id: uuid.UUID, body: CertificationBanLift, user: CurrentUser, db: DB
 ) -> CertificationBanRead:
-    raise not_implemented()
+    return bsvc.lift(db, user, ban_id, body)
 
 
 @router.get(
@@ -269,4 +289,4 @@ def get_blacklist_register(
     project_id: uuid.UUID | None = None,
     active_only: bool = True,
 ) -> BlacklistRegister:
-    raise not_implemented()
+    return bsvc.register(db, user, subject, project_id, active_only)

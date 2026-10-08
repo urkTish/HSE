@@ -44,6 +44,7 @@ import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
 import { AccessPrintHeader, BiLabel, Code, EligibilityItems, MaskedIdNumber, QrImage, SubNav, WorkerPhoto, personName } from "./common";
 import { CredentialPanel } from "./credential-actions";
+import { WorkerCertificatesPanel } from "@/components/cert/personnel";
 
 const PAGE_SIZE = 50;
 
@@ -669,6 +670,7 @@ export function WorkerDetail({ id }: { id: string }) {
           </Card>
           {current && pid ? <DeploymentCard id={current.id} worker={w} /> : <Alert tone="info">{t("notOnProject")}</Alert>}
           {pid ? <EligibilityChecker workerId={w.id} projectId={pid} /> : null}
+          {pid && can(me, "personnel_cert.view", pid) ? <WorkerCertificatesPanel workerId={w.id} projectId={pid} /> : null}
           {pid && current ? <WorkerInductions workerId={w.id} deploymentId={current.id} projectId={pid} /> : null}
           <Card>
             <CardHeader>

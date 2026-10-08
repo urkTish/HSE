@@ -677,6 +677,7 @@ def obstacle_read(
         engagement=refs.eng(o.engagement_id),
         vehicle=common.vehicle_ref(v) if v else None,
         equipment_desc=o.equipment_desc,
+        equipment_item_id=o.equipment_item_id,
         equipment_type=o.equipment_type,
         location_lat=o.location_lat,
         location_lng=o.location_lng,
@@ -855,7 +856,8 @@ def create_obstacle(
     )
     year = today().year
     seq = next_seq(db, ObstacleClearance, project.id, year)
-    data = body.model_dump(exclude={"equipment_item_id"})  # Phase 4 stage 2 persists it (CF-4)
+    data = body.model_dump()  # v1.2: equipment_item_id persisted for CF-4 re-checks
+    _check_item(db, data.get("equipment_item_id"))
     o = ObstacleClearance(
         id=uuid.uuid4(),
         year=year,
@@ -894,6 +896,15 @@ def create_obstacle(
     return out
 
 
+def _check_item(db: Session, item_id: uuid.UUID | None) -> None:
+    if item_id is None:
+        return
+    from app.models import EquipmentItem  # noqa: PLC0415
+
+    if db.get(EquipmentItem, item_id) is None:
+        raise validation_error("equipment_item_id", "Unknown equipment item.")
+
+
 def update_obstacle(
     db: Session, p: Principal, obs_id: uuid.UUID, body: ObstacleUpdate
 ) -> ObstacleRead:
@@ -905,8 +916,8 @@ def update_obstacle(
     assert project is not None  # noqa: S101
     before = _obs_snapshot(o)
     for k, v in body.changes().items():
-        if k == "equipment_item_id":  # Phase 4 stage 2 persists it (CF-4)
-            continue
+        if k == "equipment_item_id":  # v1.2 (4-third-party-cert CF-4)
+            _check_item(db, v)
         setattr(o, k, v)
     zone, _ = _validate_obstacle(db, project, o)
     _recompute(db, project, o, zone)

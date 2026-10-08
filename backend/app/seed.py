@@ -617,6 +617,10 @@ def main() -> int:
 
         seed_ptw_data(db, password)
         db.commit()
+        from app.seed_cert import seed_cert_data  # noqa: PLC0415
+
+        seed_cert_data(db)
+        db.commit()
     print("Seed data loaded.")
     return 0
 

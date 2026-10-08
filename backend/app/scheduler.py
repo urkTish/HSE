@@ -50,6 +50,11 @@ def main() -> None:
     # Phase 3 (spec 3-ptw §4.1/§4.2 timers, §7 alerts, PT-16 recompute every minute)
     sched.add_job(_job, "interval", minutes=1, args=["ptw_minute"])
     sched.add_job(_job, "cron", hour=0, minute=15, args=["ptw_daily"])
+    # Phase 4 (spec 4-third-party-cert §4 jobs at 00:05:45, §7 alerts at 07:00, HK4-4 switch)
+    sched.add_job(_job, "cron", hour=0, minute=0, second=30, args=["cert_switch"])
+    sched.add_job(_job, "cron", hour=0, minute=5, second=45, args=["cert_daily"])
+    sched.add_job(_job, "cron", hour=7, minute=1, args=["cert_alerts"])
+    sched.add_job(_job, "interval", minutes=1, args=["cert_minute"])
     sched.start()
 
 

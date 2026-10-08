@@ -235,6 +235,36 @@ def ptw_seed(_fresh_data: None, _ptw_template: str) -> None:
     _clone(_ptw_template)
 
 
+# ---- Phase 4: certification Appendix A on top of the Phase 3 world ------------------------------
+
+CERT_TEMPLATE = "hse_test_cert_tpl"
+
+
+@pytest.fixture(scope="session")
+def _cert_template(_ptw_template: str) -> str:
+    """Phase 0-3 template + the 4-third-party-cert Appendix A seed."""
+    from app.seed_cert import seed_cert_data
+
+    _clone(_ptw_template)
+    with get_sessionmaker()() as db:
+        seed_cert_data(db)
+        db.commit()
+    get_engine().dispose()
+    name = _db_name()
+    _admin_exec(
+        _terminate(name),
+        f"DROP DATABASE IF EXISTS {CERT_TEMPLATE}",
+        f"CREATE DATABASE {CERT_TEMPLATE} TEMPLATE {name}",
+    )
+    return CERT_TEMPLATE
+
+
+@pytest.fixture
+def cert_seed(_fresh_data: None, _cert_template: str) -> None:
+    """Replace the test database with a copy of the Phase 4 template."""
+    _clone(_cert_template)
+
+
 @pytest.fixture
 def noon() -> Iterator[None]:
     """Pin the clock to Appendix A "today" (2026-10-06 12:00 Asia/Riyadh = 09:00Z)."""
@@ -243,5 +273,17 @@ def noon() -> Iterator[None]:
     from app.core.clock import set_now
 
     set_now(datetime(2026, 10, 6, 9, 0, tzinfo=UTC))
+    yield
+    set_now(None)
+
+
+@pytest.fixture
+def clock() -> Iterator[None]:
+    """Pin the clock to the shared HSE_CLOCK_AT (2026-10-06 10:00 Asia/Riyadh = 07:00Z)."""
+    from datetime import UTC, datetime
+
+    from app.core.clock import set_now
+
+    set_now(datetime(2026, 10, 6, 7, 0, tzinfo=UTC))
     yield
     set_now(None)

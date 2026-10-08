@@ -12,6 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.access_jobs import PHASE2_JOBS
+from app.cert_jobs import PHASE4_JOBS
 from app.core.clock import local_date, now, today
 from app.core.config import get_settings
 from app.core.enums import AuditAction, AuditResult, EntityType, NotificationKind, Role, UserStatus
@@ -296,6 +297,7 @@ JOBS: dict[str, Callable[[Session], dict[str, Any]]] = {
     **PHASE1_JOBS,
     **PHASE2_JOBS,
     **PHASE3_JOBS,
+    **PHASE4_JOBS,
 }
 
 

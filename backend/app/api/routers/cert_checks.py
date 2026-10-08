@@ -4,8 +4,9 @@
 from fastapi import APIRouter
 
 from app.api.deps import DB, CurrentUser
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.schemas.cert_check import CertCheckRequest, CertCheckResponse
+from app.services.cert import checks as svc
 
 router = APIRouter(tags=["certification-checks"])
 
@@ -20,4 +21,4 @@ router = APIRouter(tags=["certification-checks"])
     responses=error_responses(401, 403, 404, 422),
 )
 def check_certification(body: CertCheckRequest, user: CurrentUser, db: DB) -> CertCheckResponse:
-    raise not_implemented()
+    return svc.check(db, user, body)

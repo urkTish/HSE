@@ -1686,6 +1686,9 @@ def apply_ops(db: Session, e: OpsEvent, at: datetime | None = None) -> int:
     at = at or now()
     if e.started_at > at or (e.ended_at is not None and e.ended_at <= at):
         return 0
+    from app.services.cert import scaffolds  # noqa: PLC0415 (Phase 4 SF-5, once per event)
+
+    scaffolds.ops_event_trigger(db, e)
     n = 0
     for w in db.scalars(
         select(Wap).where(

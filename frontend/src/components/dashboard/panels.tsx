@@ -339,6 +339,11 @@ export function ExpiringItems({ projectId, asOf, show }: { projectId: string | n
                   ) : null}
                 </span>
                 <span className="line-clamp-2 [overflow-wrap:anywhere]">{ar ? i.title_ar : i.title_en}</span>
+                {i.cert_limiting_factor ? (
+                  <span className="block text-xs text-muted-foreground" data-testid="expiring-limiting">
+                    {t("limitedBy", { factor: te(`certLimitingFactor.${i.cert_limiting_factor}`) })}
+                  </span>
+                ) : null}
               </span>
               <span className="flex shrink-0 flex-col items-end gap-0.5 text-end text-xs">
                 <span

@@ -8,9 +8,10 @@ from fastapi import APIRouter, File, Form, Query, Response, UploadFile, status
 
 from app.api.deps import DB, CurrentUser, PageParams
 from app.core.cert_enums import CertImportSource, CertImportStatus, CertImportTemplate
-from app.core.enums import ExportFormat
-from app.core.errors import error_responses, not_implemented
+from app.core.enums import Capability, ExportFormat
+from app.core.errors import error_responses
 from app.schemas.cert_imports import CertImportPage, CertImportRead
+from app.services.cert import imports as svc
 
 router = APIRouter(tags=["certificate-imports"])
 
@@ -40,7 +41,13 @@ def certificate_import_template(
     format_: Annotated[ExportFormat, Query(alias="format")] = ExportFormat.xlsx,
     headers: Annotated[Literal["en", "ar"], Query()] = "en",
 ) -> Response:
-    raise not_implemented()
+    user.require_any(Capability.cert_import)
+    content, media, name = svc.template(template, format_, headers)
+    return Response(
+        content=content,
+        media_type=media,
+        headers={"Content-Disposition": f'attachment; filename="{name}"'},
+    )
 
 
 @router.post(
@@ -73,7 +80,9 @@ def create_certificate_import(
         UploadFile | None, File(description="PDF / EML of the TPI's email")
     ] = None,
 ) -> CertImportRead:
-    raise not_implemented()
+    return svc.upload(
+        db, user, project_id, file, template, source, create_items, tpi_id, scans_zip, evidence_file
+    )
 
 
 @router.get(
@@ -90,7 +99,7 @@ def list_certificate_imports(
     status_: Annotated[CertImportStatus | None, Query(alias="status")] = None,
     template: CertImportTemplate | None = None,
 ) -> CertImportPage:
-    raise not_implemented()
+    return svc.list_batches(db, user, project_id, pg.page, pg.page_size, status_, template)
 
 
 @router.get(
@@ -102,7 +111,7 @@ def list_certificate_imports(
 def get_certificate_import(
     batch_id: uuid.UUID, user: CurrentUser, db: DB, include_ok_rows: bool = False
 ) -> CertImportRead:
-    raise not_implemented()
+    return svc.get(db, user, batch_id, include_ok_rows)
 
 
 @router.post(
@@ -117,7 +126,7 @@ def get_certificate_import(
     responses=error_responses(401, 403, 404, 409),
 )
 def commit_certificate_import(batch_id: uuid.UUID, user: CurrentUser, db: DB) -> CertImportRead:
-    raise not_implemented()
+    return svc.commit(db, user, batch_id)
 
 
 @router.post(
@@ -127,4 +136,4 @@ def commit_certificate_import(batch_id: uuid.UUID, user: CurrentUser, db: DB) ->
     responses=error_responses(401, 403, 404, 409),
 )
 def discard_certificate_import(batch_id: uuid.UUID, user: CurrentUser, db: DB) -> CertImportRead:
-    raise not_implemented()
+    return svc.discard(db, user, batch_id)

@@ -17,7 +17,7 @@ from app.core.cert_enums import (
     VerificationOutcome,
     VerificationStatus,
 )
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.schemas.cert_common import (
     CertTransitionRequest,
     VerificationCreate,
@@ -32,6 +32,8 @@ from app.schemas.equipment_certs import (
     EquipmentCertificateUpdate,
     EquipmentCertPreview,
 )
+from app.services.cert import equipment_certs as svc
+from app.services.cert import verification as vf
 
 router = APIRouter(tags=["equipment-certificates"])
 
@@ -61,7 +63,26 @@ def list_equipment_certificates(
     expiring_days: Annotated[int | None, Query(ge=0, le=365)] = None,
     verification_overdue: bool | None = None,
 ) -> EquipmentCertificatePage:
-    raise not_implemented()
+    return svc.list_certificates(
+        db,
+        user,
+        project_id,
+        pg.page,
+        pg.page_size,
+        q,
+        status_,
+        verification_status,
+        tpi_id,
+        equipment_id,
+        category,
+        inspection_type,
+        source,
+        engagement_id,
+        include_subcontractors,
+        in_force,
+        expiring_days,
+        verification_overdue,
+    )
 
 
 @router.post(
@@ -74,7 +95,7 @@ def list_equipment_certificates(
 def create_equipment_certificate(
     project_id: uuid.UUID, body: EquipmentCertificateCreate, user: CurrentUser, db: DB
 ) -> EquipmentCertificateRead:
-    raise not_implemented()
+    return svc.create(db, user, project_id, body)
 
 
 @router.post(
@@ -86,7 +107,7 @@ def create_equipment_certificate(
 def preview_equipment_certificate(
     project_id: uuid.UUID, body: EquipmentCertificateCreate, user: CurrentUser, db: DB
 ) -> EquipmentCertPreview:
-    raise not_implemented()
+    return svc.preview(db, user, project_id, body)
 
 
 @router.get(
@@ -98,7 +119,7 @@ def preview_equipment_certificate(
 def get_equipment_certificate(
     certificate_id: uuid.UUID, user: CurrentUser, db: DB
 ) -> EquipmentCertificateRead:
-    raise not_implemented()
+    return svc.read(db, user, certificate_id)
 
 
 @router.patch(
@@ -110,7 +131,7 @@ def get_equipment_certificate(
 def update_equipment_certificate(
     certificate_id: uuid.UUID, body: EquipmentCertificateUpdate, user: CurrentUser, db: DB
 ) -> EquipmentCertificateRead:
-    raise not_implemented()
+    return svc.update(db, user, certificate_id, body)
 
 
 @router.post(
@@ -122,7 +143,7 @@ def update_equipment_certificate(
 def transition_equipment_certificate(
     certificate_id: uuid.UUID, body: CertTransitionRequest, user: CurrentUser, db: DB
 ) -> EquipmentCertificateRead:
-    raise not_implemented()
+    return svc.transition(db, user, certificate_id, body)
 
 
 @router.get(
@@ -134,7 +155,7 @@ def transition_equipment_certificate(
 def list_equipment_certificate_verifications(
     certificate_id: uuid.UUID, user: CurrentUser, db: DB
 ) -> VerificationList:
-    raise not_implemented()
+    return svc.verifications(db, user, certificate_id)
 
 
 @router.post(
@@ -147,7 +168,7 @@ def list_equipment_certificate_verifications(
 def verify_equipment_certificate(
     certificate_id: uuid.UUID, body: VerificationCreate, user: CurrentUser, db: DB
 ) -> VerificationRead:
-    raise not_implemented()
+    return svc.verify(db, user, certificate_id, body)
 
 
 @router.get(
@@ -168,4 +189,6 @@ def get_verification_log(
     date_from: date | None = None,
     date_to: date | None = None,
 ) -> VerificationLogPage:
-    raise not_implemented()
+    return vf.log(
+        db, user, project_id, pg.page, pg.page_size, cert_kind, outcome, tpi_id, date_from, date_to
+    )

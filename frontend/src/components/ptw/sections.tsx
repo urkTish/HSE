@@ -3,6 +3,8 @@ import { Pencil } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
+import { TagStatusBadge } from "@/components/cert/common";
+import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -247,6 +249,19 @@ export function SectionView({ permit, type, actions }: { permit: Permit; type: S
   const s = sectionOf(permit, type);
   const val = (f: Field, v: unknown): ReactNode => {
     if (v === null || v === undefined || v === "" || (Array.isArray(v) && v.length === 0)) return "—";
+    if (f.k === "scaffold_tag_ref") {
+      // v1.1 (Phase 4 SF-1): the reference resolved on the scaffold register, with its tag colour.
+      const sc = (s as { scaffold?: S["ScaffoldRef"] | null } | null)?.scaffold;
+      if (sc)
+        return (
+          <span className="inline-flex flex-wrap items-center gap-2" data-testid="wah-scaffold">
+            <Link href={`/scaffolds/${sc.id}`} className="text-primary hover:underline">
+              <bdi className="ltr">{sc.tag}</bdi> · <bdi className="ltr">{sc.scaffold_no}</bdi>
+            </Link>
+            <TagStatusBadge status={sc.tag_status} />
+          </span>
+        );
+    }
     switch (f.kind) {
       case "bool":
         return <YesNo value={Boolean(v)} yes={tc("yes")} no={tc("no")} />;

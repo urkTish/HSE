@@ -4,6 +4,8 @@ import { toQueryString } from "@/lib/url-state";
 /** UI route of a record by entity type (null when the UI has no page for it). */
 export function entityRoute(type: Schemas["EntityType"] | string | null | undefined, id: string | null | undefined, projectId?: string | null): string | null {
   if (!id) {
+    if (type === "cert_settings") return "/cert-settings";
+    if (type === "hook_policy_state") return "/hook-policy";
     if (type === "project_settings" && projectId) return `/projects/${projectId}/settings`;
     if (type === "hse_settings" && projectId) return `/hse-settings?project=${projectId}`;
     return null;
@@ -114,6 +116,40 @@ export function entityRoute(type: Schemas["EntityType"] | string | null | undefi
       return `/simops-conflicts/${id}`;
     case "ptw_audit":
       return `/ptw-audits/${id}`;
+    // Phase 4 — third-party certification
+    case "tpi":
+      return `/tpis/${id}`;
+    case "tpi_accreditation":
+    case "tpi_client_approval":
+      return null;
+    case "equipment_item":
+      return `/equipment/${id}`;
+    case "equipment_deployment":
+      return `/equipment-deployments/${id}`;
+    case "equipment_certificate":
+      return `/equipment-certificates/${id}`;
+    case "configuration_event":
+      return null;
+    case "scaffold":
+      return `/scaffolds/${id}`;
+    case "scaffold_inspection":
+      return null;
+    case "personnel_certificate":
+      return `/personnel-certificates/${id}`;
+    case "cert_verification":
+      return `/verification-log`;
+    case "equipment_defect":
+      return `/defects/${id}`;
+    case "certification_ban":
+      return `/certification-bans`;
+    case "hook_policy_state":
+      return `/hook-policy`;
+    case "cert_import_batch":
+      return `/certificate-imports/${id}`;
+    case "cert_settings":
+      return `/cert-settings`;
+    case "cert_type":
+      return `/cert-catalogue`;
     default:
       return null;
   }
@@ -160,6 +196,20 @@ const DETAIL: [RegExp, string][] = [
   [/^\/api\/v1\/isolations\/([0-9a-f-]{36})$/, "/isolations/$1"],
   [/^\/api\/v1\/simops-conflicts\/([0-9a-f-]{36})$/, "/simops-conflicts/$1"],
   [/^\/api\/v1\/ptw-audits\/([0-9a-f-]{36})$/, "/ptw-audits/$1"],
+  [/^\/api\/v1\/tpis\/([0-9a-f-]{36})(?:\/affected)?$/, "/tpis/$1"],
+  [/^\/api\/v1\/equipment\/([0-9a-f-]{36})(?:\/.*)?$/, "/equipment/$1"],
+  [/^\/api\/v1\/equipment-deployments\/([0-9a-f-]{36})(?:\/arrival-inspection)?$/, "/equipment-deployments/$1"],
+  [/^\/api\/v1\/equipment-deployments\/([0-9a-f-]{36})\/sticker$/, "/equipment-deployments/$1/sticker"],
+  [/^\/api\/v1\/equipment-certificates\/([0-9a-f-]{36})(?:\/verifications)?$/, "/equipment-certificates/$1"],
+  [/^\/api\/v1\/scaffolds\/([0-9a-f-]{36})(?:\/inspections)?$/, "/scaffolds/$1"],
+  [/^\/api\/v1\/scaffolds\/([0-9a-f-]{36})\/sticker$/, "/scaffolds/$1/sticker"],
+  [/^\/api\/v1\/personnel-certificates\/([0-9a-f-]{36})(?:\/verifications)?$/, "/personnel-certificates/$1"],
+  [/^\/api\/v1\/defects\/([0-9a-f-]{36})$/, "/defects/$1"],
+  [/^\/api\/v1\/certificate-imports\/([0-9a-f-]{36})$/, "/certificate-imports/$1"],
+  [/^\/api\/v1\/certification-bans(?:\/[0-9a-f-]{36})?$/, "/certification-bans"],
+  [/^\/api\/v1\/blacklist-register$/, "/blacklist-register"],
+  [/^\/api\/v1\/projects\/[0-9a-f-]{36}\/(?:hook-policy|hook-readiness)$/, "/hook-policy"],
+  [/^\/api\/v1\/projects\/[0-9a-f-]{36}\/cert-settings$/, "/cert-settings"],
 ];
 
 /** Map an API record path (`detail_path`) to the UI page; null when there is none. */
@@ -206,6 +256,18 @@ const LISTS: [RegExp, string][] = [
   [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/locks$/, "/locks"],
   [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/simops-conflicts$/, "/simops-conflicts"],
   [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/ptw-audits$/, "/ptw-audits"],
+  [/^\/api\/v1\/tpis$/, "/tpis"],
+  [/^\/api\/v1\/equipment$/, "/equipment"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/equipment-deployments$/, "/equipment-deployments"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/equipment-certificates$/, "/equipment-certificates"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/personnel-certificates$/, "/personnel-certificates"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/verification-log$/, "/verification-log"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/scaffolds$/, "/scaffolds"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/scaffold-board$/, "/scaffold-board"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/defects$/, "/defects"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/certificate-imports$/, "/certificate-imports"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/hook-readiness$/, "/hook-policy"],
+  [/^\/api\/v1\/certification-bans$/, "/certification-bans"],
 ];
 
 /** Map an action-panel `ListLink` to the UI list with the same filters in the URL. */

@@ -60,6 +60,7 @@ PERSONAL = frozenset(
         AttachmentOwner.induction_signature,
         AttachmentOwner.offence_evidence,
         AttachmentOwner.gas_test_signature,
+        AttachmentOwner.personnel_cert_scan,  # P4-3
     }
 )
 PTW_OWNERS = frozenset(
@@ -155,6 +156,10 @@ def _owner(
         return ca.project_id, ca.status in (CaStatus.open, CaStatus.in_progress)
     if owner_type in PTW_OWNERS:
         return _ptw_owner(db, p, owner_type, owner_id, write)
+    from app.services.cert import files as cert_files  # noqa: PLC0415
+
+    if owner_type in cert_files.CERT_OWNERS:
+        return cert_files.owner(db, p, owner_type, owner_id, write)
     if owner_type in PERSONAL:
         return _access_owner(db, p, owner_type, owner_id, write)
     m = db.get(HseMeeting, owner_id)

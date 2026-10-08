@@ -461,7 +461,18 @@ def evaluate_adp(db: Session, a: Adp, day: date | None = None) -> None:
 
 def evaluate_avp(db: Session, a: Avp, day: date | None = None) -> None:
     day = day or today()
-    _apply(db, a, avp_eff(db, a), day, LF.own_valid_until, set(), common.settings(db, a.project_id))
+    from app.services.cert import providers  # noqa: PLC0415 (Phase 4 HK4-11)
+
+    hook_until = providers.avp_hook_until(db, a.vehicle_id, a.project_id, now())
+    _apply(
+        db,
+        a,
+        avp_eff(db, a, hook_until),
+        day,
+        LF.own_valid_until,
+        set(),
+        common.settings(db, a.project_id),
+    )
 
 
 def refresh_worker(db: Session, worker_id: uuid.UUID, day: date | None = None) -> None:

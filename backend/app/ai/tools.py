@@ -24,6 +24,7 @@ from sqlalchemy.orm import Session
 from app.ai.masking import redact
 from app.api.kpi_params import KpiQuery
 from app.core.access_enums import AccessKpiGroupBy
+from app.core.cert_enums import CertKpiGroupBy, EquipmentCertCategory
 from app.core.enums import Capability, Role, ZoneType
 from app.core.errors import ApiError
 from app.core.hse_enums import (
@@ -44,7 +45,7 @@ from app.core.hse_enums import (
     PeriodPreset,
 )
 from app.core.ptw_enums import PermitType, PtwKpiGroupBy
-from app.kpi import access_views, charts, fmt, groups, ptw_views, service, views
+from app.kpi import access_views, cert_views, charts, fmt, groups, ptw_views, service, views
 from app.kpi import scope as kscope
 from app.kpi.facts import Facts
 from app.kpi.periods import week_start
@@ -74,6 +75,7 @@ from app.services import observations as obs_svc
 from app.services.hse_common import user_roles
 from app.services.permissions import Principal
 
+EQC_VALUES = [c.value for c in EquipmentCertCategory]
 NO_ACCESS = "No access to the requested data."
 ACCESS_KINDS = frozenset(
     {
@@ -313,9 +315,10 @@ TOOL_DEFS: list[dict[str, Any]] = [
     ),
     _tool(
         AiTool.get_leading_warnings,
-        "Backend-computed leading-indicator warnings E1-E7 (E5-E7 for airport access: induction "
-        "coverage, gate denial spike, airside driving offences) with their inputs for the last "
-        "complete months.",
+        "Backend-computed leading-indicator warnings E1-E11 (E5-E7 for airport access: induction "
+        "coverage, gate denial spike, airside driving offences; E8-E9 permit to work; E10 "
+        "certification compliance below threshold, E11 dangerous defects / failed verifications) "
+        "with their inputs for the last complete months.",
         {
             "project_code": {"type": "string"},
             "months": {"type": "integer", "minimum": 1, "maximum": 12},
@@ -386,6 +389,41 @@ TOOL_DEFS: list[dict[str, Any]] = [
             "group_by": {
                 "type": "array",
                 "items": {"type": "string", "enum": [g.value for g in PtwKpiGroupBy]},
+            },
+        },
+        [],
+    ),
+    _tool(
+        AiTool.get_certification_kpis,
+        "T16: third-party certification KPIs (K-72..K-81): value, numerator, denominator, "
+        "components, comparisons and breakdown rows by category, cert_type, contractor, tpi, "
+        "defect_category, reason_code or month, plus the certification band counts. Aggregates "
+        "only — no names, worker numbers, certificate numbers, ID data, ban reasons or "
+        "verification-failure details.",
+        {
+            "project_codes": PROJECTS,
+            "period": PERIOD,
+            "filters": {
+                **FILTERS,
+                "properties": {
+                    **FILTERS["properties"],  # type: ignore[dict-item]
+                    "equipment_categories": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": [c.value for c in EquipmentCertCategory],
+                        },
+                    },
+                    "cert_types": {"type": "array", "items": {"type": "string"}},
+                },
+            },
+            "metrics": {
+                "type": "array",
+                "items": {"type": "string", "enum": [m.value for m in cert_views.CERT_METRICS]},
+            },
+            "group_by": {
+                "type": "array",
+                "items": {"type": "string", "enum": [g.value for g in CertKpiGroupBy]},
             },
         },
         [],
@@ -1567,6 +1605,75 @@ def t_get_ptw_kpis(ctx: ToolContext, params: dict[str, Any]) -> tuple[dict[str, 
     }, narrowed or sc.narrowed
 
 
+def t_get_certification_kpis(
+    ctx: ToolContext, params: dict[str, Any]
+) -> tuple[dict[str, Any], bool]:
+    """T16 (4-third-party-cert KC-4): aggregates only (AI-5). Group rows carry categories,
+    certificate types, contractors, TPI codes, defect categories, reason codes or months —
+    never people, certificate numbers, ban reasons or verification-failure details."""
+    q, narrowed = _query(ctx, params)
+    if q is None:
+        return {"no_access": True, "message": NO_ACCESS}, True
+    flt = params.get("filters") or {}
+    q = dataclasses.replace(
+        q,
+        equipment_categories=[
+            EquipmentCertCategory(c) for c in flt.get("equipment_categories") or []
+        ],
+        cert_types=[str(t) for t in flt.get("cert_types") or []],
+    )
+    try:
+        sc = kscope.build(ctx.db, ctx.p, q, Capability.cert_kpi_view)
+    except ApiError:
+        return {"no_access": True, "message": NO_ACCESS}, True
+    if not cert_views.has_cert(sc):
+        return {
+            "no_access": True,
+            "message": "Certification KPIs need capability 122 on the project.",
+        }, True
+    metrics = [KpiMetric(m) for m in params.get("metrics") or []] or None
+    group_by = [CertKpiGroupBy(g) for g in params.get("group_by") or []]
+    res = cert_views.cert_kpis(ctx.db, sc, metrics, group_by)
+    codes, who = _codes_who(sc)
+    period = res.context.period.label_en
+    out = []
+    for v in res.metrics:
+        row = _kpi(v)
+        row["cite"] = ctx.cite(
+            AiTool.get_certification_kpis,
+            f"{v.short_label_en} {v.display} — get_certification_kpis, {codes}, {period}, {who}",
+            metric=v.metric,
+            value=v.display,
+            period=period,
+            scope=service.scope_label(sc),
+        )
+        out.append(row)
+    breakdowns = [
+        {
+            "metric": b.metric,
+            "group_by": b.group_by.value,
+            "rows": [
+                {"key": r.key, "label": r.label_en, "value": r.display,
+                 "numerator": r.numerator, "denominator": r.denominator}
+                for r in b.rows
+            ],
+        }
+        for b in res.breakdowns
+    ]  # fmt: skip
+    band = None
+    if res.band is not None:
+        band = {
+            k: v for k, v in res.band.model_dump(mode="json").items() if not isinstance(v, list)
+        }
+    return {
+        "scope": service.scope_label(sc),
+        "period": period,
+        "band": band,
+        "kpis": out,
+        "breakdowns": breakdowns,
+    }, narrowed or sc.narrowed
+
+
 def t_propose_chart(ctx: ToolContext, params: dict[str, Any]) -> tuple[dict[str, Any], bool]:
     q, narrowed = _query(ctx, params)
     if q is None:
@@ -1613,6 +1720,7 @@ HANDLERS: dict[str, Callable[[ToolContext, dict[str, Any]], tuple[dict[str, Any]
     AiTool.propose_chart.value: t_propose_chart,
     AiTool.get_access_kpis.value: t_get_access_kpis,
     AiTool.get_ptw_kpis.value: t_get_ptw_kpis,
+    AiTool.get_certification_kpis.value: t_get_certification_kpis,
 }
 
 

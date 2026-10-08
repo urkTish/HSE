@@ -14,6 +14,7 @@ import { EmptyState, ErrorState, LoadingState } from "@/components/common/states
 import { StatusBadge } from "@/components/common/status-badge";
 import { PageHeader } from "@/components/common/page-header";
 import { useMeData } from "@/components/shell/me-context";
+import { HookConditions } from "@/components/cert/hook-ui";
 import { Link } from "@/i18n/navigation";
 import type { Schemas } from "@/lib/api/client";
 import { useHandovers, usePermit, usePermitGasTests, useShifts, useSuspensions } from "@/lib/api/ptw";
@@ -133,6 +134,7 @@ export function PermitDetail({ id }: { id: string }) {
         <CardContent className="flex flex-col gap-3">
           <BlockerList items={p.blockers} />
           <WarningList items={p.warnings} />
+          {p.hook_conditions?.length ? <HookConditions items={p.hook_conditions} /> : null}
         </CardContent>
       </Card>
 

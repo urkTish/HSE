@@ -688,6 +688,8 @@ class ObstacleClearance(Audited, Numbered, Base):
     zone_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("zones.id"))
     engagement_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("project_engagements.id"))
     vehicle_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("vehicles.id"))
+    # v1.2 (4-third-party-cert CF-4): Phase 4 equipment item whose height changes re-check it
+    equipment_item_id: Mapped[uuid.UUID | None] = mapped_column(PG_UUID(as_uuid=True))
     equipment_desc: Mapped[str | None] = mapped_column(String(150))
     equipment_type: Mapped[ObstacleEquipmentType] = enum_col(ObstacleEquipmentType)
     location_lat: Mapped[Decimal] = mapped_column(Numeric(9, 6))
@@ -961,6 +963,8 @@ class GateCheck(UUIDPk, Base):
     deployment_id: Mapped[uuid.UUID | None] = mapped_column(PG_UUID(as_uuid=True))
     vehicle_id: Mapped[uuid.UUID | None] = mapped_column(PG_UUID(as_uuid=True))
     wap_id: Mapped[uuid.UUID | None] = mapped_column(PG_UUID(as_uuid=True))
+    # v1.2 GE-6: EQ sticker checks (subject_kind equipment_deployment)
+    equipment_deployment_id: Mapped[uuid.UUID | None] = mapped_column(PG_UUID(as_uuid=True))
     engagement_id: Mapped[uuid.UUID | None] = mapped_column(PG_UUID(as_uuid=True))
     subject_ref: Mapped[str | None] = mapped_column(String(60))
     zone_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("zones.id"))

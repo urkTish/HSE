@@ -18,6 +18,8 @@ from app.core.ptw_enums import PERMIT_LIVE, PermitStatus
 
 WORKERS = "ptw_dirty_workers"
 ENGS = "ptw_dirty_engagements"
+PERMITS = "ptw_dirty_permits"
+PROJECTS = "ptw_dirty_projects"
 
 
 def mark_workers(db: Session, ids: Iterable[uuid.UUID | None]) -> None:
@@ -28,18 +30,48 @@ def mark_engagements(db: Session, ids: Iterable[uuid.UUID]) -> None:
     db.info.setdefault(ENGS, set()).update(ids)
 
 
+def mark_permits(db: Session, ids: Iterable[uuid.UUID]) -> None:
+    """v1.1 (4-third-party-cert HK4-10): permits naming an item / scaffold whose state changed."""
+    db.info.setdefault(PERMITS, set()).update(ids)
+
+
+def mark_projects(db: Session, ids: Iterable[uuid.UUID]) -> None:
+    """v1.1 (HK4-10 `hook_policy.changed`): every Approved / live permit of the project."""
+    db.info.setdefault(PROJECTS, set()).update(ids)
+
+
 def process(db: Session) -> int:
     workers: set[uuid.UUID] = db.info.pop(WORKERS, set())
     engs: set[uuid.UUID] = db.info.pop(ENGS, set())
-    if not workers and not engs:
+    permits: set[uuid.UUID] = db.info.pop(PERMITS, set())
+    projects: set[uuid.UUID] = db.info.pop(PROJECTS, set())
+    if not workers and not engs and not permits and not projects:
         return 0
-    from app.models import Permit, PermitCrew  # noqa: PLC0415
+    from app.models import Permit, PermitCrew, PermitEquipment  # noqa: PLC0415
     from app.services.permissions import engagement_descendants  # noqa: PLC0415
     from app.services.ptw import evaluation  # noqa: PLC0415
 
     statuses = [*PERMIT_LIVE, PermitStatus.approved]
-    ids: set[uuid.UUID] = set()
+    ids: set[uuid.UUID] = set(permits)
+    if projects:
+        ids |= set(
+            db.scalars(
+                select(Permit.id).where(
+                    Permit.project_id.in_(projects), Permit.status.in_(statuses)
+                )
+            )
+        )
     if workers:
+        ids |= set(
+            db.scalars(
+                select(PermitEquipment.permit_id)
+                .join(Permit, Permit.id == PermitEquipment.permit_id)
+                .where(
+                    PermitEquipment.operator_worker_id.in_(workers),
+                    Permit.status.in_(statuses),
+                )
+            )
+        )
         ids |= set(
             db.scalars(
                 select(PermitCrew.permit_id)

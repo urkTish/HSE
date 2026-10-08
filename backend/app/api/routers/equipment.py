@@ -13,7 +13,7 @@ from app.core.cert_enums import (
     EquipmentDeploymentStatus,
     ServiceStatus,
 )
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.schemas.equipment import (
     ArrivalInspectionInput,
     ArrivalInspectionRead,
@@ -40,6 +40,8 @@ from app.schemas.equipment import (
     StickerReissueRequest,
     TagOutRequest,
 )
+from app.services.cert import deployments as dsvc
+from app.services.cert import equipment as svc
 
 router = APIRouter(tags=["equipment"])
 
@@ -70,7 +72,19 @@ def list_equipment(
         int | None, Query(ge=0, le=365, description="valid_until within N days.")
     ] = None,
 ) -> EquipmentPage:
-    raise not_implemented()
+    return svc.list_items(
+        db,
+        user,
+        pg.page,
+        pg.page_size,
+        q,
+        project_id,
+        category,
+        service_status,
+        owner_contractor_id,
+        engagement_id,
+        expiring_days,
+    )
 
 
 @router.post(
@@ -81,7 +95,7 @@ def list_equipment(
     responses=error_responses(401, 403, 409, 422),
 )
 def create_equipment(body: EquipmentCreate, user: CurrentUser, db: DB) -> EquipmentRead:
-    raise not_implemented()
+    return svc.create(db, user, body)
 
 
 @router.post(
@@ -93,7 +107,7 @@ def create_equipment(body: EquipmentCreate, user: CurrentUser, db: DB) -> Equipm
 def lookup_equipment(
     body: EquipmentLookupRequest, user: CurrentUser, db: DB
 ) -> EquipmentLookupResult:
-    raise not_implemented()
+    return svc.lookup(db, user, body)
 
 
 @router.get(
@@ -103,7 +117,7 @@ def lookup_equipment(
     responses=error_responses(401, 403, 404),
 )
 def get_equipment(equipment_id: uuid.UUID, user: CurrentUser, db: DB) -> EquipmentRead:
-    raise not_implemented()
+    return svc.read(db, user, equipment_id)
 
 
 @router.patch(
@@ -116,7 +130,7 @@ def get_equipment(equipment_id: uuid.UUID, user: CurrentUser, db: DB) -> Equipme
 def update_equipment(
     equipment_id: uuid.UUID, body: EquipmentUpdate, user: CurrentUser, db: DB
 ) -> EquipmentRead:
-    raise not_implemented()
+    return svc.update(db, user, equipment_id, body)
 
 
 @router.get(
@@ -128,7 +142,7 @@ def update_equipment(
 def list_equipment_status_events(
     equipment_id: uuid.UUID, user: CurrentUser, db: DB
 ) -> EquipmentStatusEventList:
-    raise not_implemented()
+    return svc.status_events(db, user, equipment_id)
 
 
 @router.post(
@@ -140,7 +154,7 @@ def list_equipment_status_events(
 def tag_out_equipment(
     equipment_id: uuid.UUID, body: TagOutRequest, user: CurrentUser, db: DB
 ) -> EquipmentRead:
-    raise not_implemented()
+    return svc.tag_out(db, user, equipment_id, body)
 
 
 @router.post(
@@ -152,7 +166,7 @@ def tag_out_equipment(
 def return_equipment_to_service(
     equipment_id: uuid.UUID, body: ReturnToServiceRequest, user: CurrentUser, db: DB
 ) -> EquipmentRead:
-    raise not_implemented()
+    return svc.return_to_service(db, user, equipment_id, body)
 
 
 @router.post(
@@ -164,7 +178,7 @@ def return_equipment_to_service(
 def retire_equipment(
     equipment_id: uuid.UUID, body: RetireRequest, user: CurrentUser, db: DB
 ) -> EquipmentRead:
-    raise not_implemented()
+    return svc.retire(db, user, equipment_id, body)
 
 
 @router.post(
@@ -176,7 +190,7 @@ def retire_equipment(
 def blacklist_equipment(
     equipment_id: uuid.UUID, body: EquipmentBlacklistRequest, user: CurrentUser, db: DB
 ) -> EquipmentRead:
-    raise not_implemented()
+    return svc.blacklist(db, user, equipment_id, body)
 
 
 @router.post(
@@ -188,7 +202,7 @@ def blacklist_equipment(
 def lift_equipment_blacklist(
     equipment_id: uuid.UUID, body: LiftBlacklistRequest, user: CurrentUser, db: DB
 ) -> EquipmentRead:
-    raise not_implemented()
+    return svc.lift_blacklist(db, user, equipment_id, body)
 
 
 @router.get(
@@ -200,7 +214,7 @@ def lift_equipment_blacklist(
 def list_configuration_events(
     equipment_id: uuid.UUID, user: CurrentUser, db: DB
 ) -> ConfigurationEventList:
-    raise not_implemented()
+    return svc.list_config(db, user, equipment_id)
 
 
 @router.post(
@@ -213,7 +227,7 @@ def list_configuration_events(
 def create_configuration_event(
     equipment_id: uuid.UUID, body: ConfigurationEventCreate, user: CurrentUser, db: DB
 ) -> ConfigurationEventRead:
-    raise not_implemented()
+    return svc.create_config(db, user, equipment_id, body)
 
 
 # ---- deployments --------------------------------------------------------------------------
@@ -239,7 +253,21 @@ def list_equipment_deployments(
     site_id: uuid.UUID | None = None,
     arrival_inspection_due: bool | None = None,
 ) -> EquipmentDeploymentPage:
-    raise not_implemented()
+    return dsvc.list_deployments(
+        db,
+        user,
+        project_id,
+        pg.page,
+        pg.page_size,
+        q,
+        status_,
+        category,
+        service_status,
+        engagement_id,
+        include_subcontractors,
+        site_id,
+        arrival_inspection_due,
+    )
 
 
 @router.post(
@@ -252,7 +280,7 @@ def list_equipment_deployments(
 def create_equipment_deployment(
     project_id: uuid.UUID, body: EquipmentDeploymentCreate, user: CurrentUser, db: DB
 ) -> EquipmentDeploymentRead:
-    raise not_implemented()
+    return dsvc.create(db, user, project_id, body)
 
 
 @router.get(
@@ -264,7 +292,7 @@ def create_equipment_deployment(
 def get_equipment_deployment(
     deployment_id: uuid.UUID, user: CurrentUser, db: DB
 ) -> EquipmentDeploymentRead:
-    raise not_implemented()
+    return dsvc.read(db, user, deployment_id)
 
 
 @router.patch(
@@ -276,7 +304,7 @@ def get_equipment_deployment(
 def update_equipment_deployment(
     deployment_id: uuid.UUID, body: EquipmentDeploymentUpdate, user: CurrentUser, db: DB
 ) -> EquipmentDeploymentRead:
-    raise not_implemented()
+    return dsvc.update(db, user, deployment_id, body)
 
 
 @router.post(
@@ -288,7 +316,7 @@ def update_equipment_deployment(
 def transition_equipment_deployment(
     deployment_id: uuid.UUID, body: EquipmentDeploymentTransition, user: CurrentUser, db: DB
 ) -> EquipmentDeploymentRead:
-    raise not_implemented()
+    return dsvc.transition(db, user, deployment_id, body)
 
 
 @router.post(
@@ -301,7 +329,7 @@ def transition_equipment_deployment(
 def record_arrival_inspection(
     deployment_id: uuid.UUID, body: ArrivalInspectionInput, user: CurrentUser, db: DB
 ) -> ArrivalInspectionRead:
-    raise not_implemented()
+    return dsvc.record_arrival_inspection(db, user, deployment_id, body)
 
 
 @router.get(
@@ -313,7 +341,7 @@ def record_arrival_inspection(
 def get_equipment_sticker(
     deployment_id: uuid.UUID, user: CurrentUser, db: DB
 ) -> EquipmentStickerRead:
-    raise not_implemented()
+    return dsvc.get_sticker(db, user, deployment_id)
 
 
 @router.post(
@@ -325,4 +353,4 @@ def get_equipment_sticker(
 def reissue_equipment_sticker(
     deployment_id: uuid.UUID, body: StickerReissueRequest, user: CurrentUser, db: DB
 ) -> EquipmentStickerRead:
-    raise not_implemented()
+    return dsvc.reissue_sticker(db, user, deployment_id, body)

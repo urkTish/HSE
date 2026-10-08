@@ -95,7 +95,16 @@ from app.schemas.gates import (
 )
 from app.schemas.gates import GatePairing as GatePairingRead
 from app.services import attachments, audit, notify, projects
-from app.services.access import common, eligibility, lifecycle, profiles, waps, windows, workers
+from app.services.access import (
+    common,
+    eligibility,
+    hooks,
+    lifecycle,
+    profiles,
+    waps,
+    windows,
+    workers,
+)
 from app.services.access.reasons import gate_reason
 from app.services.common import duplicate, invalid_transition, paginate
 from app.services.hse_common import Refs
@@ -941,6 +950,11 @@ def gate_check(db: Session, caller: Caller, body: GateCheckRequest) -> GateCheck
             at,
         )
         return _response(db, row, g, zone, Verdict(deny=[G.TOKEN_UNKNOWN]))
+    if t.kind == QrKind.EQ:
+        # v1.2 (4-third-party-cert GE-1…GE-7): Phase 4 native checks in every hook stage
+        from app.services.cert import checks as cert_checks  # noqa: PLC0415
+
+        return cert_checks.gate_check(db, caller, g, zone, t, body, at)  # type: ignore[no-any-return]
     if t.project_id != g.project_id:
         # GC-13: a credential of another project is outside this gate's scope; no card.
         kind = GateSubjectKind.vehicle if t.kind == QrKind.VS else GateSubjectKind.person
@@ -1223,8 +1237,11 @@ def _vehicle_verdict(
                 verdict.add(G.CREW_EXCLUDED if item.reason == G.CREW_EXCLUDED else item.reason)
     # hooks by vehicle category
     for h in (s.hook_requirements_by_vehicle_category or {}).get(v.category.value, []):
+        hctx = hooks.HookContext(
+            project_id=s.project_id, zone_id=zone.id if zone else None, vehicle_id=v.id
+        )
         it = eligibility.hook_item(
-            db, HookSubjectType.vehicle, v.id, HookKind(h["kind"]), h["code"], at, s
+            db, HookSubjectType.vehicle, v.id, HookKind(h["kind"]), h["code"], at, s, hctx
         )
         verdict.merge_items([it])
     return verdict, needs_escort

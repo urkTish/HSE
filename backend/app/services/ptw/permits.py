@@ -22,7 +22,7 @@ from app.core.enums import (
     SiteStatus,
     ZoneType,
 )
-from app.core.errors import ErrorCode, not_found, validation_error
+from app.core.errors import ApiError, ErrorCode, field_error, not_found, validation_error
 from app.core.ptw_enums import (
     KEY_CREW_ROLES,
     PERMIT_TERMINAL,
@@ -1162,7 +1162,14 @@ def _add_equipment(
 ) -> PermitEquipment:
     if (body.vehicle_id is None) == (body.equipment_tag is None):
         raise validation_error(fld, "Give either vehicle_id or equipment_tag.")
-    e = PermitEquipment(id=uuid.uuid4(), permit_id=permit.id, use=body.use, hooks=[])
+    e = PermitEquipment(
+        id=uuid.uuid4(),
+        permit_id=permit.id,
+        use=body.use,
+        hooks=[],
+        operator_hooks=[],
+        conditions=[],
+    )
     if body.vehicle_id is not None:
         v = db.get(Vehicle, body.vehicle_id)
         tree = acommon.engagement_ancestors(db, permit.engagement_id)
@@ -1178,9 +1185,42 @@ def _add_equipment(
         e.tag = tag.tag
         e.description = tag.description
         e.max_working_height_m = tag.max_working_height_m
+    _bind_phase4(db, permit, e, body, fld)
     db.add(e)
     db.flush()
     return e
+
+
+def _bind_phase4(
+    db: Session, permit: Permit, e: PermitEquipment, body: PermitEquipmentInput, fld: str
+) -> None:
+    """3-ptw v1.1 §11.4 item 1 (4-third-party-cert HK4-9): the Phase 4 item (given or resolved
+    from the tag) and the operator, required for categories with an EQC operator code once
+    Phase 4 is enabled on the project (422 OPERATOR_REQUIRED)."""
+    from app.models import EquipmentItem  # noqa: PLC0415
+    from app.services.cert import policy as cpolicy  # noqa: PLC0415
+
+    if body.equipment_item_id is not None:
+        if db.get(EquipmentItem, body.equipment_item_id) is None:
+            raise validation_error(f"{fld}.equipment_item_id", "Equipment item not found.")
+        e.equipment_item_id = body.equipment_item_id
+    if body.operator_worker_id is not None:
+        if db.get(Worker, body.operator_worker_id) is None:
+            raise validation_error(f"{fld}.operator_worker_id", "Worker not found.")
+        e.operator_worker_id = body.operator_worker_id
+    if not cpolicy.enabled(db, permit.project_id):
+        return
+    evaluation.resolve_line_item(db, permit, e)
+    if e.operator_worker_id is None and evaluation.operator_code(db, e):
+        msg = "This equipment category needs a named operator (HK4-9)."
+        msg_ar = "تتطلب فئة المعدة هذه تسمية المشغل."
+        raise ApiError(
+            422,
+            ErrorCode.OPERATOR_REQUIRED,
+            msg,
+            msg_ar,
+            errors=[field_error(f"{fld}.operator_worker_id", msg, "missing", msg_ar)],
+        )
 
 
 def _equipment_writable(p: Principal, permit: Permit) -> None:
@@ -1200,7 +1240,7 @@ def add_equipment(
         lifecycle.back_to_requested(db, p, permit, "equipment added")
     _refresh(db, permit)
     db.refresh(e)
-    return views.equipment_read(db, e)
+    return views.equipment_read(db, e, views.names_ok(p, permit.project_id))
 
 
 def delete_equipment(
@@ -1509,6 +1549,11 @@ def copy(db: Session, p: Principal, permit_id: uuid.UUID, body: PermitCopyInput)
             max_working_height_m=e.max_working_height_m,
             use=e.use,
             hooks=[],
+            equipment_item_id=e.equipment_item_id,
+            deployment_id=e.deployment_id,
+            operator_worker_id=e.operator_worker_id,
+            operator_hooks=[],
+            conditions=[],
         )
         idmap[str(e.id)] = str(n.id)
         db.add(n)

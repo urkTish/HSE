@@ -9,7 +9,7 @@ from fastapi import APIRouter, status
 
 from app.api.deps import DB, CurrentUser
 from app.core.access_enums import HookKind
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.schemas.cert_config import (
     CertCatalogue,
     CertSettingsRead,
@@ -24,6 +24,8 @@ from app.schemas.cert_config import (
     HookReadinessReport,
     HookSwitchRequest,
 )
+from app.services.cert import policy, readiness
+from app.services.cert import settings as cset
 
 router = APIRouter(tags=["cert-config"])
 
@@ -35,7 +37,7 @@ router = APIRouter(tags=["cert-config"])
     responses=error_responses(401, 403, 404),
 )
 def get_cert_settings(project_id: uuid.UUID, user: CurrentUser, db: DB) -> CertSettingsRead:
-    raise not_implemented()
+    return cset.read(db, user, project_id)
 
 
 @router.patch(
@@ -47,7 +49,7 @@ def get_cert_settings(project_id: uuid.UUID, user: CurrentUser, db: DB) -> CertS
 def update_cert_settings(
     project_id: uuid.UUID, body: CertSettingsUpdate, user: CurrentUser, db: DB
 ) -> CertSettingsUpdateResult:
-    raise not_implemented()
+    return cset.update(db, user, project_id, body)
 
 
 @router.get(
@@ -59,7 +61,7 @@ def update_cert_settings(
 def get_cert_catalogue(
     user: CurrentUser, db: DB, project_id: uuid.UUID | None = None
 ) -> CertCatalogue:
-    raise not_implemented()
+    return cset.catalogue(db, user, project_id)
 
 
 @router.post(
@@ -70,7 +72,7 @@ def get_cert_catalogue(
     responses=error_responses(401, 403, 409, 422),
 )
 def create_cert_type(body: CertTypeCreate, user: CurrentUser, db: DB) -> CertTypeInfo:
-    raise not_implemented()
+    return cset.create_type(db, user, body)
 
 
 @router.patch(
@@ -80,7 +82,7 @@ def create_cert_type(body: CertTypeCreate, user: CurrentUser, db: DB) -> CertTyp
     responses=error_responses(401, 403, 404, 422),
 )
 def update_cert_type(code: str, body: CertTypeUpdate, user: CurrentUser, db: DB) -> CertTypeInfo:
-    raise not_implemented()
+    return cset.update_type(db, user, code, body)
 
 
 @router.get(
@@ -90,7 +92,7 @@ def update_cert_type(code: str, body: CertTypeUpdate, user: CurrentUser, db: DB)
     responses=error_responses(401, 403, 404),
 )
 def get_hook_policy(project_id: uuid.UUID, user: CurrentUser, db: DB) -> HookPolicyRead:
-    raise not_implemented()
+    return policy.read(db, user, project_id)
 
 
 @router.post(
@@ -102,7 +104,7 @@ def get_hook_policy(project_id: uuid.UUID, user: CurrentUser, db: DB) -> HookPol
 def enable_hook_policy(
     project_id: uuid.UUID, body: HookEnableRequest, user: CurrentUser, db: DB
 ) -> HookPolicyRead:
-    raise not_implemented()
+    return policy.enable(db, user, project_id, body)
 
 
 @router.post(
@@ -114,7 +116,7 @@ def enable_hook_policy(
 def switch_hook_policy(
     project_id: uuid.UUID, kind: HookKind, body: HookSwitchRequest, user: CurrentUser, db: DB
 ) -> HookPolicyRead:
-    raise not_implemented()
+    return policy.switch(db, user, project_id, kind, body)
 
 
 @router.post(
@@ -126,7 +128,7 @@ def switch_hook_policy(
 def defer_hook_policy(
     project_id: uuid.UUID, kind: HookKind, body: HookDeferralRequest, user: CurrentUser, db: DB
 ) -> HookPolicyRead:
-    raise not_implemented()
+    return policy.defer(db, user, project_id, kind, body)
 
 
 @router.get(
@@ -142,4 +144,4 @@ def get_hook_readiness(
     db: DB,
     on_date: date | None = None,
 ) -> HookReadinessReport:
-    raise not_implemented()
+    return readiness.report(db, user, project_id, kind, on_date)

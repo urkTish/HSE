@@ -12,7 +12,7 @@ from app.api.kpi_params import KpiParams
 from app.core.access_enums import AccessKpiGroupBy
 from app.core.cert_enums import CertKpiGroupBy
 from app.core.enums import Capability, ExportFormat
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.core.hse_enums import (
     BreakdownDimension,
     BreakdownMeasure,
@@ -22,7 +22,7 @@ from app.core.hse_enums import (
     KpiMetric,
 )
 from app.core.ptw_enums import PtwKpiGroupBy
-from app.kpi import access_views, charts, ptw_views, scope, service, views
+from app.kpi import access_views, cert_views, charts, ptw_views, scope, service, views
 from app.schemas.access_kpi import AccessKpiResponse
 from app.schemas.cert_kpi import CertKpiResponse
 from app.schemas.kpi import (
@@ -281,7 +281,8 @@ def get_chart(
     ] = None,
 ) -> ChartResponse:
     if chart_id in PHASE4_CHARTS:
-        raise not_implemented()
+        sc = scope.build(db, user, q, Capability.cert_kpi_view)
+        return ChartResponse(context=service.context(sc), chart=cert_views.chart(sc, chart_id))
     if chart_id in PHASE3_CHARTS:
         sc = scope.build(db, user, q, Capability.ptw_kpi_view)
         return ChartResponse(context=service.context(sc), chart=ptw_views.chart(sc, chart_id))
@@ -391,4 +392,5 @@ def get_cert_kpis(
     ] = None,
     group_by: Annotated[list[CertKpiGroupBy] | None, Query()] = None,
 ) -> CertKpiResponse:
-    raise not_implemented()
+    sc = scope.build(db, user, q, Capability.cert_kpi_view)
+    return cert_views.cert_kpis(db, sc, metric, group_by)

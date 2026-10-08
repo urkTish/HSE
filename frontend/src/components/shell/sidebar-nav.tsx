@@ -1,5 +1,14 @@
 "use client";
 import {
+  Award,
+  Ban,
+  Forklift,
+  Upload,
+  Wrench,
+  ScanSearch,
+  Fence,
+  Landmark,
+  FileBadge,
   BadgeCheck,
   ClipboardSignature,
   Cog,
@@ -183,6 +192,21 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
       ]
     : [];
 
+  const certItems: Item[] = pid
+    ? [
+        ...(ac("cert_register.view") ? [{ href: "/equipment-deployments", label: t("equipment"), Icon: Forklift, testId: "nav-equipment" }] : []),
+        ...(ac("cert_register.view") ? [{ href: "/equipment-certificates", label: t("equipmentCerts"), Icon: FileBadge, testId: "nav-equipment-certs" }] : []),
+        ...(ac("cert_register.view") ? [{ href: "/scaffolds", label: t("scaffolds"), Icon: Fence, testId: "nav-scaffolds" }] : []),
+        ...(ac("personnel_cert.view") ? [{ href: "/personnel-certificates", label: t("personnelCerts"), Icon: Award, testId: "nav-personnel-certs" }] : []),
+        ...(ac("cert_register.view", "defect.raise") ? [{ href: "/defects", label: t("defects"), Icon: Wrench, testId: "nav-defects" }] : []),
+        ...(ac("cert_register.view") ? [{ href: "/tpis", label: t("tpis"), Icon: Landmark, testId: "nav-tpis" }] : []),
+        ...(ac("cert.check") ? [{ href: "/cert-check", label: t("certCheck"), Icon: ScanSearch, testId: "nav-cert-check" }] : []),
+        ...(ac("cert.import") ? [{ href: "/certificate-imports", label: t("certImports"), Icon: Upload, testId: "nav-cert-imports" }] : []),
+        ...(ac("cert.blacklist", "personnel_cert.submit", "cert.review") ? [{ href: "/blacklist-register", label: t("blacklist"), Icon: Ban, testId: "nav-blacklist" }] : []),
+        ...(ac("cert_kpi.view", "cert_settings.edit") ? [{ href: "/hook-policy", label: t("certSetup"), Icon: Cog, testId: "nav-cert-setup" }] : []),
+      ]
+    : [];
+
   return (
     <nav aria-label={t("main")} className="flex flex-1 flex-col gap-5 p-3">
       <ul className="flex flex-col gap-1">
@@ -228,6 +252,18 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
               <p className="px-3 pt-1 pb-1 text-xs font-medium text-sidebar-muted">{t("ptw")}</p>
               <ul className="mb-3 flex flex-col gap-1" data-testid="nav-ptw">
                 {ptwItems.map((i) => (
+                  <li key={i.href}>
+                    <NavLink item={i} onNavigate={onNavigate} />
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : null}
+          {certItems.length > 0 ? (
+            <>
+              <p className="px-3 pt-1 pb-1 text-xs font-medium text-sidebar-muted">{t("cert")}</p>
+              <ul className="mb-3 flex flex-col gap-1" data-testid="nav-cert">
+                {certItems.map((i) => (
                   <li key={i.href}>
                     <NavLink item={i} onNavigate={onNavigate} />
                   </li>

@@ -234,6 +234,21 @@ class Facts:
     def ptw(self, value: Any) -> None:
         self._ptw = value
 
+    # app.kpi.cert_facts.CertFacts (4-third-party-cert §6.7), loaded on first use.
+    cert_loader: Any = None
+    _cert: Any = None
+
+    @property
+    def cert(self) -> Any:
+        if self._cert is None and self.cert_loader is not None:
+            self._cert = self.cert_loader()
+            self.cert_loader = None
+        return self._cert
+
+    @cert.setter
+    def cert(self, value: Any) -> None:
+        self._cert = value
+
     def sort(self) -> "Facts":
         self.wf.sort(key=lambda r: r.d)
         self.inds.sort(key=lambda r: r.d)

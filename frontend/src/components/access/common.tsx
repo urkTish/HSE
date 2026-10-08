@@ -4,6 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
 import QRCode from "qrcode";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { HookConditions, HookSeverity } from "@/components/cert/hook-ui";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -168,7 +169,7 @@ export function EligibilityItems({ items, projectId }: { items: Schemas["Eligibi
       {items.map((i, idx) => {
         const msg = ar ? i.message_ar : i.message_en;
         return (
-          <li key={`${i.kind}-${i.code ?? ""}-${idx}`} className={cn("flex flex-wrap items-center justify-between gap-2 p-2.5 text-sm", i.status === "warn" && i.reason_code !== "HOOK_NOT_AVAILABLE" && "bg-warning-bg/50")} data-testid="eligibility-item" data-status={i.status} data-reason={i.reason_code ?? ""}>
+          <li key={`${i.kind}-${i.code ?? ""}-${idx}`} className={cn("flex flex-wrap items-center justify-between gap-2 p-2.5 text-sm", i.status === "warn" && i.reason_code !== "HOOK_NOT_AVAILABLE" && "bg-warning-bg/50", i.hard_stop && "bg-danger-bg/50")} data-testid="eligibility-item" data-status={i.status} data-reason={i.reason_code ?? ""}>
             <span className="min-w-0">
               <span className="font-medium">{te(`requirementKind.${i.kind}`)}</span>
               {i.code ? (
@@ -183,8 +184,20 @@ export function EligibilityItems({ items, projectId }: { items: Schemas["Eligibi
                 </span>
               ) : null}
               {msg || i.reason_code ? <span className="block text-xs text-muted-foreground">{msg || (i.reason_code ? te(`gateReason.${i.reason_code}`) : "")}</span> : null}
+              {i.hook_reason_code && te.has(`hookReason.${i.hook_reason_code as Schemas["HookReasonCode"]}`) ? (
+                <span className="block text-xs font-medium" data-testid="hook-reason">
+                  {te(`hookReason.${i.hook_reason_code as Schemas["HookReasonCode"]}`)}
+                </span>
+              ) : null}
+              {i.swl_t ? <span className="block text-xs text-muted-foreground ltr">SWL ≤ {i.swl_t} t</span> : null}
+              {i.conditions?.length ? (
+                <span className="mt-1 block">
+                  <HookConditions items={i.conditions} />
+                </span>
+              ) : null}
             </span>
             <span className="flex items-center gap-2">
+              <HookSeverity hardStop={!!i.hard_stop} warn={!i.hard_stop && i.reason_code === "HOOK_NOT_MET_WARN"} />
               {i.valid_until ? <span className="text-xs text-muted-foreground">{date(i.valid_until)}</span> : null}
               <StatusBadge status={i.status} label={te(`requirementStatus.${i.status}`)} />
             </span>

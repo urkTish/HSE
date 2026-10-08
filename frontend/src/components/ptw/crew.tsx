@@ -14,8 +14,12 @@ import { FormField } from "@/components/common/form-field";
 import { MutationError } from "@/components/common/states";
 import { StatusBadge } from "@/components/common/status-badge";
 import { DeploymentPicker, EligibilityItems, StepDialog, VehicleSelect } from "@/components/access/common";
+import { EquipmentPicker } from "@/components/cert/deployments";
+import { HookConditions } from "@/components/cert/hook-ui";
+import { Link } from "@/i18n/navigation";
 import { useMeData } from "@/components/shell/me-context";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
+import { useCertCatalogue } from "@/lib/api/cert";
 import { useAppointments, usePtwRefresh } from "@/lib/api/ptw";
 import { can } from "@/lib/permissions";
 import { DOCUMENT_TYPES, EQUIPMENT_CATEGORIES, EQUIPMENT_USES, PTW_CREW_ROLES } from "@/lib/ptw-enums";
@@ -286,9 +290,41 @@ export function EquipmentPanel({ permit }: { permit: Permit }) {
                     </Button>
                   ) : null}
                 </div>
+                {e.equipment_item || e.operator || e.swl_t ? (
+                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs" data-testid="equipment-line-p4">
+                    {e.equipment_item ? (
+                      <Link href={`/equipment/${e.equipment_item.id}`} className="text-primary hover:underline">
+                        <bdi className="ltr">{e.equipment_item.equipment_no}</bdi>
+                        {e.deployment ? (
+                          <>
+                            {" "}
+                            · <bdi className="ltr">{e.deployment.tag}</bdi>
+                          </>
+                        ) : null}
+                      </Link>
+                    ) : null}
+                    {e.swl_t ? <span className="ltr">SWL ≤ {e.swl_t} t</span> : null}
+                    {e.operator ? (
+                      <span data-testid="equipment-operator">
+                        {t("operator")}: <WorkerRefLabel w={e.operator} />
+                      </span>
+                    ) : null}
+                  </div>
+                ) : null}
                 {e.hooks.length ? (
                   <div className="mt-2">
                     <EligibilityItems items={e.hooks} projectId={permit.project_id} />
+                  </div>
+                ) : null}
+                {e.operator_hooks?.length ? (
+                  <div className="mt-2" data-testid="operator-hooks">
+                    <p className="mb-1 text-xs font-medium text-muted-foreground">{t("operatorChecks")}</p>
+                    <EligibilityItems items={e.operator_hooks} projectId={permit.project_id} />
+                  </div>
+                ) : null}
+                {e.conditions?.length ? (
+                  <div className="mt-2">
+                    <HookConditions items={e.conditions} />
                   </div>
                 ) : null}
               </li>
@@ -314,18 +350,34 @@ function AddEquipmentDialog({ permit, onClose }: { permit: Permit; onClose: () =
   const [desc, setDesc] = useState("");
   const [height, setHeight] = useState("");
   const [use, setUse] = useState<S["EquipmentUse"]>("lifting_appliance");
+  const [item, setItem] = useState<S["EquipmentListItem"] | null>(null);
+  const [operator, setOperator] = useState<S["DeploymentRead"] | null>(null);
+  const catalogue = useCertCatalogue(permit.project_id);
+  const opCodes = new Set((catalogue.data?.equipment_categories ?? []).filter((c) => c.operator_code).map((c) => c.code));
+  const ptwToEqc = (catalogue.data?.ptw_mappings ?? []).find((m) => m.ptw_equipment_category === cat)?.eqc ?? [];
+  const needsOperator = mode === "tag" && (item ? opCodes.has(item.category) : ptwToEqc.some((c) => opCodes.has(c)));
+  function pickItem(x: S["EquipmentListItem"] | null) {
+    setItem(x);
+    if (!x) return;
+    if (x.current_tag) setTag(x.current_tag);
+    const m = (catalogue.data?.ptw_mappings ?? []).find((mm) => mm.ptw_equipment_category && mm.eqc.includes(x.category));
+    if (m?.ptw_equipment_category) setCat(m.ptw_equipment_category);
+  }
   return (
     <StepDialog
       title={t("addEquipment")}
       confirmLabel={t("addConfirm")}
-      disabled={mode === "vehicle" ? !vehicle : !tag.trim()}
+      disabled={(mode === "vehicle" ? !vehicle : !tag.trim()) || (needsOperator && !operator)}
       onClose={onClose}
       testId="save-equipment"
       onConfirm={async () => {
         await unwrap(
           api.POST("/api/v1/permits/{permit_id}/equipment", {
             params: { path: { permit_id: permit.id } },
-            body: mode === "vehicle" ? { vehicle_id: vehicle, use } : { equipment_tag: { category: cat, tag: tag.trim(), description: desc || null, max_working_height_m: height || null }, use },
+            body:
+              mode === "vehicle"
+                ? { vehicle_id: vehicle, use, operator_worker_id: operator?.worker_id ?? null }
+                : { equipment_tag: { category: cat, tag: tag.trim(), description: desc || null, max_working_height_m: height || null }, use, equipment_item_id: item?.id ?? null, operator_worker_id: operator?.worker_id ?? null },
           }),
         );
         await refresh();
@@ -347,6 +399,7 @@ function AddEquipmentDialog({ permit, onClose }: { permit: Permit; onClose: () =
         </FormField>
       ) : (
         <>
+          {catalogue.data ? <EquipmentPicker id="eq-item" label={t("registeredItem")} value={item} onChange={pickItem} projectId={permit.project_id} /> : null}
           <FormField id="eq-cat" label={t("category")} required>
             <Select value={cat} onChange={(e) => setCat(e.target.value as S["EquipmentCategory"])}>
               {EQUIPMENT_CATEGORIES.map((x) => (
@@ -367,6 +420,7 @@ function AddEquipmentDialog({ permit, onClose }: { permit: Permit; onClose: () =
           </FormField>
         </>
       )}
+      <DeploymentPicker id="eq-operator" projectId={permit.project_id} value={operator} onChange={setOperator} label={needsOperator ? t("operatorRequired") : t("operatorOptional")} required={needsOperator} status={["mobilised"]} />
       <FormField id="eq-use" label={t("use")} required>
         <Select value={use} onChange={(e) => setUse(e.target.value as S["EquipmentUse"])} data-testid="eq-use">
           {EQUIPMENT_USES.map((x) => (

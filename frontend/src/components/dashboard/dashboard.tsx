@@ -131,6 +131,7 @@ function DashboardBody({ query, projectId }: { query: KpiQuery; projectId: strin
           <Headline h={d.data.headline} show={show} projectId={projectId} periodLabel={locale === "ar" ? d.data.context.period.label_ar : d.data.context.period.label_en} />
           {d.data.access_band ? <AccessBandView b={d.data.access_band} show={show} /> : null}
           {d.data.ptw_band ? <PtwBandView b={d.data.ptw_band} show={show} /> : null}
+          {d.data.cert_band ? <CertBandView b={d.data.cert_band} show={show} projectId={projectId} /> : null}
           <section aria-labelledby="needs-h" className="flex flex-col gap-2">
             <h2 id="needs-h" className="sr-only">
               {t("needsToday")}
@@ -170,6 +171,7 @@ function DashboardBody({ query, projectId }: { query: KpiQuery; projectId: strin
           <Charts query={query} projectId={projectId} show={show} />
           {can(me, "access_kpi.view", projectId) ? <AccessCharts query={query} projectId={projectId} show={show} /> : null}
           {can(me, "ptw_kpi.view", projectId) ? <PtwCharts query={query} projectId={projectId} show={show} /> : null}
+          {can(me, "cert_kpi.view", projectId) ? <CertCharts query={query} projectId={projectId} show={show} /> : null}
           <Panel title={t("league")} testId="league-card" actions={canExport ? <ExportButton table="contractors" query={query} label={t("exportContractors")} /> : null}>
             <LeagueTable query={query} show={show} />
           </Panel>
@@ -403,6 +405,96 @@ function PtwBandView({ b, show }: { b: Schemas["PtwBand"]; show: Show }) {
           ))}
         </ul>
       ) : null}
+    </section>
+  );
+}
+
+/** §8.1 item 2 (Phase 4): certification band — items on site by service status, review / verification queues, expiries, hook stage. */
+function CertBandView({ b, show, projectId }: { b: Schemas["CertBand"]; show: Show; projectId: string | null }) {
+  const t = useTranslations("dashboard");
+  const te = useTranslations("enums");
+  const { date } = useFormatters(projectId);
+  const items: { key: string; label: string; value: number; href: string; tone?: "danger" | "warning" | "success" }[] = [
+    { key: "in-service", label: t("certBand.inService"), value: b.on_site_in_service, href: "/equipment-deployments?status=on_site&service_status=in_service", tone: "success" },
+    { key: "quarantined", label: t("certBand.quarantined"), value: b.on_site_quarantined, href: "/equipment-deployments?status=on_site&service_status=quarantined", tone: b.on_site_quarantined ? "warning" : undefined },
+    { key: "out-of-service", label: t("certBand.outOfService"), value: b.on_site_out_of_service, href: "/equipment-deployments?status=on_site&service_status=out_of_service", tone: b.on_site_out_of_service ? "danger" : undefined },
+    { key: "review", label: t("certBand.awaitingReview"), value: b.awaiting_review, href: "/equipment-certificates?status=submitted" },
+    { key: "verification", label: t("certBand.awaitingVerification"), value: b.awaiting_verification, href: "/equipment-certificates?verification_status=not_verified" },
+  ];
+  return (
+    <section aria-labelledby="cert-band-h" className="flex flex-col gap-3 rounded-xl border bg-surface p-4 shadow-xs" data-testid="cert-band">
+      <h2 id="cert-band-h" className="text-sm font-semibold">
+        {t("certBand.title")}
+      </h2>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3 lg:grid-cols-5">
+        {items.map((i) => (
+          <div key={i.key} className="flex min-w-0 flex-col gap-1" data-testid={`cert-band-${i.key}`}>
+            <p className="text-xs font-medium text-muted-foreground">{i.label}</p>
+            <Link
+              href={i.href}
+              className={cn("inline-flex items-center gap-1 text-xl leading-tight font-semibold hover:underline", i.tone === "danger" ? "text-danger" : i.tone === "warning" ? "text-warning" : i.tone === "success" ? "text-success" : "text-primary")}
+            >
+              {i.tone === "danger" ? <OctagonAlert aria-hidden className="size-4 shrink-0" /> : i.tone === "warning" ? <TriangleAlert aria-hidden className="size-4 shrink-0" /> : null}
+              {show(i.value)}
+            </Link>
+            {i.key === "verification" && b.verification_overdue ? (
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-warning" data-testid="cert-band-verification-overdue">
+                <TriangleAlert aria-hidden className="size-3.5 shrink-0" />
+                {t("certBand.overdue", { n: b.verification_overdue })}
+              </span>
+            ) : null}
+          </div>
+        ))}
+        <HeadlineValue v={b.equipment_expiring_30d} show={show} />
+        <HeadlineValue v={b.personnel_expiring_30d} show={show} />
+        <HeadlineValue v={b.inspections_overdue} show={show} />
+        <HeadlineValue v={b.blacklisted_banned} show={show} />
+      </div>
+      {b.hook_stages.length ? (
+        <ul className="flex flex-wrap gap-2 text-xs" data-testid="cert-band-hooks">
+          {b.hook_stages.map((h) => (
+            <li key={h.kind} className={cn("rounded-md border px-2 py-1", h.stage === "block" ? "border-danger/40" : h.stage === "transition" ? "border-warning/50" : undefined)} data-stage={h.stage}>
+              <Link href="/hook-policy" className="hover:underline">
+                {te(`hookKind.${h.kind}`)}: <span className="font-semibold">{te(`hookStage.${h.stage}`)}</span>
+                {h.next_block_date ? <> · {h.next_block_scope === "critical" ? t("certBand.nextBlockCritical", { d: date(h.next_block_date) }) : t("certBand.nextBlockGeneral", { d: date(h.next_block_date) })}</> : null}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </section>
+  );
+}
+
+/** C16–C18 certification charts (Phase 4 §8.1 item 3), loaded when scrolled into view. */
+function CertCharts({ query, projectId, show }: { query: KpiQuery; projectId: string | null; show: Show }) {
+  const t = useTranslations("dashboard");
+  const ref = useRef<HTMLElement | null>(null);
+  const [inView, setInView] = useState(() => typeof IntersectionObserver === "undefined");
+  useEffect(() => {
+    const el = ref.current;
+    if (inView || !el) return;
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) setInView(true);
+    }, { rootMargin: "200px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [inView]);
+  return (
+    <section ref={ref} aria-labelledby="cert-charts-h" className="flex flex-col gap-3" data-testid="cert-charts">
+      <h2 id="cert-charts-h" className="text-sm font-semibold">
+        {t("certCharts")}
+      </h2>
+      {inView ? (
+        <div className="grid gap-4 lg:grid-cols-2">
+          {(["C16", "C17"] as const).map((id) => (
+            <ChartCard key={id} id={id} query={query} projectId={projectId} show={show} />
+          ))}
+          <ChartCard id="C18" query={query} projectId={projectId} show={show} className="lg:col-span-2" />
+        </div>
+      ) : (
+        <div className="min-h-64" aria-hidden />
+      )}
     </section>
   );
 }

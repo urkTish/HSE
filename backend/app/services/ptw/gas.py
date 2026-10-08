@@ -182,9 +182,32 @@ def detector_read(
             and acommon.local_day(last.tested_at) == day
         ),
         live_permits=[common.permit_ref(x) for x in _detector_permits(db, d)],
+        calibration_body=_calibration_body(db, d),
         created_at=d.created_at,
         updated_at=d.updated_at,
     )
+
+
+def _calibration_body(db: Session, d: GasDetector) -> Any:
+    if d.calibration_body_id is None:
+        return None
+    from app.models import Tpi  # noqa: PLC0415
+    from app.services.cert import common as ccommon  # noqa: PLC0415
+
+    t = db.get(Tpi, d.calibration_body_id)
+    return ccommon.tpi_ref(t) if t else None
+
+
+def _check_calibration_body(db: Session, tpi_id: uuid.UUID | None) -> None:
+    """3-ptw v1.1 §4.6 (4-third-party-cert BL-7): a TPI of kind calibration_lab."""
+    if tpi_id is None:
+        return
+    from app.core.cert_enums import TpiKind  # noqa: PLC0415
+    from app.models import Tpi  # noqa: PLC0415
+
+    t = db.get(Tpi, tpi_id)
+    if t is None or TpiKind.calibration_lab.value not in (t.kinds or []):
+        raise validation_error("calibration_body_id", "Not a TPI of kind calibration_lab.")
 
 
 def detector_ref(d: GasDetector) -> DetectorRef:
@@ -285,6 +308,7 @@ def create_detector(
     if body.calibrated_on > today():
         raise validation_error("calibrated_on", "The calibration date cannot be in the future.")
     _check_sensors(body.sensors, body.lel_reference_gas)
+    _check_calibration_body(db, body.calibration_body_id)
     if db.scalar(
         select(GasDetector.id).where(
             GasDetector.project_id == project_id, GasDetector.serial == body.serial
@@ -310,6 +334,7 @@ def create_detector(
         calibrated_on=body.calibrated_on,
         calibration_cert_ref=body.calibration_cert_ref,
         certificate_due_on=body.certificate_due_on,
+        calibration_body_id=body.calibration_body_id,
         calibration_due_on=due,
         status=DetectorStatus.quarantined if overdue else DetectorStatus.in_service,
         quarantine_reason=QuarantineReason.calibration_overdue if overdue else None,
@@ -356,6 +381,9 @@ def update_detector(
         d.sensors = [s.value for s in body.sensors]
     if "lel_reference_gas" in ch:
         d.lel_reference_gas = body.lel_reference_gas
+    if "calibration_body_id" in ch:
+        _check_calibration_body(db, body.calibration_body_id)
+        d.calibration_body_id = body.calibration_body_id
     _check_sensors([GasSensor(s) for s in d.sensors], d.lel_reference_gas)
     d.updated_by_user_id = p.user.id
     db.flush()

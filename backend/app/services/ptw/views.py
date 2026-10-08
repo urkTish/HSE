@@ -53,6 +53,7 @@ from app.models import (
     Worker,
 )
 from app.schemas import permits as sch
+from app.schemas.access_common import HookCondition
 from app.schemas.ptw_common import SignatureRead
 from app.services.access import common as acommon
 from app.services.hse_common import Refs, user_roles
@@ -165,8 +166,10 @@ def crew_read(
     )
 
 
-def equipment_read(db: Session, e: PermitEquipment) -> sch.PermitEquipmentRead:
+def equipment_read(db: Session, e: PermitEquipment, names: bool = False) -> sch.PermitEquipmentRead:
+    from app.models import EquipmentDeployment, EquipmentItem  # noqa: PLC0415
     from app.schemas.inductions import EligibilityItem  # noqa: PLC0415
+    from app.services.cert import common as ccommon  # noqa: PLC0415
 
     v = db.get(Vehicle, e.vehicle_id) if e.vehicle_id else None
     tag = (
@@ -179,10 +182,15 @@ def equipment_read(db: Session, e: PermitEquipment) -> sch.PermitEquipmentRead:
         if e.tag and e.category
         else None
     )
-    hooks = []
-    for it in e.hooks or []:
-        d = {k: v2 for k, v2 in it.items() if k != "zone_id"}
-        hooks.append(EligibilityItem(**d))
+
+    def items(lst: list[dict[str, Any]] | None) -> list[Any]:
+        return [
+            EligibilityItem(**{k: v2 for k, v2 in it.items() if k != "zone_id"}) for it in lst or []
+        ]
+
+    item = db.get(EquipmentItem, e.equipment_item_id) if e.equipment_item_id else None
+    dep = db.get(EquipmentDeployment, e.deployment_id) if e.deployment_id else None
+    op = db.get(Worker, e.operator_worker_id) if e.operator_worker_id else None
     return sch.PermitEquipmentRead(
         id=e.id,
         vehicle=acommon.vehicle_ref(v) if v else None,
@@ -195,7 +203,13 @@ def equipment_read(db: Session, e: PermitEquipment) -> sch.PermitEquipmentRead:
             if v and v.max_working_height_m_agl is not None
             else None
         ),
-        hooks=hooks,
+        hooks=items(e.hooks),
+        equipment_item=ccommon.equipment_ref(db, item) if item else None,
+        deployment=ccommon.deployment_ref(dep) if dep else None,
+        operator=acommon.worker_ref(op, names) if op else None,
+        operator_hooks=items(e.operator_hooks),
+        conditions=[HookCondition(**c) for c in e.conditions or []],
+        swl_t=e.swl_t,
     )
 
 
@@ -330,6 +344,17 @@ def wap_link_read(w: Wap) -> sch.WapLinkRead:
     )
 
 
+def _scaffold(db: Session, permit: Permit, tag: str | None) -> Any:
+    """SF-1: scaffold_tag_ref resolved on the Phase 4 register of the permit's project."""
+    if not tag:
+        return None
+    from app.services.cert import common as ccommon  # noqa: PLC0415
+    from app.services.cert import providers  # noqa: PLC0415
+
+    sc = providers.find_scaffold(db, permit.project_id, tag)
+    return ccommon.scaffold_ref(sc) if sc else None
+
+
 def section_reads(
     db: Session, p: Principal | None, permit: Permit, f: facts_mod.Facts, refs: Refs, names: bool
 ) -> list[Any]:
@@ -380,6 +405,7 @@ def section_reads(
             out.append(
                 sch.WorkAtHeightSectionRead(
                     **base,
+                    scaffold=_scaffold(db, permit, stored.get("scaffold_tag_ref")),
                     required_clearance_m=rules.required_clearance(stored),
                     clearance_ok=rules.clearance_ok(stored),
                 )
@@ -1007,7 +1033,7 @@ def permit_read(
         crew=[crew_read(db, p, x, shift, names, medical) for x in visible_lines],
         crew_count=len([x for x in lines if x.status != CrewLineStatus.removed]),
         crew_roles=crew_roles(lines),
-        equipment=[equipment_read(db, e) for e in evaluation.equipment_lines(db, permit.id)],
+        equipment=[equipment_read(db, e, names) for e in evaluation.equipment_lines(db, permit.id)],
         sections=section_reads(db, p, permit, f, refs, names),
         pre_issue_checklist=checklist_read(db, permit, ChecklistKind.pre_issue, refs),
         closure_checklist=checklist_read(db, permit, ChecklistKind.closure, refs),
@@ -1018,6 +1044,7 @@ def permit_read(
         conditions_en=permit.conditions_en,
         conditions_ar=permit.conditions_ar,
         copied_conditions=list(permit.copied_conditions or []),
+        hook_conditions=[HookCondition(**c) for c in permit.hook_conditions or []],
         emergency_info=permit.emergency_info,
         status=permit.status,
         status_reason=permit.status_reason,

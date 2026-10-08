@@ -7,11 +7,12 @@ from fastapi import APIRouter, Query, Response
 
 from app.api.deps import DB, CurrentUser
 from app.core.enums import ExportDataset, ExportFormat
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.core.hse_enums import ExportPurpose
 from app.services import exports as svc
 from app.services import hse_exports
 from app.services.access import exports as access_exports
+from app.services.cert import exports as cert_exports
 from app.services.ptw import exports as ptw_exports
 
 router = APIRouter(prefix="/exports", tags=["exports"])
@@ -29,20 +30,7 @@ PHASE1_DATASETS = frozenset(
 
 PHASE2_DATASETS = access_exports.DATASETS
 
-PHASE4_DATASETS = frozenset(
-    {
-        ExportDataset.tpis,
-        ExportDataset.equipment,
-        ExportDataset.equipment_deployments,
-        ExportDataset.equipment_certificates,
-        ExportDataset.scaffolds,
-        ExportDataset.personnel_certificates,
-        ExportDataset.cert_verifications,
-        ExportDataset.equipment_defects,
-        ExportDataset.blacklist_register,
-        ExportDataset.cert_imports,
-    }
-)
+PHASE4_DATASETS = cert_exports.DATASETS
 
 _FILE_RESPONSES: dict[int | str, dict[str, object]] = {
     200: {
@@ -73,7 +61,7 @@ _FILE_RESPONSES: dict[int | str, dict[str, object]] = {
     "names only with capability 46; signatures, gas readings and medical data are never exported. "
     "Phase 4 certification registers need capability 123; names only with capability 46; ID "
     "numbers, scans, the medical flag, ban reasons and verification-failure details are never "
-    "exported (§8.4); blacklist_register is HSE Manager only.",
+    "exported (§8.4); blacklist_register is HSE Manager and HSE Officers only (decision 8).",
     response_class=Response,
     responses=_FILE_RESPONSES,
 )
@@ -100,8 +88,10 @@ def export_dataset(
     ] = None,
 ) -> Response:
     if dataset in PHASE4_DATASETS:
-        raise not_implemented()
-    if dataset in PHASE2_DATASETS:
+        content, media_type, filename = cert_exports.export(
+            db, user, dataset, format_, project_id, status_, q
+        )
+    elif dataset in PHASE2_DATASETS:
         content, media_type, filename = access_exports.export(
             db,
             user,

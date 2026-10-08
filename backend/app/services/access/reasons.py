@@ -59,6 +59,24 @@ GATE_TEXT: dict[GateReasonCode, tuple[str, str]] = {
         "Induction not given in the worker's language",
         "التعريف لم يُقدَّم بلغة العامل",
     ),
+    # v1.2 (4-third-party-cert §11.3 GC-6, GE-2, HK4-4)
+    G.HOOK_NOT_MET_WARN: (
+        "Requirement not met (warning until the block date)",
+        "متطلب غير مستوفى (تحذير حتى تاريخ الحظر)",
+    ),
+    G.EQUIPMENT_BLACKLISTED: ("Equipment blacklisted", "المعدة محظورة"),
+    G.EQUIPMENT_NOT_DEPLOYED: (
+        "Equipment not deployed on this project",
+        "المعدة غير معيّنة في هذا المشروع",
+    ),
+    G.EQUIPMENT_NOT_APPROVED: (
+        "Equipment not approved for mobilisation",
+        "المعدة غير معتمدة للتعبئة",
+    ),
+    G.EQUIPMENT_OUT_OF_SERVICE: ("OUT OF SERVICE", "خارج الخدمة"),
+    G.EQUIPMENT_QUARANTINED: ("Equipment quarantined", "المعدة معزولة عن الاستخدام"),
+    G.ARRIVAL_INSPECTION_DUE: ("Arrival inspection due", "فحص الوصول مستحق"),
+    G.ALSO_SCAN_VEHICLE_STICKER: ("Also scan the vehicle sticker", "امسح ملصق المركبة أيضاً"),
 }
 
 HOOK_TEXT: dict[HookKind, tuple[str, str]] = {

@@ -17,6 +17,7 @@ import { Attachments } from "@/components/common/attachments";
 import { Breadcrumbs } from "@/components/common/breadcrumbs";
 import { FieldItem, FieldList, YesNo } from "@/components/common/field-list";
 import { FormField } from "@/components/common/form-field";
+import { IncidentDefectPrompt } from "@/components/cert/defects";
 import { HistoryPanel } from "@/components/common/history-panel";
 import { MultiSelect } from "@/components/common/multi-select";
 import { UserSelect, useUserOptions } from "@/components/common/pickers";
@@ -388,6 +389,7 @@ export function IncidentDetail({ id }: { id: string }) {
               )}
             </CardContent>
           </Card>
+          {can(me, "cert_register.view", r.project_id) ? <IncidentDefectPrompt incidentId={r.id} projectId={r.project_id} /> : null}
           {can(me, "history.view", r.project_id) ? <HistoryPanel entityType="incident" entityId={r.id} projectId={r.project_id} /> : null}
         </div>
       </div>

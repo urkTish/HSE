@@ -418,6 +418,14 @@ def render(
         S.data_quality: [_data_quality(db, sc)],
         S.appendix_definitions: [_appendix(sc)],
     }
+    # 1-dashboard v1.3 AI-19 (4-third-party-cert §11.2): certification K-72…K-81 (aggregates
+    # only) with the leading indicators once Phase 4 is enabled on the project
+    from app.kpi import cert_views  # noqa: PLC0415
+    from app.services.cert import dashboard_items as cert_items  # noqa: PLC0415
+
+    if cert_items.enabled(db, project.id):
+        cert_views.cert_engine(sc)
+        tables[S.leading_indicators].append(_metric_table(sc, list(cert_views.CERT_METRICS)))
     trend_charts: list[ChartSpec] = [charts.chart(db, sc, cid) for cid in (ChartId.C1,)]
     sections = []
     for order, sec in enumerate(S, start=1):

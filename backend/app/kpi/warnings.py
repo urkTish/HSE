@@ -1,5 +1,6 @@
 """Leading-indicator warnings E1-E4 (spec 1-dashboard §6.9), E5-E7 (2-access-permits §6.9)
-and E8-E9 (3-ptw §6.12), evaluated per complete month per project and per tier-1 contractor tree.
+E8-E9 (3-ptw §6.12) and E10-E11
+(4-third-party-cert §6.9), evaluated per complete month per project and per tier-1 contractor tree.
 Means use unrounded values."""
 
 import uuid
@@ -179,6 +180,75 @@ def evaluate_engine(
             )  # fmt: skip
         out += access_warnings(engine, project_id, tree, m, label_en, label_ar, who_en, who_ar)
         out += ptw_warnings(engine, project_id, tree, m, label_en, label_ar, who_en, who_ar)
+        out += cert_warnings(engine, project_id, tree, m, label_en, label_ar, who_en, who_ar)
+    return out
+
+
+def cert_warnings(
+    engine: Engine,
+    project_id: uuid.UUID,
+    tree: EngFact | None,
+    m: Window,
+    label_en: str,
+    label_ar: str,
+    who_en: str,
+    who_ar: str,
+) -> list[Warn]:
+    """E10-E11 (4-third-party-cert §6.9); unrounded comparisons, values at the month end."""
+    from app.kpi import cert as kc  # noqa: PLC0415
+    from app.kpi.cert_facts import E11_FAILED  # noqa: PLC0415
+
+    cf = kc.facts(engine)
+    st = cf.settings.get(project_id)
+    if st is None:
+        return []
+    for attr in ("equipment_categories", "cert_types"):
+        if not hasattr(engine, attr):
+            setattr(engine, attr, None)
+    out: list[Warn] = []
+    a = engine.aggregate(m)
+    k72 = engine.result(KpiMetric.K72, a).value
+    k76 = engine.result(KpiMetric.K76, a).value
+    k81 = engine.result(KpiMetric.K81, a).value
+    t72 = Decimal(st.equipment_cert_warning_pct)
+    t76 = Decimal(st.personnel_cert_warning_pct)
+    t81 = Decimal(st.scaffold_tag_warning_pct)
+    if (
+        (k72 is not None and k72 < t72)
+        or (k76 is not None and k76 < t76)
+        or (k81 is not None and k81 < t81)
+    ):
+        out.append(
+            Warn(
+                E.E10, m, project_id, tree,
+                f"Certification compliance below threshold in {label_en}{who_en}",
+                f"انخفاض الامتثال للشهادات عن الحد في {label_ar}{who_ar}",
+                [Input("k72", "Equipment certificate compliance", "امتثال شهادات المعدات", k72, 1,
+                       " %"),
+                 Input("k72_threshold_pct", "Equipment threshold", "حد المعدات", t72, 1, " %"),
+                 Input("k76", "Personnel certification compliance", "امتثال شهادات الأفراد", k76,
+                       1, " %"),
+                 Input("k76_threshold_pct", "Personnel threshold", "حد الأفراد", t76, 1, " %"),
+                 Input("k81", "Scaffold tag compliance", "امتثال بطاقات السقالات", k81, 1, " %"),
+                 Input("k81_threshold_pct", "Scaffold threshold", "حد السقالات", t81, 1, " %")],
+            )
+        )  # fmt: skip
+    failed = len(kc.failed_verifications(engine, a, E11_FAILED))
+    a_def = len(kc.a_defects(engine, a))
+    limit = int(st.dangerous_defect_warning_count)
+    if failed >= 1 or a_def >= limit:
+        out.append(
+            Warn(
+                E.E11, m, project_id, tree,
+                f"Failed certificate verification or dangerous defects in {label_en}{who_en}",
+                f"تحقق فاشل من شهادة أو عيوب خطيرة في {label_ar}{who_ar}",
+                [Input("failed_verifications", "Failed verifications", "تحقق فاشل",
+                       Decimal(failed), 0),
+                 Input("a_defects", "Category A defects raised", "عيوب الفئة A", Decimal(a_def), 0),
+                 Input("a_defects_threshold", "A defects threshold", "حد عيوب الفئة A",
+                       Decimal(limit), 0)],
+            )
+        )  # fmt: skip
     return out
 
 

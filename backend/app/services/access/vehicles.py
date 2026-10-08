@@ -49,7 +49,7 @@ from app.schemas.airside_driving import (
 )
 from app.schemas.hse_common import ApiWarning
 from app.services import audit, projects
-from app.services.access import common, credentials, eligibility, lifecycle, profiles
+from app.services.access import common, credentials, eligibility, hooks, lifecycle, profiles
 from app.services.common import duplicate, invalid_transition, paginate
 from app.services.hse_common import Refs
 from app.services.permissions import Principal, engagement_descendants, forbidden_error
@@ -427,7 +427,14 @@ def _hook_items(db: Session, a: Avp, v: Vehicle) -> list[eligibility.Item]:
     reqs = (s.hook_requirements_by_vehicle_category or {}).get(v.category.value, [])
     return [
         eligibility.hook_item(
-            db, HookSubjectType.vehicle, v.id, HookKind(h["kind"]), h["code"], now(), s
+            db,
+            HookSubjectType.vehicle,
+            v.id,
+            HookKind(h["kind"]),
+            h["code"],
+            now(),
+            s,
+            hooks.HookContext(project_id=a.project_id, vehicle_id=v.id),
         )
         for h in reqs
     ]
