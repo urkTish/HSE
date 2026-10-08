@@ -8,6 +8,7 @@ import { CurrentProjectProvider } from "@/lib/current-project";
 import { ErrorState } from "@/components/common/states";
 import { MeContext } from "@/components/shell/me-context";
 import { Shell } from "@/components/shell/shell";
+import { ReauthProvider } from "@/components/ptw/signing";
 
 function FullPageLoading() {
   const t = useTranslations("common");
@@ -37,7 +38,9 @@ export function AppFrame({ children }: { children: ReactNode }) {
   return (
     <MeContext.Provider value={me.data}>
       <CurrentProjectProvider>
-        <Shell>{children}</Shell>
+        <ReauthProvider>
+          <Shell>{children}</Shell>
+        </ReauthProvider>
       </CurrentProjectProvider>
     </MeContext.Provider>
   );

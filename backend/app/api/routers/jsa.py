@@ -7,7 +7,7 @@ from typing import Annotated
 from fastapi import APIRouter, Query, status
 
 from app.api.deps import DB, CurrentUser, PageParams
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.core.ptw_enums import JsaStatus, PermitType
 from app.schemas.jsa import (
     JsaInstanceCreate,
@@ -19,6 +19,7 @@ from app.schemas.jsa import (
     JsaUpdate,
     ResidualAcceptanceInput,
 )
+from app.services.ptw import jsa as svc
 
 router = APIRouter(tags=["jsa"])
 
@@ -40,7 +41,18 @@ def list_jsa_templates(
     review_due: bool | None = None,
     q: Annotated[str | None, Query(max_length=100)] = None,
 ) -> JsaPage:
-    raise not_implemented()
+    return svc.list_templates(
+        db,
+        user,
+        project_id,
+        pg.page,
+        pg.page_size,
+        work_type,
+        status_,
+        engagement_id,
+        review_due,
+        q,
+    )
 
 
 @router.post(
@@ -56,7 +68,7 @@ def create_jsa_template(
     user: CurrentUser,
     db: DB,
 ) -> JsaRead:
-    raise not_implemented()
+    return svc.create_template(db, user, project_id, body)
 
 
 @router.post(
@@ -72,7 +84,7 @@ def create_permit_jsa(
     user: CurrentUser,
     db: DB,
 ) -> JsaRead:
-    raise not_implemented()
+    return svc.create_instance(db, user, permit_id, body)
 
 
 @router.get(
@@ -82,7 +94,7 @@ def create_permit_jsa(
     responses=error_responses(401, 403, 404),
 )
 def get_jsa(jsa_id: uuid.UUID, user: CurrentUser, db: DB) -> JsaRead:
-    raise not_implemented()
+    return svc.read(db, user, jsa_id)
 
 
 @router.patch(
@@ -92,7 +104,7 @@ def get_jsa(jsa_id: uuid.UUID, user: CurrentUser, db: DB) -> JsaRead:
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def update_jsa(jsa_id: uuid.UUID, body: JsaUpdate, user: CurrentUser, db: DB) -> JsaRead:
-    raise not_implemented()
+    return svc.update(db, user, jsa_id, body)
 
 
 @router.post(
@@ -102,7 +114,7 @@ def update_jsa(jsa_id: uuid.UUID, body: JsaUpdate, user: CurrentUser, db: DB) ->
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def transition_jsa(jsa_id: uuid.UUID, body: JsaTransition, user: CurrentUser, db: DB) -> JsaRead:
-    raise not_implemented()
+    return svc.transition(db, user, jsa_id, body)
 
 
 @router.post(
@@ -118,7 +130,7 @@ def accept_jsa_residual_risk(
     user: CurrentUser,
     db: DB,
 ) -> JsaRead:
-    raise not_implemented()
+    return svc.accept(db, user, jsa_id, body)
 
 
 @router.post(
@@ -129,7 +141,7 @@ def accept_jsa_residual_risk(
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def revise_jsa(jsa_id: uuid.UUID, user: CurrentUser, db: DB) -> JsaRead:
-    raise not_implemented()
+    return svc.revise(db, user, jsa_id)
 
 
 @router.get(
@@ -139,4 +151,4 @@ def revise_jsa(jsa_id: uuid.UUID, user: CurrentUser, db: DB) -> JsaRead:
     responses=error_responses(401, 403, 404),
 )
 def list_jsa_revisions(jsa_id: uuid.UUID, user: CurrentUser, db: DB) -> list[JsaListItem]:
-    raise not_implemented()
+    return svc.revisions(db, user, jsa_id)

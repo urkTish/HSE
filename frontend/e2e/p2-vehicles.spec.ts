@@ -1,4 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
+import { type Page } from "@playwright/test";
+import { expect, test } from "./fixtures/test";
 import { login, uid, USERS } from "./helpers";
 import { pickMulti, selectContaining } from "./p2-helpers";
 

@@ -26,6 +26,7 @@ from app.models import (
     UserToken,
 )
 from app.models.users import TokenKind
+from app.ptw_jobs import PHASE3_JOBS
 from app.services import audit, notify
 from app.services.audit import SYSTEM
 from app.services.users import _active_manager_ids, deactivate
@@ -294,6 +295,7 @@ JOBS: dict[str, Callable[[Session], dict[str, Any]]] = {
     "last_manager_risk": last_manager_risk,
     **PHASE1_JOBS,
     **PHASE2_JOBS,
+    **PHASE3_JOBS,
 }
 
 

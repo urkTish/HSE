@@ -894,6 +894,7 @@ _DISPATCH: dict[KpiMetric, Callable[[Engine, Agg], Result]] = {
     **{m: _not_yet(m) for m in PHASE2_METRICS},  # replaced by app.kpi.access
     **{m: _not_yet(m) for m in PHASE3_METRICS},  # Phase 3 stage 2: app.kpi.ptw
 }
-import app.kpi.access  # noqa: E402, F401  (registers K-48…K-60 into _DISPATCH)
+import app.kpi.access  # noqa: E402  (registers K-48…K-60 into _DISPATCH)
+import app.kpi.ptw  # noqa: E402, F401  (registers K-46, K-46b, K-61…K-71 into _DISPATCH)
 
 assert set(_DISPATCH) == set(KpiMetric) == set(CATALOGUE)  # noqa: S101

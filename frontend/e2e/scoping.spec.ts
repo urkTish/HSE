@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures/test";
 import en from "../messages/en.json" with { type: "json" };
 import { apiAs, login, projectId, userId, USERS } from "./helpers";
 
@@ -62,8 +62,11 @@ test.describe("Role scoping visible in the UI", () => {
     await login(page, USERS.omar);
     await page.goto(`/en/projects/${ania}/zones`);
     const sites = page.getByTestId("zone-site");
-    await expect(sites).toHaveCount(3);
-    await expect(sites).toHaveText(["S-AIR", "S-AIR", "S-AIR"]);
+    // At least the three seeded S-AIR zones (later specs may add S-AIR zones, e.g. p3-config AC1); never another site.
+    await expect(sites.first()).toBeVisible();
+    const texts = await sites.allInnerTexts();
+    expect(texts.length).toBeGreaterThanOrEqual(3);
+    expect(new Set(texts.map((x) => x.trim()))).toEqual(new Set(["S-AIR"]));
   });
 
   test("AC11: Faisal cannot change his own status or roles from the UI", async ({ page }) => {

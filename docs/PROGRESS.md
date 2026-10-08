@@ -3,7 +3,7 @@
 ## Current
 - Phase: 3 — Permit to Work (PTW)
 - Module: PTW (spec `docs/specs/3-ptw.md` v1.0)
-- Step: Contract — backend stage 1 done (contract v0.4.0, all Phase 3 endpoints stubbed 501); waiting for the stage 2 go-ahead
+- Step: Build — backend stage 2 done (all Phase 3 endpoints implemented, contract v0.4.0 with a description-only change); frontend building against v0.4.0
 
 ## Phase log
 - Phase 0 — Foundation: built, e2e green, design pass done (2026-10-05). The user asked to continue phase after phase without per-phase approval; open questions are collected below for a single review.
@@ -11,6 +11,39 @@
 - Phase 2 — Site / Airport access permits: built, e2e green, design pass done (2026-10-07).
 
 ## Done
+
+### Backend — Phase 3 implementation (stage 2, contract v0.4.0)
+- Every Phase 3 endpoint is implemented (no 501 left): configuration and zone profiles, appointments, permits (lifecycle, crew, shifts, pause, handover, exemptions, closure, board, print/QR), JSA, gas testing and detectors, isolations and locks, SIMOPS and coordination, PTW audits, PTW KPIs K-46/K-46b/K-61…K-71, charts C13–C15, dashboard band, action panel and expiring items, AI tool T15, exports and change history.
+- Jobs (`app.ptw_jobs`): minute job (issue lapses → midday ban → shift lapses → expiries → gas due), hook re-evaluation, alerts.
+- Seed: `app.seed` now includes the Phase 3 seed (Appendix A named records plus the A.9 / Y12 bulk history). Demo clock: `HSE_CLOCK_AT=<ISO>` with `HSE_CLOCK_MODE=advancing|fixed` (refused in production), D-77.
+- Tests: every AC1–AC100 and Y1–Y14 is a test (`tests/test_ptw_*.py`, shared toolkit `tests/ptw_helpers.py`); ruff, mypy strict and the contract check are clean.
+- Contract: unchanged except the `GET /exports/{dataset}` description (Phase 3 export rules, D-78). The 10 PTW `ExportDataset` values were already in v0.4.0 and now work.
+- Fixes and rules found in the test pass: D-74 … D-79 (suspension-reason priority, minute-job order, `MIDDAY_BAN` between split windows, no section for `general`, worker numbers masked in blocker/warning texts for non-46 callers, Phase 3 history, demo clock, exports, medical reason hidden).
+- Doubts for the consultant / HSE Manager: D-71 (bulk numbering past named numbers, `PTA-` audit format, CA number), D-72 (Y12 implies 23 applicable audit items but only A01–A20 exist; K-65 breakdown has no `shift_lapsed` although K-70 = 5; Phase 1 CA KPIs change on the full Phase 3 seed).
+
+### Frontend — Phase 3 PTW (against contract v0.4.0)
+- Screens (list → detail → create/edit → workflow actions, EN/AR + RTL, phone layout):
+  - PTW setup: permit types, zone PTW profiles (floors cannot be loosened), zone adjacency, SIMOPS matrix, 5×5 risk matrix, PTW settings (§ ranges; PATCH sends only changed keys).
+  - PTW appointments (issuer option only for the HSE Manager; suspend / revoke / reinstate).
+  - Permits: register; form with live SIMOPS preview; detail with tabs (overview, crew & equipment, work-type sections, JSA, gas, isolations, SIMOPS, checklists, shifts, signatures, history), readiness (blockers; warnings amber; "not yet checkable" hooks folded into one neutral note), live countdowns (gas start-by / re-test, shift end, permit end), action bar from `allowed_actions` with step-up re-auth and receiver co-sign, exemptions, field records, print and closure pack (bilingual A4, PT QR, audit hash).
+  - JSA templates and JSA editor (5×5 scores and bands from the project matrix, client hints for JS-5/6/8, residual acceptance with ALARP text, revisions).
+  - Gas: detectors (bump test, calibration, retire, quarantine shown), gas test log, entry with the server's live preview (the UI never evaluates readings), detail with countdowns and supersede.
+  - Isolations / LOTO: certificates, points (apply / verify / remove), personal locks on the lockbox, lock register (lost), lock cut (HSE Manager approval), de-isolation blockers.
+  - SIMOPS conflicts with coordination (agreed controls, co-signers on this device).
+  - Live PTW board (zones, countdowns, persons inside) and suspension log.
+  - PTW audits (field / closure / unpermitted work; checklist; "Raise CA" prefilled with source `ptw_audit`; complete).
+  - Dashboard PTW band and charts C13–C15 (`ptw_kpi.view`); minute-level expiring items; gate PTW_VIEW card (crew roles translated).
+- E2E (Playwright, real backend, fresh DB with the Phase 0–3 seed):
+  - New shared e2e clock: `e2e/clock.ts` + `e2e/fixtures/test.ts`. The tests, every browser page and the API (`HSE_CLOCK_AT` from `E2E_CLOCK_OFFSET_MS` in `start-backend.sh`) run at 2026-10-06 10:00 Riyadh with time moving on, so the Appendix A live permits are live. Every spec now imports `test`/`expect` from `./fixtures/test`. Database-side ageing in specs uses the shared clock, not SQL `now()`.
+  - Phase 3 specs: `p3-smoke` (23 PTW pages, EN and AR), `p3-config` (AC1, AC2 ×2, AC9, AC50), `p3-permits` (AC10, AC11, draft readiness), `p3-jsa` (AC26, AC28/AC29), `p3-gas` (detector register, bump test, quarantine and return to service), `p3-gas-test` (AC31 live preview, AC33 quarantined detector not offered, save), `p3-locks`, `p3-audits` (AC90), `p3-seed` (AC19/AC96, AC25, AC40, AC46, dashboard band, phone AR), `p3-lifecycle` (AC59, AC86 + AC8 re-auth).
+  - Phase 0–2 spec changes: `scoping` AC10 accepts extra S-AIR zones (p3-config AC1 adds one); `invite` AC4 ages the token on the shared clock.
+  - Screenshots (`SCREENSHOTS=1`, `screenshots-p3.spec.ts`) in `docs/screenshots/phase-3/`.
+- Not covered by UI e2e (backend tests cover them): AC3–AC7 SoD variants, AC12–AC18 (contractor suspension, hooks), AC20–AC24, AC27, AC30, AC32/AC34–AC37, AC38/AC39/AC41–AC43, AC44/AC45/AC47–AC49, the work-type rules AC51–AC85 beyond what the forms show, AC87–AC89, KPI values AC91–AC95, AC97–AC99.
+
+#### Phase 3 — backend issues found by the frontend
+- Fixed by the backend during the run: Phase 3 history (`/history/{type}/{id}` 404 for every PTW entity), `app.seed` not running the PTW seed (and the standalone seed using the wrong co-sign password), and the `HSE_CLOCK_AT` e2e clock pin.
+- The server requires `ambient_temp_c` for outdoor work at start / resume / revalidate / handover accept (HT-5). The contract marks it optional, so the UI now makes it required for outdoor permits. Please document it in the contract.
+- Spec doubts (backend DECISIONS #71/#72): bulk permit numbers run past the named ones (0471…0485); audit numbers are `PTA-…-nnnnn`, not `AUD-…-nnnn`; the 0187 audit CA has a generated number.
 
 ### Backend — Phase 3 contract v0.4.0 (stage 1)
 - `docs/contracts/openapi.yaml` v0.4.0: 105 new paths / 133 operations, all returning 501 `NOT_IMPLEMENTED` until stage 2 (the Prism mock serves them now). Tags: ptw-configuration (15), ptw-appointments (5), permits (55), jsa (9), gas-testing (14), isolations (21), simops (6), ptw-audits (6), plus `POST /auth/reauth` and `GET /kpi/ptw`.
@@ -376,6 +409,9 @@
 - (Backend, ops) With 4 API workers the KPI cache can show figures up to 20 s old after a write made through another worker, and the gate rate limit (120/min) is counted per worker. Acceptable for v1.0?
 
 ## Contract requests
+- (Frontend, Phase 3, low) Mark `ambient_temp_c` as required for outdoor permits in the start / resume / revalidate / handover-accept request descriptions (the server enforces HT-5).
+- (Frontend, Phase 3, low) `AuditCaLink.priority` / `status` as the `CaPriority` / `CaStatus` enums instead of free strings (the UI translates them only when they match).
+- (Frontend, Phase 3, low) Bilingual crew-role labels on the permit print (the print shows roles in the screen language only).
 - (Frontend, medium) `ChartSeries.metric` (KpiMetric | null) and, for period axes, `ChartCategory.start`/`end`: lets a click on a bar/point drill into the exact records. Today the UI drills only when a series key happens to be a metric id (e.g. `K-21`) and derives the month from the category key.
 - (Frontend, low) `metric` on each pyramid layer (and one metric for RWC+JTC, e.g. a K-07/K-08 combined drill): the UI maps layers to K-05/06/07/09/12/13/30 itself; RWC_JTC drills K-07 only.
 - (Frontend, low) A capability for HSE meetings (none in §5.10): the UI gates meeting edits on `inspection.plan_manage` as an assumption.

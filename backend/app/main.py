@@ -1,5 +1,6 @@
 """FastAPI application factory."""
 
+import os
 from typing import Any
 
 from fastapi import FastAPI
@@ -49,6 +50,7 @@ from app.api.routers import (
     workers,
     workforce,
 )
+from app.core.clock import pin_from_env
 from app.core.config import API_PREFIX, CONTRACT_VERSION, get_settings
 from app.core.errors import (
     ApiError,
@@ -134,6 +136,9 @@ def _install_openapi(app: FastAPI) -> None:
 
 
 def create_app() -> FastAPI:
+    pin_from_env(
+        os.environ.get("HSE_CLOCK_AT"), os.environ.get("HSE_CLOCK_MODE"), get_settings().environment
+    )
     app = FastAPI(
         title="HSE Platform API",
         version=CONTRACT_VERSION,

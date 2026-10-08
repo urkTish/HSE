@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures/test";
 import { apiAs, getJson, login, projectId, USERS } from "./helpers";
 
 // Seed covers 2025-09 … 2026-09 (spec Appendix A); September 2026 reproduces W1/W3.

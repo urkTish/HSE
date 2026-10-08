@@ -95,6 +95,10 @@ def event(
         seed_fake=bool(getattr(obj, "seed_fake", False)),
     )
     db.add(ev)
+    if not ev.seed_fake:
+        from app.services.ptw import hooks  # noqa: PLC0415 (Phase 3 PT-8)
+
+        hooks.mark_workers(db, [getattr(obj, "worker_id", None)])
     return ev
 
 

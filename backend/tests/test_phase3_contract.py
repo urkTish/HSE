@@ -74,7 +74,7 @@ def test_phase3_enums_and_codes() -> None:
     assert {"C13", "C14", "C15"} <= {c.value for c in ChartId}
     assert len(PermitType) == 9
     for m in PHASE3_METRICS:
-        assert not CATALOGUE[m].available
+        assert CATALOGUE[m].available  # Stage 2: implemented
         assert CATALOGUE[m].spec_ref.startswith("3-ptw §6.11")
 
 

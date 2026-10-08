@@ -534,6 +534,7 @@ const RESULT_TONE: Record<Schemas["GateResult"], string> = {
   PENDING_ESCORT_VEHICLE: "pending",
   EXIT_RECORDED: "closed",
   WAP_VIEW: "draft",
+  PTW_VIEW: "draft",
 };
 
 export function GateResultBadge({ result }: { result: Schemas["GateResult"] }) {

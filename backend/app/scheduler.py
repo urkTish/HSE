@@ -1,9 +1,12 @@
 """Job timetable (Asia/Riyadh). Run as a separate process: ``uv run python -m app.scheduler``."""
 
 import logging
+import os
 
 from apscheduler.schedulers.blocking import BlockingScheduler
 
+from app.core.clock import pin_from_env
+from app.core.config import get_settings
 from app.jobs import run
 
 logging.basicConfig(level=logging.INFO)
@@ -15,6 +18,9 @@ def _job(name: str) -> None:
 
 
 def main() -> None:
+    pin_from_env(
+        os.environ.get("HSE_CLOCK_AT"), os.environ.get("HSE_CLOCK_MODE"), get_settings().environment
+    )
     sched = BlockingScheduler(timezone="Asia/Riyadh")
     sched.add_job(_job, "interval", minutes=1, args=["unlock_expired"])
     sched.add_job(_job, "interval", hours=1, args=["invite_followups"])
@@ -41,6 +47,9 @@ def main() -> None:
     sched.add_job(_job, "cron", hour=7, minute=0, second=30, args=["credential_alerts"])
     sched.add_job(_job, "interval", minutes=1, args=["access_minute"])
     sched.add_job(_job, "cron", day_of_week="fri", hour=3, minute=30, args=["access_retention"])
+    # Phase 3 (spec 3-ptw §4.1/§4.2 timers, §7 alerts, PT-16 recompute every minute)
+    sched.add_job(_job, "interval", minutes=1, args=["ptw_minute"])
+    sched.add_job(_job, "cron", hour=0, minute=15, args=["ptw_daily"])
     sched.start()
 
 

@@ -1,4 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
+import { type Page } from "@playwright/test";
+import { expect, test } from "./fixtures/test";
 import en from "../messages/en.json" with { type: "json" };
 import { apiAs, login, projectId, uid, USERS } from "./helpers";
 

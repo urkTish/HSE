@@ -236,6 +236,7 @@ def to_read(db: Session, b: Bundle) -> InvestigationRead:
         lessons_learned=inv.lessons_learned,
         ptw_involved=inv.ptw_involved,
         ptw_ref=inv.ptw_ref,
+        ptws=_ptws(db, inv),
         submitted_at=inv.submitted_at,
         returned_comment=inv.returned_comment,
         approved_by=refs.user(inv.approved_by_user_id),
@@ -243,6 +244,36 @@ def to_read(db: Session, b: Bundle) -> InvestigationRead:
         higher_control_justification=b.inc.higher_control_justification,
         missing_for_submit=missing_for_submit(db, b),
     )
+
+
+def _ptws(db: Session, inv: Investigation) -> list[Any]:
+    """v1.2 linked Phase 3 permits (3-ptw §8.5)."""
+    from app.models import Permit  # noqa: PLC0415
+    from app.services.ptw import common as ptw_common  # noqa: PLC0415
+
+    out = []
+    for pid in inv.ptw_ids or []:
+        x = db.get(Permit, pid)
+        if x is not None:
+            out.append(ptw_common.permit_ref(x))
+    return out
+
+
+def _set_ptws(db: Session, b: Bundle, inv: Investigation, ch: dict[str, Any]) -> None:
+    from app.models import Permit  # noqa: PLC0415
+
+    if "ptw_ref" in ch and inv.ptw_ids and ch["ptw_ref"] != inv.ptw_ref:
+        raise validation_error("ptw_ref", "ptw_ref is read-only once linked permits are set.")
+    if "ptw_ids" not in ch:
+        return
+    ids = list(dict.fromkeys(ch["ptw_ids"] or []))
+    for i, pid in enumerate(ids):
+        x = db.get(Permit, pid)
+        if x is None or x.project_id != b.inc.project_id:
+            raise validation_error(f"ptw_ids[{i}]", "Linked permits must belong to this project.")
+    inv.ptw_ids = ids
+    if ids:
+        inv.ptw_involved = True
 
 
 def _load(db: Session, p: Principal, incident_id: uuid.UUID) -> Bundle:
@@ -269,6 +300,7 @@ def _snapshot(inv: Investigation) -> dict[str, Any]:
         "lessons_learned",
         "ptw_involved",
         "ptw_ref",
+        "ptw_ids",
         "preliminary_report",
     )
     return {k: getattr(inv, k) for k in keys}
@@ -311,6 +343,7 @@ def update(
         inv.level = level
         if not inv.extensions:
             inv.due_date = b.inc.occurred_date + timedelta(days=DUE_DAYS[level])
+    _set_ptws(db, b, inv, ch)
     for k in (
         "method",
         "sequence_of_events",

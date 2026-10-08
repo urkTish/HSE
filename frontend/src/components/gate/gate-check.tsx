@@ -70,6 +70,7 @@ const TONE: Record<Result, string> = {
   PENDING_ESCORT_VEHICLE: "bg-verdict-pending text-verdict-pending-fg",
   EXIT_RECORDED: "bg-verdict-neutral text-verdict-neutral-fg",
   WAP_VIEW: "bg-verdict-neutral text-verdict-neutral-fg",
+  PTW_VIEW: "bg-verdict-neutral text-verdict-neutral-fg",
 };
 
 /** Reason codes that are information only (no provider yet), shown as a calm note rather than a warning. */
@@ -751,6 +752,7 @@ function ResultView({
       {res.person ? <PersonCard p={res.person} /> : null}
       {res.vehicle ? <VehicleCard v={res.vehicle} /> : null}
       {res.wap ? <WapCard w={res.wap} /> : null}
+      {res.permit ? <PermitCard w={res.permit} /> : null}
 
       {res.paired_results?.length ? <PairedList title={t("pairedResults")} items={res.paired_results} /> : null}
       {pairOutcome ? (
@@ -1009,6 +1011,59 @@ function WapCard({ w }: { w: Schemas["GateWapCard"] }) {
         <p className="mt-2 text-sm">
           {t("vehicles")}: <span className="ltr">{w.vehicles.join(", ")}</span>
         </p>
+      ) : null}
+    </article>
+  );
+}
+
+function PermitCard({ w }: { w: Schemas["GatePermitCard"] }) {
+  const t = useTranslations("gate");
+  const te = useTranslations("enums");
+  const locale = useLocale();
+  return (
+    <article className="rounded-xl border bg-surface p-3" data-testid="permit-card" data-status={w.status}>
+      <p className="ltr text-xl font-bold">{w.display_no}</p>
+      <p className="text-sm">
+        {te(`permitStatus.${w.status}`)} · {w.work_types.map((wt) => te(`permitType.${wt}`)).join(" · ")}
+      </p>
+      <p className="text-sm">
+        {w.in_window_now ? <span className="font-semibold text-success">{t("inWindow")}</span> : <span className="font-semibold text-danger">{t("outsideWindow")}</span>}
+        {w.window_today ? (
+          <>
+            {" "}
+            · {t("today")} <span className="ltr">{w.window_today}</span>
+          </>
+        ) : null}
+        {w.current_shift_no ? <> · {t("ptwShift", { n: w.current_shift_no })}</> : null}
+      </p>
+      <p className="text-sm">
+        {t("ptwValidTo")}: <span className="ltr">{new Date(w.valid_to_at).toLocaleString(locale === "ar" ? "ar-SA-u-nu-latn" : "en-GB", { dateStyle: "medium", timeStyle: "short" })}</span> · {t("ptwGas")}: {te(`gasStatus.${w.gas_status}`)}
+      </p>
+      {w.blockers.length ? (
+        <ul className="mt-2 flex flex-wrap gap-1">
+          {w.blockers.map((b) => (
+            <li key={b} className="rounded bg-verdict-denied px-2 py-0.5 text-xs font-semibold text-verdict-denied-fg">
+              {te(`permitBlocker.${b}`)}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      <p className="mt-3 text-sm font-semibold">{t("crew", { n: w.crew.length })}</p>
+      {w.crew.length ? (
+        <ul className="mt-1 flex flex-col divide-y rounded-md border">
+          {w.crew.map((c) => (
+            <li key={c.worker_no} className="flex items-start gap-2 p-2 text-sm" data-eligible={c.eligible_now ? "true" : "false"}>
+              {c.eligible_now ? <Check aria-label={t("ok")} className="size-5 shrink-0 text-success" /> : <X aria-label={t("notOk")} className="size-5 shrink-0 text-danger" />}
+              <span className="flex-1">
+                <span className="font-medium">{locale === "ar" ? c.full_name_ar : c.full_name_en}</span> <span className="ltr text-muted-foreground">{c.worker_no}</span>
+                <span className="block text-xs text-muted-foreground">
+                  {te(`ptwCrewRole.${c.crew_role as Schemas["PtwCrewRole"]}`)}
+                  {c.reasons.length ? <span className="ltr"> · {c.reasons.join(", ")}</span> : null}
+                </span>
+              </span>
+            </li>
+          ))}
+        </ul>
       ) : null}
     </article>
   );

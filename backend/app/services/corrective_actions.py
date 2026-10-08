@@ -195,6 +195,11 @@ def _source_ref(db: Session, ca: CorrectiveAction) -> CaSourceRef:
         ref = row.ref if row else None
     elif ca.source_type == CaSourceType.ai_recommendation:
         ref = ca.ai_recommendation_id or (str(ca.source_id) if ca.source_id else None)
+    elif ca.source_type == CaSourceType.ptw_audit and ca.source_id:
+        from app.models import PtwAudit  # noqa: PLC0415
+
+        pa = db.get(PtwAudit, ca.source_id)
+        ref = pa.audit_no if pa else None
     return CaSourceRef(type=ca.source_type, id=ca.source_id, ref=ref)
 
 
@@ -358,6 +363,10 @@ def _resolve_source(
         return None
     if source_id is None:
         raise validation_error("source_id", "The source is required.")
+    if source_type == CaSourceType.ptw_audit:
+        from app.services.ptw import audits  # noqa: PLC0415
+
+        return audits.ca_source(db, project.id, source_id)
     model: Any = {
         CaSourceType.incident: Incident,
         CaSourceType.observation: Observation,

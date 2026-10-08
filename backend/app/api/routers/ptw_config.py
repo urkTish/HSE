@@ -6,7 +6,7 @@ import uuid
 from fastapi import APIRouter, status
 
 from app.api.deps import DB, CurrentUser
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.core.ptw_enums import PermitType
 from app.schemas.ptw_config import (
     PermitTypeConfigList,
@@ -25,6 +25,7 @@ from app.schemas.ptw_config import (
     ZonePtwProfileRead,
     ZonePtwProfileUpdate,
 )
+from app.services.ptw import config as cfg
 
 router = APIRouter(tags=["ptw-configuration"])
 
@@ -36,7 +37,7 @@ router = APIRouter(tags=["ptw-configuration"])
     responses=error_responses(401, 403, 404),
 )
 def list_permit_types(project_id: uuid.UUID, user: CurrentUser, db: DB) -> PermitTypeConfigList:
-    raise not_implemented()
+    return cfg.list_types(db, user, project_id)
 
 
 @router.patch(
@@ -52,7 +53,7 @@ def update_permit_type(
     user: CurrentUser,
     db: DB,
 ) -> PermitTypeConfigRead:
-    raise not_implemented()
+    return cfg.update_type(db, user, project_id, permit_type, body)
 
 
 @router.get(
@@ -62,7 +63,7 @@ def update_permit_type(
     responses=error_responses(401, 403, 404),
 )
 def get_zone_ptw_profile(zone_id: uuid.UUID, user: CurrentUser, db: DB) -> ZonePtwProfileRead:
-    raise not_implemented()
+    return cfg.read_profile(db, user, zone_id)
 
 
 @router.patch(
@@ -74,7 +75,7 @@ def get_zone_ptw_profile(zone_id: uuid.UUID, user: CurrentUser, db: DB) -> ZoneP
 def update_zone_ptw_profile(
     zone_id: uuid.UUID, body: ZonePtwProfileUpdate, user: CurrentUser, db: DB
 ) -> ZonePtwProfileRead:
-    raise not_implemented()
+    return cfg.update_profile(db, user, zone_id, body)
 
 
 @router.get(
@@ -86,7 +87,7 @@ def update_zone_ptw_profile(
 def list_zone_adjacency(
     project_id: uuid.UUID, user: CurrentUser, db: DB
 ) -> list[ZoneAdjacencyRead]:
-    raise not_implemented()
+    return cfg.list_adjacency(db, user, project_id)
 
 
 @router.post(
@@ -99,7 +100,7 @@ def list_zone_adjacency(
 def create_zone_adjacency(
     project_id: uuid.UUID, body: ZoneAdjacencyCreate, user: CurrentUser, db: DB
 ) -> ZoneAdjacencyRead:
-    raise not_implemented()
+    return cfg.create_adjacency(db, user, project_id, body)
 
 
 @router.patch(
@@ -111,7 +112,7 @@ def create_zone_adjacency(
 def update_zone_adjacency(
     adjacency_id: uuid.UUID, body: ZoneAdjacencyUpdate, user: CurrentUser, db: DB
 ) -> ZoneAdjacencyRead:
-    raise not_implemented()
+    return cfg.update_adjacency(db, user, adjacency_id, body)
 
 
 @router.delete(
@@ -121,7 +122,7 @@ def update_zone_adjacency(
     responses=error_responses(401, 403, 404),
 )
 def delete_zone_adjacency(adjacency_id: uuid.UUID, user: CurrentUser, db: DB) -> None:
-    raise not_implemented()
+    cfg.delete_adjacency(db, user, adjacency_id)
 
 
 @router.get(
@@ -131,7 +132,7 @@ def delete_zone_adjacency(adjacency_id: uuid.UUID, user: CurrentUser, db: DB) ->
     responses=error_responses(401, 403, 404),
 )
 def list_simops_rules(project_id: uuid.UUID, user: CurrentUser, db: DB) -> SimopsRuleList:
-    raise not_implemented()
+    return cfg.list_rules(db, user, project_id)
 
 
 @router.post(
@@ -144,7 +145,7 @@ def list_simops_rules(project_id: uuid.UUID, user: CurrentUser, db: DB) -> Simop
 def create_simops_rule(
     project_id: uuid.UUID, body: SimopsRuleCreate, user: CurrentUser, db: DB
 ) -> SimopsRuleRead:
-    raise not_implemented()
+    return cfg.create_rule(db, user, project_id, body)
 
 
 @router.patch(
@@ -156,7 +157,7 @@ def create_simops_rule(
 def update_simops_rule(
     rule_id: uuid.UUID, body: SimopsRuleUpdate, user: CurrentUser, db: DB
 ) -> SimopsRuleRead:
-    raise not_implemented()
+    return cfg.update_rule(db, user, rule_id, body)
 
 
 @router.delete(
@@ -166,7 +167,7 @@ def update_simops_rule(
     responses=error_responses(401, 403, 404, 422),
 )
 def delete_simops_rule(rule_id: uuid.UUID, user: CurrentUser, db: DB) -> None:
-    raise not_implemented()
+    cfg.delete_rule(db, user, rule_id)
 
 
 @router.get(
@@ -176,7 +177,7 @@ def delete_simops_rule(rule_id: uuid.UUID, user: CurrentUser, db: DB) -> None:
     responses=error_responses(401, 403),
 )
 def get_risk_matrix(user: CurrentUser) -> RiskMatrixRead:
-    raise not_implemented()
+    return cfg.risk_matrix()
 
 
 @router.get(
@@ -186,7 +187,7 @@ def get_risk_matrix(user: CurrentUser) -> RiskMatrixRead:
     responses=error_responses(401, 403, 404),
 )
 def get_ptw_settings(project_id: uuid.UUID, user: CurrentUser, db: DB) -> PtwSettingsRead:
-    raise not_implemented()
+    return cfg.read_settings(db, user, project_id)
 
 
 @router.patch(
@@ -198,4 +199,4 @@ def get_ptw_settings(project_id: uuid.UUID, user: CurrentUser, db: DB) -> PtwSet
 def update_ptw_settings(
     project_id: uuid.UUID, body: PtwSettingsUpdate, user: CurrentUser, db: DB
 ) -> PtwSettingsRead:
-    raise not_implemented()
+    return cfg.update_settings(db, user, project_id, body)

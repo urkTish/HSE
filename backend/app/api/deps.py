@@ -39,6 +39,9 @@ def get_db() -> Iterator[Session]:
     db = get_sessionmaker()()
     try:
         yield db
+        from app.services.ptw import hooks as ptw_hooks  # noqa: PLC0415
+
+        ptw_hooks.process(db)
         audit.flush_deferred(db)
         db.commit()
     except Exception:

@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures/test";
 import { login, USERS } from "./helpers";
 
 test.describe("Design system (Phase 0 design pass)", () => {

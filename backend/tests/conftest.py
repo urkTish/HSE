@@ -197,6 +197,44 @@ def access_seed(_fresh_data: None, _access_template: str) -> None:
     )
 
 
+# ---- Phase 3: PTW Appendix A on top of the Phase 2 world, built once and cloned per test -------
+
+PTW_TEMPLATE = "hse_test_ptw_tpl"
+
+
+def _clone(template: str) -> None:
+    get_engine().dispose()
+    name = _db_name()
+    _admin_exec(
+        _terminate(name), f"DROP DATABASE {name}", f"CREATE DATABASE {name} TEMPLATE {template}"
+    )
+
+
+@pytest.fixture(scope="session")
+def _ptw_template(_access_template: str) -> str:
+    """Phase 0-2 template + the 3-ptw Appendix A seed (bulk history + named permits)."""
+    from app.seed_ptw import seed_ptw_data
+
+    _clone(_access_template)
+    with get_sessionmaker()() as db:
+        seed_ptw_data(db, PASSWORD)
+        db.commit()
+    get_engine().dispose()
+    name = _db_name()
+    _admin_exec(
+        _terminate(name),
+        f"DROP DATABASE IF EXISTS {PTW_TEMPLATE}",
+        f"CREATE DATABASE {PTW_TEMPLATE} TEMPLATE {name}",
+    )
+    return PTW_TEMPLATE
+
+
+@pytest.fixture
+def ptw_seed(_fresh_data: None, _ptw_template: str) -> None:
+    """Replace the test database with a copy of the Phase 3 template."""
+    _clone(_ptw_template)
+
+
 @pytest.fixture
 def noon() -> Iterator[None]:
     """Pin the clock to Appendix A "today" (2026-10-06 12:00 Asia/Riyadh = 09:00Z)."""

@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures/test";
 import { login, USERS } from "./helpers";
 
 const SHOTS = "../docs/screenshots/phase-2";

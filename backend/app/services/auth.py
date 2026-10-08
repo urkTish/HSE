@@ -86,6 +86,7 @@ def create_session(db: Session, user: User) -> IssuedSession:
         expires_at=current + timedelta(hours=s.session_absolute_hours),
         ip_address=ctx.ip_address,
         user_agent=ctx.user_agent,
+        last_authenticated_at=current,
     )
     db.add(session)
     db.flush()
@@ -306,6 +307,97 @@ def logout(db: Session, p: Principal) -> None:
     )
 
 
+# ---- step-up re-authentication (Phase 3 PT-15) ------------------------------------------------
+DEFAULT_REAUTH_MINUTES = 15
+
+
+def reauth_minutes(db: Session, p: Principal | None) -> int:
+    """Shortest `step_up_reauth_minutes` over the user's projects (default 15)."""
+    from app.models import PtwSettings  # noqa: PLC0415
+
+    pids = list(p.projects) if p is not None else []
+    if p is not None and p.is_manager:
+        vals = list(db.scalars(select(PtwSettings.step_up_reauth_minutes)))
+    elif pids:
+        vals = list(
+            db.scalars(
+                select(PtwSettings.step_up_reauth_minutes).where(PtwSettings.project_id.in_(pids))
+            )
+        )
+    else:
+        vals = []
+    return min([DEFAULT_REAUTH_MINUTES, *vals]) if vals else DEFAULT_REAUTH_MINUTES
+
+
+def record_failed_password(user_id: uuid.UUID, reason: str) -> None:
+    """A wrong re-auth / co-sign password counts toward the login lockout (rule 3). Written in
+    its own transaction so it survives the failed request."""
+    from app.db.session import get_sessionmaker  # noqa: PLC0415
+
+    with get_sessionmaker()() as other:
+        user = other.get(User, user_id)
+        if user is None:
+            return
+        current = now()
+        audit.record(
+            other,
+            AuditAction.login_failed,
+            AuditActor(user.id),
+            entity_type=EntityType.user,
+            entity_id=user.id,
+            result=AuditResult.failed,
+            details={"email": user.email, "reason": reason},
+        )
+        if user.status == UserStatus.active:
+            _register_failure(other, user, current)
+        other.commit()
+
+
+def reauthenticate(db: Session, p: Principal, password: str) -> tuple[datetime, datetime]:
+    if p.user.status != UserStatus.active or not verify_password(password, p.user.password_hash):
+        record_failed_password(p.user.id, "reauth_wrong_password")
+        raise ApiError(
+            401,
+            ErrorCode.REAUTH_REQUIRED,
+            "Password incorrect: re-authentication failed.",
+            "كلمة المرور غير صحيحة: فشل إعادة التحقق.",
+            meta={"reauth_minutes": reauth_minutes(db, p)},
+        )
+    current = now()
+    if p.session is not None:
+        p.session.last_authenticated_at = current
+    audit.record(
+        db,
+        AuditAction.login_success,
+        p.actor(),
+        entity_type=EntityType.user,
+        entity_id=p.user.id,
+        details={"step_up": True},
+    )
+    return current, current + timedelta(minutes=reauth_minutes(db, p))
+
+
+def check_cosigner(db: Session, user_id: uuid.UUID, password: str) -> User:
+    """PT-15 co-signature on another user's device (DECISIONS #56)."""
+    user = db.get(User, user_id)
+    if user is None or user.status != UserStatus.active:
+        raise ApiError(
+            401,
+            ErrorCode.COSIGNER_INVALID,
+            "The co-signer cannot sign.",
+            "لا يمكن للموقّع المشارك التوقيع.",
+        )
+    if not verify_password(password, user.password_hash):
+        record_failed_password(user.id, "cosign_wrong_password")
+        raise ApiError(
+            401,
+            ErrorCode.COSIGNER_INVALID,
+            "The co-signer's password is incorrect.",
+            "كلمة مرور الموقّع المشارك غير صحيحة.",
+        )
+    return user
+
+
 # ---- passwords -----------------------------------------------------------------------------------
 def check_password(password: str, email: str, field: str = "password") -> None:
     problems = password_problems(password, email)
@@ -521,7 +613,17 @@ def build_me(db: Session, p: Principal) -> Me:
         org_capabilities=list(MANAGER_CAPABILITIES) if p.is_manager else [],
         projects=projects,
         role_assignments=assignments,
+        last_authenticated_at=p.session.last_authenticated_at if p.session else None,
+        reauth_valid_until=_reauth_until(db, p),
     )
+
+
+def _reauth_until(db: Session, p: Principal) -> datetime | None:
+    last = p.session.last_authenticated_at if p.session else None
+    if last is None:
+        return None
+    until = last + timedelta(minutes=reauth_minutes(db, p))
+    return until if until > now() else None
 
 
 def me_for_user(db: Session, user: User, session: UserSession | None) -> Me:

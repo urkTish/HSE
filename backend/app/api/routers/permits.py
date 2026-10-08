@@ -9,7 +9,7 @@ from typing import Annotated
 from fastapi import APIRouter, Query, status
 
 from app.api.deps import DB, CurrentUser, PageParams
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.core.ptw_enums import (
     PermitAction,
     PermitBlocker,
@@ -83,6 +83,8 @@ from app.schemas.permits import (
     WindReadingRead,
 )
 from app.schemas.ptw_common import BLOCKED_DOC, SIGNING_DOC
+from app.services.ptw import board, fieldwork, lifecycle
+from app.services.ptw import permits as permits_svc
 
 router = APIRouter(tags=["permits"])
 
@@ -125,7 +127,33 @@ def list_permits(
     q: Annotated[str | None, Query(max_length=100)] = None,
     sort: PermitRegisterSort = PermitRegisterSort.newest,
 ) -> PermitPage:
-    raise not_implemented()
+    return permits_svc.list_permits(
+        db,
+        user,
+        project_id,
+        pg.page,
+        pg.page_size,
+        statuses=status_,
+        work_types=work_type,
+        site_id=site_id,
+        zone_ids=zone_id,
+        engagement_ids=engagement_id,
+        include_subcontractors=include_subcontractors,
+        issuer_user_id=issuer_user_id,
+        receiver_user_id=receiver_user_id,
+        worker_id=worker_id,
+        live_on=live_on,
+        valid_from=valid_from,
+        valid_to=valid_to,
+        status_reason=status_reason,
+        blocker=blocker,
+        awaiting_me=awaiting_me,
+        simops_open=simops_open,
+        isolation_id=isolation_id,
+        wap_id=wap_id,
+        q=q,
+        sort=sort,
+    )
 
 
 @router.post(
@@ -141,7 +169,7 @@ def create_permit(
     user: CurrentUser,
     db: DB,
 ) -> PermitRead:
-    raise not_implemented()
+    return permits_svc.create(db, user, project_id, body)
 
 
 @router.get(
@@ -151,7 +179,7 @@ def create_permit(
     responses=error_responses(401, 403, 404),
 )
 def get_permit(permit_id: uuid.UUID, user: CurrentUser, db: DB) -> PermitRead:
-    raise not_implemented()
+    return permits_svc.read(db, user, permit_id)
 
 
 @router.patch(
@@ -166,7 +194,7 @@ def update_permit(
     user: CurrentUser,
     db: DB,
 ) -> PermitRead:
-    raise not_implemented()
+    return permits_svc.update(db, user, permit_id, body)
 
 
 @router.delete(
@@ -176,7 +204,7 @@ def update_permit(
     responses=error_responses(401, 403, 404, 409),
 )
 def delete_permit(permit_id: uuid.UUID, user: CurrentUser, db: DB) -> None:
-    raise not_implemented()
+    permits_svc.delete(db, user, permit_id)
 
 
 @router.post(
@@ -192,7 +220,7 @@ def add_permit_crew(
     user: CurrentUser,
     db: DB,
 ) -> PermitCrewRead:
-    raise not_implemented()
+    return permits_svc.add_crew(db, user, permit_id, body)
 
 
 @router.patch(
@@ -208,7 +236,7 @@ def update_permit_crew(
     user: CurrentUser,
     db: DB,
 ) -> PermitCrewRead:
-    raise not_implemented()
+    return permits_svc.update_crew(db, user, permit_id, line_id, body)
 
 
 @router.delete(
@@ -218,7 +246,7 @@ def update_permit_crew(
     responses=error_responses(401, 403, 404, 409),
 )
 def delete_permit_crew(permit_id: uuid.UUID, line_id: uuid.UUID, user: CurrentUser, db: DB) -> None:
-    raise not_implemented()
+    permits_svc.delete_crew(db, user, permit_id, line_id)
 
 
 @router.post(
@@ -234,7 +262,7 @@ def add_permit_equipment(
     user: CurrentUser,
     db: DB,
 ) -> PermitEquipmentRead:
-    raise not_implemented()
+    return permits_svc.add_equipment(db, user, permit_id, body)
 
 
 @router.delete(
@@ -249,7 +277,7 @@ def delete_permit_equipment(
     user: CurrentUser,
     db: DB,
 ) -> None:
-    raise not_implemented()
+    permits_svc.delete_equipment(db, user, permit_id, equipment_id)
 
 
 @router.post(
@@ -265,7 +293,7 @@ def add_permit_document(
     user: CurrentUser,
     db: DB,
 ) -> PermitDocumentRead:
-    raise not_implemented()
+    return permits_svc.add_document(db, user, permit_id, body)
 
 
 @router.patch(
@@ -281,7 +309,7 @@ def update_permit_document(
     user: CurrentUser,
     db: DB,
 ) -> PermitDocumentRead:
-    raise not_implemented()
+    return permits_svc.update_document(db, user, permit_id, document_id, body)
 
 
 @router.delete(
@@ -296,7 +324,7 @@ def delete_permit_document(
     user: CurrentUser,
     db: DB,
 ) -> None:
-    raise not_implemented()
+    permits_svc.delete_document(db, user, permit_id, document_id)
 
 
 @router.put(
@@ -311,7 +339,7 @@ def put_permit_sections(
     user: CurrentUser,
     db: DB,
 ) -> PermitRead:
-    raise not_implemented()
+    return permits_svc.put_sections(db, user, permit_id, body)
 
 
 @router.put(
@@ -326,7 +354,7 @@ def put_permit_checklist(
     user: CurrentUser,
     db: DB,
 ) -> ChecklistRead:
-    raise not_implemented()
+    return permits_svc.put_checklist(db, user, permit_id, body)
 
 
 @router.post(
@@ -342,7 +370,7 @@ def request_permit(
     user: CurrentUser,
     db: DB,
 ) -> PermitRead:
-    raise not_implemented()
+    return lifecycle.request(db, user, permit_id, body)
 
 
 @router.post(
@@ -352,7 +380,7 @@ def request_permit(
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def return_permit(permit_id: uuid.UUID, body: ReturnInput, user: CurrentUser, db: DB) -> PermitRead:
-    raise not_implemented()
+    return lifecycle.return_(db, user, permit_id, body)
 
 
 @router.post(
@@ -368,7 +396,7 @@ def area_review_permit(
     user: CurrentUser,
     db: DB,
 ) -> PermitRead:
-    raise not_implemented()
+    return lifecycle.area_review(db, user, permit_id, body)
 
 
 @router.post(
@@ -384,7 +412,7 @@ def hse_review_permit(
     user: CurrentUser,
     db: DB,
 ) -> PermitRead:
-    raise not_implemented()
+    return lifecycle.hse_review(db, user, permit_id, body)
 
 
 @router.post(
@@ -400,7 +428,7 @@ def approve_permit(
     user: CurrentUser,
     db: DB,
 ) -> PermitRead:
-    raise not_implemented()
+    return lifecycle.approve(db, user, permit_id, body)
 
 
 @router.post(
@@ -411,7 +439,7 @@ def approve_permit(
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def issue_permit(permit_id: uuid.UUID, body: IssueInput, user: CurrentUser, db: DB) -> PermitRead:
-    raise not_implemented()
+    return lifecycle.issue(db, user, permit_id, body)
 
 
 @router.post(
@@ -422,7 +450,7 @@ def issue_permit(permit_id: uuid.UUID, body: IssueInput, user: CurrentUser, db: 
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def start_permit(permit_id: uuid.UUID, body: StartInput, user: CurrentUser, db: DB) -> PermitRead:
-    raise not_implemented()
+    return lifecycle.start(db, user, permit_id, body)
 
 
 @router.post(
@@ -437,7 +465,7 @@ def end_shift_permit(
     user: CurrentUser,
     db: DB,
 ) -> PermitRead:
-    raise not_implemented()
+    return lifecycle.end_shift(db, user, permit_id, body)
 
 
 @router.post(
@@ -452,7 +480,7 @@ def suspend_permit(
     user: CurrentUser,
     db: DB,
 ) -> PermitRead:
-    raise not_implemented()
+    return lifecycle.suspend(db, user, permit_id, body)
 
 
 @router.post(
@@ -467,7 +495,7 @@ def gas_alarm_permit(
     user: CurrentUser,
     db: DB,
 ) -> PermitRead:
-    raise not_implemented()
+    return lifecycle.gas_alarm(db, user, permit_id, body)
 
 
 @router.post(
@@ -483,7 +511,7 @@ def revalidate_permit(
     user: CurrentUser,
     db: DB,
 ) -> PermitRead:
-    raise not_implemented()
+    return lifecycle.revalidate(db, user, permit_id, body)
 
 
 @router.post(
@@ -494,7 +522,7 @@ def revalidate_permit(
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def resume_permit(permit_id: uuid.UUID, body: ResumeInput, user: CurrentUser, db: DB) -> PermitRead:
-    raise not_implemented()
+    return lifecycle.resume(db, user, permit_id, body)
 
 
 @router.post(
@@ -511,7 +539,7 @@ def record_receiver_acceptance(
     user: CurrentUser,
     db: DB,
 ) -> ReceiverAcceptanceRead:
-    raise not_implemented()
+    return lifecycle.record_receiver_acceptance(db, user, permit_id, body)
 
 
 @router.post(
@@ -527,7 +555,7 @@ def request_permit_closure(
     user: CurrentUser,
     db: DB,
 ) -> PermitRead:
-    raise not_implemented()
+    return lifecycle.request_closure(db, user, permit_id, body)
 
 
 @router.post(
@@ -538,7 +566,7 @@ def request_permit_closure(
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def close_permit(permit_id: uuid.UUID, body: CloseInput, user: CurrentUser, db: DB) -> PermitRead:
-    raise not_implemented()
+    return lifecycle.close(db, user, permit_id, body)
 
 
 @router.post(
@@ -548,7 +576,7 @@ def close_permit(permit_id: uuid.UUID, body: CloseInput, user: CurrentUser, db: 
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def cancel_permit(permit_id: uuid.UUID, body: CancelInput, user: CurrentUser, db: DB) -> PermitRead:
-    raise not_implemented()
+    return lifecycle.cancel(db, user, permit_id, body)
 
 
 @router.post(
@@ -563,7 +591,7 @@ def post_expiry_check_permit(
     user: CurrentUser,
     db: DB,
 ) -> PermitRead:
-    raise not_implemented()
+    return lifecycle.post_expiry_check(db, user, permit_id, body)
 
 
 @router.post(
@@ -578,7 +606,7 @@ def start_permit_pause(
     user: CurrentUser,
     db: DB,
 ) -> PermitRead:
-    raise not_implemented()
+    return fieldwork.start_pause(db, user, permit_id, body)
 
 
 @router.post(
@@ -594,7 +622,7 @@ def end_permit_pause(
     user: CurrentUser,
     db: DB,
 ) -> PermitRead:
-    raise not_implemented()
+    return fieldwork.end_pause(db, user, permit_id, body)
 
 
 @router.post(
@@ -609,7 +637,7 @@ def record_hot_work_end(
     user: CurrentUser,
     db: DB,
 ) -> PermitRead:
-    raise not_implemented()
+    return fieldwork.record_hot_work_end(db, user, permit_id, body)
 
 
 @router.post(
@@ -625,7 +653,7 @@ def record_entry_log(
     user: CurrentUser,
     db: DB,
 ) -> EntryLogRead:
-    raise not_implemented()
+    return fieldwork.record_entry(db, user, permit_id, body)
 
 
 @router.post(
@@ -641,7 +669,7 @@ def record_wind_reading(
     user: CurrentUser,
     db: DB,
 ) -> WindReadingRead:
-    raise not_implemented()
+    return fieldwork.record_wind(db, user, permit_id, body)
 
 
 @router.post(
@@ -657,7 +685,7 @@ def record_excavation_inspection(
     user: CurrentUser,
     db: DB,
 ) -> ExcavationInspectionRead:
-    raise not_implemented()
+    return fieldwork.record_excavation_inspection(db, user, permit_id, body)
 
 
 @router.post(
@@ -673,7 +701,7 @@ def record_barrier_survey(
     user: CurrentUser,
     db: DB,
 ) -> BarrierSurveyRead:
-    raise not_implemented()
+    return fieldwork.record_barrier_survey(db, user, permit_id, body)
 
 
 @router.post(
@@ -688,7 +716,7 @@ def record_source_return(
     user: CurrentUser,
     db: DB,
 ) -> PermitRead:
-    raise not_implemented()
+    return fieldwork.record_source_return(db, user, permit_id, body)
 
 
 @router.post(
@@ -704,7 +732,7 @@ def record_permit_fod_check(
     user: CurrentUser,
     db: DB,
 ) -> PermitFodCheckRead:
-    raise not_implemented()
+    return fieldwork.record_fod_check(db, user, permit_id, body)
 
 
 @router.post(
@@ -720,7 +748,7 @@ def request_permit_exemption(
     user: CurrentUser,
     db: DB,
 ) -> ExemptionRead:
-    raise not_implemented()
+    return fieldwork.request_exemption(db, user, permit_id, body)
 
 
 @router.post(
@@ -736,7 +764,7 @@ def decide_permit_exemption(
     user: CurrentUser,
     db: DB,
 ) -> ExemptionRead:
-    raise not_implemented()
+    return fieldwork.decide_exemption(db, user, exemption_id, body)
 
 
 @router.get(
@@ -746,7 +774,7 @@ def decide_permit_exemption(
     responses=error_responses(401, 403, 404),
 )
 def list_permit_handovers(permit_id: uuid.UUID, user: CurrentUser, db: DB) -> HandoverList:
-    raise not_implemented()
+    return fieldwork.list_handovers(db, user, permit_id)
 
 
 @router.post(
@@ -762,7 +790,7 @@ def create_permit_handover(
     user: CurrentUser,
     db: DB,
 ) -> HandoverRead:
-    raise not_implemented()
+    return fieldwork.create_handover(db, user, permit_id, body)
 
 
 @router.post(
@@ -778,7 +806,7 @@ def accept_permit_handover(
     user: CurrentUser,
     db: DB,
 ) -> PermitRead:
-    raise not_implemented()
+    return fieldwork.accept_handover(db, user, handover_id, body)
 
 
 @router.get(
@@ -788,7 +816,7 @@ def accept_permit_handover(
     responses=error_responses(401, 403, 404),
 )
 def list_permit_shifts(permit_id: uuid.UUID, user: CurrentUser, db: DB) -> ShiftList:
-    raise not_implemented()
+    return board.list_shifts(db, user, permit_id)
 
 
 @router.get(
@@ -798,7 +826,7 @@ def list_permit_shifts(permit_id: uuid.UUID, user: CurrentUser, db: DB) -> Shift
     responses=error_responses(401, 403, 404),
 )
 def list_permit_suspensions(permit_id: uuid.UUID, user: CurrentUser, db: DB) -> SuspensionList:
-    raise not_implemented()
+    return board.list_suspensions(db, user, permit_id)
 
 
 @router.get(
@@ -820,7 +848,20 @@ def list_project_permit_suspensions(
     date_from: date | None = None,
     date_to: date | None = None,
 ) -> SuspensionPage:
-    raise not_implemented()
+    return board.project_suspensions(
+        db,
+        user,
+        project_id,
+        pg.page,
+        pg.page_size,
+        reason,
+        work_type,
+        engagement_id,
+        zone_id,
+        open_only,
+        date_from,
+        date_to,
+    )
 
 
 @router.get(
@@ -835,7 +876,7 @@ def get_permit_readiness(
     user: CurrentUser,
     db: DB,
 ) -> PermitReadiness:
-    raise not_implemented()
+    return board.readiness(db, user, permit_id, action)
 
 
 @router.get(
@@ -845,7 +886,7 @@ def get_permit_readiness(
     responses=error_responses(401, 403, 404, 409),
 )
 def get_permit_print(permit_id: uuid.UUID, user: CurrentUser, db: DB) -> PermitPrintRead:
-    raise not_implemented()
+    return board.print_view(db, user, permit_id)
 
 
 @router.get(
@@ -855,7 +896,7 @@ def get_permit_print(permit_id: uuid.UUID, user: CurrentUser, db: DB) -> PermitP
     responses=error_responses(401, 403, 404, 409),
 )
 def get_permit_closure_pack(permit_id: uuid.UUID, user: CurrentUser, db: DB) -> ClosurePackRead:
-    raise not_implemented()
+    return board.closure_pack(db, user, permit_id)
 
 
 @router.post(
@@ -871,7 +912,7 @@ def copy_permit(
     user: CurrentUser,
     db: DB,
 ) -> PermitRead:
-    raise not_implemented()
+    return permits_svc.copy(db, user, permit_id, body)
 
 
 @router.get(
@@ -889,7 +930,7 @@ def get_ptw_board(
     work_type: Annotated[list[PermitType] | None, Query()] = None,
     include_planned_hours: Annotated[int, Query(ge=0, le=72)] = 12,
 ) -> PtwBoardResponse:
-    raise not_implemented()
+    return board.board(db, user, project_id, site_id, zone_id, work_type, include_planned_hours)
 
 
 @router.get(
@@ -903,4 +944,4 @@ def get_incident_permit_suggestions(
     user: CurrentUser,
     db: DB,
 ) -> IncidentPermitSuggestions:
-    raise not_implemented()
+    return board.incident_suggestions(db, user, incident_id)

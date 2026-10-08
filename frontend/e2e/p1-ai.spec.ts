@@ -1,4 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
+import { type Page } from "@playwright/test";
+import { expect, test } from "./fixtures/test";
 import { insufficientStream, midStreamErrorStream, trirStream, ANSWER_ID } from "./fixtures/ai-stream";
 import { apiAs, getJson, login, projectId, USERS } from "./helpers";
 

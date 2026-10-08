@@ -28,8 +28,8 @@ PHASE3_METRICS: frozenset[KpiMetric] = frozenset(
         M.K71,
     }
 )  # fmt: skip
-PHASE3_PENDING: frozenset[KpiMetric] = PHASE3_METRICS
-"""PTW KPIs not computed yet (Phase 3 stage 1: listed, value null NOT_AVAILABLE_YET)."""
+PHASE3_PENDING: frozenset[KpiMetric] = frozenset()
+"""PTW KPIs not computed yet (none since Phase 3 stage 2)."""
 _PENDING = PHASE2_PENDING | PHASE3_PENDING
 
 
@@ -242,9 +242,10 @@ CATALOGUE: dict[KpiMetric, KpiDef] = {
              "reported engagement-site-days ÷ expected × 100", G.data_quality,
              numerator="Reported engagement-site-days",
              denominator="Expected engagement-site-days"),
-        KpiDef(M.K46, "PTW audits", "تدقيق تصاريح العمل", "PTW audits", "تدقيق التصاريح",
-               K.placeholder, G.leading, NONE, "", "", "Available from Phase 3",
-               available=False),
+        _count(M.K46, "PTW field audits", "تدقيقات تصاريح العمل الميدانية", "PTW field audits",
+               "التدقيقات الميدانية", G.leading, HIGH,
+               "n(field audits Completed or Locked, audited_at in period); K-46b coverage chip",
+               ("audits", "تدقيق")),
         _count(M.K47, "Late reports", "البلاغات المتأخرة", "Late reports", "البلاغات المتأخرة",
                G.data_quality, LOW, "n(reported_at − occurred_at > 24 h)"),
         # ---- Phase 2 access KPIs (2-access-permits §6.8) ----
@@ -350,5 +351,6 @@ LAGGING_TILES = [
 LEADING_TILES = [
     M.K30, M.K31, M.K32, M.K34, M.K35, M.K36, M.K37, M.K39, M.K41, M.K42, M.K27,
 ]  # fmt: skip
-PLACEHOLDERS = [M.K46]
+PTW_TILES = [M.K46, M.K61, M.K64, M.K66, M.K69]  # 3-ptw §8.1 item 1 (capability 103)
+PLACEHOLDERS: list[KpiMetric] = []  # K-46 became a live tile in Phase 3
 RATE_METRICS = frozenset(m for m, d in CATALOGUE.items() if d.kind == K.rate)

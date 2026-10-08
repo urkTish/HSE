@@ -8,7 +8,7 @@ from typing import Annotated
 from fastapi import APIRouter, Query, status
 
 from app.api.deps import DB, CurrentUser, PageParams
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.core.ptw_enums import DetectorStatus, GasTestResult, GasTestType
 from app.schemas.gas import (
     BumpTestCreate,
@@ -28,6 +28,7 @@ from app.schemas.gas import (
     GasTestRead,
     GasTestSupersede,
 )
+from app.services.ptw import gas as svc
 
 router = APIRouter(tags=["gas-testing"])
 
@@ -48,7 +49,17 @@ def list_gas_detectors(
     calibration_due_within_days: Annotated[int | None, Query(ge=0, le=365)] = None,
     q: Annotated[str | None, Query(max_length=100)] = None,
 ) -> DetectorPage:
-    raise not_implemented()
+    return svc.list_detectors(
+        db,
+        user,
+        project_id,
+        pg.page,
+        pg.page_size,
+        status_,
+        engagement_id,
+        calibration_due_within_days,
+        q,
+    )
 
 
 @router.post(
@@ -64,7 +75,7 @@ def create_gas_detector(
     user: CurrentUser,
     db: DB,
 ) -> DetectorRead:
-    raise not_implemented()
+    return svc.create_detector(db, user, project_id, body)
 
 
 @router.get(
@@ -74,7 +85,7 @@ def create_gas_detector(
     responses=error_responses(401, 403, 404),
 )
 def get_gas_detector(detector_id: uuid.UUID, user: CurrentUser, db: DB) -> DetectorRead:
-    raise not_implemented()
+    return svc.read_detector(db, user, detector_id)
 
 
 @router.patch(
@@ -89,7 +100,7 @@ def update_gas_detector(
     user: CurrentUser,
     db: DB,
 ) -> DetectorRead:
-    raise not_implemented()
+    return svc.update_detector(db, user, detector_id, body)
 
 
 @router.post(
@@ -105,7 +116,7 @@ def record_detector_calibration(
     user: CurrentUser,
     db: DB,
 ) -> DetectorRead:
-    raise not_implemented()
+    return svc.record_calibration(db, user, detector_id, body)
 
 
 @router.get(
@@ -121,7 +132,7 @@ def list_bump_tests(
     date_from: date | None = None,
     date_to: date | None = None,
 ) -> BumpTestList:
-    raise not_implemented()
+    return svc.list_bumps(db, user, detector_id, date_from, date_to)
 
 
 @router.post(
@@ -137,7 +148,7 @@ def record_bump_test(
     user: CurrentUser,
     db: DB,
 ) -> BumpTestRead:
-    raise not_implemented()
+    return svc.record_bump(db, user, detector_id, body)
 
 
 @router.post(
@@ -152,7 +163,7 @@ def retire_gas_detector(
     user: CurrentUser,
     db: DB,
 ) -> DetectorRead:
-    raise not_implemented()
+    return svc.retire(db, user, detector_id, body)
 
 
 @router.get(
@@ -162,7 +173,7 @@ def retire_gas_detector(
     responses=error_responses(401, 403, 404),
 )
 def list_permit_gas_tests(permit_id: uuid.UUID, user: CurrentUser, db: DB) -> GasTestList:
-    raise not_implemented()
+    return svc.list_for_permit(db, user, permit_id)
 
 
 @router.post(
@@ -178,7 +189,7 @@ def record_gas_test(
     user: CurrentUser,
     db: DB,
 ) -> GasTestRead:
-    raise not_implemented()
+    return svc.record(db, user, permit_id, body)
 
 
 @router.post(
@@ -193,7 +204,7 @@ def preview_gas_test(
     user: CurrentUser,
     db: DB,
 ) -> GasEvaluation:
-    raise not_implemented()
+    return svc.preview(db, user, permit_id, body)
 
 
 @router.get(
@@ -214,7 +225,19 @@ def list_project_gas_tests(
     date_from: date | None = None,
     date_to: date | None = None,
 ) -> GasTestPage:
-    raise not_implemented()
+    return svc.list_project(
+        db,
+        user,
+        project_id,
+        pg.page,
+        pg.page_size,
+        permit_id,
+        detector_id,
+        test_type,
+        result,
+        date_from,
+        date_to,
+    )
 
 
 @router.get(
@@ -224,7 +247,7 @@ def list_project_gas_tests(
     responses=error_responses(401, 403, 404),
 )
 def get_gas_test(gas_test_id: uuid.UUID, user: CurrentUser, db: DB) -> GasTestRead:
-    raise not_implemented()
+    return svc.read_test(db, user, gas_test_id)
 
 
 @router.post(
@@ -239,4 +262,4 @@ def supersede_gas_test(
     user: CurrentUser,
     db: DB,
 ) -> GasTestRead:
-    raise not_implemented()
+    return svc.supersede(db, user, gas_test_id, body)

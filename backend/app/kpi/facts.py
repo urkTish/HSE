@@ -219,6 +219,21 @@ class Facts:
     def access(self, value: Any) -> None:
         self._access = value
 
+    # app.kpi.ptw_facts.PtwFacts (3-ptw §6.11), loaded on first use like the access facts.
+    ptw_loader: Any = None
+    _ptw: Any = None
+
+    @property
+    def ptw(self) -> Any:
+        if self._ptw is None and self.ptw_loader is not None:
+            self._ptw = self.ptw_loader()
+            self.ptw_loader = None
+        return self._ptw
+
+    @ptw.setter
+    def ptw(self, value: Any) -> None:
+        self._ptw = value
+
     def sort(self) -> "Facts":
         self.wf.sort(key=lambda r: r.d)
         self.inds.sort(key=lambda r: r.d)

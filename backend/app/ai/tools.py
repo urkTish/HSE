@@ -7,6 +7,7 @@ de-identified (AI-5): no person names, ID numbers, contacts, medical notes or ob
 identities; free text is redacted server-side.
 """
 
+import dataclasses
 import hashlib
 import json
 import uuid
@@ -42,7 +43,8 @@ from app.core.hse_enums import (
     KpiMetric,
     PeriodPreset,
 )
-from app.kpi import access_views, charts, fmt, groups, service, views
+from app.core.ptw_enums import PermitType, PtwKpiGroupBy
+from app.kpi import access_views, charts, fmt, groups, ptw_views, service, views
 from app.kpi import scope as kscope
 from app.kpi.facts import Facts
 from app.kpi.periods import week_start
@@ -354,6 +356,36 @@ TOOL_DEFS: list[dict[str, Any]] = [
             "group_by": {
                 "type": "array",
                 "items": {"type": "string", "enum": [g.value for g in AccessKpiGroupBy]},
+            },
+        },
+        [],
+    ),
+    _tool(
+        AiTool.get_ptw_kpis,
+        "T15: permit-to-work KPIs (K-46, K-46b, K-61..K-71): value, numerator, denominator, "
+        "comparisons and breakdown rows by type, contractor, zone, month, week, "
+        "suspension_reason, audit_item or simops_rule, plus the live PTW band. Aggregates only "
+        "— no names, worker numbers, signatures or appointment holders.",
+        {
+            "project_codes": PROJECTS,
+            "period": PERIOD,
+            "filters": {
+                **FILTERS,
+                "properties": {
+                    **FILTERS["properties"],  # type: ignore[dict-item]
+                    "permit_types": {
+                        "type": "array",
+                        "items": {"type": "string", "enum": [t.value for t in PermitType]},
+                    },
+                },
+            },
+            "metrics": {
+                "type": "array",
+                "items": {"type": "string", "enum": [m.value for m in ptw_views.PTW_METRICS]},
+            },
+            "group_by": {
+                "type": "array",
+                "items": {"type": "string", "enum": [g.value for g in PtwKpiGroupBy]},
             },
         },
         [],
@@ -1476,6 +1508,65 @@ def t_get_access_kpis(ctx: ToolContext, params: dict[str, Any]) -> tuple[dict[st
     }, narrowed or sc.narrowed
 
 
+def t_get_ptw_kpis(ctx: ToolContext, params: dict[str, Any]) -> tuple[dict[str, Any], bool]:
+    """T15 (3-ptw KP-5): aggregates only (AI-5)."""
+    q, narrowed = _query(ctx, params)
+    if q is None:
+        return {"no_access": True, "message": NO_ACCESS}, True
+    flt = params.get("filters") or {}
+    q = dataclasses.replace(q, permit_types=[PermitType(t) for t in flt.get("permit_types") or []])
+    try:
+        sc = kscope.build(ctx.db, ctx.p, q, Capability.ptw_kpi_view)
+    except ApiError:
+        return {"no_access": True, "message": NO_ACCESS}, True
+    if not ptw_views.has_ptw(sc):
+        return {
+            "no_access": True,
+            "message": "PTW KPIs need capability 103 on the project.",
+        }, True
+    metrics = [KpiMetric(m) for m in params.get("metrics") or []] or None
+    group_by = [PtwKpiGroupBy(g) for g in params.get("group_by") or []]
+    res = ptw_views.ptw_kpis(ctx.db, sc, metrics, group_by)
+    codes, who = _codes_who(sc)
+    period = res.context.period.label_en
+    out = []
+    for v in res.metrics:
+        row = _kpi(v)
+        row["cite"] = ctx.cite(
+            AiTool.get_ptw_kpis,
+            f"{v.short_label_en} {v.display} — get_ptw_kpis, {codes}, {period}, {who}",
+            metric=v.metric,
+            value=v.display,
+            period=period,
+            scope=service.scope_label(sc),
+        )
+        out.append(row)
+    breakdowns = [
+        {
+            "metric": b.metric,
+            "group_by": b.group_by.value,
+            "rows": [
+                {"key": r.key, "label": r.label_en, "value": r.display,
+                 "numerator": r.numerator, "denominator": r.denominator}
+                for r in b.rows
+            ],
+        }
+        for b in res.breakdowns
+    ]  # fmt: skip
+    band = None
+    if res.band is not None:
+        band = {
+            k: v for k, v in res.band.model_dump(mode="json").items() if not isinstance(v, list)
+        }
+    return {
+        "scope": service.scope_label(sc),
+        "period": period,
+        "band": band,
+        "kpis": out,
+        "breakdowns": breakdowns,
+    }, narrowed or sc.narrowed
+
+
 def t_propose_chart(ctx: ToolContext, params: dict[str, Any]) -> tuple[dict[str, Any], bool]:
     q, narrowed = _query(ctx, params)
     if q is None:
@@ -1521,6 +1612,7 @@ HANDLERS: dict[str, Callable[[ToolContext, dict[str, Any]], tuple[dict[str, Any]
     AiTool.get_expiring_items.value: t_get_expiring_items,
     AiTool.propose_chart.value: t_propose_chart,
     AiTool.get_access_kpis.value: t_get_access_kpis,
+    AiTool.get_ptw_kpis.value: t_get_ptw_kpis,
 }
 
 

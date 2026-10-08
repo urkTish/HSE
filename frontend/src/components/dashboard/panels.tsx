@@ -292,7 +292,7 @@ export function ExpiringItems({ projectId, asOf, show }: { projectId: string | n
   const t = useTranslations("dashboard");
   const te = useTranslations("enums");
   const ar = useLocale() === "ar";
-  const { date } = useFormatters(projectId);
+  const { date, dateTime } = useFormatters(projectId);
   const q = useExpiringItems(projectId, asOf);
   const [all, setAll] = useState(false);
   if (!projectId) return null;
@@ -312,9 +312,20 @@ export function ExpiringItems({ projectId, asOf, show }: { projectId: string | n
       <ul className="flex flex-col divide-y" data-testid="expiring-items">
         {visible.map((i, idx) => {
           const href = apiPathToRoute(i.detail_path) ?? entityRoute(i.entity_type, i.entity_id, projectId);
-          const overdue = i.days_left < 0;
-          const soon = !overdue && i.days_left <= 2;
-          const when = overdue ? t("daysOverdue", { days: show(-i.days_left) }) : i.days_left === 0 ? t("dueToday") : t("daysLeft", { days: show(i.days_left), n: i.days_left });
+          // Phase 3 PTW kinds are minute-level (gas retest, fire watch, shift end): show minutes and the time.
+          const mins = typeof i.minutes_left === "number" ? i.minutes_left : null;
+          const overdue = mins !== null ? mins < 0 : i.days_left < 0;
+          const soon = !overdue && (mins !== null ? mins <= 30 : i.days_left <= 2);
+          const when =
+            mins !== null
+              ? overdue
+                ? t("minutesOverdue", { n: show(-mins) })
+                : t("minutesLeft", { n: show(mins) })
+              : overdue
+                ? t("daysOverdue", { days: show(-i.days_left) })
+                : i.days_left === 0
+                  ? t("dueToday")
+                  : t("daysLeft", { days: show(i.days_left), n: i.days_left });
           const content = (
             <>
               <span className="min-w-0">
@@ -340,7 +351,7 @@ export function ExpiringItems({ projectId, asOf, show }: { projectId: string | n
                   {overdue ? <AlertTriangle aria-hidden className="size-3.5" /> : <CalendarClock aria-hidden className="size-3.5" />}
                   {when}
                 </span>
-                <span className="text-muted-foreground">{date(i.due_date)}</span>
+                <span className="text-muted-foreground">{i.due_at ? <span className="ltr">{dateTime(i.due_at)}</span> : date(i.due_date)}</span>
               </span>
             </>
           );

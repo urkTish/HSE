@@ -1,4 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
+import { type Page } from "@playwright/test";
+import { expect, test } from "./fixtures/test";
 import { apiAs, login, uid, USERS } from "./helpers";
 import { createWorker, ensureCourse, ensureGenCourse, makePng, pickMulti, projectIds, recordInduction, selectContaining, uploadPhoto } from "./p2-helpers";
 

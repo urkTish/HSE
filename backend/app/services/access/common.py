@@ -158,7 +158,7 @@ def set_worker_id(w: Worker, id_type: WorkerIdType, number: str, country: str | 
 
 # ---- QR tokens (§3.20) ----------------------------------------------------------------------
 
-QR_RE = re.compile(r"^HSE2:(AC|VS|WP):([A-Za-z0-9_-]{22})(?:\.[A-Za-z0-9_-]+)?$")
+QR_RE = re.compile(r"^HSE2:(AC|VS|WP|PT):([A-Za-z0-9_-]{22})(?:\.[A-Za-z0-9_-]+)?$")
 
 
 def new_qr_token() -> str:

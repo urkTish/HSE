@@ -59,6 +59,15 @@ PERSONAL = frozenset(
         AttachmentOwner.pass_application_id_copy,
         AttachmentOwner.induction_signature,
         AttachmentOwner.offence_evidence,
+        AttachmentOwner.gas_test_signature,
+    }
+)
+PTW_OWNERS = frozenset(
+    {
+        AttachmentOwner.permit_document,
+        AttachmentOwner.permit_attachment,
+        AttachmentOwner.ptw_audit_photo,
+        AttachmentOwner.gas_test_signature,
     }
 )
 ENCRYPTED = frozenset({"medical", "personal"})
@@ -144,6 +153,8 @@ def _owner(
         if write and p.user.id != ca.owner_id and not ca_svc._staff(p, ca):
             raise forbidden_error()
         return ca.project_id, ca.status in (CaStatus.open, CaStatus.in_progress)
+    if owner_type in PTW_OWNERS:
+        return _ptw_owner(db, p, owner_type, owner_id, write)
     if owner_type in PERSONAL:
         return _access_owner(db, p, owner_type, owner_id, write)
     m = db.get(HseMeeting, owner_id)
@@ -152,6 +163,49 @@ def _owner(
     if write:
         p.require(m.project_id, Capability.inspection_plan_manage)
     return m.project_id, True
+
+
+def _ptw_owner(
+    db: Session, p: Principal, owner_type: AttachmentOwner, owner_id: uuid.UUID, write: bool
+) -> tuple[uuid.UUID, bool]:
+    """Phase 3 files: permit documents and attachments (owner = permit), PTW audit photos
+    (owner = audit; "avoid faces", AU-8), gas-tester signatures (owner = gas test; capability
+    46 to read, written only with the test)."""
+    from app.core.ptw_enums import PERMIT_TERMINAL, PtwAuditStatus  # noqa: PLC0415
+    from app.models import GasTest  # noqa: PLC0415
+    from app.services.access import common as acc  # noqa: PLC0415
+    from app.services.ptw import audits as ptw_audits  # noqa: PLC0415
+    from app.services.ptw import common as ptw_common  # noqa: PLC0415
+
+    c = Capability
+    if owner_type == AttachmentOwner.ptw_audit_photo:
+        a = ptw_audits.get_row(db, p, owner_id)
+        if write and a.auditor_user_id != p.user.id and not p.is_manager:
+            raise forbidden_error("Only the auditor adds photos to the audit.")
+        return a.project_id, a.status != PtwAuditStatus.locked
+    if owner_type == AttachmentOwner.gas_test_signature:
+        t = db.get(GasTest, owner_id)
+        if t is None:
+            raise not_found("Gas test")
+        permit = ptw_common.get_permit(db, p, t.permit_id)
+        if write:
+            raise forbidden_error("The signature is captured with the gas test.")
+        if p.grant(permit.project_id, c.worker_view) is None:
+            raise forbidden_error("Worker signatures need capability 46.")
+        return permit.project_id, False
+    permit = ptw_common.get_permit(db, p, owner_id)
+    if write:
+        pid = permit.project_id
+        if p.grant(pid, c.permit_prepare) is not None:
+            acc.require_cap(p, pid, c.permit_prepare, [permit.site_id], permit.engagement_id)
+        elif p.grant(pid, c.permit_receive) is not None:
+            acc.require_cap(p, pid, c.permit_receive, [permit.site_id], permit.engagement_id)
+        else:
+            acc.require_cap(p, pid, c.permit_issue, [permit.site_id], None)
+    editable = owner_type == AttachmentOwner.permit_attachment or (
+        permit.status not in PERMIT_TERMINAL
+    )
+    return permit.project_id, editable
 
 
 def _access_owner(

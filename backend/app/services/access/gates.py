@@ -82,6 +82,7 @@ from app.schemas.gates import (
     GateLogEntry,
     GateLogPage,
     GatePairedResult,
+    GatePermitCard,
     GatePersonCard,
     GateRead,
     GateReason,
@@ -945,6 +946,8 @@ def gate_check(db: Session, caller: Caller, body: GateCheckRequest) -> GateCheck
         kind = GateSubjectKind.vehicle if t.kind == QrKind.VS else GateSubjectKind.person
         if t.kind == QrKind.WP:
             kind = GateSubjectKind.wap
+        elif t.kind == QrKind.PT:
+            kind = GateSubjectKind.permit
         return _out_of_scope(db, caller, g, zone, body, kind, t, at)
     if body.pairing_id is not None:
         pr = _pairing_for(db, caller, body.pairing_id)
@@ -970,6 +973,8 @@ def gate_check(db: Session, caller: Caller, body: GateCheckRequest) -> GateCheck
             if t.kind == QrKind.AC
             else GateSubjectKind.vehicle
             if t.kind == QrKind.VS
+            else GateSubjectKind.permit
+            if t.kind == QrKind.PT
             else GateSubjectKind.wap
         )
         row = _log(
@@ -991,12 +996,16 @@ def gate_check(db: Session, caller: Caller, body: GateCheckRequest) -> GateCheck
         return _response(db, row, g, zone, Verdict(deny=[code]))
     if t.kind == QrKind.WP:
         return _wap_view(db, caller, g, zone, t, body, at)
+    if t.kind == QrKind.PT:
+        return _permit_view(db, caller, g, zone, t, body, at)
     if t.kind == QrKind.VS:
         return _vehicle_check(db, caller, g, zone, t, body, at, d)
     return _person_check(db, caller, g, zone, t, body, at)
 
 
 def _subject(db: Session, t: QrToken) -> tuple[Deployment | None, Vehicle | None, Wap | None]:
+    if t.kind == QrKind.PT:
+        return None, None, None
     if t.kind == QrKind.AC:
         return db.get(Deployment, t.subject_id), None, None
     if t.kind == QrKind.VS:
@@ -1454,6 +1463,94 @@ def _wap_view(
         final=False,
     )
     return _response(db, row, g, zone, Verdict(), wap=card)
+
+
+def _permit_view(
+    db: Session,
+    caller: Caller,
+    g: Gate,
+    zone: Zone | None,
+    t: QrToken,
+    body: GateCheckRequest,
+    at: datetime,
+) -> GateCheckResponse:
+    """v1.1 GC-10 for `PT` tokens: read-only permit summary; logs `ptw_view`, records no
+    individual's entry. Crew names need capability 46 (a signed-in caller without it sees an
+    empty crew list; gate devices see the crew as on the WAP card)."""
+    from app.core.ptw_enums import CrewLineStatus, PermitBlocker, PermitType  # noqa: PLC0415
+    from app.models import Permit  # noqa: PLC0415
+    from app.services.ptw import common as ptw_common  # noqa: PLC0415
+    from app.services.ptw import evaluation as ptw_eval  # noqa: PLC0415
+    from app.services.ptw import facts as ptw_facts  # noqa: PLC0415
+    from app.services.ptw import views as ptw_views  # noqa: PLC0415
+    from app.services.ptw.board import _window_today  # noqa: PLC0415
+
+    permit = db.get(Permit, t.subject_id)
+    if permit is None:
+        row = _log(
+            db,
+            caller,
+            g,
+            zone,
+            body.direction,
+            GateSubjectKind.unknown,
+            R.DENIED,
+            [G.TOKEN_UNKNOWN.value],
+            at,
+            qr_kind=t.kind,
+        )
+        return _response(db, row, g, zone, Verdict(deny=[G.TOKEN_UNKNOWN]))
+    if not _scope_ok(caller, g.project_id, permit.engagement_id):
+        return _out_of_scope(db, caller, g, zone, body, GateSubjectKind.permit, t, at)
+    names = caller.principal is None or (
+        caller.principal.grant(permit.project_id, C.worker_view) is not None
+    )
+    crew = []
+    if names:
+        for line in ptw_eval.crew_lines(db, permit.id):
+            wk = db.get(Worker, line.worker_id)
+            if wk is None:
+                continue
+            crew.append(
+                GateWapCrewLine(
+                    worker_no=wk.worker_no,
+                    full_name_en=wk.full_name_en,
+                    full_name_ar=wk.full_name_ar,
+                    crew_role=line.crew_role.value,
+                    eligible_now=line.status == CrewLineStatus.listed,
+                    reasons=[],
+                )
+            )
+    shift = ptw_eval.current_shift(db, permit)
+    f = ptw_facts.compute(db, permit)
+    card = GatePermitCard(
+        permit_no=permit.permit_no,
+        display_no=ptw_common.display_no(permit),
+        status=permit.status,
+        work_types=[PermitType(x) for x in permit.work_types],
+        in_window_now=ptw_common.current_instance(permit, at) is not None,
+        window_today=_window_today(permit, at),
+        valid_to_at=permit.valid_to_at,
+        current_shift_no=shift.shift_no if shift else None,
+        blockers=[PermitBlocker(b["code"]) for b in permit.blockers or []],
+        crew=crew,
+        gas_status=ptw_views.gas_state(db, permit, f, at).status,
+    )
+    row = _log(
+        db,
+        caller,
+        g,
+        zone,
+        body.direction,
+        GateSubjectKind.permit,
+        R.PTW_VIEW,
+        [],
+        at,
+        qr_kind=t.kind,
+        ref=permit.permit_no,
+        final=False,
+    )
+    return _response(db, row, g, zone, Verdict(), permit=card)
 
 
 # ---- pairing (GC-8, GC-9) ------------------------------------------------------------------------

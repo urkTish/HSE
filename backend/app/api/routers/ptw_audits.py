@@ -8,7 +8,7 @@ from typing import Annotated
 from fastapi import APIRouter, Query, status
 
 from app.api.deps import DB, CurrentUser, PageParams
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.core.ptw_enums import PtwAuditStatus, PtwAuditType
 from app.schemas.ptw_audits import (
     PtwAuditChecklist,
@@ -18,6 +18,7 @@ from app.schemas.ptw_audits import (
     PtwAuditRead,
     PtwAuditUpdate,
 )
+from app.services.ptw import audits as svc
 
 router = APIRouter(tags=["ptw-audits"])
 
@@ -41,7 +42,20 @@ def list_ptw_audits(
     date_from: date | None = None,
     date_to: date | None = None,
 ) -> PtwAuditPage:
-    raise not_implemented()
+    return svc.list_audits(
+        db,
+        user,
+        project_id,
+        pg.page,
+        pg.page_size,
+        audit_type,
+        status_,
+        permit_id,
+        engagement_id,
+        auditor_user_id,
+        date_from,
+        date_to,
+    )
 
 
 @router.post(
@@ -57,7 +71,7 @@ def create_ptw_audit(
     user: CurrentUser,
     db: DB,
 ) -> PtwAuditRead:
-    raise not_implemented()
+    return svc.create(db, user, project_id, body)
 
 
 @router.get(
@@ -73,7 +87,7 @@ def get_ptw_audit_checklist(
     audit_type: PtwAuditType,
     permit_id: uuid.UUID | None = None,
 ) -> PtwAuditChecklist:
-    raise not_implemented()
+    return svc.checklist(db, user, project_id, audit_type, permit_id)
 
 
 @router.get(
@@ -83,7 +97,7 @@ def get_ptw_audit_checklist(
     responses=error_responses(401, 403, 404),
 )
 def get_ptw_audit(audit_id: uuid.UUID, user: CurrentUser, db: DB) -> PtwAuditRead:
-    raise not_implemented()
+    return svc.read(db, user, audit_id)
 
 
 @router.patch(
@@ -98,7 +112,7 @@ def update_ptw_audit(
     user: CurrentUser,
     db: DB,
 ) -> PtwAuditRead:
-    raise not_implemented()
+    return svc.update(db, user, audit_id, body)
 
 
 @router.post(
@@ -113,4 +127,4 @@ def complete_ptw_audit(
     user: CurrentUser,
     db: DB,
 ) -> PtwAuditRead:
-    raise not_implemented()
+    return svc.complete(db, user, audit_id, body)

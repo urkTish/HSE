@@ -7,7 +7,7 @@ from typing import Annotated
 from fastapi import APIRouter, Query, status
 
 from app.api.deps import DB, CurrentUser, PageParams
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.core.ptw_enums import EnergyType, IsolationStatus, LockStatus, LockType
 from app.schemas.isolations import (
     IsolationCreate,
@@ -33,6 +33,7 @@ from app.schemas.isolations import (
     PointVerifyInput,
     WorkerInformedInput,
 )
+from app.services.ptw import isolations as svc
 
 router = APIRouter(tags=["isolations"])
 
@@ -55,7 +56,19 @@ def list_isolations(
     review_due: bool | None = None,
     q: Annotated[str | None, Query(max_length=100)] = None,
 ) -> IsolationPage:
-    raise not_implemented()
+    return svc.list_certs(
+        db,
+        user,
+        project_id,
+        pg.page,
+        pg.page_size,
+        status_,
+        energy_type,
+        permit_id,
+        long_term,
+        review_due,
+        q,
+    )
 
 
 @router.post(
@@ -71,7 +84,7 @@ def create_isolation(
     user: CurrentUser,
     db: DB,
 ) -> IsolationRead:
-    raise not_implemented()
+    return svc.create(db, user, project_id, body)
 
 
 @router.get(
@@ -81,7 +94,7 @@ def create_isolation(
     responses=error_responses(401, 403, 404),
 )
 def get_isolation(isolation_id: uuid.UUID, user: CurrentUser, db: DB) -> IsolationRead:
-    raise not_implemented()
+    return svc.read(db, user, isolation_id)
 
 
 @router.patch(
@@ -96,7 +109,7 @@ def update_isolation(
     user: CurrentUser,
     db: DB,
 ) -> IsolationRead:
-    raise not_implemented()
+    return svc.update(db, user, isolation_id, body)
 
 
 @router.post(
@@ -112,7 +125,7 @@ def add_isolation_point(
     user: CurrentUser,
     db: DB,
 ) -> IsolationRead:
-    raise not_implemented()
+    return svc.add_point(db, user, isolation_id, body)
 
 
 @router.patch(
@@ -128,7 +141,7 @@ def update_isolation_point(
     user: CurrentUser,
     db: DB,
 ) -> IsolationRead:
-    raise not_implemented()
+    return svc.update_point(db, user, isolation_id, point_id, body)
 
 
 @router.delete(
@@ -143,7 +156,7 @@ def delete_isolation_point(
     user: CurrentUser,
     db: DB,
 ) -> None:
-    raise not_implemented()
+    svc.delete_point(db, user, isolation_id, point_id)
 
 
 @router.post(
@@ -159,7 +172,7 @@ def apply_isolation_point(
     user: CurrentUser,
     db: DB,
 ) -> IsolationRead:
-    raise not_implemented()
+    return svc.apply_point(db, user, isolation_id, point_id, body)
 
 
 @router.post(
@@ -175,7 +188,7 @@ def verify_isolation_point(
     user: CurrentUser,
     db: DB,
 ) -> IsolationRead:
-    raise not_implemented()
+    return svc.verify_point(db, user, isolation_id, point_id, body)
 
 
 @router.post(
@@ -191,7 +204,7 @@ def remove_isolation_point(
     user: CurrentUser,
     db: DB,
 ) -> IsolationRead:
-    raise not_implemented()
+    return svc.remove_point(db, user, isolation_id, point_id, body)
 
 
 @router.post(
@@ -206,7 +219,7 @@ def transition_isolation(
     user: CurrentUser,
     db: DB,
 ) -> IsolationRead:
-    raise not_implemented()
+    return svc.transition(db, user, isolation_id, body)
 
 
 @router.post(
@@ -222,7 +235,7 @@ def review_long_term_isolation(
     user: CurrentUser,
     db: DB,
 ) -> IsolationRead:
-    raise not_implemented()
+    return svc.review(db, user, isolation_id, body)
 
 
 @router.get(
@@ -232,7 +245,7 @@ def review_long_term_isolation(
     responses=error_responses(401, 403, 404),
 )
 def list_personal_locks(isolation_id: uuid.UUID, user: CurrentUser, db: DB) -> PersonalLockList:
-    raise not_implemented()
+    return svc.list_personal(db, user, isolation_id)
 
 
 @router.post(
@@ -248,7 +261,7 @@ def apply_personal_lock(
     user: CurrentUser,
     db: DB,
 ) -> PersonalLockEventRead:
-    raise not_implemented()
+    return svc.apply_personal(db, user, isolation_id, body)
 
 
 @router.post(
@@ -263,7 +276,7 @@ def remove_personal_lock(
     user: CurrentUser,
     db: DB,
 ) -> PersonalLockEventRead:
-    raise not_implemented()
+    return svc.remove_personal(db, user, event_id, body)
 
 
 @router.post(
@@ -278,7 +291,7 @@ def cut_personal_lock(
     user: CurrentUser,
     db: DB,
 ) -> PersonalLockEventRead:
-    raise not_implemented()
+    return svc.cut(db, user, event_id, body)
 
 
 @router.post(
@@ -293,7 +306,7 @@ def record_lock_cut_worker_informed(
     user: CurrentUser,
     db: DB,
 ) -> PersonalLockEventRead:
-    raise not_implemented()
+    return svc.worker_informed(db, user, event_id, body)
 
 
 @router.get(
@@ -312,7 +325,9 @@ def list_locks(
     holder_worker_id: uuid.UUID | None = None,
     q: Annotated[str | None, Query(max_length=100)] = None,
 ) -> LockPage:
-    raise not_implemented()
+    return svc.list_locks(
+        db, user, project_id, pg.page, pg.page_size, lock_type, status_, holder_worker_id, q
+    )
 
 
 @router.post(
@@ -323,7 +338,7 @@ def list_locks(
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def create_lock(project_id: uuid.UUID, body: LockCreate, user: CurrentUser, db: DB) -> LockRead:
-    raise not_implemented()
+    return svc.create_lock(db, user, project_id, body)
 
 
 @router.patch(
@@ -333,7 +348,7 @@ def create_lock(project_id: uuid.UUID, body: LockCreate, user: CurrentUser, db: 
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def update_lock(lock_id: uuid.UUID, body: LockUpdate, user: CurrentUser, db: DB) -> LockRead:
-    raise not_implemented()
+    return svc.update_lock(db, user, lock_id, body)
 
 
 @router.post(
@@ -348,4 +363,4 @@ def report_lock_lost(
     user: CurrentUser,
     db: DB,
 ) -> LockRead:
-    raise not_implemented()
+    return svc.report_lost(db, user, lock_id, body)

@@ -11,7 +11,7 @@ from app.api.deps import DB, CurrentUser, PageParams
 from app.api.kpi_params import KpiParams
 from app.core.access_enums import AccessKpiGroupBy
 from app.core.enums import Capability, ExportFormat
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.core.hse_enums import (
     BreakdownDimension,
     BreakdownMeasure,
@@ -21,7 +21,7 @@ from app.core.hse_enums import (
     KpiMetric,
 )
 from app.core.ptw_enums import PtwKpiGroupBy
-from app.kpi import access_views, charts, scope, service, views
+from app.kpi import access_views, charts, ptw_views, scope, service, views
 from app.schemas.access_kpi import AccessKpiResponse
 from app.schemas.kpi import (
     BreakdownResponse,
@@ -278,7 +278,8 @@ def get_chart(
     ] = None,
 ) -> ChartResponse:
     if chart_id in PHASE3_CHARTS:
-        raise not_implemented()
+        sc = scope.build(db, user, q, Capability.ptw_kpi_view)
+        return ChartResponse(context=service.context(sc), chart=ptw_views.chart(sc, chart_id))
     if chart_id in PHASE2_CHARTS:
         sc = scope.build(db, user, q, Capability.access_kpi_view)
         spec = access_views.chart(db, sc, chart_id, gate_id)
@@ -362,4 +363,5 @@ def get_ptw_kpis(
     metric: Annotated[list[KpiMetric] | None, Query(description="Default: all PTW KPIs.")] = None,
     group_by: Annotated[list[PtwKpiGroupBy] | None, Query()] = None,
 ) -> PtwKpiResponse:
-    raise not_implemented()
+    sc = scope.build(db, user, q, Capability.ptw_kpi_view)
+    return ptw_views.ptw_kpis(db, sc, metric, group_by)

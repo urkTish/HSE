@@ -1,0 +1,25 @@
+# Phase 3: PTW appointments register.
+P = {
+  "ptwAppointments": {
+    "title": ["PTW appointments", "تعيينات تصاريح العمل"],
+    "subtitle": ["Named, competent people authorised to act in a PTW function (issuer, area authority, gas tester…).", "الأشخاص المؤهلون المخولون بأداء وظيفة في نظام التصاريح (مُصدِر، مسؤول منطقة، فاحص غاز…)."],
+    "new": ["New appointment", "تعيين جديد"], "edit": ["Edit appointment", "تعديل التعيين"],
+    "newHint": ["Issuer appointments are made by the HSE Manager only. The holder's validity is checked whenever they act.", "تعيينات المُصدِرين يجريها مدير السلامة فقط. يتم التحقق من صلاحية صاحب التعيين عند كل إجراء."],
+    "created": ["Appointment {no} created", "تم إنشاء التعيين {no}"],
+    "searchHint": ["Number or holder", "الرقم أو صاحب التعيين"],
+    "no": ["Appointment", "التعيين"], "holder": ["Holder", "صاحب التعيين"], "function": ["Function", "الوظيفة"], "discipline": ["Discipline", "التخصص"],
+    "types": ["Permit types", "أنواع التصاريح"], "allTypes": ["All types", "كل الأنواع"], "scope": ["Sites / zones", "المواقع / المناطق"],
+    "valid": ["Valid", "الصلاحية"], "validFrom": ["Valid from", "صالح من"], "validTo": ["Valid to", "صالح حتى"],
+    "validToHint": ["At most appointment_max_months after the start.", "بحد أقصى المدة المسموحة للتعيين من تاريخ البداية."],
+    "expiring": ["Expiring", "ينتهي قريباً"], "withinDays": ["Within {n} days", "خلال {n} يوماً"],
+    "holderKind": ["Holder is", "صاحب التعيين"], "holderUser": ["A platform user", "مستخدم في المنصة"], "holderWorker": ["A worker (no account)", "عامل (بدون حساب)"],
+    "userOnlyHint": ["Issuers, area and isolation authorities sign in the platform, so they must be users.", "المُصدِرون ومسؤولو المناطق والعزل يوقّعون في المنصة، لذا يجب أن يكونوا مستخدمين."],
+    "zonesOptional": ["Zones (empty = all zones of the sites)", "المناطق (فارغ = كل مناطق المواقع)"], "allZones": ["All zones of the sites", "كل مناطق المواقع"],
+    "basis": ["Basis of appointment", "أساس التعيين"], "basisHint": ["Course, assessment or certificate references. No ID numbers.", "مراجع الدورة أو التقييم أو الشهادة. بدون أرقام هوية."],
+    "appointedBy": ["Appointed by", "عيّنه"],
+    "livePermits": ["Live permits where the holder acts ({n})", "التصاريح السارية التي يعمل عليها ({n})"], "noLivePermits": ["None.", "لا يوجد."],
+    "suspend": ["Suspend", "إيقاف"], "reinstate": ["Reinstate", "إعادة التفعيل"], "revoke": ["Revoke", "إلغاء"],
+    "suspendTitle": ["Suspend this appointment?", "إيقاف هذا التعيين؟"], "reinstateTitle": ["Reinstate this appointment?", "إعادة تفعيل هذا التعيين؟"], "revokeTitle": ["Revoke this appointment?", "إلغاء هذا التعيين؟"],
+    "reevaluateHint": ["Every live permit on which the holder acts is re-evaluated and may become blocked.", "يُعاد تقييم كل تصريح ساري يعمل عليه صاحب التعيين وقد يصبح معطلاً."],
+  },
+}

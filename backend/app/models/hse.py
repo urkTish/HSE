@@ -400,6 +400,8 @@ class Investigation(Base):
     lessons_learned: Mapped[str | None] = mapped_column(Text)
     ptw_involved: Mapped[bool | None] = mapped_column(Boolean)
     ptw_ref: Mapped[str | None] = mapped_column(String(40))
+    # Phase 3 §5.2 — structured links to permits (ptw_involved derives true when non-empty)
+    ptw_ids: Mapped[list[uuid.UUID]] = mapped_column(UUIDS, default=list)
     submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     returned_comment: Mapped[str | None] = mapped_column(String(1000))
     approved_by_user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))

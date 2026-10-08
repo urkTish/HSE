@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures/test";
 import { apiAs, getJson, login, uid, USERS } from "./helpers";
 import { createWorker, ensureGenCourse, iqama, pickMulti, projectIds, recordInduction, selectContaining, sign } from "./p2-helpers";
 

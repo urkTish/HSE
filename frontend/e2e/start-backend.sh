@@ -24,4 +24,10 @@ export PRIVACY_NOTICE_VERSION="${PRIVACY_NOTICE_VERSION:-PN-1.0}"
 
 uv run alembic upgrade head
 uv run python -m app.seed
+# Shared e2e clock (e2e/clock.ts): the API runs at the same shifted instant as the tests and browsers,
+# by default the PTW seed instant 2026-10-06 10:00 Riyadh, with time moving on (HSE_CLOCK_MODE advancing).
+if [ -n "${E2E_CLOCK_OFFSET_MS:-}" ]; then
+  HSE_CLOCK_AT="$(python3 -c "import datetime,os; print((datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(milliseconds=int(os.environ['E2E_CLOCK_OFFSET_MS']))).isoformat())")"
+  export HSE_CLOCK_AT
+fi
 exec uv run uvicorn app.main:app --host 127.0.0.1 --port "${E2E_BACKEND_PORT:-8000}"

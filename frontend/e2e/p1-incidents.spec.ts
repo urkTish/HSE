@@ -1,4 +1,5 @@
-import { expect, test, type APIRequestContext } from "@playwright/test";
+import { type APIRequestContext } from "@playwright/test";
+import { expect, test } from "./fixtures/test";
 import { apiAs, getJson, login, projectId, USERS } from "./helpers";
 
 async function setup(api: APIRequestContext) {

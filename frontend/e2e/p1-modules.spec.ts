@@ -1,4 +1,5 @@
-import { expect, test, type Locator } from "@playwright/test";
+import { type Locator } from "@playwright/test";
+import { expect, test } from "./fixtures/test";
 import { apiAs, getJson, login, projectId, selectByPrefix, uid, USERS } from "./helpers";
 
 /** Pick the first non-empty option of a <select>. */

@@ -25,7 +25,14 @@ from app.core.hse_enums import (
     Severity,
 )
 from app.kpi import data, fmt, present
-from app.kpi.catalogue import CATALOGUE, LAGGING_TILES, LEADING_TILES, PLACEHOLDERS, KpiDef
+from app.kpi.catalogue import (
+    CATALOGUE,
+    LAGGING_TILES,
+    LEADING_TILES,
+    PLACEHOLDERS,
+    PTW_TILES,
+    KpiDef,
+)
 from app.kpi.engine import Agg, Component, Engine, LtiFree, Result
 from app.kpi.facts import EngFact
 from app.kpi.periods import (
@@ -483,9 +490,12 @@ def itd_window(scope: Scope) -> Window:
 
 
 def dashboard(scope: Scope, db: Session | None = None) -> DashboardResponse:
-    from app.kpi import access_views  # noqa: PLC0415 (cycle: access_views uses service)
+    from app.kpi import access_views, ptw_views  # noqa: PLC0415 (cycle: they use service)
 
     access = db is not None and access_views.has_access(scope)
+    ptw = ptw_views.has_ptw(scope)
+    if ptw:
+        ptw_views.ptw_engine(scope)
     headline = DashboardHeadline(
         lti_free=lti_free_read(scope),
         man_hours_period=kpi_value(scope, M.K01),
@@ -499,8 +509,10 @@ def dashboard(scope: Scope, db: Session | None = None) -> DashboardResponse:
         headline=headline,
         lagging=[tile(scope, m) for m in LAGGING_TILES],
         leading=[tile(scope, m) for m in LEADING_TILES]
-        + ([tile(scope, m) for m in access_views.ACCESS_TILES] if access else []),
+        + ([tile(scope, m) for m in access_views.ACCESS_TILES] if access else [])
+        + ([tile(scope, m) for m in PTW_TILES] if ptw else []),
         access_band=access_views.access_band(db, scope) if access and db is not None else None,
+        ptw_band=ptw_views.ptw_band(db, scope) if ptw and db is not None else None,
         placeholders=[
             KpiPlaceholder(
                 metric=m,

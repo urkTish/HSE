@@ -67,13 +67,27 @@ export function EmptyState({ message }: { message?: string }) {
   );
 }
 
+type MetaBlocker = { code: string; detail_en?: string | null; detail_ar?: string | null; ref?: string | null };
+
+/** Blockers sent with a refused transition (422 with meta.blockers): strings (WAP) or BlockerItem objects (PTW). */
+function metaBlockers(error: unknown): MetaBlocker[] {
+  if (!(error instanceof ApiError)) return [];
+  const raw = error.meta.blockers ?? error.meta.items;
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((b): MetaBlocker | null => (typeof b === "string" ? { code: b } : b && typeof b === "object" && "code" in b ? (b as MetaBlocker) : null))
+    .filter((b): b is MetaBlocker => b !== null);
+}
+
 /** Top-of-form error summary for a failed mutation. */
 export function MutationError({ error }: { error: unknown }) {
   const msg = useErrorMessage();
   const ar = useLocale() === "ar";
+  const te = useTranslations("enums");
   if (!error) return null;
+  const blockers = metaBlockers(error);
   return (
-    <Alert tone="danger" data-testid="form-error">
+    <Alert tone="danger" data-testid="form-error" data-code={error instanceof ApiError ? error.code : undefined}>
       {msg(error)}
       {/* Dialogs have no per-field slots: list the API's field errors in the page language. */}
       {error instanceof ApiError &&
@@ -91,6 +105,21 @@ export function MutationError({ error }: { error: unknown }) {
               : <bdi>{ar ? f.msg_ar || f.msg : f.msg}</bdi>
             </li>
           ))}
+        </ul>
+      ) : null}
+      {blockers.length ? (
+        <ul className="mt-1 list-inside list-disc text-sm" data-testid="error-blockers">
+          {blockers.map((b, i) => {
+            const key = `permitBlocker.${b.code}`;
+            const label = te.has(key as "permitBlocker.JSA_MISSING") ? te(key as "permitBlocker.JSA_MISSING") : te.has(`wapBlocker.${b.code}` as "wapBlocker.NOTAM_NOT_ISSUED") ? te(`wapBlocker.${b.code}` as "wapBlocker.NOTAM_NOT_ISSUED") : b.code;
+            const detail = ar ? b.detail_ar : b.detail_en;
+            return (
+              <li key={`${b.code}-${i}`} data-testid="error-blocker" data-code={b.code}>
+                {label}
+                {detail ? <span className="text-xs text-muted-foreground"> — {detail}</span> : null}
+              </li>
+            );
+          })}
         </ul>
       ) : null}
     </Alert>

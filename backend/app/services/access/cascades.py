@@ -29,6 +29,9 @@ def on_contractor_status(
     if to_status == ContractorStatus.blacklisted:
         _blacklist(db, c, eng_ids, actor)
     waps.refresh_for_engagements(db, eng_ids)
+    from app.services.ptw import hooks  # noqa: PLC0415 (Phase 3 rule 28)
+
+    hooks.mark_engagements(db, eng_ids)
     db.flush()
 
 

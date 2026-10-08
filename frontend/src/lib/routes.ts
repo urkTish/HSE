@@ -80,6 +80,40 @@ export function entityRoute(type: Schemas["EntityType"] | string | null | undefi
       return `/gates/${id}`;
     case "access_settings":
       return `/access-settings`;
+    case "permit":
+      return `/permits/${id}`;
+    case "permit_shift":
+    case "permit_handover":
+    case "permit_suspension":
+    case "permit_exemption":
+      return null;
+    case "permit_type_config":
+      return `/ptw-setup/types`;
+    case "zone_ptw_profile":
+      return `/ptw-setup/zones`;
+    case "zone_adjacency":
+      return `/ptw-setup/adjacency`;
+    case "simops_rule":
+      return `/ptw-setup/simops-rules`;
+    case "ptw_settings":
+      return `/ptw-setup/settings`;
+    case "ptw_appointment":
+      return `/ptw-appointments/${id}`;
+    case "jsa":
+      return `/jsas/${id}`;
+    case "gas_detector":
+      return `/gas-detectors/${id}`;
+    case "gas_test":
+      return `/gas-tests/${id}`;
+    case "isolation_certificate":
+      return `/isolations/${id}`;
+    case "lock":
+    case "personal_lock_event":
+      return `/locks`;
+    case "simops_conflict":
+      return `/simops-conflicts/${id}`;
+    case "ptw_audit":
+      return `/ptw-audits/${id}`;
     default:
       return null;
   }
@@ -118,6 +152,14 @@ const DETAIL: [RegExp, string][] = [
   [/^\/api\/v1\/credentials\/avp\/([0-9a-f-]{36})$/, "/avps/$1"],
   [/^\/api\/v1\/credentials\/access_card\/([0-9a-f-]{36})$/, "/deployments/$1"],
   [/^\/api\/v1\/projects\/[0-9a-f-]{36}\/access-settings$/, "/access-settings"],
+  [/^\/api\/v1\/permits\/([0-9a-f-]{36})(?:\/(?:print|closure-pack))?$/, "/permits/$1"],
+  [/^\/api\/v1\/ptw-appointments\/([0-9a-f-]{36})$/, "/ptw-appointments/$1"],
+  [/^\/api\/v1\/jsas\/([0-9a-f-]{36})$/, "/jsas/$1"],
+  [/^\/api\/v1\/gas-detectors\/([0-9a-f-]{36})$/, "/gas-detectors/$1"],
+  [/^\/api\/v1\/gas-tests\/([0-9a-f-]{36})$/, "/gas-tests/$1"],
+  [/^\/api\/v1\/isolations\/([0-9a-f-]{36})$/, "/isolations/$1"],
+  [/^\/api\/v1\/simops-conflicts\/([0-9a-f-]{36})$/, "/simops-conflicts/$1"],
+  [/^\/api\/v1\/ptw-audits\/([0-9a-f-]{36})$/, "/ptw-audits/$1"],
 ];
 
 /** Map an API record path (`detail_path`) to the UI page; null when there is none. */
@@ -153,6 +195,17 @@ const LISTS: [RegExp, string][] = [
   [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/wap-board$/, "/wap-board"],
   [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/ops-events$/, "/ops-events"],
   [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/gate-log$/, "/gate-log"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/permits$/, "/permits"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/ptw-board$/, "/ptw-board"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/permit-suspensions$/, "/permit-suspensions"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/ptw-appointments$/, "/ptw-appointments"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/jsa-templates$/, "/jsa-templates"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/gas-detectors$/, "/gas-detectors"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/gas-tests$/, "/gas-tests"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/isolations$/, "/isolations"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/locks$/, "/locks"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/simops-conflicts$/, "/simops-conflicts"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/ptw-audits$/, "/ptw-audits"],
 ];
 
 /** Map an action-panel `ListLink` to the UI list with the same filters in the URL. */

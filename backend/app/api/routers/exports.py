@@ -12,6 +12,7 @@ from app.core.hse_enums import ExportPurpose
 from app.services import exports as svc
 from app.services import hse_exports
 from app.services.access import exports as access_exports
+from app.services.ptw import exports as ptw_exports
 
 router = APIRouter(prefix="/exports", tags=["exports"])
 
@@ -53,7 +54,8 @@ _FILE_RESPONSES: dict[int | str, dict[str, object]] = {
     "exported. Phase 2 access registers (capability 78) mask IDs; `include_identity=true` adds "
     "full ID numbers with capability 79 and a purpose (pass_office, authority_request, legal, "
     "other + purpose_text) recorded in the audit entry (P2-10); photos and ID copies are never "
-    "exported; gate_log needs capability 76.",
+    "exported; gate_log needs capability 76. Phase 3 PTW registers need capability 104; person "
+    "names only with capability 46; signatures, gas readings and medical data are never exported.",
     response_class=Response,
     responses=_FILE_RESPONSES,
 )
@@ -104,6 +106,10 @@ def export_dataset(
             include_identity,
             purpose,
             purpose_text,
+        )
+    elif dataset in ptw_exports.DATASETS:
+        content, media_type, filename = ptw_exports.export(
+            db, user, dataset, format_, project_id, status_, q
         )
     else:
         content, media_type, filename = svc.export(

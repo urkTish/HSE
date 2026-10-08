@@ -1,6 +1,15 @@
 "use client";
 import {
   BadgeCheck,
+  ClipboardSignature,
+  Cog,
+  FileCheck2,
+  Gauge as GaugeIcon,
+  Layers,
+  LockKeyhole,
+  MonitorPlay,
+  UserCheck,
+  Wind,
   Bot,
   Car,
   DoorOpen,
@@ -159,6 +168,21 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
       ]
     : [];
 
+  const ptwView = ac("permit.view");
+  const ptwItems: Item[] = pid
+    ? [
+        ...(ptwView ? [{ href: "/permits", label: t("permits"), Icon: FileCheck2, testId: "nav-permits" }] : []),
+        ...(ptwView ? [{ href: "/ptw-board", label: t("ptwBoard"), Icon: MonitorPlay, testId: "nav-ptw-board" }] : []),
+        ...(ac("permit.view", "gas_test.record", "gas_detector.manage") ? [{ href: "/gas-tests", label: t("gas"), Icon: Wind, testId: "nav-gas" }] : []),
+        ...(ac("permit.view", "isolation.manage") ? [{ href: "/isolations", label: t("isolations"), Icon: LockKeyhole, testId: "nav-isolations" }] : []),
+        ...(ac("permit.view", "simops.coordinate") ? [{ href: "/simops-conflicts", label: t("simops"), Icon: Layers, testId: "nav-simops" }] : []),
+        ...(ac("jsa_template.manage", "permit.prepare", "permit.view") ? [{ href: "/jsa-templates", label: t("jsa"), Icon: ClipboardSignature, testId: "nav-jsa" }] : []),
+        ...(ac("ptw_audit.conduct", "ptw_kpi.view") ? [{ href: "/ptw-audits", label: t("ptwAudits"), Icon: GaugeIcon, testId: "nav-ptw-audits" }] : []),
+        ...(ac("ptw_appointment.manage", "permit.view") ? [{ href: "/ptw-appointments", label: t("ptwAppointments"), Icon: UserCheck, testId: "nav-ptw-appointments" }] : []),
+        ...(ac("ptw_settings.edit", "ptw_zone_profile.edit") ? [{ href: "/ptw-setup", label: t("ptwSetup"), Icon: Cog, testId: "nav-ptw-setup" }] : []),
+      ]
+    : [];
+
   return (
     <nav aria-label={t("main")} className="flex flex-1 flex-col gap-5 p-3">
       <ul className="flex flex-col gap-1">
@@ -192,6 +216,18 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
               <p className="px-3 pt-1 pb-1 text-xs font-medium text-sidebar-muted">{t("access")}</p>
               <ul className="mb-3 flex flex-col gap-1" data-testid="nav-access">
                 {accessItems.map((i) => (
+                  <li key={i.href}>
+                    <NavLink item={i} onNavigate={onNavigate} />
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : null}
+          {ptwItems.length > 0 ? (
+            <>
+              <p className="px-3 pt-1 pb-1 text-xs font-medium text-sidebar-muted">{t("ptw")}</p>
+              <ul className="mb-3 flex flex-col gap-1" data-testid="nav-ptw">
+                {ptwItems.map((i) => (
                   <li key={i.href}>
                     <NavLink item={i} onNavigate={onNavigate} />
                   </li>

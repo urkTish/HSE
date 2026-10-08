@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures/test";
 import en from "../messages/en.json" with { type: "json" };
 import { apiAs, login, sql, uid, USERS, selectByPrefix } from "./helpers";
 
@@ -59,8 +59,10 @@ test.describe("Invitations & privacy notice", () => {
   test("AC4: an invitation older than 72 h is rejected as expired", async ({ page }) => {
     const email = `e2e.expired.${uid().toLowerCase()}@example.com`;
     await inviteViaUi(page, email, "E2E Expired");
+    // Relative to the shared e2e clock (e2e/clock.ts), not the database's wall clock.
+    const at = new Date().toISOString();
     sql(
-      `update user_tokens set created_at = now() - interval '73 hours', expires_at = now() - interval '1 hour' where user_id = (select id from users where email='${email}')`,
+      `update user_tokens set created_at = timestamptz '${at}' - interval '73 hours', expires_at = timestamptz '${at}' - interval '1 hour' where user_id = (select id from users where email='${email}')`,
     );
     await page.context().clearCookies();
     await page.goto(inviteLink(email).replace(/^\/ar\//, "/en/"));

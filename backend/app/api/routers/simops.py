@@ -8,7 +8,7 @@ from typing import Annotated
 from fastapi import APIRouter, Query, status
 
 from app.api.deps import DB, CurrentUser, PageParams
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.core.ptw_enums import SimopsConflictStatus, SimopsResult
 from app.schemas.simops import (
     CoordinationCreate,
@@ -18,6 +18,7 @@ from app.schemas.simops import (
     SimopsConflictRead,
     SimopsPreviewRequest,
 )
+from app.services.ptw import simops as svc
 
 router = APIRouter(tags=["simops"])
 
@@ -34,7 +35,7 @@ def preview_simops_check(
     user: CurrentUser,
     db: DB,
 ) -> SimopsCheckResult:
-    raise not_implemented()
+    return svc.preview(db, user, project_id, body)
 
 
 @router.post(
@@ -44,7 +45,7 @@ def preview_simops_check(
     responses=error_responses(401, 403, 404, 409),
 )
 def run_permit_simops_check(permit_id: uuid.UUID, user: CurrentUser, db: DB) -> SimopsCheckResult:
-    raise not_implemented()
+    return svc.run_for_permit(db, user, permit_id)
 
 
 @router.get(
@@ -66,7 +67,20 @@ def list_simops_conflicts(
     detected_from: datetime | None = None,
     detected_to: datetime | None = None,
 ) -> SimopsConflictPage:
-    raise not_implemented()
+    return svc.list_conflicts(
+        db,
+        user,
+        project_id,
+        pg.page,
+        pg.page_size,
+        status_,
+        result,
+        permit_id,
+        zone_id,
+        awaiting_me,
+        detected_from,
+        detected_to,
+    )
 
 
 @router.get(
@@ -76,7 +90,7 @@ def list_simops_conflicts(
     responses=error_responses(401, 403, 404),
 )
 def get_simops_conflict(conflict_id: uuid.UUID, user: CurrentUser, db: DB) -> SimopsConflictRead:
-    raise not_implemented()
+    return svc.read(db, user, conflict_id)
 
 
 @router.post(
@@ -92,7 +106,7 @@ def create_simops_coordination(
     user: CurrentUser,
     db: DB,
 ) -> SimopsConflictRead:
-    raise not_implemented()
+    return svc.create_coordination(db, user, conflict_id, body)
 
 
 @router.post(
@@ -107,4 +121,4 @@ def sign_simops_coordination(
     user: CurrentUser,
     db: DB,
 ) -> SimopsConflictRead:
-    raise not_implemented()
+    return svc.sign(db, user, coordination_id, body)

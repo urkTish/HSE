@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures/test";
 import en from "../messages/en.json" with { type: "json" };
 import { apiAs, login, PASSWORD, USERS, userId } from "./helpers";
 

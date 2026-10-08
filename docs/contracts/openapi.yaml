@@ -3129,7 +3129,8 @@ paths:
         medical attachments are never exported. Phase 2 access registers (capability 78) mask IDs; `include_identity=true`
         adds full ID numbers with capability 79 and a purpose (pass_office, authority_request, legal,
         other + purpose_text) recorded in the audit entry (P2-10); photos and ID copies are never exported;
-        gate_log needs capability 76.'
+        gate_log needs capability 76. Phase 3 PTW registers need capability 104; person names only with
+        capability 46; signatures, gas readings and medical data are never exported.'
       operationId: export_dataset
       security:
       - sessionCookie: []

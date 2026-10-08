@@ -130,6 +130,7 @@ function DashboardBody({ query, projectId }: { query: KpiQuery; projectId: strin
           <ContextBar ctx={d.data.context} show={show} projectId={projectId} />
           <Headline h={d.data.headline} show={show} projectId={projectId} periodLabel={locale === "ar" ? d.data.context.period.label_ar : d.data.context.period.label_en} />
           {d.data.access_band ? <AccessBandView b={d.data.access_band} show={show} /> : null}
+          {d.data.ptw_band ? <PtwBandView b={d.data.ptw_band} show={show} /> : null}
           <section aria-labelledby="needs-h" className="flex flex-col gap-2">
             <h2 id="needs-h" className="sr-only">
               {t("needsToday")}
@@ -168,6 +169,7 @@ function DashboardBody({ query, projectId }: { query: KpiQuery; projectId: strin
           </section>
           <Charts query={query} projectId={projectId} show={show} />
           {can(me, "access_kpi.view", projectId) ? <AccessCharts query={query} projectId={projectId} show={show} /> : null}
+          {can(me, "ptw_kpi.view", projectId) ? <PtwCharts query={query} projectId={projectId} show={show} /> : null}
           <Panel title={t("league")} testId="league-card" actions={canExport ? <ExportButton table="contractors" query={query} label={t("exportContractors")} /> : null}>
             <LeagueTable query={query} show={show} />
           </Panel>
@@ -348,6 +350,86 @@ function AccessBandView({ b, show }: { b: Schemas["AccessBand"]; show: Show }) {
           )}
         </div>
       </div>
+    </section>
+  );
+}
+
+/** Phase 3 PTW band: live permits by type, suspensions, high-risk, isolations, SIMOPS and the weekly audit plan. */
+function PtwBandView({ b, show }: { b: Schemas["PtwBand"]; show: Show }) {
+  const t = useTranslations("dashboard");
+  const te = useTranslations("enums");
+  const items: { key: string; label: string; value: string | number; href: string; tone?: "danger" | "warning" }[] = [
+    { key: "active", label: t("ptwBand.active"), value: b.active_total, href: "/ptw-board" },
+    { key: "suspended", label: t("ptwBand.suspended"), value: b.suspended_non_routine, href: "/permits?status=suspended", tone: b.suspended_non_routine ? "warning" : undefined },
+    { key: "high-risk", label: t("ptwBand.highRisk"), value: b.high_risk_active, href: "/ptw-board" },
+    { key: "long-term", label: t("ptwBand.longTerm"), value: b.long_term_isolations, href: "/isolations?long_term=true" },
+    { key: "simops", label: t("ptwBand.simops"), value: b.open_simops_conflicts, href: "/simops-conflicts?status=open", tone: b.open_simops_conflicts ? "warning" : undefined },
+  ];
+  return (
+    <section aria-labelledby="ptw-band-h" className="flex flex-col gap-3 rounded-xl border bg-surface p-4 shadow-xs" data-testid="ptw-band">
+      <h2 id="ptw-band-h" className="text-sm font-semibold">
+        {t("ptwBand.title")}
+      </h2>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3 lg:grid-cols-7">
+        {items.map((i) => (
+          <div key={i.key} className="flex min-w-0 flex-col gap-1" data-testid={`ptw-band-${i.key}`}>
+            <p className="text-xs font-medium text-muted-foreground">{i.label}</p>
+            <Link href={i.href} className={cn("text-xl leading-tight font-semibold hover:underline", i.tone === "warning" ? "text-warning" : "text-primary")}>
+              {show(i.value)}
+            </Link>
+          </div>
+        ))}
+        <HeadlineValue v={b.active_isolations} show={show} />
+        <div className="flex min-w-0 flex-col gap-1" data-testid="ptw-band-audits" data-behind={b.audits_behind_plan}>
+          <p className="text-xs font-medium text-muted-foreground">{t("ptwBand.audits")}</p>
+          <Link href="/ptw-audits" className={cn("text-xl leading-tight font-semibold hover:underline", b.audits_behind_plan ? "text-warning" : "text-primary")}>
+            {show(b.field_audits_this_week)} / {show(b.field_audits_week_target)}
+          </Link>
+          {b.audits_behind_plan ? <span className="text-xs text-warning">{t("ptwBand.behindPlan")}</span> : null}
+        </div>
+      </div>
+      {b.active_by_type.length ? (
+        <ul className="flex flex-wrap gap-2 text-xs" data-testid="ptw-band-types">
+          {b.active_by_type.map((x) => (
+            <li key={x.type} className="rounded-md border px-2 py-1">
+              {te(`permitType.${x.type}`)} <span className="font-semibold tabular-nums">{show(x.count)}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </section>
+  );
+}
+
+/** C13–C15 PTW charts, loaded when scrolled into view. */
+function PtwCharts({ query, projectId, show }: { query: KpiQuery; projectId: string | null; show: Show }) {
+  const t = useTranslations("dashboard");
+  const ref = useRef<HTMLElement | null>(null);
+  const [inView, setInView] = useState(() => typeof IntersectionObserver === "undefined");
+  useEffect(() => {
+    const el = ref.current;
+    if (inView || !el) return;
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) setInView(true);
+    }, { rootMargin: "200px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [inView]);
+  return (
+    <section ref={ref} aria-labelledby="ptw-charts-h" className="flex flex-col gap-3" data-testid="ptw-charts">
+      <h2 id="ptw-charts-h" className="text-sm font-semibold">
+        {t("ptwCharts")}
+      </h2>
+      {inView ? (
+        <div className="grid gap-4 lg:grid-cols-2">
+          {(["C13", "C14"] as const).map((id) => (
+            <ChartCard key={id} id={id} query={query} projectId={projectId} show={show} />
+          ))}
+          <ChartCard id="C15" query={query} projectId={projectId} show={show} className="lg:col-span-2" />
+        </div>
+      ) : (
+        <div className="min-h-64" aria-hidden />
+      )}
     </section>
   );
 }

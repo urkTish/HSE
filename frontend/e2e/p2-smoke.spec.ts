@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures/test";
 import { login, USERS } from "./helpers";
 
 /** Every Phase 2 register renders against the real backend in EN and AR without an error state. */

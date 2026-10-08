@@ -1,6 +1,6 @@
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures/test";
 import { trirStream } from "./fixtures/ai-stream";
 import { apiAs, getJson, login, projectId, USERS } from "./helpers";
 

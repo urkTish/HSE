@@ -4,7 +4,7 @@ from fastapi import APIRouter, Response, status
 
 from app.api.deps import DB, CurrentUser, SessionUser
 from app.core.config import SESSION_COOKIE_NAME, get_settings
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.models import User
 from app.schemas.auth import (
     AcceptedResponse,
@@ -119,7 +119,8 @@ def change_password(body: PasswordChangeRequest, user: CurrentUser, db: DB) -> N
     responses=error_responses(401, 403, 422, 429),
 )
 def reauthenticate(body: ReauthRequest, user: CurrentUser, db: DB) -> ReauthResponse:
-    raise not_implemented()
+    at, until = svc.reauthenticate(db, user, body.password)
+    return ReauthResponse(reauthenticated_at=at, valid_until=until)
 
 
 @router.post(

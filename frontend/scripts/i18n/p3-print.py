@@ -1,0 +1,30 @@
+# Phase 3: permit print and closed-permit pack (bilingual values "EN|AR", like Phase 2 accessPrint).
+_BI = {
+  "ptwTitle": "Permit to work|تصريح عمل",
+  "ptwClosureTitle": "Closed permit pack|ملف التصريح المغلق",
+  "ptwShift": "Shift|الوردية",
+  "ptwTypes": "Work types|أنواع العمل",
+  "ptwScan": "Scan to check|امسح للتحقق",
+  "ptwLocation": "Location|الموقع الدقيق",
+  "ptwReceiver": "Receiver|المستلم",
+  "ptwIssuer": "Issuer|المُصدِر",
+  "ptwAreaAuthority": "Area authority|مسؤول المنطقة",
+  "ptwGas": "Latest gas test|آخر فحص غاز",
+  "ptwIsolations": "Isolations|العزل",
+  "ptwLock": "lock|قفل",
+  "ptwTag": "tag|بطاقة",
+  "ptwConditions": "Key conditions|الشروط الأساسية",
+  "ptwEmergency": "Emergency|الطوارئ",
+  "ptwFooter": "Display at the work site. Stop work if any condition changes. Valid only within the stated windows and while not suspended.|يُعرض في موقع العمل. أوقف العمل عند تغيّر أي شرط. صالح ضمن النوافذ المحددة فقط وما لم يكن موقوفاً.",
+  "ptwHash": "Audit hash|بصمة التدقيق",
+  "ptwShifts": "Shifts|الورديات",
+  "ptwSuspensions": "Suspensions|الإيقافات",
+  "ptwGasTests": "Gas tests|فحوص الغاز",
+  "ptwSignatures": "Signatures|التواقيع",
+  "ptwClosureChecklist": "Closure checklist|قائمة التحقق للإغلاق",
+  "ptwClosedAt": "Closed at|وقت الإغلاق",
+}
+P = {
+  "accessPrint": {k: [v, v] for k, v in _BI.items()},
+  "ptwPrint": {"qr": ["QR code of permit {no}", "رمز QR للتصريح {no}"]},
+}

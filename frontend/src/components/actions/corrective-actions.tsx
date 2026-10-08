@@ -235,18 +235,19 @@ export function CaForm({ project, ca }: { project: Schemas["ProjectRead"]; ca?: 
   );
   type Values = z.infer<typeof schema>;
   const initialCl = (s.get("control_level") ?? "") as Schemas["ControlLevel"];
+  const initialPrio = (s.get("priority") ?? "") as Schemas["CaPriority"];
   const form = useForm<Values>({
     resolver: zodResolver(schema),
     defaultValues: {
       title: ca?.title ?? s.get("title") ?? "",
       description: ca?.description ?? s.get("description") ?? "",
       control_level: ca?.control_level ?? (CONTROL_LEVELS.includes(initialCl) ? initialCl : "engineering"),
-      priority: ca?.priority ?? "medium",
+      priority: ca?.priority ?? (CA_PRIORITIES.includes(initialPrio) ? initialPrio : "medium"),
       owner_id: ca?.owner.id ?? "",
       verifier_id: ca?.verifier.id ?? "",
-      responsible_engagement_id: ca?.responsible_engagement.id ?? "",
-      site_id: ca?.site.id ?? "",
-      zone_id: ca?.zone?.id ?? "",
+      responsible_engagement_id: ca?.responsible_engagement.id ?? s.get("engagement_id") ?? "",
+      site_id: ca?.site.id ?? s.get("site_id") ?? "",
+      zone_id: ca?.zone?.id ?? s.get("zone_id") ?? "",
       due_date: "",
     },
   });

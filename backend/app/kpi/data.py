@@ -142,6 +142,8 @@ def load(
         facts = copy.copy(shared)  # own lazy loader on this request's session
         if shared._access is None:
             facts.access_loader = _access_loader(db, key, shared)
+        if shared._ptw is None:
+            facts.ptw_loader = _ptw_loader(db, key, shared)
         return facts
     facts = _load(db, plist, hse)
     with _CACHE_LOCK:
@@ -157,6 +159,17 @@ def _access_loader(db: Session, pids: tuple[uuid.UUID, ...], shared: Facts) -> A
         acc = load_access(db, list(pids))
         shared.access = acc
         return acc
+
+    return run
+
+
+def _ptw_loader(db: Session, pids: tuple[uuid.UUID, ...], shared: Facts) -> Any:
+    def run() -> Any:
+        from app.kpi.ptw_facts import load_ptw  # noqa: PLC0415
+
+        pf = load_ptw(db, list(pids))
+        shared.ptw = pf
+        return pf
 
     return run
 
@@ -495,6 +508,7 @@ def _load(
             )
         )
     facts.access_loader = lambda: load_access(db, pids)
+    facts.ptw_loader = _ptw_loader(db, tuple(pids), facts)
     return facts.sort()
 
 

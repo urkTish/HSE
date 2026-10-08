@@ -6,7 +6,7 @@ from typing import Annotated
 from fastapi import APIRouter, Query, status
 
 from app.api.deps import DB, CurrentUser, PageParams
-from app.core.errors import error_responses, not_implemented
+from app.core.errors import error_responses
 from app.core.ptw_enums import AppointmentDiscipline, AppointmentFunction, AppointmentStatus
 from app.schemas.ptw_appointments import (
     AppointmentCreate,
@@ -15,6 +15,7 @@ from app.schemas.ptw_appointments import (
     AppointmentTransition,
     AppointmentUpdate,
 )
+from app.services.ptw import appointments as svc
 
 router = APIRouter(tags=["ptw-appointments"])
 
@@ -40,7 +41,22 @@ def list_ptw_appointments(
     expiring_within_days: Annotated[int | None, Query(ge=0, le=365)] = None,
     q: Annotated[str | None, Query(max_length=100)] = None,
 ) -> AppointmentPage:
-    raise not_implemented()
+    return svc.list_appointments(
+        db,
+        user,
+        project_id,
+        pg.page,
+        pg.page_size,
+        function,
+        discipline,
+        status_,
+        holder_user_id,
+        holder_worker_id,
+        site_id,
+        zone_id,
+        expiring_within_days,
+        q,
+    )
 
 
 @router.post(
@@ -53,7 +69,7 @@ def list_ptw_appointments(
 def create_ptw_appointment(
     project_id: uuid.UUID, body: AppointmentCreate, user: CurrentUser, db: DB
 ) -> AppointmentRead:
-    raise not_implemented()
+    return svc.create(db, user, project_id, body)
 
 
 @router.get(
@@ -63,7 +79,7 @@ def create_ptw_appointment(
     responses=error_responses(401, 403, 404),
 )
 def get_ptw_appointment(appointment_id: uuid.UUID, user: CurrentUser, db: DB) -> AppointmentRead:
-    raise not_implemented()
+    return svc.read(db, user, appointment_id)
 
 
 @router.patch(
@@ -75,7 +91,7 @@ def get_ptw_appointment(appointment_id: uuid.UUID, user: CurrentUser, db: DB) ->
 def update_ptw_appointment(
     appointment_id: uuid.UUID, body: AppointmentUpdate, user: CurrentUser, db: DB
 ) -> AppointmentRead:
-    raise not_implemented()
+    return svc.update(db, user, appointment_id, body)
 
 
 @router.post(
@@ -87,4 +103,4 @@ def update_ptw_appointment(
 def transition_ptw_appointment(
     appointment_id: uuid.UUID, body: AppointmentTransition, user: CurrentUser, db: DB
 ) -> AppointmentRead:
-    raise not_implemented()
+    return svc.transition(db, user, appointment_id, body)

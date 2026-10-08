@@ -206,6 +206,9 @@ def _history_allowed(
     elif entity_type.value in PHASE2_HISTORY:
         pid = _phase2_project(db, p, entity_type, entity_id)
         ok = p.has_any(cap) if pid is None else p.grant(pid, cap) is not None
+    elif entity_type.value in PHASE3_HISTORY:
+        pid = _phase3_project(db, p, entity_type, entity_id)
+        ok = p.grant(pid, cap) is not None
     else:
         pid = _phase1_project(db, p, entity_type, entity_id)
         ok = p.grant(pid, cap) is not None
@@ -329,6 +332,84 @@ def _phase2_project(
         access_settings.read(db, p, entity_id)
         return entity_id
     raise not_found("History")
+
+
+PHASE3_HISTORY = frozenset(
+    {
+        "permit", "permit_shift", "permit_handover", "permit_suspension", "permit_exemption",
+        "permit_type_config", "zone_ptw_profile", "zone_adjacency", "ptw_appointment", "jsa",
+        "gas_detector", "bump_test", "gas_test", "isolation_certificate", "lock",
+        "personal_lock_event", "simops_rule", "simops_conflict", "simops_coordination",
+        "ptw_audit", "ptw_settings",
+    }
+)  # fmt: skip
+
+
+def _phase3_project(
+    db: Session, p: Principal, entity_type: EntityType, entity_id: uuid.UUID
+) -> uuid.UUID:
+    """Phase 3 records: visible through their own service rules (permit scope for permit
+    children, PTW view capability 82 for project-level records); 404 when unknown."""
+    from app import models as m  # noqa: PLC0415
+    from app.services.ptw import appointments, audits, common, isolations, jsa  # noqa: PLC0415
+
+    et = EntityType
+    if entity_type == et.permit:
+        return common.get_permit(db, p, entity_id).project_id
+    if entity_type == et.ptw_appointment:
+        return appointments.get_row(db, p, entity_id).project_id
+    if entity_type == et.jsa:
+        return jsa.get_row(db, p, entity_id).project_id
+    if entity_type == et.isolation_certificate:
+        return isolations.get_cert(db, p, entity_id).project_id
+    if entity_type == et.ptw_audit:
+        return audits.get_row(db, p, entity_id).project_id
+    if entity_type in (et.ptw_settings, et.zone_ptw_profile):
+        if entity_type == et.zone_ptw_profile:
+            zone = org.get_zone(db, p, entity_id)
+            pid = zone.project_id
+        else:
+            pid = entity_id
+        common.view_grant(db, p, pid)
+        return pid
+    child: dict[EntityType, Any] = {
+        et.permit_shift: m.PermitShift, et.permit_handover: m.PermitHandover,
+        et.permit_suspension: m.PermitSuspension, et.permit_exemption: m.PermitExemption,
+    }  # fmt: skip
+    if entity_type in child:
+        row = db.get(child[entity_type], entity_id)
+        if row is None:
+            raise not_found("History")
+        return common.get_permit(db, p, row.permit_id).project_id
+    project_rows: dict[EntityType, Any] = {
+        et.permit_type_config: m.PermitTypeConfig, et.zone_adjacency: m.ZoneAdjacency,
+        et.gas_detector: m.GasDetector, et.gas_test: m.GasTest, et.lock: m.Lock,
+        et.personal_lock_event: m.PersonalLockEvent, et.simops_rule: m.SimopsRule,
+        et.simops_conflict: m.SimopsConflict,
+    }  # fmt: skip
+    if entity_type == et.bump_test:
+        bump = db.get(m.BumpTest, entity_id)
+        det = db.get(m.GasDetector, bump.detector_id) if bump is not None else None
+        if det is None:
+            raise not_found("History")
+        common.view_grant(db, p, det.project_id)
+        return det.project_id
+    if entity_type == et.simops_coordination:
+        co = db.get(m.SimopsCoordination, entity_id)
+        k = db.get(m.SimopsConflict, co.conflict_id) if co is not None else None
+        if k is None:
+            raise not_found("History")
+        common.view_grant(db, p, k.project_id)
+        return k.project_id
+    model = project_rows.get(entity_type)
+    row = db.get(model, entity_id) if model is not None else None
+    if row is None:
+        raise not_found("History")
+    if entity_type == et.gas_test:
+        common.get_permit(db, p, row.permit_id)
+    else:
+        common.view_grant(db, p, row.project_id)
+    return row.project_id  # type: ignore[no-any-return]
 
 
 def history_query(

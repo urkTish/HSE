@@ -1,5 +1,5 @@
-"""Leading-indicator warnings E1-E4 (spec 1-dashboard §6.9) and E5-E7 (2-access-permits
-§6.9), evaluated per complete month per project and per tier-1 contractor tree.
+"""Leading-indicator warnings E1-E4 (spec 1-dashboard §6.9), E5-E7 (2-access-permits §6.9)
+and E8-E9 (3-ptw §6.12), evaluated per complete month per project and per tier-1 contractor tree.
 Means use unrounded values."""
 
 import uuid
@@ -178,6 +178,73 @@ def evaluate_engine(
                 )
             )  # fmt: skip
         out += access_warnings(engine, project_id, tree, m, label_en, label_ar, who_en, who_ar)
+        out += ptw_warnings(engine, project_id, tree, m, label_en, label_ar, who_en, who_ar)
+    return out
+
+
+def ptw_warnings(
+    engine: Engine,
+    project_id: uuid.UUID,
+    tree: EngFact | None,
+    m: Window,
+    label_en: str,
+    label_ar: str,
+    who_en: str,
+    who_ar: str,
+) -> list[Warn]:
+    """E8-E9 (3-ptw §6.12); unrounded comparisons."""
+    from app.kpi import ptw as kp  # noqa: PLC0415
+
+    pf = kp.facts(engine)
+    st = pf.settings.get(project_id)
+    if st is None:
+        return []
+    out: list[Warn] = []
+    a = engine.aggregate(m)
+    # E8 audit compliance / critical findings
+    k46 = engine.result(KpiMetric.K46, a).value or Decimal(0)
+    k61 = engine.result(KpiMetric.K61, a).value
+    k64 = engine.result(KpiMetric.K64, a).value or Decimal(0)
+    pct = Decimal(st.ptw_audit_warning_pct)
+    crit = Decimal(st.ptw_critical_findings_warning)
+    if (k46 >= 10 and k61 is not None and k61 < pct) or k64 >= crit:
+        out.append(
+            Warn(
+                E.E8, m, project_id, tree,
+                f"PTW audit compliance low or critical PTW findings high in {label_en}{who_en}",
+                "انخفاض الالتزام في تدقيق التصاريح أو ارتفاع المخالفات الحرجة في "
+                f"{label_ar}{who_ar}",
+                [Input("k46", "Field audits", "التدقيقات الميدانية", k46, 0),
+                 Input("k61", "Audit compliance", "الالتزام في التدقيق", k61, 1, " %"),
+                 Input("k61_threshold_pct", "Compliance threshold", "حد الالتزام", pct, 1, " %"),
+                 Input("k64", "Critical findings", "المخالفات الحرجة", k64, 0),
+                 Input("k64_threshold", "Critical findings threshold", "حد المخالفات", crit, 0)],
+            )
+        )  # fmt: skip
+    # E9 closure compliance / shift lapses
+    r69 = engine.result(KpiMetric.K69, a)
+    ended = Decimal(r69.denominator or 0)
+    k69 = r69.value
+    cpct = Decimal(st.ptw_closure_warning_pct)
+    k70 = engine.result(KpiMetric.K70, a).value or Decimal(0)
+    priors = [engine.result(KpiMetric.K70, engine.aggregate(_prior(m, n))).value for n in (3, 2, 1)]
+    mean = _mean(priors)
+    lapse = mean is not None and k70 >= 2 * mean and k70 >= 5
+    if (ended >= 10 and k69 is not None and k69 < cpct) or lapse:
+        out.append(
+            Warn(
+                E.E9, m, project_id, tree,
+                f"Permit closure compliance low or shift lapses rising in {label_en}{who_en}",
+                f"انخفاض الالتزام بإغلاق التصاريح أو ارتفاع انقضاء الورديات في {label_ar}{who_ar}",
+                [Input("k69", "Closure compliance", "الالتزام بالإغلاق", k69, 1, " %"),
+                 Input("k69_threshold_pct", "Closure threshold", "حد الإغلاق", cpct, 1, " %"),
+                 Input("closed_or_expired", "Permits closed or expired",
+                       "التصاريح المغلقة أو المنتهية", ended, 0),
+                 Input("k70", "Shift lapses", "انقضاء الورديات", k70, 0),
+                 Input("k70_prior3_mean", "Mean of prior 3 months", "متوسط الأشهر الثلاثة السابقة",
+                       mean, 2)],
+            )
+        )  # fmt: skip
     return out
 
 
