@@ -676,7 +676,10 @@ def action_items(
 
         for st in db.scalars(
             select(HookPolicyState).where(
-                HookPolicyState.project_id == pid, HookPolicyState.stage != HookStage.block
+                HookPolicyState.project_id == pid,
+                HookPolicyState.stage != HookStage.block,
+                # training codes have their own item (5-training §8.3)
+                HookPolicyState.kind != HookKind.training_course,
             )
         ):
             soon = [

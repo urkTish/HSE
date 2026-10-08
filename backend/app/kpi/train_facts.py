@@ -97,7 +97,7 @@ class TrainFacts:
     settings: dict[UUID, TrainingSettings] = field(default_factory=dict)
     hook_states: dict[UUID, HookPolicyState] = field(default_factory=dict)
     courses: dict[str, Any] = field(default_factory=dict)
-    pe_cache: dict[tuple[UUID, date], Any] = field(default_factory=dict)
+    pe_cache: dict[tuple[Any, ...], Any] = field(default_factory=dict)
     base_cache: dict[UUID, Any] = field(default_factory=dict)
     db: Session | None = None
 
@@ -118,6 +118,22 @@ class TrainFacts:
             if base is None:
                 base = self.base_cache[pid] = treq.load_base(self.db, pid)
             pe = treq.evaluate_project(self.db, pid, d, bookings=True, base=base)
+            self.pe_cache[key] = pe
+        return pe
+
+    def peval_full(self, pid: UUID, d: date) -> Any:
+        """As peval, with the enforcement lines (crew roles, appointments, credentials, zones)
+        — the action panel's evaluation (cached with the KPI facts)."""
+        from app.services.train import requirements as treq  # noqa: PLC0415
+
+        key = (pid, d, "full")
+        pe = self.pe_cache.get(key)
+        if pe is None:
+            assert self.db is not None  # noqa: S101
+            base = self.base_cache.get(pid)
+            if base is None:
+                base = self.base_cache[pid] = treq.load_base(self.db, pid)
+            pe = treq.evaluate_project(self.db, pid, d, bookings=True, enforcement=True, base=base)
             self.pe_cache[key] = pe
         return pe
 

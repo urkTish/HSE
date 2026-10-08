@@ -3,7 +3,7 @@
 ## Current
 - Phase: 5 — Training certificates
 - Module: training (spec `docs/specs/5-training.md` v1.0)
-- Step: Backend stage 2 (implementation) done against contract v0.6.0; frontend integration / e2e in progress
+- Step: Backend stage 2 done; frontend built and integrated against contract v0.6.0 (Phase 5 e2e green; Phase 1/2/4 dashboard e2e waiting on backend dashboard performance)
 
 ## Phase log
 - Phase 0 — Foundation: built, e2e green, design pass done (2026-10-05). The user asked to continue phase after phase without per-phase approval; open questions are collected below for a single review.
@@ -14,9 +14,29 @@
 
 ## Done
 
-### Frontend — Phase 5 training (in progress, against contract v0.6.0)
-- Screens built and checked against the Prism mock (EN and AR, no runtime errors on 28 pages): course catalogue, providers / accreditations / acceptability, trainer authorisations, matrix / gaps / exemptions / refresher plan, sessions (mobile attendance register, signatures, close, void), records (preview, verification, scan with reason, TR certificate, reissue, verification log), worker training panel / passport / data-subject report, training settings and hooks enable, `training_register_from` in HSE settings, `training_course` on the hook policy and readiness, imports, TR card and Training section in the field check, training sidebar section, dashboard training band / C19–C21 / K-37 source and notes / trade-course-category filters.
-- Next: integration and e2e against the stage 2 backend (in progress), screenshots, final report.
+### Frontend — Phase 5 training (contract v0.6.0, integrated with the stage 2 backend)
+- Screens (EN/AR, RTL, phone-first where used in the field):
+  - Course catalogue (tighten-only edits, inactive instead of delete) and providers with accreditations, register check, acceptability helper, suspend / blacklist.
+  - Trainer authorisations; training matrix (manual and read-only hook lines, versions, remove with reason), gaps (summary by course / contractor / trade, sorted by gap; rows by C scope; counts only for viewers), exemptions, refresher plan with "create session from plan".
+  - Sessions: form with day minutes and capacity, nominate (per-worker refusal codes from `meta.errors`), mobile attendance register (all present, minutes, theory / practical, device signature), close with attendance sheet, cancel, void.
+  - Records: external record form with preview and ID-on-card match (never stored), scan upload and scan opening with a reason, review / suspend / revoke, verification log and verification dialog, TR certificate print and reissue. The change history on a record is shown only to reviewers and the HSE Manager (P5-4).
+  - Worker training panel, passport, data-subject report, training profile; deployment training card.
+  - Training settings (ranges, shorten-only validity, language-block categories, critical codes, enable hooks); `training_register_from` in HSE settings; `training_course` on the hook policy and readiness (`?kind=training_course`); access settings point to the hook policy for training.
+  - Imports with template download, dry-run row report (IDs masked), commit / discard; a rejected file shows its code (E12) and the missing column.
+  - TR card and the Training section in the field check; "Revoked / ملغاة" for any revoked token (AC122).
+  - Training sidebar section; dashboard training band, C19–C21 (lazy), K-37 source and notes, trade / course / course-category filters.
+- e2e (real backend, fresh seed, clock 2026-10-06 10:00): 15 Phase 5 spec files, 43 tests, all green in the full run — `p5-smoke` (15 registers × EN/AR, nav), `p5-catalogue` (AC1, AC4, AC5/10), `p5-providers` (AC11, AC12/13/15), `p5-trainers` (AC20, AC22), `p5-matrix` (AC28 519 · 12, AC29/30, AC32, AC33), `p5-gaps` (AC85, AC36, AC86/87, AC88), `p5-sessions` (AC40, AC45, AC55, AC63, phone AR attendance on 00022), `p5-records` (AC67, AC65/69/139, AC74/141, verification log), `p5-check` (AC121, AC124), `p5-hooks` (AC92/105, AC112, AC93, AC97 training part), `p5-imports` (AC114, AC119), `p5-dashboard` (AC126, band and C19–C21, AC133), `p5-passport` (panel and passport, AC143, AC35), `p5-settings`, `p5-z-void` (AC54, AC122; runs last).
+  - Full suite: 193 passed, 5 skipped (screenshots), 7 failed — all dashboard tests of Phases 1/2/4 that wait > 10 s for `/dashboard/action-panel` (2.6–7.7 s) and the first `/kpi/dashboard` per scope (4–6 s) on the Phase 5 data. Reported to the backend; no Phase 0–4 test timeout was loosened.
+  - Phase 0–4 test changed: `p2-settings` HK-4 now uses `medical_fitness` as the hook without a registered provider (training is registered since Phase 5).
+  - `e2e/start-backend.sh` runs uvicorn with `--timeout-keep-alive 75` (sporadic ECONNRESET on reused proxy sockets).
+- Screenshots (`SCREENSHOTS=1 npx playwright test e2e/screenshots-p5.spec.ts`, fresh seed): `docs/screenshots/phase-5/` 01 matrix, 02 gaps, 03 session attendance on a phone in Arabic, 04 record with TR certificate, 05 refresher plan, 06 hook policy training card, 07 import dry run, 08 dashboard training band.
+- Seed / spec doubts (for the HSE Manager review):
+  - Omar's site engineer grant is site-scoped and does not cover the 00031 attendees or Imran Hussain; AC63 and AC121 run as Fahad (same role).
+  - AC97: at the 10:00 clock Rajesh's WAP window for Z-TWB is closed (WAP_OUTSIDE_WINDOW), so the gate verdict is DENIED; the test checks the training part (EXPIRING_7D, no HOOK_NOT_MET).
+  - Session close cannot be shown on the phone at the clock (00022 is In Progress until 16:00); the TR certificate is shown on Imran's seeded record.
+  - Imran Hussain's WAH record is now completed 29 Sept 2026 (backend D-105), not 20 Sept as in A.5.
+  - K-82 on the seed is 10,830 / 11,023 (D-106); displayed 98.2 % as TR7.
+  - K-86 / K-87 are not dashboard tiles (§8.1 lists K-82, K-83, K-84, K-88, K-85 chip); they are read from `/kpi/training`.
 
 ### Backend — Phase 5 implementation (stage 2, contract v0.6.0)
 - Every Phase 5 endpoint is implemented (no 501 left). Migration `20261008_0006_phase5_training`. Services are in `app/services/train/`:
@@ -715,6 +735,11 @@
 - ~~(Design, Phase 4, medium) `GET /history/{entity_type}/{entity_id}` answers 404 for the Phase 4 entity types (equipment item, equipment deployment, scaffold, personnel certificate, defect…): `_history_allowed` in `services/audit_read.py` has no Phase 4 branch. The UI now shows "Change history is not available for this record yet"; the backend should add the Phase 4 types (project scope from the record).~~ Done in 0.6.0 (16 Phase 4 types; D-104).
 - (Design, Phase 4, low) `in_force`, `expiring`, `days_left`, `limiting_factor` on `EquipmentListItem` and the equipment deployment list item (proposal P15).
 - (Design, Phase 4, low) `current_line` (`EquipmentLineSummary`) on `EquipmentDeploymentRead` (proposal P16).
+- (Frontend, Phase 5, low) Document `owner_id` for the six Phase 5 attachment owners. The UI uses: record id for `training_record_scan` and `training_verification_evidence`, provider id for `training_accreditation_certificate`, authorisation id (project id before it exists) for `trainer_authorisation_evidence`, session id for `training_attendance_sheet`, nomination id for `training_attendance_signature`. All work against the stage 2 backend.
+- (Frontend, Phase 5, low) A dedicated passport read (`GET /workers/{id}/training-passport?project_id=`) with in-force state per course; today the UI uses `GET /workers/{id}/training-records?project_id=`.
+- (Frontend, Phase 5, low) Schema names: several Phase 5 schemas are exported as `app__schemas__training_matrix__RequirementStatus`-style names (duplicate class names in the backend). Unique names would keep the generated client stable.
+- (Frontend, Phase 5, low) `GET /projects/{id}/training-gaps/summary` has no `course_code` / `trade` filters; the gaps page shows the full summary while the row list is filtered.
+- (Frontend, Phase 5, medium) `SessionRead.warnings` (POSSIBLE_ID_NUMBER, P5-10): the backend now returns it, but contract v0.6.0 does not define it, so the generated client has no type and the session page does not show it. Add `warnings: ApiWarning[]` to `SessionRead` in the contract; the UI shows it with the existing warnings component.
 
 ## Design proposals
 L items from the Phase 0 design pass, waiting for the user's decision at the phase demo (details in `docs/design/phase-0-findings.md`):

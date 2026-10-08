@@ -81,7 +81,7 @@ from app.services.cert import alerts
 from app.services.cert import common as cc
 from app.services.cert.personnel import name_match
 from app.services.common import invalid_transition, paginate
-from app.services.hse_common import Refs
+from app.services.hse_common import Refs, id_warnings
 from app.services.permissions import Principal, engagement_descendants, forbidden_error
 from app.services.train import common, providers, recordops
 from app.services.train import hook as thook
@@ -664,6 +664,7 @@ def record_read(
         extra["practical_result"] = r.practical_result
     if hse:
         extra["status_reason_text"] = r.status_reason_text
+        warnings.extend(id_warnings(status_reason_text=r.status_reason_text))
     if not_acc:
         extra["not_accepted_message_en"] = NOT_ACCEPTED_EN
         extra["not_accepted_message_ar"] = NOT_ACCEPTED_AR

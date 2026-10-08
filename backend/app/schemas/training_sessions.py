@@ -207,6 +207,11 @@ class SessionRead(ApiModel):
         description="Current SS-1…SS-4 / TA-2 problems (e.g. TRAINER_NOT_AUTHORISED after a "
         "suspension, PROVIDER_NOT_ACCEPTABLE)."
     )
+    warnings: list[ApiWarning] = Field(
+        default_factory=list,
+        description="P1-8 `POSSIBLE_ID_NUMBER` on the session's free text (off-site location, "
+        "status / void reason) (P5-10); never blocking.",
+    )
     allowed_actions: list[str] = Field(
         examples=[["schedule", "cancel", "close"]],
         description="Of schedule, record_delivered, cancel, close, void, edit, nominate.",

@@ -473,6 +473,7 @@ def switch(
         project.id,
         f"{en} now block ({kind.value}: {scope_en})",
         f"{ar} أصبحت مانعة ({scope_ar})",
+        st.id,
     )
     clear_cache(db)
     from app.services.cert import events  # noqa: PLC0415
@@ -553,6 +554,7 @@ def defer(
         project.id,
         f"{en}: general block date deferred to {body.new_date}",
         f"{ar}: تم تأجيل تاريخ الحظر العام إلى {body.new_date}",
+        st.id,
     )
     clear_cache(db)
     return policy_read(db, project.id)
@@ -564,7 +566,9 @@ def _label(kind: HookKind) -> tuple[str, str]:
     return "Certificate checks", "فحوص الشهادات"
 
 
-def _alert_change(db: Session, project_id: uuid.UUID, en: str, ar: str) -> None:
+def _alert_change(
+    db: Session, project_id: uuid.UUID, en: str, ar: str, entity_id: uuid.UUID | None = None
+) -> None:
     users = set(project_role_users(db, project_id, Role.hse_officer, Role.contractor_hse_rep))
     notify.notify(
         db,
@@ -573,6 +577,7 @@ def _alert_change(db: Session, project_id: uuid.UUID, en: str, ar: str) -> None:
         en,
         ar,
         entity_type=EntityType.hook_policy_state,
+        entity_id=entity_id,
         project_id=project_id,
     )
 

@@ -344,7 +344,7 @@ def action_panel(db: Session, p: Principal, q: KpiQuery) -> ActionPanelResponse:
     # 9. Phase 4 certification items (4-third-party-cert §8.3; capability 122)
     cert_items.action_items(db, p, project, day, f.engs, f.sites, add, _link, flt)
     # 10. Phase 5 training items (5-training §8.3; capability 143)
-    train_items.action_items(db, p, project, day, f.engs, f.sites, add, _link, flt)
+    train_items.action_items(db, p, project, day, f.engs, f.sites, add, _link, flt, facts=sc.facts)
     return ActionPanelResponse(project_id=pid, as_of=day, items=entries)
 
 

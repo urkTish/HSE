@@ -72,7 +72,7 @@ from app.services.access import common as acommon
 from app.services.cert import alerts
 from app.services.cert import common as cc
 from app.services.common import invalid_transition, paginate
-from app.services.hse_common import Refs
+from app.services.hse_common import Refs, id_warnings
 from app.services.permissions import Principal, forbidden_error
 from app.services.train import common, recordops
 from app.services.train import hook as thook
@@ -368,6 +368,11 @@ def read(db: Session, p: Principal, s: TrainingSession) -> SessionRead:
         void=void,
         counts=counts(nominations(db, s)),
         blockers=blockers(db, s),
+        warnings=id_warnings(
+            offsite_text=s.offsite_text,
+            status_reason=s.status_reason,
+            void_reason_text=void.reason_text if void else None,
+        ),
         allowed_actions=_allowed(db, p, s),
         created_by=creator,
         created_at=s.created_at,
@@ -974,7 +979,7 @@ def _nominee_errors(
     if other:
         errs.append({"worker_id": wid, "code": ErrorCode.SCHEDULE_CLASH.value, "session_no": other})
     st = common.settings(db, s.project_id)
-    _total, failed = _attempts(db, w.id, c, s.project_id, s.first_day)
+    _total, failed = _attempts(db, w.id, c, s.project_id, min(today(), s.first_day))
     if failed >= st.training_max_attempts_30d:
         errs.append(
             {"worker_id": wid, "code": ErrorCode.TRAINING_ATTEMPTS_EXCEEDED.value,
@@ -996,7 +1001,7 @@ def _add_nomination(
     w = db.get(Worker, wid)
     assert w is not None  # noqa: S101
     dep = common.deployment(db, wid, s.project_id)
-    total, _f = _attempts(db, wid, c, s.project_id, s.first_day)
+    total, _f = _attempts(db, wid, c, s.project_id, min(today(), s.first_day))
     existing = db.scalar(
         select(TrainingNomination).where(
             TrainingNomination.session_id == s.id, TrainingNomination.worker_id == wid

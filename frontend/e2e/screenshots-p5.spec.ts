@@ -57,13 +57,17 @@ test("Phase 5 screenshots", async ({ page }) => {
   await page.goto("/en/hook-policy?kind=training_course");
   await expect(page.getByTestId("hook-kind-training_course")).toBeVisible();
   await expect(page.getByTestId("hook-readiness")).toBeVisible();
+  await page.getByTestId("hook-kind-training_course").evaluate((el) => el.scrollIntoView({ block: "start" }));
+  await page.evaluate(() => window.scrollBy(0, -80));
   await shot(page, "06-hook-policy-training.png");
 
   await page.goto("/en");
   const band = page.getByTestId("training-band");
   await expect(band).toBeVisible();
+  await expect(page.locator("[data-testid=action-item]").first()).toBeVisible({ timeout: 60_000 });
   await band.scrollIntoViewIfNeeded();
-  await page.waitForTimeout(500);
+  await page.waitForLoadState("networkidle");
+  await page.waitForTimeout(800);
   await page.screenshot({ path: join(OUT, "08-dashboard-training-band.png") });
 
   const sid = await sessionId(api, "RBT-52", "TRS-RBT-52-2026-00022");

@@ -299,8 +299,10 @@ def action_items(
     add: Adder,
     link: Callable[[str, str, dict[str, Any]], object],
     flt: dict[str, list[str]],
+    facts: Any = None,
 ) -> None:
-    """Appends the §8.3 entries via the dashboard's ``add(key, count, severity, link, by)``."""
+    """Appends the §8.3 entries via the dashboard's ``add(key, count, severity, link, by)``.
+    ``facts`` (the KPI request's Facts) shares the requirement evaluation with the KPI cache."""
     from app.core.clock import now  # noqa: PLC0415
     from app.services.train import gaps, sessions  # noqa: PLC0415
 
@@ -381,12 +383,18 @@ def action_items(
     # requirement-based items (one evaluation)
     from app.services.train import requirements as reqs  # noqa: PLC0415
 
-    pe = reqs.evaluate_project(db, pid, day, bookings=True, enforcement=True)
+    tf = facts.train if facts is not None else None
+    if tf is not None and pid in tf.pids:
+        pe = tf.with_db(db).peval_full(pid, day)
+    else:
+        pe = reqs.evaluate_project(db, pid, day, bookings=True, enforcement=True)
     hooked = [
         r
         for r in pe.reqs
-        if r.counted and r.state.value == "gap" and r.hook_code and ok(r.dep.engagement_id)
+        # GP-7: enforcement lines (crew roles, appointments) count here though not in KPIs
+        if r.state.value == "gap" and r.hook_code and ok(r.dep.engagement_id)
     ]
+    hooked = list({(r.dep.id, r.key): r for r in hooked}.values())
     permits, waps = gaps.live_work(db, pid, {r.dep.worker_id for r in hooked})
     live = Counter(
         r.dep.engagement_id
@@ -411,3 +419,81 @@ def action_items(
     add(A.training_expiring_7d_not_booked, sum(soon.values()), Severity.warning,
         link("refresher_plan", f"{base}/refresher-plan",
              {"state": "not_booked", "due_within_days": "7", **eflt}), soon)  # fmt: skip
+    # hook block date ≤ 7 days with training readiness < 100 % (HK5-9)
+    from app.core.cert_enums import HookStage  # noqa: PLC0415
+
+    not_ready = 0
+    st = db.scalar(
+        select(HookPolicyState).where(
+            HookPolicyState.project_id == pid, HookPolicyState.kind == HookKind.training_course
+        )
+    )
+    if st is not None and st.stage != HookStage.block and not c.counts_only:
+        due_soon = [
+            w for w, done in ((st.critical_block_from, st.critical_switched_at),
+                              (st.general_block_from, st.general_switched_at))
+            if w is not None and done is None and day <= w <= day + timedelta(days=7)
+        ]  # fmt: skip
+        if due_soon:
+            not_ready = soon_not_ready(db, pe, st, set(due_soon))
+    add(A.training_hook_block_soon_not_ready, not_ready, Severity.warning,
+        link("hook_readiness", f"{base}/hook-readiness", {"kind": "training_course"}))  # fmt: skip
+    # appointment holders without a linked worker (HK5-7: a configuration error)
+    add(A.training_holders_not_linked, holders_not_linked(db, pid, day), Severity.warning,
+        link("ptw_appointments", f"{base}/ptw-appointments", {}))  # fmt: skip
+
+
+def soon_not_ready(db: Session, pe: Any, st: HookPolicyState, soon: set[date]) -> int:
+    """Codes whose block date is in ``soon`` with readiness < 100 %: HK5-9 readiness computed on
+    the panel's own requirement evaluation (Mobilised deployments, enforcement lines)."""
+    from app.services.cert import policy  # noqa: PLC0415
+
+    cfg = policy.cfg(db, st.project_id, HookKind.training_course)
+    good = ("met", "expiring", "exempt")
+    per_code: dict[str, dict[uuid.UUID, bool]] = {}
+    for r in pe.reqs:
+        if not r.hook_code:
+            continue
+        for code in r.codes:
+            if code in pe.f.hook_codes:
+                cur = per_code.setdefault(code, {})
+                cur[r.dep.worker_id] = cur.get(r.dep.worker_id, False) or r.state.value in good
+    n = 0
+    for code in policy.codes_of(db, HookKind.training_course):
+        subj = per_code.get(code, {})
+        if subj and policy.block_from(st, cfg, code) in soon and not all(subj.values()):
+            n += 1
+    return n
+
+
+def holders_not_linked(db: Session, project_id: uuid.UUID, day: date) -> int:
+    """Active appointments of a function that a training line hooks (`appointment:<function>`)
+    whose holder is a user with no linked worker record."""
+    from app.core.ptw_enums import AppointmentStatus  # noqa: PLC0415
+    from app.core.train_enums import MatrixAppliesTo  # noqa: PLC0415
+    from app.models import PtwAppointment  # noqa: PLC0415
+    from app.services.train import requirements as reqs  # noqa: PLC0415
+
+    functions = {
+        v
+        for ln in reqs.lines_at(db, project_id, day)
+        if ln.row.applies_to_kind == MatrixAppliesTo.appointment_function
+        for v in ln.row.applies_to_values or []
+    }
+    if not functions:
+        return 0
+    linked = set(db.scalars(select(Worker.user_id).where(Worker.user_id.is_not(None))))
+    n = 0
+    for a in db.scalars(
+        select(PtwAppointment).where(
+            PtwAppointment.project_id == project_id,
+            PtwAppointment.status == AppointmentStatus.active,
+            PtwAppointment.valid_from <= day,
+            PtwAppointment.valid_to >= day,
+        )
+    ):
+        if a.function.value not in functions or a.holder_worker_id is not None:
+            continue
+        if a.holder_user_id is not None and a.holder_user_id not in linked:
+            n += 1
+    return n

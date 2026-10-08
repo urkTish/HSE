@@ -63,6 +63,10 @@ class MatrixLineCreate(StrictInput):
     requirement: MatrixRequirement
     level: MatrixLevel
     due_within_days: int = Field(ge=0, le=180)
+    effective_from: date | None = Field(
+        default=None,
+        description="Ignored: a line is effective from the day it is saved (MX-7, AC34).",
+    )
 
 
 class MatrixLineUpdate(PatchInput):
