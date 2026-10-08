@@ -3,7 +3,8 @@ import { expect, test } from "./fixtures/test";
 import { apiAs, login, uid, USERS } from "./helpers";
 import { createWorker, ensureCourse, ensureGenCourse, pickMulti, projectIds, recordInduction, selectContaining } from "./p2-helpers";
 
-const SHOTS = "../docs/screenshots/phase-2";
+// Committed demo screenshots are only rewritten on demand (SCREENSHOTS=1).
+const SHOTS = process.env.SCREENSHOTS ? "../docs/screenshots/phase-2" : "test-results/shots";
 
 function day(offset: number): string {
   const d = new Date(Date.now() + 3 * 3600_000 + offset * 86400_000); // Riyadh date

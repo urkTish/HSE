@@ -1,7 +1,7 @@
 "use client";
 import { Printer } from "lucide-react";
 import { useTranslations } from "next-intl";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { AccessPrintHeader, BiLabel, QrImage, useBi } from "@/components/access/common";
 import { ErrorState, LoadingState } from "@/components/common/states";
@@ -14,13 +14,13 @@ import { useProjectId } from "./common";
 type S = Schemas;
 type Print = S["PermitPrintRead"];
 
-function Bi({ en, ar }: { en: ReactNode; ar: ReactNode }) {
+function Bi({ en, ar, stack }: { en: ReactNode; ar: ReactNode; stack?: boolean }) {
   return (
-    <span className="inline-flex flex-wrap items-baseline gap-x-1.5">
+    <span className={stack ? "inline-flex flex-col items-start leading-tight" : "inline-flex flex-wrap items-baseline gap-x-1.5"}>
       <span lang="en" dir="ltr">
         {en}
       </span>
-      <span aria-hidden>/</span>
+      {stack ? null : <span aria-hidden>/</span>}
       <span lang="ar" dir="rtl">
         {ar}
       </span>
@@ -28,48 +28,96 @@ function Bi({ en, ar }: { en: ReactNode; ar: ReactNode }) {
   );
 }
 
+type BiNs = "permitStatus" | "permitType" | "ptwCrewRole" | "gasResult" | "signaturePurpose";
+
+/** An enum label in both languages for paper ("Active / ساري"), from the ptwBi "EN|AR" messages. */
+function useBiEnum() {
+  const t = useTranslations("ptwBi");
+  return (ns: BiNs, k: string) => {
+    const key = `${ns}.${k}` as "permitStatus.active";
+    const [en = k, ar = ""] = (t.has(key) ? t(key) : k).split("|");
+    return { en, ar };
+  };
+}
+
+function BiEnum({ ns, k, stack }: { ns: BiNs; k: string; stack?: boolean }) {
+  const v = useBiEnum()(ns, k);
+  return <Bi en={v.en} ar={v.ar} stack={stack} />;
+}
+
 function hhmm(t: string): string {
   return t.slice(0, 5);
+}
+
+/**
+ * Every printed page carries the permit number and "controlled copy" in the @page margin boxes (globals.css),
+ * so a loose second page can still be matched to its permit.
+ */
+function PageFooter({ p }: { p: Print }) {
+  const bi = useBi();
+  const c = bi("ptwControlled");
+  const start = `${p.display_no} · ${c.en.split(" — ")[0]}`;
+  const end = c.ar.split(" — ")[0] ?? "";
+  useEffect(() => {
+    const root = document.documentElement.style;
+    root.setProperty("--print-footer-start", JSON.stringify(start));
+    root.setProperty("--print-footer-end", JSON.stringify(end));
+    return () => {
+      root.removeProperty("--print-footer-start");
+      root.removeProperty("--print-footer-end");
+    };
+  }, [start, end]);
+  return null;
 }
 
 /** The A4 body shared by the permit print and the closed-permit pack. */
 function PermitSheet({ p, title, children }: { p: Print; title: "ptwTitle" | "ptwClosureTitle"; children?: ReactNode }) {
   const t = useTranslations("ptwPrint");
-  const te = useTranslations("enums");
   const pid = useProjectId();
   const { dateTime } = useFormatters(pid);
   const bi = useBi();
   return (
-    <article className="paper mx-auto flex w-full max-w-3xl flex-col gap-4 rounded-xl border bg-white p-6 text-black print:max-w-none print:rounded-none print:border-0 print:p-0" data-testid="permit-print">
+    // Fixed LTR layout: the printed permit is the same document whatever the screen language (English left, Arabic right).
+    <article dir="ltr" className="paper mx-auto flex w-full max-w-3xl flex-col gap-4 rounded-xl border bg-white p-6 text-black print:max-w-none print:rounded-none print:border-0 print:p-0" data-testid="permit-print">
+      <PageFooter p={p} />
       <AccessPrintHeader title={title} />
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
         <div className="flex min-w-0 flex-col gap-2">
           <p className="ltr text-2xl font-bold tracking-wide" data-testid="print-permit-no">
             {p.display_no}
           </p>
           <p className="flex flex-wrap items-center gap-2 text-sm">
             <BiLabel k="status" className="text-xs" />
-            <span className="rounded border-2 border-black px-2 py-0.5 text-base font-bold">{te(`permitStatus.${p.status}`)}</span>
+            <span className="rounded border-2 border-black px-2 py-0.5 text-base font-bold" data-testid="print-status">
+              <BiEnum ns="permitStatus" k={p.status} />
+            </span>
             {p.current_shift_no ? (
               <span className="text-sm">
                 <BiLabel k="ptwShift" className="text-xs" /> <span className="font-semibold tabular-nums">{p.current_shift_no}</span>
               </span>
             ) : null}
           </p>
-          <p className="flex flex-col text-sm">
+          <div className="flex flex-col text-sm">
             <BiLabel k="ptwTypes" className="text-xs" />
-            <span className="font-semibold">{p.work_types.map((w) => te(`permitType.${w}`)).join(" · ")}</span>
-          </p>
-          <p className="flex flex-col text-sm">
-            <BiLabel k="dates" className="text-xs" />
-            <span className="ltr text-lg font-semibold">
-              {dateTime(p.valid_from_at)} – {dateTime(p.valid_to_at)}
+            <span className="flex flex-wrap gap-x-4 gap-y-0.5 font-semibold">
+              {p.work_types.map((w) => (
+                <BiEnum key={w} ns="permitType" k={w} />
+              ))}
             </span>
-          </p>
+          </div>
+          <div className="flex flex-col gap-0.5 text-sm">
+            <BiLabel k="dates" className="text-xs" />
+            <span className="grid grid-cols-[auto_1fr] items-baseline gap-x-2">
+              <BiLabel k="ptwFrom" className="text-xs" />
+              <span className="ltr text-base font-semibold">{dateTime(p.valid_from_at)}</span>
+              <BiLabel k="ptwTo" className="text-xs" />
+              <span className="ltr text-base font-semibold">{dateTime(p.valid_to_at)}</span>
+            </span>
+          </div>
         </div>
         <div className="flex flex-col items-center gap-1 rounded-lg border-2 border-black p-2" data-testid="print-qr" data-payload={p.qr_payload}>
-          <QrImage payload={p.qr_payload} size={150} label={t("qr", { no: p.display_no })} />
-          <span className="ltr font-mono font-bold" data-testid="print-ref">
+          <QrImage payload={p.qr_payload} size={132} label={t("qr", { no: p.display_no })} />
+          <span className="ltr font-mono text-sm font-bold" data-testid="print-ref">
             {p.printed_ref}
           </span>
           <BiLabel k="ptwScan" className="text-[8pt]" />
@@ -83,7 +131,7 @@ function PermitSheet({ p, title, children }: { p: Print; title: "ptwTitle" | "pt
         <dt>
           <BiLabel k="ptwLocation" stack className="text-xs font-medium" />
         </dt>
-        <dd>{p.location}</dd>
+        <dd dir="auto">{p.location}</dd>
         <dt>
           <BiLabel k="windows" stack className="text-xs font-medium" />
         </dt>
@@ -125,7 +173,9 @@ function PermitSheet({ p, title, children }: { p: Print; title: "ptwTitle" | "pt
               <tr key={i} className="border-b">
                 <td className="ltr py-1 font-mono">{c.worker_no ?? "—"}</td>
                 <td className="py-1">{c.name_en || c.name_ar ? <Bi en={c.name_en ?? ""} ar={c.name_ar ?? c.name_en ?? ""} /> : "—"}</td>
-                <td className="py-1">{te(`ptwCrewRole.${c.crew_role}`)}</td>
+                <td className="py-1">
+                  <BiEnum ns="ptwCrewRole" k={c.crew_role} />
+                </td>
               </tr>
             ))}
           </tbody>
@@ -138,7 +188,9 @@ function PermitSheet({ p, title, children }: { p: Print; title: "ptwTitle" | "pt
           </h2>
           {p.latest_gas_test ? (
             <p className="text-sm" data-testid="print-gas">
-              <span className="ltr font-mono">{p.latest_gas_test.test_no}</span> · <span className="ltr">{dateTime(p.latest_gas_test.tested_at)}</span> · <span className="font-semibold uppercase">{p.latest_gas_test.result}</span>
+              <span className="ltr font-mono">{p.latest_gas_test.test_no}</span> · <span className="ltr">{dateTime(p.latest_gas_test.tested_at)}</span> · <span className="font-semibold">
+                <BiEnum ns="gasResult" k={p.latest_gas_test.result} />
+              </span>
             </p>
           ) : (
             <p className="text-sm">—</p>
@@ -175,15 +227,55 @@ function PermitSheet({ p, title, children }: { p: Print; title: "ptwTitle" | "pt
           <p className="text-sm">—</p>
         )}
       </section>
-      <section className="rounded border-2 border-black p-2">
+      <section className="rounded border-2 border-black p-2 break-inside-avoid">
         <h2 className="mb-1 font-semibold">
           <BiLabel k="ptwEmergency" />
         </h2>
-        <p className="text-sm whitespace-pre-line">{p.emergency_info}</p>
+        <p className="text-sm whitespace-pre-line" dir="auto">
+          {p.emergency_info}
+        </p>
+      </section>
+      <section className="break-inside-avoid" data-testid="print-authorisation">
+        <h2 className="mb-1 font-semibold">
+          <BiLabel k="ptwAuthorisation" />
+        </h2>
+        <table className="w-full table-fixed border-collapse text-sm">
+          <thead>
+            <tr className="text-xs">
+              {(["ptwRoleCol", "ptwNameCol", "ptwSignCol", "ptwDateCol"] as const).map((k) => (
+                <th key={k} className="border border-black p-1 text-start font-medium">
+                  <BiLabel k={k} stack />
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {(
+              [
+                ["ptwReceiver", p.receiver_name],
+                ["ptwIssuer", p.issuer_name],
+                ["ptwAreaAuthority", p.area_authority_name],
+              ] as const
+            ).map(([k, n]) => (
+              <tr key={k} className="h-12">
+                <td className="border border-black p-1 text-xs">
+                  <BiLabel k={k} stack />
+                </td>
+                <td className="border border-black p-1">{n ?? "—"}</td>
+                <td className="border border-black p-1" />
+                <td className="border border-black p-1" />
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p className="mt-1 text-[8pt]">
+          <BiLabel k="ptwSignNote" stack />
+        </p>
       </section>
       {children}
-      <footer className="mt-auto flex flex-col gap-1 border-t-2 border-black pt-2 text-xs">
+      <footer className="mt-auto flex flex-col gap-1 border-t-2 border-black pt-2 text-xs break-inside-avoid">
         <BiLabel k="ptwFooter" stack className="gap-1" />
+        <BiLabel k="ptwControlled" className="font-semibold" />
         <span className="flex flex-wrap items-baseline gap-x-1 text-[8pt]" data-testid="audit-hash">
           <span>{bi("ptwHash").en}</span> / <bdi dir="rtl">{bi("ptwHash").ar}</bdi>:{" "}
           <bdi dir="ltr" className="font-mono break-all">{p.audit_hash}</bdi> · <bdi dir="ltr">{dateTime(p.generated_at)}</bdi>
@@ -270,7 +362,13 @@ export function ClosurePack({ id }: { id: string }) {
             <BiLabel k="ptwGasTests" />
           </h2>
           <ul className="ltr text-sm">
-            {c.gas_tests.length ? c.gas_tests.map((g) => <li key={g.id} className="font-mono">{g.test_no} · {dateTime(g.tested_at)} · {g.result}</li>) : <li>—</li>}
+            {c.gas_tests.length
+              ? c.gas_tests.map((g) => (
+                  <li key={g.id}>
+                    <span className="font-mono">{g.test_no}</span> · {dateTime(g.tested_at)} · <BiEnum ns="gasResult" k={g.result} />
+                  </li>
+                ))
+              : <li>—</li>}
           </ul>
         </section>
         <section>
@@ -280,7 +378,7 @@ export function ClosurePack({ id }: { id: string }) {
           <ul className="text-sm" data-testid="pack-signatures">
             {c.signatures.map((s) => (
               <li key={s.id}>
-                {te(`signaturePurpose.${s.purpose}`)} · {s.user?.full_name_en ?? s.worker_label ?? "—"} ({s.role_label}) · <span className="ltr">{dateTime(s.signed_at)}</span> · <span className="ltr font-mono text-[8pt]">#{s.permit_hash.slice(0, 12)}</span>
+                <BiEnum ns="signaturePurpose" k={s.purpose} /> · {s.user?.full_name_en ?? s.worker_label ?? "—"} ({s.role_label}) · <span className="ltr">{dateTime(s.signed_at)}</span> · <span className="ltr font-mono text-[8pt]">#{s.permit_hash.slice(0, 12)}</span>
               </li>
             ))}
           </ul>

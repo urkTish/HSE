@@ -353,7 +353,7 @@ function AppointmentView({ project, a }: { project: S["ProjectRead"]; a: Appt })
                 </Button>
               ) : null}
               {manage && (a.status === "active" || a.status === "suspended") ? (
-                <Button variant="destructive" onClick={() => setStep("revoke")} data-testid="revoke-appointment">
+                <Button variant="destructive-outline" onClick={() => setStep("revoke")} data-testid="revoke-appointment">
                   {t("revoke")}
                 </Button>
               ) : null}

@@ -228,7 +228,12 @@ function ConflictView({ project, c }: { project: S["ProjectRead"]; c: S["SimopsC
         <Breadcrumbs items={[{ label: t("title"), href: "/simops-conflicts" }, { label: c.conflict_no }]} />
         <PageHeader
           title={c.conflict_no}
-          description={`${c.rule_code} · ${te(`simopsResult.${c.result}`)}`}
+          description={
+            <span className="inline-flex flex-wrap items-center gap-2">
+              <bdi className="ltr">{c.rule_code}</bdi>
+              <SimopsResultBadge result={c.result} />
+            </span>
+          }
           actions={
             <>
               <span data-testid="conflict-status" data-status={c.status}>

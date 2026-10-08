@@ -46,6 +46,7 @@
   --color-series-6: var(--series-6);
   --color-series-7: var(--series-7);
   --color-series-8: var(--series-8);
+  --color-series-neutral: var(--series-neutral);
   --color-verdict-granted: var(--verdict-granted);
   --color-verdict-granted-fg: var(--verdict-granted-fg);
   --color-verdict-note: var(--verdict-note);
@@ -207,6 +208,7 @@
     margin: 14mm 14mm 20mm;
     @bottom-center {
       content: counter(page) " / " counter(pages);
+      direction: ltr; /* "1 / 2", not "2 / 1", on Arabic pages */
       font-size: 8pt;
       color: #475569;
     }
@@ -242,6 +244,7 @@
     --series-6: #008300;
     --series-7: #4a3aa7;
     --series-8: #e34948;
+    --series-neutral: #8f99a8;
     --chart-grid: #e1e4ea;
     --chart-axis: #b8c0cc;
     --status-success: #166534;

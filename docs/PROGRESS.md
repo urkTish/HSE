@@ -1,14 +1,15 @@
 # Progress
 
 ## Current
-- Phase: 3 — Permit to Work (PTW)
-- Module: PTW (spec `docs/specs/3-ptw.md` v1.0)
-- Step: Build — backend stage 2 done (all Phase 3 endpoints implemented, contract v0.4.0 with a description-only change); frontend building against v0.4.0
+- Phase: 4 — Third-party certification
+- Module: third-party certification (spec `docs/specs/4-third-party-cert.md` v1.0)
+- Step: Contract
 
 ## Phase log
 - Phase 0 — Foundation: built, e2e green, design pass done (2026-10-05). The user asked to continue phase after phase without per-phase approval; open questions are collected below for a single review.
 - Phase 1 — Dashboard (with AI): built, e2e green, design pass done (2026-10-06).
 - Phase 2 — Site / Airport access permits: built, e2e green, design pass done (2026-10-07).
+- Phase 3 — Permit to Work: built, e2e green, design pass done (2026-10-08).
 
 ## Done
 
@@ -322,6 +323,30 @@
 - E2E (Playwright, real backend): full suite 71 passed, 2 skipped (screenshot specs, on demand) on a fresh migrated + seeded DB — 35 Phase 0 + 36 Phase 1 tests in `e2e/p1-*.spec.ts` — dashboard (AC55, 59, 60, 61, 62, 63, 64, filters in URL, drill-down, charts, mobile), AI (AC65, 72, 73, 74, 75, insufficient data, errors, Arabic) via a recorded SSE stream in `e2e/fixtures/ai-stream.ts` (typed against the contract, replayed with `page.route`; test-only), workforce/import (AC2, 3, 4, 7, 10), incidents/PDPL (AC13, 19, 20, 21, 29, 30, 31, 33), CAs (AC40, 41, 42, 43), observations (AC35) and create flows for observations, inspections, meetings, settings, reports. Phase 0 specs unchanged except a wait in AC12 (options load asynchronously).
 - Screenshots: `docs/screenshots/phase-1/` (run `SCREENSHOTS=1 npx playwright test e2e/screenshots-p1.spec.ts`).
 
+### Design pass — Phase 3 (UI/UX Designer)
+- Design pass: done (Phase 3).
+  - Findings, ranking and the Phase 3 design-system additions: `docs/design/phase-3-findings.md`.
+  - Before/after screenshots: `docs/screenshots/phase-3/design/`.
+- **Permit page.** A state panel under the title shows the status in large type with its own icon, the reason and a plain sentence ("Work in progress…", "Work stopped…", "Approved. Not valid for work until issued"). It also holds today's window, the blocker count and the live countdowns.
+  - Only Active is green; approved and issued are blue everywhere.
+  - Actions are grouped: the safe next step, then the other steps, then "Stop work" (Suspend as a red outline, Gas alarm solid red), then "Cannot be undone" (Cancel / Delete as red outlines, separated).
+  - Cancel, Delete and Close dialogs warn that they cannot be undone; the cancel dialog's dismiss button reads "Keep the permit".
+- **Gas.**
+  - Chips read "Gas: Valid".
+  - The live PASS/FAIL result is large, with icon and sentence, and repeats under the readings on phones.
+  - Every reading input shows its limit; failing values are a chip with icon + "out of limit".
+  - Phone tables no longer show raw `o2_pct` keys.
+- **Print.** Fixed LTR bilingual sheet with bilingual status, types, crew roles and gas result. It adds From/To validity lines, an authorisation and acceptance table, a "controlled copy" line, and the permit number + page numbers in every page margin.
+- **Other screens.**
+  - 5×5 matrix: score + band word per cell, named axes, mirrors in Arabic, extreme readable in dark.
+  - C13: no repeated hue (grey `--series-neutral` for General work; ink high-risk line).
+  - Board: routine suspensions amber.
+  - Lock register: "Cut lock" outlined with an irreversible warning; locks on vs removed distinct.
+  - `dir="auto"` on free text; countdowns over a day in days.
+  - Smaller items: PTW band icons, gate PTW card badges, SIMOPS result badge.
+- No business logic, API calls, permissions, KPI values or data shown changed. E2E selectors unchanged. New strings in `scripts/i18n/p3-design.py`.
+- Checks: see the final report of this pass (lint, typecheck, i18n:check, build, full e2e).
+
 ### Design pass — Phase 2 (UI/UX Designer)
 - Design pass: done (Phase 2). Findings, ranking and the Phase 2 design-system additions: `docs/design/phase-2-findings.md`; before/after screenshots: `docs/screenshots/phase-2/design/`.
 - Gate screen: "granted with a note" now leads with a tick and GRANTED (amber panel kept, per spec) and a small "With a note" pill; the "training check from Phase 5" reason is a neutral note, not an amber warning; reasons ordered deny → warning → note. While a verdict is up the pickers hide and the result actions (Next scan with a draining 30 s line, Cancel pairing, Admitted despite denial as a red-outlined secondary) sit in the thumb bar. Theme-independent verdict tokens replace raw Tailwind colours; dark mode fixed (the `dark:` classes followed the OS, not the toggle). In/Out with icons, 44–56 px targets.
@@ -412,7 +437,8 @@
 ## Contract requests
 - (Frontend, Phase 3, low) Mark `ambient_temp_c` as required for outdoor permits in the start / resume / revalidate / handover-accept request descriptions (the server enforces HT-5).
 - (Frontend, Phase 3, low) `AuditCaLink.priority` / `status` as the `CaPriority` / `CaStatus` enums instead of free strings (the UI translates them only when they match).
-- (Frontend, Phase 3, low) Bilingual crew-role labels on the permit print (the print shows roles in the screen language only).
+- ~~(Frontend, Phase 3, low) Bilingual crew-role labels on the permit print (the print shows roles in the screen language only).~~ Solved in the UI by the Phase 3 design pass (`ptwBi.*` labels from the enum messages).
+- (Design, Phase 3, low) Per-reading fail codes (or the input index) in `GasEvaluation` from `POST /permits/{id}/gas-tests/preview`, so the UI can outline the exact failing input. `worst` is one aggregate reading; on the seed its `point` came back "at_work_point" for readings entered as top/middle/bottom.
 - (Frontend, medium) `ChartSeries.metric` (KpiMetric | null) and, for period axes, `ChartCategory.start`/`end`: lets a click on a bar/point drill into the exact records. Today the UI drills only when a series key happens to be a metric id (e.g. `K-21`) and derives the month from the category key.
 - (Frontend, low) `metric` on each pyramid layer (and one metric for RWC+JTC, e.g. a K-07/K-08 combined drill): the UI maps layers to K-05/06/07/09/12/13/30 itself; RWC_JTC drills K-07 only.
 - (Frontend, low) A capability for HSE meetings (none in §5.10): the UI gates meeting edits on `inspection.plan_manage` as an assumption.
@@ -441,3 +467,10 @@ L items from the Phase 2 design pass (details in `docs/design/phase-2-findings.m
 - **P10. Access settings: show only the hook requirements that exist.** Today every ADP category, ~25 vehicle categories and every crew role shows an empty picker (≈ 6,000 px of "None"). Proposal: list only categories with a requirement plus "Add requirement for…", each section collapsible.
 - **P11. Colour of "granted with a note" at the gate.** The spec makes GRANTED_WITH_WARNING amber; until Phase 5 that is every clean airside scan. This pass kept amber but leads with a tick and "GRANTED". Option for the HSE Manager: a green panel with an amber note band. Needs a decision because it changes the spec's colour semantics.
 - **P1 / P2 / P9 also apply to Phase 2:** two-calendar dates still wrap in the gate log and WAP windows (P1); pass application and WAP detail have long action rows on phones (P2); the access card, sticker and WAP print use the platform mark until a project logo exists (P9).
+
+L items from the Phase 3 design pass (details in `docs/design/phase-3-findings.md`):
+- **P2 (raised priority, PTW layout).** Sticky phone action bar on the permit page. The safe next step and "Stop work" pinned to the bottom, the other steps in a sheet. On a phone the action groups still scroll away above the readiness and the tabs.
+- **P7 / P1 also apply to Phase 3.** The permit register opens on the closed bulk history (live permits should come first: "Live now", "Waiting for me", "Suspended"), and two-calendar validity makes each row 4 lines.
+- **P12. One-page permit print.** A 6-person crew permit now prints on two A4 pages (the authorisation block moves to page 2). Proposal: crew in two columns, conditions and emergency side by side, signatures beside the QR; plus the project logo (P9).
+- **P13. Per-reading gas evaluation in the live preview.** Needs the contract request above. The failing input itself would then turn red; today the UI shows the fail codes, the limits under each input and the worst reading.
+- **P14. Risk matrix direction in Arabic.** This pass mirrors the 5×5 grid in RTL (severity grows to the left, like the rest of the layout). If HSE prefers the matrix identical to printed English standards in both languages, it is a one-line switch back to LTR. Needs the HSE Manager's call.

@@ -97,6 +97,8 @@ function PtwBoard({ project }: { project: S["ProjectRead"] }) {
   );
 }
 
+const ROUTINE: string[] = ["shift_end", "shift_lapsed", "midday_ban"];
+
 function BoardCard({ p }: { p: S["BoardPermit"] }) {
   const t = useTranslations("ptwBoard");
   const te = useTranslations("enums");
@@ -106,7 +108,8 @@ function BoardCard({ p }: { p: S["BoardPermit"] }) {
       className={cn(
         "flex flex-col gap-1.5 rounded-lg border p-2.5 hover:bg-accent",
         p.status === "active" && p.in_window_now && "border-s-4 border-s-success",
-        p.status === "suspended" && "border-s-4 border-s-danger",
+        // Routine suspensions (shift end, midday ban) are amber; stop-work, gas and other suspensions red.
+        p.status === "suspended" && (ROUTINE.includes(p.status_reason ?? "other") ? "border-s-4 border-s-warning" : "border-s-4 border-s-danger"),
         p.blockers.length > 0 && p.status !== "suspended" && "border-s-4 border-s-warning",
       )}
       data-testid="board-permit"
@@ -114,14 +117,16 @@ function BoardCard({ p }: { p: S["BoardPermit"] }) {
       data-permit-no={p.permit_no}
     >
       <span className="flex flex-wrap items-center justify-between gap-2">
-        <span className="ltr font-semibold">{p.display_no}</span>
+        <bdi className="ltr font-semibold">{p.display_no}</bdi>
         <PermitStatusBadge status={p.status} reason={p.status_reason} />
       </span>
       <span className="flex flex-wrap items-center gap-1">
         <TypeChips types={p.work_types} primary={p.primary_type} short />
         <HighRiskBadge show={p.high_risk} />
       </span>
-      <span className="line-clamp-2 text-sm">{p.title}</span>
+      <span className="line-clamp-2 text-sm" dir="auto">
+        {p.title}
+      </span>
       <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
         <span>{p.engagement_code}</span>
         {p.window_today ? <bdi className={cn("ltr tabular-nums", p.in_window_now && "font-semibold text-success")}>{p.window_today}</bdi> : <span>{t("noWindowToday")}</span>}

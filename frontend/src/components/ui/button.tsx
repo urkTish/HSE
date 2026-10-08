@@ -10,6 +10,8 @@ const buttonVariants = cva(
       variant: {
         default: "bg-primary text-primary-foreground shadow-xs hover:bg-primary-hover",
         destructive: "bg-destructive text-destructive-foreground shadow-xs hover:bg-destructive-hover",
+        // Hard-to-undo actions that are not the main action (cancel permit, cut lock): visible, never the loudest.
+        "destructive-outline": "border-2 border-destructive bg-surface text-destructive hover:bg-danger-bg",
         outline: "border border-input bg-surface text-foreground hover:bg-accent hover:text-accent-foreground",
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",

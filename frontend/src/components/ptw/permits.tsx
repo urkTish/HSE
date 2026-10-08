@@ -42,6 +42,8 @@ import { SimopsCheckView } from "./simops";
 type S = Schemas;
 type Permit = S["PermitRead"];
 type WindowIn = { start_local: string; end_local: string; weekdays: S["Weekday"][] };
+/** Finished permits: their last gas state is history, not an alert (no amber "No valid test" on closed rows). */
+const FINISHED: S["PermitStatus"][] = ["closed", "cancelled", "expired"];
 const PAGE_SIZE = 50;
 
 /* ───────────────────────── Register ───────────────────────── */
@@ -167,7 +169,7 @@ function PermitList({ project }: { project: S["ProjectRead"] }) {
                     <bdi className="ltr tabular-nums">{p.crew_count}</bdi>
                   </TD>
                   <TD label={t("gas")}>
-                    {p.gas_status !== "not_required" ? <GasStatusBadge status={p.gas_status} /> : <span className="text-muted-foreground">—</span>}
+                    {p.gas_status !== "not_required" ? <GasStatusBadge status={p.gas_status} muted={FINISHED.includes(p.status)} prefix={false} /> : <span className="text-muted-foreground">—</span>}
                   </TD>
                   <TD label={tc("status")}>
                     <PermitStatusBadge status={p.status} reason={p.status_reason} />

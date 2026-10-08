@@ -666,27 +666,40 @@ export function RiskMatrixPage() {
   );
 }
 
-/** The 5×5 matrix read from the server (likelihood rows 5→1, severity columns 1→5) with the band legend. */
-export function RiskMatrixView({ highlight }: { highlight?: { l: number; s: number }[] }) {
+/**
+ * The 5×5 matrix read from the server (likelihood rows 5→1, severity columns 1→5) with the band legend.
+ * Each cell carries its score and band word (colour is never alone; high and extreme also differ in fill
+ * weight). The axes are named in the page language and the grid mirrors in Arabic (severity grows to the
+ * left), like the rest of the RTL layout. Highlighted cells (JSA lines) get a thick ring and a marker.
+ */
+export function RiskMatrixView({ highlight, compact }: { highlight?: { l: number; s: number }[]; compact?: boolean }) {
   const t = useTranslations("ptwSetup");
+  const td = useTranslations("ptwDesign");
+  const te = useTranslations("enums");
   const name = useLocalizedName();
   const q = useRiskMatrix();
   if (q.isError) return <ErrorState error={q.error} onRetry={() => q.refetch()} />;
   if (!q.data) return <LoadingState />;
   const cell = (l: number, s: number) => q.data.cells.find((c) => c.likelihood === l && c.severity === s);
+  const cellCls = compact ? "h-11 w-12" : "h-14 w-16";
   return (
     <div className="flex flex-col gap-4">
-      <div className="overflow-x-auto" dir="ltr">
+      <div className="overflow-x-auto">
         <table className="border-separate border-spacing-1 text-sm" data-testid="risk-matrix">
           <caption className="sr-only">{t("matrix.title")}</caption>
           <thead>
             <tr>
-              <th scope="col" className="p-1 text-xs text-muted-foreground">
-                {t("matrix.lBy")}
+              <th scope="col" rowSpan={2} className="p-1 align-bottom text-[11px] leading-tight font-medium text-muted-foreground">
+                <span className="block">{td("likelihood")} ↓</span>
               </th>
+              <th scope="colgroup" colSpan={5} className="p-1 text-center text-[11px] font-medium text-muted-foreground">
+                {td("severity")} <span aria-hidden className="inline-block rtl:-scale-x-100">→</span>
+              </th>
+            </tr>
+            <tr>
               {[1, 2, 3, 4, 5].map((s) => (
-                <th key={s} scope="col" className="w-14 p-1 text-xs font-medium">
-                  S{s}
+                <th key={s} scope="col" className="p-1 text-xs font-semibold">
+                  <bdi className="ltr">S{s}</bdi>
                 </th>
               ))}
             </tr>
@@ -694,15 +707,26 @@ export function RiskMatrixView({ highlight }: { highlight?: { l: number; s: numb
           <tbody>
             {[5, 4, 3, 2, 1].map((l) => (
               <tr key={l}>
-                <th scope="row" className="p-1 text-xs font-medium">
-                  L{l}
+                <th scope="row" className="p-1 text-xs font-semibold">
+                  <bdi className="ltr">L{l}</bdi>
                 </th>
                 {[1, 2, 3, 4, 5].map((s) => {
                   const c = cell(l, s);
                   const hit = highlight?.some((h) => h.l === l && h.s === s);
                   return (
-                    <td key={s} className={cn("h-12 w-14 rounded border text-center font-semibold tabular-nums", c ? riskBandCellClass(c.band) : "", hit && "ring-2 ring-foreground ring-offset-1")} data-band={c?.band} data-score={c?.score}>
-                      {c?.score ?? ""}
+                    <td
+                      key={s}
+                      className={cn("relative rounded border text-center align-middle", cellCls, c ? riskBandCellClass(c.band) : "", hit && "outline-[3px] outline-offset-1 outline-foreground outline-solid")}
+                      data-band={c?.band}
+                      data-score={c?.score}
+                      data-hit={hit ? "true" : undefined}
+                      title={c ? `L${l} × S${s} = ${c.score} · ${te(`riskBand.${c.band}`)}` : undefined}
+                    >
+                      <span className={cn("block leading-none font-bold tabular-nums", compact ? "text-sm" : "text-base")}>{c?.score ?? ""}</span>
+                      {c ? <span className={cn("block truncate px-0.5 leading-tight font-medium", compact ? "text-[9px]" : "text-[10px]")}>{te(`riskBand.${c.band}`)}</span> : null}
+                      {hit ? (
+                        <span aria-hidden className="absolute -top-1.5 -end-1.5 size-3 rounded-full border-2 border-surface bg-foreground" />
+                      ) : null}
                     </td>
                   );
                 })}
@@ -711,7 +735,7 @@ export function RiskMatrixView({ highlight }: { highlight?: { l: number; s: numb
           </tbody>
         </table>
       </div>
-      <ul className="grid gap-2 sm:grid-cols-2" data-testid="risk-bands">
+      <ul className={cn("grid gap-2", !compact && "sm:grid-cols-2")} data-testid="risk-bands">
         {q.data.bands.map((b) => (
           <li key={b.band} className="flex items-start gap-2 rounded-md border p-2 text-sm">
             <RiskBandBadge band={b.band} />

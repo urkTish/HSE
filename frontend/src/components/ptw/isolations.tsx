@@ -1,5 +1,5 @@
 "use client";
-import { KeyRound, Lock, Plus, Scissors, Trash2 } from "lucide-react";
+import { KeyRound, Lock, LockOpen, Plus, Scissors, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -31,6 +31,7 @@ import { useAppointments, useIsolation, useIsolations, useLocks, usePersonalLock
 import { can, canWrite } from "@/lib/permissions";
 import { ENERGY_TYPES, ISOLATION_METHODS, ISOLATION_STATUSES, LOCK_STATUSES, LOCK_TYPES, VERIFICATION_METHODS } from "@/lib/ptw-enums";
 import { useFormatters } from "@/lib/use-formatters";
+import { cn } from "@/lib/utils";
 import { useSearchState } from "@/lib/url-state";
 import { DateTimeInput, IsolationSubNav, nowIso, PermitNo, useNow, userLabel, WorkerRefLabel } from "./common";
 import { useSigned } from "./signing";
@@ -327,12 +328,12 @@ export function IsolationDetail({ id }: { id: string }) {
   const personal = canWrite(me, "personal_lock.record", pid) || manage;
   const allApplied = i.points.length > 0 && i.points.every((p) => p.applied_at);
   const allVerified = i.points.length > 0 && i.points.every((p) => p.verified_at);
-  const transitions: { to: S["IsolationStatus"]; show: boolean; tone: "default" | "outline" | "destructive" }[] = [
+  const transitions: { to: S["IsolationStatus"]; show: boolean; tone: "default" | "outline" | "destructive-outline" }[] = [
     { to: "isolated", show: i.status === "planned" && manage && allApplied, tone: "default" },
     { to: "verified", show: i.status === "isolated" && manage && allVerified, tone: "default" },
     { to: "deisolation_requested", show: i.status === "verified" && (manage || can(me, "permit.receive", pid)), tone: "outline" },
     { to: "deisolated", show: i.status === "deisolation_requested" && (authorise || manage) && i.points.every((p) => p.removed_at), tone: "default" },
-    { to: "cancelled", show: i.status === "planned" && manage, tone: "destructive" },
+    { to: "cancelled", show: i.status === "planned" && manage, tone: "destructive-outline" },
   ];
   return (
     <div className="flex flex-col gap-5" data-testid="isolation-detail" data-status={i.status}>
@@ -493,6 +494,7 @@ export function IsolationDetail({ id }: { id: string }) {
 
 function IsoStepDialog({ iso, step, onClose }: { iso: Iso; step: PStep; onClose: () => void }) {
   const t = useTranslations("isolations");
+  const td = useTranslations("ptwDesign");
   const te = useTranslations("enums");
   const me = useMeData();
   const refresh = usePtwRefresh();
@@ -678,7 +680,7 @@ function IsoStepDialog({ iso, step, onClose }: { iso: Iso; step: PStep; onClose:
       break;
   }
   return (
-    <StepDialog title={title} confirmLabel={title} disabled={disabled} destructive={destructive} onConfirm={run} onClose={onClose} wide={step.kind === "add"} testId="iso-step-confirm">
+    <StepDialog title={title} confirmLabel={title} disabled={disabled} destructive={destructive} onConfirm={run} onClose={onClose} wide={step.kind === "add"} testId="iso-step-confirm" dismissLabel={destructive ? td("goBack") : undefined}>
       {body}
     </StepDialog>
   );
@@ -690,6 +692,7 @@ type LStep = { kind: "remove" | "cut" | "informed"; ev: S["PersonalLockEventRead
 
 function PersonalLocks({ iso, canApply, onApply }: { iso: Iso; canApply: boolean; onApply: () => void }) {
   const t = useTranslations("isolations");
+  const td = useTranslations("ptwDesign");
   const te = useTranslations("enums");
   const me = useMeData();
   const q = usePersonalLocks(iso.id);
@@ -714,8 +717,16 @@ function PersonalLocks({ iso, canApply, onApply }: { iso: Iso; canApply: boolean
         {items.length ? (
           <ul className="flex flex-col divide-y rounded-md border text-sm">
             {items.map((ev) => (
-              <li key={ev.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 p-2" data-testid="personal-lock" data-removed={ev.removed_at ? ev.removed_by ?? "yes" : "no"}>
-                <Lock aria-hidden className="size-4 text-muted-foreground" />
+              <li
+                key={ev.id}
+                className={cn("flex flex-wrap items-center gap-x-3 gap-y-1 p-2", ev.removed_at ? "text-muted-foreground" : "border-s-4 border-s-info")}
+                data-testid="personal-lock"
+                data-removed={ev.removed_at ? ev.removed_by ?? "yes" : "no"}
+              >
+                {ev.removed_at ? <LockOpen aria-hidden className="size-4" /> : <Lock aria-hidden className="size-4 text-info" strokeWidth={2.5} />}
+                {ev.removed_at ? null : (
+                  <span className="rounded bg-info-bg px-1.5 text-xs font-semibold text-info">{td("lockOn")}</span>
+                )}
                 <bdi className="ltr font-mono">{ev.lock_no}</bdi>
                 <WorkerRefLabel w={ev.worker} />
                 {ev.permit ? <PermitNo p={ev.permit} /> : null}
@@ -737,7 +748,7 @@ function PersonalLocks({ iso, canApply, onApply }: { iso: Iso; canApply: boolean
                     </Button>
                   ) : null}
                   {!ev.removed_at && cut ? (
-                    <Button size="sm" variant="destructive" onClick={() => setStep({ kind: "cut", ev })} data-testid="cut-lock">
+                    <Button size="sm" variant="destructive-outline" onClick={() => setStep({ kind: "cut", ev })} data-testid="cut-lock">
                       <Scissors aria-hidden />
                       {t("cut")}
                     </Button>
@@ -762,6 +773,7 @@ function PersonalLocks({ iso, canApply, onApply }: { iso: Iso; canApply: boolean
 
 function LockStepDialog({ iso, step, onClose }: { iso: Iso; step: LStep; onClose: () => void }) {
   const t = useTranslations("isolations");
+  const td = useTranslations("ptwDesign");
   const refresh = usePtwRefresh();
   const signed = useSigned();
   const [at, setAt] = useState(nowIso());
@@ -820,7 +832,7 @@ function LockStepDialog({ iso, step, onClose }: { iso: Iso; step: LStep; onClose
     );
   }
   return (
-    <StepDialog title={title} confirmLabel={title} disabled={disabled} destructive={step.kind === "cut"} onConfirm={run} onClose={onClose} testId="lock-step-confirm">
+    <StepDialog title={title} confirmLabel={title} disabled={disabled} destructive={step.kind === "cut"} onConfirm={run} onClose={onClose} testId="lock-step-confirm" warning={step.kind === "cut" ? td("lockCutWarning") : undefined}>
       {body}
     </StepDialog>
   );

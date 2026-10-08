@@ -10,7 +10,8 @@ import {
   selectContaining,
 } from "./p2-helpers";
 
-const SHOTS = "../docs/screenshots/phase-2";
+// Committed demo screenshots are only rewritten on demand (SCREENSHOTS=1).
+const SHOTS = process.env.SCREENSHOTS ? "../docs/screenshots/phase-2" : "test-results/shots";
 
 test.describe
   .serial("Phase 2 — gates, devices and the gate check screen", () => {

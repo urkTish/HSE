@@ -1,7 +1,8 @@
 import { expect, test } from "./fixtures/test";
 import { login, USERS } from "./helpers";
 
-const SHOTS = "../docs/screenshots/phase-2";
+// Committed demo screenshots are only rewritten on demand (SCREENSHOTS=1).
+const SHOTS = process.env.SCREENSHOTS ? "../docs/screenshots/phase-2" : "test-results/shots";
 
 test.describe.serial("Phase 2 — access settings and dashboard", () => {
   test("§3.22: the HSE Manager changes an access setting; out-of-range values are refused in the form", async ({ page }) => {

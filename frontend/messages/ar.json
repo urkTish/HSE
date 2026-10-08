@@ -4722,7 +4722,16 @@
     "ptwGasTests": "Gas tests|فحوص الغاز",
     "ptwSignatures": "Signatures|التواقيع",
     "ptwClosureChecklist": "Closure checklist|قائمة التحقق للإغلاق",
-    "ptwClosedAt": "Closed at|وقت الإغلاق"
+    "ptwClosedAt": "Closed at|وقت الإغلاق",
+    "ptwFrom": "From|من",
+    "ptwTo": "To|إلى",
+    "ptwAuthorisation": "Authorisation and acceptance|الاعتماد والاستلام",
+    "ptwRoleCol": "Role|الدور",
+    "ptwNameCol": "Name|الاسم",
+    "ptwSignCol": "Signature|التوقيع",
+    "ptwDateCol": "Date / time|التاريخ / الوقت",
+    "ptwSignNote": "Electronic signatures are recorded in the platform (see the audit hash). Sign here only for the paper copy at the work site.|التوقيعات الإلكترونية مسجلة في المنصة (انظر بصمة التدقيق). وقّع هنا لنسخة الموقع الورقية فقط.",
+    "ptwControlled": "Controlled copy — check the live status by scanning the QR code|نسخة مضبوطة — تحقق من الحالة الفعلية بمسح رمز QR"
   },
   "ptw": {
     "nav": {
@@ -5957,5 +5966,109 @@
     "completeTitle": "إكمال هذا التدقيق؟",
     "completeHint": "تصبح النتيجة نهائية ويُقفل التدقيق للتعديل بعد المهلة المحددة.",
     "note": "ملاحظة"
+  },
+  "ptwDesign": {
+    "gasPrefix": "الغاز:",
+    "days": "{d} ي",
+    "stateLabel": "حالة التصريح",
+    "pausedNow": "· متوقف مؤقتاً",
+    "state": {
+      "draft": "مسودة — لم يُطلب بعد. غير صالح للعمل.",
+      "requested": "بانتظار المراجعة. غير صالح للعمل.",
+      "reviewed": "تمت المراجعة، بانتظار الاعتماد. غير صالح للعمل.",
+      "approved": "معتمد. غير صالح للعمل حتى يُصدر في الموقع.",
+      "issued": "صادر. يبدأ العمل عندما يبدأ المستلم الوردية مع الطاقم.",
+      "active": "العمل جارٍ بموجب هذا التصريح.",
+      "paused": "العمل متوقف مؤقتاً. الطاقم في استراحة.",
+      "suspended": "العمل متوقف. لا يُستأنف إلا بعد استئناف التصريح أو إعادة التحقق منه.",
+      "closed": "مغلق. انتهى العمل وسُلّمت المنطقة.",
+      "cancelled": "ملغى. غير صالح للعمل.",
+      "expired": "منتهي الصلاحية. غير صالح للعمل."
+    },
+    "inWindow": "ضمن نافذة العمل اليوم حتى",
+    "outsideWindow": "خارج نافذة العمل. تبدأ النافذة التالية",
+    "noMoreWindows": "لا توجد نافذة عمل أخرى ضمن مدة الصلاحية.",
+    "blockersCount": "{n, plural, one {معوق واحد يمنع الخطوة التالية} two {معوقان يمنعان الخطوة التالية} few {# معوقات تمنع الخطوة التالية} many {# معوقاً يمنع الخطوة التالية} other {# معوق يمنع الخطوة التالية}}",
+    "noBlockersShort": "لا توجد معوقات",
+    "stopGroup": "إيقاف العمل",
+    "endGroup": "لا يمكن التراجع عنه",
+    "irreversible": "لا يمكن التراجع عن هذا الإجراء. تحقق من رقم التصريح قبل التأكيد.",
+    "likelihood": "الاحتمالية (L)",
+    "severity": "الشدة (S)",
+    "limit": "الحد",
+    "outOfLimit": "خارج الحد",
+    "gasPassLine": "جميع القراءات ضمن الحدود المطبقة.",
+    "gasFailLine": "قراءة خارج الحدود. لا تبدأ العمل ولا تستمر فيه.",
+    "lockOn": "مركّب",
+    "lockCutWarning": "قطع القفل الشخصي لا يمكن التراجع عنه. لا تقطعه إلا بعد البحث عن صاحبه والتأكد من أنه ليس عند المعدة.",
+    "keepPermit": "الإبقاء على التصريح",
+    "goBack": "رجوع"
+  },
+  "ptwBi": {
+    "permitStatus": {
+      "draft": "Draft|مسودة",
+      "requested": "Requested|مطلوب",
+      "reviewed": "Reviewed|تمت المراجعة",
+      "approved": "Approved|معتمد",
+      "issued": "Issued|صادر",
+      "active": "Active|ساري",
+      "suspended": "Suspended|موقوف",
+      "closed": "Closed|مغلق",
+      "cancelled": "Cancelled|ملغى",
+      "expired": "Expired|منتهي"
+    },
+    "permitType": {
+      "general": "General / cold work|أعمال عامة (باردة)",
+      "hot_work": "Hot work|أعمال ساخنة",
+      "confined_space": "Confined space entry|دخول الأماكن المحصورة",
+      "work_at_height": "Working at height|العمل على ارتفاع",
+      "excavation": "Excavation|الحفر",
+      "electrical_isolation": "Electrical work / isolation|الأعمال الكهربائية والعزل",
+      "lifting": "Lifting operations|عمليات الرفع",
+      "radiography": "Industrial radiography|التصوير الإشعاعي الصناعي",
+      "airside_works": "Airside works|أعمال الجانب الجوي"
+    },
+    "ptwCrewRole": {
+      "worker": "Worker|عامل",
+      "supervisor": "Supervisor|مشرف",
+      "hot_work_operative": "Hot-work operative|منفذ العمل الساخن",
+      "fire_watch": "Fire watch|مراقب الحريق",
+      "entrant": "Entrant|الداخل",
+      "standby_person": "Standby person|الشخص المناوب",
+      "rescue_lead": "Rescue lead|قائد الإنقاذ",
+      "rescue_member": "Rescue member|عضو فريق الإنقاذ",
+      "gas_tester": "Gas tester|فاحص الغاز",
+      "crane_operator": "Crane operator|مشغل الرافعة",
+      "rigger": "Rigger|عامل الربط",
+      "signaller": "Signaller|موجه الإشارات",
+      "lift_supervisor": "Lift supervisor|مشرف الرفع",
+      "electrician": "Electrician|كهربائي",
+      "competent_person": "Competent person|الشخص الكفء",
+      "radiographer": "Radiographer|فني التصوير الإشعاعي",
+      "rpo": "Radiation protection officer|مسؤول الحماية من الإشعاع",
+      "driver": "Driver|سائق",
+      "banksman": "Banksman|منظم حركة المعدات",
+      "escort": "Escort|مرافق"
+    },
+    "gasResult": {
+      "pass": "Pass|ناجح",
+      "fail": "Fail|فاشل"
+    },
+    "signaturePurpose": {
+      "request": "Request|الطلب",
+      "review": "Area review|مراجعة المنطقة",
+      "hse_review": "HSE review|مراجعة السلامة",
+      "approve": "Approval|الاعتماد",
+      "issue": "Issue|الإصدار",
+      "accept": "Receiver acceptance|قبول المستلم",
+      "revalidate": "Revalidation|إعادة التفعيل",
+      "resume": "Resume|الاستئناف",
+      "close": "Closure|الإغلاق",
+      "cancel": "Cancellation|الإلغاء",
+      "handover_accept": "Handover acceptance|قبول التسليم",
+      "residual_acceptance": "Residual risk acceptance|قبول المخاطر المتبقية",
+      "simops_coordination": "SIMOPS coordination|تنسيق العمليات المتزامنة",
+      "gas_test": "Gas test|فحص الغاز"
+    }
   }
 }

@@ -1,5 +1,5 @@
 "use client";
-import { AlarmClock, Copy, Flame, Handshake, Pause, PenLine, Play, Siren, Trash2 } from "lucide-react";
+import { AlarmClock, Ban, Copy, Flame, Hand, Handshake, Pause, PenLine, Play, Siren, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -20,6 +20,7 @@ import { useHandovers, usePtwRefresh, useReadiness } from "@/lib/api/ptw";
 import { can } from "@/lib/permissions";
 import { PAUSE_REASONS, STATUS_REASONS, WIND_SOURCES, WORK_STATUSES } from "@/lib/ptw-enums";
 import { useFormatters } from "@/lib/use-formatters";
+import { cn } from "@/lib/utils";
 import { BlockerList, DateTimeInput, DecimalInput, WarningList, nowIso, useNow, userLabel } from "./common";
 import { ReceiverCosign, SigningNotice, cosignBody, useSigned, type CosignState } from "./signing";
 
@@ -39,15 +40,19 @@ export type Step =
   | "delete";
 
 /** Lifecycle actions offered by the server (allowed_actions) plus field actions derived from role and status. */
-export function usePermitSteps(p: Permit): { k: Step; tone: "primary" | "outline" | "danger" }[] {
+/** primary = the safe next step; outline = other steps; stop = stop work (always reachable); alarm = emergency;
+ *  irreversible = cannot be undone (kept apart and outlined, never the loudest button); record = housekeeping. */
+export type StepTone = "primary" | "outline" | "stop" | "alarm" | "irreversible" | "record";
+
+export function usePermitSteps(p: Permit): { k: Step; tone: StepTone }[] {
   const me = useMeData();
   const now = useNow(30_000);
   const handovers = useHandovers(p.id, { enabled: p.status === "active" });
   const receiver = p.receiver.id === me.id;
   const issuer = p.issuer?.id === me.id;
   const a = new Set(p.allowed_actions);
-  const out: { k: Step; tone: "primary" | "outline" | "danger" }[] = [];
-  const order: [S["PermitAction"], "primary" | "outline" | "danger"][] = [
+  const out: { k: Step; tone: StepTone }[] = [];
+  const order: [S["PermitAction"], StepTone][] = [
     ["request", "primary"],
     ["review", "primary"],
     ["hse_review", "primary"],
@@ -61,8 +66,8 @@ export function usePermitSteps(p: Permit): { k: Step; tone: "primary" | "outline
     ["request_closure", "outline"],
     ["close", "primary"],
     ["return", "outline"],
-    ["suspend", "danger"],
-    ["cancel", "danger"],
+    ["suspend", "stop"],
+    ["cancel", "irreversible"],
   ];
   for (const [k, tone] of order) if (a.has(k)) out.push({ k, tone });
   const awaitingAcceptance = receiver && (p.status === "approved" || p.status === "suspended") && !(p.receiver_acceptance && new Date(p.receiver_acceptance.valid_until).getTime() > now);
@@ -73,12 +78,12 @@ export function usePermitSteps(p: Permit): { k: Step; tone: "primary" | "outline
     const hw = p.work_types.includes("hot_work") && !(p.sections as unknown as { work_type?: string; hot_work_ended_at?: string | null }[]).find((s) => s.work_type === "hot_work")?.hot_work_ended_at;
     if (hw) out.push({ k: "hot_work_end", tone: "outline" });
   }
-  if (p.status === "active" && p.gas.required) out.push({ k: "gas_alarm", tone: "danger" });
+  if (p.status === "active" && p.gas.required) out.push({ k: "gas_alarm", tone: "alarm" });
   if (p.status === "expired" && p.post_expiry_check_pending && issuer) out.push({ k: "post_expiry", tone: "primary" });
   const pending = (handovers.data?.items ?? []).find((h) => h.status === "initiated" && (h.to_receiver.id === me.id || h.to_issuer.id === me.id));
   if (pending) out.push({ k: "handover_accept", tone: "primary" });
-  if (p.status === "draft" && can(me, "permit.prepare", p.project_id) && !p.first_requested_at) out.push({ k: "delete", tone: "danger" });
-  if (can(me, "permit.prepare", p.project_id)) out.push({ k: "copy", tone: "outline" });
+  if (p.status === "draft" && can(me, "permit.prepare", p.project_id) && !p.first_requested_at) out.push({ k: "delete", tone: "irreversible" });
+  if (can(me, "permit.prepare", p.project_id)) out.push({ k: "copy", tone: "record" });
   return out;
 }
 
@@ -94,23 +99,47 @@ const ICON: Partial<Record<Step, typeof Play>> = {
   copy: Copy,
   delete: Trash2,
   end_shift: AlarmClock,
+  suspend: Hand,
+  cancel: Ban,
 };
 
 export function PermitActionBar({ permit, onStep }: { permit: Permit; onStep: (s: Step) => void }) {
   const t = useTranslations("permitActions");
+  const td = useTranslations("ptwDesign");
   const steps = usePermitSteps(permit);
   if (!steps.length) return null;
+  const go = steps.filter((s) => s.tone === "primary");
+  const more = steps.filter((s) => s.tone === "outline" || s.tone === "record");
+  const stop = steps.filter((s) => s.tone === "stop" || s.tone === "alarm");
+  const end = steps.filter((s) => s.tone === "irreversible");
+  const btn = (s: { k: Step; tone: StepTone }, cls?: string) => {
+    const Icon = ICON[s.k];
+    const variant = s.tone === "primary" || s.tone === "alarm" ? (s.tone === "alarm" ? "destructive" : "default") : s.tone === "stop" || s.tone === "irreversible" ? "destructive-outline" : s.tone === "record" ? "ghost" : "outline";
+    return (
+      <Button key={s.k} variant={variant} onClick={() => onStep(s.k)} data-testid={`act-${s.k}`} data-tone={s.tone} className={cn("h-auto min-h-control py-2 whitespace-normal", cls)}>
+        {Icon ? <Icon aria-hidden /> : null}
+        {t(`btn.${s.k}`)}
+      </Button>
+    );
+  };
+  // Phone: the safe next step full width first, then the others two per row, then stop-work and the
+  // irreversible actions in their own labelled rows. Desktop: one row, stop / irreversible pushed to the end.
   return (
-    <div className="flex flex-wrap gap-2" data-testid="permit-actions">
-      {steps.map((s) => {
-        const Icon = ICON[s.k];
-        return (
-          <Button key={s.k} variant={s.tone === "danger" ? "destructive" : s.tone === "primary" ? "default" : "outline"} onClick={() => onStep(s.k)} data-testid={`act-${s.k}`}>
-            {Icon ? <Icon aria-hidden /> : null}
-            {t(`btn.${s.k}`)}
-          </Button>
-        );
-      })}
+    <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center" data-testid="permit-actions">
+      {go.length ? <div className="grid gap-2 sm:flex sm:flex-wrap">{go.map((s) => btn(s, "min-h-12 text-base sm:min-h-control sm:text-sm"))}</div> : null}
+      {more.length ? <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">{more.map((s) => btn(s))}</div> : null}
+      {stop.length ? (
+        <div role="group" aria-label={td("stopGroup")} className="flex flex-col gap-1.5 border-t pt-3 lg:ms-auto lg:flex-row lg:items-center lg:border-t-0 lg:pt-0">
+          <span className="text-xs font-semibold text-muted-foreground lg:sr-only">{td("stopGroup")}</span>
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">{stop.map((s) => btn(s))}</div>
+        </div>
+      ) : null}
+      {end.length ? (
+        <div role="group" aria-label={td("endGroup")} className={cn("flex flex-col gap-1.5 border-t pt-3 lg:flex-row lg:items-center lg:border-t-0 lg:border-s lg:ps-3 lg:pt-0", !stop.length && "lg:ms-auto")}>
+          <span className="text-xs font-semibold text-muted-foreground lg:sr-only">{td("endGroup")}</span>
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">{end.map((s) => btn(s))}</div>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -231,6 +260,7 @@ const outdoor = (p: Permit) => p.exposure !== "indoor";
 /** One dialog per lifecycle / field action. Signing steps go through re-authentication; 422 blockers are listed in full. */
 export function PermitStepDialog({ permit, step, onClose }: { permit: Permit; step: Step; onClose: () => void }) {
   const t = useTranslations("permitActions");
+  const td = useTranslations("ptwDesign");
   const te = useTranslations("enums");
   const tc = useTranslations("common");
   const me = useMeData();
@@ -284,6 +314,8 @@ export function PermitStepDialog({ permit, step, onClose }: { permit: Permit; st
   let disabled = false;
   let destructive = false;
   let sign = false;
+  // Steps that cannot be undone get a plain warning at the top of the dialog.
+  const irreversible = step === "cancel" || step === "delete" || step === "close";
 
   switch (step) {
     case "request":
@@ -772,7 +804,7 @@ export function PermitStepDialog({ permit, step, onClose }: { permit: Permit; st
   }
 
   return (
-    <StepDialog title={title} confirmLabel={t(`btn.${step}`)} destructive={destructive} disabled={disabled} onConfirm={run} onClose={onClose} wide testId="step-confirm">
+    <StepDialog title={title} confirmLabel={t(`btn.${step}`)} destructive={destructive} disabled={disabled} onConfirm={run} onClose={onClose} wide testId="step-confirm" warning={irreversible ? td("irreversible") : undefined} dismissLabel={step === "cancel" ? td("keepPermit") : undefined}>
       {readinessAction ? <Readiness permit={permit} action={readinessAction} /> : null}
       {body}
       {sign ? <SigningNotice /> : null}

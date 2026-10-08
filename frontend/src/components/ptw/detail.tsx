@@ -1,5 +1,5 @@
 "use client";
-import { ClipboardList, FileStack, Pencil, Printer } from "lucide-react";
+import { Archive, CircleDashed, CirclePlay, CircleX, ClipboardList, Clock, FileCheck2, FileStack, Hand, Pause, Pencil, Printer, ShieldAlert, ShieldCheck, TriangleAlert } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { Alert } from "@/components/ui/alert";
@@ -23,7 +23,7 @@ import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
 import { cn } from "@/lib/utils";
 import { PermitActionBar, PermitStepDialog, type Step } from "./actions";
-import { BlockerList, Countdown, GasStatusBadge, HighRiskBadge, PermitNo, PermitStatusBadge, RiskBandBadge, SignatureList, SimopsResultBadge, TypeChips, WarningList, userLabel, WorkerRefLabel } from "./common";
+import { BlockerList, Countdown, GasStatusBadge, HighRiskBadge, PermitNo, RiskBandBadge, SignatureList, SimopsResultBadge, TypeChips, WarningList, userLabel, WorkerRefLabel } from "./common";
 import { canEditLines, ChecklistPanel, CrewPanel, DocumentsPanel, EquipmentPanel } from "./crew";
 import { ExemptionsPanel, FieldRecords } from "./field-records";
 import { CreatePermitJsa } from "./jsa";
@@ -68,10 +68,9 @@ export function PermitDetail({ id }: { id: string }) {
         <Breadcrumbs items={[{ label: t("permits"), href: "/permits" }, { label: p.display_no }]} />
         <PageHeader
           title={<bdi className="ltr" data-testid="permit-no">{p.display_no}</bdi>}
-          description={p.title}
+          description={<span dir="auto">{p.title}</span>}
           actions={
             <>
-              <PermitStatusBadge status={p.status} reason={p.status_reason} />
               {editDraft ? (
                 <Button variant="outline" asChild>
                   <Link href={`/permits/${p.id}/edit`} data-testid="edit-permit">
@@ -106,14 +105,10 @@ export function PermitDetail({ id }: { id: string }) {
         </div>
       </div>
 
+      <PermitStatePanel p={p} />
       <PermitActionBar permit={p} onStep={setStep} />
       {step ? <PermitStepDialog permit={p} step={step} onClose={() => setStep(null)} /> : null}
 
-      {p.status_reason && (p.status === "suspended" || p.status === "cancelled" || p.status === "expired") ? (
-        <Alert tone={p.status === "suspended" ? "warning" : "info"} data-testid="status-reason">
-          <StatusReasonText p={p} />
-        </Alert>
-      ) : null}
       {p.post_expiry_check_pending ? (
         <Alert tone="warning" data-testid="post-expiry-pending">
           {t("postExpiryPending")}
@@ -131,9 +126,7 @@ export function PermitDetail({ id }: { id: string }) {
         </Alert>
       ) : null}
 
-      <LiveTimers p={p} />
-
-      <Card>
+      <Card id="readiness">
         <CardHeader>
           <CardTitle className="text-base">{t("blockers")}</CardTitle>
         </CardHeader>
@@ -212,14 +205,114 @@ export function PermitDetail({ id }: { id: string }) {
   );
 }
 
-function StatusReasonText({ p }: { p: Permit }) {
-  const t = useTranslations("permitDetail");
+const STATE_TONE: Record<S["PermitStatus"], "success" | "warning" | "danger" | "info" | "neutral"> = {
+  draft: "info",
+  requested: "info",
+  reviewed: "info",
+  approved: "info",
+  issued: "info",
+  active: "success",
+  suspended: "warning",
+  closed: "neutral",
+  cancelled: "neutral",
+  expired: "danger",
+};
+const STATE_ICON: Record<S["PermitStatus"], typeof CirclePlay> = {
+  draft: CircleDashed,
+  requested: Clock,
+  reviewed: ShieldCheck,
+  approved: ShieldCheck,
+  issued: FileCheck2,
+  active: CirclePlay,
+  suspended: Hand,
+  closed: Archive,
+  cancelled: CircleX,
+  expired: TriangleAlert,
+};
+const TONE_CLS = {
+  success: "border-success/40 bg-success-bg [--tone:var(--status-success)]",
+  warning: "border-warning/50 bg-warning-bg [--tone:var(--status-warning)]",
+  danger: "border-danger/40 bg-danger-bg [--tone:var(--status-danger)]",
+  info: "border-info/40 bg-info-bg [--tone:var(--status-info)]",
+  neutral: "border-neutral/40 bg-neutral-bg [--tone:var(--status-neutral)]",
+};
+
+/**
+ * One-glance permit state for the field: the status in large type with its own icon and a plain-language line
+ * ("Work in progress", "Work stopped…", "Not valid for work until issued"), the reason, today's window, the
+ * blocker count and the live countdowns. Colour is never alone (icon + word + sentence).
+ */
+function PermitStatePanel({ p }: { p: Permit }) {
+  const t = useTranslations("ptwDesign");
   const te = useTranslations("enums");
+  const { prefs, dateTime } = useFormatters(p.project_id);
+  const paused = p.status === "active" && Boolean(p.current_shift?.paused_now);
+  const tone = paused ? "warning" : STATE_TONE[p.status];
+  const Icon = paused ? Pause : STATE_ICON[p.status];
+  const hm = (iso: string) => new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: prefs.timeZone }).format(new Date(iso));
+  const live = LIVE.includes(p.status);
+  const n = p.blockers.length;
   return (
-    <>
-      {t("reason", { reason: p.status_reason ? te(`statusReason.${p.status_reason}`) : "—" })}
-      {p.status_detail ? <span className="block text-xs">{p.status_detail}</span> : null}
-    </>
+    <section
+      className={cn("flex flex-col gap-3 rounded-xl border-2 border-s-8 p-4 [border-inline-start-color:var(--tone)]", TONE_CLS[tone])}
+      data-testid="permit-status"
+      data-status={p.status}
+      data-tone={tone}
+      aria-label={t("stateLabel")}
+    >
+      <div className="flex items-start gap-3">
+        <Icon aria-hidden className="mt-0.5 size-9 shrink-0 text-[var(--tone)]" strokeWidth={2.25} />
+        <div className="min-w-0 flex-1">
+          <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <span className="text-2xl leading-tight font-bold text-[var(--tone)]" data-testid="permit-state-word">
+              {te(`permitStatus.${p.status}`)}
+            </span>
+            {p.status_reason ? (
+              <span className="text-base font-semibold" data-testid="status-reason">
+                {te(`statusReason.${p.status_reason}`)}
+              </span>
+            ) : null}
+            {paused ? <span className="text-base font-semibold">{t("pausedNow")}</span> : null}
+          </p>
+          <p className="mt-0.5 text-sm font-medium">{paused ? t("state.paused") : t(`state.${p.status}`)}</p>
+          {p.status_detail && (p.status === "suspended" || p.status === "cancelled" || p.status === "expired") ? (
+            <p className="mt-1 text-sm whitespace-pre-line text-muted-foreground" dir="auto">
+              {p.status_detail}
+            </p>
+          ) : null}
+          {live ? (
+            <p className="mt-1 text-sm" data-testid="permit-window-state">
+              {p.current_window ? (
+                <>
+                  {t("inWindow")} <bdi className="ltr font-semibold tabular-nums">{hm(p.current_window.end_at)}</bdi>
+                </>
+              ) : p.next_window ? (
+                <>
+                  {t("outsideWindow")} <span className="ltr font-semibold">{dateTime(p.next_window.start_at)}</span>
+                </>
+              ) : (
+                t("noMoreWindows")
+              )}
+            </p>
+          ) : null}
+        </div>
+      </div>
+      {n || p.status === "draft" || ["requested", "reviewed", "approved", "issued", "suspended"].includes(p.status) ? (
+        <a
+          href="#readiness"
+          className={cn(
+            "inline-flex min-h-touch items-center gap-2 self-start rounded-md border px-3 text-sm font-semibold",
+            n ? "border-danger/50 bg-surface text-danger" : "border-success/40 bg-surface text-success",
+          )}
+          data-testid="permit-blocker-count"
+          data-count={n}
+        >
+          {n ? <ShieldAlert aria-hidden className="size-5" /> : <ShieldCheck aria-hidden className="size-5" />}
+          {n ? t("blockersCount", { n }) : t("noBlockersShort")}
+        </a>
+      ) : null}
+      <LiveTimers p={p} />
+    </section>
   );
 }
 
@@ -231,13 +324,12 @@ function LiveTimers({ p }: { p: Permit }) {
   if (p.status === "active" && p.gas.next_due_at) timers.push({ key: "gas-retest", to: p.gas.next_due_at, label: t("gasRetest"), warn: 15 });
   if (p.current_shift && !p.current_shift.ended_at) timers.push({ key: "shift-end", to: p.current_shift.planned_end_at, label: t("shiftEnds"), warn: 30 });
   if (LIVE.includes(p.status)) timers.push({ key: "permit-end", to: p.valid_to_at, label: t("permitEnds"), warn: 60 });
-  if (!timers.length && !p.current_shift?.paused_now) return null;
+  if (!timers.length) return null;
   return (
-    <div className="flex flex-wrap gap-3" data-testid="live-timers">
+    <div className="flex flex-wrap gap-2" data-testid="live-timers">
       {timers.map((x) => (
-        <Countdown key={x.key} to={x.to} label={x.label} warnMinutes={x.warn} testId={`timer-${x.key}`} icon="clock" />
+        <Countdown key={x.key} to={x.to} label={x.label} warnMinutes={x.warn} testId={`timer-${x.key}`} icon="clock" size="lg" />
       ))}
-      {p.current_shift?.paused_now ? <StatusBadge status="on_hold" label={t("pausedNow")} /> : null}
     </div>
   );
 }
@@ -263,7 +355,9 @@ function Overview({ p }: { p: Permit }) {
                 </span>
               ))}
             </FieldItem>
-            <FieldItem label={tp("location")}>{p.location_desc}</FieldItem>
+            <FieldItem label={tp("location")}>
+              <span dir="auto">{p.location_desc}</span>
+            </FieldItem>
             <FieldItem label={t("grid")} ltr>
               {p.grid_x_m && p.grid_y_m ? `${p.grid_x_m}, ${p.grid_y_m}${p.elevation_m ? ` · ${p.level_code ?? ""} ${p.elevation_m} m` : ""}` : "—"}
             </FieldItem>
@@ -291,7 +385,11 @@ function Overview({ p }: { p: Permit }) {
             <FieldItem label={t("supervisor")}>
               <WorkerRefLabel w={p.supervisor} />
             </FieldItem>
-            {p.high_risk ? <FieldItem label={t("highRiskReasons")}>{p.high_risk_reasons_en.join("; ") || "—"}</FieldItem> : null}
+            {p.high_risk ? (
+              <FieldItem label={t("highRiskReasons")}>
+                <span dir="auto">{p.high_risk_reasons_en.join("; ") || "—"}</span>
+              </FieldItem>
+            ) : null}
             <FieldItem label={tp("flammables")}>{p.flammables_in_use ? tc("yes") : tc("no")}</FieldItem>
             <FieldItem label={tp("engine")}>{p.combustion_engine_plant ? tc("yes") : tc("no")}</FieldItem>
           </FieldList>
@@ -302,16 +400,22 @@ function Overview({ p }: { p: Permit }) {
           <CardTitle className="text-base">{t("scope")}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3 text-sm">
-          <p className="whitespace-pre-line">{locale === "ar" && p.scope_ar ? p.scope_ar : p.scope_en}</p>
+          <p className="whitespace-pre-line" dir="auto">
+            {locale === "ar" && p.scope_ar ? p.scope_ar : p.scope_en}
+          </p>
           {p.conditions_en || p.conditions_ar ? (
             <div>
               <p className="text-xs font-medium text-muted-foreground">{t("conditions")}</p>
-              <p className="whitespace-pre-line">{locale === "ar" && p.conditions_ar ? p.conditions_ar : p.conditions_en}</p>
+              <p className="whitespace-pre-line" dir="auto">
+                {locale === "ar" && p.conditions_ar ? p.conditions_ar : p.conditions_en}
+              </p>
             </div>
           ) : null}
           <div>
             <p className="text-xs font-medium text-muted-foreground">{tp("emergency")}</p>
-            <p className="whitespace-pre-line">{p.emergency_info}</p>
+            <p className="whitespace-pre-line" dir="auto">
+              {p.emergency_info}
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -424,7 +528,7 @@ function GasTab({ p }: { p: Permit }) {
     <Card>
       <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
         <CardTitle className="flex items-center gap-2 text-base">
-          {t("gasTests")} <GasStatusBadge status={p.gas.status} />
+          {t("gasTests")} <GasStatusBadge status={p.gas.status} prefix={false} />
         </CardTitle>
         {record ? (
           <Button size="sm" asChild>

@@ -1,6 +1,6 @@
 "use client";
 import { useMutation } from "@tanstack/react-query";
-import { Download, OctagonAlert } from "lucide-react";
+import { Download, OctagonAlert, TriangleAlert } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
@@ -374,7 +374,8 @@ function PtwBandView({ b, show }: { b: Schemas["PtwBand"]; show: Show }) {
         {items.map((i) => (
           <div key={i.key} className="flex min-w-0 flex-col gap-1" data-testid={`ptw-band-${i.key}`}>
             <p className="text-xs font-medium text-muted-foreground">{i.label}</p>
-            <Link href={i.href} className={cn("text-xl leading-tight font-semibold hover:underline", i.tone === "warning" ? "text-warning" : "text-primary")}>
+            <Link href={i.href} className={cn("inline-flex items-center gap-1 text-xl leading-tight font-semibold hover:underline", i.tone === "warning" ? "text-warning" : "text-primary")}>
+              {i.tone === "warning" ? <TriangleAlert aria-hidden className="size-4 shrink-0" /> : null}
               {show(i.value)}
             </Link>
           </div>
@@ -385,7 +386,12 @@ function PtwBandView({ b, show }: { b: Schemas["PtwBand"]; show: Show }) {
           <Link href="/ptw-audits" className={cn("text-xl leading-tight font-semibold hover:underline", b.audits_behind_plan ? "text-warning" : "text-primary")}>
             {show(b.field_audits_this_week)} / {show(b.field_audits_week_target)}
           </Link>
-          {b.audits_behind_plan ? <span className="text-xs text-warning">{t("ptwBand.behindPlan")}</span> : null}
+          {b.audits_behind_plan ? (
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-warning">
+              <TriangleAlert aria-hidden className="size-3.5 shrink-0" />
+              {t("ptwBand.behindPlan")}
+            </span>
+          ) : null}
         </div>
       </div>
       {b.active_by_type.length ? (

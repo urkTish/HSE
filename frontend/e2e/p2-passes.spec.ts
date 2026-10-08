@@ -3,7 +3,8 @@ import { expect, test } from "./fixtures/test";
 import { apiAs, login, uid, USERS } from "./helpers";
 import { createWorker, ensureCourse, ensureGenCourse, makePng, pickMulti, projectIds, recordInduction, selectContaining, uploadPhoto } from "./p2-helpers";
 
-const SHOTS = "../docs/screenshots/phase-2";
+// Committed demo screenshots are only rewritten on demand (SCREENSHOTS=1).
+const SHOTS = process.env.SCREENSHOTS ? "../docs/screenshots/phase-2" : "test-results/shots";
 
 function code(prefix: string, len: number): string {
   return `${prefix}${uid()}`.slice(0, len);

@@ -640,6 +640,7 @@ export function StepDialog({
   onClose,
   testId = "step-confirm",
   wide,
+  dismissLabel,
 }: {
   title: string;
   description?: ReactNode;
@@ -652,6 +653,8 @@ export function StepDialog({
   onClose: () => void;
   testId?: string;
   wide?: boolean;
+  /** Label of the dismiss button when "Cancel" would read like the action itself (e.g. "Cancel permit"). */
+  dismissLabel?: string;
 }) {
   const tc = useTranslations("common");
   const [busy, setBusy] = useState(false);
@@ -680,7 +683,7 @@ export function StepDialog({
         <MutationError error={error} />
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
-            {tc("cancel")}
+            {dismissLabel ?? tc("cancel")}
           </Button>
           <Button variant={destructive ? "destructive" : "default"} onClick={() => void go()} disabled={busy || disabled} data-testid={testId}>
             {busy ? tc("saving") : confirmLabel}

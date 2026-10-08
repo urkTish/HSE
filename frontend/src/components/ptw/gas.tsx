@@ -1,5 +1,5 @@
 "use client";
-import { Plus, Trash2 } from "lucide-react";
+import { CircleCheck, OctagonX, Plus, Trash2, TriangleAlert } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -86,22 +86,114 @@ function ResultBadge({ result }: { result: S["GasTestResult"] }) {
   );
 }
 
+/** Large live result of the server's evaluation: icon + word + sentence, readable in the sun. */
+function GasVerdict({ result, compact }: { result: S["GasTestResult"]; compact?: boolean }) {
+  const te = useTranslations("enums");
+  const td = useTranslations("ptwDesign");
+  const pass = result === "pass";
+  const Icon = pass ? CircleCheck : OctagonX;
+  return (
+    <div className={cn("flex items-center gap-3 rounded-lg border-2 p-3", pass ? "border-success/50 bg-success-bg text-success" : "border-danger/60 bg-danger-bg text-danger")} data-verdict={result}>
+      <Icon aria-hidden className={cn("shrink-0", compact ? "size-7" : "size-9")} strokeWidth={2.25} />
+      <span className="min-w-0">
+        <span className={cn("block leading-tight font-bold uppercase", compact ? "text-xl" : "text-2xl")}>{te(`gasResult.${result}`)}</span>
+        <span className="block text-sm font-medium text-foreground">{pass ? td("gasPassLine") : td("gasFailLine")}</span>
+      </span>
+    </div>
+  );
+}
+
+/** Column label and the applied limit for each standard reading (both from the server's applied limits). */
+function useStdColumns(limits: Limits) {
+  const l = limits.limits;
+  return [
+    { k: "o2_pct" as const, label: "O₂ %", limit: `${l.o2_min_pct}–${l.o2_max_pct}` },
+    { k: "lel_pct" as const, label: "LEL %", limit: `< ${l.lel_below_pct}` },
+    { k: "h2s_ppm" as const, label: "H₂S ppm", limit: `< ${l.h2s_below_ppm}` },
+    { k: "co_ppm" as const, label: "CO ppm", limit: `< ${l.co_below_ppm}` },
+  ];
+}
+
+/** A reading the server marked as outside its limit: bold, red, a warning icon and the words, never colour alone. */
+function ReadingValue({ value, fail }: { value: string | null | undefined; fail: boolean }) {
+  const t = useTranslations("ptwDesign");
+  if (!fail) return <bdi className="ltr tabular-nums">{value ?? "—"}</bdi>;
+  return (
+    <span className="inline-flex items-center gap-1 rounded bg-danger-bg px-1.5 font-bold text-danger" data-fail="true">
+      <TriangleAlert aria-hidden className="size-4 shrink-0" />
+      <bdi className="ltr tabular-nums">{value ?? "—"}</bdi>
+      <span className="text-xs font-semibold">{t("outOfLimit")}</span>
+    </span>
+  );
+}
+
+/** The governing reading in the narrow preview column: one line per gas with its limit (no sideways scroll). */
+function WorstReading({ r, limits }: { r: S["GasReadingRead"]; limits: Limits }) {
+  const te = useTranslations("enums");
+  const td = useTranslations("ptwDesign");
+  const cols = useStdColumns(limits);
+  return (
+    <div className="rounded-md border text-sm" data-testid="gas-readings">
+      <p className="border-b px-2 py-1 text-xs text-muted-foreground">{te(`gasPoint.${r.point}`)}</p>
+      <dl className="divide-y">
+        {cols.map((c) => (
+          <div key={c.k} className="flex items-center justify-between gap-2 px-2 py-1.5">
+            <dt className="flex flex-col leading-tight">
+              <bdi className="ltr font-medium">{c.label}</bdi>
+              <span className="text-[11px] text-muted-foreground">
+                {td("limit")} <bdi className="ltr tabular-nums">{c.limit}</bdi>
+              </span>
+            </dt>
+            <dd>
+              <ReadingValue value={r[c.k]} fail={r.fail_codes.some((x) => FAIL_FIELD[x] === c.k)} />
+            </dd>
+          </div>
+        ))}
+        {limits.other_toxics.map((o) => (
+          <div key={o.gas} className="flex items-center justify-between gap-2 px-2 py-1.5">
+            <dt className="flex flex-col leading-tight">
+              <bdi className="ltr font-medium">
+                {o.gas} {o.unit}
+              </bdi>
+              <span className="text-[11px] text-muted-foreground">
+                {td("limit")} <bdi className="ltr tabular-nums">{`< ${o.below}`}</bdi>
+              </span>
+            </dt>
+            <dd>
+              <ReadingValue value={r.other.find((x) => x.gas === o.gas)?.value} fail={r.fail_codes.includes("OTHER_ABOVE_LIMIT")} />
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
+
 function ReadingsTable({ readings, limits }: { readings: S["GasReadingRead"][]; limits: Limits }) {
   const t = useTranslations("gas");
+  const td = useTranslations("ptwDesign");
   const te = useTranslations("enums");
-  const others = limits.other_toxics.map((o) => o.gas);
+  const others = limits.other_toxics;
+  const cols = useStdColumns(limits);
+  const head = (label: string, limit: string) => (
+    <span className="flex flex-col leading-tight">
+      <bdi className="ltr">{label}</bdi>
+      <span className="text-[11px] font-normal text-muted-foreground">
+        {td("limit")} <bdi className="ltr tabular-nums">{limit}</bdi>
+      </span>
+    </span>
+  );
   return (
     <div className="overflow-x-auto">
       <Table data-testid="gas-readings">
         <THead>
           <TR>
             <TH>{t("point")}</TH>
-            <TH>O₂ %</TH>
-            <TH>LEL %</TH>
-            <TH>H₂S ppm</TH>
-            <TH>CO ppm</TH>
-            {others.map((g) => (
-              <TH key={g}>{g}</TH>
+            {cols.map((c) => (
+              <TH key={c.k}>{head(c.label, c.limit)}</TH>
+            ))}
+            {others.map((o) => (
+              <TH key={o.gas}>{head(`${o.gas} ${o.unit}`, `< ${o.below}`)}</TH>
             ))}
           </TR>
         </THead>
@@ -109,14 +201,14 @@ function ReadingsTable({ readings, limits }: { readings: S["GasReadingRead"][]; 
           {readings.map((r, i) => (
             <TR key={i} data-fail={r.fail_codes.length ? "true" : "false"}>
               <TD label={t("point")}>{te(`gasPoint.${r.point}`)}</TD>
-              {STD.map((k) => (
-                <TD key={k} label={k} className={cn("ltr tabular-nums", r.fail_codes.some((c) => FAIL_FIELD[c] === k) && "font-semibold text-danger")}>
-                  {r[k] ?? "—"}
+              {cols.map((c) => (
+                <TD key={c.k} label={`${c.label} (${c.limit})`}>
+                  <ReadingValue value={r[c.k]} fail={r.fail_codes.some((x) => FAIL_FIELD[x] === c.k)} />
                 </TD>
               ))}
-              {others.map((g) => (
-                <TD key={g} label={g} className={cn("ltr tabular-nums", r.fail_codes.includes("OTHER_ABOVE_LIMIT") && "font-semibold text-danger")}>
-                  {r.other.find((o) => o.gas === g)?.value ?? "—"}
+              {others.map((o) => (
+                <TD key={o.gas} label={`${o.gas} ${o.unit} (< ${o.below})`}>
+                  <ReadingValue value={r.other.find((x) => x.gas === o.gas)?.value} fail={r.fail_codes.includes("OTHER_ABOVE_LIMIT")} />
                 </TD>
               ))}
             </TR>
@@ -276,8 +368,14 @@ function GasTestEntry({ project }: { project: S["ProjectRead"] }) {
   );
 }
 
+function limitText(l: Limits, k: Std): string {
+  const x = l.limits;
+  return k === "o2_pct" ? `${x.o2_min_pct}–${x.o2_max_pct} %` : k === "lel_pct" ? `< ${x.lel_below_pct} %` : k === "h2s_ppm" ? `< ${x.h2s_below_ppm} ppm` : `< ${x.co_below_ppm} ppm`;
+}
+
 function GasTestForm({ permitId }: { permitId: string }) {
   const t = useTranslations("gas");
+  const td = useTranslations("ptwDesign");
   const te = useTranslations("enums");
   const terr = useTranslations("errors");
   const tc = useTranslations("common");
@@ -428,16 +526,23 @@ function GasTestForm({ permitId }: { permitId: string }) {
                   ) : null}
                 </div>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {STD.map((k) => (
-                    <FormField key={k} id={`gr-${i}-${k}`} label={t(`unit.${k}`)}>
-                      <DecimalInput
-                        id={`gr-${i}-${k}`}
-                        value={r[k]}
-                        onChange={(v) => setRow(i, { [k]: v } as Partial<Reading>)}
-                        data-testid={`reading-${k}`}
-                      />
-                    </FormField>
-                  ))}
+                  {STD.map((k) => {
+                    const lim = preview ? limitText(preview.applicable_limits, k) : null;
+                    return (
+                      <FormField key={k} id={`gr-${i}-${k}`} label={t(`unit.${k}`)} hint={lim ? (
+                          <>
+                            {td("limit")} <bdi className="ltr tabular-nums">{lim}</bdi>
+                          </>
+                        ) : undefined}>
+                        <DecimalInput
+                          id={`gr-${i}-${k}`}
+                          value={r[k]}
+                          onChange={(v) => setRow(i, { [k]: v } as Partial<Reading>)}
+                          data-testid={`reading-${k}`}
+                        />
+                      </FormField>
+                    );
+                  })}
                   {others.map((o) => (
                     <FormField key={o.gas} id={`gr-${i}-${o.gas}`} label={`${o.gas} (${o.unit})`}>
                       <DecimalInput id={`gr-${i}-${o.gas}`} value={r.other[o.gas] ?? ""} onChange={(v) => setRow(i, { other: { ...r.other, [o.gas]: v } })} />
@@ -452,6 +557,22 @@ function GasTestForm({ permitId }: { permitId: string }) {
                 {t("addPoint")}
               </Button>
             </div>
+            {preview ? (
+              // Phones: the live result right under the readings (the full preview panel is further down).
+              <div className="flex flex-col gap-1 lg:hidden" aria-live="polite">
+                <GasVerdict result={preview.result} compact />
+                {preview.fail_codes.length ? (
+                  <ul className="flex flex-col gap-1 text-sm font-semibold text-danger">
+                    {preview.fail_codes.map((c) => (
+                      <li key={c} className="flex items-start gap-1.5">
+                        <TriangleAlert aria-hidden className="mt-0.5 size-4 shrink-0" />
+                        {te(`gasFailCode.${c}`)}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+            ) : null}
           </CardContent>
         </Card>
         <Card>
@@ -477,11 +598,14 @@ function GasTestForm({ permitId }: { permitId: string }) {
           <CardContent className="flex flex-col gap-3">
             {preview ? (
               <>
-                <ResultBadge result={preview.result} />
+                <span data-testid="gas-result" data-result={preview.result}>
+                  <GasVerdict result={preview.result} />
+                </span>
                 {preview.fail_codes.length ? (
-                  <ul className="text-sm text-danger" data-testid="preview-fails">
+                  <ul className="flex flex-col gap-1 text-sm font-semibold text-danger" data-testid="preview-fails">
                     {preview.fail_codes.map((c) => (
-                      <li key={c} data-code={c}>
+                      <li key={c} data-code={c} className="flex items-start gap-1.5">
+                        <TriangleAlert aria-hidden className="mt-0.5 size-4 shrink-0" />
                         {te(`gasFailCode.${c}`)}
                       </li>
                     ))}
@@ -498,7 +622,7 @@ function GasTestForm({ permitId }: { permitId: string }) {
                 ) : null}
                 <LimitsText l={preview.applicable_limits} />
                 <p className="text-xs font-medium">{t("worst")}</p>
-                <ReadingsTable readings={[preview.worst]} limits={preview.applicable_limits} />
+                <WorstReading r={preview.worst} limits={preview.applicable_limits} />
                 <p className="text-xs text-muted-foreground">{t("previewHint")}</p>
               </>
             ) : previewError ? (
@@ -841,7 +965,7 @@ export function DetectorDetail({ id }: { id: string }) {
             </Button>
           ) : null}
           {manage ? (
-            <Button variant="destructive" onClick={() => setStep("retire")} data-testid="retire-detector">
+            <Button variant="destructive-outline" onClick={() => setStep("retire")} data-testid="retire-detector">
               {t("retire")}
             </Button>
           ) : null}

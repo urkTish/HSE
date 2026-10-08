@@ -114,12 +114,15 @@ export function PermitNo({ p, link = true }: { p: Pick<S["PermitRef"], "id" | "d
   );
 }
 
+/** Only an Active permit is green: approved and issued permits are not yet authorised work (blue). */
+const PERMIT_TONE_KEY: Partial<Record<S["PermitStatus"], string>> = { approved: "ptw_approved", issued: "ptw_issued", active: "ptw_active" };
+
 /** Permit status with its reason (e.g. Suspended · Gas test failed). */
 export function PermitStatusBadge({ status, reason }: { status: S["PermitStatus"]; reason?: S["StatusReason"] | null }) {
   const te = useTranslations("enums");
   return (
     <span className="inline-flex flex-wrap items-center gap-1" data-testid="permit-status" data-status={status}>
-      <StatusBadge status={status} label={te(`permitStatus.${status}`)} />
+      <StatusBadge status={PERMIT_TONE_KEY[status] ?? status} label={te(`permitStatus.${status}`)} />
       {reason ? <span className="text-xs text-muted-foreground">{te(`statusReason.${reason}`)}</span> : null}
     </span>
   );
@@ -177,12 +180,15 @@ const GAS_TONE: Record<S["GasStatus"], "success" | "warning" | "danger" | "neutr
   missing: "warning",
 };
 
-export function GasStatusBadge({ status }: { status: S["GasStatus"] }) {
+export function GasStatusBadge({ status, muted, prefix = true }: { status: S["GasStatus"]; muted?: boolean; prefix?: boolean }) {
   const te = useTranslations("enums");
-  const Icon = status === "valid" ? CircleCheck : status === "not_required" ? Info : TriangleAlert;
+  const t = useTranslations("ptwDesign");
+  const Icon = muted ? Info : status === "valid" ? CircleCheck : status === "not_required" ? Info : TriangleAlert;
+  // "Gas:" prefix: next to the permit status, "Valid" alone read like the permit's own state (both are ساري in Arabic).
   return (
-    <Badge tone={GAS_TONE[status]} data-testid="gas-status" data-status={status}>
+    <Badge tone={muted ? "neutral" : GAS_TONE[status]} data-testid="gas-status" data-status={status}>
       <Icon aria-hidden />
+      {prefix ? <span className="font-normal">{t("gasPrefix")}</span> : null}
       {te(`gasStatus.${status}`)}
     </Badge>
   );
@@ -192,7 +198,8 @@ const BAND_CLS: Record<S["RiskBand"], string> = {
   low: "border-success/30 bg-success-bg text-success",
   medium: "border-warning/30 bg-warning-bg text-warning",
   high: "border-danger/30 bg-danger-bg text-danger",
-  extreme: "border-danger bg-danger text-white",
+  // Solid fill + its own foreground token (white text on the dark-mode salmon danger was unreadable).
+  extreme: "border-destructive bg-destructive text-destructive-foreground",
 };
 
 /** 5×5 risk band chip (score optional). Colour plus text, never colour alone. */
@@ -352,8 +359,15 @@ export function useNow(ms = 1000): number {
   return now;
 }
 
-function fmtDuration(ms: number): string {
+function fmtDuration(ms: number, dayLabel?: (d: number) => string): string {
   const total = Math.max(0, Math.floor(ms / 1000));
+  if (dayLabel && total >= 86_400) {
+    // Over a day: "3 d 18:59" (days, hours and minutes) instead of "90:59:58".
+    const d = Math.floor(total / 86_400);
+    const hh = String(Math.floor((total % 86_400) / 3600)).padStart(2, "0");
+    const mi = String(Math.floor((total % 3600) / 60)).padStart(2, "0");
+    return `${dayLabel(d)} ${hh}:${mi}`;
+  }
   const h = Math.floor(total / 3600);
   const m = Math.floor((total % 3600) / 60);
   const s = total % 60;
@@ -363,27 +377,30 @@ function fmtDuration(ms: number): string {
 }
 
 /** Live countdown to `to`: amber in the last `warnMinutes`, red once overdue. */
-export function Countdown({ to, label, warnMinutes = 10, icon = "clock", testId = "countdown" }: { to: string; label: string; warnMinutes?: number; icon?: "clock" | "fire" | "wind"; testId?: string }) {
+export function Countdown({ to, label, warnMinutes = 10, icon = "clock", testId = "countdown", size }: { to: string; label: string; warnMinutes?: number; icon?: "clock" | "fire" | "wind"; testId?: string; size?: "lg" }) {
   const t = useTranslations("ptw");
+  const td = useTranslations("ptwDesign");
   const now = useNow();
   const left = new Date(to).getTime() - now;
+  const days = (d: number) => td("days", { d });
   const overdue = left <= 0;
   const warn = !overdue && left <= warnMinutes * 60_000;
-  const Icon = icon === "fire" ? Flame : icon === "wind" ? Wind : AlarmClock;
+  const Icon = overdue ? TriangleAlert : icon === "fire" ? Flame : icon === "wind" ? Wind : AlarmClock;
   return (
     <span
       role="timer"
       aria-live="off"
       className={cn(
         "inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-sm font-medium",
-        overdue ? "border-danger/40 bg-danger-bg text-danger" : warn ? "border-warning/40 bg-warning-bg text-warning" : "border-input bg-surface",
+        size === "lg" && "min-h-touch px-3 text-base [&_bdi]:text-lg [&_bdi]:font-bold",
+        overdue ? "border-danger/50 bg-danger-bg text-danger" : warn ? "border-warning/50 bg-warning-bg text-warning" : "border-input bg-surface",
       )}
       data-testid={testId}
       data-state={overdue ? "overdue" : warn ? "warn" : "ok"}
     >
       <Icon aria-hidden className="size-4" />
       <span>{label}</span>
-      <bdi className="ltr tabular-nums">{overdue ? t("overdueBy", { d: fmtDuration(-left) }) : fmtDuration(left)}</bdi>
+      <bdi className="ltr tabular-nums">{overdue ? t("overdueBy", { d: fmtDuration(-left, days) }) : fmtDuration(left, days)}</bdi>
     </span>
   );
 }

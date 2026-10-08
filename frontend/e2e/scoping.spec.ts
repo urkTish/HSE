@@ -64,6 +64,8 @@ test.describe("Role scoping visible in the UI", () => {
     const sites = page.getByTestId("zone-site");
     // At least the three seeded S-AIR zones (later specs may add S-AIR zones, e.g. p3-config AC1); never another site.
     await expect(sites.first()).toBeVisible();
+    // Site names load after the zone rows; wait until none shows the "—" placeholder.
+    await expect.poll(async () => (await sites.allInnerTexts()).every((x) => x.trim() !== "—")).toBe(true);
     const texts = await sites.allInnerTexts();
     expect(texts.length).toBeGreaterThanOrEqual(3);
     expect(new Set(texts.map((x) => x.trim()))).toEqual(new Set(["S-AIR"]));

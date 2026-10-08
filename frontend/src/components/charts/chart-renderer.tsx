@@ -23,6 +23,9 @@ type Series = Schemas["ChartSeries"];
  *   series-5 magenta heat-related cases
  *   series-6 green   safe observations
  *   series-7 violet  rate lines in a lower panel (inspection compliance, R12 LTIFR)
+ *   C13 (permits by type, 9 types): the 8 slots in order plus a neutral grey for "General / cold work" (the
+ *   catch-all type), so no hue repeats (the API cycles the 9th type back to series-1); the high-risk share
+ *   line is ink, not violet, because violet already means "Lifting" in the same chart.
  */
 const ROLE_SLOT: Record<string, string> = {
   target: "var(--muted-foreground)",
@@ -36,6 +39,9 @@ const ROLE_SLOT: Record<string, string> = {
 const KEY_SLOT: Record<string, string> = {
   r12_ltifr: "var(--series-7)",
   inspection_compliance: "var(--series-7)",
+  general: "var(--series-neutral)",
+  airside_works: "var(--series-1)",
+  high_risk_share: "var(--foreground)",
 };
 
 export function seriesColor(role: string, key?: string): string {

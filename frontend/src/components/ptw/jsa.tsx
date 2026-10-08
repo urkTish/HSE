@@ -286,7 +286,7 @@ export function JsaStepsEditor({ steps, onChange }: { steps: Step[]; onChange: (
     .map((h) => band(h.residual_l, h.residual_s))
     .reduce<S["RiskBand"] | null>((a, b) => (b && (!a || RANK[b] > RANK[a]) ? b : a), null);
   return (
-    <div className="grid gap-5 lg:grid-cols-[1fr_auto]">
+    <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_19rem]">
       <div className="flex flex-col gap-4" data-testid="jsa-steps-editor">
         {steps.map((s, i) => (
           <Card key={i} data-testid="jsa-step">
@@ -336,7 +336,7 @@ export function JsaStepsEditor({ steps, onChange }: { steps: Step[]; onChange: (
           {t("governing")}: {governing ? <RiskBandBadge band={governing} /> : "—"}
         </p>
         <p className="text-xs text-muted-foreground">{t("matrixHint")}</p>
-        <RiskMatrixView highlight={highlight} />
+        <RiskMatrixView highlight={highlight} compact />
       </aside>
     </div>
   );
@@ -574,11 +574,11 @@ export function JsaDetail({ id }: { id: string }) {
       {editing ? (
         <JsaEdit j={j} onDone={() => setEditing(false)} />
       ) : (
-        <div className="grid gap-5 lg:grid-cols-[1fr_auto]">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_19rem]">
           <JsaStepsView j={j} />
           <aside className="flex flex-col gap-2 lg:sticky lg:top-4 lg:self-start">
             <p className="text-xs text-muted-foreground">{t("matrixHint")}</p>
-            <RiskMatrixView highlight={highlight} />
+            <RiskMatrixView highlight={highlight} compact />
           </aside>
         </div>
       )}

@@ -136,6 +136,8 @@
   --series-6: #008300; /* green */
   --series-7: #4a3aa7; /* violet */
   --series-8: #e34948; /* red */
+  /* Neutral series for a catch-all category only (C13 "General / cold work"); deliberately grey, never a 9th hue. */
+  --series-neutral: #8f99a8;
   --chart-grid: #e1e4ea;
   --chart-axis: #b8c0cc;
 
@@ -187,6 +189,7 @@
     --series-6: #008300;
     --series-7: #9085e9;
     --series-8: #e66767;
+    --series-neutral: #6b7686;
     --chart-grid: #263247;
     --chart-axis: #3a4860;
     --sidebar: #080d17;
@@ -237,6 +240,7 @@
   --series-6: #008300;
   --series-7: #9085e9;
   --series-8: #e66767;
+  --series-neutral: #6b7686;
   --chart-grid: #263247;
   --chart-axis: #3a4860;
   --sidebar: #080d17;

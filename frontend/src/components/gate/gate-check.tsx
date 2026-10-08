@@ -20,6 +20,7 @@ import { Link } from "@/i18n/navigation";
 import { ApiError, api, unwrap, type Schemas } from "@/lib/api/client";
 import { DEFAULT_TIME_ZONE, formatDate, type DateDisplayPrefs } from "@/lib/datetime";
 import { cn } from "@/lib/utils";
+import { GasStatusBadge, PermitStatusBadge } from "@/components/ptw/common";
 
 type Ctx = Schemas["GateCallerContext"];
 type Res = Schemas["GateCheckResponse"];
@@ -1023,11 +1024,22 @@ function PermitCard({ w }: { w: Schemas["GatePermitCard"] }) {
   return (
     <article className="rounded-xl border bg-surface p-3" data-testid="permit-card" data-status={w.status}>
       <p className="ltr text-xl font-bold">{w.display_no}</p>
-      <p className="text-sm">
-        {te(`permitStatus.${w.status}`)} · {w.work_types.map((wt) => te(`permitType.${wt}`)).join(" · ")}
+      <p className="mt-1 flex flex-wrap items-center gap-2 text-sm">
+        <PermitStatusBadge status={w.status} />
+        <span>{w.work_types.map((wt) => te(`permitType.${wt}`)).join(" · ")}</span>
       </p>
-      <p className="text-sm">
-        {w.in_window_now ? <span className="font-semibold text-success">{t("inWindow")}</span> : <span className="font-semibold text-danger">{t("outsideWindow")}</span>}
+      <p className="mt-1 text-sm">
+        {w.in_window_now ? (
+          <span className="inline-flex items-center gap-1 font-semibold text-success">
+            <Check aria-hidden className="size-4" />
+            {t("inWindow")}
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 font-semibold text-danger">
+            <X aria-hidden className="size-4" />
+            {t("outsideWindow")}
+          </span>
+        )}
         {w.window_today ? (
           <>
             {" "}
@@ -1037,12 +1049,17 @@ function PermitCard({ w }: { w: Schemas["GatePermitCard"] }) {
         {w.current_shift_no ? <> · {t("ptwShift", { n: w.current_shift_no })}</> : null}
       </p>
       <p className="text-sm">
-        {t("ptwValidTo")}: <span className="ltr">{new Date(w.valid_to_at).toLocaleString(locale === "ar" ? "ar-SA-u-nu-latn" : "en-GB", { dateStyle: "medium", timeStyle: "short" })}</span> · {t("ptwGas")}: {te(`gasStatus.${w.gas_status}`)}
-      </p>
+        {t("ptwValidTo")}: <span className="ltr">{new Date(w.valid_to_at).toLocaleString(locale === "ar" ? "ar-SA-u-nu-latn" : "en-GB", { dateStyle: "medium", timeStyle: "short" })}</span> </p>
+      {w.gas_status !== "not_required" ? (
+        <p className="mt-1">
+          <GasStatusBadge status={w.gas_status} />
+        </p>
+      ) : null}
       {w.blockers.length ? (
         <ul className="mt-2 flex flex-wrap gap-1">
           {w.blockers.map((b) => (
-            <li key={b} className="rounded bg-verdict-denied px-2 py-0.5 text-xs font-semibold text-verdict-denied-fg">
+            <li key={b} className="inline-flex items-center gap-1 rounded bg-verdict-denied px-2 py-0.5 text-xs font-semibold text-verdict-denied-fg">
+              <X aria-hidden className="size-3.5" />
               {te(`permitBlocker.${b}`)}
             </li>
           ))}

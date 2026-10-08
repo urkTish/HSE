@@ -1,4 +1,4 @@
-import { AlertTriangle, Archive, Ban, CheckCircle2, CircleDashed, Clock, Hourglass, Info, Loader, Lock, PackageCheck, PauseCircle, Search, ShieldCheck, Undo2, XCircle } from "lucide-react";
+import { AlertTriangle, Archive, Ban, CheckCircle2, CircleDashed, Clock, FileCheck2, Hourglass, Info, Loader, Lock, PackageCheck, PauseCircle, PlayCircle, Search, ShieldCheck, Undo2, XCircle } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
 
@@ -138,6 +138,10 @@ const MAP: Record<string, { tone: Tone; Icon: ComponentType<SVGProps<SVGSVGEleme
   conditional: { tone: "warning", Icon: AlertTriangle },
   allowed: { tone: "success", Icon: CheckCircle2 },
   locked_audit: { tone: "neutral", Icon: Lock },
+  // Phase 3 design: only an Active permit is green (work in progress); approved / issued are not yet work.
+  ptw_approved: { tone: "info", Icon: ShieldCheck },
+  ptw_issued: { tone: "info", Icon: FileCheck2 },
+  ptw_active: { tone: "success", Icon: PlayCircle },
 };
 
 /** Status shown with colour + icon + text (never colour alone). */

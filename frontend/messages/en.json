@@ -4722,7 +4722,16 @@
     "ptwGasTests": "Gas tests|فحوص الغاز",
     "ptwSignatures": "Signatures|التواقيع",
     "ptwClosureChecklist": "Closure checklist|قائمة التحقق للإغلاق",
-    "ptwClosedAt": "Closed at|وقت الإغلاق"
+    "ptwClosedAt": "Closed at|وقت الإغلاق",
+    "ptwFrom": "From|من",
+    "ptwTo": "To|إلى",
+    "ptwAuthorisation": "Authorisation and acceptance|الاعتماد والاستلام",
+    "ptwRoleCol": "Role|الدور",
+    "ptwNameCol": "Name|الاسم",
+    "ptwSignCol": "Signature|التوقيع",
+    "ptwDateCol": "Date / time|التاريخ / الوقت",
+    "ptwSignNote": "Electronic signatures are recorded in the platform (see the audit hash). Sign here only for the paper copy at the work site.|التوقيعات الإلكترونية مسجلة في المنصة (انظر بصمة التدقيق). وقّع هنا لنسخة الموقع الورقية فقط.",
+    "ptwControlled": "Controlled copy — check the live status by scanning the QR code|نسخة مضبوطة — تحقق من الحالة الفعلية بمسح رمز QR"
   },
   "ptw": {
     "nav": {
@@ -5957,5 +5966,109 @@
     "completeTitle": "Complete this audit?",
     "completeHint": "The score is final and the audit locks for editing after the configured window.",
     "note": "Note"
+  },
+  "ptwDesign": {
+    "gasPrefix": "Gas:",
+    "days": "{d} d",
+    "stateLabel": "Permit state",
+    "pausedNow": "· Paused",
+    "state": {
+      "draft": "Draft — not yet requested. Not valid for work.",
+      "requested": "Waiting for review. Not valid for work.",
+      "reviewed": "Reviewed, waiting for approval. Not valid for work.",
+      "approved": "Approved. Not valid for work until it is issued at the site.",
+      "issued": "Issued. Work starts when the receiver starts the shift with the crew.",
+      "active": "Work in progress under this permit.",
+      "paused": "Work paused. The crew is on a break.",
+      "suspended": "Work stopped. It may continue only after the permit is resumed or revalidated.",
+      "closed": "Closed. The work is finished and the area handed back.",
+      "cancelled": "Cancelled. Not valid for work.",
+      "expired": "Expired. Not valid for work."
+    },
+    "inWindow": "In today's work window until",
+    "outsideWindow": "Outside the work window. Next window opens",
+    "noMoreWindows": "No further work window within the validity.",
+    "blockersCount": "{n, plural, one {# blocker stops the next step} other {# blockers stop the next step}}",
+    "noBlockersShort": "No blockers",
+    "stopGroup": "Stop work",
+    "endGroup": "Cannot be undone",
+    "irreversible": "This cannot be undone. Check the permit number before you confirm.",
+    "likelihood": "Likelihood (L)",
+    "severity": "Severity (S)",
+    "limit": "Limit",
+    "outOfLimit": "out of limit",
+    "gasPassLine": "Every reading is within the applied limits.",
+    "gasFailLine": "A reading is outside the limits. Do not start or continue work.",
+    "lockOn": "On",
+    "lockCutWarning": "Cutting a personal lock cannot be undone. Cut only after the holder has been searched for and confirmed absent from the equipment.",
+    "keepPermit": "Keep the permit",
+    "goBack": "Go back"
+  },
+  "ptwBi": {
+    "permitStatus": {
+      "draft": "Draft|مسودة",
+      "requested": "Requested|مطلوب",
+      "reviewed": "Reviewed|تمت المراجعة",
+      "approved": "Approved|معتمد",
+      "issued": "Issued|صادر",
+      "active": "Active|ساري",
+      "suspended": "Suspended|موقوف",
+      "closed": "Closed|مغلق",
+      "cancelled": "Cancelled|ملغى",
+      "expired": "Expired|منتهي"
+    },
+    "permitType": {
+      "general": "General / cold work|أعمال عامة (باردة)",
+      "hot_work": "Hot work|أعمال ساخنة",
+      "confined_space": "Confined space entry|دخول الأماكن المحصورة",
+      "work_at_height": "Working at height|العمل على ارتفاع",
+      "excavation": "Excavation|الحفر",
+      "electrical_isolation": "Electrical work / isolation|الأعمال الكهربائية والعزل",
+      "lifting": "Lifting operations|عمليات الرفع",
+      "radiography": "Industrial radiography|التصوير الإشعاعي الصناعي",
+      "airside_works": "Airside works|أعمال الجانب الجوي"
+    },
+    "ptwCrewRole": {
+      "worker": "Worker|عامل",
+      "supervisor": "Supervisor|مشرف",
+      "hot_work_operative": "Hot-work operative|منفذ العمل الساخن",
+      "fire_watch": "Fire watch|مراقب الحريق",
+      "entrant": "Entrant|الداخل",
+      "standby_person": "Standby person|الشخص المناوب",
+      "rescue_lead": "Rescue lead|قائد الإنقاذ",
+      "rescue_member": "Rescue member|عضو فريق الإنقاذ",
+      "gas_tester": "Gas tester|فاحص الغاز",
+      "crane_operator": "Crane operator|مشغل الرافعة",
+      "rigger": "Rigger|عامل الربط",
+      "signaller": "Signaller|موجه الإشارات",
+      "lift_supervisor": "Lift supervisor|مشرف الرفع",
+      "electrician": "Electrician|كهربائي",
+      "competent_person": "Competent person|الشخص الكفء",
+      "radiographer": "Radiographer|فني التصوير الإشعاعي",
+      "rpo": "Radiation protection officer|مسؤول الحماية من الإشعاع",
+      "driver": "Driver|سائق",
+      "banksman": "Banksman|منظم حركة المعدات",
+      "escort": "Escort|مرافق"
+    },
+    "gasResult": {
+      "pass": "Pass|ناجح",
+      "fail": "Fail|فاشل"
+    },
+    "signaturePurpose": {
+      "request": "Request|الطلب",
+      "review": "Area review|مراجعة المنطقة",
+      "hse_review": "HSE review|مراجعة السلامة",
+      "approve": "Approval|الاعتماد",
+      "issue": "Issue|الإصدار",
+      "accept": "Receiver acceptance|قبول المستلم",
+      "revalidate": "Revalidation|إعادة التفعيل",
+      "resume": "Resume|الاستئناف",
+      "close": "Closure|الإغلاق",
+      "cancel": "Cancellation|الإلغاء",
+      "handover_accept": "Handover acceptance|قبول التسليم",
+      "residual_acceptance": "Residual risk acceptance|قبول المخاطر المتبقية",
+      "simops_coordination": "SIMOPS coordination|تنسيق العمليات المتزامنة",
+      "gas_test": "Gas test|فحص الغاز"
+    }
   }
 }
