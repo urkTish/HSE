@@ -7,6 +7,7 @@ export function entityRoute(type: Schemas["EntityType"] | string | null | undefi
     if (type === "cert_settings") return "/cert-settings";
     if (type === "hook_policy_state") return "/hook-policy";
     if (type === "training_settings") return "/training-settings";
+    if (type === "medical_settings") return "/medical-settings";
     if (type === "project_settings" && projectId) return `/projects/${projectId}/settings`;
     if (type === "hse_settings" && projectId) return `/hse-settings?project=${projectId}`;
     return null;
@@ -174,6 +175,29 @@ export function entityRoute(type: Schemas["EntityType"] | string | null | undefi
       return `/training-imports/${id}`;
     case "training_settings":
       return `/training-settings`;
+    // Phase 6a — occupational health
+    case "fitness_code":
+      return /^[0-9a-f-]{36}$/.test(id) ? `/fitness-codes` : `/fitness-codes?q=${encodeURIComponent(id)}`;
+    case "medical_provider":
+      return `/medical-providers/${id}`;
+    case "medical_examiner":
+      return `/medical-examiners`;
+    case "medical_plan_line":
+      return `/medical-plan`;
+    case "health_profile":
+      return null;
+    case "fitness_assessment":
+      return `/fitness-assessments/${id}`;
+    case "fitness_verification":
+      return `/fitness-assessments`;
+    case "fitness_hold":
+      return `/fitness-holds`;
+    case "fitness_referral":
+      return `/fitness-referrals`;
+    case "medical_import_batch":
+      return `/medical-imports/${id}`;
+    case "medical_settings":
+      return `/medical-settings`;
     case "training_profile":
     case "training_nomination":
     case "training_retraining_note":
@@ -246,6 +270,11 @@ const DETAIL: [RegExp, string][] = [
   [/^\/api\/v1\/training-records\/([0-9a-f-]{36})\/certificate$/, "/training-records/$1/certificate"],
   [/^\/api\/v1\/training-imports\/([0-9a-f-]{36})$/, "/training-imports/$1"],
   [/^\/api\/v1\/projects\/[0-9a-f-]{36}\/training-settings$/, "/training-settings"],
+  [/^\/api\/v1\/medical-providers\/([0-9a-f-]{36})(?:\/affected)?$/, "/medical-providers/$1"],
+  [/^\/api\/v1\/fitness-assessments\/([0-9a-f-]{36})(?:\/verifications)?$/, "/fitness-assessments/$1"],
+  [/^\/api\/v1\/deployments\/([0-9a-f-]{36})\/(?:health-profile|fitness-requirements)$/, "/worker-health/$1"],
+  [/^\/api\/v1\/medical-imports\/([0-9a-f-]{36})$/, "/medical-imports/$1"],
+  [/^\/api\/v1\/projects\/[0-9a-f-]{36}\/medical-settings$/, "/medical-settings"],
 ];
 
 /** Map an API record path (`detail_path`) to the UI page; null when there is none. */
@@ -315,6 +344,15 @@ const LISTS: [RegExp, string][] = [
   [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/training-records$/, "/training-records"],
   [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/training-verification-log$/, "/training-verification-log"],
   [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/training-imports$/, "/training-imports"],
+  [/^\/api\/v1\/fitness-codes$/, "/fitness-codes"],
+  [/^\/api\/v1\/medical-providers$/, "/medical-providers"],
+  [/^\/api\/v1\/medical-examiners$/, "/medical-examiners"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/medical-plan$/, "/medical-plan"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/fitness-gaps$/, "/fitness-gaps"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/fitness-assessments$/, "/fitness-assessments"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/fitness-holds$/, "/fitness-holds"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/fitness-referrals$/, "/fitness-referrals"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/medical-imports$/, "/medical-imports"],
 ];
 
 /** Map an action-panel `ListLink` to the UI list with the same filters in the URL. */

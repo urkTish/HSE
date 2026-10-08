@@ -1,5 +1,9 @@
 "use client";
 import {
+  Activity,
+  BookMarked,
+  HeartPulse,
+  Stethoscope,
   Award,
   BookOpenCheck,
   Grid3x3,
@@ -230,6 +234,23 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
       ]
     : [];
 
+  const medicalItems: Item[] = pid
+    ? [
+        ...(ac("fitness.status_view", "fitness.functional_view", "fitness.clinical_view") ? [{ href: "/worker-health", label: t("workerHealth"), Icon: UserCheck, testId: "nav-worker-health" }] : []),
+        ...(ac("fitness.functional_view", "fitness.clinical_view", "fitness.record_clinic", "fitness.submit_external", "fitness.review")
+          ? [{ href: "/fitness-assessments", label: t("fitnessAssessments"), Icon: Stethoscope, testId: "nav-fitness-assessments" }]
+          : []),
+        ...(ac("fitness_referral.raise", "fitness_hold.manage", "fitness.functional_view", "fitness.clinical_view")
+          ? [{ href: "/fitness-holds", label: t("fitnessHolds"), Icon: HeartPulse, testId: "nav-fitness-holds" }]
+          : []),
+        ...(ac("medical_plan.edit", "fitness.functional_view", "fitness.clinical_view") ? [{ href: "/medical-plan", label: t("medicalPlan"), Icon: ClipboardList, testId: "nav-medical-plan" }] : []),
+        ...(ac("medical_kpi.view") ? [{ href: "/occupational-health", label: t("occupationalHealth"), Icon: Activity, testId: "nav-occupational-health" }] : []),
+        ...(ac("fitness_catalogue.view") ? [{ href: "/fitness-codes", label: t("medicalCatalogue"), Icon: BookMarked, testId: "nav-medical-catalogue" }] : []),
+        ...(ac("fitness.import") ? [{ href: "/medical-imports", label: t("medicalImports"), Icon: Upload, testId: "nav-medical-imports" }] : []),
+        ...(ac("medical_settings.edit") ? [{ href: "/medical-settings", label: t("medicalSettings"), Icon: Cog, testId: "nav-medical-settings" }] : []),
+      ]
+    : [];
+
   return (
     <nav aria-label={t("main")} className="flex flex-1 flex-col gap-5 p-3">
       <ul className="flex flex-col gap-1">
@@ -299,6 +320,18 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
               <p className="px-3 pt-1 pb-1 text-xs font-medium text-sidebar-muted">{t("training")}</p>
               <ul className="mb-3 flex flex-col gap-1" data-testid="nav-training">
                 {trainingItems.map((i) => (
+                  <li key={i.href}>
+                    <NavLink item={i} onNavigate={onNavigate} />
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : null}
+          {medicalItems.length > 0 ? (
+            <>
+              <p className="px-3 pt-1 pb-1 text-xs font-medium text-sidebar-muted">{t("medical")}</p>
+              <ul className="mb-3 flex flex-col gap-1" data-testid="nav-medical">
+                {medicalItems.map((i) => (
                   <li key={i.href}>
                     <NavLink item={i} onNavigate={onNavigate} />
                   </li>

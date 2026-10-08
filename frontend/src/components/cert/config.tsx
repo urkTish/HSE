@@ -619,7 +619,7 @@ export function HookPolicyPage() {
 
 const P4_KINDS = ["equipment_certificate", "personnel_certificate"] as const;
 /** Kinds shown on the hook policy page: Phase 4 kinds plus training_course (5-training HK5-1). */
-const POLICY_KINDS = [...P4_KINDS, "training_course"] as const;
+const POLICY_KINDS = [...P4_KINDS, "training_course", "medical_fitness"] as const;
 
 function HookPolicy({ project }: { project: Project }) {
   const t = useTranslations("hookPolicy");
@@ -629,6 +629,7 @@ function HookPolicy({ project }: { project: Project }) {
   const refresh = useCertRefresh();
   const editable = canWrite(me, "cert_settings.edit", project.id);
   const trainingEditable = canWrite(me, "training_settings.edit", project.id);
+  const medicalEditable = canWrite(me, "medical_settings.edit", project.id);
   const [enable, setEnable] = useState(false);
   const [regOn, setRegOn] = useState("");
   const p = q.data;
@@ -676,10 +677,10 @@ function HookPolicy({ project }: { project: Project }) {
             {p.kinds
               .filter((k) => (POLICY_KINDS as readonly string[]).includes(k.kind))
               .map((k) => (
-                <HookKindCard key={k.kind} project={project} k={k} editable={k.kind === "training_course" ? trainingEditable && !!p.training_enabled : editable && p.enabled} asOf={p.as_of} />
+                <HookKindCard key={k.kind} project={project} k={k} editable={k.kind === "training_course" ? trainingEditable && !!p.training_enabled : k.kind === "medical_fitness" ? medicalEditable && !!p.medical_enabled : editable && p.enabled} asOf={p.as_of} />
               ))}
           </div>
-          {p.enabled || p.training_enabled || trainingEditable ? <Readiness project={project} kinds={p.enabled ? POLICY_KINDS : ["training_course"]} /> : null}
+          {p.enabled || p.training_enabled || trainingEditable ? <Readiness project={project} kinds={p.enabled ? POLICY_KINDS.filter((k) => k !== "medical_fitness" || p.medical_enabled) : ["training_course"]} /> : null}
           <p className="text-xs text-muted-foreground">{t("asOf", { d: date(p.as_of) })}</p>
         </div>
       ) : null}
@@ -705,7 +706,7 @@ function HookPolicy({ project }: { project: Project }) {
   );
 }
 
-function HookKindCard({ project, k, editable, asOf }: { project: Project; k: S["HookPolicyStateRead"]; editable: boolean; asOf: string }) {
+export function HookKindCard({ project, k, editable, asOf }: { project: Project; k: S["HookPolicyStateRead"]; editable: boolean; asOf: string }) {
   const t = useTranslations("hookPolicy");
   const te = useTranslations("enums");
   const { date, dateTime } = useFormatters(project.id);
@@ -856,7 +857,7 @@ function addDays(iso: string, n: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-function Readiness({ project, kinds }: { project: Project; kinds: readonly S["HookKind"][] }) {
+export function Readiness({ project, kinds }: { project: Project; kinds: readonly S["HookKind"][] }) {
   const t = useTranslations("hookPolicy");
   const te = useTranslations("enums");
   const tc = useTranslations("common");
@@ -951,7 +952,7 @@ function Readiness({ project, kinds }: { project: Project; kinds: readonly S["Ho
                                     <Code>{s.ref}</Code>
                                   )}
                                   {s.label ? <span>{s.label}</span> : null}
-                                  <span className="text-muted-foreground">{te.has(`hookReason.${s.reason_code}`) ? te(`hookReason.${s.reason_code}` as never) : s.reason_code}</span>
+                                  <span className="text-muted-foreground">{te.has(`hookReason.${s.reason_code}` as never) ? te(`hookReason.${s.reason_code}` as never) : s.reason_code}</span>
                                   <HookSeverity hardStop={s.hard_stop} warn={!s.hard_stop} />
                                 </li>
                               );
