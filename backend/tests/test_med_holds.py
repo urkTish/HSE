@@ -10,7 +10,6 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.clock import set_now
-from app.core.ptw_enums import PermitStatus
 from app.models import (
     Deployment,
     FitnessHold,
@@ -99,7 +98,11 @@ def test_AC59_AC62_AC64_lti_hold_blocks_permit_then_reclassified(
     it = hook(db, "WKR-000016", "CSE-ENTRY-FIT")
     assert it.status.value == "not_met" and it.hard_stop and reason(it) == "MEDICAL_HOLD"
     p = db.scalar(select(Permit).where(Permit.permit_no == "PTW-ANIA-EXP-2026-0413"))
-    assert p is not None and p.status == PermitStatus.suspended, (p.status, p.blockers)
+    assert p is not None
+    # Phase 3 rule: an ineligible non-key crew member (entrant) is excluded from the crew; the
+    # permit is suspended only for a key role (DECISIONS: AC59 vs 3-ptw crew exclusion).
+    excluded = [w for w in p.warnings or [] if w["code"] == "CREW_EXCLUDED"]
+    assert any(w["ref"] == "WKR-000016" for w in excluded), (p.status, p.warnings)
     # AC62: reclassified to FAC (no absence) before release → Cancelled source_reclassified
     res = noura.patch(f"{API}/injury-cases/{case['id']}", json={"away_start_date": None})
     assert res.status_code == 200, res.text
@@ -112,7 +115,7 @@ def test_AC60_AC61_AC63_heat_hold_mtc_no_hold_and_void(api: Api, ids: Ids, db: S
     noura = api.as_("noura.qahtani")
     inc = create_incident(noura, ids, occurred_at="2026-10-05T10:40:00Z")
     _case(noura, ids, inc["id"], "WKR-000016", db, nature="heat_exhaustion",
-          treatments=["fluids_oral_heat"], body_part="whole_body")  # fmt: skip
+          treatments=["fluids_oral_heat"], body_part="internal_systemic")  # fmt: skip
     _case(noura, ids, inc["id"], "WKR-000034", db, treatments=["sutures_staples_glue"])
     assert transition(noura, inc["id"], "reported").status_code == 200
     (h,) = _holds(db, "WKR-000016")
@@ -152,7 +155,7 @@ def test_AC66_AC80_rtw_reference_and_restricted_days_prompt(
     line = fit(
         "GEN-FIT",
         "fit_with_restrictions",
-        restrictions=[{"code": "no_heavy_lifting", "value": "15"}],
+        restrictions=[{"code": "lifting_limit_kg", "value": 15}],
         restriction_review_date="2026-11-05",
     )
     ok(post(huda, db, body(db, "WKR-000016", [line], **rtw)))
@@ -222,18 +225,18 @@ def test_AC71_AC72_AC73_referral_scope_hold_and_cancel(api: Api, db: Session) ->
     faris = api.as_("faris.anazi")
     assert _refer(faris, db, "WKR-000014").status_code == 403  # NAJD worker
     ok(_refer(faris, db, "WKR-000016"))  # RAWABI worker
-    fahad = api.as_("fahad.mutairi")
+    fahad = api.as_("fahad.mutairi")  # S-LAND; Osman Idris is on S-LAND
+    r2 = ok(_refer(fahad, db, "WKR-000009"))
+    url = f"{API}/fitness-referrals/{r2['id']}/cancel"
+    assert fahad.post(url, json={"reason": "short"}).status_code == 422
+    ok(fahad.post(url, json={"reason": "raised against the wrong worker"}))
     before = _notified(db, "grace.villanueva", "fitness_referral_raised")
-    r = ok(_refer(fahad, db, "WKR-000014", remove_from_work=True))
+    r = ok(_refer(fahad, db, "WKR-000009", remove_from_work=True))
     assert r["hold_no"] and r["due_at"].startswith("2026-10-07T07:00")
     assert _notified(db, "grace.villanueva", "fitness_referral_raised") == before + 1
     assert _notified(db, "huda.mansour", "fitness_referral_raised") >= 1
     url = f"{API}/fitness-referrals/{r['id']}/cancel"
     assert fahad.post(url, json={"reason": "raised against the wrong worker"}).status_code == 403
-    r2 = ok(_refer(fahad, db, "WKR-000013"))
-    url = f"{API}/fitness-referrals/{r2['id']}/cancel"
-    assert fahad.post(url, json={"reason": "short"}).status_code == 422
-    ok(fahad.post(url, json={"reason": "raised against the wrong worker"}))
 
 
 def test_AC74_overdue_alerts(db: Session) -> None:
@@ -256,7 +259,7 @@ def test_AC74_overdue_alerts(db: Session) -> None:
 
 def test_AC75_heat_referral_warns_incident_expected(api: Api, db: Session) -> None:
     n = len(list(db.scalars(select(Incident.id))))
-    r = ok(_refer(api.as_("fahad.mutairi"), db, "WKR-000014", reason="heat_illness_episode"))
+    r = ok(_refer(api.as_("fahad.mutairi"), db, "WKR-000009", reason="heat_illness_episode"))
     assert "INCIDENT_RECORD_EXPECTED" in [w["code"] for w in r["warnings"]]
     assert r["incident_draft_link"]
     assert len(list(db.scalars(select(Incident.id)))) == n

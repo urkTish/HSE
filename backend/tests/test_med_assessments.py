@@ -260,7 +260,9 @@ def test_AC15_AC16_AC17_AC18_AC20_acceptability(api: Api, db: Session) -> None:
     assert err(res) == "EXAMINER_NOT_QUALIFIED", res.text
     set_now(riyadh(2026, 10, 21))
     res = post(
-        huda, db, body(db, "WKR-000015", [fit()], examiner=2, examined=date(2026, 10, 21), **ext)
+        api.as_("huda.mansour"),
+        db,
+        body(db, "WKR-000015", [fit()], examiner=2, examined=date(2026, 10, 21), **ext),
     )
     assert err(res) == "EXAMINER_LICENCE_INVALID", res.text
 

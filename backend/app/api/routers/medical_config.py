@@ -104,8 +104,9 @@ def medical_import_template(
     summary="Upload a fitness-status file and run the dry-run validation (capability 161)",
     description="Validates every row (E01-E10, W01-W04) and writes nothing. Status data only: "
     "a column that looks clinical → E10 for the file. `.csv` or `.xlsx`, ≤ 5 MB, ≤ 5,000 rows. "
-    "`clinic_register_file` needs capability 157 and `provider_id`; rows become Submitted (never "
-    "Accepted). Commit within 60 min.",
+    "`clinic_register_file` needs capability 157 and `provider_id`; its rows are committed as "
+    "Accepted and verified (method clinic_register_file). `contractor_file` rows are committed as "
+    "Draft (the scan is still needed), never Accepted. Commit within 60 min.",
     responses=error_responses(401, 403, 404, 422),
 )
 def create_medical_import(
