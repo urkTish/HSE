@@ -17,7 +17,7 @@ from app.core.access_enums import HookKind
 from app.core.cert_enums import HookCodePolicy, HookStage
 from app.core.clock import now, today
 from app.core.enums import AuditAction, Capability, EntityType, NotificationKind, Role
-from app.core.errors import ApiError, ErrorCode, validation_error
+from app.core.errors import ApiError, ErrorCode, not_implemented, validation_error
 from app.models import CertSettings, HookPolicyState
 from app.schemas.cert_config import (
     HookCodeState,
@@ -313,6 +313,8 @@ def enable(
 
 
 def _require_state(db: Session, project_id: uuid.UUID, kind: HookKind) -> HookPolicyState:
+    if kind == HookKind.training_course:
+        raise not_implemented()  # 5-training §4.7 (Phase 5 stage 2, capability 145)
     if kind not in KINDS:
         raise validation_error("kind", "Only personnel_certificate and equipment_certificate.")
     st = state(db, project_id, kind)

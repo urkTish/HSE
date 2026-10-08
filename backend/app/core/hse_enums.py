@@ -84,6 +84,7 @@ class ImportCode(StrEnum):
     W04 = "W04"
     W05 = "W05"
     W06 = "W06"
+    W07 = "W07"  # v1.4: training_hours on a date ≥ training_register_from (5-training TH-6)
 
 
 class MonthLockStatus(StrEnum):
@@ -779,6 +780,14 @@ class AttachmentOwner(StrEnum):
     defect_photo = "defect_photo"
     defect_evidence = "defect_evidence"
     scaffold_inspection_photo = "scaffold_inspection_photo"
+    # Phase 5 (5-training). External certificate scans and import files with ID columns are
+    # sensitive: personal bucket, signed URL ≤ 5 min with a reason (capability 139, P5-3)
+    training_record_scan = "training_record_scan"
+    training_accreditation_certificate = "training_accreditation_certificate"
+    trainer_authorisation_evidence = "trainer_authorisation_evidence"
+    training_attendance_sheet = "training_attendance_sheet"
+    training_verification_evidence = "training_verification_evidence"
+    training_attendance_signature = "training_attendance_signature"
 
 
 class ScanStatus(StrEnum):
@@ -799,6 +808,7 @@ class ExportPurpose(StrEnum):
     other = "other"
     pass_office = "pass_office"
     authority_request = "authority_request"
+    data_subject_request = "data_subject_request"  # 5-training P5-9 per-worker report
 
 
 # ---------------------------------------------------------------------------------------------
@@ -899,6 +909,14 @@ class KpiMetric(StrEnum):
     K79 = "K-79"
     K80 = "K-80"
     K81 = "K-81"
+    # Phase 5 training KPIs (5-training §6.8; K-37 keeps its id with a revised source)
+    K82 = "K-82"
+    K83 = "K-83"
+    K84 = "K-84"
+    K85 = "K-85"
+    K86 = "K-86"
+    K87 = "K-87"
+    K88 = "K-88"
 
 
 class KpiKind(StrEnum):
@@ -949,6 +967,8 @@ class KpiWarning(StrEnum):
     RESTATED = "RESTATED"
     MIXED_BASES = "MIXED_BASES"
     CAPPED_CASES = "CAPPED_CASES"
+    TRAINING_REGISTER_DIFFERS = "TRAINING_REGISTER_DIFFERS"  # 5-training TH-7 (params pct)
+    SESSIONS_NOT_CLOSED = "SESSIONS_NOT_CLOSED"  # 5-training TH-1 (params count)
 
 
 class PeriodPreset(StrEnum):
@@ -1058,6 +1078,7 @@ class CompareDimension(StrEnum):
     ptw_involved = "ptw_involved"
     ca_overdue_at_event = "ca_overdue_at_event"
     ptw_audit_band = "ptw_audit_band"  # 1-dashboard v1.2 (3-ptw KP-5)
+    training_gap_at_event = "training_gap_at_event"  # 1-dashboard v1.4 (5-training TR9)
     ramadan = "ramadan"
 
 
@@ -1091,6 +1112,8 @@ class LeadingWarningCode(StrEnum):
     E9 = "E9"  # 3-ptw §6.12: K-69 below threshold (≥ 10 ended) or K-70 spike
     E10 = "E10"  # 4-third-party-cert §6.9: K-72 / K-76 / K-81 below thresholds
     E11 = "E11"  # ≥ 1 failed verification or A defects ≥ dangerous_defect_warning_count
+    E12 = "E12"  # 5-training §6.9: K-82 < training_matrix_warning_pct (month end, unrounded)
+    E13 = "E13"  # ≥ 1 failed training verification or ≥ 1 voided session in the month
 
 
 class ChartId(StrEnum):
@@ -1114,6 +1137,9 @@ class ChartId(StrEnum):
     C16 = "C16"  # 4-third-party-cert §8.1: K-72 and K-76 by month with E10 reference lines
     C17 = "C17"  # defects raised by month (A/B/C stacked) with K-80 line
     C18 = "C18"  # certificate expiry profile next 90 days, weekly, equipment / personnel
+    C19 = "C19"  # 5-training §8.1: K-82 and K-83 by month with the E12 reference line
+    C20 = "C20"  # training person-hours by month by course category + K-37 line
+    C21 = "C21"  # training expiry profile next 90 days, weekly, booked / not booked
 
 
 class ChartKind(StrEnum):
@@ -1193,6 +1219,17 @@ class ActionPanelItem(StrEnum):
     trade_cert_missing = "trade_cert_missing"
     hook_block_soon_not_ready = "hook_block_soon_not_ready"  # ≤ 7 days, readiness < 100 %
     ban_reviews_due = "ban_reviews_due"
+    # Phase 5 (5-training §8.3)
+    training_records_awaiting_review = "training_records_awaiting_review"  # > 24 h
+    training_verifications_overdue = "training_verifications_overdue"
+    training_verification_failed_undecided = "training_verification_failed_undecided"  # VR-6
+    training_unable_to_verify = "training_unable_to_verify"
+    training_sessions_not_closed = "training_sessions_not_closed"  # after the deadline
+    training_hook_gaps_on_live_work = "training_hook_gaps_on_live_work"  # GP-7
+    training_expiring_7d_not_booked = "training_expiring_7d_not_booked"
+    training_hook_block_soon_not_ready = "training_hook_block_soon_not_ready"
+    training_sessions_not_allowed = "training_sessions_not_allowed"  # trainer / provider lapsed
+    training_holders_not_linked = "training_holders_not_linked"  # HK5-7
 
 
 class ExpiringItemKind(StrEnum):
@@ -1233,6 +1270,13 @@ class ExpiringItemKind(StrEnum):
     tpi_client_approval_expiry = "tpi_client_approval_expiry"
     certificate_verification_due = "certificate_verification_due"
     hook_block_date = "hook_block_date"
+    # Phase 5 (5-training §8.2); hook_block_date also covers kind training_course
+    training_record_expiry = "training_record_expiry"
+    training_refresher_due = "training_refresher_due"
+    trainer_authorisation_expiry = "trainer_authorisation_expiry"
+    training_provider_accreditation_expiry = "training_provider_accreditation_expiry"
+    training_verification_due = "training_verification_due"
+    training_session_close_due = "training_session_close_due"
 
 
 class Severity(StrEnum):
@@ -1272,6 +1316,7 @@ class AiTool(StrEnum):
     get_access_kpis = "get_access_kpis"  # T14 (1-dashboard v1.1)
     get_ptw_kpis = "get_ptw_kpis"  # T15 (1-dashboard v1.2, 3-ptw KP-5)
     get_certification_kpis = "get_certification_kpis"  # T16 (1-dashboard v1.3, KC-4)
+    get_training_kpis = "get_training_kpis"  # T17 (1-dashboard v1.4, 5-training TK-4)
 
 
 class GroundingResult(StrEnum):
@@ -1365,3 +1410,8 @@ class ReferenceList(StrEnum):
     cert_service_status_reason = "cert_service_status_reason"  # SSR
     cert_ban_reason = "cert_ban_reason"  # BR (HSE Manager / Officer only)
     cert_equipment_blacklist_reason = "cert_equipment_blacklist_reason"  # EBR
+    # Phase 5 (5-training §3.15)
+    training_course_category = "training_course_category"  # CAT-C
+    training_accreditation_body = "training_accreditation_body"  # ACB
+    training_matrix_role = "training_matrix_role"  # MR
+    training_session_void_reason = "training_session_void_reason"  # SV

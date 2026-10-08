@@ -10,8 +10,9 @@ from fastapi import Depends, Query
 
 from app.core.cert_enums import EquipmentCertCategory
 from app.core.enums import ZoneType
-from app.core.hse_enums import ComparisonKind, PeriodPreset
+from app.core.hse_enums import ComparisonKind, PeriodPreset, Trade
 from app.core.ptw_enums import PermitType
+from app.core.train_enums import CourseCategory
 
 
 @dataclass(frozen=True)
@@ -34,6 +35,9 @@ class KpiQuery:
     permit_types: list[PermitType] = field(default_factory=list)
     equipment_categories: list[EquipmentCertCategory] = field(default_factory=list)
     cert_types: list[str] = field(default_factory=list)
+    trades: list[Trade] = field(default_factory=list)
+    course_codes: list[str] = field(default_factory=list)
+    course_categories: list[CourseCategory] = field(default_factory=list)
 
 
 def kpi_query(
@@ -95,6 +99,18 @@ def kpi_query(
             "K-78 persons, K-79."
         ),
     ] = None,
+    trade: Annotated[
+        list[Trade] | None,
+        Query(description="Phase 5: deployment trade(s); filters training KPIs (K-82…K-88) only."),
+    ] = None,
+    course_code: Annotated[
+        list[str] | None,
+        Query(description="Phase 5: course code(s); filters training KPIs (K-82…K-88) only."),
+    ] = None,
+    course_category: Annotated[
+        list[CourseCategory] | None,
+        Query(description="Phase 5: course category (CAT-C); filters training KPIs only."),
+    ] = None,
 ) -> KpiQuery:
     return KpiQuery(
         project_ids=project_id or [],
@@ -115,6 +131,9 @@ def kpi_query(
         permit_types=permit_type or [],
         equipment_categories=equipment_category or [],
         cert_types=cert_type or [],
+        trades=trade or [],
+        course_codes=course_code or [],
+        course_categories=course_category or [],
     )
 
 

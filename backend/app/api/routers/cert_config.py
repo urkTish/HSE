@@ -110,7 +110,8 @@ def enable_hook_policy(
 @router.post(
     "/projects/{project_id}/hook-policy/{kind}/switch",
     response_model=HookPolicyRead,
-    summary="Early switch of codes to block (HK4-5; 124); never back to warn",
+    summary="Early switch of codes to block (HK4-5; 124 — kind training_course: 145, HK5-5, "
+    "501 until Phase 5 stage 2); never back to warn",
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def switch_hook_policy(
@@ -122,7 +123,8 @@ def switch_hook_policy(
 @router.post(
     "/projects/{project_id}/hook-policy/{kind}/deferral",
     response_model=HookPolicyRead,
-    summary="Defer the general block date once, ≤ 30 days (HK4-6; 124)",
+    summary="Defer the general block date once, ≤ 30 days (HK4-6; 124 — kind training_course: "
+    "145, 501 until Phase 5 stage 2)",
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def defer_hook_policy(
@@ -134,7 +136,8 @@ def defer_hook_policy(
 @router.get(
     "/projects/{project_id}/hook-readiness",
     response_model=HookReadinessReport,
-    summary="Readiness report per code before the block date (HK4-7, §6.8; capability 122)",
+    summary="Readiness report per code before the block date (HK4-7, §6.8; capability 122 — "
+    "kind training_course: 143, HK5-9, 501 until Phase 5 stage 2)",
     responses=error_responses(401, 403, 404, 422),
 )
 def get_hook_readiness(

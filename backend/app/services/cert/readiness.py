@@ -145,6 +145,10 @@ def report(
     project = projects.get_visible(db, p, project_id)
     if p.grant(project.id, C.cert_kpi_view) is None:
         raise forbidden_error()
+    if kind == HookKind.training_course:
+        from app.core.errors import not_implemented  # noqa: PLC0415
+
+        raise not_implemented()  # 5-training HK5-9 (Phase 5 stage 2, capability 143)
     if kind not in (HookKind.personnel_certificate, HookKind.equipment_certificate):
         from app.core.errors import validation_error  # noqa: PLC0415
 

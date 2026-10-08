@@ -12,7 +12,7 @@ from app.api.kpi_params import KpiParams
 from app.core.access_enums import AccessKpiGroupBy
 from app.core.cert_enums import CertKpiGroupBy
 from app.core.enums import Capability, ExportFormat
-from app.core.errors import error_responses
+from app.core.errors import error_responses, not_implemented
 from app.core.hse_enums import (
     BreakdownDimension,
     BreakdownMeasure,
@@ -22,6 +22,7 @@ from app.core.hse_enums import (
     KpiMetric,
 )
 from app.core.ptw_enums import PtwKpiGroupBy
+from app.core.train_enums import TrainingKpiGroupBy
 from app.kpi import access_views, cert_views, charts, ptw_views, scope, service, views
 from app.schemas.access_kpi import AccessKpiResponse
 from app.schemas.cert_kpi import CertKpiResponse
@@ -42,6 +43,7 @@ from app.schemas.kpi import (
     TrendsResponse,
 )
 from app.schemas.ptw_kpi import PtwKpiResponse
+from app.schemas.training_kpi import TrainingKpiResponse
 
 router = APIRouter(prefix="/kpi", tags=["kpi"])
 
@@ -56,6 +58,7 @@ KPI_ERRORS = error_responses(401, 403, 404, 422)
 PHASE2_CHARTS = frozenset({ChartId.C10, ChartId.C11, ChartId.C12})
 PHASE3_CHARTS = frozenset({ChartId.C13, ChartId.C14, ChartId.C15})
 PHASE4_CHARTS = frozenset({ChartId.C16, ChartId.C17, ChartId.C18})
+PHASE5_CHARTS = frozenset({ChartId.C19, ChartId.C20, ChartId.C21})
 
 
 @router.get(
@@ -264,9 +267,10 @@ def get_data_quality(user: CurrentUser, db: DB, q: KpiParams) -> DataQualityResp
 @router.get(
     "/charts/{chart_id}",
     response_model=ChartResponse,
-    summary="Dashboard chart C1-C18 as a renderer-agnostic ChartSpec",
+    summary="Dashboard chart C1-C21 as a renderer-agnostic ChartSpec",
     description=FILTERS + " C7 needs `dimension` (and optional `measure`, default "
-    "injury_cases). Monthly charts cover the 12 months ending at the period end.",
+    "injury_cases). Monthly charts cover the 12 months ending at the period end. C19-C21 "
+    "(training, capability 143) answer 501 until Phase 5 stage 2.",
     responses=KPI_ERRORS,
 )
 def get_chart(
@@ -280,6 +284,8 @@ def get_chart(
         uuid.UUID | None, Query(description="C10/C11: one gate's checks only.")
     ] = None,
 ) -> ChartResponse:
+    if chart_id in PHASE5_CHARTS:
+        raise not_implemented()  # 5-training §8.1 item 3 (stage 2)
     if chart_id in PHASE4_CHARTS:
         sc = scope.build(db, user, q, Capability.cert_kpi_view)
         return ChartResponse(context=service.context(sc), chart=cert_views.chart(sc, chart_id))
@@ -394,3 +400,25 @@ def get_cert_kpis(
 ) -> CertKpiResponse:
     sc = scope.build(db, user, q, Capability.cert_kpi_view)
     return cert_views.cert_kpis(db, sc, metric, group_by)
+
+
+@router.get(
+    "/training",
+    response_model=TrainingKpiResponse,
+    summary="Training KPIs K-37 (revised source), K-82…K-88 with breakdowns and the training "
+    "band (5-training §6.8)",
+    description=FILTERS + " Plus `trade`, `course_code` and `course_category` (training KPIs "
+    "only). Capability 143; Viewer/Client get aggregates only (TK-5). `group_by` adds "
+    "breakdown tables (TK-4).",
+    responses=KPI_ERRORS,
+)
+def get_training_kpis(
+    user: CurrentUser,
+    db: DB,
+    q: KpiParams,
+    metric: Annotated[
+        list[KpiMetric] | None, Query(description="Default: K-37 and K-82…K-88.")
+    ] = None,
+    group_by: Annotated[list[TrainingKpiGroupBy] | None, Query()] = None,
+) -> TrainingKpiResponse:
+    raise not_implemented()

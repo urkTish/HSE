@@ -364,6 +364,58 @@ PHASE4_MATRIX: dict[Role, dict[Capability, CapabilityScope]] = {
 for _role, _caps in PHASE4_MATRIX.items():
     MATRIX[_role].update(_caps)
 
+# 5-training §5.15 (capabilities 125-145). The HSE Manager holds all of them (A); 126, 128 and
+# 145 are HSE-Manager-only. Contractor HSE Rep 132 / 134 / 141 narrow further in the services
+# (TA-6 own contractor_internal provider, own sessions, contractor_file only).
+PHASE5_MATRIX: dict[Role, dict[Capability, CapabilityScope]] = {
+    Role.hse_officer: dict.fromkeys(
+        [
+            C.training_catalogue_view, C.training_provider_edit, C.training_matrix_edit,
+            C.training_profile_edit, C.trainer_authorise, C.training_session_manage,
+            C.training_nominate, C.training_attendance_record, C.training_session_close,
+            C.training_record_view, C.training_record_submit, C.training_record_review,
+            C.training_scan_view, C.training_record_suspend, C.training_import,
+            C.training_check, C.training_kpi_view, C.export_training,
+        ],
+        S.project,
+    ),
+    Role.site_engineer: dict.fromkeys(
+        [
+            C.training_catalogue_view, C.training_profile_edit, C.training_nominate,
+            C.training_record_view, C.training_check, C.training_kpi_view, C.export_training,
+        ],
+        S.sites,
+    ),
+    Role.permit_issuer: dict.fromkeys(
+        [
+            C.training_catalogue_view, C.training_record_view, C.training_check,
+            C.training_kpi_view,
+        ],
+        S.sites,
+    ),
+    Role.permit_receiver: dict.fromkeys(
+        [
+            C.training_catalogue_view, C.training_record_view, C.training_check,
+            C.training_kpi_view,
+        ],
+        S.own_engagement,
+    ),
+    Role.contractor_hse_rep: dict.fromkeys(
+        [
+            C.training_catalogue_view, C.training_profile_edit, C.training_session_manage,
+            C.training_nominate, C.training_attendance_record, C.training_record_view,
+            C.training_record_submit, C.training_scan_view, C.training_import,
+            C.training_check, C.training_kpi_view, C.export_training,
+        ],
+        S.contractor_tree,
+    ),
+    Role.viewer_client: dict.fromkeys(
+        [C.training_catalogue_view, C.training_kpi_view, C.export_training], S.project
+    ),
+}  # fmt: skip
+for _role, _caps in PHASE5_MATRIX.items():
+    MATRIX[_role].update(_caps)
+
 SCOPE_RANK = {S.own_engagement: 1, S.contractor_tree: 2, S.sites: 3, S.project: 4, S.all: 5}
 ROLE_RANK = {r: i for i, r in enumerate(Role)}  # lower index = more senior
 OFFICER_ASSIGNABLE = frozenset(

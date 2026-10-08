@@ -54,6 +54,13 @@ from app.api.routers import (
     simops,
     sites,
     tpis,
+    trainer_authorisations,
+    training_config,
+    training_courses,
+    training_imports,
+    training_matrix,
+    training_records,
+    training_sessions,
     users,
     waps,
     workers,
@@ -72,10 +79,11 @@ from app.schemas.ai import AiStreamEvent
 
 DESCRIPTION = """
 HSE platform API — Phase 0 Foundation (spec `docs/specs/0-foundation.md` v1.0), Phase 1
-Dashboard & core data with AI (spec `docs/specs/1-dashboard.md` v1.3), Phase 2 Site/Airport
-access permits (spec `docs/specs/2-access-permits.md` v1.2), Phase 3 Permit to Work (spec
-`docs/specs/3-ptw.md` v1.1) and Phase 4 Third-party inspection & certification (spec
-`docs/specs/4-third-party-cert.md` v1.0).
+Dashboard & core data with AI (spec `docs/specs/1-dashboard.md` v1.4), Phase 2 Site/Airport
+access permits (spec `docs/specs/2-access-permits.md` v1.3), Phase 3 Permit to Work (spec
+`docs/specs/3-ptw.md` v1.2), Phase 4 Third-party inspection & certification (spec
+`docs/specs/4-third-party-cert.md` v1.1) and Phase 5 Training certificates (spec
+`docs/specs/5-training.md` v1.0).
 
 * Auth: `POST /api/v1/auth/login` sets the httpOnly SameSite=Lax cookie `hse_session` (JWT) and
   returns `{access_token, user}`. Send the cookie or `Authorization: Bearer <token>`.
@@ -108,6 +116,11 @@ access permits (spec `docs/specs/2-access-permits.md` v1.2), Phase 3 Permit to W
   (`POST /personnel-certificates/{id}/scan-url`). Hook results carry `hard_stop`,
   `hook_reason_code` and `conditions`; the hook stage per project and kind (warn → transition →
   block) is `GET /projects/{id}/hook-policy`.
+* Phase 5: course codes key the catalogue (`/training-courses/{code}`). Session-issued training
+  certificates carry `HSE2:TR:<token>` — checked with `POST /certification-checks` (capability
+  142), never an access token (gates answer TOKEN_UNKNOWN). Training hooks use the shared hook
+  policy (kind `training_course`; enable with `POST /projects/{id}/training-hooks/enable`).
+  Scores are visible per AT-7; scans need a reason (`POST /training-records/{id}/scan-url`).
 """
 
 # Schemas used only in non-JSON responses (SSE) and therefore not reachable from any route.
@@ -220,6 +233,14 @@ def create_app() -> FastAPI:
         defects,
         cert_imports,
         cert_checks,
+        # Phase 5
+        training_config,
+        training_courses,
+        trainer_authorisations,
+        training_matrix,
+        training_sessions,
+        training_records,
+        training_imports,
     ):
         app.include_router(module.router, prefix=API_PREFIX)
     app.include_router(auth.public_router, prefix=API_PREFIX)

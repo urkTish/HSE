@@ -22,7 +22,7 @@ from app.core.enums import (
     EntityType,
     NotificationKind,
 )
-from app.core.errors import not_found
+from app.core.errors import not_found, not_implemented
 from app.models import AuditEntry, RoleAssignment, User
 from app.schemas.audit import AuditChainVerification, AuditEntryRead, ChangeHistoryEntry
 from app.services import audit, contractors, notify, org, projects, users
@@ -209,6 +209,11 @@ def _history_allowed(
     elif entity_type.value in PHASE3_HISTORY:
         pid = _phase3_project(db, p, entity_type, entity_id)
         ok = p.grant(pid, cap) is not None
+    elif entity_type.value in PHASE5_HISTORY:
+        raise not_implemented()  # 5-training records: Phase 5 stage 2
+    elif entity_type.value in PHASE4_HISTORY:
+        pid = _phase4_project(db, p, entity_type, entity_id)
+        ok = p.has_any(cap) if pid is None else p.grant(pid, cap) is not None
     else:
         pid = _phase1_project(db, p, entity_type, entity_id)
         ok = p.grant(pid, cap) is not None
@@ -410,6 +415,119 @@ def _phase3_project(
     else:
         common.view_grant(db, p, row.project_id)
     return row.project_id  # type: ignore[no-any-return]
+
+
+PHASE4_HISTORY = frozenset(
+    {
+        "tpi", "tpi_accreditation", "tpi_client_approval", "equipment_item",
+        "equipment_deployment", "equipment_certificate", "configuration_event", "scaffold",
+        "scaffold_inspection", "personnel_certificate", "cert_verification", "equipment_defect",
+        "certification_ban", "hook_policy_state", "cert_import_batch", "cert_settings",
+    }
+)  # fmt: skip
+
+
+PHASE5_HISTORY = frozenset(
+    {
+        "training_course", "training_provider", "training_provider_accreditation",
+        "trainer_authorisation", "training_matrix_line", "training_profile",
+        "training_exemption", "training_session", "training_nomination", "training_record",
+        "training_verification", "training_import_batch", "training_settings",
+        "training_retraining_note",
+    }
+)  # fmt: skip
+
+
+def _phase4_project(
+    db: Session, p: Principal, entity_type: EntityType, entity_id: uuid.UUID
+) -> uuid.UUID | None:
+    """Phase 4 records: visible through their own service rules (404 when unknown or out of
+    scope). Org-wide records (TPIs, equipment items, certification bans) return None and need
+    capability 17 anywhere plus the register view (105). `cert_type` changes are audited
+    without an entity id, so they have no per-record history (404)."""
+    from app import models as m  # noqa: PLC0415
+    from app.services.cert import (  # noqa: PLC0415
+        bans,
+        defects,
+        deployments,
+        equipment,
+        equipment_certs,
+        imports,
+        personnel,
+        policy,
+        scaffolds,
+    )
+    from app.services.cert import settings as cert_settings  # noqa: PLC0415
+
+    et = EntityType
+    register = Capability.cert_register_view
+    if entity_type in (et.tpi, et.tpi_accreditation):
+        model = m.Tpi if entity_type == et.tpi else m.TpiAccreditation
+        if db.get(model, entity_id) is None:
+            raise not_found("History")
+        if not p.has_any(register):
+            raise forbidden_error()
+        return None
+    if entity_type == et.tpi_client_approval:
+        ca = db.get(m.TpiClientApproval, entity_id)
+        if ca is None:
+            raise not_found("History")
+        projects.get_visible(db, p, ca.project_id)
+        if p.grant(ca.project_id, register) is None:
+            raise forbidden_error()
+        return ca.project_id
+    if entity_type == et.equipment_item:
+        equipment.get_visible(db, p, entity_id)
+        return None
+    if entity_type == et.configuration_event:
+        ev = db.get(m.ConfigurationEvent, entity_id)
+        if ev is None:
+            raise not_found("History")
+        equipment.get_visible(db, p, ev.equipment_id)
+        return ev.project_id
+    if entity_type == et.equipment_deployment:
+        return deployments.get_visible(db, p, entity_id).project_id
+    if entity_type == et.equipment_certificate:
+        return equipment_certs.get_visible(db, p, entity_id).project_id
+    if entity_type == et.scaffold:
+        return scaffolds.get_visible(db, p, entity_id).project_id
+    if entity_type == et.scaffold_inspection:
+        si = db.get(m.ScaffoldInspection, entity_id)
+        if si is None:
+            raise not_found("History")
+        return scaffolds.get_visible(db, p, si.scaffold_id).project_id
+    if entity_type == et.personnel_certificate:
+        return personnel.get_visible(db, p, entity_id).project_id
+    if entity_type == et.cert_verification:
+        v = db.get(m.CertVerification, entity_id)
+        if v is None:
+            raise not_found("History")
+        if v.cert_kind.value == "personnel":
+            personnel.get_visible(db, p, v.cert_id)
+        else:
+            equipment_certs.get_visible(db, p, v.cert_id)
+        return v.project_id
+    if entity_type == et.equipment_defect:
+        return defects._get(db, p, entity_id).project_id
+    if entity_type == et.certification_ban:
+        b = db.get(m.CertificationBan, entity_id)
+        if b is None or not (bans.hse_viewer(p) or bans._visible_worker(db, p, b.worker_id)):
+            raise not_found("History")
+        return None
+    if entity_type == et.hook_policy_state:
+        st = db.get(m.HookPolicyState, entity_id)
+        if st is None:
+            raise not_found("History")
+        projects.get_visible(db, p, st.project_id)
+        policy._view(p, st.project_id)
+        return st.project_id
+    if entity_type == et.cert_import_batch:
+        return imports.get_batch(db, p, entity_id).project_id
+    if entity_type == et.cert_settings:
+        projects.get_visible(db, p, entity_id)
+        cert_settings._view(p, entity_id)
+        return entity_id
+    raise not_found("History")
 
 
 def history_query(

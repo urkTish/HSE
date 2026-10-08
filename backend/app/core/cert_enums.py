@@ -588,8 +588,9 @@ class HookCodePolicy(StrEnum):
 
 
 class HookReasonCode(StrEnum):
-    """Phase 4 provider detail reasons (HK4-8, HK4-3, SF-, PC-, EC-). Every value is also an
-    ErrorCode so the frontend translates one list."""
+    """Provider detail reasons: Phase 4 (HK4-8, HK4-3, SF-, PC-, EC-) and, from v0.6.0, the
+    Phase 5 training_course provider (5-training HK5-6). Every value is also an ErrorCode so
+    the frontend translates one list."""
 
     EQUIPMENT_NOT_REGISTERED = "EQUIPMENT_NOT_REGISTERED"
     CATEGORY_MISMATCH = "CATEGORY_MISMATCH"
@@ -621,6 +622,16 @@ class HookReasonCode(StrEnum):
     CARD_RESTRICTION_REVIEW = "CARD_RESTRICTION_REVIEW"
     EXPIRING_7D = "EXPIRING_7D"
     UNKNOWN_CODE = "UNKNOWN_CODE"
+    # v0.6.0 (5-training HK5-3, HK5-6, HK5-7): training_course provider detail reasons
+    TRAINING_MISSING = "TRAINING_MISSING"
+    TRAINING_EXPIRED = "TRAINING_EXPIRED"
+    TRAINING_PENDING_REVIEW = "TRAINING_PENDING_REVIEW"
+    TRAINING_UNVERIFIED = "TRAINING_UNVERIFIED"
+    TRAINING_SUSPENDED = "TRAINING_SUSPENDED"
+    TRAINING_REVOKED = "TRAINING_REVOKED"
+    TRAINING_VERIFICATION_FAILED = "TRAINING_VERIFICATION_FAILED"
+    INDUCTION_NOT_VALID = "INDUCTION_NOT_VALID"
+    HOLDER_NOT_LINKED = "HOLDER_NOT_LINKED"
 
 
 class CertScopeMismatch(StrEnum):
@@ -702,6 +713,7 @@ class CertCheckSubject(StrEnum):
     equipment = "equipment"
     scaffold = "scaffold"
     person = "person"
+    training_record = "training_record"  # v0.6.0: TR QR (5-training CK5-1, capability 142)
 
 
 class CertCheckResult(StrEnum):

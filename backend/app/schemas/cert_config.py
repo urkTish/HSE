@@ -238,7 +238,10 @@ class HookEarlySwitchRead(ApiModel):
 
 
 class HookPolicyStateRead(ApiModel):
-    kind: HookKind = Field(description="personnel_certificate or equipment_certificate.")
+    kind: HookKind = Field(
+        description="personnel_certificate, equipment_certificate or (5-training §3.12, from "
+        "Phase 5 stage 2) training_course."
+    )
     stage: HookStage
     provider_registered_on: date | None
     critical_block_from: date | None
@@ -253,6 +256,11 @@ class HookPolicyStateRead(ApiModel):
 class HookPolicyRead(ApiModel):
     project_id: uuid.UUID
     enabled: bool = Field(description="Phase 4 enabled on the project (HK4-1).")
+    training_enabled: bool = Field(
+        default=False,
+        description="5-training HK5-1: training hooks enabled (POST /projects/{id}/training-hooks"
+        "/enable); `kinds` then includes training_course.",
+    )
     as_of: date
     kinds: list[HookPolicyStateRead]
 
@@ -265,9 +273,10 @@ class HookEnableRequest(StrictInput):
 
 
 class HookSwitchRequest(StrictInput):
-    """HK4-5 early switch (capability 124): `policy` block for the listed codes (or all) —
-    always allowed, effective at once, audited, alerted. `policy` warn on a blocked code →
-    422 HOOK_POLICY_LOOSENING (a return to warn needs a spec change)."""
+    """HK4-5 early switch (capability 124; kind training_course: capability 145, HK5-5):
+    `policy` block for the listed codes (or all) — always allowed, effective at once, audited,
+    alerted. `policy` warn on a blocked code → 422 HOOK_POLICY_LOOSENING (a return to warn needs
+    a spec change)."""
 
     all_codes: bool = False
     codes: list[str] = Field(default_factory=list)
@@ -275,9 +284,9 @@ class HookSwitchRequest(StrictInput):
 
 
 class HookDeferralRequest(StrictInput):
-    """HK4-6 (capability 124): general_block_from later, once per project and kind (422
-    DEFERRAL_USED), ≤ 30 days (422 DEFERRAL_TOO_LONG), reason ≥ 30 chars. `codes` naming a
-    critical code → 422 CRITICAL_CODE_NO_DEFERRAL."""
+    """HK4-6 (capability 124; kind training_course: capability 145, HK5-5): general_block_from
+    later, once per project and kind (422 DEFERRAL_USED), ≤ 30 days (422 DEFERRAL_TOO_LONG),
+    reason ≥ 30 chars. `codes` naming a critical code → 422 CRITICAL_CODE_NO_DEFERRAL."""
 
     new_date: date
     reason: str = Field(min_length=30, max_length=500)

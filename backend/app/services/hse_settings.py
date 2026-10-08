@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.core.clock import now
 from app.core.enums import AuditAction, Capability, EntityType
-from app.core.errors import ApiError, ErrorCode, not_found, validation_error
+from app.core.errors import ApiError, ErrorCode, not_found, not_implemented, validation_error
 from app.core.hse_enums import CaPriority, ReferenceList, TreatmentClass
 from app.data.reference import OFF_POINTS, REFERENCE
 from app.models import HseSettings, ReferenceItem, User
@@ -154,6 +154,9 @@ def update(
                 "يجب تسجيل موافقة العميل على نقل البيانات قبل تفعيل المساعد الذكي.",
             )
         s.ai_requested = want
+    if data.pop("training_register_from", None) is not None:
+        # 5-training TH-6: stored from Phase 5 stage 2 (contract v0.6.0 stage 1: null is a no-op).
+        raise not_implemented()
     reg = data.get("induction_register_from")
     if reg is not None and project.start_date is not None and reg < project.start_date:
         raise validation_error(

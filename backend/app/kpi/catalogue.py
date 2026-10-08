@@ -34,8 +34,11 @@ PHASE4_METRICS: frozenset[KpiMetric] = frozenset(
     {M.K72, M.K73, M.K74, M.K75, M.K76, M.K77, M.K78, M.K79, M.K80, M.K81}
 )
 PHASE4_PENDING: frozenset[KpiMetric] = frozenset()
-"""Certification KPIs not computed yet (stage 1: catalogued, value null NOT_AVAILABLE_YET)."""
-_PENDING = PHASE2_PENDING | PHASE3_PENDING | PHASE4_PENDING
+"""Certification KPIs not computed yet (none since Phase 4 stage 2)."""
+PHASE5_METRICS: frozenset[KpiMetric] = frozenset({M.K82, M.K83, M.K84, M.K85, M.K86, M.K87, M.K88})
+PHASE5_PENDING: frozenset[KpiMetric] = PHASE5_METRICS
+"""Training KPIs not computed yet (stage 1: catalogued, value null NOT_AVAILABLE_YET)."""
+_PENDING = PHASE2_PENDING | PHASE3_PENDING | PHASE4_PENDING | PHASE5_PENDING
 
 
 @dataclass(frozen=True)
@@ -65,6 +68,8 @@ class KpiDef:
             return f"3-ptw §6.11 {self.metric.value}"
         if self.metric in PHASE4_METRICS:
             return f"4-third-party-cert §6.7 {self.metric.value}"
+        if self.metric in PHASE5_METRICS:
+            return f"5-training §6.8 {self.metric.value}"
         return f"1-dashboard §6.1 {self.metric.value}"
 
 
@@ -224,7 +229,9 @@ CATALOGUE: dict[KpiMetric, KpiDef] = {
                G.leading, HIGH, "Σ toolbox_talks; Σ toolbox_attendees"),
         KpiDef(M.K37, "Training hours per worker", "ساعات التدريب لكل عامل", "Training h/worker",
                "التدريب لكل عامل", K.average, G.leading, HIGH, "h/worker", "ساعة/عامل",
-               "Σ training_hours ÷ K-03", 2, None, "Σ training hours", "Average headcount"),
+               "Σ training hours ÷ K-03; per day one source (v1.4): the training register for "
+               "days ≥ training_register_from, daily-return training_hours before it", 2, None,
+               "Σ training hours", "Average headcount"),
         _count(M.K38, "Inductions", "التعريفات بالسلامة", "Inductions", "التعريفات", G.leading,
                NONE, "Σ inductions"),
         _pct(M.K39, "HSE meeting attendance", "نسبة حضور اجتماعات السلامة", "Meeting attendance",
@@ -397,6 +404,38 @@ CATALOGUE: dict[KpiMetric, KpiDef] = {
              "In Use scaffolds with tag green or yellow ÷ In Use scaffolds (excl. Closed Red, "
              "Under Erection / Alteration) at as_of × 100",
              numerator="Green or yellow", denominator="In Use scaffolds"),
+        # ---- Phase 5 training (5-training §6.8) ----
+        _pct(M.K82, "Training matrix compliance", "نسبة الامتثال لمصفوفة التدريب",
+             "Matrix compliance", "امتثال المصفوفة",
+             "counted requirements at as_of met or expiring ÷ counted requirements at as_of × "
+             "100; breakdown by course, trade, contractor",
+             numerator="Met or expiring", denominator="Counted requirements"),
+        _pct(M.K83, "Workers fully trained", "العمال المستوفون لكل متطلباتهم",
+             "Fully trained", "مستوفون بالكامل",
+             "Mobilised contractor_worker deployments with ≥ 1 counted requirement and no gap ÷ "
+             "those with ≥ 1 counted requirement × 100",
+             numerator="Without gap", denominator="Workers with requirements"),
+        _count(M.K84, "Competency gaps", "الفجوات في الكفاءة", "Gaps", "الفجوات", G.leading,
+               LOW,
+               "at as_of: counted requirements in state gap; components: workers with ≥ 1 gap · "
+               "gaps on hook codes"),
+        _count(M.K85, "Training expiring ≤ 30 days", "تدريب ينتهي خلال 30 يوماً",
+               "Training expiring", "تدريب ينتهي", G.leading, LOW,
+               "distinct in-force records with valid_until ∈ [as_of, as_of + 30] satisfying a "
+               "counted requirement of a Mobilised contractor_worker deployment; by course"),
+        KpiDef(M.K86, "Training person-hours", "ساعات التدريب الفعلية", "Training hours",
+               "ساعات التدريب", K.hours, G.leading, NONE, "h", "ساعة",
+               "Σ register hours of the period's days ≥ training_register_from, by course "
+               "category; components: voided-session hours · client/PMC staff hours", 2),
+        _pct(M.K87, "Assessment pass rate", "نسبة النجاح في التقييم", "Pass rate",
+             "نسبة النجاح",
+             "passed ÷ (passed + failed) attendances in sessions Closed in the period × 100 "
+             "(incomplete excluded)", better=NONE,
+             numerator="Passed", denominator="Passed + failed"),
+        _pct(M.K88, "Refreshers booked in time", "التجديدات المحجوزة في الوقت",
+             "Booked in time", "محجوزة في الوقت",
+             "K-85 records with plan state booked_in_time ÷ K-85 × 100; K-85 = 0 → '—'",
+             numerator="Booked in time", denominator="Expiring ≤ 30 days"),
     ]
 }  # fmt: skip
 
@@ -409,5 +448,6 @@ LEADING_TILES = [
 ]  # fmt: skip
 PTW_TILES = [M.K46, M.K61, M.K64, M.K66, M.K69]  # 3-ptw §8.1 item 1 (capability 103)
 CERT_TILES = [M.K72, M.K76, M.K74, M.K80, M.K81]  # 4-third-party-cert §8.1 item 1 (cap 122)
+TRAINING_TILES = [M.K82, M.K83, M.K84, M.K88]  # 5-training §8.1 item 1 (capability 143)
 PLACEHOLDERS: list[KpiMetric] = []  # K-46 became a live tile in Phase 3
 RATE_METRICS = frozenset(m for m, d in CATALOGUE.items() if d.kind == K.rate)

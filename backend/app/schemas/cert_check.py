@@ -19,6 +19,8 @@ from app.core.cert_enums import (
 )
 from app.core.errors import ErrorCode
 from app.core.hse_enums import Trade
+from app.core.train_enums import RequirementState as TrainingRequirementState
+from app.core.train_enums import TrainingCheckStatus
 from app.schemas.cert_common import EquipmentLimitationRead, PersonnelLimitationRead
 from app.schemas.common import ApiModel, StrictInput
 from app.schemas.hse_common import DecimalStr
@@ -26,7 +28,8 @@ from app.schemas.hse_common import DecimalStr
 
 class CertCheckRequest(StrictInput):
     """Send exactly one of `payload` (QR text: kind EQ — one token family for
-    equipment and scaffold stickers — or AC in certificates mode),
+    equipment and scaffold stickers — AC in certificates / competence mode, or TR for a
+    session-issued training certificate, 5-training CK5-1, capability 142),
     `printed_ref` (`<project>-<tag>` for equipment or a scaffold) or `cert_no` (a personnel
     certificate number, with `tpi_code` when ambiguous). `project_id` scopes a printed_ref or
     cert_no lookup (required for them). 422 VALIDATION_ERROR otherwise."""
@@ -94,6 +97,40 @@ class PersonCheckCertificate(ApiModel):
     limitations: list[PersonnelLimitationRead] = Field(description="Non-medical only.")
 
 
+class PersonCheckTraining(ApiModel):
+    """5-training CK5-2 competence mode: one applicable requirement. No ID, scan, score or
+    verification detail."""
+
+    course_code: str = Field(examples=["CSE-ATTENDANT"])
+    course_name_en: str
+    course_name_ar: str
+    in_force: bool
+    not_in_force_reason: str | None = Field(
+        description="Hook reason, e.g. TRAINING_MISSING, TRAINING_EXPIRED (no failure detail)."
+    )
+    valid_until: date | None
+    state: TrainingRequirementState = Field(description="met / expiring / due / gap / exempt.")
+    hook_code: bool
+
+
+class TrainingCheckCard(ApiModel):
+    """5-training CK5-1 (QR kind TR): names only with capability 46 (else 'Worker'); never ID
+    numbers, scores, scans or verification details. Logs `training_qr_view`."""
+
+    record_no: str
+    course_code: str
+    course_name_en: str
+    course_name_ar: str
+    worker_no: str | None
+    worker_name_en: str | None
+    worker_name_ar: str | None
+    completed_on: date
+    valid_until: date | None
+    status: TrainingCheckStatus
+    colour: str = Field(description="green | amber | red.", examples=["green"])
+    provider_code: str
+
+
 class PersonCheckCard(ApiModel):
     worker_id: uuid.UUID
     worker_no: str
@@ -103,6 +140,11 @@ class PersonCheckCard(ApiModel):
     employer_short_code: str | None
     trade: Trade | None
     certificates: list[PersonCheckCertificate]
+    training: list[PersonCheckTraining] | None = Field(
+        default=None,
+        description="5-training CK5-2 Training section (capability 142); null without it or "
+        "until Phase 5 stage 2.",
+    )
 
 
 class CertCheckResponse(ApiModel):
@@ -118,3 +160,6 @@ class CertCheckResponse(ApiModel):
     equipment: EquipmentCheckCard | None = None
     scaffold: ScaffoldCheckCard | None = None
     person: PersonCheckCard | None = None
+    training_record: TrainingCheckCard | None = Field(
+        default=None, description="5-training CK5-1: a TR QR."
+    )

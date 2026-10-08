@@ -69,6 +69,11 @@ class HseSettingsRead(ApiModel):
         description="v1.1: K-38 counts passed general_site induction records from this date "
         "(daily-return inductions before it; null = daily returns only).",
     )
+    training_register_from: date | None = Field(
+        default=None,
+        description="v1.4 (5-training TH-6): K-37 uses training-register hours for days on or "
+        "after this date, daily-return training_hours before it (null = daily returns only).",
+    )
     ai_enabled: bool = Field(description="Effective: requested AND approval recorded (AI-14).")
     ai_requested: bool = Field(description="The HSE Manager's switch.")
     ai_transfer_approval: AiTransferApprovalRead | None
@@ -128,6 +133,11 @@ class HseSettingsUpdate(PatchInput):
     injury_identity_retention_years: int | None = Field(default=None, ge=5, le=30)
     induction_register_from: date | None = Field(
         default=None, description="≥ project start; null switches K-38 back to daily returns."
+    )
+    training_register_from: date | None = Field(
+        default=None,
+        description="≥ project start and ≤ today; once set it may only move earlier "
+        "(422 VALIDATION_ERROR). Enables HK5-1 (training hooks).",
     )
     ai_enabled: bool | None = None
 

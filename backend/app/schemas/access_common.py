@@ -33,7 +33,7 @@ MASKED_ID_DOC = (
 )
 
 QR_PAYLOAD_DOC = (
-    "`HSE2:<AC|VS|WP|PT|EQ>:<22-char base64url token>` — no name, ID or other personal data "
+    "`HSE2:<AC|VS|WP|PT|EQ|TR>:<22-char base64url token>` — no name, ID or other personal data "
     "(§3.20). "
     "Encode as a QR code; print `printed_ref` beside it for manual fallback."
 )

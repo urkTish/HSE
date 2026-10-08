@@ -74,7 +74,7 @@ PHASE4_PATHS = {
 
 def test_phase4_paths_in_contract() -> None:
     spec = create_app().openapi()
-    assert spec["info"]["version"] == "0.5.0"
+    assert spec["info"]["version"] == "0.6.0"
     assert set(spec["paths"]) >= PHASE4_PATHS
     schemas = spec["components"]["schemas"]
     qr = schemas["EquipmentStickerRead"]["properties"]["qr_payload"]

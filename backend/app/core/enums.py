@@ -21,7 +21,8 @@ class Role(StrEnum):
 class Capability(StrEnum):
     """Rows of the permission matrix: 1-19 Phase 0 (0-foundation §5.10), 20-45 Phase 1
     (1-dashboard §5.10), 46-81 Phase 2 (2-access-permits §5.13), 82-104 Phase 3 (3-ptw §5.14),
-    numbered in spec order; 105-124 Phase 4 (4-third-party-cert §5.15).
+    numbered in spec order; 105-124 Phase 4 (4-third-party-cert §5.15); 125-145 Phase 5
+    (5-training §5.15).
     Rows with two capabilities (23, 32, 33, 41) are split into one value per action."""
 
     project_manage = "project.manage"  # 1
@@ -162,6 +163,32 @@ class Capability(StrEnum):
     cert_kpi_view = "cert_kpi.view"  # 122 KPIs, expiring items, action panel, readiness
     export_cert = "export.cert"  # 123 (IDs never; names only with 46)
     cert_settings_edit = "cert_settings.edit"  # 124 settings, lists, early switch, deferral
+    # ---- Phase 5 (5-training §5.15) ----
+    training_catalogue_view = "training_catalogue.view"  # 125 catalogue, providers, matrix,
+    # session calendar (no attendee names)
+    training_course_edit = "training_course.edit"  # 126 catalogue (tighten only, CC-2)
+    training_provider_edit = "training_provider.edit"  # 127 providers, accreditations, submit
+    training_provider_decide = "training_provider.decide"  # 128 approve / suspend / blacklist
+    training_matrix_edit = "training_matrix.edit"  # 129 manual lines (loosening: Manager,
+    # MX-8); exemptions
+    training_profile_edit = "training_profile.edit"  # 130 matrix roles, work zones
+    trainer_authorise = "trainer.authorise"  # 131 grant / suspend / withdraw authorisations
+    training_session_manage = "training_session.manage"  # 132 create / schedule / cancel;
+    # session from refresher plan (contractor reps: own contractor_internal provider, TA-6)
+    training_nominate = "training.nominate"  # 133 nominate / withdraw attendees
+    training_attendance_record = "training_attendance.record"  # 134 (+ the session's trainers)
+    training_session_close = "training_session.close"  # 135 close + issue records (SoD SS-8)
+    training_record_view = "training_record.view"  # 136 records, attendance, gaps (names: 46)
+    training_record_submit = "training_record.submit"  # 137 external records
+    training_record_review = "training_record.review"  # 138 accept / return / reject; verify
+    training_scan_view = "training_scan.view"  # 139 open certificate scans (reason, audited)
+    training_record_suspend = "training_record.suspend"  # 140 suspend / reinstate / revoke
+    training_import = "training.import"  # 141 (provider_register_file: HSE Officer / Manager)
+    training_check = "training.check"  # 142 TR QR, AC card in competence mode
+    training_kpi_view = "training_kpi.view"  # 143 KPIs, expiring, action panel, plan, readiness
+    export_training = "export.training"  # 144 (IDs and scans never; names only with 46)
+    training_settings_edit = "training_settings.edit"  # 145 settings, hooks enable / switch /
+    # deferral, void a session (HSE Manager only)
 
 
 class CapabilityScope(StrEnum):
@@ -347,6 +374,7 @@ class AuditAction(StrEnum):
     retention_purge = "retention_purge"
     privacy_notice_acknowledged = "privacy_notice_acknowledged"
     cert_check_view = "cert_check_view"  # 4-third-party-cert VF-9 (no entry recorded)
+    training_qr_view = "training_qr_view"  # 5-training CK5-1 (TR QR scan; no entry recorded)
 
 
 AUTH_ACTIONS: frozenset[AuditAction] = frozenset(
@@ -461,6 +489,21 @@ class EntityType(StrEnum):
     cert_import_batch = "cert_import_batch"
     cert_settings = "cert_settings"
     cert_type = "cert_type"
+    # Phase 5
+    training_course = "training_course"
+    training_provider = "training_provider"
+    training_provider_accreditation = "training_provider_accreditation"
+    trainer_authorisation = "trainer_authorisation"
+    training_matrix_line = "training_matrix_line"
+    training_profile = "training_profile"
+    training_exemption = "training_exemption"
+    training_session = "training_session"
+    training_nomination = "training_nomination"
+    training_record = "training_record"
+    training_verification = "training_verification"
+    training_import_batch = "training_import_batch"
+    training_settings = "training_settings"
+    training_retraining_note = "training_retraining_note"
 
 
 class ExportDataset(StrEnum):
@@ -518,6 +561,20 @@ class ExportDataset(StrEnum):
     equipment_defects = "equipment_defects"
     blacklist_register = "blacklist_register"
     cert_imports = "cert_imports"
+    # Phase 5 training registers (capability 144; never ID numbers or scans; names only with
+    # capability 46; scores only for HSE Manager / Officer, P5-5)
+    training_courses = "training_courses"
+    training_providers = "training_providers"
+    trainer_authorisations = "trainer_authorisations"
+    training_matrix = "training_matrix"
+    training_sessions = "training_sessions"
+    training_attendance = "training_attendance"
+    training_records = "training_records"
+    training_verifications = "training_verifications"
+    training_gaps = "training_gaps"
+    refresher_plan = "refresher_plan"
+    training_hours = "training_hours"
+    training_imports = "training_imports"
 
 
 class ExportFormat(StrEnum):
@@ -652,3 +709,27 @@ class NotificationKind(StrEnum):
     hook_policy_changed = "hook_policy_changed"
     trade_cert_missing = "trade_cert_missing"
     cert_import_update = "cert_import_update"
+    # ---- Phase 5 (5-training §7) ----
+    training_record_expiry = "training_record_expiry"
+    training_expiring_on_crew = "training_expiring_on_crew"
+    training_refresher_due = "training_refresher_due"
+    training_refresher_booked_late = "training_refresher_booked_late"
+    training_gap_on_live_work = "training_gap_on_live_work"
+    training_gap_at_mobilisation = "training_gap_at_mobilisation"
+    training_session_update = "training_session_update"  # scheduled / rescheduled / cancelled
+    training_session_reminder = "training_session_reminder"
+    training_session_close_due = "training_session_close_due"
+    training_session_voided = "training_session_voided"
+    training_record_submitted = "training_record_submitted"
+    training_verification_due = "training_verification_due"
+    training_verification_unable = "training_verification_unable"
+    training_verification_failed = "training_verification_failed"
+    training_record_status = "training_record_status"  # returned / rejected / suspended /
+    # revoked (no reason to contractor roles, TR-13)
+    training_cert_no_reused = "training_cert_no_reused"
+    trainer_authorisation_expiry = "trainer_authorisation_expiry"
+    trainer_authorisation_lapsed_sessions = "trainer_authorisation_lapsed_sessions"
+    training_provider_accreditation_expiry = "training_provider_accreditation_expiry"
+    training_provider_status = "training_provider_status"  # suspended / blacklisted
+    training_attempts_exceeded = "training_attempts_exceeded"
+    training_import_update = "training_import_update"

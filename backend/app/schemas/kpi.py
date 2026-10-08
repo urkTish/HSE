@@ -38,6 +38,7 @@ from app.core.hse_enums import (
     Severity,
 )
 from app.core.ptw_enums import PermitType
+from app.core.train_enums import TrainingHoursSource
 from app.schemas.common import ApiModel, Page
 from app.schemas.hse_common import EngagementRef, ZoneRef
 
@@ -217,6 +218,16 @@ class KpiValue(ApiModel):
     sources: KpiSources | None = Field(
         description="Present on GET /kpi/metrics/{metric}; null in bundles (use drill-down)."
     )
+    data_source: TrainingHoursSource | None = Field(
+        default=None,
+        description="K-37 only (5-training TH-6): register, daily_returns or mixed (the period "
+        "spans training_register_from). Null for other metrics.",
+    )
+    notes: list[Banner] = Field(
+        default_factory=list,
+        description="Per-tile notes, e.g. K-37 TRAINING_REGISTER_DIFFERS {pct: '7.2'} (TH-7) and "
+        "SESSIONS_NOT_CLOSED {count: '2'} (TH-1).",
+    )
 
 
 class SparkPoint(ApiModel):
@@ -374,6 +385,35 @@ class CertBand(ApiModel):
     hook_stages: list[CertBandHookStage]
 
 
+class TrainingBandHookStage(ApiModel):
+    stage: HookStage
+    next_block_date: date | None = Field(
+        description="'Critical training codes block from 2026-10-08' (§6.5)."
+    )
+    next_block_scope: str | None = Field(default=None, examples=["critical", "general"])
+
+
+class TrainingBand(ApiModel):
+    """5-training §8.1 item 2 (capability 143). Counts at as_of; aggregates only (TK-5)."""
+
+    project_id: uuid.UUID
+    as_of: date
+    sessions_this_week_scheduled: int
+    sessions_in_progress: int
+    sessions_awaiting_close: int
+    sessions_close_overdue: int
+    records_awaiting_review: int
+    records_awaiting_verification: int
+    verification_overdue: int = Field(description="The overdue chip.")
+    expiring_30d: KpiValue = Field(description="K-85.")
+    hook_gaps_on_live_work: int = Field(
+        description="Hook-code gaps of workers on non-terminal permits / Active WAPs (GP-7)."
+    )
+    hook_stage: TrainingBandHookStage | None = Field(
+        description="Kind training_course; null before training hooks are enabled (HK5-1)."
+    )
+
+
 class DashboardResponse(ApiModel):
     """§8.1 items 1-4 in one call. Charts: GET /kpi/charts/{chart_id}; action panel:
     GET /dashboard/action-panel."""
@@ -393,6 +433,11 @@ class DashboardResponse(ApiModel):
         default=None,
         description="Phase 4 certification band (capability 122); null without it or before "
         "Phase 4 is enabled on the project.",
+    )
+    training_band: TrainingBand | None = Field(
+        default=None,
+        description="Phase 5 training band (capability 143); null without it (and until "
+        "Phase 5 stage 2 ships).",
     )
 
 
