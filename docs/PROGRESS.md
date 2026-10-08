@@ -38,6 +38,41 @@
   - The defect close dialog offers only the item's current certificate line; there is no list of other after-repair lines to choose.
   - The certificate preview reports `SCAN_REQUIRED` before a Draft exists; the UI hides it and asks for the scan after saving.
 
+### Backend — Phase 4 implementation (stage 2, contract v0.5.0)
+- Every Phase 4 endpoint is implemented (no 501 left anywhere; the stale `501` responses were removed from `/kpi/certification` and `/exports/{dataset}`). Migration `20261008_0005_phase4_cert`. Services are in `app/services/cert/`:
+  - tpis, equipment, deployments, equipment_certs, personnel, verification, validity (strictest-wins), defects, scaffolds, bans, policy, providers, readiness, checks, imports, exports, dashboard_items, alerts, events.
+- Rules implemented:
+  - Strictest-date validity per line, with `limiting_factor`.
+  - Personnel ID match through the Phase 2 blind index. Card ID numbers are never stored; only the masked form is shown.
+  - Verification methods and SoD; defects A/B/C with due dates.
+  - Return to service with SoD and TPI re-inspection; accessory A-defects are retired, never repaired.
+  - Tower-crane climb suspension; scaffold tag expiry.
+  - Blacklisting cascades for items, holders and TPIs, including stickers, deployments and certificates.
+- Hook providers for equipment and personnel certificates. The automatic warn → block switch runs per project and per kind (`cert_switch`, 00:00:30).
+- Phase 2/3 test expectations were changed only where the spec says so, and each stage keeps a test.
+- Jobs (`app.cert_jobs`):
+  - `cert_daily`: expiries, defect-B overdue → out of service, `cert_scans_deleted` retention (P4-7).
+  - `cert_alerts`: Z5 schedule, accreditation and client approval, verification due, hook block approaching, trade missing.
+  - `cert_minute`: review reminders, arrival due.
+  - Worker anonymisation (Phase 2 job) also clears certificate numbers, printed names and scans.
+- Certificate imports: dry run, then commit within 60 minutes. Commit takes the valid rows, sets them to Submitted and never Accepted. Personnel rows are ID-masked and W05 catches a repeated file. A TPI register file (HSE only) records a `tpi_register_file` verification.
+- KPIs K-72…K-81 run in the single `kpi/` engine (`app/kpi/cert.py`), with:
+  - charts and the dashboard band;
+  - expiring items and the action panel;
+  - AI tool T16, and E10–E11 through T13;
+  - permissions 105–124, audit and exports (personnel certificates, equipment certificates, blacklist register).
+- Seed: Appendix A (`app.seed_cert`) runs from `python -m app.seed` and is idempotent. It is evaluated at the shared clock (`HSE_CLOCK_AT` 2026-10-06 10:00 Riyadh).
+- Performance fixes found with the frontend:
+  - KPI facts cache single-flight; session heartbeats no longer invalidate the cache (D-94). The dashboard takes about 4.5 s cold and 2 s warm (it was 21 s).
+  - Set-based action-panel queries plus a 5-minute readiness cache (D-93). The panel takes about 0.4 s warm (it was 9–12 s).
+- Tests: every Phase 4 AC with a backend side is `test_P4AC<n>_…` (AC1–AC113; AC114 is UI-only). The files are `tests/test_cert_*.py`, with helpers in `tests/cert_helpers.py`. KPI worked examples Z11/Z12 are checked to the decimal; the AI uses the fake LLM.
+- Full backend suite: 556 passed (555 in the full run plus the AC94 test added after it, run on its own with the access and contract tests). Ruff, ruff format, mypy (strict, `app`), `alembic check` and `export_openapi --check` are clean.
+- Contract changes since stage 1 (v0.5.0, additive, version unchanged):
+  - `ErrorCode` gains `TOKEN_UNKNOWN`, `CREDENTIAL_REVOKED` and `OUT_OF_SCOPE`.
+  - The blacklist-register export description now says HSE Manager and HSE Officers (decision 8).
+  - The stale `501` responses were removed from `/kpi/certification` and `/exports/{dataset}`.
+- Decisions D-87 … D-101.
+
 ### Backend — Phase 4 contract v0.5.0 (stage 1)
 - `docs/contracts/openapi.yaml` v0.5.0: 75 new paths / 96 operations. Every one returns 501 `NOT_IMPLEMENTED` until stage 2; the Prism mock serves them now.
 - Operations by tag:
@@ -552,6 +587,13 @@
 - Per-entity retention/anonymisation (P7) — no personal-data entities with retention defaults in Phase 0 beyond the audit log.
 
 ## Open questions for the HSE Manager
+- (Backend, Phase 4, AC71) Omar's site-engineer grant covers another site, so the field check of RW-MC-03 (S-LAND) returns `OUT_OF_SCOPE`. Capability 121 stays site-scoped. Should site engineers get the field check project-wide?
+- (Backend, Phase 4, AC111) Omar holds capability 46 in the seed, so he sees names; AC111 assumes he does not. The test overrides it. Change the seed grant or the AC?
+- (Backend, Phase 4, AC36/AC78) The seed has no Contractor HSE Rep for GULFPAVE (sanjay.verma is a permit receiver). Stop-use / tag-out alerts reach reps through the contractor tree (the RAWABI reps). Add a GULFPAVE rep?
+- (Backend, Phase 4, Z11) The Z11 trade-certificate figures assume trades that differ from the Phase 2 bulk deployments; the Phase 2 trades were kept so Phase 2 figures do not change (D-100). Bikash Rai stays on RBT-52.
+- (Backend, Phase 4, AC21/AC94) The S-LAND gate is `G-ANIA-01` in the seed; the spec says G-LAND-1. Rename?
+- (Backend, Phase 4, AC18) DLIFT is suspended in the seed, so AC18's "deploy elsewhere" case is set up directly in the test.
+- (Backend, Phase 4, P4-7) The scan-retention exception for certificates linked to an incident is not implemented, because no certificate–incident link exists yet (D-99).
 - (Backend, Phase 3, §5.14) The HSE Manager has "—" for preparing, receiving, area review, issuing, isolating, personal locks, de-isolation and SIMOPS signatures, so a manager cannot issue a permit or sign a coordination record unless also assigned that project role. Implemented as specified (D-55). Confirm.
 - (Backend, Phase 3, PT-15) Two-person steps (issue with receiver acceptance, handover, SIMOPS coordination) accept either an inline co-signature (second person types their password on the same device) or a prior signature from their own device. Confirm that shared-device co-signing is acceptable (D-56).
 - (Backend, Phase 1, defaults pending the HSE Manager — DECISIONS 18-20) AI-8 trend wording; D-10 PDF export deferred; who may see observations/inspections/CAs (incident-register scope via capability 31 plus own/verifier records).

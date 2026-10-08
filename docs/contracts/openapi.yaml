@@ -3140,7 +3140,7 @@ paths:
         capability 46; signatures, gas readings and medical data are never exported. Phase 4 certification
         registers need capability 123; names only with capability 46; ID numbers, scans, the medical flag,
         ban reasons and verification-failure details are never exported (§8.4); blacklist_register is
-        HSE Manager only.'
+        HSE Manager and HSE Officers only (decision 8).'
       operationId: export_dataset
       security:
       - sessionCookie: []
@@ -3249,12 +3249,6 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '422':
           description: Validation error (field errors in detail.errors).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '501':
-          description: Not implemented yet.
           content:
             application/json:
               schema:
@@ -12962,12 +12956,6 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '422':
           description: Validation error (field errors in detail.errors).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '501':
-          description: Not implemented yet.
           content:
             application/json:
               schema:
@@ -52061,6 +52049,9 @@ components:
       - HOOK_NOT_MET_WARN
       - EXPIRING_7D
       - UNKNOWN_CODE
+      - TOKEN_UNKNOWN
+      - CREDENTIAL_REVOKED
+      - OUT_OF_SCOPE
       - SETTING_LOOSENING
       - EVIDENCE_DOMAIN_MISMATCH
       - IMPORT_SOURCE_NOT_ALLOWED

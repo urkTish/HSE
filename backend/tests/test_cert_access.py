@@ -1,4 +1,4 @@
-"""4-third-party-cert §9 ACs 95-97 (gate equipment check) and 107-113 (permissions, PDPL)."""
+"""4-third-party-cert §9 ACs 94-97 (gate equipment check) and 107-113 (permissions, PDPL)."""
 
 import uuid
 from datetime import date
@@ -37,6 +37,15 @@ pytestmark = pytest.mark.usefixtures("cert_seed", "clock")
 
 
 # ---- gate (AC95-97) ---------------------------------------------------------------------------
+
+
+def test_P4AC94_out_of_service_denied_and_revoked_sticker_first(api: Api, db: Session) -> None:
+    c = api.as_("noura.qahtani")
+    r = scan(c, db, "G-ANIA-01", payload=eq_payload(db, "RW-MEWP-07"), direction="in")
+    assert r["result"] == "DENIED" and "EQUIPMENT_OUT_OF_SERVICE" in reasons(r), r
+    r = scan(c, db, "G-ANIA-01", payload=eq_payload(db, "SH-TH-02"), direction="in")
+    assert r["result"] == "DENIED", r
+    assert reasons(r)[0] == "CREDENTIAL_REVOKED", r  # GE-2: before EQUIPMENT_BLACKLISTED
 
 
 def test_P4AC95_linked_vehicle_item_also_scan_vehicle_sticker(api: Api, db: Session) -> None:

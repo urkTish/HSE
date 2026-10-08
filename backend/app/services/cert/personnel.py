@@ -1386,7 +1386,7 @@ def _erase_scans(db: Session, pc: PersonnelCertificate) -> int:
 def scan_retention_job(db: Session, day: date | None = None) -> int:
     """P4-7: scans of certificates that ended (Expired / Superseded / Revoked / Rejected) more
     than `cert_scan_retention_years` ago are deleted; the metadata stays; each deletion is
-    audited. Certificates referenced by an incident follow Phase 1 P1-5 instead (kept)."""
+    audited. The incident-link exception is not implemented yet (no link exists; D-99)."""
     from app.kpi.periods import add_months  # noqa: PLC0415
 
     day = day or today()

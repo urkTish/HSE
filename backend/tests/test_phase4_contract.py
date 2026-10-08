@@ -1,13 +1,11 @@
 """Phase 4 contract surface (stage 1): paths, schemas, enums, error codes and capability
 matrix (spec 4-third-party-cert)."""
 
-import pytest
-
 from app.api.routers import cert_config
 from app.core.access_enums import GATE_WARN_CODES, GateReasonCode, QrKind
 from app.core.cert_enums import HookReasonCode
 from app.core.enums import Capability, ExportDataset, Role
-from app.core.errors import ApiError, ErrorCode
+from app.core.errors import ErrorCode
 from app.core.hse_enums import (
     ActionPanelItem,
     AiTool,
