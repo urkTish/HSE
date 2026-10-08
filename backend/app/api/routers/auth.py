@@ -4,7 +4,7 @@ from fastapi import APIRouter, Response, status
 
 from app.api.deps import DB, CurrentUser, SessionUser
 from app.core.config import SESSION_COOKIE_NAME, get_settings
-from app.core.errors import error_responses
+from app.core.errors import error_responses, not_implemented
 from app.models import User
 from app.schemas.auth import (
     AcceptedResponse,
@@ -20,6 +20,8 @@ from app.schemas.auth import (
     PasswordResetRequest,
     PrivacyAckRequest,
     PrivacyNotice,
+    ReauthRequest,
+    ReauthResponse,
 )
 from app.services import auth as svc
 from app.services import users as user_svc
@@ -105,6 +107,19 @@ def update_me(body: MeUpdate, user: CurrentUser, db: DB) -> Me:
 )
 def change_password(body: PasswordChangeRequest, user: CurrentUser, db: DB) -> None:
     svc.change_password(db, user, body.current_password, body.new_password)
+
+
+@router.post(
+    "/reauth",
+    response_model=ReauthResponse,
+    summary="Step-up re-authentication before signing (Phase 3 PT-15)",
+    description="Wrong password → 401 REAUTH_REQUIRED (counts toward the login lockout). "
+    "Signing endpoints return 401 REAUTH_REQUIRED when the last re-auth is older than "
+    "step_up_reauth_minutes.",
+    responses=error_responses(401, 403, 422, 429),
+)
+def reauthenticate(body: ReauthRequest, user: CurrentUser, db: DB) -> ReauthResponse:
+    raise not_implemented()
 
 
 @router.post(

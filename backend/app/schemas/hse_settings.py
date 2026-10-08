@@ -7,6 +7,7 @@ from datetime import date, datetime, time
 from pydantic import Field
 
 from app.core.hse_enums import CaPriority, KpiMetric, ReferenceList, TreatmentClass
+from app.core.ptw_enums import AuditFindingSeverity, PermitType
 from app.schemas.common import ApiModel, PatchInput, StrictInput
 from app.schemas.hse_common import DecimalStr, UserRef
 
@@ -147,6 +148,21 @@ class ReferenceItemRead(ApiModel):
     )
     description_en: str | None = None
     description_ar: str | None = None
+    permit_types: list[PermitType] | None = Field(
+        default=None,
+        description="PTW lists (checklists C/X, audit items A, hazards): types it applies to; "
+        "null = all.",
+    )
+    default_severity: AuditFindingSeverity | None = Field(
+        default=None, description="ptw_audit_item: default finding severity."
+    )
+    na_allowed: bool | None = Field(
+        default=None, description="PTW checklists: n.a. may be answered."
+    )
+    routine: bool | None = Field(
+        default=None, description="ptw_status_reason: routine (shift_end, midday_ban; SH-8)."
+    )
+    key_role: bool | None = Field(default=None, description="ptw_crew_role: key role (§3.6).")
     sort_order: int
 
 

@@ -35,6 +35,7 @@ from app.core.hse_enums import (
     SeriesKind,
     Severity,
 )
+from app.core.ptw_enums import PermitType
 from app.schemas.common import ApiModel, Page
 from app.schemas.hse_common import EngagementRef, ZoneRef
 
@@ -318,6 +319,31 @@ class AccessBand(ApiModel):
     ops_suspension_zones: list[ZoneRef]
 
 
+class PtwBandTypeCount(ApiModel):
+    type: PermitType
+    count: int
+
+
+class PtwBand(ApiModel):
+    """3-ptw §8.1 item 2 (all projects with capability 103). Counts at as_of; aggregates
+    only (KP-6)."""
+
+    project_id: uuid.UUID
+    as_of: date
+    active_by_type: list[PtwBandTypeCount] = Field(
+        description="Active permits now by primary type."
+    )
+    active_total: int
+    suspended_non_routine: int
+    high_risk_active: int
+    active_isolations: KpiValue = Field(description="K-67 (components: long-term).")
+    long_term_isolations: int
+    open_simops_conflicts: int
+    field_audits_this_week: int
+    field_audits_week_target: int
+    audits_behind_plan: bool
+
+
 class DashboardResponse(ApiModel):
     """§8.1 items 1-4 in one call. Charts: GET /kpi/charts/{chart_id}; action panel:
     GET /dashboard/action-panel."""
@@ -329,6 +355,9 @@ class DashboardResponse(ApiModel):
     placeholders: list[KpiPlaceholder]
     access_band: AccessBand | None = Field(
         default=None, description="Phase 2 access band; null on non-airport projects."
+    )
+    ptw_band: PtwBand | None = Field(
+        default=None, description="Phase 3 PTW band (capability 103); null without it."
     )
 
 

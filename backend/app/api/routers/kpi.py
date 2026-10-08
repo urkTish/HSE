@@ -11,7 +11,7 @@ from app.api.deps import DB, CurrentUser, PageParams
 from app.api.kpi_params import KpiParams
 from app.core.access_enums import AccessKpiGroupBy
 from app.core.enums import Capability, ExportFormat
-from app.core.errors import error_responses
+from app.core.errors import error_responses, not_implemented
 from app.core.hse_enums import (
     BreakdownDimension,
     BreakdownMeasure,
@@ -20,6 +20,7 @@ from app.core.hse_enums import (
     KpiExportTable,
     KpiMetric,
 )
+from app.core.ptw_enums import PtwKpiGroupBy
 from app.kpi import access_views, charts, scope, service, views
 from app.schemas.access_kpi import AccessKpiResponse
 from app.schemas.kpi import (
@@ -38,6 +39,7 @@ from app.schemas.kpi import (
     SourceRecordPage,
     TrendsResponse,
 )
+from app.schemas.ptw_kpi import PtwKpiResponse
 
 router = APIRouter(prefix="/kpi", tags=["kpi"])
 
@@ -50,6 +52,7 @@ FILTERS = (
 )
 KPI_ERRORS = error_responses(401, 403, 404, 422)
 PHASE2_CHARTS = frozenset({ChartId.C10, ChartId.C11, ChartId.C12})
+PHASE3_CHARTS = frozenset({ChartId.C13, ChartId.C14, ChartId.C15})
 
 
 @router.get(
@@ -258,7 +261,7 @@ def get_data_quality(user: CurrentUser, db: DB, q: KpiParams) -> DataQualityResp
 @router.get(
     "/charts/{chart_id}",
     response_model=ChartResponse,
-    summary="Dashboard chart C1-C12 as a renderer-agnostic ChartSpec",
+    summary="Dashboard chart C1-C15 as a renderer-agnostic ChartSpec",
     description=FILTERS + " C7 needs `dimension` (and optional `measure`, default "
     "injury_cases). Monthly charts cover the 12 months ending at the period end.",
     responses=KPI_ERRORS,
@@ -274,6 +277,8 @@ def get_chart(
         uuid.UUID | None, Query(description="C10/C11: one gate's checks only.")
     ] = None,
 ) -> ChartResponse:
+    if chart_id in PHASE3_CHARTS:
+        raise not_implemented()
     if chart_id in PHASE2_CHARTS:
         sc = scope.build(db, user, q, Capability.access_kpi_view)
         spec = access_views.chart(db, sc, chart_id, gate_id)
@@ -340,3 +345,21 @@ def get_access_kpis(
 ) -> AccessKpiResponse:
     sc = scope.build(db, user, q, Capability.access_kpi_view)
     return access_views.access_kpis(db, sc, metric, group_by, gate_id)
+
+
+@router.get(
+    "/ptw",
+    response_model=PtwKpiResponse,
+    summary="PTW KPIs K-46, K-46b, K-61…K-71 with breakdowns and the PTW band (3-ptw §6.11)",
+    description=FILTERS + " Plus `permit_type` (PTW KPIs only). Capability 103; Viewer/Client "
+    "get aggregates only. `group_by` adds breakdown tables (KP-5).",
+    responses=KPI_ERRORS,
+)
+def get_ptw_kpis(
+    user: CurrentUser,
+    db: DB,
+    q: KpiParams,
+    metric: Annotated[list[KpiMetric] | None, Query(description="Default: all PTW KPIs.")] = None,
+    group_by: Annotated[list[PtwKpiGroupBy] | None, Query()] = None,
+) -> PtwKpiResponse:
+    raise not_implemented()

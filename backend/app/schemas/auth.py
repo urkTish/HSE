@@ -101,6 +101,28 @@ class Me(ApiModel):
     )
     projects: list[ProjectAccess]
     role_assignments: list[RoleAssignmentRead] = Field(description="Active assignments only.")
+    last_authenticated_at: datetime | None = Field(
+        default=None,
+        description="Phase 3 PT-15: last password entry in this session (login or re-auth).",
+    )
+    reauth_valid_until: datetime | None = Field(
+        default=None,
+        description="Signing actions need re-authentication until this moment "
+        "(last_authenticated_at + step_up_reauth_minutes); null = re-auth needed now.",
+    )
+
+
+class ReauthRequest(StrictInput):
+    """PT-15 step-up: re-enter the password before a signing action."""
+
+    password: str = Field(min_length=1, max_length=128)
+
+
+class ReauthResponse(ApiModel):
+    reauthenticated_at: datetime
+    valid_until: datetime = Field(
+        description="Signing actions are accepted until this moment (step_up_reauth_minutes)."
+    )
 
 
 class LoginResponse(ApiModel):

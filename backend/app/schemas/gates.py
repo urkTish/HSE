@@ -24,6 +24,7 @@ from app.core.access_enums import (
     WapStatus,
 )
 from app.core.hse_enums import Trade
+from app.core.ptw_enums import GasStatus, PermitBlocker, PermitStatus, PermitType
 from app.schemas.common import ApiModel, Page, PatchInput, StrictInput, Timestamps
 from app.schemas.hse_common import SiteRef, UserRef, ZoneRef
 
@@ -214,6 +215,23 @@ class GateWapCard(ApiModel):
     vehicles: list[str] = Field(description="vehicle_no list.")
 
 
+class GatePermitCard(ApiModel):
+    """v1.1 GC-10 for `PT` tokens (3-ptw PT-20): read-only permit summary; logs `ptw_view`,
+    records no individual's entry. Crew names only with capability 46."""
+
+    permit_no: str
+    display_no: str
+    status: PermitStatus
+    work_types: list[PermitType]
+    in_window_now: bool
+    window_today: str | None
+    valid_to_at: datetime
+    current_shift_no: int | None
+    blockers: list[PermitBlocker]
+    crew: list[GateWapCrewLine]
+    gas_status: GasStatus
+
+
 class GatePairing(ApiModel):
     pairing_id: uuid.UUID
     waiting_for: PairingWaitingFor
@@ -251,6 +269,7 @@ class GateCheckResponse(ApiModel):
     person: GatePersonCard | None = None
     vehicle: GateVehicleCard | None = None
     wap: GateWapCard | None = None
+    permit: GatePermitCard | None = None
     pairing: GatePairing | None = None
     paired_results: list[GatePairedResult] = Field(default_factory=list)
     late_exit: bool = False

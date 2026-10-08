@@ -20,7 +20,8 @@ class Role(StrEnum):
 
 class Capability(StrEnum):
     """Rows of the permission matrix: 1-19 Phase 0 (0-foundation §5.10), 20-45 Phase 1
-    (1-dashboard §5.10), 46-81 Phase 2 (2-access-permits §5.13), numbered in spec order.
+    (1-dashboard §5.10), 46-81 Phase 2 (2-access-permits §5.13), 82-104 Phase 3 (3-ptw §5.14),
+    numbered in spec order.
     Rows with two capabilities (23, 32, 33, 41) are split into one value per action."""
 
     project_manage = "project.manage"  # 1
@@ -112,6 +113,30 @@ class Capability(StrEnum):
     export_access_identity = "export.access_identity"  # 79 full IDs / per-worker data report
     access_settings_edit = "access_settings.edit"  # 80 settings, AP-CAT/AP-AREA/OFF/VC, hooks
     zone_profile_edit = "zone_profile.edit"  # 81
+    # ---- Phase 3 (3-ptw §5.14) ----
+    permit_view = "permit.view"  # 82 permits, live board, gas tests, isolations, conflicts
+    permit_prepare = "permit.prepare"  # 83 Draft permit, JSA instance, documents
+    permit_receive = "permit.receive"  # 84 act as named receiver
+    permit_area_review = "permit.area_review"  # 85 review as area authority (+appt)
+    permit_hse_review = "permit.hse_review"  # 86 HSE review; accept High residual risk
+    permit_issue = "permit.issue"  # 87 approve/issue/revalidate/resume/close (+appt issuer)
+    permit_suspend = "permit.suspend"  # 88 suspend / stop work
+    permit_cancel = "permit.cancel"  # 89
+    gas_test_record = "gas_test.record"  # 90 gas tests and bump tests
+    gas_detector_manage = "gas_detector.manage"  # 91 detectors and calibrations
+    isolation_manage = "isolation.manage"  # 92 plan/apply/verify/remove points (+appt)
+    personal_lock_record = "personal_lock.record"  # 93 personal locks on/off
+    deisolation_authorise = "deisolation.authorise"  # 94
+    lock_cut_approve = "lock_cut.approve"  # 95 IS-9
+    jsa_template_manage = "jsa_template.manage"  # 96 (contractor reps propose)
+    simops_coordinate = "simops.coordinate"  # 97 sign SIMOPS coordination
+    ptw_zone_profile_edit = "ptw_zone_profile.edit"  # 98 zone PTW profiles, adjacency
+    ptw_settings_edit = "ptw_settings.edit"  # 99 SIMOPS matrix, types, checklists, settings
+    ptw_appointment_manage = "ptw_appointment.manage"  # 100 (issuer: HSE Manager only)
+    ptw_audit_conduct = "ptw_audit.conduct"  # 101
+    ptw_exemption_grant = "ptw_exemption.grant"  # 102 midday ban, energized, impairment, >90 %
+    ptw_kpi_view = "ptw_kpi.view"  # 103 PTW KPIs, band, expiring items, action panel
+    export_ptw = "export.ptw"  # 104
 
 
 class CapabilityScope(StrEnum):
@@ -370,6 +395,28 @@ class EntityType(StrEnum):
     gate_device = "gate_device"
     gate_log = "gate_log"
     access_settings = "access_settings"
+    # Phase 3
+    permit = "permit"
+    permit_shift = "permit_shift"
+    permit_handover = "permit_handover"
+    permit_suspension = "permit_suspension"
+    permit_exemption = "permit_exemption"
+    permit_type_config = "permit_type_config"
+    zone_ptw_profile = "zone_ptw_profile"
+    zone_adjacency = "zone_adjacency"
+    ptw_appointment = "ptw_appointment"
+    jsa = "jsa"
+    gas_detector = "gas_detector"
+    bump_test = "bump_test"
+    gas_test = "gas_test"
+    isolation_certificate = "isolation_certificate"
+    lock = "lock"
+    personal_lock_event = "personal_lock_event"
+    simops_rule = "simops_rule"
+    simops_conflict = "simops_conflict"
+    simops_coordination = "simops_coordination"
+    ptw_audit = "ptw_audit"
+    ptw_settings = "ptw_settings"
 
 
 class ExportDataset(StrEnum):
@@ -404,6 +451,17 @@ class ExportDataset(StrEnum):
     obstacle_clearances = "obstacle_clearances"
     ops_events = "ops_events"
     gate_log = "gate_log"
+    # Phase 3 PTW registers (capability 104; names only with capability 46, never signatures)
+    permits = "permits"
+    permit_suspensions = "permit_suspensions"
+    gas_tests = "gas_tests"
+    gas_detectors = "gas_detectors"
+    isolations = "isolations"
+    locks = "locks"
+    ptw_appointments = "ptw_appointments"
+    jsa_templates = "jsa_templates"
+    simops_conflicts = "simops_conflicts"
+    ptw_audits = "ptw_audits"
 
 
 class ExportFormat(StrEnum):
@@ -482,3 +540,33 @@ class NotificationKind(StrEnum):
     obstacle_clearance_update = "obstacle_clearance_update"
     obstacle_clearance_ending = "obstacle_clearance_ending"
     ops_suspension = "ops_suspension"
+    # ---- Phase 3 (3-ptw §7) ----
+    permit_requested = "permit_requested"
+    permit_review_reminder = "permit_review_reminder"
+    permit_reviewed = "permit_reviewed"
+    permit_update = "permit_update"  # approved / returned / cancelled
+    permit_not_issued = "permit_not_issued"
+    permit_issue_lapsed = "permit_issue_lapsed"
+    shift_end_approaching = "shift_end_approaching"
+    shift_lapsed = "shift_lapsed"
+    gas_retest_due = "gas_retest_due"
+    gas_test_failed = "gas_test_failed"
+    permit_suspended = "permit_suspended"
+    midday_ban = "midday_ban"
+    fire_watch_ended = "fire_watch_ended"
+    permit_ending = "permit_ending"
+    permit_expired = "permit_expired"
+    post_expiry_check_pending = "post_expiry_check_pending"
+    simops_conflict = "simops_conflict"
+    ptw_critical_finding = "ptw_critical_finding"
+    ptw_audits_behind_plan = "ptw_audits_behind_plan"
+    gas_detector_calibration_due = "gas_detector_calibration_due"
+    gas_detector_quarantined = "gas_detector_quarantined"
+    ptw_appointment_expiry = "ptw_appointment_expiry"
+    jsa_template_review_due = "jsa_template_review_due"
+    isolation_review_due = "isolation_review_due"
+    isolation_orphan = "isolation_orphan"
+    lock_cut = "lock_cut"
+    crew_eligibility_expiring = "crew_eligibility_expiring"
+    ptw_exemption = "ptw_exemption"
+    crew_excluded = "crew_excluded"

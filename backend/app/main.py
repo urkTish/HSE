@@ -24,17 +24,25 @@ from app.api.routers import (
     credentials,
     dashboard,
     exports,
+    gas,
     gates,
     health,
     hse_settings,
     incidents,
     inductions,
     inspections,
+    isolations,
+    jsa,
     kpi,
     meetings,
     notifications,
     observations,
+    permits,
     projects,
+    ptw_appointments,
+    ptw_audits,
+    ptw_config,
+    simops,
     sites,
     users,
     waps,
@@ -53,8 +61,9 @@ from app.schemas.ai import AiStreamEvent
 
 DESCRIPTION = """
 HSE platform API — Phase 0 Foundation (spec `docs/specs/0-foundation.md` v1.0), Phase 1
-Dashboard & core data with AI (spec `docs/specs/1-dashboard.md` v1.1) and Phase 2 Site/Airport
-access permits (spec `docs/specs/2-access-permits.md` v1.0).
+Dashboard & core data with AI (spec `docs/specs/1-dashboard.md` v1.2), Phase 2 Site/Airport
+access permits (spec `docs/specs/2-access-permits.md` v1.1) and Phase 3 Permit to Work (spec
+`docs/specs/3-ptw.md` v1.0).
 
 * Auth: `POST /api/v1/auth/login` sets the httpOnly SameSite=Lax cookie `hse_session` (JWT) and
   returns `{access_token, user}`. Send the cookie or `Authorization: Bearer <token>`.
@@ -74,6 +83,12 @@ access permits (spec `docs/specs/2-access-permits.md` v1.0).
   session (`POST /gate-device/login`); device sessions can call nothing else.
 * Some errors carry `detail.meta` (e.g. WORKER_EXISTS → worker_no; VALIDITY_EXCEEDS_LIMIT →
   limiting_factor; WAP_BLOCKED → blockers).
+* Phase 3: signing actions need a password entry within `step_up_reauth_minutes`
+  (`POST /auth/reauth`), else 401 REAUTH_REQUIRED. Blocked permit transitions return 422 with
+  `detail.code` = the first blocker and `detail.meta.blockers` = all of them (no override).
+  Permit QR payloads are `HSE2:PT:<token>`. HSE Managers do not prepare, receive, review as
+  area authority, issue, isolate or sign SIMOPS coordination unless they also hold that project
+  role.
 """
 
 # Schemas used only in non-JSON responses (SSE) and therefore not reachable from any route.
@@ -164,6 +179,15 @@ def create_app() -> FastAPI:
         credentials,
         gates,
         access_settings,
+        # Phase 3
+        ptw_config,
+        ptw_appointments,
+        permits,
+        jsa,
+        gas,
+        isolations,
+        simops,
+        ptw_audits,
     ):
         app.include_router(module.router, prefix=API_PREFIX)
     app.include_router(auth.public_router, prefix=API_PREFIX)

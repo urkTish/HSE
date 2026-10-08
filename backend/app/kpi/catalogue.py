@@ -22,6 +22,15 @@ PHASE2_METRICS: frozenset[KpiMetric] = frozenset(
 )  # fmt: skip
 PHASE2_PENDING: frozenset[KpiMetric] = frozenset()
 """Access KPIs not computed yet (none since stage 2)."""
+PHASE3_METRICS: frozenset[KpiMetric] = frozenset(
+    {
+        M.K46b, M.K61, M.K62, M.K63, M.K64, M.K65, M.K66, M.K67, M.K68, M.K69, M.K70,
+        M.K71,
+    }
+)  # fmt: skip
+PHASE3_PENDING: frozenset[KpiMetric] = PHASE3_METRICS
+"""PTW KPIs not computed yet (Phase 3 stage 1: listed, value null NOT_AVAILABLE_YET)."""
+_PENDING = PHASE2_PENDING | PHASE3_PENDING
 
 
 @dataclass(frozen=True)
@@ -47,6 +56,8 @@ class KpiDef:
     def spec_ref(self) -> str:
         if self.metric in PHASE2_METRICS:
             return f"2-access-permits §6.8 {self.metric.value}"
+        if self.metric in PHASE3_METRICS:
+            return f"3-ptw §6.11 {self.metric.value}"
         return f"1-dashboard §6.1 {self.metric.value}"
 
 
@@ -114,7 +125,7 @@ def _pct(
 
 
 CATALOGUE: dict[KpiMetric, KpiDef] = {
-    d.metric: (replace(d, available=False) if d.metric in PHASE2_PENDING else d)
+    d.metric: (replace(d, available=False) if d.metric in _PENDING else d)
     for d in [
         KpiDef(M.K01, "Man-hours", "ساعات العمل", "Man-hours", "ساعات العمل", K.hours,
                G.exposure, NONE, "h", "ساعة", "Σ man_hours (submitted/verified/locked rows)"),
@@ -282,6 +293,53 @@ CATALOGUE: dict[KpiMetric, KpiDef] = {
         _count(M.K60, "Obstacle clearances", "موافقات العوائق", "Obstacle clearances",
                "موافقات العوائق", G.leading, NONE,
                "active at as_of; expiring ≤ 7 days; rejected in period; active with penetration"),
+        # ---- Phase 3 PTW KPIs (3-ptw §6.11) ----
+        _pct(M.K46b, "PTW audit coverage", "تغطية تدقيق التصاريح", "Audit coverage",
+             "تغطية التدقيق",
+             "distinct permits with ≥ 1 field audit ÷ permits Issued/Active/Suspended in "
+             "period × 100", numerator="Audited permits", denominator="Live permits"),
+        _pct(M.K61, "PTW audit compliance", "نسبة الالتزام في تدقيق التصاريح",
+             "Audit compliance", "الالتزام في التدقيق",
+             "Σ compliant_count ÷ Σ applicable_count × 100 over field audits in period",
+             numerator="Compliant items", denominator="Applicable items"),
+        _count(M.K62, "Permits issued", "التصاريح الصادرة", "Permits issued",
+               "التصاريح الصادرة", G.exposure, NONE,
+               "n(permits with first issued_at in period); by primary type, any type, high-risk",
+               ("permits", "تصريح")),
+        _count(M.K63, "Permit-shifts", "ورديات التصاريح", "Permit-shifts", "ورديات التصاريح",
+               G.exposure, NONE, "n(shift records with started_at in period)",
+               ("shifts", "وردية")),
+        KpiDef(M.K64, "Critical PTW findings", "المخالفات الحرجة لتصاريح العمل",
+               "Critical findings", "المخالفات الحرجة", K.count_, G.leading, LOW, "count", "عدد",
+               "critical non-compliant field-audit items + unpermitted_work audits; "
+               "rate = count × 100 ÷ K-46", 0, None, "Critical findings", "Field audits"),
+        KpiDef(M.K65, "Non-routine suspensions", "الإيقافات غير الاعتيادية",
+               "Non-routine suspensions", "الإيقافات غير الاعتيادية", K.count_, G.leading, NONE,
+               "count", "عدد",
+               "n(suspension events with routine = false); rate = count × 100 ÷ K-63", 0, None,
+               "Non-routine suspensions", "Permit-shifts"),
+        _pct(M.K66, "Gas-test compliance", "الالتزام بفحص الغاز", "Gas-test compliance",
+             "الالتزام بفحص الغاز",
+             "compliant gas-required shifts ended ÷ gas-required shifts ended × 100 (§6.3)",
+             numerator="Compliant shifts", denominator="Gas-required shifts"),
+        _count(M.K67, "Active isolations", "العزل النشط", "Active isolations", "العزل النشط",
+               G.leading, NONE,
+               "n(certificates Isolated, Verified or De-isolation Requested at as_of); "
+               "of which long-term", ("certificates", "شهادة")),
+        _count(M.K68, "SIMOPS conflicts", "تعارضات العمليات المتزامنة", "SIMOPS conflicts",
+               "تعارضات العمليات", G.leading, NONE,
+               "n(conflicts detected in period) by result; n(open at as_of)"),
+        _pct(M.K69, "Permit closure compliance", "الالتزام بإغلاق التصاريح",
+             "Closure compliance", "الالتزام بالإغلاق",
+             "permits Closed ÷ permits Closed or Expired in period × 100",
+             numerator="Closed", denominator="Closed or Expired"),
+        _count(M.K70, "Shift lapses", "انقضاء الورديات دون تسليم", "Shift lapses",
+               "انقضاء الورديات", G.leading, LOW,
+               "n(shift records with end_type lapsed and ended_at in period)"),
+        KpiDef(M.K71, "Permit turnaround", "مدة إصدار التصريح", "Permit turnaround",
+               "مدة الإصدار", K.hours, G.leading, LOW, "h", "ساعة",
+               "median(first issued_at − first requested_at) over permits first issued in "
+               "period", 1),
     ]
 }  # fmt: skip
 

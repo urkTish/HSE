@@ -16,7 +16,6 @@ from app.core.context import get_request_context
 from app.core.enums import (
     AuditAction,
     AuditResult,
-    Capability,
     EntityType,
     NotificationKind,
     UserStatus,
@@ -41,7 +40,13 @@ from app.schemas.auth import (
 )
 from app.services import audit, notify
 from app.services.audit import SYSTEM, AuditActor
-from app.services.permissions import ROLE_RANK, Principal, build_principal, capability_list
+from app.services.permissions import (
+    MANAGER_CAPABILITIES,
+    ROLE_RANK,
+    Principal,
+    build_principal,
+    capability_list,
+)
 
 
 def invalid_credentials() -> ApiError:
@@ -513,7 +518,7 @@ def build_me(db: Session, p: Principal) -> Me:
         privacy_notice_ack_at=u.privacy_notice_ack_at,
         privacy_ack_required=u.privacy_notice_version != current_version,
         is_hse_manager=p.is_manager,
-        org_capabilities=list(Capability) if p.is_manager else [],
+        org_capabilities=list(MANAGER_CAPABILITIES) if p.is_manager else [],
         projects=projects,
         role_assignments=assignments,
     )

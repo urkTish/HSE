@@ -137,8 +137,11 @@ class SuspendedContractorGateMode(StrEnum):
 
 
 class HookSubjectType(StrEnum):
+    """v1.1: equipment_tag = {category, tag} for equipment not in the vehicle register."""
+
     worker = "worker"
     vehicle = "vehicle"
+    equipment_tag = "equipment_tag"
 
 
 class HookProviderStatus(StrEnum):
@@ -680,6 +683,7 @@ class QrKind(StrEnum):
     AC = "AC"
     VS = "VS"
     WP = "WP"
+    PT = "PT"  # v1.1: PTW permit print (3-ptw PT-20); read-only at gates (GC-10)
 
 
 class QrTokenStatus(StrEnum):
@@ -704,6 +708,7 @@ class GateResult(StrEnum):
     PENDING_ESCORT_VEHICLE = "PENDING_ESCORT_VEHICLE"
     EXIT_RECORDED = "EXIT_RECORDED"
     WAP_VIEW = "WAP_VIEW"
+    PTW_VIEW = "PTW_VIEW"  # v1.1 GC-10: PT token → read-only permit summary, logs ptw_view
 
 
 class GateReasonSeverity(StrEnum):
@@ -768,6 +773,7 @@ class GateSubjectKind(StrEnum):
     person = "person"
     vehicle = "vehicle"
     wap = "wap"
+    permit = "permit"
     unknown = "unknown"
 
 

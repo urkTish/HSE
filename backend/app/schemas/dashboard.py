@@ -1,7 +1,7 @@
 """Dashboard action panel, expiring items and saved filters (spec 1-dashboard §8.1, D-2)."""
 
 import uuid
-from datetime import date
+from datetime import date, datetime
 
 from pydantic import Field
 
@@ -64,6 +64,14 @@ class ExpiringItem(ApiModel):
     detail_path: str | None
     limiting_factor: LimitingFactor | None = Field(
         default=None, description="Phase 2 credentials: the term giving the effective validity."
+    )
+    due_at: datetime | None = Field(
+        default=None,
+        description="Phase 3 timed kinds (ptw_valid_to, ptw_shift_end, gas_retest_due, "
+        "fire_watch_end): the exact UTC time; due_date is its local date.",
+    )
+    minutes_left: int | None = Field(
+        default=None, description="Phase 3 timed kinds: minutes until due_at (negative = past)."
     )
 
 

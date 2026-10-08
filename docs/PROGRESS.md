@@ -3,7 +3,7 @@
 ## Current
 - Phase: 3 — Permit to Work (PTW)
 - Module: PTW (spec `docs/specs/3-ptw.md` v1.0)
-- Step: Contract
+- Step: Contract — backend stage 1 done (contract v0.4.0, all Phase 3 endpoints stubbed 501); waiting for the stage 2 go-ahead
 
 ## Phase log
 - Phase 0 — Foundation: built, e2e green, design pass done (2026-10-05). The user asked to continue phase after phase without per-phase approval; open questions are collected below for a single review.
@@ -11,6 +11,91 @@
 - Phase 2 — Site / Airport access permits: built, e2e green, design pass done (2026-10-07).
 
 ## Done
+
+### Backend — Phase 3 contract v0.4.0 (stage 1)
+- `docs/contracts/openapi.yaml` v0.4.0: 105 new paths / 133 operations, all returning 501 `NOT_IMPLEMENTED` until stage 2 (the Prism mock serves them now). Tags: ptw-configuration (15), ptw-appointments (5), permits (55), jsa (9), gas-testing (14), isolations (21), simops (6), ptw-audits (6), plus `POST /auth/reauth` and `GET /kpi/ptw`.
+- Phase 0-2 paths unchanged; additive only:
+  - `Me.last_authenticated_at` / `Me.reauth_valid_until`.
+  - `DashboardResponse.ptw_band` (null until stage 2).
+  - `ExpiringItem.due_at` / `minutes_left` (minute-level PTW items such as gas re-test due and shift end).
+  - Reference items gain `permit_types`, `default_severity`, `na_allowed`, `routine`, `key_role` (new lists ptw_*).
+  - `InvestigationUpdate.ptw_ids` / `InvestigationRead.ptws` (1-dashboard v1.2: PTW involved).
+  - `GateCheckResponse.permit` (`GatePermitCard`, result `PTW_VIEW` for a `HSE2:PT:` scan).
+  - A `permit_type` query on every /kpi endpoint (filters PTW KPIs only).
+  - New ChartIds C13-C15 (501 until stage 2).
+- Enums extended:
+  - `Capability` 82-104.
+  - `ErrorCode`: about 90 Phase 3 codes; every `PermitBlocker` is also an ErrorCode.
+  - `EntityType`, `NotificationKind` (29), `ExportDataset` (10 PTW registers).
+  - `AttachmentOwner` (+permit_document, permit_attachment, ptw_audit_photo, gas_test_signature, crew_briefing_signature), `CaSourceType.ptw_audit`.
+  - `ReferenceList` (+8 ptw_* lists).
+  - `KpiMetric` K-46b, K-61…K-71: in the catalogue with `available=false`, value `null` / `NOT_AVAILABLE_YET` until stage 2. K-46 stays the placeholder until then.
+  - `LeadingWarningCode` E8-E9, `ActionPanelItem` (+13), `ExpiringItemKind` (+8), `AiTool.get_ptw_kpis`, `QrKind.PT`, `HookSubjectType.equipment_tag`.
+- The permission matrix rows 82-104 are live, so `Me` capabilities already show them.
+  - **The HSE Manager does not hold 83, 84, 85, 87, 92, 93, 94 or 97 org-wide** (spec "—"). `Me.org_capabilities` no longer lists them; a manager gets them only through a project role assignment.
+
+#### Phase 3 — what the frontend must know
+- **Signatures and re-authentication (PT-15).**
+  - Signing actions: request, review, hse-review, approve, issue, revalidate, resume, close, receiver acceptance, handover accept, exemption decision, JSA residual acceptance, SIMOPS coordination create/sign, gas test.
+  - Each needs a password entry within `step_up_reauth_minutes` (default 15). Otherwise the call returns 401 `REAUTH_REQUIRED` with `meta.reauth_minutes`, which is **not** a logout.
+  - Flow: show a password prompt, call `POST /auth/reauth {password}` (→ `{reauthenticated_at, valid_until}`), then resend the same request unchanged. `Me.reauth_valid_until` tells the UI whether to ask before the user signs.
+  - A wrong re-auth password returns 401 `REAUTH_REQUIRED` and counts toward the login lockout.
+  - Every signature shows on the permit as `SignatureRead {purpose, user | worker_label, role_label, appointment_no, signed_at, permit_hash}`.
+- **Two signers on one action.**
+  - **Issue / revalidate / resume** need the receiver's acceptance in the same step, in one of two ways:
+    - (a) `receiver_cosign {user_id, password}` in the issuer's request, when the receiver is at the issuer's device;
+    - (b) the receiver first calls `POST /permits/{id}/receiver-acceptance {purpose}` on their own device (valid `step_up_reauth_minutes`), then the issuer issues.
+  - A wrong co-signer password returns 401 `COSIGNER_INVALID`; it never logs the issuer out.
+  - **Handover:** the outgoing receiver offers it with `POST /permits/{id}/handovers`. Accept with `POST /permit-handovers/{id}/accept`: each incoming signer calls it on their own device, or one includes the other's `cosign`. The handover is Accepted once both signatures exist before planned_end_at.
+  - **SIMOPS coordination:** the record is created signed by the caller, with optional `cosigners[]`. The other signers then call `POST /simops-coordinations/{id}/sign`.
+- **Allowed actions, blockers, warnings.**
+  - `PermitRead.allowed_actions` lists the lifecycle actions the caller may try now, by role, appointment and status. Show only those buttons.
+  - `blockers[]` (`BlockerItem {code, detail_en/ar, ref, issue_time}`) and `warnings[]` (amber, never blocking) are recomputed on every read.
+  - `GET /permits/{id}/readiness?action=issue` previews one action, including the other error codes it would return (e.g. `OUTSIDE_WINDOW`, `REAUTH_REQUIRED`).
+  - **A blocked transition returns 422** with `detail.code` = the first blocker (list B order) and `detail.meta.blockers` = all of them. Show the whole list. There is no override (PT-17).
+  - An invalid status transition returns 409 `INVALID_TRANSITION`. Write attempts on a permit that is no longer editable return 409 `PERMIT_READ_ONLY`.
+- **Lifecycle** (one POST per action under `/permits/{id}/…`):
+  - Main path: Draft →`request`→ Requested →`review` (area authority) → [`hse-review` for high-risk types] → Reviewed →`approve`→ Approved →`issue` (issuer at site, `site_visit_confirmed: true`) → Issued →`start` (receiver, crew present and briefed) → Active.
+  - Shifts: `end-shift` (→ Suspended `shift_end`, routine), then `revalidate` for the next shift/day; or a handover.
+  - Suspension: `suspend` (anyone with 88, never blocked) / `gas-alarm` → Suspended, then `resume` once the cause is cleared (non-routine needs `cause_cleared_text` ≥ 20).
+  - Closure: `request-closure` (receiver: closure checklist and work status) → `close` (issuer: site inspection; 422 `CLOSURE_INCOMPLETE` with `meta.items`; `FIRE_WATCH_RUNNING` until fire_watch_until).
+  - Other exits: `return` (back to the receiver with a reason) and `cancel` (reason from list SR).
+  - System jobs: Issued not started in time → Approved (`lapse_issue`); valid_to passed → Expired, then `post-expiry-check` by the issuer.
+  - Inside a shift: `pause` / `pause/end` (break, prayer, heat, weather). A long pause needs a gas re-test before `pause/end`.
+  - Field records: `hot-work-end` (fire watch timer), `entry-log` (CSE in/out), `wind-readings`, `excavation-inspections`, `barrier-surveys`, `source-return`, `fod-check`.
+  - Exemptions: `POST /permits/{id}/exemptions` → `POST /permit-exemptions/{id}/decision` (capability 102, signed).
+  - Drafts: Draft/Returned are edited with `PATCH /permits/{id}`, `PUT …/sections` (one section per work type, discriminated by `work_type`) and `PUT …/checklist`. Crew, equipment and documents have their own endpoints, and crew lines carry `eligibility[]`.
+  - JSA: one per permit via `POST /permits/{id}/jsa` (blank or from a template), then `PATCH /jsas/{id}` and `POST /jsas/{id}/transitions`. Residual risk is accepted by band with `POST /jsas/{id}/residual-acceptances`. Risk scores and bands are computed by the server; read the matrix from `GET /ptw/risk-matrix`.
+- **SIMOPS conflict response.**
+  - `POST /projects/{id}/simops-check` previews the conflicts for unsaved form data and stores nothing. `POST /permits/{id}/simops-check` runs the check for a saved permit and stores conflicts. Request, approve and issue also run it.
+  - `SimopsCheckResult` has:
+    - `matches[]`, each `{rule_code, result prohibited|conditional, other_permit, checked_is_a, distance_m, distance_basis, vertical_note, overlap_from/to, required_controls_en/ar, conflict_id, conflict_status, coordinated}`;
+    - the counts `prohibited` and `conditional`;
+    - `resolved_by_change[]`.
+  - A prohibited match blocks Approve and Issue (`SIMOPS_PROHIBITED`). A conditional match blocks Issue until a coordination record is fully signed (`SIMOPS_COORDINATION_REQUIRED`).
+  - A conflict's `required_signers[]` shows who still has to sign: issuer A, issuer B and the area authority (one signature when they are the same user).
+  - Distances are display strings at 1 dp; the comparison uses unrounded values.
+- **Gas test entry.**
+  - Use `POST /permits/{id}/gas-tests/preview` while typing. It returns `GasEvaluation`: the server decides pass or fail, the applied limits (the strictest across the permit's types) and the fail codes. **The UI never evaluates readings itself.**
+  - Then call `POST /permits/{id}/gas-tests` with `{test_type, detector_id, tested_at, readings[{point, o2_pct, lel_pct, h2s_ppm, co_ppm, other[]}], tester…}`. Decimals are strings.
+  - CSE pre_entry / pre_issue tests need the 3 points top, middle and bottom (`CSE_POINTS_REQUIRED`).
+  - A tester without an account signs on the recorder's device (`tester_signature_png_base64`, else `TESTER_SIGNATURE_REQUIRED`).
+  - The detector must be in service, calibrated, and bump-tested today before `tested_at` (`DETECTOR_CALIBRATION_OVERDUE`, `BUMP_TEST_MISSING`, `DETECTOR_SENSOR_MISSING`). `tested_at` may be at most 60 min in the past (`BACKDATED_TEST`).
+  - A failed test on an Active permit suspends it at once. Tests are immutable: correct one with `POST /gas-tests/{id}/supersede`.
+  - `PermitRead.gas` gives `valid_for_start_until` and `next_due_at` for the countdown. The minute-level expiring items carry `due_at` / `minutes_left`.
+- **Hook results ("warn").** As in Phase 2: until providers exist (Phases 4-6), hook requirements on crew roles, equipment and permit types (crane certificates, operator cards, PTW training) come back as eligibility items with `status = warn` and `reason_code = HOOK_NOT_AVAILABLE`. They show amber, never block, and also appear in `warnings[]`. The `ptw-settings` read shows `hook_policy` read-only.
+- **Print and QR.**
+  - `GET /permits/{id}/print` (Issued or later; 409 before that) returns the A4 EN/AR data: crew lines, isolations, gas state, signatures, `qr_payload` = `HSE2:PT:<22-char token>` (no personal data) and `printed_ref` (the permit number) beside it.
+  - Scanning that QR at a gate returns `result = PTW_VIEW` with `GateCheckResponse.permit` (status, in-window now, blockers, crew (names need 46), gas status; nobody is logged as entering).
+  - `GET /permits/{id}/closure-pack` returns the same data plus the closure record, for Closed, Expired and Cancelled permits.
+  - The print never contains ID numbers, nationality or fitness detail.
+- **Names and privacy.** Worker names in crew, gas-tester and personal-lock records need capability 46 ("Worker" otherwise). Viewer/Client get counts and aggregates only (PT-19). The AI sees no names.
+- **Dashboard.**
+  - Until stage 2:
+    - K-46b and K-61…K-71 show "—" with `NOT_AVAILABLE_YET`;
+    - `/kpi/ptw` and charts C13-C15 return 501;
+    - `ptw_band` is null.
+  - The action panel gains 13 PTW items and the expiring list 8 PTW kinds (with `due_at` / `minutes_left`).
 
 ### Frontend — Phase 2 Site / Airport access (against contract v0.3.0)
 - Screens (list → detail → create/edit → workflow actions, EN/AR + RTL, phone layout):
@@ -272,6 +357,8 @@
 - Per-entity retention/anonymisation (P7) — no personal-data entities with retention defaults in Phase 0 beyond the audit log.
 
 ## Open questions for the HSE Manager
+- (Backend, Phase 3, §5.14) The HSE Manager has "—" for preparing, receiving, area review, issuing, isolating, personal locks, de-isolation and SIMOPS signatures, so a manager cannot issue a permit or sign a coordination record unless also assigned that project role. Implemented as specified (D-55). Confirm.
+- (Backend, Phase 3, PT-15) Two-person steps (issue with receiver acceptance, handover, SIMOPS coordination) accept either an inline co-signature (second person types their password on the same device) or a prior signature from their own device. Confirm that shared-device co-signing is acceptable (D-56).
 - (Backend, Phase 1, defaults pending the HSE Manager — DECISIONS 18-20) AI-8 trend wording; D-10 PDF export deferred; who may see observations/inspections/CAs (incident-register scope via capability 31 plus own/verifier records).
 - (Backend, Phase 1, §6.9 E4) A "repeat event" is a recordable case with the same mechanism in the same tier-1 tree within 90 days. With the seed volumes this fires in most months. Should it be limited to LTI/RWC, or need ≥ 2 repeats?
 - (Backend, Phase 1, W4) The spec's longest LTI-free run (112 days) does not match its own LTI dates (the actual gaps are longer). The engine computes from the dates.

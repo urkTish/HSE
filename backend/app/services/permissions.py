@@ -30,9 +30,28 @@ from app.services.audit import AuditActor
 C = Capability
 S = CapabilityScope
 
+# Phase 3 (3-ptw §5.14): capabilities the HSE Manager does NOT hold org-wide ("—" in the
+# manager column: preparing, receiving, area review, issuing, isolating, personal locks,
+# de-isolation, SIMOPS signatures). They come only from a project role assignment.
+MANAGER_EXCLUDED: frozenset[Capability] = frozenset(
+    {
+        C.permit_prepare,
+        C.permit_receive,
+        C.permit_area_review,
+        C.permit_issue,
+        C.isolation_manage,
+        C.personal_lock_record,
+        C.deisolation_authorise,
+        C.simops_coordinate,
+    }
+)
+MANAGER_CAPABILITIES: tuple[Capability, ...] = tuple(
+    c for c in Capability if c not in MANAGER_EXCLUDED
+)
+
 # Spec §5.10, one dict per role. Missing capability = "—".
 MATRIX: dict[Role, dict[Capability, CapabilityScope]] = {
-    Role.hse_manager: dict.fromkeys(Capability, S.all),
+    Role.hse_manager: dict.fromkeys(MANAGER_CAPABILITIES, S.all),
     Role.hse_officer: {
         C.project_view: S.project,
         C.site_zone_manage: S.project,
@@ -242,6 +261,55 @@ PHASE2_MATRIX: dict[Role, dict[Capability, CapabilityScope]] = {
 for _role, _caps in PHASE2_MATRIX.items():
     MATRIX[_role].update(_caps)
 
+# Phase 3 (3-ptw §5.14), rows 82-104. "+appt" (85, 87, 92, 97) and the gas tester / issuer
+# appointment checks are enforced in the services on top of these rows. Viewer/Client rows
+# 82, 103 and 104 are counts / aggregates / no-names (PT-19), also enforced in the services.
+PHASE3_MATRIX: dict[Role, dict[Capability, CapabilityScope]] = {
+    Role.hse_officer: dict.fromkeys(
+        [
+            C.permit_view, C.permit_area_review, C.permit_hse_review, C.permit_suspend,
+            C.permit_cancel, C.gas_test_record, C.gas_detector_manage, C.isolation_manage,
+            C.jsa_template_manage, C.simops_coordinate, C.ptw_zone_profile_edit,
+            C.ptw_appointment_manage, C.ptw_audit_conduct, C.ptw_kpi_view, C.export_ptw,
+        ],
+        S.project,
+    ),
+    Role.site_engineer: dict.fromkeys(
+        [
+            C.permit_view, C.permit_prepare, C.permit_area_review, C.permit_suspend,
+            C.gas_test_record, C.isolation_manage, C.personal_lock_record, C.simops_coordinate,
+            C.ptw_audit_conduct, C.ptw_kpi_view, C.export_ptw,
+        ],
+        S.sites,
+    ),
+    Role.permit_issuer: dict.fromkeys(
+        [
+            C.permit_view, C.permit_area_review, C.permit_issue, C.permit_suspend,
+            C.permit_cancel, C.gas_test_record, C.isolation_manage, C.personal_lock_record,
+            C.deisolation_authorise, C.simops_coordinate, C.ptw_audit_conduct, C.ptw_kpi_view,
+        ],
+        S.sites,
+    ),
+    Role.permit_receiver: dict.fromkeys(
+        [
+            C.permit_view, C.permit_prepare, C.permit_receive, C.permit_suspend,
+            C.permit_cancel, C.gas_test_record, C.personal_lock_record, C.ptw_kpi_view,
+        ],
+        S.own_engagement,
+    ),
+    Role.contractor_hse_rep: dict.fromkeys(
+        [
+            C.permit_view, C.permit_prepare, C.permit_suspend, C.gas_test_record,
+            C.gas_detector_manage, C.personal_lock_record, C.jsa_template_manage,
+            C.ptw_audit_conduct, C.ptw_kpi_view, C.export_ptw,
+        ],
+        S.contractor_tree,
+    ),
+    Role.viewer_client: dict.fromkeys([C.permit_view, C.ptw_kpi_view, C.export_ptw], S.project),
+}  # fmt: skip
+for _role, _caps in PHASE3_MATRIX.items():
+    MATRIX[_role].update(_caps)
+
 SCOPE_RANK = {S.own_engagement: 1, S.contractor_tree: 2, S.sites: 3, S.project: 4, S.all: 5}
 ROLE_RANK = {r: i for i, r in enumerate(Role)}  # lower index = more senior
 OFFICER_ASSIGNABLE = frozenset(
@@ -343,7 +411,7 @@ class Principal:
 
     # ---- capability lookup -------------------------------------------------------------
     def grant(self, project_id: uuid.UUID | None, cap: Capability) -> Grant | None:
-        if self.is_manager:
+        if self.is_manager and cap not in MANAGER_EXCLUDED:
             return FULL
         if project_id is None:
             return None
@@ -352,12 +420,14 @@ class Principal:
 
     def project_grants(self, cap: Capability) -> dict[uuid.UUID, Grant] | None:
         """Grants per project for a capability; ``None`` means every project (manager)."""
-        if self.is_manager:
+        if self.is_manager and cap not in MANAGER_EXCLUDED:
             return None
         return {pid: g for pid, s in self.projects.items() if (g := s.grants.get(cap))}
 
     def has_any(self, cap: Capability) -> bool:
-        return self.is_manager or any(cap in s.grants for s in self.projects.values())
+        if self.is_manager and cap not in MANAGER_EXCLUDED:
+            return True
+        return any(cap in s.grants for s in self.projects.values())
 
     def has_role_anywhere(self, role: Role) -> bool:
         return any(role in s.roles for s in self.projects.values())

@@ -687,6 +687,7 @@ class CaSourceType(StrEnum):
     incident = "incident"
     observation = "observation"
     inspection = "inspection"
+    ptw_audit = "ptw_audit"  # 1-dashboard v1.2: source_id = PTW audit (3-ptw §3.15)
     ai_recommendation = "ai_recommendation"
     other = "other"
 
@@ -759,6 +760,14 @@ class AttachmentOwner(StrEnum):
     pass_application_id_copy = "pass_application_id_copy"
     induction_signature = "induction_signature"
     offence_evidence = "offence_evidence"
+    # Phase 3 (3-ptw): permit documents and post-closure files; audit photos ("avoid faces",
+    # AU-8); gas-tester and crew-briefing signatures of workers without accounts (personal
+    # bucket, signed URL ≤ 5 min, capability 46 only, never exported — P3-5, AC98)
+    permit_document = "permit_document"
+    permit_attachment = "permit_attachment"
+    ptw_audit_photo = "ptw_audit_photo"
+    gas_test_signature = "gas_test_signature"
+    crew_briefing_signature = "crew_briefing_signature"
 
 
 class ScanStatus(StrEnum):
@@ -855,6 +864,19 @@ class KpiMetric(StrEnum):
     K58 = "K-58"
     K59 = "K-59"
     K60 = "K-60"
+    # Phase 3 PTW KPIs (3-ptw §6.11; K-46 is defined there too)
+    K46b = "K-46b"
+    K61 = "K-61"
+    K62 = "K-62"
+    K63 = "K-63"
+    K64 = "K-64"
+    K65 = "K-65"
+    K66 = "K-66"
+    K67 = "K-67"
+    K68 = "K-68"
+    K69 = "K-69"
+    K70 = "K-70"
+    K71 = "K-71"
 
 
 class KpiKind(StrEnum):
@@ -1013,6 +1035,7 @@ class CompareDimension(StrEnum):
     zone_type = "zone_type"
     ptw_involved = "ptw_involved"
     ca_overdue_at_event = "ca_overdue_at_event"
+    ptw_audit_band = "ptw_audit_band"  # 1-dashboard v1.2 (3-ptw KP-5)
     ramadan = "ramadan"
 
 
@@ -1042,6 +1065,8 @@ class LeadingWarningCode(StrEnum):
     E5 = "E5"  # 2-access-permits §6.9: induction coverage below threshold
     E6 = "E6"  # gate denial rate ≥ 2 × prior-3-month mean and ≥ 1.00 %
     E7 = "E7"  # ≥ 1 OFF-05 offence or ≥ 3 ADP suspensions in the month
+    E8 = "E8"  # 3-ptw §6.12: K-61 below threshold (≥ 10 audits) or K-64 ≥ threshold
+    E9 = "E9"  # 3-ptw §6.12: K-69 below threshold (≥ 10 ended) or K-70 spike
 
 
 class ChartId(StrEnum):
@@ -1059,6 +1084,9 @@ class ChartId(StrEnum):
     C10 = "C10"  # gate checks by month with denial rate (2-access-permits §8.1)
     C11 = "C11"  # denial reasons breakdown, top 8
     C12 = "C12"  # expiring credentials next 90 days by week and kind
+    C13 = "C13"  # 3-ptw §8.1: permits issued by month by primary type + high-risk share
+    C14 = "C14"  # K-61 monthly line with K-64 bars
+    C15 = "C15"  # non-routine suspensions by reason
 
 
 class ChartKind(StrEnum):
@@ -1111,6 +1139,20 @@ class ActionPanelItem(StrEnum):
     revoked_token_scans = "revoked_token_scans"
     admitted_despite_denial = "admitted_despite_denial"
     induction_language_mismatch = "induction_language_mismatch"
+    # Phase 3 (3-ptw §8.3)
+    permits_requested_unreviewed = "permits_requested_unreviewed"
+    permits_approved_not_issued = "permits_approved_not_issued"
+    permits_suspended_non_routine = "permits_suspended_non_routine"
+    shift_lapses_today = "shift_lapses_today"
+    post_expiry_checks_pending = "post_expiry_checks_pending"
+    gas_tests_failed_24h = "gas_tests_failed_24h"
+    simops_open_starting_24h = "simops_open_starting_24h"
+    ptw_critical_findings_ca_not_started = "ptw_critical_findings_ca_not_started"
+    ptw_audits_behind_plan = "ptw_audits_behind_plan"
+    orphan_isolations = "orphan_isolations"
+    quarantined_detectors_on_live_permits = "quarantined_detectors_on_live_permits"
+    midday_exemptions_active = "midday_exemptions_active"
+    lock_cuts_7d = "lock_cuts_7d"
 
 
 class ExpiringItemKind(StrEnum):
@@ -1133,6 +1175,15 @@ class ExpiringItemKind(StrEnum):
     notam_expiry = "notam_expiry"
     obstacle_clearance_expiry = "obstacle_clearance_expiry"
     pass_return_due = "pass_return_due"
+    # Phase 3 (3-ptw §8.2); timed kinds carry due_at / minutes_left
+    ptw_valid_to = "ptw_valid_to"
+    ptw_shift_end = "ptw_shift_end"
+    gas_retest_due = "gas_retest_due"
+    fire_watch_end = "fire_watch_end"
+    gas_detector_calibration_due = "gas_detector_calibration_due"
+    ptw_appointment_expiry = "ptw_appointment_expiry"
+    isolation_review_due = "isolation_review_due"
+    jsa_template_review_due = "jsa_template_review_due"
 
 
 class Severity(StrEnum):
@@ -1170,6 +1221,7 @@ class AiTool(StrEnum):
     get_expiring_items = "get_expiring_items"
     propose_chart = "propose_chart"
     get_access_kpis = "get_access_kpis"  # T14 (1-dashboard v1.1)
+    get_ptw_kpis = "get_ptw_kpis"  # T15 (1-dashboard v1.2, 3-ptw KP-5)
 
 
 class GroundingResult(StrEnum):
@@ -1246,3 +1298,12 @@ class ReferenceList(StrEnum):
     airside_offence = "airside_offence"
     vehicle_category = "vehicle_category"
     credential_reason = "credential_reason"
+    # Phase 3 (3-ptw §3.16)
+    ptw_crew_role = "ptw_crew_role"
+    ptw_hazard = "ptw_hazard"
+    ptw_status_reason = "ptw_status_reason"
+    ptw_equipment_category = "ptw_equipment_category"
+    ptw_pre_issue_checklist = "ptw_pre_issue_checklist"
+    ptw_closure_checklist = "ptw_closure_checklist"
+    ptw_audit_item = "ptw_audit_item"
+    ptw_blocker = "ptw_blocker"

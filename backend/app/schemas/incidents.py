@@ -52,6 +52,7 @@ from app.schemas.hse_common import (
     UserRef,
     ZoneRef,
 )
+from app.schemas.ptw_common import PermitRef
 
 P3_HINT = "Do not enter person names, ID numbers or medical details here (P3)."
 ISO2 = r"^[A-Z]{2}$"
@@ -610,8 +611,17 @@ class InvestigationUpdate(PatchInput):
     immediate_causes: str | None = Field(default=None, max_length=2000)
     root_causes: list[RootCauseInput] | None = None
     lessons_learned: str | None = Field(default=None, max_length=2000)
-    ptw_involved: bool | None = None
-    ptw_ref: str | None = Field(default=None, max_length=40)
+    ptw_involved: bool | None = Field(
+        default=None, description="Set true automatically when ptw_ids is non-empty (v1.2)."
+    )
+    ptw_ref: str | None = Field(
+        default=None, max_length=40, description="Legacy free text; read-only once ptw_ids set."
+    )
+    ptw_ids: list[uuid.UUID] | None = Field(
+        default=None,
+        description="v1.2: Phase 3 permits of the same project; suggestions from "
+        "GET /incidents/{id}/permit-suggestions.",
+    )
 
 
 class InvestigationExtensionRequest(StrictInput):
@@ -648,6 +658,9 @@ class InvestigationRead(ApiModel):
     lessons_learned: str | None
     ptw_involved: bool | None
     ptw_ref: str | None
+    ptws: list[PermitRef] = Field(
+        default_factory=list, description="v1.2 linked permits (ptw_ids)."
+    )
     submitted_at: datetime | None
     returned_comment: str | None
     approved_by: UserRef | None
