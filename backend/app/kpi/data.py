@@ -132,8 +132,12 @@ event.listen(Session, "after_commit", _after_commit)
 
 
 def clear_cache() -> None:
+    from app.kpi import train_facts  # noqa: PLC0415
+
     with _CACHE_LOCK:
         _CACHE.clear()
+    with train_facts._SHARED_LOCK:
+        train_facts._SHARED.clear()
 
 
 def load(

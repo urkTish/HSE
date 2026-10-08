@@ -111,6 +111,7 @@ P = {
   }},
   "errors": {"code": {
     "TOKEN_UNKNOWN": ["The code is not recognised.", "الرمز غير معروف."],
+    "TRAINING_HOOKS_NOT_ENABLED": ["Training checks are not switched on for this project yet.", "فحوص التدريب غير مفعلة في هذا المشروع بعد."],
     "OUT_OF_SCOPE": ["This record is outside your access scope.", "هذا السجل خارج نطاق صلاحيتك."],
     "CREDENTIAL_REVOKED": ["This credential has been revoked.", "تم إلغاء هذا التصريح."],
     "INDUCTION_OWNED_BY_PHASE2": ["Inductions are delivered and recorded in the induction module, not as training.", "يتم تقديم التعريف وتسجيله في وحدة التعريف وليس كتدريب."],

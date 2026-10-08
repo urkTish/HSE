@@ -70074,6 +70074,13 @@ components:
           maximum: 180.0
           minimum: 0.0
           title: Due Within Days
+        effective_from:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Effective From
+          description: 'Ignored: a line is effective from the day it is saved (MX-7, AC34).'
       additionalProperties: false
       type: object
       required:
@@ -83841,6 +83848,13 @@ components:
           title: Blockers
           description: Current SS-1…SS-4 / TA-2 problems (e.g. TRAINER_NOT_AUTHORISED after a suspension,
             PROVIDER_NOT_ACCEPTABLE).
+        warnings:
+          items:
+            $ref: '#/components/schemas/ApiWarning'
+          type: array
+          title: Warnings
+          description: P1-8 `POSSIBLE_ID_NUMBER` on the session's free text (off-site location, status
+            / void reason) (P5-10); never blocking.
         allowed_actions:
           items:
             type: string

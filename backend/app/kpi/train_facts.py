@@ -7,7 +7,10 @@ request works on a copy bound to its own session (`with_db`)."""
 from __future__ import annotations
 
 import copy
+import threading
+import time
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
@@ -106,36 +109,88 @@ class TrainFacts:
         out.db = db
         return out
 
-    def peval(self, pid: UUID, d: date) -> Any:
-        """The requirement evaluation of a project at local date d (cached)."""
+    def _base(self, pid: UUID) -> Any:
         from app.services.train import requirements as treq  # noqa: PLC0415
 
-        key = (pid, d)
-        pe = self.pe_cache.get(key)
-        if pe is None:
+        base = self.base_cache.get(pid)
+        if base is None:
             assert self.db is not None  # noqa: S101
-            base = self.base_cache.get(pid)
-            if base is None:
-                base = self.base_cache[pid] = treq.load_base(self.db, pid)
-            pe = treq.evaluate_project(self.db, pid, d, bookings=True, base=base)
-            self.pe_cache[key] = pe
-        return pe
+            db = self.db
+            base = self.base_cache[pid] = shared(("base", pid), lambda: treq.load_base(db, pid))
+        return base
+
+    def peval(self, pid: UUID, d: date) -> Any:
+        """The requirement evaluation of a project at local date d (cached)."""
+        return self._eval(pid, d, enforcement=False)
 
     def peval_full(self, pid: UUID, d: date) -> Any:
         """As peval, with the enforcement lines (crew roles, appointments, credentials, zones)
         — the action panel's evaluation (cached with the KPI facts)."""
+        return self._eval(pid, d, enforcement=True)
+
+    def _eval(self, pid: UUID, d: date, enforcement: bool) -> Any:
         from app.services.train import requirements as treq  # noqa: PLC0415
 
-        key = (pid, d, "full")
+        key = ("pe", pid, d, enforcement)
         pe = self.pe_cache.get(key)
         if pe is None:
             assert self.db is not None  # noqa: S101
-            base = self.base_cache.get(pid)
-            if base is None:
-                base = self.base_cache[pid] = treq.load_base(self.db, pid)
-            pe = treq.evaluate_project(self.db, pid, d, bookings=True, enforcement=True, base=base)
-            self.pe_cache[key] = pe
+            db = self.db
+
+            def build() -> Any:
+                return treq.evaluate_project(
+                    db, pid, d, bookings=True, enforcement=enforcement, base=self._base(pid)
+                )
+
+            pe = self.pe_cache[key] = shared(key, build)
         return pe
+
+
+# Per-project requirement evaluations shared by every KPI scope and the action panel (one
+# project's evaluation does not depend on who asks). Same switch, TTL and write generation as
+# the KPI facts cache (app.kpi.data); single flight per key, so the dashboard's parallel
+# requests wait for one build instead of each building it.
+_SHARED: dict[tuple[Any, ...], tuple[float, int, Any]] = {}
+_SHARED_LOCK = threading.Lock()
+_KEY_LOCKS: dict[tuple[Any, ...], threading.Lock] = {}
+
+
+def shared(key: tuple[Any, ...], build: Callable[[], Any]) -> Any:
+    from app.core.config import get_settings  # noqa: PLC0415
+    from app.kpi import data  # noqa: PLC0415
+
+    ttl = get_settings().kpi_cache_seconds
+    if ttl <= 0:
+        return build()
+
+    def hit() -> Any:
+        with data._CACHE_LOCK:
+            gen = data._GENERATION
+        with _SHARED_LOCK:
+            h = _SHARED.get(key)
+        if h is not None and h[1] == gen and time.monotonic() - h[0] < ttl:
+            return h[2]
+        return None
+
+    got = hit()
+    if got is not None:
+        return got
+    with _SHARED_LOCK:
+        lock = _KEY_LOCKS.setdefault(key, threading.Lock())
+    with lock:
+        got = hit()
+        if got is not None:
+            return got
+        at = time.monotonic()
+        with data._CACHE_LOCK:
+            gen = data._GENERATION
+        out = build()
+        with _SHARED_LOCK:
+            if len(_SHARED) > 256:
+                _SHARED.clear()
+                _KEY_LOCKS.clear()
+            _SHARED[key] = (at, gen, out)
+        return out
 
 
 def load_train(db: Session, pids: list[UUID], shared: Any = None) -> TrainFacts:

@@ -136,3 +136,19 @@ def test_P5AC90_gap_on_live_permit(api: Api, db: Session) -> None:
     dep = db.scalar(select(Deployment).where(Deployment.worker_id == worker(db, "WKR-000017").id,
                                              Deployment.project_id == pid))  # fmt: skip
     assert dep is not None and dep.status == DeploymentStatus.mobilised  # GP-8
+
+
+def test_P5AC148_arabic_texts_backend_side(api: Api, db: Session) -> None:
+    """The RTL rendering is UI-only; the backend side is that every Phase 5 label and error
+    carries its AR text."""
+    c = api.as_("noura.qahtani")
+    res = c.get(f"{API}/training-courses", params={"page_size": 200})
+    assert res.status_code == 200, res.text
+    assert all(x["name_ar"] for x in res.json()["items"])
+    pid = project(db, "ANIA-EXP").id
+    res = c.post(f"{API}/projects/{pid}/training-matrix/lines",
+                 json={"applies_to_kind": "trade", "applies_to_values": ["painter"],
+                       "requirement": {"course_code": "WAH"}, "level": "mandatory",
+                       "due_within_days": 30})  # fmt: skip
+    assert res.status_code == 422, res.text
+    assert res.json()["detail"]["message_ar"], res.json()

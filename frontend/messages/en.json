@@ -1220,7 +1220,8 @@
       "TRAINING_VERIFICATION_FAILED": "The training verification failed.",
       "INDUCTION_NOT_VALID": "The induction is not valid.",
       "HOLDER_NOT_LINKED": "The appointment holder has no linked worker record.",
-      "SESSION_NOT_EDITABLE": "The session can no longer be edited."
+      "SESSION_NOT_EDITABLE": "The session can no longer be edited.",
+      "TRAINING_HOOKS_NOT_ENABLED": "Training checks are not switched on for this project yet."
     }
   },
   "theme": {

@@ -544,6 +544,7 @@ function SessionView({ project, x }: { project: S["ProjectRead"]; x: S["SessionR
         <Alert tone="info">{t("closeDue", { date: date(x.close_due_on) })}</Alert>
       ) : null}
       <ApiWarnings warnings={x.blockers} />
+      <ApiWarnings warnings={x.warnings} />
       {x.void ? (
         <Alert tone="danger" data-testid="session-voided">
           {t("voidedBy", { reason: te(`sessionVoidReason.${x.void.reason_code}`), at: dateTime(x.void.at) })}

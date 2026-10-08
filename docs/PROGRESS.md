@@ -1,7 +1,7 @@
 # Progress
 
 ## Current
-- Phase: 5 — Training certificates
+- Phase: 6a — Occupational health & medical fitness (Phase 5 Training is PARKED, see below)
 - Module: training (spec `docs/specs/5-training.md` v1.0)
 - Step: Backend stage 2 done; frontend built and integrated against contract v0.6.0 (Phase 5 e2e green; Phase 1/2/4 dashboard e2e waiting on backend dashboard performance)
 
@@ -43,11 +43,11 @@
   - common, courses, providers, trainers, matrix, requirements (requirement engine), validity, hook (training_course hook provider), gaps (gap register, refresher plan), sessions, recordops, records (external records, verification, scans, certificates, passport, data-subject report), imports, exports, config (settings, hooks enable, hours report), dashboard_items, files.
 - Rules implemented: catalogue tighten-only and BD5-2/BD5-4; PV-1…PV-8 (acceptability, accreditations with register check, suspension and blacklist cascades); TA-1…TA-6; matrix versions, hook-derived lines (E01–E12, H01–H03), profiles, exemptions, due dates (TR2); sessions SS-1…SS-10 (day lengths, capacity, clashes, prerequisites, attempts, language, close with SoD and sheet, void cascade); attendance and assessment AT-1…AT-7; records TR-1…TR-16 (ID match through the Phase 2 blind index, never stored), verification VR-1…VR-8, scans with reason (P5-3), certificates with TR QR (TR-14), PDPL P5-1…P5-10.
 - Training hooks reuse the Phase 4 hook policy (kind `training_course`): enable, warn → block switch (`cert_switch`), deferral, readiness; the hook provider answers Phase 2 gates / passes / WAPs and Phase 3 permits (crew roles and key roles).
-- KPIs K-37 (register / daily returns switch, TH-6) and K-82…K-88 in the shared `kpi/` engine (`app/kpi/training.py`), charts C19–C21, the training band, expiring items, action panel (8 of 10 items, D-115), E12–E13, AI tool T17 and the T9 dimension `training_gap_at_event`.
+- KPIs K-37 (register / daily returns switch, TH-6) and K-82…K-88 in the shared `kpi/` engine (`app/kpi/training.py`), charts C19–C21, the training band, expiring items, action panel (all 10 items, D-115), E12–E13, AI tool T17 and the T9 dimension `training_gap_at_event`.
 - Jobs (`app.train_jobs`): `training_daily` 00:06:00, `training_alerts` 07:02, `training_minute` every 60 s (D-113).
 - Imports (training_records, session_attendance; contractor file or provider register file with evidence email) and the 12 training exports (capability 144; names only with 46, scores only for HSE).
 - Seed: Appendix A (`app.seed_train`) runs from `python -m app.seed` after the Phase 4 seed, is idempotent and verifies TR7 / A.9 counts at the end (raises on any mismatch). Deterministic since D-110.
-- Tests: `tests/test_train_*.py` (catalogue, matrix, sessions, records, imports, hooks, KPIs, exports) with helpers in `tests/train_helpers.py`; every test is named `test_P5AC<n>_…`. The stage-1 501 test in `tests/test_phase5_contract.py` now checks the endpoints answer. About 90 Phase 5 tests cover ACs 1–6, 8–13, 15–18, 20–23, 26, 28–33, 35–38, 40–46, 48, 50, 51, 53–57, 61, 63–67, 69, 71, 73, 74, 77, 82, 84–86, 91–94, 96–99, 102, 105, 106, 111, 112, 114–123, 125–133, 135, 137, 139–143. Not covered by a backend test yet: 7, 14, 19, 24, 25, 27, 34, 39, 47, 49, 52, 58–60, 62, 68, 70, 72, 75, 76, 78–81, 83, 87–90, 95, 100, 101, 103, 104, 107–110, 113, 124, 136, 138, 144–148.
+- Tests: `tests/test_train_*.py` (catalogue, matrix, sessions, records, imports, hooks, KPIs, exports) with helpers in `tests/train_helpers.py`; every test is named `test_P5AC<n>_…`. The stage-1 501 test in `tests/test_phase5_contract.py` now checks the endpoints answer. About 140 Phase 5 tests cover every AC with a backend side: 1–147 (the stage-2 additions are in `test_train_sessions_more.py`, `test_train_records_more.py`, `test_train_plan_more.py`, `test_train_hooks_more.py` and `test_train_kpis_more.py`). UI-only: AC134 (screens) and AC148 (RTL layout; its backend side, AR texts on courses and errors, is tested). Partial by data: AC68 tests `partial` with "Biju K. Thomas" (see open question), AC88 shows the pre-fill on HEAT-AWR (the seed's FIRE-WATCH plan items are all booked), AC49 uses Noura on 00058 (Salem has no user).
 - Full backend suite: 657 tests, one stale assertion in the full run (`test_phase5_endpoints_implemented` expected `training_register_from` null), fixed and re-run green with the Phase 5 KPI and history tests. Ruff, ruff format, mypy (strict, `app`), `alembic check` and `export_openapi --check` are clean.
 - Contract changes since stage 1 (v0.6.0, additive, version unchanged):
   - `ErrorCode.TRAINING_HOOKS_NOT_ENABLED`.
@@ -57,7 +57,9 @@
   - Provider acceptability reports the provider-kind reason before the accreditation reason (D-111).
   - A training_records import commit creates Submitted records only for rows with a scan in the zip; rows without a scan stay Draft (`counts.records_left_draft`).
 - Fixes from the frontend e2e run: `GET/PATCH /projects/{id}/hse-settings` now returns `training_register_from` (it was always null); `GET /history/{type}/{id}` drops reasons, scores and verification details of Phase 5 records for callers without capability 138 (P5-4); hours KPIs display with their catalogue decimals (K-86 "5,124.00", and K-71 now shows its 1 dp as 3-ptw specifies); the KPI engine loads a project's deployments, records and bookings once per request for all sparkline dates (ANIA-EXP dashboard cold about 14 s → 7 s under the profiler; warm 0.3 s); the refresher plan no longer reads settings per row (about 6 s → 3 s under the profiler).
-- Decisions D-105 … D-116.
+- Fixes from the AC tests (stage 2b): AT-5 window (D-117); P1-8 on Phase 5 free text, `effective_from` ignored (D-118); action-panel items `hook_block_soon_not_ready`, `holders_not_linked` and enforcement-line gaps (D-115); hook-policy change alerts carry the state id. Dashboard / action-panel performance: D-119.
+- Contract (still v0.6.0, additive): `SessionRead.warnings`, `MatrixLineCreate.effective_from`.
+- Decisions D-105 … D-119.
 
 ### Backend — Phase 5 contract v0.6.0 (stage 1)
 - `docs/contracts/openapi.yaml` v0.6.0: 57 new paths / 74 operations. Every one returns 501 `NOT_IMPLEMENTED` until stage 2; the Prism mock serves them now.
@@ -675,6 +677,7 @@
 - Phase 1 demo; then Phase 2 per the roadmap
 
 ## Parked
+- **Phase 5 Training (parked 2026-10-08 at the HSE Manager's request, to resume after Phase 6):** backend and frontend built against contract v0.6.0; remaining: ~47 ACs without backend tests, 2 action-panel items, dashboard cold-load speed (~7 s), frontend e2e not yet green (dashboard timeouts), and the Phase 5 design pass.
 - (Phase 1, D-10) PDF export of the dashboard/monthly report: deferred by the coordinator. The frontend print view covers it for now.
 - (Phase 1, I-15) The check that the supervisor named on an incident holds a supervisor role on that site is not implemented; the field is free text.
 - (Phase 1) Attachment virus scanning: files are stored locally with `scan_status = skipped`. A scanner/object store is not chosen yet.
@@ -691,7 +694,7 @@
 - (Backend, Phase 5, D-112) Phase 4 personnel certificates send the "certificate number reused" alert inside the failing request, so it is rolled back. Phase 5 now commits it separately. Apply the same fix to Phase 4?
 - (Backend, Phase 5, AC63 / AC121) Omar (site engineer) is site-scoped, so he sees none of the 00031 attendees and Imran's TR QR answers `OUT_OF_SCOPE` (same as Phase 4 AC71). The tests and e2e use Fahad. Should site engineers get the training check project-wide?
 - (Backend, Phase 5, AC122) A TR QR whose token was revoked (record revoked, e.g. after the 00031 void) answers `revoked_token` / `CREDENTIAL_REVOKED` without the training card; the UI shows "Revoked / ملغاة". Confirm that this satisfies AC122.
-- (Backend, Phase 5, D-115) Action panel items `hook_block_soon_not_ready` and `holders_not_linked` are not produced yet. Needed for go-live?
+- (Backend, Phase 5, AC68) PC-4 counts whole tokens, so "B. Thomas" against Biju Thomas shares one token and is `none`, not `partial` as AC68 says. Should initials match (B. = Biju) for Phase 4 and Phase 5, or change the AC example?
 - (Backend, Phase 4, AC71) Omar's site-engineer grant covers another site, so the field check of RW-MC-03 (S-LAND) returns `OUT_OF_SCOPE`. Capability 121 stays site-scoped. Should site engineers get the field check project-wide?
 - (Backend, Phase 4, AC111) Omar holds capability 46 in the seed, so he sees names; AC111 assumes he does not. The test overrides it. Change the seed grant or the AC?
 - (Backend, Phase 4, AC36/AC78) The seed has no Contractor HSE Rep for GULFPAVE (sanjay.verma is a permit receiver). Stop-use / tag-out alerts reach reps through the contractor tree (the RAWABI reps). Add a GULFPAVE rep?
@@ -739,7 +742,7 @@
 - (Frontend, Phase 5, low) A dedicated passport read (`GET /workers/{id}/training-passport?project_id=`) with in-force state per course; today the UI uses `GET /workers/{id}/training-records?project_id=`.
 - (Frontend, Phase 5, low) Schema names: several Phase 5 schemas are exported as `app__schemas__training_matrix__RequirementStatus`-style names (duplicate class names in the backend). Unique names would keep the generated client stable.
 - (Frontend, Phase 5, low) `GET /projects/{id}/training-gaps/summary` has no `course_code` / `trade` filters; the gaps page shows the full summary while the row list is filtered.
-- (Frontend, Phase 5, medium) `SessionRead.warnings` (POSSIBLE_ID_NUMBER, P5-10): the backend now returns it, but contract v0.6.0 does not define it, so the generated client has no type and the session page does not show it. Add `warnings: ApiWarning[]` to `SessionRead` in the contract; the UI shows it with the existing warnings component.
+- ~~(Frontend, Phase 5, medium) `SessionRead.warnings` missing from the contract.~~ Done: the contract (still v0.6.0) now carries it, and the session page shows it.
 
 ## Design proposals
 L items from the Phase 0 design pass, waiting for the user's decision at the phase demo (details in `docs/design/phase-0-findings.md`):

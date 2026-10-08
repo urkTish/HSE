@@ -281,6 +281,16 @@ def load(
     base: Base | None = None,
 ) -> Facts:
     lines = lines_at(db, project_id, d)
+    if not lines and base is not None and deployment_ids is None and worker_ids is None:
+        # no matrix line in force at d (e.g. KPI sparkline months before the matrix existed):
+        # nothing to evaluate, so skip loading deployments, records and bookings
+        s0 = common.settings(db, project_id)
+        return Facts(
+            project_id=project_id, d=d, lines=[], deps=[], workers={}, roles={}, zones={},
+            passes={}, adps={}, exemptions={}, records={}, inductions={},
+            ctx=v.EvalCtx(courses=common.courses(db), settings=s0, providers=thook.providers(db)),
+            hook_codes=project_hook_codes(db, project_id), critical=common.critical_codes(s0),
+        )  # fmt: skip
     if base is not None and deployment_ids is None and worker_ids is None:
         all_deps: list[Deployment] = base.deps
     else:

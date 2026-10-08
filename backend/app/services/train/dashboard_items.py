@@ -203,20 +203,24 @@ def expiring(
         return d is not None and lo <= d <= horizon
 
     # training records of mobilised holders
-    for r in db.scalars(
-        select(TrainingRecord).where(
+    for r, wno in db.execute(
+        select(TrainingRecord, Worker.worker_no)
+        .join(Worker, Worker.id == TrainingRecord.worker_id)
+        .join(Deployment, Deployment.worker_id == TrainingRecord.worker_id)
+        .where(
+            Deployment.project_id == pid,
+            Deployment.status == DeploymentStatus.mobilised,
             TrainingRecord.status == RS.accepted,
             TrainingRecord.valid_until.is_not(None),
             TrainingRecord.valid_until <= horizon,
+            TrainingRecord.valid_until >= lo,
         )
-    ):
+    ).all():
         if not keep(r.valid_until):
             continue
         dep = c.mobilised(r.worker_id)
         if dep is None or not c.ok(dep.engagement_id, list(dep.site_ids or [])):
             continue
-        w = db.get(Worker, r.worker_id)
-        wno = w.worker_no if w else ""
         assert r.valid_until is not None  # noqa: S101
         out.append(
             c.item(

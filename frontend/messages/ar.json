@@ -1220,7 +1220,8 @@
       "TRAINING_VERIFICATION_FAILED": "فشل التحقق من التدريب.",
       "INDUCTION_NOT_VALID": "التعريف غير ساري.",
       "HOLDER_NOT_LINKED": "حامل التعيين غير مرتبط بسجل عامل.",
-      "SESSION_NOT_EDITABLE": "لم يعد بالإمكان تعديل الجلسة."
+      "SESSION_NOT_EDITABLE": "لم يعد بالإمكان تعديل الجلسة.",
+      "TRAINING_HOOKS_NOT_ENABLED": "فحوص التدريب غير مفعلة في هذا المشروع بعد."
     }
   },
   "theme": {
