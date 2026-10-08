@@ -132,7 +132,9 @@ def list_medical_imports(
     db: DB,
     status_: Annotated[MedicalImportStatus | None, Query(alias="status")] = None,
 ) -> MedicalImportBatchPage:
-    return imports.list_batches(db, user, project_id, pg.page, pg.page_size, status_)
+    return imports.list_batches(
+        db, user, project_id, pg.page, pg.page_size, [status_] if status_ else None
+    )
 
 
 @router.get(

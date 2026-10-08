@@ -625,6 +625,10 @@ def main() -> int:
 
         seed_train_data(db)
         db.commit()
+        from app.seed_med import seed_med_data  # noqa: PLC0415
+
+        seed_med_data(db, password)
+        db.commit()
     print("Seed data loaded.")
     return 0
 

@@ -499,7 +499,7 @@ def create(
         restate_if_locked(
             db, p, b, [b.inc.occurred_date], f"{b.inc.ref} case added", f"إضافة حالة {b.inc.ref}"
         )
-    warnings = id_warnings(medical_notes=c.medical_notes)
+    warnings = id_warnings(medical_notes=c.medical_notes) + _med(db, c, p)
     return to_read(db, p, c, bundle(db, b.inc), warnings=warnings)
 
 
@@ -554,7 +554,15 @@ def update(db: Session, p: Principal, case_id: uuid.UUID, body: InjuryCaseUpdate
             f"{b.inc.ref}-P{c.person_no} reclassified {key_before[0].value} → {c.category.value}",
             f"إعادة تصنيف {b.inc.ref}-P{c.person_no}",
         )
-    return to_read(db, p, c, b, warnings=id_warnings(medical_notes=c.medical_notes))
+    warnings = id_warnings(medical_notes=c.medical_notes) + _med(db, c, p)
+    return to_read(db, p, c, b, warnings=warnings)
+
+
+def _med(db: Session, c: InjuryCase, p: Principal) -> list[ApiWarning]:
+    """6a §11.2: fitness holds from injury cases (FH-1a, FH-4) and RW-2 warnings."""
+    from app.services.med import holds as med_holds  # noqa: PLC0415
+
+    return med_holds.on_case(db, c, p)
 
 
 def _worker_no(db: Session, worker_id: uuid.UUID | None) -> str | None:
@@ -639,7 +647,7 @@ def confirm(
             f"{b.inc.ref}-P{c.person_no} reclassified {key_before[0].value} → {c.category.value}",
             f"إعادة تصنيف {b.inc.ref}-P{c.person_no}",
         )
-    return to_read(db, p, c, b)
+    return to_read(db, p, c, b, warnings=_med(db, c, p))
 
 
 def get_for_incident(db: Session, incident_id: uuid.UUID) -> list[InjuryCase]:

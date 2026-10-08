@@ -272,6 +272,21 @@ class Facts:
     def train(self, value: Any) -> None:
         self._train = value
 
+    # app.kpi.medical.MedFacts (6a-occupational-health §6.6), loaded on first use.
+    med_loader: Any = None
+    _med: Any = None
+
+    @property
+    def med(self) -> Any:
+        if self._med is None and self.med_loader is not None:
+            self._med = self.med_loader()
+            self.med_loader = None
+        return self._med
+
+    @med.setter
+    def med(self, value: Any) -> None:
+        self._med = value
+
     def sort(self) -> "Facts":
         self.wf.sort(key=lambda r: r.d)
         self.inds.sort(key=lambda r: r.d)

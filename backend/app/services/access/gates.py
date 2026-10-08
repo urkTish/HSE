@@ -510,6 +510,8 @@ def context(db: Session, caller: Caller, project_id: uuid.UUID | None) -> GateCa
 class Verdict:
     deny: list[GateReasonCode] = field(default_factory=list)
     warn: list[GateReasonCode] = field(default_factory=list)
+    # 6a HK6-7 / §11.3 GC-7: medical results show only the generic HSE-check texts
+    texts: dict[GateReasonCode, tuple[str, str]] = field(default_factory=dict)
 
     def add(self, code: GateReasonCode, warn: bool = False) -> None:
         target = self.warn if warn else self.deny
@@ -522,6 +524,10 @@ class Verdict:
                 self.add(i.reason or G.HOOK_NOT_MET)
             elif i.status in (RS.warn, RS.expiring) and i.reason:
                 self.add(i.reason, warn=True)
+            else:
+                continue
+            if i.hook_kind == HookKind.medical_fitness and i.message and i.reason:
+                self.texts.setdefault(i.reason, i.message)
 
     def result(self) -> GateResult:
         if self.deny:
@@ -529,9 +535,11 @@ class Verdict:
         return R.GRANTED_WITH_WARNING if self.warn else R.GRANTED
 
     def reasons(self) -> list[GateReason]:
-        return [gate_reason(c, False) for c in self.deny] + [
-            gate_reason(c, True) for c in self.warn
-        ]
+        out = [gate_reason(c, False) for c in self.deny] + [gate_reason(c, True) for c in self.warn]
+        for r in out:
+            if r.code in self.texts:
+                r.message_en, r.message_ar = self.texts[r.code]
+        return out
 
     def codes(self) -> list[str]:
         return [c.value for c in self.deny + self.warn]
@@ -671,6 +679,10 @@ def _log(
     )
     db.add(row)
     db.flush()
+    if dep is not None:
+        from app.services.med import holds as med_holds  # noqa: PLC0415
+
+        med_holds.detect_gate(db, row)  # 6a FH-8a
     return row
 
 
@@ -2140,6 +2152,9 @@ def admitted_despite_denial(
     row.admitted_by_user_id = caller.user_id
     row.admitted_at = at
     db.flush()
+    from app.services.med import holds as med_holds  # noqa: PLC0415
+
+    med_holds.detect_gate(db, row)  # 6a FH-8a
     actor = caller.principal.actor(row.project_id) if caller.principal else None
     audit.record(
         db,

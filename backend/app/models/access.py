@@ -182,6 +182,10 @@ class AccessSettings(Base):
         JSONB, default=dict
     )
     hook_requirements_by_crew_role: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    # 2-access-permits v1.4 §11.3 (6a): [{kind, code}] evaluated at site gates and every zone
+    project_hook_requirements: Mapped[list[dict[str, Any]]] = mapped_column(
+        JSONB, default=list, server_default="[]"
+    )
     updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     updated_by_user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))
 

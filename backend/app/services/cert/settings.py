@@ -447,6 +447,16 @@ def create_type(db: Session, p: Principal, body: CertTypeCreate) -> CertTypeInfo
             "exists in exactly one catalogue (BD-3).",
             "هذا الرمز مستخدم في فهرس الدورات التدريبية؛ لا يجوز تكراره (BD-3).",
         )
+    from app.services.med import common as mcommon  # noqa: PLC0415
+
+    if mcommon.code(db, body.code) is not None:  # 6a MC-2 / 4-third-party-cert v1.2 BD-3
+        raise ApiError(
+            422,
+            ErrorCode.CODE_IN_OTHER_CATALOGUE,
+            f"{body.code} is a fitness code (6a catalogue); a credential type exists in exactly "
+            "one catalogue.",
+            "هذا الرمز مستخدم في فهرس رموز اللياقة؛ لا يجوز تكراره.",
+        )
     if is_type(db, body.code):
         from app.services.common import duplicate  # noqa: PLC0415
 

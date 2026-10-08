@@ -40,8 +40,9 @@ from app.services.permissions import Principal, forbidden_error
 C = Capability
 KINDS = ref.PHASE4_KINDS
 """Phase 4 kinds: `enabled(db, project)` without a kind keeps meaning "Phase 4 is enabled"."""
-ALL_KINDS: tuple[HookKind, ...] = (*KINDS, HookKind.training_course)
-"""v1.1 §3.14: the state entity is shared with Phase 5 kind training_course (5-training §3.12)."""
+ALL_KINDS: tuple[HookKind, ...] = (*KINDS, HookKind.training_course, HookKind.medical_fitness)
+"""v1.1 §3.14: the state entity is shared with Phase 5 kind training_course (5-training §3.12)
+and 6a kind medical_fitness (6a §3.9)."""
 MAX_DEFERRAL_DAYS = 30
 
 
@@ -66,6 +67,15 @@ class Cfg:
 
 
 def cfg(db: Session, project_id: uuid.UUID, kind: HookKind) -> Cfg:
+    if kind == HookKind.medical_fitness:
+        from app.services.med import common as mcommon  # noqa: PLC0415
+
+        ms = mcommon.settings(db, project_id)
+        return Cfg(
+            frozenset(mcommon.critical_codes(ms)),
+            ms.medical_hook_transition_days,
+            ms.medical_hook_critical_transition_days,
+        )
     if kind == HookKind.training_course:
         from app.services.train import common as tcommon  # noqa: PLC0415
 
@@ -79,7 +89,9 @@ def cfg(db: Session, project_id: uuid.UUID, kind: HookKind) -> Cfg:
 
 
 def cap_for(kind: HookKind) -> Capability:
-    """Capability routing per kind: 145 for training_course, 124 for the Phase 4 kinds."""
+    """Capability routing per kind: 145 training_course, 164 medical_fitness, 124 Phase 4."""
+    if kind == HookKind.medical_fitness:
+        return C.medical_settings_edit
     return C.training_settings_edit if kind == HookKind.training_course else C.cert_settings_edit
 
 
@@ -119,6 +131,10 @@ def enabled(db: Session, project_id: uuid.UUID, kind: HookKind | None = None) ->
 
 
 def codes_of(db: Session, kind: HookKind) -> list[str]:
+    if kind == HookKind.medical_fitness:
+        from app.services.med import hook as mhook  # noqa: PLC0415
+
+        return mhook.codes(db)
     if kind == HookKind.training_course:
         from app.services.train import hook as thook  # noqa: PLC0415
 
@@ -131,6 +147,10 @@ def codes_of(db: Session, kind: HookKind) -> list[str]:
 
 
 def implemented(db: Session, kind: HookKind, code: str) -> bool:
+    if kind == HookKind.medical_fitness:
+        from app.services.med import hook as mhook  # noqa: PLC0415
+
+        return mhook.implemented(db, code)
     if kind == HookKind.training_course:
         from app.services.train import hook as thook  # noqa: PLC0415
 
@@ -182,6 +202,8 @@ def _view(p: Principal, project_id: uuid.UUID) -> None:
         C.settings_view,
         C.training_catalogue_view,
         C.training_kpi_view,
+        C.fitness_catalogue_view,
+        C.medical_kpi_view,
     ):
         if p.grant(project_id, cap) is not None:
             return
@@ -294,10 +316,18 @@ def policy_read(db: Session, project_id: uuid.UUID) -> HookPolicyRead:
             db, tst, HookKind.training_course, cfg(db, project_id, HookKind.training_course)
         )
         kinds.append(training)
+    mst = state(db, project_id, HookKind.medical_fitness)
+    if mst is not None:
+        kinds.append(
+            stage_read(
+                db, mst, HookKind.medical_fitness, cfg(db, project_id, HookKind.medical_fitness)
+            )
+        )
     return HookPolicyRead(
         project_id=project_id,
         enabled=any(k.provider_registered_on is not None for k in kinds if k.kind in KINDS),
         training_enabled=training is not None,
+        medical_enabled=mst is not None,
         as_of=today(),
         kinds=kinds,
     )
@@ -384,9 +414,18 @@ def enable(
 def _require_state(db: Session, project_id: uuid.UUID, kind: HookKind) -> HookPolicyState:
     if kind not in ALL_KINDS:
         raise validation_error(
-            "kind", "Only personnel_certificate, equipment_certificate and training_course."
+            "kind",
+            "Only personnel_certificate, equipment_certificate, training_course and "
+            "medical_fitness.",
         )
     st = state(db, project_id, kind)
+    if st is None and kind == HookKind.medical_fitness:
+        raise ApiError(
+            409,
+            ErrorCode.MEDICAL_HOOKS_NOT_ENABLED,
+            "Medical hooks are not enabled on this project.",
+            "متطلبات اللياقة غير مفعلة في هذا المشروع.",
+        )
     if st is None and kind == HookKind.training_course:
         raise ApiError(
             409,
@@ -561,6 +600,8 @@ def defer(
 
 
 def _label(kind: HookKind) -> tuple[str, str]:
+    if kind == HookKind.medical_fitness:
+        return "Fitness checks", "فحوص اللياقة"
     if kind == HookKind.training_course:
         return "Training checks", "فحوص التدريب"
     return "Certificate checks", "فحوص الشهادات"

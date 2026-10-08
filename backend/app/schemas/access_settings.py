@@ -78,6 +78,11 @@ class AccessSettingsRead(ApiModel):
     hook_requirements_by_crew_role: dict[CrewRole, list[HookRequirementRead]] = Field(
         description="HK-2, e.g. banksman → personnel_certificate BANKSMAN."
     )
+    project_hook_requirements: list[HookRequirementRead] = Field(
+        default_factory=list,
+        description="v1.4 (6a §11.3): evaluated at site gates and every zone (ZP-4 step 8); "
+        "6a seeds medical_fitness GEN-FIT on enable. Edited through the 6a settings.",
+    )
     updated_at: datetime | None
     updated_by: UserRef | None
 

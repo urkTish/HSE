@@ -26,7 +26,15 @@ MAPS = (
 PLAIN = [
     c.key
     for c in AccessSettings.__table__.columns
-    if c.key not in ("project_id", "updated_at", "updated_by_user_id", "hook_policy", *MAPS)
+    if c.key
+    not in (
+        "project_id",
+        "updated_at",
+        "updated_by_user_id",
+        "hook_policy",
+        "project_hook_requirements",
+        *MAPS,
+    )
 ]
 
 
@@ -59,6 +67,9 @@ def to_read(db: Session, s: AccessSettings) -> AccessSettingsRead:
         hook_requirements_by_adp_category=_map(s.hook_requirements_by_adp_category),
         hook_requirements_by_vehicle_category=_map(s.hook_requirements_by_vehicle_category),
         hook_requirements_by_crew_role=_map(s.hook_requirements_by_crew_role),
+        project_hook_requirements=[
+            HookRequirementRead(**h) for h in s.project_hook_requirements or []
+        ],
         updated_at=s.updated_at,
         updated_by=Refs(db).user(s.updated_by_user_id),
     )

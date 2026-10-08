@@ -88,7 +88,7 @@ def test_phase3_capabilities_in_matrix() -> None:
         Capability.personal_lock_record,
         Capability.deisolation_authorise,
         Capability.simops_coordinate,
-    } == MANAGER_EXCLUDED
+    } == MANAGER_EXCLUDED - {Capability.fitness_record_clinic}  # + Phase 6a MP-8
     assert set(MATRIX[Role.hse_manager]) == set(MANAGER_CAPABILITIES)
     assert Capability.lock_cut_approve in MATRIX[Role.hse_manager]
     assert Capability.permit_issue in MATRIX[Role.permit_issuer]

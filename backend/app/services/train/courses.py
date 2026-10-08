@@ -306,6 +306,14 @@ def create_course(db: Session, p: Principal, body: CourseCreate) -> CourseRead:
             f"{code} is a Phase 4 personnel certificate type; use another code.",
             f"الرمز {code} مستخدم في قائمة شهادات الأفراد (المرحلة 4).",
         )
+    from app.services.med import common as mcommon  # noqa: PLC0415
+
+    if mcommon.code(db, code) is not None:  # 6a MC-2 / 5-training v1.1 CC
+        raise _err(
+            ErrorCode.CODE_IN_OTHER_CATALOGUE,
+            f"{code} is a fitness code (6a catalogue); use another code.",
+            f"الرمز {code} مستخدم في فهرس رموز اللياقة.",
+        )
     if common.course(db, code) is not None:
         from app.services.common import duplicate  # noqa: PLC0415
 

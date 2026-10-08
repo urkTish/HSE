@@ -192,6 +192,10 @@ def _cached(db: Session, key: tuple[uuid.UUID, ...], ttl: float) -> Facts | None
         facts.train_loader = _train_loader(db, key, shared)
     else:
         facts._train = shared._train.with_db(db)
+    if shared._med is None:
+        facts.med_loader = _med_loader(db, key, shared)
+    else:
+        facts._med = shared._med.with_db(db)
     return facts
 
 
@@ -234,6 +238,20 @@ def _cert_loader(db: Session, pids: tuple[uuid.UUID, ...], shared: Facts) -> Any
     from app.kpi.cert_facts import load_cert  # noqa: PLC0415
 
     return _lazy(db, pids, shared, "cert", load_cert)
+
+
+def _med_loader(db: Session, pids: tuple[uuid.UUID, ...], shared: Facts) -> Any:
+    from app.kpi.medical import load_med  # noqa: PLC0415
+
+    def run() -> Any:
+        with _flight(pids, "med"):
+            cur = shared._med
+            if cur is None:
+                cur = load_med(db, list(pids))
+                shared._med = cur
+            return cur.with_db(db)
+
+    return run
 
 
 def _train_loader(db: Session, pids: tuple[uuid.UUID, ...], shared: Facts) -> Any:
@@ -603,6 +621,7 @@ def _load(
     facts.ptw_loader = _ptw_loader(db, tuple(sorted(pids)), facts)
     facts.cert_loader = _cert_loader(db, tuple(sorted(pids)), facts)
     facts.train_loader = _train_loader(db, tuple(sorted(pids)), facts)
+    facts.med_loader = _med_loader(db, tuple(sorted(pids)), facts)
     return facts.sort()
 
 

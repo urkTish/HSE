@@ -146,6 +146,10 @@ def report(
         from app.services.train import config as tconfig  # noqa: PLC0415
 
         return tconfig.readiness(db, p, project_id, on_date)
+    if kind == HookKind.medical_fitness:  # 6a HK6-9 (capability 162)
+        from app.services.med import config as mconfig  # noqa: PLC0415
+
+        return mconfig.readiness(db, p, project_id, on_date)
     project = projects.get_visible(db, p, project_id)
     if p.grant(project.id, C.cert_kpi_view) is None:
         raise forbidden_error()

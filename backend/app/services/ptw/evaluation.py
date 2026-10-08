@@ -721,6 +721,25 @@ def evaluate_equipment(
                 None,
             )
         )
+    mcode = (
+        ref.MEDICAL_OPERATOR_CODES.get(line.category.value)
+        if line.category is not None and line.operator_worker_id is not None and permit is not None
+        else None
+    )
+    if mcode and permit is not None and line.operator_worker_id is not None:
+        from app.services.med import common as mcommon  # noqa: PLC0415
+
+        if mcommon.registered(db, permit.project_id):
+            mctx = ctx or ahooks.HookContext(project_id=permit.project_id)
+            ops.append(
+                _item_json(
+                    elig.hook_item(
+                        db, HookSubjectType.worker, line.operator_worker_id,
+                        HookKind.medical_fitness, mcode, at, access, mctx,
+                    ),
+                    None,
+                )
+            )  # fmt: skip
     line.operator_hooks = ops
     conds: list[dict[str, Any]] = []
     _merge_conditions(conds, out)
@@ -820,6 +839,8 @@ def _crew_checks(
 
 
 def _warn_detail(it: dict[str, Any]) -> str:
+    if it.get("hook_kind") == HookKind.medical_fitness.value:  # P6-7: never the medical reason
+        return f"{it.get('code')} (HSE check)"
     return f"{it.get('code')} ({it.get('hook_reason_code') or 'HOOK_NOT_MET'})"
 
 

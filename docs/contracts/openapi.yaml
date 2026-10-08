@@ -47348,6 +47348,13 @@ components:
           type: object
           title: Hook Requirements By Crew Role
           description: HK-2, e.g. banksman → personnel_certificate BANKSMAN.
+        project_hook_requirements:
+          items:
+            $ref: '#/components/schemas/HookRequirementRead'
+          type: array
+          title: Project Hook Requirements
+          description: 'v1.4 (6a §11.3): evaluated at site gates and every zone (ZP-4 step 8); 6a seeds
+            medical_fitness GEN-FIT on enable. Edited through the 6a settings.'
         updated_at:
           anyOf:
           - type: string

@@ -164,6 +164,40 @@ CRANE_CATEGORIES = frozenset(
 )
 WAH_ARREST_HOOK = (HK.training_course, "WAH")
 RESCUE_FIRST_AID_HOOK = (HK.training_course, "FIRST-AID")  # 3-ptw v1.2 §11.4
+MEDICAL_CREW_HOOKS: dict[PtwCrewRole, tuple[str, ...]] = {  # 3-ptw v1.3 §11.4 (6a HK6-2)
+    R.entrant: ("CSE-ENTRY-FIT",),
+    R.rescue_lead: ("CSE-ENTRY-FIT", "RESPIRATOR-FIT"),
+    R.rescue_member: ("CSE-ENTRY-FIT", "RESPIRATOR-FIT"),
+    R.crane_operator: ("CRANE-OPERATOR-FIT",),
+    R.driver: ("DRIVER-FIT",),
+    R.radiographer: ("RAD-WORKER-FIT",),
+    R.rpo: ("RAD-WORKER-FIT",),
+}
+MEDICAL_WAH_CODE = "WAH-FIT"
+_CRANES = (
+    "tower_crane", "mobile_crane", "crawler_crane", "loader_crane", "overhead_gantry_crane",
+)  # fmt: skip
+_PLANT = (
+    "construction_hoist", "mast_climber", "bmu", "mewp", "forklift", "telehandler",
+    "excavator", "wheel_loader", "piling_rig", "concrete_pump_boom",
+)  # fmt: skip
+MEDICAL_OPERATOR_CODES: dict[str, str] = {
+    **dict.fromkeys(_CRANES, "CRANE-OPERATOR-FIT"),
+    **dict.fromkeys(_PLANT, "PLANT-OPERATOR-FIT"),
+}
+
+
+def medical_crew_hooks(t: PermitType) -> list[tuple[PtwCrewRole, tuple[HookKind, str]]]:
+    out = [
+        (role, (HK.medical_fitness, code))
+        for role, codes in MEDICAL_CREW_HOOKS.items()
+        for code in codes
+    ]
+    if t == PermitType.work_at_height:
+        out += [(role, (HK.medical_fitness, MEDICAL_WAH_CODE)) for role in PtwCrewRole]
+    return out
+
+
 APPOINTMENT_HOOKS: dict[AppointmentFunction, tuple[tuple[HookKind, str], ...]] = {
     AppointmentFunction.issuer: ((HK.training_course, "PTW-ISSUER"),),
     AppointmentFunction.isolation_authority: ((HK.training_course, "LOTO-AUTHORITY"),),

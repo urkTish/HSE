@@ -79,6 +79,8 @@ ENCRYPTED = frozenset({"medical", "personal"})
 def _bucket(owner: AttachmentOwner) -> str:
     if owner == AttachmentOwner.injury_case_medical:
         return "medical"
+    if owner == AttachmentOwner.fitness_scan:  # 6a P6-5: separate encrypted medical bucket
+        return "medical"
     return "personal" if owner in PERSONAL else "general"
 
 
@@ -158,6 +160,10 @@ def _owner(
         return ca.project_id, ca.status in (CaStatus.open, CaStatus.in_progress)
     if owner_type in PTW_OWNERS:
         return _ptw_owner(db, p, owner_type, owner_id, write)
+    if owner_type == AttachmentOwner.fitness_scan:
+        from app.services.med import assessments as med_assessments  # noqa: PLC0415
+
+        return med_assessments.scan_owner(db, p, owner_id, write)
     from app.services.cert import files as cert_files  # noqa: PLC0415
 
     if owner_type in cert_files.CERT_OWNERS:
@@ -413,6 +419,8 @@ def _get(db: Session, p: Principal, attachment_id: uuid.UUID) -> Attachment:
 
 def signed_url(db: Session, p: Principal, attachment_id: uuid.UUID) -> SignedUrlRead:
     a = _get(db, p, attachment_id)
+    if a.owner_type == AttachmentOwner.fitness_scan:
+        raise forbidden_error("Open fitness scans through scan-url with a reason (P6-5).")
     medical = a.owner_type == AttachmentOwner.injury_case_medical
     short = medical or a.owner_type in PERSONAL  # P1-3 / P2-2: ≤ 5 min
     expires = int(time.time()) + (MEDICAL_TTL if short else DEFAULT_TTL)

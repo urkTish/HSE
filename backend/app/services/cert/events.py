@@ -33,6 +33,10 @@ EVENTS = frozenset(
         "training.record_changed",
         "training.session_voided",
         "training.provider_changed",
+        # Phase 6a (6a-occupational-health HK6-8)
+        "medical.fitness_changed",
+        "medical.hold_changed",
+        "medical.provider_changed",
     }
 )
 LOG_KEY = "cert_events"
@@ -113,6 +117,10 @@ def publish(
         from app.services.train import hook as thook  # noqa: PLC0415
 
         thook.clear_cache(db)
+    if event.startswith("medical.") or event == "hook_policy.changed":
+        from app.services.med import common as mcommon  # noqa: PLC0415
+
+        mcommon.clear_cache(db)
     db.info.setdefault(LOG_KEY, []).append(event)
     workers = _ids(worker_ids)
     items = _ids(item_ids)

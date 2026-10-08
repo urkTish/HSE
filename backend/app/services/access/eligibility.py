@@ -167,7 +167,7 @@ def hook_item(
 ) -> Item:
     """HK-3/HK-4. v1.2: kinds answered by Phase 4 on the project (HK4-1) go to the Phase 4
     provider with the context (HK4-8) and the project's stage (HK4-4)."""
-    if kind in PHASE4_KINDS or kind == HookKind.training_course:
+    if kind in PHASE4_KINDS or kind in (HookKind.training_course, HookKind.medical_fitness):
         from app.services.cert import policy as cpolicy  # noqa: PLC0415
 
         st = cpolicy.active_state(db, s.project_id, kind, common.local_day(at))
@@ -222,10 +222,16 @@ def phase4_hook_item(
         from app.services.train import hook as thook  # noqa: PLC0415
 
         res = thook.check(db, subject_type, subject_id, code, at, ctx, s.project_id)
+    elif kind == HookKind.medical_fitness:
+        from app.services.med import hook as mhook  # noqa: PLC0415
+
+        res = mhook.check(db, subject_type, subject_id, code, at, ctx, s.project_id)
     else:
         res = providers.check(db, subject_type, subject_id, kind, code, at, ctx, s.project_id)
     reason = HookReasonCode(res.reason_code) if res.reason_code else None
     detail = cref.REASON_TEXT.get(reason) if reason else None
+    if kind == HookKind.medical_fitness:
+        return _medical_item(code, res, reason, cpolicy.code_policy(st, cs, code, at))
     extra: dict[str, Any] = {
         "hook_kind": kind,
         "hard_stop": res.hard_stop,
@@ -257,6 +263,37 @@ def phase4_hook_item(
     return Item(
         RK.hook, code, RS.warn, G.HOOK_NOT_MET_WARN, res.valid_until, res.ref,
         message=msg(G.HOOK_NOT_MET_WARN), **extra,
+    )  # fmt: skip
+
+
+def _medical_item(code: str, res: Any, reason: HookReasonCode | None, policy: Any) -> Item:
+    """HK6-7: the generic texts only (never "medical", never the reason); the detail reason is
+    kept on the item for capability-157 surfaces."""
+    from app.core.cert_enums import HookCodePolicy  # noqa: PLC0415
+    from app.services.med import reference as mref  # noqa: PLC0415
+
+    extra: dict[str, Any] = {
+        "hook_kind": HookKind.medical_fitness,
+        "hard_stop": res.hard_stop,
+        "hook_reason": reason,
+        "conditions": res.conditions,
+    }
+    if res.status == HookProviderStatus.met:
+        msg = mref.RESTRICTION_APPLIES if res.conditions else None
+        return Item(RK.hook, code, RS.met, None, res.valid_until, res.ref, message=msg, **extra)
+    if res.status == HookProviderStatus.expiring:
+        return Item(
+            RK.hook, code, RS.expiring, G.EXPIRING_7D, res.valid_until, res.ref,
+            message=mref.RESTRICTION_APPLIES if res.conditions else mref.CHECK_DUE, **extra,
+        )  # fmt: skip
+    if res.hard_stop or policy == HookCodePolicy.block:
+        return Item(
+            RK.hook, code, RS.not_met, G.HOOK_NOT_MET, res.valid_until, res.ref,
+            message=mref.NOT_ELIGIBLE, **extra,
+        )  # fmt: skip
+    return Item(
+        RK.hook, code, RS.warn, G.HOOK_NOT_MET_WARN, res.valid_until, res.ref,
+        message=mref.CHECK_DUE, **extra,
     )  # fmt: skip
 
 
@@ -575,6 +612,13 @@ def evaluate(
             items.extend(
                 induction_item(db, worker.id, zone.project_id, courses.get(code), code, at, s)
             )
+    hctx = hooks.HookContext(project_id=s.project_id, zone_id=zone.id, crew_role=crew_role)
+    for h in s.project_hook_requirements or []:  # 6a §11.3: site gates and every zone
+        items.append(
+            hook_item(
+                db, HookSubjectType.worker, worker.id, HookKind(h["kind"]), h["code"], at, s, hctx
+            )
+        )
     if site_only:
         return ev
     prof = profiles.ensure(db, zone)
@@ -602,7 +646,6 @@ def evaluate(
     ]  # fmt: skip
     if crew_role:
         reqs += list((s.hook_requirements_by_crew_role or {}).get(crew_role, []))
-    hctx = hooks.HookContext(project_id=s.project_id, zone_id=zone.id, crew_role=crew_role)
     for h in reqs:
         items.append(
             hook_item(

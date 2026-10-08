@@ -133,7 +133,7 @@ def hse_seed(_fresh_data: None) -> None:
 
 # ---- Phase 2: full Appendix A world, built once and cloned per test ----------------------------
 
-ACCESS_TEMPLATE = "hse_test_access_tpl"
+ACCESS_TEMPLATE = TEST_DB.rsplit("/", 1)[1] + "_access_tpl"
 
 
 def _admin_exec(*statements: str) -> None:
@@ -199,7 +199,7 @@ def access_seed(_fresh_data: None, _access_template: str) -> None:
 
 # ---- Phase 3: PTW Appendix A on top of the Phase 2 world, built once and cloned per test -------
 
-PTW_TEMPLATE = "hse_test_ptw_tpl"
+PTW_TEMPLATE = TEST_DB.rsplit("/", 1)[1] + "_ptw_tpl"
 
 
 def _clone(template: str) -> None:
@@ -237,7 +237,7 @@ def ptw_seed(_fresh_data: None, _ptw_template: str) -> None:
 
 # ---- Phase 4: certification Appendix A on top of the Phase 3 world ------------------------------
 
-CERT_TEMPLATE = "hse_test_cert_tpl"
+CERT_TEMPLATE = TEST_DB.rsplit("/", 1)[1] + "_cert_tpl"
 
 
 @pytest.fixture(scope="session")
@@ -267,7 +267,7 @@ def cert_seed(_fresh_data: None, _cert_template: str) -> None:
 
 # ---- Phase 5: training Appendix A on top of the Phase 4 world -----------------------------------
 
-TRAIN_TEMPLATE = "hse_test_train_tpl"
+TRAIN_TEMPLATE = TEST_DB.rsplit("/", 1)[1] + "_train_tpl"
 
 
 @pytest.fixture(scope="session")
@@ -293,6 +293,36 @@ def _train_template(_cert_template: str) -> str:
 def train_seed(_fresh_data: None, _train_template: str) -> None:
     """Replace the test database with a copy of the Phase 5 template."""
     _clone(_train_template)
+
+
+# ---- Phase 6a: occupational health Appendix A on top of the Phase 5 world ----------------------
+
+MED_TEMPLATE = TEST_DB.rsplit("/", 1)[1] + "_med_tpl"
+
+
+@pytest.fixture(scope="session")
+def _med_template(_train_template: str) -> str:
+    """Phase 0-5 template + the 6a Appendix A seed (verified against MF4)."""
+    from app.seed_med import seed_med_data
+
+    _clone(_train_template)
+    with get_sessionmaker()() as db:
+        seed_med_data(db, PASSWORD)
+        db.commit()
+    get_engine().dispose()
+    name = _db_name()
+    _admin_exec(
+        _terminate(name),
+        f"DROP DATABASE IF EXISTS {MED_TEMPLATE}",
+        f"CREATE DATABASE {MED_TEMPLATE} TEMPLATE {name}",
+    )
+    return MED_TEMPLATE
+
+
+@pytest.fixture
+def med_seed(_fresh_data: None, _med_template: str) -> None:
+    """Replace the test database with a copy of the Phase 6a template."""
+    _clone(_med_template)
 
 
 @pytest.fixture

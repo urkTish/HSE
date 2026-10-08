@@ -41,8 +41,8 @@ PHASE5_PENDING: frozenset[KpiMetric] = frozenset()
 PHASE6A_METRICS: frozenset[KpiMetric] = frozenset(
     {M.K89, M.K90, M.K91, M.K92, M.K93, M.K94, M.K95, M.K96}
 )
-PHASE6A_PENDING: frozenset[KpiMetric] = PHASE6A_METRICS
-"""Occupational health KPIs not computed yet (stage 1: catalogued, value null)."""
+PHASE6A_PENDING: frozenset[KpiMetric] = frozenset()
+"""Occupational health KPIs not computed yet (none since Phase 6a stage 2)."""
 _PENDING = PHASE2_PENDING | PHASE3_PENDING | PHASE4_PENDING | PHASE5_PENDING | PHASE6A_PENDING
 
 

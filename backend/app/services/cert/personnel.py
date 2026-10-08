@@ -1231,7 +1231,12 @@ def review_restriction(
     db: Session, p: Principal, certificate_id: uuid.UUID, body: RestrictionReviewRequest
 ) -> PersonnelCertRead:
     pc = get_visible(db, p, certificate_id)
-    _require(db, p, pc, C.cert_review)
+    from app.core.access_enums import HookKind  # noqa: PLC0415
+    from app.services.cert import policy as hook_policy  # noqa: PLC0415
+
+    # 6a §11.5 (2): once medical hooks are enabled, the OH Practitioner (157) records the review
+    medical = hook_policy.enabled(db, pc.project_id, HookKind.medical_fitness)
+    _require(db, p, pc, C.fitness_clinical_view if medical else C.cert_review)
     if not pc.medical_restriction_on_card:
         raise validation_error("certificate_id", "The card states no restriction.")
     before = cc.snap(pc)

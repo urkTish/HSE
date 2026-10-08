@@ -86,10 +86,17 @@ def names_ok(p: Principal | None, project_id: uuid.UUID) -> bool:
 
 
 def medical_ok(p: Principal | None, project_id: uuid.UUID) -> bool:
-    """HK3-4: medical-fitness detail only for capability 56 holders."""
+    """HK3-4 as revised by 6a HK6-7: kind and code of medical results for capability 156."""
     if p is None:
         return True
-    return p.grant(project_id, C.background_check_view) is not None
+    return p.grant(project_id, C.fitness_functional_view) is not None
+
+
+def clinical_ok(p: Principal | None, project_id: uuid.UUID | None) -> bool:
+    """6a HK6-7: the medical hook reason_code for capability 157 only."""
+    if p is None or project_id is None:
+        return p is None
+    return p.grant(project_id, C.fitness_clinical_view) is not None
 
 
 def _worker(db: Session, wid: uuid.UUID | None, names: bool) -> Any:
@@ -102,7 +109,9 @@ def _worker(db: Session, wid: uuid.UUID | None, names: bool) -> Any:
 # ---- crew / equipment / documents ----------------------------------------------------------------
 
 
-def _eligibility(items: list[dict[str, Any]], medical: bool) -> list[sch.CrewEligibilityItem]:
+def _eligibility(
+    items: list[dict[str, Any]], medical: bool, clinical: bool = False
+) -> list[sch.CrewEligibilityItem]:
     out = []
     for it in items or []:
         d = dict(it)
@@ -126,6 +135,8 @@ def _eligibility(items: list[dict[str, Any]], medical: bool) -> list[sch.CrewEli
             continue
         if d.get("hook_kind") == HookKind.medical_fitness.value:
             d["reason_code"] = None  # AC99 / HK3-4: kind and code only, never the reason
+            if not clinical:
+                d["hook_reason_code"] = None  # 6a HK6-7: the reason for 157 holders only
         out.append(sch.CrewEligibilityItem(**d, zone_id=uuid.UUID(zid) if zid else None))
     return out
 
@@ -160,7 +171,7 @@ def crew_read(
         status=line.status,
         excluded_reason=redacted_reason,
         eligible=line.eligible,
-        eligibility=_eligibility(line.eligibility, medical),
+        eligibility=_eligibility(line.eligibility, medical, clinical_ok(p, pid)),
         evaluated_at=line.evaluated_at,
         briefed_current_shift=bool(shift and line.worker_id in (shift.briefed or [])),
     )

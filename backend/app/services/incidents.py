@@ -1138,6 +1138,10 @@ def transition(
     )
     if src == ST.draft and to == ST.reported:
         _report_alerts(db, b)
+    if to in (ST.reported, ST.voided):
+        from app.services.med import holds as med_holds  # noqa: PLC0415
+
+        med_holds.on_incident_status(db, inc, p)
     if counted_change:
         restate_if_locked(
             db, p, b, [inc.occurred_date], f"{inc.ref} {to.value}", f"{inc.ref} تغيرت حالته"

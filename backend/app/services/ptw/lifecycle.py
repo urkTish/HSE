@@ -337,6 +337,9 @@ def open_shift(
     db.add(s)
     db.flush()
     permit.current_shift_id = s.id
+    from app.services.med import holds as med_holds  # noqa: PLC0415
+
+    med_holds.detect_crew(db, permit.permit_no, list(crew), at)  # 6a FH-8b
     from app.services.ptw import jsa  # noqa: PLC0415
 
     jsa.record_briefing(db, jsa.current_for_permit(db, permit), s.id, s.shift_no, crew, receiver_id)

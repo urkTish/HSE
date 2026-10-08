@@ -94,6 +94,13 @@ def training_registered(db: Session, project_id: uuid.UUID) -> bool:
     return bool(cache[key])
 
 
+def medical_registered(db: Session, project_id: uuid.UUID) -> bool:
+    """6a registered its `medical_fitness` provider on the project (HK6-1)."""
+    from app.services.med import common as mcommon  # noqa: PLC0415
+
+    return mcommon.registered(db, project_id)
+
+
 def type_lists(db: Session, project_id: uuid.UUID, t: PermitType) -> dict[str, Any]:
     """Defaults + per-project additions of one type."""
     info = ref.TYPES[t]
@@ -128,6 +135,12 @@ def type_lists(db: Session, project_id: uuid.UUID, t: PermitType) -> dict[str, A
                 *crew[PtwCrewRole.rescue_lead],
                 ref.RESCUE_FIRST_AID_HOOK,
             ]
+    if medical_registered(db, project_id):
+        # 3-ptw v1.3 §11.4 (6a HK6-2): medical crew hooks from the day 6a registers its provider
+        for mrole, mpair in ref.medical_crew_hooks(t):
+            mlst = crew.setdefault(mrole, [])
+            if mpair not in mlst:
+                mlst.append(mpair)
     for role, items in ((cfg.extra_crew_hooks if cfg else None) or {}).items():
         lst = crew.setdefault(PtwCrewRole(role), [])
         for h in items:
