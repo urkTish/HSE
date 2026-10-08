@@ -145,6 +145,8 @@ class _Ctx:
         self.counts_only = bool(scope and scope.read_only and not p.is_manager)
         self.refs = Refs(db)
         self._worker_eng: dict[uuid.UUID, uuid.UUID | None] = {}
+        self._workers_loaded = False
+        self._item_eng: dict[uuid.UUID, tuple[uuid.UUID, bool]] | None = None
 
     def ok(self, eng: uuid.UUID | None, sites: list[uuid.UUID] | None = None) -> bool:
         g = self.grant
@@ -160,25 +162,41 @@ class _Ctx:
         return g is not None and g.engagement_ids is None and g.site_ids is None
 
     def worker_eng(self, worker_id: uuid.UUID) -> uuid.UUID | None:
-        if worker_id not in self._worker_eng:
-            dep = self.db.scalar(
-                select(Deployment)
-                .where(Deployment.worker_id == worker_id, Deployment.project_id == self.project.id)
-                .order_by(Deployment.status != DeploymentStatus.mobilised)
-                .limit(1)
-            )
-            self._worker_eng[worker_id] = dep.engagement_id if dep else None
-        return self._worker_eng[worker_id]
+        if not self._workers_loaded:
+            self._workers_loaded = True
+            # one query: mobilised deployments win over others (as the per-worker lookup did)
+            rows = self.db.execute(
+                select(Deployment.worker_id, Deployment.engagement_id, Deployment.status).where(
+                    Deployment.project_id == self.project.id
+                )
+            ).all()
+            for wid, eng, st in rows:
+                if wid not in self._worker_eng or st == DeploymentStatus.mobilised:
+                    self._worker_eng[wid] = eng
+        return self._worker_eng.get(worker_id)
 
     def cert_eng(self, cert: Any) -> uuid.UUID | None:
         """Engagement of a certificate: the holder's deployment or the item's deployment."""
         if isinstance(cert, PersonnelCertificate):
             return self.worker_eng(cert.worker_id)
-        line = self.db.scalar(
-            select(EquipmentCertLine).where(EquipmentCertLine.certificate_id == cert.id).limit(1)
+        if self._item_eng is None:
+            self._item_eng = {}
+            for d in self.db.scalars(
+                select(EquipmentDeployment)
+                .where(EquipmentDeployment.project_id == self.project.id)
+                .order_by(EquipmentDeployment.created_at)
+            ):
+                live = d.status in cc.LIVE_DEPLOYMENT
+                prev = self._item_eng.get(d.equipment_id)
+                if prev is None or live or not prev[1]:
+                    self._item_eng[d.equipment_id] = (d.engagement_id, live)
+        item_id = self.db.scalar(
+            select(EquipmentCertLine.equipment_id)
+            .where(EquipmentCertLine.certificate_id == cert.id)
+            .limit(1)
         )
-        dep = _deployment(self.db, line.equipment_id, self.project.id) if line else None
-        return dep.engagement_id if dep else None
+        hit = self._item_eng.get(item_id) if item_id else None
+        return hit[0] if hit else None
 
     def item(
         self,
@@ -426,6 +444,40 @@ def expiring(
 Adder = Callable[..., None]
 
 
+_READY: dict[tuple[Any, ...], tuple[float, int]] = {}
+READY_TTL_S = 300.0
+
+
+def _not_ready(
+    db: Session,
+    p: Principal,
+    pid: uuid.UUID,
+    kind: HookKind,
+    day: date,
+    soon: tuple[date, ...],
+    readiness: Any,
+) -> int:
+    """Codes blocking within 7 days whose readiness is < 100 %. The readiness report evaluates
+    every subject (seconds on a large project), so this planning count is cached per (project,
+    kind, day) for 5 minutes; the readiness report itself is always live."""
+    import time  # noqa: PLC0415
+
+    from app.core.config import get_settings  # noqa: PLC0415
+
+    key = (pid, kind, day, soon)
+    hit = _READY.get(key)
+    t = time.monotonic()
+    caching = get_settings().kpi_cache_seconds > 0  # the same switch as the KPI cache
+    if caching and hit is not None and t - hit[0] < READY_TTL_S:
+        return hit[1]
+    rep = readiness.report(db, p, pid, kind, day)
+    n = sum(1 for x in rep.codes if x.block_from in soon and x.required and x.in_force < x.required)
+    if len(_READY) > 256:
+        _READY.clear()
+    _READY[key] = (t, n)
+    return n
+
+
 def action_items(
     db: Session,
     p: Principal,
@@ -580,32 +632,41 @@ def action_items(
             scf[sc.engagement_id] += 1
     add(A.scaffolds_tag_not_valid, sum(scf.values()), Severity.critical,
         link("scaffolds", f"{base}/scaffolds", {"status": [ScaffoldStatus.in_use.value], **eflt}), scf)  # fmt: skip
-    # PC-12 trade certificate missing
-    from app.services.cert import personnel  # noqa: PLC0415
+    # PC-12 trade certificate missing (set-based: one query per table)
+    from app.services.cert import settings as cset  # noqa: PLC0415
 
     trade: Counter[uuid.UUID | None] = Counter()
-    for dep2 in db.scalars(
-        select(Deployment).where(
-            Deployment.project_id == pid, Deployment.status == DeploymentStatus.mobilised
+    reqs = dict(cset.get(db, pid).trade_cert_requirements or {})
+    if reqs:
+        held = set(
+            db.execute(
+                select(PersonnelCertificate.worker_id, PersonnelCertificate.cert_type).where(
+                    PersonnelCertificate.project_id == pid,
+                    PersonnelCertificate.cert_type.in_(set(reqs.values())),
+                    PersonnelCertificate.status == CS.accepted,
+                    PersonnelCertificate.valid_until >= day,
+                )
+            ).all()
         )
-    ):
-        if not ok(dep2.engagement_id):
-            continue
-        code = personnel.trade_requirement(db, pid, dep2.worker_id)
-        if not code:
-            continue
-        held = db.scalar(
-            select(PersonnelCertificate.id)
-            .where(
-                PersonnelCertificate.worker_id == dep2.worker_id,
-                PersonnelCertificate.cert_type == code,
-                PersonnelCertificate.status == CS.accepted,
-                PersonnelCertificate.valid_until >= day,
+        # Certificates are personal: a card held on another project counts too.
+        held |= set(
+            db.execute(
+                select(PersonnelCertificate.worker_id, PersonnelCertificate.cert_type).where(
+                    PersonnelCertificate.project_id != pid,
+                    PersonnelCertificate.cert_type.in_(set(reqs.values())),
+                    PersonnelCertificate.status == CS.accepted,
+                    PersonnelCertificate.valid_until >= day,
+                )
+            ).all()
+        )
+        for wid, eng_id, tr in db.execute(
+            select(Deployment.worker_id, Deployment.engagement_id, Deployment.trade).where(
+                Deployment.project_id == pid, Deployment.status == DeploymentStatus.mobilised
             )
-            .limit(1)
-        )
-        if held is None:
-            trade[dep2.engagement_id] += 1
+        ).all():
+            code = reqs.get(tr.value) if tr is not None else None
+            if code and ok(eng_id) and (wid, code) not in held:
+                trade[eng_id] += 1
     add(A.trade_cert_missing, sum(trade.values()), Severity.warning,
         link("personnel_certificates", pc_link, eflt), trade)  # fmt: skip
     # hook block ≤ 7 days with readiness < 100 %
@@ -624,11 +685,7 @@ def action_items(
             ]  # fmt: skip
             if not soon:
                 continue
-            rep = readiness.report(db, p, pid, HookKind(st.kind), day)
-            not_ready += sum(
-                1 for x in rep.codes
-                if x.block_from in soon and x.required and x.in_force < x.required
-            )  # fmt: skip
+            not_ready += _not_ready(db, p, pid, HookKind(st.kind), day, tuple(soon), readiness)
     add(A.hook_block_soon_not_ready, not_ready, Severity.warning,
         link("hook_readiness", f"{base}/hook-readiness", {}), None)  # fmt: skip
     # ban reviews due (HSE Manager / Officer: decision 8)

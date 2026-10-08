@@ -27,6 +27,7 @@ from app.core.access_enums import (
     DeploymentStatus,
     GateDirection,
     GateResult,
+    GateSubjectKind,
     InductionResult,
     InductionStatus,
     InductionType,
@@ -359,7 +360,10 @@ def load_access(db: Session, pids: list[UUID]) -> AccessFacts:
             G.local_date, G.site_id, G.zone_id, G.engagement_id, G.gate_id, G.result,
             G.first_deny_reason, func.count(),
         )
-        .where(G.project_id.in_(pids), G.direction == GateDirection.in_, G.final.is_(True))
+        .where(
+            G.project_id.in_(pids), G.direction == GateDirection.in_, G.final.is_(True),
+            G.subject_kind != GateSubjectKind.equipment_deployment,  # GE-6: not in K-52 / K-53
+        )
         .group_by(
             G.local_date, G.site_id, G.zone_id, G.engagement_id, G.gate_id, G.result,
             G.first_deny_reason,

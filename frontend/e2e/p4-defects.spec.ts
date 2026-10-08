@@ -124,6 +124,9 @@ test.describe("Defects", () => {
       "data-status",
       "out_of_service",
     );
+    await expect(page.getByTestId("equipment-stop")).toContainText(
+      "boom cylinder weeping",
+    );
   });
 
   test("AC79: the lifting-gear incident prompts the investigator to link or raise a defect and shows the linked one", async ({

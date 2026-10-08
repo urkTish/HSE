@@ -43,6 +43,7 @@ M = KpiMetric
 HUNDRED = Decimal(100)
 SCAFFOLD = "scaffold"
 
+
 def label(cat: str) -> tuple[str, str]:
     from app.core.cert_enums import EquipmentCertCategory  # noqa: PLC0415
     from app.services.cert.reference import EQC  # noqa: PLC0415

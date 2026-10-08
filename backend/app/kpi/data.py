@@ -94,12 +94,27 @@ _CACHE_LOCK = threading.Lock()
 _GENERATION = 0
 
 
+# Writes that never change a KPI fact; the 30-second session heartbeat (deps.py) would
+# otherwise invalidate every scope's cache on each request.
+_NO_KPI_TABLES = frozenset({"user_sessions", "gate_device_sessions"})
+
+
+def _table_of(obj: Any) -> str | None:
+    t = getattr(type(obj), "__tablename__", None)
+    return t if isinstance(t, str) else None
+
+
 def _mark_write(session: Session, *_: Any) -> None:
-    session.info["kpi_wrote"] = True
+    rows = [*session.new, *session.dirty, *session.deleted]
+    if not rows or any(_table_of(o) not in _NO_KPI_TABLES for o in rows):
+        session.info["kpi_wrote"] = True
 
 
 def _mark_statement(state: ORMExecuteState) -> None:
-    if not state.is_select:
+    if state.is_select:
+        return
+    table = getattr(getattr(state.statement, "table", None), "name", None)
+    if table not in _NO_KPI_TABLES:
         state.session.info["kpi_wrote"] = True
 
 
@@ -133,58 +148,84 @@ def load(
     if ttl <= 0:
         return _load(db, plist, hse)
     key = tuple(sorted(p.id for p in plist))
+    hit = _cached(db, key, ttl)
+    if hit is not None:
+        return hit
+    # Single flight: concurrent requests for the same scope (the dashboard fires the tiles and
+    # every chart at once) wait for one build instead of each rebuilding the facts.
+    with _flight(key, "base"):
+        hit = _cached(db, key, ttl)
+        if hit is not None:
+            return hit
+        at = time.monotonic()
+        with _CACHE_LOCK:
+            gen = _GENERATION
+        facts = _load(db, plist, hse)
+        with _CACHE_LOCK:
+            if gen == _GENERATION:
+                if len(_CACHE) > 64:
+                    _CACHE.clear()
+                _CACHE[key] = (at, gen, facts)
+        return facts
+
+
+def _cached(db: Session, key: tuple[uuid.UUID, ...], ttl: float) -> Facts | None:
     at = time.monotonic()
     with _CACHE_LOCK:
         hit = _CACHE.get(key)
         gen = _GENERATION
-    if hit is not None and hit[1] == gen and at - hit[0] < ttl:
-        shared = hit[2]
-        facts = copy.copy(shared)  # own lazy loader on this request's session
-        if shared._access is None:
-            facts.access_loader = _access_loader(db, key, shared)
-        if shared._ptw is None:
-            facts.ptw_loader = _ptw_loader(db, key, shared)
-        if shared._cert is None:
-            facts.cert_loader = _cert_loader(db, key, shared)
-        return facts
-    facts = _load(db, plist, hse)
-    with _CACHE_LOCK:
-        if gen == _GENERATION:
-            if len(_CACHE) > 64:
-                _CACHE.clear()
-            _CACHE[key] = (at, gen, facts)
+    if hit is None or hit[1] != gen or at - hit[0] >= ttl:
+        return None
+    shared = hit[2]
+    facts = copy.copy(shared)  # own lazy loader on this request's session
+    if shared._access is None:
+        facts.access_loader = _access_loader(db, key, shared)
+    if shared._ptw is None:
+        facts.ptw_loader = _ptw_loader(db, key, shared)
+    if shared._cert is None:
+        facts.cert_loader = _cert_loader(db, key, shared)
     return facts
 
 
-def _access_loader(db: Session, pids: tuple[uuid.UUID, ...], shared: Facts) -> Any:
+_FLIGHTS: dict[tuple[tuple[uuid.UUID, ...], str], threading.RLock] = {}
+
+
+def _flight(key: tuple[uuid.UUID, ...], part: str) -> threading.RLock:
+    with _CACHE_LOCK:
+        if len(_FLIGHTS) > 512:
+            _FLIGHTS.clear()
+        return _FLIGHTS.setdefault((key, part), threading.RLock())
+
+
+def _lazy(db: Session, pids: tuple[uuid.UUID, ...], shared: Facts, part: str, fn: Any) -> Any:
+    """A lazy fact section loaded once per shared Facts, other requests waiting for it."""
+
     def run() -> Any:
-        acc = load_access(db, list(pids))
-        shared.access = acc
-        return acc
+        with _flight(pids, part):
+            cur = getattr(shared, f"_{part}")
+            if cur is not None:
+                return cur
+            val = fn(db, list(pids))
+            setattr(shared, f"_{part}", val)
+            return val
 
     return run
+
+
+def _access_loader(db: Session, pids: tuple[uuid.UUID, ...], shared: Facts) -> Any:
+    return _lazy(db, pids, shared, "access", load_access)
 
 
 def _ptw_loader(db: Session, pids: tuple[uuid.UUID, ...], shared: Facts) -> Any:
-    def run() -> Any:
-        from app.kpi.ptw_facts import load_ptw  # noqa: PLC0415
+    from app.kpi.ptw_facts import load_ptw  # noqa: PLC0415
 
-        pf = load_ptw(db, list(pids))
-        shared.ptw = pf
-        return pf
-
-    return run
+    return _lazy(db, pids, shared, "ptw", load_ptw)
 
 
 def _cert_loader(db: Session, pids: tuple[uuid.UUID, ...], shared: Facts) -> Any:
-    def run() -> Any:
-        from app.kpi.cert_facts import load_cert  # noqa: PLC0415
+    from app.kpi.cert_facts import load_cert  # noqa: PLC0415
 
-        cf = load_cert(db, list(pids))
-        shared.cert = cf
-        return cf
-
-    return run
+    return _lazy(db, pids, shared, "cert", load_cert)
 
 
 def _load(
@@ -520,9 +561,9 @@ def _load(
                 m.project_id,
             )
         )
-    facts.access_loader = lambda: load_access(db, pids)
-    facts.ptw_loader = _ptw_loader(db, tuple(pids), facts)
-    facts.cert_loader = _cert_loader(db, tuple(pids), facts)
+    facts.access_loader = _access_loader(db, tuple(sorted(pids)), facts)
+    facts.ptw_loader = _ptw_loader(db, tuple(sorted(pids)), facts)
+    facts.cert_loader = _cert_loader(db, tuple(sorted(pids)), facts)
     return facts.sort()
 
 

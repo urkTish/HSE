@@ -446,7 +446,7 @@ export function CertImportDetail({ id }: { id: string }) {
                   )}
                 </TD>
                 <TD label={t("scan")}>{r.scan_found == null ? "—" : r.scan_found ? t("scanYes") : t("scanNo")}</TD>
-                <TD label={t("action")}>{r.action ?? "—"}</TD>
+                <TD label={t("action")}>{r.action ? (t.has(`rowAction.${r.action}` as never) ? t(`rowAction.${r.action}` as never) : r.action) : "—"}</TD>
               </TR>
             ))}
           </TBody>

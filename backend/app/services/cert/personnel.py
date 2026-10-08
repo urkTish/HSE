@@ -26,7 +26,7 @@ from app.core.cert_enums import (
     VerificationStatus,
 )
 from app.core.clock import now, today
-from app.core.enums import AuditAction, Capability, EntityType, NotificationKind
+from app.core.enums import AuditAction, AuditResult, Capability, EntityType, NotificationKind
 from app.core.errors import ApiError, ErrorCode, not_found, validation_error
 from app.core.hse_enums import AttachmentOwner
 from app.core.text import normalize
@@ -184,6 +184,8 @@ def id_match(
         entity_id=w.id,
         project_id=project_id,
         details={"cert_id_mismatch": masked, "worker_no": w.worker_no},
+        result=AuditResult.failed,
+        defer=True,  # persisted although the request is rolled back (nothing else is stored)
     )
     raise ApiError(
         422,
@@ -1133,10 +1135,12 @@ def verify(
     db: Session, p: Principal, certificate_id: uuid.UUID, body: VerificationCreate
 ) -> VerificationRead:
     pc = get_visible(db, p, certificate_id)
+    cc.require(p, pc.project_id, C.cert_verify)  # 403 before any content check (row 108)
     if (
         pc.id_match_result == IdMatchResult.not_shown
         and body.outcome.value == "confirmed"
         and body.method not in NOT_SHOWN_METHODS
+        and body.method.value != "original_sighted"  # never verifies (VF-3)
     ):
         raise validation_error(
             "method",
@@ -1185,6 +1189,16 @@ def scan_url(
     if body.reason == ScanReason.other and not (body.reason_text or "").strip():
         raise validation_error("reason_text", "Describe the reason.")
     aid = pc.scan_front_attachment_id if body.side == ScanSide.front else pc.scan_back_attachment_id
+    if aid is None and body.side == ScanSide.front:  # a draft's scan is bound at Submit
+        aid = db.scalar(
+            select(Attachment.id)
+            .where(
+                Attachment.owner_type == AttachmentOwner.personnel_cert_scan,
+                Attachment.owner_id == pc.id,
+            )
+            .order_by(Attachment.created_at)
+            .limit(1)
+        )
     if aid is None or pc.scans_deleted_at is not None:
         raise not_found("Scan")
     import time  # noqa: PLC0415
@@ -1344,3 +1358,82 @@ def expiry_job(db: Session, at: datetime | None = None) -> int:
         _publish(db, pc)
         n += 1
     return n
+
+
+# ---- retention (P4-7) ----------------------------------------------------------------------------
+
+ENDED = (CS.expired, CS.superseded, CS.revoked, CS.rejected)
+
+
+def _erase_scans(db: Session, pc: PersonnelCertificate) -> int:
+    from app.services import attachments  # noqa: PLC0415
+
+    n = 0
+    for a in db.scalars(
+        select(Attachment).where(
+            Attachment.owner_type == AttachmentOwner.personnel_cert_scan,
+            Attachment.owner_id == pc.id,
+        )
+    ):
+        attachments.erase(db, a)
+        n += 1
+    pc.scan_front_attachment_id = None
+    pc.scan_back_attachment_id = None
+    pc.scans_deleted_at = now()
+    return n
+
+
+def scan_retention_job(db: Session, day: date | None = None) -> int:
+    """P4-7: scans of certificates that ended (Expired / Superseded / Revoked / Rejected) more
+    than `cert_scan_retention_years` ago are deleted; the metadata stays; each deletion is
+    audited. Certificates referenced by an incident follow Phase 1 P1-5 instead (kept)."""
+    from app.kpi.periods import add_months  # noqa: PLC0415
+
+    day = day or today()
+    n = 0
+    for pc in list(
+        db.scalars(
+            select(PersonnelCertificate).where(
+                PersonnelCertificate.status.in_(ENDED),
+                PersonnelCertificate.ended_on.is_not(None),
+            )
+        )
+    ):
+        years = cset.get(db, pc.project_id).cert_scan_retention_years
+        assert pc.ended_on is not None  # noqa: S101
+        if day < add_months(pc.ended_on, 12 * years):
+            continue
+        has_scan = db.scalar(
+            select(Attachment.id)
+            .where(
+                Attachment.owner_type == AttachmentOwner.personnel_cert_scan,
+                Attachment.owner_id == pc.id,
+            )
+            .limit(1)
+        )
+        if has_scan is None:
+            continue
+        files = _erase_scans(db, pc)
+        audit.record(
+            db,
+            AuditAction.retention_purge,
+            entity_type=EntityType.personnel_certificate,
+            entity_id=pc.id,
+            project_id=pc.project_id,
+            details={"scans_deleted": files, "retention_years": years, "rule": "P4-7"},
+        )
+        n += 1
+    db.flush()
+    return n
+
+
+def anonymise_worker(db: Session, worker_id: uuid.UUID) -> None:
+    """P4-7 with Phase 2 P2-7: the worker's certificates lose cert_no, the printed name and the
+    scans; type and validity stay for statistics."""
+    for pc in db.scalars(
+        select(PersonnelCertificate).where(PersonnelCertificate.worker_id == worker_id)
+    ):
+        _erase_scans(db, pc)
+        pc.cert_no = None
+        pc.name_as_printed = None
+        pc.tpi_verification_url = None

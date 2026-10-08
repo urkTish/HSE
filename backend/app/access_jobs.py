@@ -880,6 +880,9 @@ def anonymise_workers(db: Session, day: date | None = None) -> int:
             attachments.erase(db, f)
         for h in db.scalars(select(WorkerIdHistory).where(WorkerIdHistory.worker_id == w.id)):
             db.delete(h)
+        from app.services.cert import personnel as pcerts  # noqa: PLC0415 (P4-7)
+
+        pcerts.anonymise_worker(db, w.id)
         w.full_name_en = f"Anonymised worker {w.worker_no}"
         w.full_name_ar = f"عامل مجهول الهوية {w.worker_no}"
         w.id_type = None

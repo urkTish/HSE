@@ -847,6 +847,7 @@ def _seed_named_equipment(ctx: Ctx) -> None:
         "Z-LAY1",
         swl="50.000",
         vehicle="VEH-0003",
+        serial="TESTSN-MC-0003",
         since=at(2025, 11, 7),
         arrived=date(2025, 11, 10),
     )

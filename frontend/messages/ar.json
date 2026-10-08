@@ -7620,7 +7620,12 @@
     "scan": "الصورة",
     "scanYes": "موجودة",
     "scanNo": "مفقودة",
-    "action": "الإجراء"
+    "action": "الإجراء",
+    "rowAction": {
+      "none": "لا شيء (يُتخطى)",
+      "create_certificate": "إنشاء شهادة",
+      "create_item_and_certificate": "إنشاء المعدة والشهادة"
+    }
   },
   "certCheck": {
     "title": "فحص الشهادات",

@@ -42,7 +42,7 @@ _FILE_RESPONSES: dict[int | str, dict[str, object]] = {
             },
         },
     },
-    **error_responses(401, 403, 404, 422, 501),
+    **error_responses(401, 403, 404, 422),
 }
 
 

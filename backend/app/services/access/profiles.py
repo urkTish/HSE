@@ -279,6 +279,11 @@ def update(
                 raise loosening(key)
             setattr(prof, key, ch[key])
     if "hook_requirements" in ch:
+        from app.services.cert import settings as cset  # noqa: PLC0415
+
+        for h in ch["hook_requirements"]:
+            if str(getattr(h["kind"], "value", h["kind"])) == "training_course":
+                cset.require_not_cert_type(db, h["code"], "hook_requirements")
         prof.hook_requirements = [
             {"kind": h["kind"].value if hasattr(h["kind"], "value") else h["kind"],
              "code": h["code"],

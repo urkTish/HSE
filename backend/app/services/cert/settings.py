@@ -13,7 +13,7 @@ from app.core.access_enums import HookKind
 from app.core.cert_enums import CertLevel, EquipmentCertCategory
 from app.core.clock import now, today
 from app.core.enums import AuditAction, Capability, EntityType
-from app.core.errors import ApiError, ErrorCode, not_found, validation_error
+from app.core.errors import ApiError, ErrorCode, field_error, not_found, validation_error
 from app.core.ptw_enums import EquipmentCategory
 from app.models import CertSettings, CertType, InductionCourse, ZoneAccessProfile
 from app.schemas.cert_config import (
@@ -88,6 +88,20 @@ def cap_months(db: Session, s: CertSettings, cert_type: str) -> int | None:
 
 def is_type(db: Session, code: str) -> bool:
     return code in ref.PCT or db.get(CertType, code) is not None
+
+
+def require_not_cert_type(db: Session, code: str, field: str = "code") -> None:
+    """BD-3 (the reverse direction): a training-catalogue code (induction course or
+    training_course hook requirement today, Phase 5 courses later) must not be a PCT code."""
+    if is_type(db, code.strip().upper()):
+        raise ApiError(
+            422,
+            ErrorCode.CODE_IN_OTHER_CATALOGUE,
+            f"{code} is a third-party certificate type (Phase 4 catalogue); a credential type "
+            "exists in exactly one catalogue (BD-3).",
+            "هذا الرمز نوع شهادة طرف ثالث؛ لا يجوز تكراره في فهرس التدريب (BD-3).",
+            errors=[field_error(field, "Code is a certificate type.", "code_in_other_catalogue")],
+        )
 
 
 def critical_codes(s: CertSettings) -> set[str]:

@@ -188,9 +188,10 @@ def _deployments(c: _Ctx, status: str | None, q: str | None) -> Rows:
 
 def _eq_certs(c: _Ctx, status: str | None, q: str | None) -> Rows:
     sts = _parse(CertificateStatus, status)
-    items = _all(
+    listed = _all(
         lambda pg, ps: ec_svc.list_certificates(c.db, c.p, c.project.id, pg, ps, q=q, statuses=sts)
     )
+    items = [ec_svc.read(c.db, c.p, x.id) for x in listed]  # full rows with lines
     cols = [
         "cert_no", "tpi_code", "inspection_type", "inspected_on", "issued_on", "printed_next_due",
         "equipment_no", "serial_as_printed", "result", "swl_t", "limitations", "line_valid_until",
@@ -201,7 +202,8 @@ def _eq_certs(c: _Ctx, status: str | None, q: str | None) -> Rows:
         cols += ["inspector_name", "submitted_by", "reviewed_by"]
     rows = []
     for e in items:
-        for ln in e.lines or [None]:
+        lines: list[Any] = list(e.lines) or [None]
+        for ln in lines:
             row = [
                 e.cert_no, e.tpi.tpi_code, _v(e.inspection_type), e.inspected_on, e.issued_on,
                 e.printed_next_due,
@@ -244,9 +246,10 @@ def _scaffolds(c: _Ctx, status: str | None, q: str | None) -> Rows:
 
 def _personnel(c: _Ctx, status: str | None, q: str | None) -> Rows:
     sts = _parse(CertificateStatus, status)
-    items = _all(
+    listed = _all(
         lambda pg, ps: pc_svc.list_certificates(c.db, c.p, c.project.id, pg, ps, q=q, statuses=sts)
     )
+    items = [pc_svc.read(c.db, c.p, x.id) for x in listed]  # full rows (validity, scope, …)
     cols = ["record_no", "worker_no"]
     if c.names:
         cols += ["worker_name_en", "worker_name_ar"]

@@ -203,6 +203,9 @@ class Facts:
     engagements: dict[UUID, EngFact] = field(default_factory=dict)
     zones: dict[UUID, ZoneFact] = field(default_factory=dict)
     project_start: date | None = None
+    # Per-build memo shared by the request copies of a cached Facts (data.load): derived values
+    # that depend only on these facts and small keys (e.g. the snapshot digest).
+    memo: dict[Any, Any] = field(default_factory=dict, repr=False, compare=False)
     # app.kpi.access_facts.AccessFacts (2-access-permits §6.8), loaded on first use so Phase 1
     # requests never pay for the access registers / gate log.
     access_loader: Any = None

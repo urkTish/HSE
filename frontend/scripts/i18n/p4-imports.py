@@ -37,5 +37,10 @@ P = {
     "rowNo": ["Row", "الصف"], "codes": ["Codes", "الرموز"], "messages": ["Messages", "الرسائل"], "certificate": ["Certificate", "الشهادة"],
     "holder": ["Holder", "الحامل"], "item": ["Item", "المعدة"], "scan": ["Scan", "الصورة"], "scanYes": ["Found", "موجودة"], "scanNo": ["Missing", "مفقودة"],
     "action": ["Action", "الإجراء"],
+    "rowAction": {
+      "none": ["None (skipped)", "لا شيء (يُتخطى)"],
+      "create_certificate": ["Create certificate", "إنشاء شهادة"],
+      "create_item_and_certificate": ["Create item and certificate", "إنشاء المعدة والشهادة"],
+    },
   },
 }

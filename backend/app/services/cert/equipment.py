@@ -282,7 +282,9 @@ def item_read(db: Session, p: Principal, item: EquipmentItem) -> EquipmentRead:
         documents=[EquipmentDocumentRead(**x) for x in item.documents or []],
         service_status=item.service_status,
         service_status_reason=item.service_status_reason,
-        service_status_text=item.service_status_text if hse else None,
+        service_status_text=item.service_status_text
+        if hse or item.service_status_reason != SSR.blacklisted
+        else None,
         service_status_since=item.service_status_since,
         has_valid_certificate=ic.ev.in_force,
         configuration_suspended=config_suspended(db, item.id),

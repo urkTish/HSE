@@ -7620,7 +7620,12 @@
     "scan": "Scan",
     "scanYes": "Found",
     "scanNo": "Missing",
-    "action": "Action"
+    "action": "Action",
+    "rowAction": {
+      "none": "None (skipped)",
+      "create_certificate": "Create certificate",
+      "create_item_and_certificate": "Create item and certificate"
+    }
   },
   "certCheck": {
     "title": "Certification check",

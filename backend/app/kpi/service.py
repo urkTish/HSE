@@ -172,24 +172,25 @@ def _bases(scope: Scope) -> BasesRead:
 def snapshot(scope: Scope, w: Window | None = None) -> str:
     e = scope.engine
     w = w or scope.window
-    return data.snapshot_hash(
-        [
-            sorted(str(x.id) for x in scope.projects),
-            scope.flt,
-            w,
-            scope.as_of,
-            scope.config,
-            e.wf,
-            e.all_cases,
-            e.events,
-            e.obs,
-            e.insp,
-            e.cas,
-            e.meetings,
-            sorted(scope.facts.engagements.items(), key=lambda kv: str(kv[0])),
-            scope.restated,
-        ]
-    )
+    head = [sorted(str(x.id) for x in scope.projects), scope.flt, scope.as_of, scope.config]
+    key = ("snapshot", repr(head), repr(scope.restated))
+    digest = scope.facts.memo.get(key)
+    if digest is None:
+        # The fact lists are large; their digest is computed once per cached Facts build.
+        digest = data.snapshot_hash(
+            [
+                e.wf,
+                e.all_cases,
+                e.events,
+                e.obs,
+                e.insp,
+                e.cas,
+                e.meetings,
+                sorted(scope.facts.engagements.items(), key=lambda kv: str(kv[0])),
+            ]
+        )
+        scope.facts.memo[key] = digest
+    return data.snapshot_hash([*head, w, scope.restated, digest])
 
 
 def completeness(

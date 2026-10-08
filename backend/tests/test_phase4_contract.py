@@ -101,11 +101,15 @@ def test_phase4_paths_in_contract() -> None:
     assert "id_on_card" not in schemas["PersonnelCertRead"]["properties"]
 
 
-def test_phase4_stubs_raise_501() -> None:
-    with pytest.raises(ApiError) as exc:
-        cert_config.get_cert_catalogue(None, None)  # type: ignore[arg-type]
-    assert exc.value.status_code == 501
-    assert exc.value.code == ErrorCode.NOT_IMPLEMENTED
+def test_phase4_stage1_stubs_are_all_implemented() -> None:
+    """Stage 2 replaced every Phase 4 501 stub: no cert/KPI route documents a 501 any more."""
+    from app.main import app
+
+    spec = app.openapi()
+    for path, ops in spec["paths"].items():
+        for op in ops.values():
+            assert "501" not in op.get("responses", {}), path
+    assert callable(cert_config.get_cert_catalogue)
 
 
 def test_phase4_enums_and_codes() -> None:
@@ -139,7 +143,7 @@ def test_phase4_enums_and_codes() -> None:
     assert len(ActionPanelItem) >= 12
     assert len(PHASE4_METRICS) == 10
     for m in PHASE4_METRICS:
-        assert not CATALOGUE[m].available  # Stage 1: catalogued, not computed yet
+        assert CATALOGUE[m].available  # Stage 2: computed by the kpi/ engine
         assert CATALOGUE[m].spec_ref.startswith("4-third-party-cert §6.7")
     assert ExportDataset.equipment_certificates.value == "equipment_certificates"
 

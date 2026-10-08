@@ -162,3 +162,81 @@ def scan(c: TestClient, db: Session, gate_code: str, **body: Any) -> dict[str, A
 
 def reasons(r: dict[str, Any]) -> list[str]:
     return [x["code"] for x in r["reasons"]]
+
+
+# ---- certificate flows (API) ---------------------------------------------------------------------
+
+PDF = b"%PDF-1.4\n" + b"0" * 64
+
+
+def contractor(db: Session, code: str) -> Any:
+    from app.models import Contractor
+
+    c = db.scalar(select(Contractor).where(Contractor.short_code == code))
+    assert c is not None, code
+    return c
+
+
+def line(db: Session, tag: str, **kw: Any) -> dict[str, Any]:
+    it = item(db, tag)
+    swl = {"swl_t": str(it.rated_capacity_t)} if it.rated_capacity_t is not None else {}
+    return {"equipment_id": str(it.id), "serial_as_printed": it.serial_no, "result": "pass",
+            **swl, **kw}  # fmt: skip
+
+
+def ec_body(
+    db: Session,
+    tpi_code: str,
+    cert_no: str,
+    inspected: date,
+    lines: list[dict[str, Any]],
+    **kw: Any,
+) -> dict[str, Any]:
+    return {
+        "tpi_id": str(tpi(db, tpi_code).id),
+        "cert_no": cert_no,
+        "inspection_type": kw.pop("inspection_type", "periodic"),
+        "inspected_on": inspected.isoformat(),
+        "issued_on": kw.pop("issued_on", inspected).isoformat(),
+        "inspector_name": "Test Inspector",
+        "lines": lines,
+        **{k: (v.isoformat() if isinstance(v, date) else v) for k, v in kw.items()},
+    }
+
+
+def upload_pdf(c: TestClient, owner_type: str, owner_id: Any) -> str:
+    res = c.post(
+        f"{API}/attachments",
+        data={"owner_type": owner_type, "owner_id": str(owner_id)},
+        files={"file": ("scan.pdf", PDF, "application/pdf")},
+    )
+    assert res.status_code in (200, 201), res.text
+    return str(res.json()["id"])
+
+
+def ec_submitted(c: TestClient, db: Session, pcode: str, body: dict[str, Any]) -> dict[str, Any]:
+    """Create a draft, attach its scan and Submit it (as the client's user)."""
+    pid = project(db, pcode).id
+    res = c.post(f"{API}/projects/{pid}/equipment-certificates", json=body)
+    assert res.status_code in (200, 201), res.text
+    cid = res.json()["id"]
+    scan_id = upload_pdf(c, "equipment_certificate_scan", cid)
+    res = c.patch(f"{API}/equipment-certificates/{cid}", json={"scan_attachment_id": scan_id})
+    assert res.status_code == 200, res.text
+    res = c.post(f"{API}/equipment-certificates/{cid}/transitions", json={"to_status": "submitted"})
+    assert res.status_code == 200, res.text
+    out: dict[str, Any] = res.json()
+    return out
+
+
+def verify_body(c: TestClient, kind: str, cid: Any, **kw: Any) -> dict[str, Any]:
+    """A confirmed portal verification (AICC portal channel) with evidence."""
+    ev = upload_pdf(c, "verification_evidence", cid)
+    return {
+        "method": "tpi_portal",
+        "channel_used": "verify.aicc-test.example",
+        "outcome": "confirmed",
+        "reference": "AICC portal ref TEST-77812",
+        "evidence_attachment_id": ev,
+        **kw,
+    }

@@ -302,3 +302,32 @@ def test_expiring_items_and_action_panel(api: Api, ids: Ids) -> None:
     assert "hook_block_soon_not_ready" in got
     # VF-6: Nadeem's failed verification was decided (Rejected), so it is not undecided
     assert got["verification_failed_undecided"] == 0
+
+
+def test_kpi_cache_ignores_the_session_heartbeat(db: Session) -> None:
+    """The 30-second last_seen_at heartbeat must not invalidate the KPI facts cache (the
+    dashboard fires every chart at once; a rebuild per request made it time out)."""
+    import uuid as _uuid
+    from datetime import timedelta
+
+    from sqlalchemy import select as sel
+
+    from app.core.clock import now
+    from app.models import Project as Pr
+    from app.models import User, UserSession
+
+    u = db.scalar(sel(User).limit(1))
+    assert u is not None
+    s = UserSession(id=_uuid.uuid4(), user_id=u.id, created_at=now(), last_seen_at=now(),
+                    expires_at=now() + timedelta(hours=8), last_authenticated_at=now())  # fmt: skip
+    db.add(s)
+    db.flush()
+    db.info.pop("kpi_wrote", None)
+    s.last_seen_at = s.last_seen_at + timedelta(seconds=31)
+    db.flush()
+    assert "kpi_wrote" not in db.info
+    pr = db.scalar(sel(Pr).limit(1))
+    assert pr is not None
+    pr.name_en = pr.name_en + " "
+    db.flush()
+    assert db.info.get("kpi_wrote") is True

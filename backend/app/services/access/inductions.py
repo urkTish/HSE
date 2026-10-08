@@ -210,6 +210,9 @@ def create_course(
     project = projects.get_visible(db, p, project_id)
     p.require(project.id, C.induction_course_manage)
     code = body.code.strip().upper()
+    from app.services.cert import settings as cset  # noqa: PLC0415
+
+    cset.require_not_cert_type(db, code)
     if db.scalar(
         select(InductionCourse.id).where(
             InductionCourse.project_id == project.id, InductionCourse.code == code

@@ -381,7 +381,7 @@ def get_ptw_kpis(
     description=FILTERS + " Plus `equipment_category` and `cert_type` (certification KPIs "
     "only). Capability 122; Viewer/Client get aggregates only (KC-5). `group_by` adds "
     "breakdown tables (KC-4).",
-    responses={**KPI_ERRORS, **error_responses(501)},
+    responses=KPI_ERRORS,
 )
 def get_cert_kpis(
     user: CurrentUser,

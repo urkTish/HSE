@@ -88,6 +88,7 @@ def cert_daily(db: Session, at: datetime | None = None) -> dict[str, Any]:
         "b_defects_overdue": defects.overdue_job(db, at),
         "contractor_blacklist_demobilised": deployments.blacklisted_contractor_job(db),
         "ban_reviews_due": bans.review_job(db, acommon.local_day(at)),
+        "cert_scans_deleted": personnel.scan_retention_job(db, acommon.local_day(at)),
     }
     db.flush()
     return out

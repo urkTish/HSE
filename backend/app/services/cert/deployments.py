@@ -327,6 +327,15 @@ def create(
             "This item cannot be deployed.",
             "لا يمكن تعيين هذه المعدة.",
         )
+    live = cc.live_deployment(db, item.id)
+    if live is not None:
+        raise ApiError(
+            422,
+            ErrorCode.EQUIPMENT_DEPLOYED_ELSEWHERE,
+            "The item already has a live deployment; demobilise it first (EM-4).",
+            "للمعدة تعيين قائم؛ يجب تسريحها أولاً.",
+            meta={"deployment_no": live.deployment_no},
+        )
     if eng.contractor_id != item.owner_contractor_id:
         raise validation_error(
             "engagement_id", "The engagement must be the owner's (or hiring contractor's)."
@@ -345,15 +354,6 @@ def create(
         z = db.get(Zone, body.zone_id)
         if z is None or z.site_id not in body.site_ids:
             raise validation_error("zone_id", "The zone must be on one of the sites.")
-    live = cc.live_deployment(db, item.id)
-    if live is not None:
-        raise ApiError(
-            422,
-            ErrorCode.EQUIPMENT_DEPLOYED_ELSEWHERE,
-            "The item already has a live deployment; demobilise it first (EM-4).",
-            "للمعدة تعيين قائم؛ يجب تسريحها أولاً.",
-            meta={"deployment_no": live.deployment_no},
-        )
     tag = body.tag.strip().upper()
     if _tag_taken(db, project.id, tag, None):
         raise _tag_exists()
