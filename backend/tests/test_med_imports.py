@@ -81,7 +81,18 @@ def test_AC116_AC121_clinic_register_commit(api: Api, db: Session) -> None:
 
 
 def test_AC117_AC118_AC120_contractor_file(api: Api, db: Session) -> None:
-    qno = "WKR-000013"  # Tariq Mahmood, GULFPAVE: outside the RAWABI tree
+    from app.models import Deployment, ProjectEngagement, Worker
+
+    qno = db.scalar(  # a QIMMA worker (RBT-52 only): outside Ahmed's scope on ANIA-EXP
+        select(Worker.worker_no)
+        .join(Deployment, Deployment.worker_id == Worker.id)
+        .join(ProjectEngagement, ProjectEngagement.id == Deployment.engagement_id)
+        .join(Contractor, Contractor.id == ProjectEngagement.contractor_id)
+        .where(Contractor.short_code == "QIMMA")
+        .order_by(Worker.worker_no)
+        .limit(1)
+    )
+    assert qno is not None
     ahmed = api.as_("ahmed.zahrani")
     rows = [
         "WKR-000016,SALAMA,EXR-0003,periodic,2026-10-01,SAL-TEST-26-7101,GEN-FIT,fit",
@@ -114,12 +125,14 @@ def test_AC119_commit_after_60_minutes(api: Api, db: Session) -> None:
 
 
 def test_AC122_AC123_scan_url(api: Api, db: Session) -> None:
-    a = db.scalar(
-        select(FitnessAssessment)
-        .where(FitnessAssessment.scan_attachment_id.is_not(None))
-        .where(FitnessAssessment.project_id == project(db, "ANIA-EXP").id)
-        .limit(1)
-    )
+    from tests.cert_helpers import upload_pdf
+    from tests.med_helpers import body, fit, post
+
+    ahmed = api.as_("ahmed.zahrani")
+    ext = {"source": "external_certificate", "certificate_no": "SAL-TEST-26-7401"}
+    made = ok(post(ahmed, db, body(db, "WKR-000016", [fit()], prov="SALAMA", examiner=3, **ext)))
+    upload_pdf(ahmed, "fitness_scan", made["id"])
+    a = db.get(FitnessAssessment, made["id"])
     assert a is not None
     url = f"{API}/fitness-assessments/{a.id}/scan-url"
     huda = api.as_("huda.mansour")

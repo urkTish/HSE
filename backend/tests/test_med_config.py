@@ -53,7 +53,7 @@ def test_AC1_AC2_role_assignment_and_manager_boundary(api: Api, ids: Ids, db: Se
     faisal = api.as_("faisal.harbi")
     res = post(faisal, db, body(db, "WKR-000014", [fit()]))
     assert res.status_code == 403, res.text
-    me = faisal.get(f"{API}/me").json()
+    me = faisal.get(f"{API}/auth/me").json()
     assert "fitness.record_clinic" not in me["org_capabilities"]
 
 
@@ -89,7 +89,7 @@ def test_AC3_AC4_AC5_tiers(api: Api, db: Session) -> None:
     res = _fitness(api, "ramesh.kumar", db, "WKR-000009")
     assert res.status_code == 200, res.text
     items = {x["code"]: x for x in res.json()["items"]}
-    assert res.json()["tier"] == "status" and items["GEN-FIT"]["outcome"] is None
+    assert res.json()["tier"] == "status" and items["GEN-FIT"].get("outcome") is None
     assert items["WAH-FIT"]["text_en"].startswith("Not eligible")
     res = _fitness(api, "ahmed.zahrani", db, "WKR-000034")
     assert res.status_code == 200 and res.json()["on_hold"] is True, res.text

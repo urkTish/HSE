@@ -193,7 +193,7 @@ def test_AC89_held_worker_denied_at_gate(api: Api, db: Session) -> None:
     assert rs and "Not eligible" in rs[0]["message_en"], out
     assert "MEDICAL_HOLD" not in res.text
     row = db.get(GateCheck, out["check_id"])
-    assert row is not None and "MEDICAL_HOLD" not in str(row.reasons)
+    assert row is not None and "MEDICAL_HOLD" not in str(row.reason_codes)
 
 
 def test_AC95_permit_suspended_when_line_ends(db: Session) -> None:
