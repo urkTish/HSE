@@ -93,7 +93,7 @@ test.describe.serial("Contractors and engagements", () => {
     await page.locator("#transition-reason").fill("E2E blacklist test");
     await page.getByTestId("transition-confirm").click();
     await expect(page.locator("[data-status=blacklisted]")).toBeVisible();
-    await expect(page.getByText("E2E blacklist test")).toBeVisible();
+    await expect(page.getByText("E2E blacklist test").first()).toBeVisible();
     await expect(page.getByTestId("transition-suspended")).toHaveText(en.contractor.actions.liftBlacklist);
   });
 
