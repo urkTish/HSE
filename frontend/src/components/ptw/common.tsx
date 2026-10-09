@@ -299,7 +299,7 @@ export function WarningList({ items }: { items: S["WarningItem"][] }) {
             {notes.map((w, i) => (
               <li key={`${w.code}-${i}`} className="text-xs text-muted-foreground" data-testid="permit-warning" data-code={w.code} data-tone="note">
                 {detail(w) ?? te(`permitWarning.${w.code}`)}
-                {w.ref ? <bdi className="ltr ms-1 font-mono">{w.ref}</bdi> : null}
+                {w.ref ? <bdi className="ltr ms-1 font-mono rtl:ms-0 rtl:me-1">{w.ref}</bdi> : null}
               </li>
             ))}
           </ul>
@@ -336,7 +336,7 @@ export function SignatureList({ items }: { items: S["SignatureRead"][] }) {
             </span>
           </span>
           <span className="text-xs text-muted-foreground">
-            <span className="ltr">{dateTime(s.signed_at)}</span>
+            <span className="[unicode-bidi:isolate]">{dateTime(s.signed_at)}</span>
             <bdi className="ltr block font-mono text-[10px]" title={t("permitHash")}>
               #{s.permit_hash.slice(0, 12)}
             </bdi>

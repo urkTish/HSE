@@ -593,7 +593,7 @@ export function JsaDetail({ id }: { id: string }) {
             <ul className="flex flex-col divide-y rounded-md border text-sm">
               {j.crew_briefings.map((b, i) => (
                 <li key={i} className="p-2">
-                  {t("briefingLine", { shift: b.shift_no, n: b.worker_count, name: userLabel(b.briefed_by, locale) })} · <span className="ltr">{dateTime(b.at)}</span>
+                  {t("briefingLine", { shift: b.shift_no, n: b.worker_count, name: userLabel(b.briefed_by, locale) })} · <span className="[unicode-bidi:isolate]">{dateTime(b.at)}</span>
                 </li>
               ))}
             </ul>
@@ -731,7 +731,7 @@ function Acceptances({ j }: { j: Jsa }) {
                   <span className="font-medium">{userLabel(a.accepted_by, locale)}</span>
                   <span className="text-xs text-muted-foreground">{a.accepted_as}</span>
                   <RiskBandBadge band={a.band} />
-                  <span className="ltr text-xs text-muted-foreground">{dateTime(a.accepted_at)}</span>
+                  <span className="[unicode-bidi:isolate] text-xs text-muted-foreground">{dateTime(a.accepted_at)}</span>
                 </span>
                 {a.alarp_justification ? <span className="text-xs">{t("alarp")}: {a.alarp_justification}</span> : null}
               </li>
@@ -843,7 +843,7 @@ function Revisions({ id, projectId }: { id: string; projectId: string }) {
                 {r.jsa_no} r{r.revision}
               </Link>
               <StatusBadge status={r.status} label={te(`jsaStatus.${r.status}`)} />
-              <span className="ltr text-xs text-muted-foreground">{dateTime(r.updated_at)}</span>
+              <span className="[unicode-bidi:isolate] text-xs text-muted-foreground">{dateTime(r.updated_at)}</span>
             </li>
           ))}
         </ul>

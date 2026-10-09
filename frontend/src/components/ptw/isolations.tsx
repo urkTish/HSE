@@ -396,7 +396,7 @@ export function IsolationDetail({ id }: { id: string }) {
             </FieldItem>
             {i.last_review ? (
               <FieldItem label={t("lastReview")}>
-                {userLabel(i.last_review.reviewed_by, locale)} · <span className="ltr">{dateTime(i.last_review.reviewed_at)}</span> · {i.last_review.lock_tag_in_place ? t("inPlace") : t("notInPlace")}
+                {userLabel(i.last_review.reviewed_by, locale)} · <span className="[unicode-bidi:isolate]">{dateTime(i.last_review.reviewed_at)}</span> · {i.last_review.lock_tag_in_place ? t("inPlace") : t("notInPlace")}
               </FieldItem>
             ) : null}
             {i.deisolation_authorised_by ? (
@@ -432,14 +432,14 @@ export function IsolationDetail({ id }: { id: string }) {
                 </div>
                 <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
                   <span>
-                    {t("applied")}: {p.applied_at ? <>{userLabel(p.applied_by, locale)} · <span className="ltr">{dateTime(p.applied_at)}</span> · <Lock aria-hidden className="inline size-3" /> <bdi className="ltr">{p.isolation_lock_no}</bdi> · {t("tag")} <bdi className="ltr">{p.tag_no}</bdi></> : "—"}
+                    {t("applied")}: {p.applied_at ? <>{userLabel(p.applied_by, locale)} · <span className="[unicode-bidi:isolate]">{dateTime(p.applied_at)}</span> · <Lock aria-hidden className="inline size-3" /> <bdi className="ltr">{p.isolation_lock_no}</bdi> · {t("tag")} <bdi className="ltr">{p.tag_no}</bdi></> : "—"}
                   </span>
                   <span>
-                    {t("verified")}: {p.verified_at ? <>{p.verified_by_user ? userLabel(p.verified_by_user, locale) : <WorkerRefLabel w={p.verified_by_worker} />} · <span className="ltr">{dateTime(p.verified_at)}</span> · {p.verification_method ? te(`verificationMethod.${p.verification_method}`) : ""}</> : "—"}
+                    {t("verified")}: {p.verified_at ? <>{p.verified_by_user ? userLabel(p.verified_by_user, locale) : <WorkerRefLabel w={p.verified_by_worker} />} · <span className="[unicode-bidi:isolate]">{dateTime(p.verified_at)}</span> · {p.verification_method ? te(`verificationMethod.${p.verification_method}`) : ""}</> : "—"}
                   </span>
                   {p.removed_at ? (
                     <span>
-                      {t("removed")}: {userLabel(p.removed_by, locale)} · <span className="ltr">{dateTime(p.removed_at)}</span>
+                      {t("removed")}: {userLabel(p.removed_by, locale)} · <span className="[unicode-bidi:isolate]">{dateTime(p.removed_at)}</span>
                     </span>
                   ) : null}
                 </div>
@@ -730,10 +730,10 @@ function PersonalLocks({ iso, canApply, onApply }: { iso: Iso; canApply: boolean
                 <bdi className="ltr font-mono">{ev.lock_no}</bdi>
                 <WorkerRefLabel w={ev.worker} />
                 {ev.permit ? <PermitNo p={ev.permit} /> : null}
-                <span className="ltr text-xs text-muted-foreground">{dateTime(ev.applied_at)}</span>
+                <span className="[unicode-bidi:isolate] text-xs text-muted-foreground">{dateTime(ev.applied_at)}</span>
                 {ev.removed_at ? (
                   <span className="text-xs text-muted-foreground">
-                    {ev.removed_by ? te(`lockRemoval.${ev.removed_by}`) : t("removed")} · <span className="ltr">{dateTime(ev.removed_at)}</span>
+                    {ev.removed_by ? te(`lockRemoval.${ev.removed_by}`) : t("removed")} · <span className="[unicode-bidi:isolate]">{dateTime(ev.removed_at)}</span>
                   </span>
                 ) : null}
                 {ev.cut ? (

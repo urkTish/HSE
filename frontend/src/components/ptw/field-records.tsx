@@ -77,10 +77,10 @@ export function FieldRecords({ permit, type }: { permit: Permit; type: S["Permit
                   <WorkerRefLabel w={e.worker} />
                 </span>
                 <span className="flex items-center gap-1 text-xs">
-                  <LogIn aria-hidden className="size-3.5" /> <span className="ltr">{dateTime(e.in_at)}</span>
+                  <LogIn aria-hidden className="size-3.5" /> <span className="[unicode-bidi:isolate]">{dateTime(e.in_at)}</span>
                 </span>
                 <span className="flex items-center gap-1 text-xs">
-                  <LogOut aria-hidden className="size-3.5" /> {e.out_at ? <span className="ltr">{dateTime(e.out_at)}</span> : <span className="font-semibold text-warning">{t("inside")}</span>}
+                  <LogOut aria-hidden className="size-3.5" /> {e.out_at ? <span className="[unicode-bidi:isolate]">{dateTime(e.out_at)}</span> : <span className="font-semibold text-warning">{t("inside")}</span>}
                 </span>
               </li>
             ))}
@@ -100,7 +100,7 @@ export function FieldRecords({ permit, type }: { permit: Permit; type: S["Permit
               <li key={r.id} className="flex flex-wrap items-center gap-2 p-2" data-within={r.within_limit ? "true" : "false"}>
                 <bdi className="ltr font-semibold tabular-nums">{r.speed_ms} m/s</bdi>
                 <span className="text-xs text-muted-foreground">
-                  {t("limit")} <bdi className="ltr">{r.limit_ms}</bdi> · {te(`windSource.${r.source}`)} · <span className="ltr">{dateTime(r.measured_at)}</span>
+                  {t("limit")} <bdi className="ltr">{r.limit_ms}</bdi> · {te(`windSource.${r.source}`)} · <span className="[unicode-bidi:isolate]">{dateTime(r.measured_at)}</span>
                 </span>
                 <StatusBadge status={r.within_limit ? "ok" : "failed"} label={r.within_limit ? t("withinLimit") : t("overLimit")} />
               </li>
@@ -124,7 +124,7 @@ export function FieldRecords({ permit, type }: { permit: Permit; type: S["Permit
               <li key={i.id} className="flex flex-wrap items-center gap-2 p-2">
                 <StatusBadge status={i.result === "safe" ? "ok" : "failed"} label={te(`inspectionOutcome.${i.result}`)} />
                 <span className="text-xs">
-                  <span className="ltr">{dateTime(i.inspected_at)}</span> · <bdi className="ltr">{i.appointment.appointment_no}</bdi>
+                  <span className="[unicode-bidi:isolate]">{dateTime(i.inspected_at)}</span> · <bdi className="ltr">{i.appointment.appointment_no}</bdi>
                   {i.after_rain_or_event ? ` · ${t("afterRain")}` : ""}
                 </span>
                 {i.note ? <span className="w-full text-xs text-muted-foreground">{i.note}</span> : null}
@@ -150,7 +150,7 @@ export function FieldRecords({ permit, type }: { permit: Permit; type: S["Permit
               <li key={b.id} className="flex flex-wrap items-center gap-2 p-2">
                 <bdi className="ltr font-semibold tabular-nums">{b.max_usv_h} µSv/h</bdi>
                 <span className="text-xs text-muted-foreground">
-                  <bdi className="ltr">{b.meter_tag}</bdi> · <span className="ltr">{dateTime(b.measured_at)}</span>
+                  <bdi className="ltr">{b.meter_tag}</bdi> · <span className="[unicode-bidi:isolate]">{dateTime(b.measured_at)}</span>
                 </span>
                 <StatusBadge status={b.within_limit ? "ok" : "failed"} label={b.within_limit ? t("withinLimit") : t("overLimit")} />
               </li>

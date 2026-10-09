@@ -123,7 +123,7 @@ function AuditList({ project }: { project: S["ProjectRead"] }) {
                     <Link href={`/ptw-audits/${a.id}`} className="ltr font-medium text-primary hover:underline">
                       {a.audit_no}
                     </Link>
-                    <span className="ltr block text-xs text-muted-foreground">{dateTime(a.audited_at)}</span>
+                    <span className="[unicode-bidi:isolate] block text-xs text-muted-foreground">{dateTime(a.audited_at)}</span>
                   </TD>
                   <TD label={t("type")}>{te(`ptwAuditType.${a.audit_type}`)}</TD>
                   <TD label={t("permit")}>{a.permit ? <PermitNo p={a.permit} /> : (a.zone?.code ?? "—")}</TD>
@@ -165,7 +165,7 @@ function ItemsEditor({ items, answers, onChange, disabled }: { items: S["AuditIt
           <li key={i.code} className={cn("flex flex-col gap-2 p-3", !i.applies && "bg-muted/40")} data-testid="audit-item" data-code={i.code} data-applies={i.applies ? "true" : "false"}>
             <div className="flex flex-wrap items-start justify-between gap-2">
               <span className="text-sm">
-                <bdi className="ltr me-1.5 font-mono text-xs text-muted-foreground">{i.code}</bdi>
+                <bdi className="ltr me-1.5 font-mono text-xs text-muted-foreground rtl:me-0 rtl:ms-1.5">{i.code}</bdi>
                 {locale === "ar" ? i.label_ar : i.label_en}
                 <span className="ms-1.5 text-xs text-muted-foreground">({te(`findingSeverityPtw.${i.default_severity}`)})</span>
               </span>
@@ -468,7 +468,7 @@ export function PtwAuditDetail({ id }: { id: string }) {
             <FieldItem label={tc("contractor")}>{a.engagement.short_code}</FieldItem>
             <FieldItem label={t("auditor")}>{userLabel(a.auditor, locale)}</FieldItem>
             <FieldItem label={t("auditedAt")}>
-              <span className="ltr">{dateTime(a.audited_at)}</span>
+              <span className="[unicode-bidi:isolate]">{dateTime(a.audited_at)}</span>
             </FieldItem>
             <FieldItem label={t("score")}>
               <span data-testid="audit-score" className="ltr tabular-nums">
@@ -481,12 +481,12 @@ export function PtwAuditDetail({ id }: { id: string }) {
             {a.unpermitted_work_desc ? <FieldItem label={t("unpermittedDesc")}>{a.unpermitted_work_desc}</FieldItem> : null}
             {a.stop_work_issued_at ? (
               <FieldItem label={t("stopWorkAt")}>
-                <span className="ltr">{dateTime(a.stop_work_issued_at)}</span>
+                <span className="[unicode-bidi:isolate]">{dateTime(a.stop_work_issued_at)}</span>
               </FieldItem>
             ) : null}
             {a.locks_at && a.status === "completed" ? (
               <FieldItem label={t("locksAt")}>
-                <span className="ltr">{dateTime(a.locks_at)}</span>
+                <span className="[unicode-bidi:isolate]">{dateTime(a.locks_at)}</span>
               </FieldItem>
             ) : null}
           </FieldList>

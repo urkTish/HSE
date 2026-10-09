@@ -35,6 +35,7 @@ import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
 import { cn } from "@/lib/utils";
 import { Countdown, DateTimeInput, DecimalInput, GasSubNav, nowIso, PermitNo, TypeChips, useNow, useProjectId, userLabel } from "./common";
+import { RecordActions } from "@/components/common/record-actions";
 
 type S = Schemas;
 type Reading = { point: S["GasReadingPoint"]; o2_pct: string; lel_pct: string; h2s_ppm: string; co_ppm: string; other: Record<string, string> };
@@ -297,7 +298,7 @@ function GasTestList({ project }: { project: S["ProjectRead"] }) {
                     <Link href={`/gas-tests/${g.id}`} className="ltr font-medium text-primary hover:underline">
                       {g.test_no}
                     </Link>
-                    <span className="ltr block text-xs text-muted-foreground">{dateTime(g.tested_at)}</span>
+                    <span className="[unicode-bidi:isolate] block text-xs text-muted-foreground">{dateTime(g.tested_at)}</span>
                   </TD>
                   <TD label={t("permit")}>
                     <PermitNo p={g.permit} />
@@ -690,7 +691,7 @@ export function GasTestDetail({ id }: { id: string }) {
               <PermitNo p={g.permit} />
             </FieldItem>
             <FieldItem label={t("testedAt")}>
-              <span className="ltr">{dateTime(g.tested_at)}</span>
+              <span className="[unicode-bidi:isolate]">{dateTime(g.tested_at)}</span>
             </FieldItem>
             <FieldItem label={t("shift")}>{g.shift_no ?? "—"}</FieldItem>
             <FieldItem label={t("tester")}>
@@ -703,7 +704,7 @@ export function GasTestDetail({ id }: { id: string }) {
               </Link>
             </FieldItem>
             <FieldItem label={t("validForStart")}>
-              <span className="ltr">{dateTime(g.valid_for_start_until)}</span>
+              <span className="[unicode-bidi:isolate]">{dateTime(g.valid_for_start_until)}</span>
             </FieldItem>
             <FieldItem label={t("nextDue")}>
               <span className="ltr">{g.next_due_at ? dateTime(g.next_due_at) : "—"}</span>
@@ -967,17 +968,12 @@ export function DetectorDetail({ id }: { id: string }) {
               {t("recordCalibration")}
             </Button>
           ) : null}
-          {manage ? (
-            <Button variant="destructive-outline" onClick={() => setStep("retire")} data-testid="retire-detector">
-              {t("retire")}
-            </Button>
-          ) : null}
         </div>
       ) : null}
       {d.quarantine_reason ? (
         <Alert tone="danger">
           {t("quarantinedBecause", { reason: te(`quarantineReason.${d.quarantine_reason}`) })}
-          {d.quarantined_at ? <span className="ltr ms-1">{dateTime(d.quarantined_at)}</span> : null}
+          {d.quarantined_at ? <span className="[unicode-bidi:isolate] ms-1">{dateTime(d.quarantined_at)}</span> : null}
         </Alert>
       ) : null}
       <Card>
@@ -990,7 +986,7 @@ export function DetectorDetail({ id }: { id: string }) {
             <FieldItem label={t("sensors")}>{d.sensors.map((x) => te(`gasSensor.${x}`)).join(", ")}</FieldItem>
             <FieldItem label={t("lelGas")}>{d.lel_reference_gas ? te(`lelGas.${d.lel_reference_gas}`) : "—"}</FieldItem>
             <FieldItem label={t("calibratedOn")}>
-              <span className="ltr">{date(d.calibrated_on)}</span> · <bdi className="ltr">{d.calibration_cert_ref}</bdi>
+              <span className="[unicode-bidi:isolate]">{date(d.calibrated_on)}</span> · <bdi className="ltr">{d.calibration_cert_ref}</bdi>
             </FieldItem>
             <FieldItem label={t("calibrationBody")}>{d.calibration_body ? <TpiLabel tpi={d.calibration_body} /> : "—"}</FieldItem>
             <FieldItem label={t("calDue")}>
@@ -1020,7 +1016,7 @@ export function DetectorDetail({ id }: { id: string }) {
               {bumps.data.items.map((b) => (
                 <li key={b.id} className="flex flex-wrap items-center gap-2 p-2">
                   <StatusBadge status={b.result === "pass" ? "ok" : "failed"} label={te(`gasResult.${b.result}`)} />
-                  <span className="ltr">{dateTime(b.tested_at)}</span>
+                  <span className="[unicode-bidi:isolate]">{dateTime(b.tested_at)}</span>
                   <span className="text-xs text-muted-foreground">
                     {b.sensors_responded.map((x) => te(`gasSensor.${x}`)).join(", ")} · {b.tested_by_user ? userLabel(b.tested_by_user, locale) : (b.tested_by_worker?.worker_no ?? "")} · {t("lot")} <bdi className="ltr">{b.gas_cylinder_lot}</bdi>
                   </span>
@@ -1034,6 +1030,13 @@ export function DetectorDetail({ id }: { id: string }) {
       </Card>
       <HistoryPanel entityType="gas_detector" entityId={d.id} projectId={d.project_id} />
       {step ? <DetectorStepDialog d={d} step={step} onClose={() => setStep(null)} /> : null}
+      {manage && d.status !== "retired" ? (
+        <RecordActions className="mt-0">
+          <Button variant="destructive-outline" onClick={() => setStep("retire")} data-testid="retire-detector">
+            {t("retire")}
+          </Button>
+        </RecordActions>
+      ) : null}
     </div>
   );
 }

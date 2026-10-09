@@ -253,13 +253,13 @@ function SuspensionLog({ project }: { project: S["ProjectRead"] }) {
                     {x.detail ? <span className="block text-xs text-muted-foreground">{x.detail}</span> : null}
                   </TD>
                   <TD label={t("suspendedAt")}>
-                    <span className="ltr">{dateTime(x.suspended_at)}</span>
+                    <span className="[unicode-bidi:isolate]">{dateTime(x.suspended_at)}</span>
                   </TD>
                   <TD label={t("raisedBy")}>{x.raised_by ? userLabel(x.raised_by, locale) : x.auto_source_ref ? <bdi className="ltr">{x.auto_source_ref}</bdi> : t("system")}</TD>
                   <TD label={t("resumedAt")}>
                     {x.resumed_at ? (
                       <>
-                        <span className="ltr">{dateTime(x.resumed_at)}</span>
+                        <span className="[unicode-bidi:isolate]">{dateTime(x.resumed_at)}</span>
                         {x.resumed_by ? <span className="block text-xs text-muted-foreground">{userLabel(x.resumed_by, locale)}</span> : null}
                       </>
                     ) : (

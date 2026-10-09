@@ -75,7 +75,7 @@ function PermitTypes({ project }: { project: Project }) {
             <Card key={c.type} data-testid="permit-type-card" data-type={c.type}>
               <CardHeader className="flex flex-row items-start justify-between gap-2">
                 <CardTitle className="text-base">
-                  <bdi className="ltr me-2 rounded bg-primary/10 px-1.5 py-0.5 text-sm">{c.ref_letter}</bdi>
+                  <bdi className="ltr me-2 rounded bg-primary/10 px-1.5 py-0.5 text-sm rtl:me-0 rtl:ms-2">{c.ref_letter}</bdi>
                   {name(c.label_en, c.label_ar)}
                 </CardTitle>
                 {editable ? (
@@ -536,7 +536,7 @@ function SimopsRules({ project }: { project: Project }) {
                 <TD label={t("simops.typeB")}>{te(`simopsType.${r.type_b}`)}</TD>
                 <TD label={t("simops.condition")}>
                   {name(r.condition_en, r.condition_ar)}
-                  {r.threshold_m ? <bdi className="ltr ms-1 tabular-nums">({r.threshold_m} m)</bdi> : null}
+                  {r.threshold_m ? <bdi className="ltr ms-1 tabular-nums rtl:ms-0 rtl:me-1">({r.threshold_m} m)</bdi> : null}
                 </TD>
                 <TD label={t("simops.result")}>
                   <SimopsResultBadge result={r.result} />

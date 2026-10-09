@@ -81,7 +81,7 @@ export function SimopsCheckView({ result }: { result: S["SimopsCheckResult"] }) 
               ) : (
                 te(`distanceBasis.${m.distance_basis}`)
               )}
-              {m.vertical_note ? <> · {m.vertical_note}</> : null} · {t("overlap")}: <span className="ltr">{dateTime(m.overlap_from)} – {dateTime(m.overlap_to)}</span>
+              {m.vertical_note ? <> · {m.vertical_note}</> : null} · {t("overlap")}: <span className="[unicode-bidi:isolate]">{dateTime(m.overlap_from)} – {dateTime(m.overlap_to)}</span>
             </p>
             {name(m.required_controls_en, m.required_controls_ar) ? (
               <p className="mt-1 text-sm">

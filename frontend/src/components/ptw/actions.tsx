@@ -21,6 +21,7 @@ import { can } from "@/lib/permissions";
 import { PAUSE_REASONS, STATUS_REASONS, WIND_SOURCES, WORK_STATUSES } from "@/lib/ptw-enums";
 import { useFormatters } from "@/lib/use-formatters";
 import { cn } from "@/lib/utils";
+import { RecordActions } from "@/components/common/record-actions";
 import { BlockerList, DateTimeInput, DecimalInput, WarningList, nowIso, useNow, userLabel } from "./common";
 import { ReceiverCosign, SigningNotice, cosignBody, useSigned, type CosignState } from "./signing";
 
@@ -111,7 +112,12 @@ const ICON: Partial<Record<Step, typeof Play>> = {
   cancel: Ban,
 };
 
-export function PermitActionBar({ permit, onStep }: { permit: Permit; onStep: (s: Step) => void }) {
+/**
+ * `part="main"` leaves the irreversible steps (Cancel / Delete) to `part="end"` at the page end, as long as there
+ * is another step to show at the top; with nothing else they stay in the bar so the bar is never empty.
+ * Stop-work (Suspend, Gas alarm) always stays at the top: it must be reachable at once.
+ */
+export function PermitActionBar({ permit, onStep, part = "all" }: { permit: Permit; onStep: (s: Step) => void; part?: "all" | "main" | "end" }) {
   const t = useTranslations("permitActions");
   const td = useTranslations("ptwDesign");
   const steps = usePermitSteps(permit);
@@ -119,7 +125,8 @@ export function PermitActionBar({ permit, onStep }: { permit: Permit; onStep: (s
   const go = steps.filter((s) => s.tone === "primary");
   const more = steps.filter((s) => s.tone === "outline" || s.tone === "record");
   const stop = steps.filter((s) => s.tone === "stop" || s.tone === "alarm");
-  const end = steps.filter((s) => s.tone === "irreversible");
+  const allEnd = steps.filter((s) => s.tone === "irreversible");
+  const split = part !== "all" && go.length + more.length + stop.length > 0;
   const btn = (s: { k: Step; tone: StepTone }, cls?: string) => {
     const Icon = ICON[s.k];
     const variant = s.tone === "primary" || s.tone === "alarm" ? (s.tone === "alarm" ? "destructive" : "default") : s.tone === "stop" || s.tone === "irreversible" ? "destructive-outline" : s.tone === "record" ? "ghost" : "outline";
@@ -130,6 +137,15 @@ export function PermitActionBar({ permit, onStep }: { permit: Permit; onStep: (s
       </Button>
     );
   };
+  if (part === "end") {
+    if (!split || !allEnd.length) return null;
+    return (
+      <RecordActions label={td("endGroup")} testId="permit-end-actions">
+        {allEnd.map((s) => btn(s))}
+      </RecordActions>
+    );
+  }
+  const end = split ? [] : allEnd;
   // Phone: the safe next step full width first, then the others two per row, then stop-work and the
   // irreversible actions in their own labelled rows. Desktop: one row, stop / irreversible pushed to the end.
   return (

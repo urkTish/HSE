@@ -21,6 +21,7 @@ import { useHandovers, usePermit, usePermitGasTests, useShifts, useSuspensions }
 import { joinList, useLocalizedName } from "@/lib/i18n-helpers";
 import { can } from "@/lib/permissions";
 import { RegimeBadge, RestMinutes } from "@/components/heat/common";
+import { StackedDate } from "@/components/medical/common";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
 import { cn } from "@/lib/utils";
@@ -108,7 +109,7 @@ export function PermitDetail({ id }: { id: string }) {
       </div>
 
       <PermitStatePanel p={p} />
-      <PermitActionBar permit={p} onStep={setStep} />
+      <PermitActionBar permit={p} onStep={setStep} part="main" />
       {step ? <PermitStepDialog permit={p} step={step} onClose={() => setStep(null)} /> : null}
 
       {p.post_expiry_check_pending ? (
@@ -204,6 +205,8 @@ export function PermitDetail({ id }: { id: string }) {
           </div>
         ) : null}
       </div>
+      {/* Cancel / Delete: at the page end, away from the next step (6c / 6d record-actions pattern). */}
+      <PermitActionBar permit={p} onStep={setStep} part="end" />
     </div>
   );
 }
@@ -291,7 +294,7 @@ function PermitStatePanel({ p }: { p: Permit }) {
                 </>
               ) : p.next_window ? (
                 <>
-                  {t("outsideWindow")} <span className="ltr font-semibold">{dateTime(p.next_window.start_at)}</span>
+                  {t("outsideWindow")} <span className="[unicode-bidi:isolate] font-semibold">{dateTime(p.next_window.start_at)}</span>
                 </>
               ) : (
                 t("noMoreWindows")
@@ -344,7 +347,6 @@ function Overview({ p }: { p: Permit }) {
   const tc = useTranslations("common");
   const locale = useLocale();
   const name = useLocalizedName();
-  const { dateTime } = useFormatters(p.project_id);
   return (
     <div className="flex flex-col gap-5">
       <Card>
@@ -386,7 +388,7 @@ function Overview({ p }: { p: Permit }) {
               </FieldItem>
             ) : null}
             <FieldItem label={tp("validity")}>
-              <span className="ltr">{dateTime(p.valid_from_at)}</span> – <span className="ltr">{dateTime(p.valid_to_at)}</span>
+              <DateRange from={p.valid_from_at} to={p.valid_to_at} projectId={p.project_id} />
             </FieldItem>
             <FieldItem label={t("windows")}>
               {p.windows.map((w, i) => (
@@ -398,8 +400,8 @@ function Overview({ p }: { p: Permit }) {
                 </span>
               ))}
             </FieldItem>
-            <FieldItem label={t("currentWindow")}>{p.current_window ? `${dateTime(p.current_window.start_at)} – ${dateTime(p.current_window.end_at)}` : "—"}</FieldItem>
-            <FieldItem label={t("nextWindow")}>{p.next_window ? `${dateTime(p.next_window.start_at)} – ${dateTime(p.next_window.end_at)}` : "—"}</FieldItem>
+            <FieldItem label={t("currentWindow")}>{p.current_window ? <DateRange from={p.current_window.start_at} to={p.current_window.end_at} projectId={p.project_id} /> : "—"}</FieldItem>
+            <FieldItem label={t("nextWindow")}>{p.next_window ? <DateRange from={p.next_window.start_at} to={p.next_window.end_at} projectId={p.project_id} /> : "—"}</FieldItem>
             <FieldItem label={tp("receiver")}>{userLabel(p.receiver, locale)}</FieldItem>
             <FieldItem label={tp("areaAuthority")}>{p.area_authority ? userLabel(p.area_authority, locale) : "—"}</FieldItem>
             <FieldItem label={tp("issuer")}>{p.issuer ? userLabel(p.issuer, locale) : "—"}</FieldItem>
@@ -462,7 +464,7 @@ function Overview({ p }: { p: Permit }) {
             <FieldItem label={tp("linkedObs")}>
               {p.obstacle_clearances.length
                 ? p.obstacle_clearances.map((o) => (
-                    <Link key={o.id} href={`/obstacle-clearances/${o.id}`} className="ltr me-3 text-primary hover:underline">
+                    <Link key={o.id} href={`/obstacle-clearances/${o.id}`} className="ltr me-3 text-primary hover:underline rtl:me-0 rtl:ms-3">
                       {o.obs_no}
                     </Link>
                   ))
@@ -471,7 +473,7 @@ function Overview({ p }: { p: Permit }) {
             <FieldItem label={t("incidents")}>
               {p.incidents.length
                 ? p.incidents.map((i) => (
-                    <Link key={i.id} href={`/incidents/${i.id}`} className="ltr me-3 text-primary hover:underline">
+                    <Link key={i.id} href={`/incidents/${i.id}`} className="ltr me-3 text-primary hover:underline rtl:me-0 rtl:ms-3">
                       {i.ref}
                     </Link>
                   ))
@@ -482,6 +484,17 @@ function Overview({ p }: { p: Permit }) {
       </Card>
       <ExemptionsPanel permit={p} />
     </div>
+  );
+}
+
+/** From – to as two-line dates (Gregorian with time, Hijri muted under it); wraps between the ends, never inside one. */
+function DateRange({ from, to, projectId }: { from: string; to: string; projectId: string }) {
+  return (
+    <span className="inline-flex flex-wrap items-start gap-x-2 gap-y-1">
+      <StackedDate v={from} time projectId={projectId} />
+      <span aria-hidden>–</span>
+      <StackedDate v={to} time projectId={projectId} />
+    </span>
   );
 }
 
@@ -583,7 +596,7 @@ function GasTab({ p }: { p: Permit }) {
                       <Link href={`/gas-tests/${g.id}`} className="ltr font-medium text-primary hover:underline">
                         {g.test_no}
                       </Link>
-                      <span className="ltr block text-xs text-muted-foreground">{dateTime(g.tested_at)}</span>
+                      <span className="[unicode-bidi:isolate] block text-xs text-muted-foreground">{dateTime(g.tested_at)}</span>
                     </TD>
                     <TD>{te(`gasTestType.${g.test_type}`)}</TD>
                     <TD>
@@ -652,7 +665,7 @@ function SimopsTab({ p }: { p: Permit }) {
                 {c.overlap_from ? (
                   <>
                     {" "}
-                    · <span className="ltr">{dateTime(c.overlap_from)}</span> – <span className="ltr">{c.overlap_to ? dateTime(c.overlap_to) : "…"}</span>
+                    · <span className="[unicode-bidi:isolate]">{dateTime(c.overlap_from)}</span> – <span className="ltr">{c.overlap_to ? dateTime(c.overlap_to) : "…"}</span>
                   </>
                 ) : null}
               </span>
@@ -685,7 +698,7 @@ function ShiftsTab({ p }: { p: Permit }) {
             {shifts.data?.items.map((x) => (
               <li key={x.id} className="flex flex-col gap-0.5 p-3 text-sm">
                 <span className="font-medium">
-                  {t("shiftNo", { n: x.shift_no })} · <span className="ltr">{dateTime(x.started_at)}</span> – <span className="ltr">{x.ended_at ? dateTime(x.ended_at) : dateTime(x.planned_end_at)}</span>
+                  {t("shiftNo", { n: x.shift_no })} · <span className="[unicode-bidi:isolate]">{dateTime(x.started_at)}</span> – <span className="ltr">{x.ended_at ? dateTime(x.ended_at) : dateTime(x.planned_end_at)}</span>
                   {x.end_type ? <span className="ms-2 text-xs text-muted-foreground">{te(`shiftEndType.${x.end_type}`)}</span> : null}
                 </span>
                 <span className="text-xs text-muted-foreground">
@@ -697,14 +710,19 @@ function ShiftsTab({ p }: { p: Permit }) {
                       · <RegimeBadge regime={x.heat_regime} short />
                     </>
                   ) : null}
-                  {x.gas_compliant === false ? <span className="ms-1 text-danger">{t("gasNonCompliant")}</span> : null}
+                  {x.gas_compliant === false ? (
+                    <span className="ms-1 inline-flex items-center gap-1 font-medium text-danger">
+                      <CircleX aria-hidden className="size-3.5 shrink-0" />
+                      {t("gasNonCompliant")}
+                    </span>
+                  ) : null}
                 </span>
                 {x.pauses.length ? (
                   <span className="text-xs text-muted-foreground">
                     {x.pauses.map((pz, i) => (
                       <span key={i} className="me-2">
-                        {te(`pauseReason.${pz.reason}`)} <span className="ltr">{dateTime(pz.from_at)}</span>
-                        {pz.to_at ? <> – <span className="ltr">{dateTime(pz.to_at)}</span></> : null}
+                        {te(`pauseReason.${pz.reason}`)} <span className="[unicode-bidi:isolate]">{dateTime(pz.from_at)}</span>
+                        {pz.to_at ? <> – <span className="[unicode-bidi:isolate]">{dateTime(pz.to_at)}</span></> : null}
                       </span>
                     ))}
                   </span>
@@ -730,7 +748,7 @@ function ShiftsTab({ p }: { p: Permit }) {
                   <StatusBadge status={h.status} label={te(`handoverStatus.${h.status}`)} />
                 </span>
                 <span className="text-xs text-muted-foreground">
-                  <span className="ltr">{dateTime(h.initiated_at)}</span> · {t("incomingIssuer", { name: userLabel(h.to_issuer, locale) })}
+                  <span className="[unicode-bidi:isolate]">{dateTime(h.initiated_at)}</span> · {t("incomingIssuer", { name: userLabel(h.to_issuer, locale) })}
                 </span>
                 <span className="whitespace-pre-line">{locale === "ar" && h.notes_ar ? h.notes_ar : h.notes_en}</span>
               </li>
@@ -752,12 +770,12 @@ function ShiftsTab({ p }: { p: Permit }) {
                   {x.routine ? <span className="text-xs text-muted-foreground">{t("routine")}</span> : null}
                 </span>
                 <span className="text-xs text-muted-foreground">
-                  <span className="ltr">{dateTime(x.suspended_at)}</span>
+                  <span className="[unicode-bidi:isolate]">{dateTime(x.suspended_at)}</span>
                   {x.raised_by ? <> · {userLabel(x.raised_by, locale)}</> : x.auto_source_ref ? <> · <bdi className="ltr">{x.auto_source_ref}</bdi></> : null}
                   {x.resumed_at ? (
                     <>
                       {" "}
-                      · {t("resumedAt")} <span className="ltr">{dateTime(x.resumed_at)}</span>
+                      · {t("resumedAt")} <span className="[unicode-bidi:isolate]">{dateTime(x.resumed_at)}</span>
                     </>
                   ) : null}
                 </span>

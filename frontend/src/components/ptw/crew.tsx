@@ -612,7 +612,7 @@ export function ChecklistPanel({ permit, checklist }: { permit: Permit; checklis
             return (
               <li key={i.code} className="flex flex-col gap-2 p-2 sm:flex-row sm:items-start" data-testid="checklist-item" data-code={i.code} data-answer={i.answer ?? ""}>
                 <span className="min-w-0 flex-1 text-sm">
-                  <bdi className="ltr me-1.5 font-mono text-xs text-muted-foreground">{i.code}</bdi>
+                  <bdi className="ltr me-1.5 font-mono text-xs text-muted-foreground rtl:me-0 rtl:ms-1.5">{i.code}</bdi>
                   {locale === "ar" ? i.label_ar : i.label_en}
                   {i.answered_by ? (
                     <span className="block text-xs text-muted-foreground">

@@ -35,6 +35,7 @@ import { APPOINTMENT_FUNCTIONS, APPOINTMENT_STATUSES, PERMIT_TYPES } from "@/lib
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
 import { PermitNo, WorkerRefLabel, userLabel } from "./common";
+import { RecordActions } from "@/components/common/record-actions";
 
 type S = Schemas;
 type Appt = S["AppointmentRead"];
@@ -352,11 +353,6 @@ function AppointmentView({ project, a }: { project: S["ProjectRead"]; a: Appt })
                   {t("reinstate")}
                 </Button>
               ) : null}
-              {manage && (a.status === "active" || a.status === "suspended") ? (
-                <Button variant="destructive-outline" onClick={() => setStep("revoke")} data-testid="revoke-appointment">
-                  {t("revoke")}
-                </Button>
-              ) : null}
             </>
           }
         />
@@ -426,6 +422,13 @@ function AppointmentView({ project, a }: { project: S["ProjectRead"]; a: Appt })
             </FormField>
           ) : null}
         </StepDialog>
+      ) : null}
+      {manage && (a.status === "active" || a.status === "suspended") ? (
+        <RecordActions className="mt-0">
+          <Button variant="destructive-outline" onClick={() => setStep("revoke")} data-testid="revoke-appointment">
+            {t("revoke")}
+          </Button>
+        </RecordActions>
       ) : null}
     </div>
   );
