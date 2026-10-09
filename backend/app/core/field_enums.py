@@ -249,6 +249,7 @@ class SuggestionSource(StrEnum):
     """TBT-9 order."""
 
     campaign = "campaign"
+    lesson = "lesson"
     incident = "incident"
     failed_item = "failed_item"
     observation_category = "observation_category"

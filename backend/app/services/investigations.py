@@ -243,7 +243,18 @@ def to_read(db: Session, b: Bundle) -> InvestigationRead:
         approved_at=inv.approved_at,
         higher_control_justification=b.inc.higher_control_justification,
         missing_for_submit=missing_for_submit(db, b),
+        **_lesson(db, b.inc.id),
     )
+
+
+def _lesson(db: Session, incident_id: uuid.UUID) -> dict[str, Any]:
+    """1-dashboard v1.9 §11.2 item 4: the 6f lesson no. and status (LL-1)."""
+    from sqlalchemy import select  # noqa: PLC0415
+
+    from app.models import FuLesson  # noqa: PLC0415
+
+    ls = db.scalar(select(FuLesson).where(FuLesson.incident_id == incident_id).limit(1))
+    return {"lesson_no": ls.lesson_no, "lesson_status": ls.status} if ls else {}
 
 
 def _ptws(db: Session, inv: Investigation) -> list[Any]:

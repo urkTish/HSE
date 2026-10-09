@@ -445,6 +445,36 @@ def env_seed(_fresh_data: None, _env_template: str) -> None:
     _clone(_env_template)
 
 
+# ---- Phase 6f: incident follow-up Appendix A on top of the Phase 6e world ------------------------
+
+FU_TEMPLATE = TEST_DB.rsplit("/", 1)[1] + "_fu_tpl"
+
+
+@pytest.fixture(scope="session")
+def _fu_template(_env_template: str) -> str:
+    """Phase 0-6e template + the 6f Appendix A seed."""
+    from app.seed_followup import seed_followup_data
+
+    _clone(_env_template)
+    with get_sessionmaker()() as db:
+        seed_followup_data(db)
+        db.commit()
+    get_engine().dispose()
+    name = _db_name()
+    _admin_exec(
+        _terminate(name),
+        f"DROP DATABASE IF EXISTS {FU_TEMPLATE}",
+        f"CREATE DATABASE {FU_TEMPLATE} TEMPLATE {name}",
+    )
+    return FU_TEMPLATE
+
+
+@pytest.fixture
+def fu_seed(_fresh_data: None, _fu_template: str) -> None:
+    """Replace the test database with a copy of the Phase 6f template."""
+    _clone(_fu_template)
+
+
 @pytest.fixture
 def noon() -> Iterator[None]:
     """Pin the clock to Appendix A "today" (2026-10-06 12:00 Asia/Riyadh = 09:00Z)."""

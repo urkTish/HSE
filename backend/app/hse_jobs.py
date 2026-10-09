@@ -53,6 +53,7 @@ from app.services import audit, hse_settings, notify
 from app.services import incidents as inc_svc
 from app.services import inspections as ins_svc
 from app.services import workforce as wf_svc
+from app.services.followup import common as fu_common
 from app.services.hse_common import contractor_reps, project_role_users, project_today
 from app.services.permissions import Principal
 
@@ -347,8 +348,13 @@ def incident_alerts(db: Session, at: datetime | None = None) -> dict[str, Any]:
                             project_id=pid,
                         )
                         counts["unclassified"] += 1
-            # external notifications
-            for r in inc_svc.required_notifications(i, cases.get(i.id, [])):
+            # external notifications (6f §7 alerts replace these under the rule profile)
+            ext_req = (
+                []
+                if fu_common.under_profile(db, i)
+                else inc_svc.required_notifications(i, cases.get(i.id, []))
+            )
+            for r in ext_req:
                 if r.body.value in recorded.get(i.id, set()):
                     continue
                 stages = [("pre", r.due_at - timedelta(hours=24)), ("due", r.due_at)]

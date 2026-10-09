@@ -205,6 +205,10 @@ def _validate(db: Session, p: Principal, c: BriefingCampaign) -> list[dict[str, 
         )
         if inc is None:
             raise validation_error("reason_ref", "Give the Phase 1 incident ref (CMP-1).")
+    if c.reason == CampaignReason.lesson:
+        from app.services.followup.lessons import lesson_published_for  # noqa: PLC0415
+
+        lesson_published_for(db, p, c.reason_ref)  # 6f LK-2
     if not ((c.message_en or "").strip() or (c.message_ar or "").strip()):
         raise validation_error("message_en", "Write the campaign message.")
     for k in ("message_en", "message_ar"):

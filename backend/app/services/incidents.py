@@ -187,7 +187,13 @@ class Required:
 
 
 def required_notifications(inc: Incident, cases: Sequence[InjuryCase]) -> list[Required]:
-    """I-20 (deadlines ASSUMPTION/VERIFY). Draft and voided incidents require nothing."""
+    """I-20 (deadlines ASSUMPTION/VERIFY). Draft and voided incidents require nothing. From the
+    project's `followup_rules_from` the 6f rule profile decides (6f §11.2)."""
+    from app.services.followup.requirements import phase1_required  # noqa: PLC0415
+
+    fu = phase1_required(inc)
+    if fu is not None:
+        return fu
     if inc.status in (ST.draft, ST.voided):
         return []
     at = inc.occurred_at
@@ -274,6 +280,14 @@ def notification_reads(
     at: datetime | None = None,
 ) -> list[ExternalNotificationRead]:
     t = at or now()
+    from app.services.followup import requirements as fu_req  # noqa: PLC0415
+
+    if fu_req.phase1_required(inc) is not None:
+        from sqlalchemy.orm import object_session  # noqa: PLC0415
+
+        db = object_session(inc)
+        assert db is not None  # noqa: S101
+        return fu_req.phase1_reads(db, inc, refs, t)
     req = {r.body: r for r in required_notifications(inc, cases)}
     rec = {ExternalBody(n.body): n for n in recorded}
     out = []
@@ -1116,6 +1130,9 @@ def transition(
         b.inv.approved_by_user_id = p.user.id
         b.inv.approved_at = now()
         b.inv.returned_comment = None
+        from app.services.followup.lessons import on_investigation_approved  # noqa: PLC0415
+
+        on_investigation_approved(db, inc, b.inv)  # 6f LL-1
         if to == ST.closed:
             inc.closed_at = now()
     elif src == ST.actions_pending and to == ST.closed:
@@ -1222,6 +1239,14 @@ def record_notification(
         raise invalid_transition("Incident", inc.status, "notified")
     if payload.notified_at > now() + timedelta(minutes=5):
         raise validation_error("notified_at", "The notification time cannot be in the future.")
+    from app.services.followup import common as fu_common  # noqa: PLC0415
+
+    if fu_common.under_profile(db, inc):
+        from app.services.followup import submissions as fu_subs  # noqa: PLC0415
+
+        fu_subs.record_phase1(db, p, inc, body, payload)
+        reads = notification_reads(inc, b.cases, b.recorded, Refs(db))
+        return next(n for n in reads if n.body == body)
     row = db.get(ExternalNotification, (inc.id, body))
     before = None
     if row is None:

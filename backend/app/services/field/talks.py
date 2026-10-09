@@ -607,6 +607,12 @@ def suggestions(
         )
         if unmet and c.topic_code in current:
             picks.append((current[c.topic_code], SuggestionSource.campaign, c.campaign_no))
+    # (1b) topics linked to lessons published to the project in the last 30 days (6f LK-4)
+    from app.services.followup.lessons import suggested_topics  # noqa: PLC0415
+
+    for tcode, lesson_no in suggested_topics(db, project_id, today):
+        if tcode in current:
+            picks.append((current[tcode], SuggestionSource.lesson, lesson_no))
     # (2) topics linked to incidents of the project in the last 30 days, newest first
     for inc in db.scalars(
         select(Incident)

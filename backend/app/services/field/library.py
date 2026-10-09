@@ -377,6 +377,9 @@ def transition_template(
         t.published_at = at
         t.published_by_user_id = p.user.id
         t.review_due_on = review_due(at)
+        from app.services.followup.lessons import adopt_on_publish  # noqa: PLC0415
+
+        adopt_on_publish(db, t.template_code, t.version, t.change_note)  # 6f LK-3
     else:
         if t.status != VS.published:
             raise fc.err(409, ErrorCode.INVALID_TRANSITION, "Only a Published version is retired.",

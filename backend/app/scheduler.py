@@ -77,6 +77,10 @@ def main() -> None:
     sched.add_job(_job, "cron", hour=0, minute=11, args=["env_daily"])
     sched.add_job(_job, "cron", hour=7, minute=8, args=["env_alerts"])
     sched.add_job(_job, "interval", minutes=1, args=["env_minute"])
+    # Phase 6f (spec 6f-incident-followup §7, NR-5, P6f-4)
+    sched.add_job(_job, "cron", hour=0, minute=13, args=["followup_daily"])
+    sched.add_job(_job, "cron", hour=7, minute=10, args=["followup_alerts"])
+    sched.add_job(_job, "interval", minutes=1, args=["followup_minute"])
     sched.start()
 
 

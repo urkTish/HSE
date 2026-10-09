@@ -13,6 +13,7 @@ from app.core.hse_enums import RECORDABLE, KpiMetric, LeadingWarningCode
 from app.kpi import fmt
 from app.kpi.engine import Engine
 from app.kpi.facts import EngFact
+from app.kpi.followup import fu_warnings
 from app.kpi.periods import Window, add_months, fmt_month, month_end, month_key, month_start
 from app.kpi.scope import Scope
 
@@ -187,6 +188,7 @@ def evaluate_engine(
         out += emergency_warnings(engine, project_id, tree, m, label_en, label_ar, who_en, who_ar)
         out += field_warnings(engine, project_id, tree, m, label_en, label_ar, who_en, who_ar)
         out += env_warnings(engine, project_id, tree, m, label_en, label_ar, who_en, who_ar)
+        out += fu_warnings(engine, project_id, tree, m, label_en, label_ar, who_en, who_ar)
     return out
 
 
