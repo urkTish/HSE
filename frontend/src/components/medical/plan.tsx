@@ -29,7 +29,7 @@ import { TRADES } from "@/lib/access-enums";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
 import { DateFilter } from "@/components/training/common";
-import { FitnessCodeLabel, FitnessCodeSelect, MedicalPlanSubNav, TierNote, useFitnessCatalogue, useMedCaps, workerHealthHref } from "./common";
+import { FitnessCodeLabel, FitnessCodeSelect, GapCategoryBadge, MedicalPlanSubNav, StackedDate, TierNote, useFitnessCatalogue, useMedCaps, workerHealthHref } from "./common";
 
 type S = Schemas;
 type Project = S["ProjectRead"];
@@ -311,7 +311,7 @@ function VersionsDialog({ project, line, onClose }: { project: Project; line: S[
           {(q.data?.items ?? []).map((v) => (
             <li key={v.id} className="rounded-md border p-2">
               <span className="font-medium">
-                {date(v.effective_from)} → {v.effective_to ? date(v.effective_to) : t("current")}
+                {date(v.effective_from)} <span aria-hidden className="inline-block rtl:-scale-x-100">→</span> {v.effective_to ? date(v.effective_to) : t("current")}
               </span>
               <span className="block">
                 {te(`medAppliesTo.${v.applies_to_kind}`)}: {v.applies_to_values.map((x) => value(v.applies_to_kind, x)).join(" · ") || "—"} · {t("days", { n: v.due_within_days })}
@@ -399,10 +399,12 @@ function Gaps({ project }: { project: Project }) {
                       {g.critical ? <Badge tone="danger">{t("critical")}</Badge> : null}
                     </span>
                   </TD>
-                  <TD label={t("dueDate")}>{date(g.due_date)}</TD>
+                  <TD label={t("dueDate")}>
+                    <StackedDate v={g.due_date} projectId={project.id} />
+                  </TD>
                   {tier2 ? (
                     <TD label={t("category")}>
-                      <span data-testid="gap-category">{g.outcome_category ? (te.has(`gapCategory.${g.outcome_category}` as never) ? te(`gapCategory.${g.outcome_category}` as never) : g.outcome_category) : "—"}</span>
+                      <GapCategoryBadge category={g.outcome_category} />
                     </TD>
                   ) : null}
                   {tier3 ? <TD label={t("reason")}>{g.reason_code ? te(`hookReason.${g.reason_code}`) : "—"}</TD> : null}

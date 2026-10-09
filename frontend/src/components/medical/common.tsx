@@ -1,5 +1,5 @@
 "use client";
-import { Search, ShieldAlert } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Lock, OctagonAlert, Search, ShieldAlert } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,7 @@ import { useMeData } from "@/components/shell/me-context";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
 import { useFitnessAssessments, useFitnessCodes, useMedicalExaminers, useMedicalProviders } from "@/lib/api/medical";
 import { can, canWrite } from "@/lib/permissions";
+import { formatDate, formatDateTime } from "@/lib/datetime";
 import { useFormatters } from "@/lib/use-formatters";
 
 type S = Schemas;
@@ -149,12 +150,18 @@ const OUTCOME_TONE: Record<S["FitnessOutcome"], "success" | "warning" | "danger"
   temporarily_unfit: "danger",
   permanently_unfit: "danger",
 };
+/** Icon per outcome so the category never rests on colour alone (design pass 6a). */
+const OUTCOME_ICON = { fit: CheckCircle2, fit_with_restrictions: AlertTriangle, temporarily_unfit: OctagonAlert, permanently_unfit: OctagonAlert } as const;
 
 export function OutcomeBadge({ outcome }: { outcome: S["FitnessOutcome"] | null | undefined }) {
   const te = useTranslations("enums");
   if (!outcome) return null;
   return (
     <Badge tone={OUTCOME_TONE[outcome]} data-testid="fitness-outcome" data-outcome={outcome}>
+      {(() => {
+        const Icon = OUTCOME_ICON[outcome];
+        return <Icon aria-hidden />;
+      })()}
       {te(`fitnessOutcome.${outcome}`)}
     </Badge>
   );
@@ -183,7 +190,8 @@ export function HookBandBadge({ band, en, ar }: { band: S["HookBand"]; en: strin
   );
 }
 
-const HOLD_TONE: Record<S["HoldStatus"], string> = { active: "suspended", released: "valid", cancelled: "cancelled" };
+/** An active hold removes the worker from work (P6-7), so it reads as a stop (red), like the worker page. */
+const HOLD_TONE: Record<S["HoldStatus"], string> = { active: "fitness_hold_active", released: "valid", cancelled: "cancelled" };
 
 export function HoldStatusBadge({ status }: { status: S["HoldStatus"] }) {
   const te = useTranslations("enums");
@@ -370,14 +378,70 @@ export function ExaminerSelect({
   );
 }
 
-/** Tier note shown above tier-aware tables (OH-2): the server omits fields above the caller's tier. */
+/**
+ * Tier note shown above tier-aware tables (OH-2): the server omits fields above the caller's tier.
+ * Tiers 2 and 3 also say the data is confidential and that each view is recorded (sensitive_field_read).
+ */
 export function TierNote({ tier }: { tier: S["FitnessTier"] | null | undefined }) {
   const t = useTranslations("medical.common");
+  const td = useTranslations("medDesign");
   if (!tier) return null;
   return (
-    <p className="mb-2 text-xs text-muted-foreground" data-testid="fitness-tier" data-tier={tier}>
-      {t(`tier.${tier}`)}
+    <p className="mb-3 flex w-fit max-w-full items-start gap-2 rounded-md border border-input/70 bg-surface px-3 py-1.5 text-xs" data-testid="fitness-tier" data-tier={tier}>
+      <Lock aria-hidden className="mt-px size-3.5 shrink-0 text-muted-foreground" />
+      <span>
+        <span className="font-medium">{t(`tier.${tier}`)}</span>
+        {tier !== "status" ? <span className="text-muted-foreground"> {td("confidential")}</span> : null}
+      </span>
     </p>
+  );
+}
+
+/** Free text typed by users (reasons, notes): isolated so Latin text keeps its punctuation in Arabic pages. */
+export function FreeText({ children, className, testId }: { children: string | null | undefined; className?: string; testId?: string }) {
+  if (!children) return null;
+  return (
+    <span dir="auto" className={className} data-testid={testId}>
+      {children}
+    </span>
+  );
+}
+
+/** Gregorian date (and time) on one line, the Hijri date muted underneath: stops dense tables wrapping to 5–6 lines. */
+export function StackedDate({ v, time, projectId }: { v: string | null | undefined; time?: boolean; projectId?: string | null }) {
+  const { prefs, hijri } = useFormatters(projectId);
+  if (!v) return <span>—</span>;
+  const p = { ...prefs, showHijri: false };
+  return (
+    <span className="inline-flex flex-col">
+      <span className="whitespace-nowrap">{time ? formatDateTime(v, p) : formatDate(v, p)}</span>
+      {prefs.showHijri ? <span className="text-xs whitespace-nowrap text-muted-foreground">{hijri(v)}</span> : null}
+    </span>
+  );
+}
+
+/** Gap category (tier 2+) as a badge: red for "cannot work" gaps, amber for pending or partial ones. */
+const GAP_TONE: Record<string, string> = {
+  missing: "gap",
+  expired: "gap",
+  unfit: "gap",
+  hold: "fitness_hold_active",
+  revoked: "gap",
+  verification_failed: "gap",
+  review_due: "expiring",
+  restriction: "partial",
+  pending_review: "pending_approval",
+  unverified: "pending_approval",
+};
+
+export function GapCategoryBadge({ category }: { category: string | null | undefined }) {
+  const te = useTranslations("enums");
+  if (!category) return <span>—</span>;
+  const label = te.has(`gapCategory.${category}` as never) ? te(`gapCategory.${category}` as never) : category;
+  return (
+    <span data-testid="gap-category" data-category={category}>
+      <StatusBadge status={GAP_TONE[category] ?? "other"} label={label} />
+    </span>
   );
 }
 

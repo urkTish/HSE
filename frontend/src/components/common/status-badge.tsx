@@ -1,4 +1,4 @@
-import { AlertTriangle, Archive, Ban, OctagonAlert, CheckCircle2, CircleDashed, Clock, FileCheck2, Hourglass, Info, Loader, Lock, PackageCheck, PauseCircle, PlayCircle, Search, ShieldCheck, Undo2, XCircle } from "lucide-react";
+import { AlertTriangle, Archive, Ban, OctagonAlert, CheckCircle2, CircleDashed, Clock, FileCheck2, Hourglass, Info, Loader, Lock, PackageCheck, PauseCircle, PlayCircle, Search, ShieldCheck, Undo2, UserX, XCircle } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
 
@@ -195,6 +195,8 @@ const MAP: Record<string, { tone: Tone; Icon: ComponentType<SVGProps<SVGSVGEleme
   in_force: { tone: "success", Icon: CheckCircle2 },
   not_in_force: { tone: "neutral", Icon: CircleDashed },
   mandatory: { tone: "danger", Icon: Lock },
+  // Phase 6a — an active fitness hold removes the worker from work (P6-7).
+  fitness_hold_active: { tone: "danger", Icon: UserX },
   recommended: { tone: "info", Icon: Info },
 };
 

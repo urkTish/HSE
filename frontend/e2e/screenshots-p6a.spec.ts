@@ -100,6 +100,16 @@ for (const locale of ["en", "ar"] as const) {
     await page.getByTestId("mi-discard").click();
     await expect(page).toHaveURL(/\/medical-imports$/);
 
+    // Phone (390 px): the worker's fitness state and the holds list as cards, for field use.
+    await page.setViewportSize({ width: 390, height: 844 });
+    await go(`/worker-health/${sunil.worker_id}?dep=${sunil.id}`);
+    await expect(page.getByTestId("req-row").first()).toBeVisible();
+    await shot(page, `16-worker-health-phone-${locale}.png`, true);
+    await go("/fitness-holds");
+    await expect(page.getByTestId("hold-row").first()).toBeVisible();
+    await shot(page, `17-fitness-holds-phone-${locale}.png`);
+    await page.setViewportSize({ width: 1440, height: 900 });
+
     await page.context().clearCookies();
     await login(page, USERS.faisal, locale);
     await pinProject(page, "ANIA-EXP");

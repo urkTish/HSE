@@ -39,12 +39,14 @@ import {
   FitnessCasesSubNav,
   FitnessCodeLabel,
   FitnessCodeSelect,
+  FreeText,
   MedProviderLabel,
   MedProviderSelect,
   MedVerificationBadge,
   NoDiagnosisHint,
   OutcomeBadge,
   RestrictionList,
+  StackedDate,
   TierNote,
   useFitnessCatalogue,
   useMedCaps,
@@ -65,10 +67,10 @@ export function FitnessAssessmentsPage() {
 
 function Assessments({ project }: { project: Project }) {
   const t = useTranslations("medical.assessments");
+  const td = useTranslations("medDesign");
   const te = useTranslations("enums");
   const tc = useTranslations("common");
   const caps = useMedCaps(project.id);
-  const { date } = useFormatters(project.id);
   const s = useSearchState();
   const page = s.getInt("page", 1) ?? 1;
   const status = s.getAll("status") as S["AssessmentStatus"][];
@@ -144,7 +146,9 @@ function Assessments({ project }: { project: Project }) {
                     <WorkerLabel w={a.worker} link />
                     {a.engagement_short_code ? <Code className="block text-xs text-muted-foreground">{a.engagement_short_code}</Code> : null}
                   </TD>
-                  <TD label={t("examinedOn")}>{date(a.examined_on)}</TD>
+                  <TD label={t("examinedOn")}>
+                    <StackedDate v={a.examined_on} projectId={project.id} />
+                  </TD>
                   <TD label={t("source")}>{te(`assessmentSource.${a.source}`)}</TD>
                   <TD label={t("lines")}>
                     <ul className="flex flex-col gap-0.5 text-xs">
@@ -171,7 +175,7 @@ function Assessments({ project }: { project: Project }) {
           <Pagination page={page} pageSize={PAGE_SIZE} total={q.data?.total ?? 0} onPage={(p) => s.set({ page: p })} />
         </>
       ) : (
-        <EmptyState />
+        <EmptyState message={s.get("q") || status.length || source.length || verif.length || mine ? undefined : td("noAssessments")} />
       )}
     </div>
   );
@@ -631,10 +635,14 @@ function AssessmentView({ project, a }: { project: Project; a: S["FitnessAssessm
               ) : null}
               {a.id_match_result ? <FieldItem label={t("idMatch")}>{te(`idMatch.${a.id_match_result}`)}</FieldItem> : null}
               {a.clinical_data_present != null ? <FieldItem label={t("clinicalData")}>{a.clinical_data_present ? tc("yes") : tc("no")}</FieldItem> : null}
-              {a.status_reason ? <FieldItem label={t("statusReason")}>{a.status_reason}</FieldItem> : null}
+              {a.status_reason ? (
+                <FieldItem label={t("statusReason")}>
+                  <FreeText>{a.status_reason}</FreeText>
+                </FieldItem>
+              ) : null}
               {a.revoke ? (
                 <FieldItem label={t("revoked")}>
-                  {a.revoke.reason ?? a.revoke.code} · <UserName u={a.revoke.by} /> · {dateTime(a.revoke.at)}
+                  {a.revoke.reason ? <FreeText>{a.revoke.reason}</FreeText> : a.revoke.code} · <UserName u={a.revoke.by} /> · {dateTime(a.revoke.at)}
                 </FieldItem>
               ) : null}
               <FieldItem label={t("purposeNoticeShort")}>{a.purpose_notice_given ? tc("yes") : tc("no")}</FieldItem>
@@ -856,7 +864,7 @@ function Verifications({ a, projectId, canRecord, onRecord }: { a: S["FitnessAss
               <li key={v.id} className="rounded-md border p-2" data-testid="fa-verification" data-outcome={v.outcome}>
                 <span className="font-medium">{te(`fitnessVerifOutcome.${v.outcome}`)}</span> · {te(`fitnessVerifMethod.${v.method}`)} · <span className="ltr">{v.channel_used}</span>
                 <span className="block text-xs text-muted-foreground">
-                  {dateTime(v.performed_at)} · <UserName u={v.performed_by} /> · {v.reference} → {te(`verificationStatus.${v.verification_status_after}`)}
+                  {dateTime(v.performed_at)} · <UserName u={v.performed_by} /> · {v.reference} <span aria-hidden className="inline-block rtl:-scale-x-100">→</span> {te(`verificationStatus.${v.verification_status_after}`)}
                 </span>
               </li>
             ))}

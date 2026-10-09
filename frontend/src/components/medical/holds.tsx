@@ -26,7 +26,7 @@ import { useFitnessHolds, useFitnessReferrals, useMedicalRefresh } from "@/lib/a
 import { HOLD_STATUSES, REFERRAL_REASONS, REFERRAL_STATUSES } from "@/lib/med-enums";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
-import { FitnessCasesSubNav, HoldStatusBadge, MedWorkerPicker, NoDiagnosisHint, ReferralStatusBadge, TierNote, useMedCaps, type MedWorker } from "./common";
+import { FitnessCasesSubNav, FreeText, HoldStatusBadge, MedWorkerPicker, NoDiagnosisHint, ReferralStatusBadge, StackedDate, TierNote, useMedCaps, type MedWorker } from "./common";
 
 type S = Schemas;
 type Project = S["ProjectRead"];
@@ -48,6 +48,7 @@ export function FitnessHoldsPage() {
 
 function Holds({ project }: { project: Project }) {
   const t = useTranslations("medical.holds");
+  const td = useTranslations("medDesign");
   const te = useTranslations("enums");
   const tc = useTranslations("common");
   const caps = useMedCaps(project.id);
@@ -110,8 +111,12 @@ function Holds({ project }: { project: Project }) {
                   <TD label={t("worker")}>
                     <WorkerLabel w={h.worker} link />
                   </TD>
-                  <TD label={t("started")}>{dateTime(h.started_at)}</TD>
-                  <TD label={t("ended")}>{h.released_at ? dateTime(h.released_at) : h.cancelled_at ? dateTime(h.cancelled_at) : "—"}</TD>
+                  <TD label={t("started")}>
+                    <StackedDate v={h.started_at} time projectId={project.id} />
+                  </TD>
+                  <TD label={t("ended")}>
+                    <StackedDate v={h.released_at ?? h.cancelled_at} time projectId={project.id} />
+                  </TD>
                   <TD label={t("hours")}>
                     <span className="ltr tabular-nums">{h.hold_hours}</span>
                   </TD>
@@ -134,10 +139,10 @@ function Holds({ project }: { project: Project }) {
                     <TD label={t("reason")}>
                       {h.reason ? <span data-testid="hold-reason">{te(`holdReason.${h.reason}`)}</span> : "—"}
                       {h.source_ref ? <Code className="block text-xs">{h.source_ref}</Code> : null}
-                      {h.reason_text ? <span className="block text-xs text-muted-foreground">{h.reason_text}</span> : null}
+                      <FreeText className="block text-xs text-muted-foreground">{h.reason_text}</FreeText>
                       {h.release_assessment_no ? <span className="block text-xs">{t("releasedBy", { no: h.release_assessment_no })}</span> : null}
                       {h.cancel_code ? <span className="block text-xs">{te(`holdCancelCode.${h.cancel_code}`)}</span> : null}
-                      {h.cancel_reason ? <span className="block text-xs text-muted-foreground">{h.cancel_reason}</span> : null}
+                      <FreeText className="block text-xs text-muted-foreground">{h.cancel_reason}</FreeText>
                     </TD>
                   ) : null}
                   <TD label={tc("status")}>
@@ -169,7 +174,7 @@ function Holds({ project }: { project: Project }) {
           <Pagination page={page} pageSize={PAGE_SIZE} total={q.data?.total ?? 0} onPage={(p) => s.set({ page: p })} />
         </>
       ) : (
-        <EmptyState />
+        <EmptyState message={status.length || wdh ? undefined : td("noHolds")} />
       )}
       {place ? <PlaceHoldDialog project={project} onClose={() => setPlace(false)} /> : null}
       {cancel ? (
@@ -274,6 +279,7 @@ export function FitnessReferralsPage() {
 
 function Referrals({ project }: { project: Project }) {
   const t = useTranslations("medical.referrals");
+  const td = useTranslations("medDesign");
   const te = useTranslations("enums");
   const tc = useTranslations("common");
   const caps = useMedCaps(project.id);
@@ -318,7 +324,7 @@ function Referrals({ project }: { project: Project }) {
               <TR>
                 <TH>{t("no")}</TH>
                 <TH>{t("worker")}</TH>
-                <TH>{t("raised")}</TH>
+                <TH>{td("raisedOn")}</TH>
                 <TH>{t("due")}</TH>
                 <TH>{t("removeFromWork")}</TH>
                 {tier3 ? <TH>{t("reason")}</TH> : null}
@@ -336,14 +342,14 @@ function Referrals({ project }: { project: Project }) {
                   <TD label={t("worker")}>
                     <WorkerLabel w={r.worker} link />
                   </TD>
-                  <TD label={t("raised")}>
-                    {dateTime(r.raised_at)}
+                  <TD label={td("raisedOn")}>
+                    <StackedDate v={r.raised_at} time projectId={project.id} />
                     <span className="block text-xs text-muted-foreground">
                       <UserName u={r.raised_by} />
                     </span>
                   </TD>
                   <TD label={t("due")}>
-                    {dateTime(r.due_at)}
+                    <StackedDate v={r.due_at} time projectId={project.id} />
                     {r.assessed_at ? (
                       <span className={r.on_time ? "block text-xs text-success" : "block text-xs text-danger"} data-testid="referral-on-time" data-on-time={r.on_time ? "yes" : "no"}>
                         {r.on_time ? t("onTime") : t("late")} · {dateTime(r.assessed_at)}
@@ -354,8 +360,8 @@ function Referrals({ project }: { project: Project }) {
                   {tier3 ? (
                     <TD label={t("reason")}>
                       {r.reason ? <span data-testid="referral-reason">{te(`referralReason.${r.reason}`)}</span> : "—"}
-                      {r.note ? <span className="block text-xs text-muted-foreground" data-testid="referral-note">{r.note}</span> : null}
-                      {r.cancel_reason ? <span className="block text-xs text-muted-foreground">{r.cancel_reason}</span> : null}
+                      <FreeText className="block text-xs text-muted-foreground" testId="referral-note">{r.note}</FreeText>
+                      <FreeText className="block text-xs text-muted-foreground">{r.cancel_reason}</FreeText>
                     </TD>
                   ) : null}
                   <TD label={tc("status")}>
@@ -387,7 +393,7 @@ function Referrals({ project }: { project: Project }) {
           <Pagination page={page} pageSize={PAGE_SIZE} total={q.data?.total ?? 0} onPage={(p) => s.set({ page: p })} />
         </>
       ) : (
-        <EmptyState />
+        <EmptyState message={status.length || overdue ? undefined : td("noReferrals")} />
       )}
       {raise ? <RaiseReferralDialog project={project} onClose={() => setRaise(false)} /> : null}
       {cancel ? (

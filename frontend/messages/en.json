@@ -9671,5 +9671,25 @@
       "key": "Group",
       "noBreakdown": "No breakdown for this selection."
     }
+  },
+  "medDesign": {
+    "confidential": "Confidential health data: each view is recorded.",
+    "raisedOn": "Raised",
+    "noHolds": "No fitness holds on this project.",
+    "noReferrals": "No fitness referrals on this project.",
+    "noAssessments": "No fitness assessments on this project yet.",
+    "state": {
+      "label": "Fitness for work",
+      "onHold": "Removed from work",
+      "onHoldLine": "Pending HSE check. No site entry and no permit crew until the hold is released.",
+      "stop": "Not eligible — stops work",
+      "stopLine": "Fitness requirement not met. Work that needs these codes is blocked:",
+      "check": "Fitness check needed",
+      "checkLine": "Not cleared on every requirement. Codes to check:",
+      "cleared": "Cleared for work",
+      "clearedLine": "Every fitness requirement on this project is met.",
+      "none": "No fitness requirements",
+      "noneLine": "No fitness code applies to this worker on this project."
+    }
   }
 }

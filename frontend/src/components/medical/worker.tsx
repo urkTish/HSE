@@ -1,5 +1,5 @@
 "use client";
-import { Download, HeartPulse, Pencil, ShieldAlert, Stethoscope, UserX } from "lucide-react";
+import { AlertTriangle, CheckCircle2, CircleDashed, Download, HeartPulse, OctagonAlert, Pencil, ShieldAlert, Stethoscope, UserX } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -16,7 +16,7 @@ import { PageHeader } from "@/components/common/page-header";
 import { ProjectGate } from "@/components/common/project-gate";
 import { ErrorState, LoadingState } from "@/components/common/states";
 import { Code, StepDialog, WorkerLabel } from "@/components/access/common";
-import { UserName } from "@/components/cert/common";
+import { CertStatePanel, UserName } from "@/components/cert/common";
 import { Link, useRouter } from "@/i18n/navigation";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
 import { useDeployments } from "@/lib/api/access";
@@ -26,7 +26,7 @@ import { useErrorMessage } from "@/lib/i18n-helpers";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
 import { PlaceHoldDialog, RaiseReferralDialog } from "./holds";
-import { FitnessCodeLabel, HookBandBadge, MedicalPlanSubNav, MedWorkerPicker, OutcomeBadge, RequirementStateBadge, RestrictionList, TierNote, useFitnessCatalogue, useMedCaps, workerHealthHref, type MedWorker } from "./common";
+import { FitnessCodeLabel, HookBandBadge, MedicalPlanSubNav, MedWorkerPicker, OutcomeBadge, RequirementStateBadge, RestrictionList, StackedDate, TierNote, useFitnessCatalogue, useMedCaps, workerHealthHref, type MedWorker } from "./common";
 
 type S = Schemas;
 type Project = S["ProjectRead"];
@@ -122,12 +122,6 @@ function WorkerHealth({ project, workerId }: { project: Project; workerId: strin
           </span>
         }
         description={`${project.code}${trade ? ` · ${te(`trade.${trade}`)}` : ""}`}
-        badge={f?.on_hold ? (
-          <Badge tone="danger" data-testid="on-hold">
-            <UserX aria-hidden />
-            {t("onHold")}
-          </Badge>
-        ) : null}
         actions={
           <>
             {caps.recordClinic || caps.submitExternal ? (
@@ -159,6 +153,7 @@ function WorkerHealth({ project, workerId }: { project: Project; workerId: strin
         }
       />
       <div className="flex flex-col gap-4">
+        <FitnessStatePanel f={f} />
         {caps.status ? (
           <Card data-testid="worker-fitness">
             <CardHeader>
@@ -190,12 +185,13 @@ function WorkerHealth({ project, workerId }: { project: Project; workerId: strin
                             <HookBandBadge band={i.band} en={i.text_en} ar={i.text_ar} />
                             {i.hard_stop ? (
                               <Badge tone="danger" className="ms-1" data-testid="hard-stop">
+                                <OctagonAlert aria-hidden />
                                 {t("hardStop")}
                               </Badge>
                             ) : null}
                           </TD>
                           <TD label={t("validUntil")}>
-                            <span data-testid="item-valid-until">{i.valid_until ? date(i.valid_until) : "—"}</span>
+                            <span data-testid="item-valid-until"><StackedDate v={i.valid_until} projectId={project.id} /></span>
                           </TD>
                           {tier2 ? (
                             <TD label={t("outcome")}>
@@ -268,8 +264,12 @@ function WorkerHealth({ project, workerId }: { project: Project; workerId: strin
                           <RequirementStateBadge state={r.state} />
                           {tier3 && r.reason_code ? <span className="block text-xs text-muted-foreground">{te(`hookReason.${r.reason_code}`)}</span> : null}
                         </TD>
-                        <TD label={t("dueDate")}>{date(r.due_date)}</TD>
-                        <TD label={t("validUntil")}>{r.valid_until ? date(r.valid_until) : "—"}</TD>
+                        <TD label={t("dueDate")}>
+                          <StackedDate v={r.due_date} projectId={project.id} />
+                        </TD>
+                        <TD label={t("validUntil")}>
+                          <StackedDate v={r.valid_until} projectId={project.id} />
+                        </TD>
                         {tier2 ? (
                           <TD label={t("outcome")}>
                             <OutcomeBadge outcome={r.outcome} />
@@ -313,7 +313,13 @@ function WorkerHealth({ project, workerId }: { project: Project; workerId: strin
                 <ul className="flex flex-col gap-1 text-xs text-muted-foreground">
                   {profile.data.history.map((h, i) => (
                     <li key={i}>
-                      {date(h.from_date)} → {h.to_date ? date(h.to_date) : t("current")}: {h.value.map((g) => te(`exposureGroup.${g}`)).join(" · ") || "—"} · <UserName u={h.by} />
+                      {date(h.from_date)} <span aria-hidden className="inline-block rtl:-scale-x-100">→</span> {h.to_date ? date(h.to_date) : t("current")}: {h.value.map((g) => te(`exposureGroup.${g}`)).join(" · ") || t("noExposure")}
+                      {h.by ? (
+                        <>
+                          {" · "}
+                          <UserName u={h.by} />
+                        </>
+                      ) : null}
                     </li>
                   ))}
                 </ul>
@@ -358,4 +364,38 @@ function ExposureDialog({ profile, onClose }: { profile: S["HealthProfileRead"];
       ) : null}
     </StepDialog>
   );
+}
+
+/**
+ * One-glance answer to "may this worker work today?" (design pass 6a), worded from server fields only:
+ * on_hold, and each required item's band and hard_stop. Wording follows P6-7, so it says nothing medical.
+ */
+function FitnessStatePanel({ f }: { f: S["WorkerFitnessRead"] }) {
+  const t = useTranslations("medDesign.state");
+  const required = f.items.filter((i) => i.required);
+  const stops = f.items.filter((i) => i.hard_stop);
+  const open = required.filter((i) => i.band !== "cleared");
+  const codes = (xs: S["WorkerFitnessItem"][]) => xs.map((i) => i.code).join(" · ");
+  const common = { label: t("label") };
+  if (f.on_hold) {
+    return <CertStatePanel {...common} tone="danger" Icon={UserX} word={t("onHold")} line={t("onHoldLine")} testId="on-hold" data={{ "data-state": "on_hold" }} />;
+  }
+  if (stops.length) {
+    return (
+      <CertStatePanel {...common} tone="danger" Icon={OctagonAlert} word={t("stop")} line={t("stopLine")} testId="fitness-state" data={{ "data-state": "stop" }}>
+        <span className="ltr font-semibold">{codes(stops)}</span>
+      </CertStatePanel>
+    );
+  }
+  if (open.length) {
+    return (
+      <CertStatePanel {...common} tone="warning" Icon={AlertTriangle} word={t("check")} line={t("checkLine")} testId="fitness-state" data={{ "data-state": "check" }}>
+        <span className="ltr font-semibold">{codes(open)}</span>
+      </CertStatePanel>
+    );
+  }
+  if (required.length) {
+    return <CertStatePanel {...common} tone="success" Icon={CheckCircle2} word={t("cleared")} line={t("clearedLine")} testId="fitness-state" data={{ "data-state": "cleared" }} />;
+  }
+  return <CertStatePanel {...common} tone="neutral" Icon={CircleDashed} word={t("none")} line={t("noneLine")} testId="fitness-state" data={{ "data-state": "none" }} />;
 }

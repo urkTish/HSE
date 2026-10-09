@@ -195,6 +195,7 @@ export function CertStatePanel({
   children,
   testId,
   data,
+  label,
 }: {
   tone: StateTone;
   Icon: LucideIcon;
@@ -204,12 +205,14 @@ export function CertStatePanel({
   children?: ReactNode;
   testId?: string;
   data?: Record<`data-${string}`, string>;
+  /** Accessible name of the panel; defaults to "Certification state". */
+  label?: string;
 }) {
   const t = useTranslations("certDesign");
   return (
     <section
       className={cn("flex flex-col gap-2 rounded-xl border-2 border-s-8 p-4 [border-inline-start-color:var(--tone)]", STATE_TONE_CLS[tone])}
-      aria-label={t("stateLabel")}
+      aria-label={label ?? t("stateLabel")}
       data-testid={testId}
       data-tone={tone}
       {...data}

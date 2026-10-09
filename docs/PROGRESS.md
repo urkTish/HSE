@@ -3,7 +3,7 @@
 ## Current
 - Phase: 6a — Occupational health & medical fitness (Phase 5 Training is PARKED, see below)
 - Module: occupational health (spec `docs/specs/6a-occupational-health.md` v1.0)
-- Step: Frontend done (screens against contract v0.7.0 and the stage 2 backend, p6a e2e green, EN/AR screenshots); design pass next
+- Step: Design done (design pass 2026-10-09, `docs/design/phase-6a-findings.md`; p6a e2e green, screenshots regenerated); phase demo next
 - Next module spec: 6b spec v1.0 written (`docs/specs/6b-heat-stress.md`, 61 ACs; earlier-spec changes in its §11 not yet applied)
 
 ## Phase log
@@ -803,3 +803,9 @@ L items from the Phase 4 design pass (details in `docs/design/phase-4-findings.m
 - **P16. Certificate line on the deployment page.** The equipment-on-project page (the one an engineer opens for "the crane on my site") shows usable / not usable but not the certificate number, TPI, SWL and limitations. Needs `current_line` on `EquipmentDeploymentRead`.
 - **P17. Tag board field display.** A "problems only" toggle and a kiosk / TV mode for site offices (large tiles, problems first per zone, auto-refresh, no navigation chrome).
 - **P1 / P2 also apply to Phase 4.** Two-calendar dates make certificate rows 4–5 lines; equipment, scaffold and personnel-card actions come before the state on phones.
+
+L items from the Phase 6a design pass (details in `docs/design/phase-6a-findings.md`):
+- **P18. Server verdict for "may this worker work today".** The worker page panel combines `on_hold` and each item's `band` / `hard_stop`; a `work_state` (removed / stop / check / cleared / none) with its codes on `WorkerFitnessRead`, in P6-7 words, would make it a server decision reusable by the field check (contract change).
+- **P19. Trends on the Health KPIs page.** C22–C24 and a previous-month comparison on each K-89…K-96 tile, once the chart data is built (parked in the backend).
+- **P20. "Hide health details" for shared screens.** A per-user switch masking outcomes, restrictions and reasons until clicked (each reveal audited); no tier-2/3 content on kiosk / TV modes.
+- **P1 / P2 also apply to Phase 6a.** On phones the worker page puts four actions above the fitness state.
