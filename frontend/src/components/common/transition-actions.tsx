@@ -68,12 +68,14 @@ export function TransitionActions<S extends string>({
 
   return (
     <>
-      <div className="flex flex-wrap gap-2" role="group" aria-label={t("changeStatus")}>
-        {options.map((o) => (
+      {/* Destructive moves (close, archive, blacklist, deactivate) last, outlined and set apart from the everyday ones. */}
+      <div className="flex flex-wrap items-center gap-2" role="group" aria-label={t("changeStatus")}>
+        {[...options.filter((o) => !o.destructive), ...options.filter((o) => o.destructive)].map((o, i, all) => (
           <Button
             key={o.to}
-            variant={o.destructive ? "destructive" : "outline"}
+            variant={o.destructive ? "destructive-outline" : "outline"}
             size="sm"
+            className={o.destructive && i > 0 && !all[i - 1].destructive ? "sm:ms-3" : undefined}
             onClick={() => start(o)}
             data-testid={`transition-${o.to}`}
           >
