@@ -73,6 +73,10 @@ import {
   Settings,
   UserRound,
   Users,
+  Leaf,
+  Truck,
+  AudioWaveform,
+  MessageSquareWarning,
 } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
 import { useTranslations } from "next-intl";
@@ -288,6 +292,20 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
       ]
     : [];
 
+  /* Phase 6e environmental (202–214). */
+  const envItems: Item[] = pid && ac("env.view")
+    ? [
+        { href: "/env-overview", label: t("envOverview"), Icon: Leaf, testId: "nav-env-overview" },
+        { href: "/env-aspects", label: t("envAspects"), Icon: ListTree, testId: "nav-env-aspects" },
+        { href: "/env-permits", label: t("envPermits"), Icon: FileBadge, testId: "nav-env-permits" },
+        { href: "/waste-consignments", label: t("envWaste"), Icon: Truck, testId: "nav-env-waste" },
+        { href: "/env-readings", label: t("envMonitoring"), Icon: AudioWaveform, testId: "nav-env-monitoring" },
+        { href: "/spills", label: t("envSpills"), Icon: Droplets, testId: "nav-env-spills" },
+        { href: "/env-complaints", label: t("envComplaints"), Icon: MessageSquareWarning, testId: "nav-env-complaints" },
+        { href: "/env-kpis", label: t("envKpis"), Icon: FileBarChart, testId: "nav-env-kpis" },
+      ]
+    : [];
+
   const emergencyItems: Item[] = pid
     ? [
         ...(ac("emergency.view") ? [{ href: "/emergency-board", label: t("emergencyBoard"), Icon: ShieldAlert, testId: "nav-emergency-board" }] : []),
@@ -405,6 +423,18 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
               <p className="px-3 pt-1 pb-1 text-xs font-medium text-sidebar-muted">{t("field")}</p>
               <ul className="mb-3 flex flex-col gap-1" data-testid="nav-field">
                 {fieldItems.map((i) => (
+                  <li key={i.href}>
+                    <NavLink item={i} onNavigate={onNavigate} />
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : null}
+          {envItems.length > 0 ? (
+            <>
+              <p className="px-3 pt-1 pb-1 text-xs font-medium text-sidebar-muted">{t("env")}</p>
+              <ul className="mb-3 flex flex-col gap-1" data-testid="nav-env">
+                {envItems.map((i) => (
                   <li key={i.href}>
                     <NavLink item={i} onNavigate={onNavigate} />
                   </li>
