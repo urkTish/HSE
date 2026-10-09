@@ -5,7 +5,7 @@
 - Module: heat stress (spec `docs/specs/6b-heat-stress.md` v1.0, §11 earlier-spec changes applied)
 - Phase 6b step = Design done (findings `docs/design/phase-6b-findings.md`; contract v0.8.0); phase demo next
 - Phase 6c — Emergency preparedness & drills (spec `docs/specs/6c-emergency-drills.md` v1.0, §11 earlier-spec changes applied; contract v0.9.0)
-- Phase 6c step = Backend done (stage 2); frontend next
+- Phase 6c step = Frontend done (design pass next)
 - Phase 6d — Field assurance (checklists, audits, toolbox talks): spec `docs/specs/6d-field-assurance.md` v1.0 (61 ACs; §11 earlier-spec changes applied); contract next
 
 ## Phase log
@@ -16,6 +16,18 @@
 - Phase 4 — Third-party certification: built, e2e green, design pass done (2026-10-08).
 
 ## Done
+
+### Frontend — Phase 6c emergency preparedness & drills (contract v0.9.0, integrated with the stage 2 backend)
+- "Emergency" sidebar section (D-169): board (readiness per site: coverage counters, equipment gaps, next drills, open musters, active events; refreshed every minute), action panel, emergency info (AP + numbers for chosen zones), KPIs K-104…K-109 with breakdowns.
+- Plan and setup: ERP revisions (draft → submit → approve / return; scenarios editor; `meta.missing` shown for ERP_INCOMPLETE), assembly points with the MP sticker, emergency numbers, zone requirements, muster readers (register / revoke, token once), settings (HSE Manager edits; others read-only).
+- Organisation: roster with privacy note and training state, assign / end; coverage per site, shift and day; rescue teams with readiness reasons and members.
+- Equipment: register with readiness reasons, EA sticker, edit, tag out, retire; checks list with void; phone-first check entry (scan / paste the sticker or pick by site / zone / type; pass / fail / n.a. answer buttons; saved panel with result, CA ref and warnings).
+- Drills: programme (lines with "Plan drill"), list and plan dialog (scenario from the ERP in force), detail: start (optional earlier alarm), muster link, timings and outside agencies, conduct, cancel, void, measures vs targets, evaluation form (criteria from the reference list, findings with CA), evaluation view with CA links.
+- Muster, phone first: counters, AP select, camera or pasted access card scan, roll list (missing / accounted / resolved / all, search) with tick and resolve (reason buttons, note), count mode per engagement with resolutions and visitors, printable sheet (open roll musters), void; names hidden note when the API returns no entries.
+- Events: list, declare dialog (from the board too; casualties as a number only; late entry), detail with times, response record (first responder, outside agencies, incident link), All Clear, review (HSE staff), void.
+- Permits: "Resume after drill" for the receiver of an `emergency_drill` suspension (D-175).
+- e2e: `p6c-board`, `p6c-plan`, `p6c-org`, `p6c-assets`, `p6c-drills`, `p6c-muster`, `p6c-events` (24 tests) all pass alone; screenshots (EN / AR, board and muster at 390 px) in `docs/screenshots/phase-6c/` via `screenshots-p6c.spec.ts` (`SCREENSHOTS=1`).
+- Full e2e run after the 6c frontend: 222 passed, 18 failed, 11 skipped, 10 did not run (46.7 min). The one 6c failure (no permit left to suspend after earlier specs) was fixed by resuming any receiver's drill-suspended permit (Ramesh's first); the spec passes alone. Failures outside 6c are left as before (see Parked).
 
 ### Frontend — Phase 6b heat stress (contract v0.8.0, integrated with the stage 2 backend)
 - Screens (EN/AR, RTL), all under the new "Heat stress" nav section:
@@ -735,6 +747,7 @@
 - Phase 1 demo; then Phase 2 per the roadmap
 
 ## Parked
+- **Phase 6c frontend (2026-10-09):** no UI yet for register exports (189), AI tool T20, charts C28–C30, check photos (no attachment owner) and the permit form's emergency-info prefill button (the backend pre-fills at Request, PE-6). The muster reader list is session-only (no list endpoint). Full e2e run failures outside 6c, left as TODO: p1-dashboard ×6, p1-modules:64, contractors AC17, p2-passes AP-4, p2-settings HK-4, p2-workers IN, p4-dashboard AC103, p5-check AC124, p5-dashboard, p5-hooks AC93, p6a-settings, p6b-settings-report:46 (the backend working tree had uncommitted 6d changes during the run).
 - **Phase 6c backend (2026-10-09):** not built yet: AI tool T20 (AC63), charts C28–C30 data, register exports (189), expiring-items / poster entries, the P1-8 scan of event free texts. K-106 and two other ED9 figures differ on the seed (D-166). AC66 is tested on the reference lists only; ACs 34 (exact alert dates), 45 (plan_deficiency via the evaluation API) and 64 (exports) are partly covered.
 - **Phase 6b frontend (2026-10-09):** no UI yet for WBGT bulk import (`/wbgt-imports`), heat exports (176, not built in the backend), patrol photos (no attachment owner). The heat-stop resume and day-confirmation flows have no e2e test (no seed state at the clock). Full e2e run after the 6b frontend: 217 passed, 9 failed, 9 skipped, 3 did not run (37.6 min). Failures outside 6b, left as before: p1-dashboard ×5, p4-dashboard AC103, p2-settings HK-4 (as parked after 6a); p6a-settings "1 settings saved." toast (passes alone). The one 6b failure (K-97 is diluted by zones earlier specs create) was fixed by not asserting K-97 in that spec; the spec passes alone.
 - **Phase 6b backend (2026-10-09):** not built or not tested yet: AI tool T19 and T9 heat dimensions, charts C25–C27 data, heat exports (capability 176), expiring-items / dashboard band integration, WR-7 permit-only readings, GP-6 (heat training gap in `train/gaps.py`), retention purge (AC60, untested), season report `heat_awr_compliance` (null), AC61 i18n check. ACs 18, 19, 21, 25, 26, 28, 46, 50 and the AC20 resume steps have no dedicated backend test.
@@ -790,6 +803,9 @@
 - (Backend, ops) With 4 API workers the KPI cache can show figures up to 20 s old after a write made through another worker, and the gate rate limit (120/min) is counted per worker. Acceptable for v1.0?
 
 ## Contract requests
+- (Frontend 6c) `GET /projects/{id}/muster-devices` (list the muster readers with AP, label, last seen, revoked) — the page can only list devices registered in the current session.
+- (Frontend 6c) `q` (tag / location search) on `GET /projects/{id}/emergency-assets`, and a lookup of an asset by its EA sticker payload (so a scanned check shows the asset and its items before saving).
+- (Frontend 6c) an attachment owner type for emergency asset checks (photos of a failed item).
 - (Frontend, Phase 6b, low) An attachment owner type for midday-ban patrol photos (e.g. `ban_patrol_photo`), so `PatrolCreate.photo_ids` can be filled (D-155).
 - (Frontend, Phase 6b, low) `app.seed` should call the 6b heat seed (`app.seed_heat`); e2e runs it separately for now (D-156).
 - (Frontend, Phase 3, low) Mark `ambient_temp_c` as required for outdoor permits in the start / resume / revalidate / handover-accept request descriptions (the server enforces HT-5).

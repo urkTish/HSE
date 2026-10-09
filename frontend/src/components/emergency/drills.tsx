@@ -851,7 +851,7 @@ function EvaluationForm({ project, d }: { project: Project; d: Drill }) {
           {criteria.map((c) => (
             <li key={c.code} className="flex flex-col gap-2" data-testid="eval-criterion" data-code={c.code}>
               <span className="text-sm">
-                <Code className="me-1">{c.code}</Code>
+                <Code className="me-1">{c.code}</Code>{" "}
                 {label("criteria", c.code)}
               </span>
               <AnswerButtons
@@ -969,7 +969,7 @@ function EvaluationView({ project, d }: { project: Project; d: Drill }) {
             <li key={c.criterion} className="flex items-start gap-2" data-testid="eval-answer" data-code={c.criterion} data-answer={c.answer}>
               <Badge tone={c.answer === "fail" ? "danger" : c.answer === "pass" ? "success" : "neutral"}>{te(`checkAnswer.${c.answer}`)}</Badge>
               <span>
-                <Code className="me-1">{c.criterion}</Code>
+                <Code className="me-1">{c.criterion}</Code>{" "}
                 {label("criteria", c.criterion)}
               </span>
             </li>
