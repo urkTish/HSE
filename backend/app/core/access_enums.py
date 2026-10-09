@@ -686,6 +686,8 @@ class QrKind(StrEnum):
     PT = "PT"  # v1.1: PTW permit print (3-ptw PT-20); read-only at gates (GC-10)
     EQ = "EQ"  # v1.2: equipment / scaffold sticker (4-third-party-cert §3.5, GE-1, VF-8)
     TR = "TR"  # v1.3: training certificate (5-training TR-14); never a gate token (GC-3)
+    EA = "EA"  # v1.5: 6c emergency asset sticker; never a gate token
+    MP = "MP"  # v1.5: 6c assembly point (opens the muster screen); never a gate token
 
 
 class QrTokenStatus(StrEnum):

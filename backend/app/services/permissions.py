@@ -541,6 +541,55 @@ PHASE6B_MATRIX: dict[Role, dict[Capability, CapabilityScope]] = {
 for _role, _caps in PHASE6B_MATRIX.items():
     MATRIX[_role].update(_caps)
 
+# 6c-emergency-drills §5.13 (capabilities 178-190). 180 is HSE Manager only. Narrowing in
+# parentheses (site engineers: 188 All Clear only; Viewer/Client: 178 read-only and 189 aggregates)
+# is enforced in the services.
+PHASE6C_MATRIX: dict[Role, dict[Capability, CapabilityScope]] = {
+    Role.hse_officer: dict.fromkeys(
+        [
+            C.emergency_view, C.erp_prepare, C.emergency_roster_manage, C.emergency_asset_manage,
+            C.emergency_check_record, C.drill_plan, C.drill_run, C.drill_evaluate,
+            C.emergency_declare, C.emergency_all_clear, C.emergency_kpi_view, C.emergency_void,
+        ],
+        S.project,
+    ),
+    Role.site_engineer: dict.fromkeys(
+        [
+            C.emergency_view, C.emergency_roster_manage, C.emergency_asset_manage,
+            C.emergency_check_record, C.drill_plan, C.drill_run, C.drill_evaluate,
+            C.emergency_declare, C.emergency_all_clear, C.emergency_kpi_view,
+        ],
+        S.sites,
+    ),
+    Role.permit_issuer: dict.fromkeys(
+        [
+            C.emergency_view, C.emergency_check_record, C.drill_run, C.emergency_declare,
+            C.emergency_kpi_view,
+        ],
+        S.sites,
+    ),
+    Role.permit_receiver: dict.fromkeys(
+        [
+            C.emergency_view, C.emergency_check_record, C.drill_run, C.emergency_declare,
+            C.emergency_kpi_view,
+        ],
+        S.own_engagement,
+    ),
+    Role.contractor_hse_rep: dict.fromkeys(
+        [
+            C.emergency_view, C.emergency_roster_manage, C.emergency_asset_manage,
+            C.emergency_check_record, C.drill_run, C.emergency_declare, C.emergency_kpi_view,
+        ],
+        S.contractor_tree,
+    ),
+    Role.viewer_client: dict.fromkeys([C.emergency_view, C.emergency_kpi_view], S.project),
+    Role.oh_practitioner: dict.fromkeys(
+        [C.emergency_view, C.emergency_declare, C.emergency_kpi_view], S.project
+    ),
+}  # fmt: skip
+for _role, _caps in PHASE6C_MATRIX.items():
+    MATRIX[_role].update(_caps)
+
 SCOPE_RANK = {S.own_engagement: 1, S.contractor_tree: 2, S.sites: 3, S.project: 4, S.all: 5}
 ROLE_RANK = {r: i for i, r in enumerate(Role)}  # lower index = more senior
 OFFICER_ASSIGNABLE = frozenset(

@@ -20,6 +20,7 @@ class TpiKind(StrEnum):
     calibration_lab = "calibration_lab"  # ISO/IEC 17025
     ndt_body = "ndt_body"  # ISO 9712 personnel scheme, accredited to ISO/IEC 17024
     client_scheme = "client_scheme"
+    fire_protection_service = "fire_protection_service"  # v1.2 (6c §11.5); never TP-4
 
 
 class TpiStatus(StrEnum):
@@ -48,6 +49,7 @@ class AccreditationStandard(StrEnum):
     iso_iec_17024 = "iso_iec_17024"
     iso_iec_17025 = "iso_iec_17025"
     client_scheme = "client_scheme"
+    civil_defense_licence = "civil_defense_licence"  # v1.2 (6c §11.5); no scope categories
 
 
 class ClientApprovalStatus(StrEnum):

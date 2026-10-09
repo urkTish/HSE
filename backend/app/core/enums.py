@@ -230,6 +230,20 @@ class Capability(StrEnum):
     heat_settings_edit = "heat_settings.edit"  # 175 settings, regime table, enforcement, issue
     export_heat = "export.heat"  # 176 registers (never photos or review texts below 173)
     heat_void = "heat.void"  # 177 void readings, checks and patrols
+    # ---- Phase 6c (6c-emergency-drills §5.13) ----
+    emergency_view = "emergency.view"  # 178 ERP, APs, contacts, roster, teams, assets, drills
+    erp_prepare = "erp.prepare"  # 179 ERP drafts, scenarios, APs, contacts, zone profiles
+    erp_approve = "erp.approve"  # 180 approve ERP, 6c settings, enforcement (Manager)
+    emergency_roster_manage = "emergency_roster.manage"  # 181 roster and rescue teams
+    emergency_asset_manage = "emergency_asset.manage"  # 182 register / retire assets, stickers
+    emergency_check_record = "emergency_check.record"  # 183 asset checks, tag out
+    drill_plan = "drill.plan"  # 184 plan / cancel drills; see unannounced drills
+    drill_run = "drill.run"  # 185 start, timings, muster (scan, tick, resolve, sheet)
+    drill_evaluate = "drill.evaluate"  # 186 evaluate drills, findings
+    emergency_declare = "emergency.declare"  # 187 declare an event, timeline, external calls
+    emergency_all_clear = "emergency.all_clear"  # 188 All Clear; review events
+    emergency_kpi_view = "emergency_kpi.view"  # 189 6c KPIs, action panel, exports
+    emergency_void = "emergency.void"  # 190 void drills, checks, events, musters
 
 
 class CapabilityScope(StrEnum):
@@ -570,6 +584,20 @@ class EntityType(StrEnum):
     heat_illness_entry = "heat_illness_entry"
     heat_season_report = "heat_season_report"
     heat_settings = "heat_settings"
+    # Phase 6c
+    erp = "erp"
+    assembly_point = "assembly_point"
+    emergency_contact = "emergency_contact"
+    zone_emergency_profile = "zone_emergency_profile"
+    emergency_roster = "emergency_roster"
+    rescue_team = "rescue_team"
+    emergency_asset = "emergency_asset"
+    emergency_asset_check = "emergency_asset_check"
+    emergency_drill = "emergency_drill"
+    emergency_muster = "emergency_muster"
+    emergency_event = "emergency_event"
+    emergency_settings = "emergency_settings"
+    muster_device = "muster_device"
 
 
 class ExportDataset(StrEnum):
@@ -850,3 +878,13 @@ class NotificationKind(StrEnum):
     heat_review_overdue = "heat_review_overdue"  # HI-4
     heat_calibration_expiry = "heat_calibration_expiry"
     heat_coverage_gap = "heat_coverage_gap"  # required zone without an active point
+    # ---- Phase 6c (6c-emergency-drills §7) ----
+    emergency_event = "emergency_event"  # EV-2 declared
+    emergency_unaccounted = "emergency_unaccounted"  # MU-8 / MU-6 found_on_site
+    emergency_coverage_short = "emergency_coverage_short"  # EO-7
+    emergency_drill_due = "emergency_drill_due"  # DP-4
+    emergency_evaluation_overdue = "emergency_evaluation_overdue"  # DR-6 / EV-5
+    emergency_asset_failed = "emergency_asset_failed"  # EA-4
+    emergency_asset_due = "emergency_asset_due"  # check overdue, service / consumable due
+    emergency_team_not_current = "emergency_team_not_current"  # RT-2
+    emergency_erp_review = "emergency_erp_review"  # ER-7 / ER-8

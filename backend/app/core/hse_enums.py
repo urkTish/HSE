@@ -691,6 +691,7 @@ class CaSourceType(StrEnum):
     ptw_audit = "ptw_audit"  # 1-dashboard v1.2: source_id = PTW audit (3-ptw §3.15)
     equipment_defect = "equipment_defect"  # 1-dashboard v1.3: DEF number (manual only, DF-10)
     heat_check = "heat_check"  # 1-dashboard v1.5: 6b welfare check or midday-ban patrol
+    emergency = "emergency"  # 1-dashboard v1.6: 6c asset check, drill or event
     ai_recommendation = "ai_recommendation"
     other = "other"
 
@@ -938,6 +939,13 @@ class KpiMetric(StrEnum):
     K101 = "K-101"
     K102 = "K-102"
     K103 = "K-103"
+    # Phase 6c emergency KPIs (6c-emergency-drills §6.8)
+    K104 = "K-104"
+    K105 = "K-105"
+    K106 = "K-106"
+    K107 = "K-107"
+    K108 = "K-108"
+    K109 = "K-109"
 
 
 class KpiKind(StrEnum):
@@ -1140,6 +1148,8 @@ class LeadingWarningCode(StrEnum):
     E15 = "E15"  # 6a §6.7: ≥ 1 hold with work during the hold (K-94 < 100 %)
     E16 = "E16"  # 6b §6.8: ≥ 1 ban violation or K-99 below threshold (months with ban dates)
     E17 = "E17"  # 6b §6.8: control-gap heat illness, or K-97 / K-101 below threshold
+    E18 = "E18"  # 6c §6.9: preparedness (K-104, overdue line, K-106, ERP overdue)
+    E19 = "E19"  # 6c §6.9: response readiness (K-107, K-108, headcount, found_on_site)
 
 
 class ChartId(StrEnum):

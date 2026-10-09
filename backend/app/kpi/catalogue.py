@@ -48,9 +48,12 @@ PHASE6B_METRICS: frozenset[KpiMetric] = frozenset(
 )
 PHASE6B_PENDING: frozenset[KpiMetric] = frozenset()
 """Heat-stress KPIs not computed yet (none since Phase 6b stage 2)."""
+PHASE6C_METRICS: frozenset[KpiMetric] = frozenset({M.K104, M.K105, M.K106, M.K107, M.K108, M.K109})
+PHASE6C_PENDING: frozenset[KpiMetric] = PHASE6C_METRICS
+"""Emergency KPIs not computed yet (stage 1)."""
 _PENDING = (
     PHASE2_PENDING | PHASE3_PENDING | PHASE4_PENDING | PHASE5_PENDING | PHASE6A_PENDING
-    | PHASE6B_PENDING
+    | PHASE6B_PENDING | PHASE6C_PENDING
 )  # fmt: skip
 
 
@@ -87,6 +90,8 @@ class KpiDef:
             return f"6a-occupational-health §6.6 {self.metric.value}"
         if self.metric in PHASE6B_METRICS:
             return f"6b-heat-stress §6.6 {self.metric.value}"
+        if self.metric in PHASE6C_METRICS:
+            return f"6c-emergency-drills §6.8 {self.metric.value}"
         return f"1-dashboard §6.1 {self.metric.value}"
 
 
@@ -520,6 +525,32 @@ CATALOGUE: dict[KpiMetric, KpiDef] = {
                "الإجهاد الحراري", G.lagging, LOW,
                "heat-illness log entries with source injury_case, event in period, not voided; "
                "components: rate × 200,000 ÷ K-01, recordable count and rate (category ≠ FAC)"),
+        # ---- Phase 6c emergency preparedness (6c-emergency-drills §6.8) ----
+        _pct(M.K104, "Drill programme compliance", "الالتزام ببرنامج التمارين",
+             "Drill programme", "برنامج التمارين",
+             "programme items met on time ÷ items due in the period (DP-5) × 100",
+             numerator="Met on time", denominator="Items due"),
+        _pct(M.K105, "Evacuation drill performance", "أداء تمارين الإخلاء",
+             "Evacuation drills", "تمارين الإخلاء",
+             "evaluated evacuation drills meeting the evacuation and headcount targets ÷ "
+             "evaluated evacuation drills × 100; chips: median evacuation and headcount minutes",
+             numerator="Within targets", denominator="Evaluated drills"),
+        _pct(M.K106, "Emergency team coverage", "تغطية فريق الطوارئ",
+             "Emergency coverage", "تغطية الطوارئ",
+             "covered site-shift-days ÷ required site-shift-days × 100 (§6.2)",
+             numerator="Covered", denominator="Required"),
+        _pct(M.K107, "Emergency equipment readiness", "جاهزية معدات الطوارئ",
+             "Equipment readiness", "جاهزية المعدات",
+             "ready assets at as_of ÷ assets not retired at as_of × 100 (§6.5)",
+             numerator="Ready", denominator="Assets"),
+        _pct(M.K108, "Rescue team readiness", "جاهزية فرق الإنقاذ",
+             "Rescue teams", "فرق الإنقاذ",
+             "active rescue teams current at as_of ÷ active teams × 100 (RT-2)",
+             numerator="Current", denominator="Active teams"),
+        _count(M.K109, "Real emergency events", "الأحداث الطارئة الفعلية", "Emergency events",
+               "الأحداث الطارئة", G.lagging, NONE,
+               "events raised in the period, not voided; components: false alarms, median first "
+               "response and external arrival minutes"),
     ]
 }  # fmt: skip
 

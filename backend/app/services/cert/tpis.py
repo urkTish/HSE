@@ -79,6 +79,7 @@ KIND_STANDARD: dict[AccreditationStandard, set[TpiKind]] = {
     AccreditationStandard.iso_iec_17024: {TpiKind.personnel_certification_body, TpiKind.ndt_body},
     AccreditationStandard.iso_iec_17025: {TpiKind.calibration_lab},
     AccreditationStandard.client_scheme: {TpiKind.client_scheme},
+    AccreditationStandard.civil_defense_licence: {TpiKind.fire_protection_service},
 }
 REASON_TEXT: dict[str, tuple[str, str]] = {
     "TPI_NOT_APPROVED": ("The TPI is not approved.", "الجهة غير معتمدة."),

@@ -11,6 +11,7 @@ from app.api.deps import DB, CurrentUser, PageParams
 from app.api.kpi_params import KpiParams
 from app.core.access_enums import AccessKpiGroupBy
 from app.core.cert_enums import CertKpiGroupBy
+from app.core.emergency_enums import EmergencyKpiGroupBy
 from app.core.enums import Capability, ExportFormat
 from app.core.errors import error_responses
 from app.core.heat_enums import HeatKpiGroupBy
@@ -29,6 +30,7 @@ from app.kpi import (
     access_views,
     cert_views,
     charts,
+    emergency_views,
     heat_views,
     med_views,
     ptw_views,
@@ -39,6 +41,7 @@ from app.kpi import (
 )
 from app.schemas.access_kpi import AccessKpiResponse
 from app.schemas.cert_kpi import CertKpiResponse
+from app.schemas.emergency import EmergencyKpiResponse
 from app.schemas.heat import HeatKpiResponse
 from app.schemas.kpi import (
     BreakdownResponse,
@@ -480,3 +483,22 @@ def get_heat_stress_kpis(
 ) -> HeatKpiResponse:
     sc = scope.build(db, user, q, Capability.heat_kpi_view)
     return heat_views.heat_kpis(db, sc, metric, group_by)
+
+
+@router.get(
+    "/emergency",
+    response_model=EmergencyKpiResponse,
+    summary="Emergency preparedness KPIs K-104…K-109 with breakdowns (6c-emergency-drills §6.8)",
+    description=FILTERS + " Capability 189; aggregates only (EM-2): no names, muster entries or "
+    "free texts.",
+    responses=KPI_ERRORS,
+)
+def get_emergency_kpis(
+    user: CurrentUser,
+    db: DB,
+    q: KpiParams,
+    metric: Annotated[list[KpiMetric] | None, Query(description="Default: K-104…K-109.")] = None,
+    group_by: Annotated[list[EmergencyKpiGroupBy] | None, Query()] = None,
+) -> EmergencyKpiResponse:
+    sc = scope.build(db, user, q, Capability.emergency_kpi_view)
+    return emergency_views.emergency_kpis(db, sc, metric, group_by)

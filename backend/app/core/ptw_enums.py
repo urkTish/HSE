@@ -313,10 +313,16 @@ class StatusReason(StrEnum):
     duplicate = "duplicate"
     other = "other"
     heat_stress_stop = "heat_stress_stop"  # 3-ptw v1.3 / 6b PH-3 (routine)
+    emergency_drill = "emergency_drill"  # 3-ptw v1.4 / 6c PE-2 (routine)
 
 
 ROUTINE_REASONS: frozenset[StatusReason] = frozenset(
-    {StatusReason.shift_end, StatusReason.midday_ban, StatusReason.heat_stress_stop}
+    {
+        StatusReason.shift_end,
+        StatusReason.midday_ban,
+        StatusReason.heat_stress_stop,
+        StatusReason.emergency_drill,
+    }
 )
 CANCEL_REASONS: frozenset[StatusReason] = frozenset(
     {
@@ -380,6 +386,9 @@ class PermitBlocker(StrEnum):
     # 3-ptw v1.3 (6b PH-2, PH-3), from heat_ptw_enforcement_from
     HEAT_STOP = "HEAT_STOP"
     WBGT_READING_REQUIRED = "WBGT_READING_REQUIRED"
+    # 3-ptw v1.4 (6c PE-3), confined_space from emergency_ptw_enforcement_from
+    RESCUE_TEAM_NOT_REGISTERED = "RESCUE_TEAM_NOT_REGISTERED"
+    RESCUE_DRILL_OVERDUE = "RESCUE_DRILL_OVERDUE"
 
 
 class PermitWarningCode(StrEnum):
@@ -406,6 +415,9 @@ class PermitWarningCode(StrEnum):
     WORKER_ACCLIMATISING = "WORKER_ACCLIMATISING"
     HEAT_STOP_FOR_WORKER = "HEAT_STOP_FOR_WORKER"
     HEAT_REGIME = "HEAT_REGIME"  # PH-4: regime and rest minutes per hour (informational)
+    # 3-ptw v1.4 (6c PE-4, PE-5)
+    HEIGHT_RESCUE_NOT_READY = "HEIGHT_RESCUE_NOT_READY"
+    NO_READY_EXTINGUISHER = "NO_READY_EXTINGUISHER"
 
 
 class ChecklistAnswer(StrEnum):
