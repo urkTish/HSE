@@ -54,7 +54,9 @@ test.describe("Training hooks", () => {
     await expect(page.getByTestId("training-register-from")).toContainText("15 Aug 2026");
   });
 
-  test("AC93: PTW-0413 shows Biju Thomas's missing CSE-ATTENDANT as a warning and stays Active", async ({ page }) => {
+  // Since the 6c seed (6c-emergency-drills §11.6 item 3, A.4 RT-ANIA-CSE-01) Biju holds CSE-RESCUE, which
+  // satisfies CSE-ATTENDANT, so the standby line is met (5-training AC93 predates 6c; same as p5-check AC124).
+  test("AC93: PTW-0413 shows Biju Thomas's CSE-ATTENDANT as met (CSE-RESCUE since 6c) and stays Active", async ({ page }) => {
     const id = await permitId("PTW-ANIA-EXP-2026-0413");
     await login(page, USERS.faisal);
     await page.goto(`/en/permits/${id}`);
@@ -63,8 +65,8 @@ test.describe("Training hooks", () => {
     const standby = page.locator('[data-testid="crew-line"][data-role="standby_person"]').filter({ hasText: "WKR-000017" });
     await standby.getByTestId("toggle-eligibility").click();
     const item = standby.locator('[data-testid="eligibility-item"]').filter({ hasText: "CSE-ATTENDANT" });
-    await expect(item).toHaveAttribute("data-status", "warn");
-    await expect(item).toHaveAttribute("data-reason", "HOOK_NOT_MET_WARN");
+    await expect(item).toHaveAttribute("data-status", "met");
+    await expect(item).toHaveAttribute("data-reason", "");
     await expect(page.locator("main")).toContainText(/Active/);
   });
 

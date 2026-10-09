@@ -139,7 +139,9 @@ test.describe("Dashboard", () => {
     await page.goto(`/en?${SEP}`);
     await page.getByTestId("filter-all-projects").click();
     await expect(page).toHaveURL(/all=1/);
-    await expect(page.locator("[data-testid=dashboard-banner][data-code=MIXED_BASES], [data-testid=banner-mixed]").first()).toBeVisible();
+    // First all-projects read of the run: the KPI cache is cold for three projects (about 4 s on its
+    // own, more while the charts load beside it), so the default 10 s can run out.
+    await expect(page.locator("[data-testid=dashboard-banner][data-code=MIXED_BASES], [data-testid=banner-mixed]").first()).toBeVisible({ timeout: 30_000 });
   });
 
   test("Mobile (390 px, Arabic): no horizontal page scroll", async ({ page }) => {

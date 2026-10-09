@@ -1022,6 +1022,12 @@ def seed_emergency_data(db: Session) -> None:
         _events(ctx)
         db.flush()
         ec.clear_cache(db)
+        # The §11.6 item 3 CSE-RESCUE / WAH-RESCUE records satisfy crew hooks (CSE-RESCUE covers
+        # CSE-ATTENDANT): re-evaluate live permits so stored crew eligibility matches, as the 6a
+        # and 5-training seeds do after adding their records.
+        from app.seed_med import _refresh_permits  # noqa: PLC0415
+
+        _refresh_permits(db)
     finally:
         set_now(None)
 
