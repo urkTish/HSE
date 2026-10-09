@@ -85,6 +85,7 @@ class ImportCode(StrEnum):
     W05 = "W05"
     W06 = "W06"
     W07 = "W07"  # v1.4: training_hours on a date ≥ training_register_from (5-training TH-6)
+    W08 = "W08"  # v1.7: toolbox fields on a date ≥ toolbox_register_from (6d SRC-2)
 
 
 class MonthLockStatus(StrEnum):
@@ -641,6 +642,7 @@ class InspectionFrequency(StrEnum):
     fortnightly = "fortnightly"
     monthly = "monthly"
     once = "once"
+    quarterly = "quarterly"  # v1.7 (6d §3.3): start day of month every 3 months, clamped
 
 
 class Weekday(StrEnum):
@@ -664,6 +666,7 @@ class InspectionStatus(StrEnum):
     completed = "completed"
     missed = "missed"
     cancelled = "cancelled"
+    voided = "voided"  # v1.7 (6d EXE-9): unplanned only; planned instances return to planned/missed
 
 
 class InspectionTimeliness(StrEnum):
@@ -692,6 +695,7 @@ class CaSourceType(StrEnum):
     equipment_defect = "equipment_defect"  # 1-dashboard v1.3: DEF number (manual only, DF-10)
     heat_check = "heat_check"  # 1-dashboard v1.5: 6b welfare check or midday-ban patrol
     emergency = "emergency"  # 1-dashboard v1.6: 6c asset check, drill or event
+    field_audit = "field_audit"  # 1-dashboard v1.7: 6d audit (AUD-4)
     ai_recommendation = "ai_recommendation"
     other = "other"
 
@@ -793,6 +797,14 @@ class AttachmentOwner(StrEnum):
     # Phase 6a (6a-occupational-health P6-5): fitness certificate scans live in the separate
     # medical bucket, signed URL ≤ 5 min with a reason (capability 160); never exported
     fitness_scan = "fitness_scan"
+    # Phase 6d (6d-field-assurance EXE-5, P6d-3/P6d-4): checklist and release photos (EXIF stripped,
+    # capability 200, never Viewer/Client), talk signatures and sheet photos (personal bucket,
+    # capability 199, signatures never exported), generated audit reports (EN / AR)
+    field_photo = "field_photo"
+    stop_work_photo = "stop_work_photo"
+    toolbox_signature = "toolbox_signature"
+    toolbox_sheet = "toolbox_sheet"
+    field_audit_report = "field_audit_report"
 
 
 class ScanStatus(StrEnum):
@@ -946,6 +958,15 @@ class KpiMetric(StrEnum):
     K107 = "K-107"
     K108 = "K-108"
     K109 = "K-109"
+    # Phase 6d field assurance KPIs (6d-field-assurance §6.7)
+    K110 = "K-110"
+    K111 = "K-111"
+    K112 = "K-112"
+    K113 = "K-113"
+    K114 = "K-114"
+    K115 = "K-115"
+    K116 = "K-116"
+    K117 = "K-117"
 
 
 class KpiKind(StrEnum):
@@ -1150,6 +1171,8 @@ class LeadingWarningCode(StrEnum):
     E17 = "E17"  # 6b §6.8: control-gap heat illness, or K-97 / K-101 below threshold
     E18 = "E18"  # 6c §6.9: preparedness (K-104, overdue line, K-106, ERP overdue)
     E19 = "E19"  # 6c §6.9: response readiness (K-107, K-108, headcount, found_on_site)
+    E20 = "E20"  # 6d §6.8: field assurance (K-113, K-114, K-111 rate, stop-work > 7 days)
+    E21 = "E21"  # 6d §6.8: toolbox engagement (K-116, K-117)
 
 
 class ChartId(StrEnum):

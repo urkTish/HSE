@@ -5,6 +5,7 @@ from datetime import date, datetime
 
 from pydantic import Field, model_validator
 
+from app.core.field_enums import ResponseResult, Rotation
 from app.core.hse_enums import (
     FindingSeverity,
     InspectionAssigneeRole,
@@ -33,6 +34,16 @@ class InspectionPlanCreate(StrictInput):
     assignee_role: InspectionAssigneeRole
     assignee_user_id: uuid.UUID | None = None
     active: bool = True
+    template_code: str | None = Field(
+        default=None,
+        max_length=8,
+        description="v1.7 (6d §3.3): a Published inspection template of the same type; required "
+        "from inspection_template_required_from (422 TEMPLATE_REQUIRED).",
+    )
+    rotation: Rotation = Field(default=Rotation.none, description="6d ISP-2.")
+    rotation_list: list[uuid.UUID] = Field(
+        default_factory=list, description="2–20 zones of the site or engagements on the site."
+    )
 
     @model_validator(mode="after")
     def _rules(self) -> "InspectionPlanCreate":
@@ -60,6 +71,9 @@ class InspectionPlanUpdate(PatchInput):
     assignee_role: InspectionAssigneeRole | None = None
     assignee_user_id: uuid.UUID | None = None
     active: bool | None = None
+    template_code: str | None = Field(default=None, max_length=8)
+    rotation: Rotation | None = None
+    rotation_list: list[uuid.UUID] | None = None
 
 
 class InspectionPlanRead(Timestamps):
@@ -79,6 +93,12 @@ class InspectionPlanRead(Timestamps):
     assignee: UserRef | None
     active: bool
     next_planned_date: date | None
+    template_code: str | None = None
+    rotation: Rotation = Rotation.none
+    rotation_list: list[uuid.UUID] = Field(default_factory=list)
+    without_checklist: bool = Field(
+        default=False, description='6d ISP-1: "plan without checklist" after the switch date.'
+    )
 
 
 class InspectionPlanPage(Page[InspectionPlanRead]):
@@ -162,6 +182,11 @@ class InspectionRead(Timestamps):
     status: InspectionStatus
     timeliness: InspectionTimeliness = Field(description="Derived (N-2).")
     cancel_reason: str | None
+    response_id: uuid.UUID | None = Field(default=None, description="6d checklist response.")
+    result: ResponseResult | None = Field(default=None, description="6d FND-6 pass / fail.")
+    offline_delay_min: int | None = None
+    recorded_offline: bool = Field(default=False, description='6d EXE-7 "recorded offline".')
+    void_reason: str | None = None
 
 
 class InspectionPage(Page[InspectionRead]):

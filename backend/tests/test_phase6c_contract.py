@@ -62,7 +62,7 @@ PHASE6C_PATHS = {
 
 def test_phase6c_paths_in_contract() -> None:
     spec = create_app().openapi()
-    assert spec["info"]["version"] == "0.9.0"
+    assert tuple(map(int, spec["info"]["version"].split("."))) >= (0, 9, 0)
     assert set(spec["paths"]) >= PHASE6C_PATHS
     ops = [op["operationId"] for v in spec["paths"].values() for op in v.values()]
     assert len(ops) == len(set(ops))

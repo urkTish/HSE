@@ -25,6 +25,7 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.clock import now
+from app.core.field_enums import Rotation
 from app.core.hse_enums import (
     Activity,
     AgeBand,
@@ -472,6 +473,10 @@ class InspectionPlan(UUIDPk, TimestampMixin, Base):
     assignee_user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))
     active: Mapped[bool] = mapped_column(Boolean, default=True)
     generated_until: Mapped[date | None] = mapped_column(Date)
+    # v1.7 (6d §3.3, ISP-1, ISP-2)
+    template_code: Mapped[str | None] = mapped_column(String(8))
+    rotation: Mapped[Rotation] = enum_col(Rotation, default=Rotation.none, server_default="none")
+    rotation_list: Mapped[list[uuid.UUID]] = mapped_column(UUIDS, default=list, server_default="{}")
 
 
 class Inspection(UUIDPk, TimestampMixin, Base):
@@ -506,6 +511,10 @@ class Inspection(UUIDPk, TimestampMixin, Base):
     status: Mapped[InspectionStatus] = enum_col(InspectionStatus)
     cancel_reason: Mapped[str | None] = mapped_column(String(500))
     missed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # v1.7 (6d EXE-3, EXE-7, EXE-9): the checklist response, offline delay, last void reason
+    response_id: Mapped[uuid.UUID | None] = mapped_column()
+    offline_delay_min: Mapped[int | None] = mapped_column(Integer)
+    void_reason: Mapped[str | None] = mapped_column(String(500))
     seed_fake: Mapped[bool] = mapped_column(Boolean, default=False)
 
 

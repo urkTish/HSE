@@ -50,10 +50,15 @@ PHASE6B_PENDING: frozenset[KpiMetric] = frozenset()
 """Heat-stress KPIs not computed yet (none since Phase 6b stage 2)."""
 PHASE6C_METRICS: frozenset[KpiMetric] = frozenset({M.K104, M.K105, M.K106, M.K107, M.K108, M.K109})
 PHASE6C_PENDING: frozenset[KpiMetric] = frozenset()
+PHASE6D_METRICS: frozenset[KpiMetric] = frozenset(
+    {M.K110, M.K111, M.K112, M.K113, M.K114, M.K115, M.K116, M.K117}
+)
+PHASE6D_PENDING: frozenset[KpiMetric] = PHASE6D_METRICS
+"""Field assurance KPIs not computed yet (stage 1)."""
 """Emergency KPIs not computed yet (none since Phase 6c stage 2)."""
 _PENDING = (
     PHASE2_PENDING | PHASE3_PENDING | PHASE4_PENDING | PHASE5_PENDING | PHASE6A_PENDING
-    | PHASE6B_PENDING | PHASE6C_PENDING
+    | PHASE6B_PENDING | PHASE6C_PENDING | PHASE6D_PENDING
 )  # fmt: skip
 
 
@@ -90,6 +95,8 @@ class KpiDef:
             return f"6a-occupational-health §6.6 {self.metric.value}"
         if self.metric in PHASE6B_METRICS:
             return f"6b-heat-stress §6.6 {self.metric.value}"
+        if self.metric in PHASE6D_METRICS:
+            return f"6d-field-assurance §6.7 {self.metric.value}"
         if self.metric in PHASE6C_METRICS:
             return f"6c-emergency-drills §6.8 {self.metric.value}"
         return f"1-dashboard §6.1 {self.metric.value}"
@@ -551,6 +558,41 @@ CATALOGUE: dict[KpiMetric, KpiDef] = {
                "الأحداث الطارئة", G.lagging, NONE,
                "events raised in the period, not voided; components: false alarms, median first "
                "response and external arrival minutes"),
+        # ---- Phase 6d field assurance (6d-field-assurance §6.7) ----
+        _pct(M.K110, "Checklist compliance score", "نسبة المطابقة في قوائم التفتيش",
+             "Checklist score", "نسبة المطابقة",
+             "Σ earned weight ÷ Σ applicable weight × 100 over responses of Completed, not voided "
+             "inspections (pooled); chips: pass rate, inspections",
+             numerator="Earned weight", denominator="Applicable weight"),
+        _count(M.K111, "Critical item failures", "إخفاقات البنود الحرجة", "Critical failures",
+               "الإخفاقات الحرجة", G.leading, LOW,
+               "critical non-compliant answers in Completed, not voided inspections; rate × 100 ÷ "
+               "inspections; chip: stop-work orders raised"),
+        _pct(M.K112, "Repeat findings", "الملاحظات المتكررة", "Repeat findings",
+             "الملاحظات المتكررة",
+             "item findings with repeat_of ÷ item findings × 100 (FND-5)", better=LOW,
+             numerator="Repeats", denominator="Item findings"),
+        _pct(M.K113, "Contractor inspection coverage", "تغطية التفتيش للمقاولين",
+             "Inspection coverage", "تغطية التفتيش",
+             "covered ÷ required engagement-site-weeks × 100 (ISP-3)",
+             numerator="Covered", denominator="Required"),
+        _pct(M.K114, "Audit programme compliance", "الالتزام ببرنامج التدقيق",
+             "Audit programme", "برنامج التدقيق",
+             "programme items met on time ÷ items due (§6.4) × 100",
+             numerator="Met on time", denominator="Items due"),
+        _pct(M.K115, "HSE audit score", "نتيجة تدقيق السلامة", "Audit score", "نتيجة التدقيق",
+             "Σ earned ÷ Σ applicable weight × 100 over audits Issued in the period (pooled); "
+             "chips: major_nc, minor_nc, grade mix",
+             numerator="Earned weight", denominator="Applicable weight"),
+        _pct(M.K116, "Toolbox weekly reach", "الوصول الأسبوعي لاجتماعات التوعية",
+             "Toolbox reach", "الوصول الأسبوعي",
+             "Σ min(briefed, headcount) ÷ Σ headcount over engagement-site-weeks × 100 (§6.5); "
+             "chip: language match",
+             numerator="Reached", denominator="Headcount"),
+        _pct(M.K117, "Briefing campaign completion", "إنجاز حملات التوعية",
+             "Campaign completion", "إنجاز الحملات",
+             "pairs met on time ÷ pairs of campaigns due in the period × 100 (CMP-3)",
+             numerator="Met on time", denominator="Pairs"),
     ]
 }  # fmt: skip
 

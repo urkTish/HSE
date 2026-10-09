@@ -244,6 +244,18 @@ class Capability(StrEnum):
     emergency_all_clear = "emergency.all_clear"  # 188 All Clear; review events
     emergency_kpi_view = "emergency_kpi.view"  # 189 6c KPIs, action panel, exports
     emergency_void = "emergency.void"  # 190 void drills, checks, events, musters
+    # ---- Phase 6d (6d-field-assurance §5.13) ----
+    field_library_view = "field_library.view"  # 191 template and topic libraries
+    field_library_author = "field_library.author"  # 192 template and topic drafts
+    field_library_publish = "field_library.publish"  # 193 publish / retire; 6d settings (Manager)
+    field_audit_conduct = "field_audit.conduct"  # 194 plan, cancel, conduct audits; programme
+    field_audit_issue = "field_audit.issue"  # 195 issue audit reports
+    stop_work_release = "stop_work.release"  # 196 release stop-work orders
+    briefing_campaign_manage = "briefing_campaign.manage"  # 197 issue / cancel campaigns
+    toolbox_record = "toolbox.record"  # 198 record toolbox talks and attendance
+    toolbox_names_view = "toolbox_names.view"  # 199 attendance names and signatures
+    field_view = "field.view"  # 200 6d registers, responses, KPIs, action panel, exports
+    field_void = "field.void"  # 201 void inspections (6d), audits, talks, stop-work orders
 
 
 class CapabilityScope(StrEnum):
@@ -598,6 +610,16 @@ class EntityType(StrEnum):
     emergency_event = "emergency_event"
     emergency_settings = "emergency_settings"
     muster_device = "muster_device"
+    # Phase 6d
+    checklist_template = "checklist_template"
+    toolbox_topic = "toolbox_topic"
+    checklist_response = "checklist_response"
+    field_finding = "field_finding"
+    stop_work_order = "stop_work_order"
+    field_audit = "field_audit"
+    toolbox_talk = "toolbox_talk"
+    briefing_campaign = "briefing_campaign"
+    field_settings = "field_settings"
 
 
 class ExportDataset(StrEnum):
@@ -888,3 +910,12 @@ class NotificationKind(StrEnum):
     emergency_asset_due = "emergency_asset_due"  # check overdue, service / consumable due
     emergency_team_not_current = "emergency_team_not_current"  # RT-2
     emergency_erp_review = "emergency_erp_review"  # ER-7 / ER-8
+    # ---- Phase 6d (6d-field-assurance §7) ----
+    stop_work_order = "stop_work_order"  # FND-7 Active, > 24 h
+    critical_item_failure = "critical_item_failure"  # FND-6
+    inspection_coverage_gap = "inspection_coverage_gap"  # ISP-4
+    audit_due = "audit_due"  # AUD-7
+    audit_report_overdue = "audit_report_overdue"  # AUD-5
+    briefing_campaign = "briefing_campaign"  # CMP-4
+    offline_submission_rejected = "offline_submission_rejected"  # EXE-6
+    field_library_review = "field_library_review"  # TPL-6

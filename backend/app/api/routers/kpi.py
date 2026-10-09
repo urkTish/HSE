@@ -14,6 +14,7 @@ from app.core.cert_enums import CertKpiGroupBy
 from app.core.emergency_enums import EmergencyKpiGroupBy
 from app.core.enums import Capability, ExportFormat
 from app.core.errors import error_responses
+from app.core.field_enums import FieldKpiGroupBy
 from app.core.heat_enums import HeatKpiGroupBy
 from app.core.hse_enums import (
     BreakdownDimension,
@@ -31,6 +32,7 @@ from app.kpi import (
     cert_views,
     charts,
     emergency_views,
+    field_views,
     heat_views,
     med_views,
     ptw_views,
@@ -42,6 +44,7 @@ from app.kpi import (
 from app.schemas.access_kpi import AccessKpiResponse
 from app.schemas.cert_kpi import CertKpiResponse
 from app.schemas.emergency import EmergencyKpiResponse
+from app.schemas.field import FieldKpiResponse
 from app.schemas.heat import HeatKpiResponse
 from app.schemas.kpi import (
     BreakdownResponse,
@@ -502,3 +505,24 @@ def get_emergency_kpis(
 ) -> EmergencyKpiResponse:
     sc = scope.build(db, user, q, Capability.emergency_kpi_view)
     return emergency_views.emergency_kpis(db, sc, metric, group_by)
+
+
+@router.get(
+    "/field-assurance",
+    response_model=FieldKpiResponse,
+    summary="Field assurance KPIs K-34, K-35, K-36, K-110…K-117 with breakdowns (6d §6.7)",
+    description=FILTERS + " Capability 200; aggregates only (FM-2): item codes and texts, topic "
+    "codes, counts and scores; never names, finding or note texts, photos or signatures.",
+    responses=KPI_ERRORS,
+)
+def get_field_assurance_kpis(
+    user: CurrentUser,
+    db: DB,
+    q: KpiParams,
+    metric: Annotated[
+        list[KpiMetric] | None, Query(description="Default: K-34, K-35, K-36, K-110…K-117.")
+    ] = None,
+    group_by: Annotated[list[FieldKpiGroupBy] | None, Query()] = None,
+) -> FieldKpiResponse:
+    sc = scope.build(db, user, q, Capability.field_view)
+    return field_views.field_kpis(db, sc, metric, group_by)

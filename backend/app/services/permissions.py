@@ -590,6 +590,49 @@ PHASE6C_MATRIX: dict[Role, dict[Capability, CapabilityScope]] = {
 for _role, _caps in PHASE6C_MATRIX.items():
     MATRIX[_role].update(_caps)
 
+# 6d-field-assurance §5.13 (capabilities 191-201). 193 is HSE Manager only. Narrowing in
+# parentheses (site engineers: 194 as audit team member only; reps: 194 under AUD-3; Viewer/Client:
+# 200 aggregates without photos or names) is enforced in the services.
+PHASE6D_MATRIX: dict[Role, dict[Capability, CapabilityScope]] = {
+    Role.hse_officer: dict.fromkeys(
+        [
+            C.field_library_view, C.field_library_author, C.field_audit_conduct,
+            C.field_audit_issue, C.stop_work_release, C.briefing_campaign_manage,
+            C.toolbox_record, C.toolbox_names_view, C.field_view, C.field_void,
+        ],
+        S.project,
+    ),
+    Role.site_engineer: {
+        C.field_library_view: S.project,
+        **dict.fromkeys(
+            [
+                C.field_audit_conduct, C.stop_work_release, C.toolbox_record,
+                C.toolbox_names_view, C.field_view,
+            ],
+            S.sites,
+        ),
+    },
+    Role.permit_issuer: {
+        C.field_library_view: S.project,
+        **dict.fromkeys([C.toolbox_record, C.toolbox_names_view, C.field_view], S.sites),
+    },
+    Role.permit_receiver: {
+        C.field_library_view: S.project,
+        **dict.fromkeys([C.toolbox_record, C.toolbox_names_view, C.field_view], S.own_engagement),
+    },
+    Role.contractor_hse_rep: {
+        C.field_library_view: S.project,
+        **dict.fromkeys(
+            [C.field_audit_conduct, C.toolbox_record, C.toolbox_names_view, C.field_view],
+            S.contractor_tree,
+        ),
+    },
+    Role.viewer_client: dict.fromkeys([C.field_library_view, C.field_view], S.project),
+    Role.oh_practitioner: dict.fromkeys([C.field_library_view], S.project),
+}  # fmt: skip
+for _role, _caps in PHASE6D_MATRIX.items():
+    MATRIX[_role].update(_caps)
+
 SCOPE_RANK = {S.own_engagement: 1, S.contractor_tree: 2, S.sites: 3, S.project: 4, S.all: 5}
 ROLE_RANK = {r: i for i, r in enumerate(Role)}  # lower index = more senior
 OFFICER_ASSIGNABLE = frozenset(
