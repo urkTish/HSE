@@ -48,8 +48,8 @@ def get_gate_caller(
         raise ApiError(401, ErrorCode.UNAUTHENTICATED, "Not authenticated.", "غير مسجل الدخول.")
     claims = decode_jwt(token)
     if claims and claims.get("typ") == "gate":
-        if claims.get("kind") in ("weather_station", "muster_reader"):
-            raise gate_device_forbidden()  # 6b HS-4 / 6c §11.3: not gate devices
+        if claims.get("kind") in ("weather_station", "muster_reader", "env_monitor"):
+            raise gate_device_forbidden()  # 6b HS-4 / 6c §11.3 / 6e §11.3: not gate devices
         return gates.device_caller(db, claims)
     if not bearer and cookie is None and gate_cookie:
         raise ApiError(401, ErrorCode.UNAUTHENTICATED, "Invalid token.", "رمز غير صالح.")

@@ -13,6 +13,7 @@ from app.core.access_enums import AccessKpiGroupBy
 from app.core.cert_enums import CertKpiGroupBy
 from app.core.emergency_enums import EmergencyKpiGroupBy
 from app.core.enums import Capability, ExportFormat
+from app.core.env_enums import EnvKpiGroupBy
 from app.core.errors import error_responses
 from app.core.field_enums import FieldKpiGroupBy
 from app.core.heat_enums import HeatKpiGroupBy
@@ -32,6 +33,7 @@ from app.kpi import (
     cert_views,
     charts,
     emergency_views,
+    env_views,
     field_views,
     heat_views,
     med_views,
@@ -44,6 +46,7 @@ from app.kpi import (
 from app.schemas.access_kpi import AccessKpiResponse
 from app.schemas.cert_kpi import CertKpiResponse
 from app.schemas.emergency import EmergencyKpiResponse
+from app.schemas.env import EnvKpiResponse
 from app.schemas.field import FieldKpiResponse
 from app.schemas.heat import HeatKpiResponse
 from app.schemas.kpi import (
@@ -526,3 +529,24 @@ def get_field_assurance_kpis(
 ) -> FieldKpiResponse:
     sc = scope.build(db, user, q, Capability.field_view)
     return field_views.field_kpis(db, sc, metric, group_by)
+
+
+@router.get(
+    "/environmental",
+    response_model=EnvKpiResponse,
+    summary="Environmental KPIs K-118…K-126 with breakdowns (6e §6.7)",
+    description=FILTERS + " Capability 202; aggregates only (EK-2): stream, class, route, "
+    "provider (organisation), point, parameter, cause and substance codes; never driver names, "
+    "plates, complainant data, reviewer names, photos or free texts. With a contractor filter "
+    'K-118 is "—" (project level only).',
+    responses=KPI_ERRORS,
+)
+def get_environmental_kpis(
+    user: CurrentUser,
+    db: DB,
+    q: KpiParams,
+    metric: Annotated[list[KpiMetric] | None, Query(description="Default: K-118…K-126.")] = None,
+    group_by: Annotated[list[EnvKpiGroupBy] | None, Query()] = None,
+) -> EnvKpiResponse:
+    sc = scope.build(db, user, q, Capability.env_view)
+    return env_views.env_kpis(db, sc, metric, group_by)

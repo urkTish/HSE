@@ -31,6 +31,10 @@ from app.api.routers import (
     emergency_assets,
     emergency_config,
     emergency_drills,
+    env_config,
+    env_events,
+    env_monitoring,
+    env_waste,
     equipment,
     equipment_certificates,
     exports,
@@ -93,16 +97,17 @@ from app.core.middleware import RequestContextMiddleware
 from app.schemas.ai import AiStreamEvent
 
 DESCRIPTION = """
-HSE platform API — Phase 0 Foundation (spec `docs/specs/0-foundation.md` v1.2), Phase 1
-Dashboard & core data with AI (spec `docs/specs/1-dashboard.md` v1.7), Phase 2 Site/Airport
-access permits (spec `docs/specs/2-access-permits.md` v1.6), Phase 3 Permit to Work (spec
+HSE platform API — Phase 0 Foundation (spec `docs/specs/0-foundation.md` v1.3), Phase 1
+Dashboard & core data with AI (spec `docs/specs/1-dashboard.md` v1.8), Phase 2 Site/Airport
+access permits (spec `docs/specs/2-access-permits.md` v1.7), Phase 3 Permit to Work (spec
 `docs/specs/3-ptw.md` v1.5), Phase 4 Third-party inspection & certification (spec
 `docs/specs/4-third-party-cert.md` v1.3), Phase 5 Training certificates (spec
 `docs/specs/5-training.md` v1.3), Phase 6a Occupational health & medical fitness (spec
 `docs/specs/6a-occupational-health.md` v1.1), Phase 6b Heat stress management (spec
 `docs/specs/6b-heat-stress.md` v1.1), Phase 6c Emergency preparedness & drills (spec
-`docs/specs/6c-emergency-drills.md` v1.1) and Phase 6d Field assurance (spec
-`docs/specs/6d-field-assurance.md` v1.0).
+`docs/specs/6c-emergency-drills.md` v1.2), Phase 6d Field assurance (spec
+`docs/specs/6d-field-assurance.md` v1.1) and Phase 6e Environmental management (spec
+`docs/specs/6e-environmental.md` v1.0).
 
 * Auth: `POST /api/v1/auth/login` sets the httpOnly SameSite=Lax cookie `hse_session` (JWT) and
   returns `{access_token, user}`. Send the cookie or `Authorization: Bearer <token>`.
@@ -285,6 +290,11 @@ def create_app() -> FastAPI:
         field_inspections,
         field_audits,
         field_toolbox,
+        # Phase 6e
+        env_config,
+        env_waste,
+        env_monitoring,
+        env_events,
     ):
         app.include_router(module.router, prefix=API_PREFIX)
     app.include_router(auth.public_router, prefix=API_PREFIX)

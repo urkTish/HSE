@@ -56,9 +56,14 @@ PHASE6D_METRICS: frozenset[KpiMetric] = frozenset(
 PHASE6D_PENDING: frozenset[KpiMetric] = frozenset()
 """Field assurance KPIs not computed yet (stage 1)."""
 """Emergency KPIs not computed yet (none since Phase 6c stage 2)."""
+PHASE6E_METRICS: frozenset[KpiMetric] = frozenset(
+    {M.K118, M.K119, M.K120, M.K121, M.K122, M.K123, M.K124, M.K125, M.K126}
+)
+PHASE6E_PENDING: frozenset[KpiMetric] = PHASE6E_METRICS
+"""Environmental KPIs not computed yet (stage 1)."""
 _PENDING = (
     PHASE2_PENDING | PHASE3_PENDING | PHASE4_PENDING | PHASE5_PENDING | PHASE6A_PENDING
-    | PHASE6B_PENDING | PHASE6C_PENDING | PHASE6D_PENDING
+    | PHASE6B_PENDING | PHASE6C_PENDING | PHASE6D_PENDING | PHASE6E_PENDING
 )  # fmt: skip
 
 
@@ -95,6 +100,8 @@ class KpiDef:
             return f"6a-occupational-health §6.6 {self.metric.value}"
         if self.metric in PHASE6B_METRICS:
             return f"6b-heat-stress §6.6 {self.metric.value}"
+        if self.metric in PHASE6E_METRICS:
+            return f"6e-environmental §6.7 {self.metric.value}"
         if self.metric in PHASE6D_METRICS:
             return f"6d-field-assurance §6.7 {self.metric.value}"
         if self.metric in PHASE6C_METRICS:
@@ -593,6 +600,42 @@ CATALOGUE: dict[KpiMetric, KpiDef] = {
              "Campaign completion", "إنجاز الحملات",
              "pairs met on time ÷ pairs of campaigns due in the period × 100 (CMP-3)",
              numerator="Met on time", denominator="Pairs"),
+        # ---- Phase 6e environmental (6e-environmental §6.7) ----
+        _pct(M.K118, "Environmental permit compliance", "الالتزام بالتصاريح البيئية",
+             "Permit compliance", "الالتزام بالتصاريح",
+             "required requirements in force at as_of ÷ required requirements applicable × 100 "
+             "(PRM-2; project level only); chip: expiring ≤ 30 days",
+             numerator="In force", denominator="Applicable"),
+        KpiDef(M.K119, "Waste generated", "النفايات المتولدة", "Waste", "النفايات",
+               K.count_, G.lagging, LOW, "t", "طن",
+               "Σ tonnes of consignments dispatched in the period (§6.3, voided and rejected "
+               "excluded); chips: hazardous t, intensity per 100,000 h, sewage m³", 1),
+        _pct(M.K120, "Waste diversion rate", "نسبة تحويل النفايات عن الطمر",
+             "Diversion", "تحويل النفايات",
+             "Σ t (reuse, recycle, recovery) ÷ K-119 × 100; target diversion_target_pct",
+             numerator="Diverted t", denominator="Total t"),
+        _pct(M.K121, "Waste chain-of-custody on time", "إثبات استلام النفايات في الموعد",
+             "Custody on time", "الاستلام في الموعد",
+             "consignments with due_on in the period (≤ as_of) received by due_on ÷ those "
+             "consignments (not voided) × 100",
+             numerator="On time", denominator="Due"),
+        _pct(M.K122, "Monitoring compliance", "الالتزام بخطة الرصد", "Monitoring",
+             "خطة الرصد", "met slots ÷ required slots × 100 (§6.5, pooled)",
+             numerator="Met", denominator="Required"),
+        _count(M.K123, "Project-caused exceedances", "التجاوزات بسبب المشروع",
+               "Exceedances", "التجاوزات", G.lagging, LOW,
+               "exceedances not voided whose cause (or suggested cause while unreviewed) is not "
+               "background_natural, by first-reading date; chips: background, by parameter"),
+        _count(M.K124, "Spills", "الانسكابات", "Spills", "الانسكابات", G.lagging, LOW,
+               "spills not voided that occurred in the period; chip: reportable"),
+        _pct(M.K125, "Spill-kit readiness", "جاهزية حقائب الانسكاب", "Spill kits",
+             "حقائب الانسكاب",
+             "spill_kit assets ready at as_of (6c §6.5 + SPL-5) ÷ spill_kit assets not "
+             "Retired × 100", numerator="Ready", denominator="Kits"),
+        KpiDef(M.K126, "Water use", "استهلاك المياه", "Water", "المياه", K.count_,
+               G.exposure, LOW, "m³", "م³",
+               "Σ volume_m3 of the months in the period; L per man-hour; chip treated "
+               "effluent %", 0),
     ]
 }  # fmt: skip
 

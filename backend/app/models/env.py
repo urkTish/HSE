@@ -242,8 +242,8 @@ class EnvInstrument(Audited, Base):
 
     __tablename__ = "env_instruments"
     __table_args__ = (
-        UniqueConstraint("project_id", "instrument_no"),
-        UniqueConstraint("project_id", "serial_no"),
+        UniqueConstraint("project_id", "instrument_no", name="uq_env_instrument_no"),
+        UniqueConstraint("project_id", "serial_no", name="uq_env_instrument_serial"),
     )
 
     project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id"))
@@ -399,7 +399,7 @@ class Spill(Audited, Numbered, Base):
     __tablename__ = "env_spills"
     __table_args__ = (
         UniqueConstraint("project_id", "year", "seq"),
-        UniqueConstraint("project_id", "client_uuid"),
+        UniqueConstraint("project_id", "client_uuid", name="uq_env_spill_client_uuid"),
     )
 
     spill_no: Mapped[str] = mapped_column(String(40), unique=True)
