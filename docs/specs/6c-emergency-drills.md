@@ -695,7 +695,7 @@ Each has a default so the build can start.
 9. **Fire equipment service:** which Civil Defense-licensed maintenance companies are used, and should their licence be checked like a TPI accreditation?
 10. **WAH-RESCUE course:** a new Phase 5 course (24 months) for height rescue teams. Do you use a specific provider or client course?
 
-## 11. Changes required in earlier specs (to be applied by the coordinator; this spec does not edit them)
+## 11. Changes required in earlier specs (applied 2026-10-09: 0-foundation v1.1, 1-dashboard v1.6, 2-access-permits v1.5, 3-ptw v1.4, 4-third-party-cert v1.2, 5-training v1.2)
 
 ### 11.1 `0-foundation.md` v1.0 → v1.1 (adds to the 6a/6b changes)
 1. Matrix rows 178–190 (§5.13).

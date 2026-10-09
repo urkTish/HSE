@@ -1,6 +1,6 @@
 # Module Spec — Phase 0: Foundation
 
-**Version:** v1.0 · **Date:** 2026-10-05 · **Author:** HSE Consultant Agent · **Status:** Draft for HSE Manager review
+**Version:** v1.1 · **Date:** 2026-10-09 · **Author:** HSE Consultant Agent · **Status:** Draft for HSE Manager review
 **Covers:** auth & roles, permission matrix & scoping, projects → sites → zones, contractors, users, audit log, project settings, i18n EN/AR, PDPL baseline.
 **Out of scope:** dashboard, man-hours, incidents (Phase 1); permits, certificates, training (Phases 2–5). Anything found for later phases goes to `docs/PROGRESS.md` → "Parked".
 
@@ -483,3 +483,4 @@ Phase 0 computes no HSE KPIs; it supplies the dimensions and settings every KPI 
 
 ### Change log
 - v1.0 (2026-10-05) — first issue.
+- v1.1 (2026-10-09) — changes required by Phase 6c (`6c-emergency-drills.md` v1.0 §11.1), adding to the 6a/6b matrix rows: capability rows 178–190 (6c §5.13: view, ERP drafts, ERP approval and settings, roster and rescue teams, assets, asset checks, drill planning, drill execution and muster, drill evaluation, event declaration, All Clear and review, 6c KPIs, voids). No existing rule changes.
