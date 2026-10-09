@@ -58,6 +58,8 @@ class Settings(BaseSettings):
     # facts. A committed fact write in any process clears it (kpi_generation_seq); this bounds
     # how long one snapshot is reused. 0 disables (the test suite runs with 0).
     kpi_cache_seconds: int = 300
+    # Rebuild dropped KPI cache scopes in the background once writes settle (app.kpi.warm).
+    kpi_warm: bool = True
     ai_questions_per_user_day: int = 60  # AI-17
     ai_reports_per_project_month: int = 10  # AI-17
     ai_insights_cache_minutes: int = 360

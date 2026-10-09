@@ -28,7 +28,7 @@ log = logging.getLogger(__name__)
 KPI_WARM_DELAY = 1.5  # seconds without a new fact write before rebuilding
 
 _LOCK = threading.Lock()
-_PENDING: set[tuple[uuid.UUID, ...]] = set()
+_PENDING: dict[tuple[uuid.UUID, ...], None] = {}  # insertion order: most used first
 _LAST_NOTE = [0.0]
 _WAKE = threading.Event()
 _THREAD: list[threading.Thread | None] = [None]
@@ -45,7 +45,8 @@ def note(keys: Iterable[tuple[uuid.UUID, ...]]) -> None:
     if not keys or not enabled():
         return
     with _LOCK:
-        _PENDING.update(keys)
+        for k in keys:
+            _PENDING.setdefault(k, None)
         _LAST_NOTE[0] = time.monotonic()
     _ensure_thread()
     _WAKE.set()
@@ -61,7 +62,7 @@ def start() -> None:
     try:
         with get_sessionmaker()() as db:
             pids = sorted(db.scalars(select(Project.id)))
-    except Exception:  # noqa: BLE001 - database not ready / not migrated: nothing to warm
+    except Exception:
         log.warning("kpi warm: project list unavailable", exc_info=True)
         return
     note([(p,) for p in pids] + ([tuple(pids)] if len(pids) > 1 else []))
@@ -87,17 +88,30 @@ def _run() -> None:
                 break
             time.sleep(left)
         with _LOCK:
-            keys = sorted(_PENDING)
+            keys = list(_PENDING)
             _PENDING.clear()
             _WAKE.clear()
+        if any(len(k) > 1 for k in keys):  # an All-projects scope: also the current full set
+            full = _all_projects()
+            if full and full not in keys:
+                keys.append(full)
         for key in keys:
             with _LOCK:
                 if _PENDING:  # a newer write: its rebuild supersedes this one
                     break
             try:
                 warm(key)
-            except Exception:  # noqa: BLE001 - warming is best effort; requests still build
+            except Exception:
                 log.warning("kpi warm failed for %s", key, exc_info=True)
+
+
+def _all_projects() -> tuple[uuid.UUID, ...] | None:
+    from app.db.session import get_sessionmaker  # noqa: PLC0415
+    from app.models import Project  # noqa: PLC0415
+
+    with get_sessionmaker()() as db:
+        pids = tuple(sorted(db.scalars(select(Project.id))))
+    return pids if len(pids) > 1 else None
 
 
 def warm(key: tuple[uuid.UUID, ...]) -> None:
@@ -121,4 +135,5 @@ def warm(key: tuple[uuid.UUID, ...]) -> None:
         if train is not None:
             for pid in key:
                 train._base(pid)
-        db.rollback()
+        # closed, not rolled back: a rollback would expire the cached ORM rows (CertSettings,
+        # ...) and later requests could not refresh them from another session

@@ -1,5 +1,6 @@
 """Per-process KPI facts cache (frontend report: a dashboard fires ~15 /kpi requests)."""
 
+import uuid
 from collections.abc import Iterator
 
 import pytest
@@ -10,6 +11,7 @@ from app.core.clock import now
 from app.core.config import get_settings
 from app.core.enums import AuditAction, EntityType
 from app.kpi import data
+from app.kpi.facts import Facts
 from app.models import HseMeeting, Project, User
 from app.services import audit, hse_settings
 from app.services.audit import AuditActor
@@ -18,12 +20,13 @@ from app.services.audit import AuditActor
 @pytest.fixture
 def cache_on(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     monkeypatch.setattr(get_settings(), "kpi_cache_seconds", 20)
+    monkeypatch.setattr(get_settings(), "kpi_warm", False)  # no background rebuilds here
     data.clear_cache()
     yield
     data.clear_cache()
 
 
-def _load(db: Session) -> data.Facts:
+def _load(db: Session) -> Facts:
     projects = list(db.scalars(select(Project).order_by(Project.code)))
     return data.load(db, projects, {p.id: hse_settings.get(db, p.id) for p in projects})
 
@@ -76,5 +79,44 @@ def test_bookkeeping_writes_keep_the_cache(db: Session) -> None:
     audit.record(
         db, AuditAction.login_success, AuditActor(u.id), entity_type=EntityType.user, entity_id=u.id
     )
+    db.commit()
+    assert _load(db).meetings is first.meetings
+
+
+@pytest.mark.usefixtures("hse_seed", "cache_on")
+def test_warm_builds_every_section_of_a_scope(db: Session) -> None:
+    """Dashboard cold load: app.kpi.warm builds a scope's facts and every lazy section (and
+    the training requirement base) off the request path, so the next read finds them."""
+    from app.kpi import train_facts, warm
+
+    p = db.scalars(select(Project).where(Project.code == "ANIA-EXP")).one()
+    key = (p.id,)
+    db.commit()  # the warm session must see the seeded rows
+    warm.warm(key)
+    facts = data.cached(db, key)
+    assert facts is not None
+    for part in ("_access", "_ptw", "_cert", "_train", "_med"):
+        assert getattr(facts, part) is not None, part
+    assert ("base", p.id) in train_facts._SHARED
+
+
+def test_warm_is_off_without_the_cache(monkeypatch: pytest.MonkeyPatch) -> None:
+    from app.kpi import warm
+
+    monkeypatch.setattr(get_settings(), "kpi_cache_seconds", 0)
+    assert not warm.enabled()
+    warm.note([(uuid.uuid4(),)])
+    assert not warm._PENDING
+
+
+@pytest.mark.usefixtures("hse_seed", "cache_on")
+def test_ai_insight_cache_writes_keep_the_cache(db: Session) -> None:
+    """The dashboard's insights panel stores its result on a view; that is not a KPI fact."""
+    from app.models import AiInsightCache
+
+    first = _load(db)
+    p = db.scalars(select(Project)).first()
+    assert p is not None
+    db.add(AiInsightCache(cache_key=uuid.uuid4().hex, project_id=p.id, payload={}))
     db.commit()
     assert _load(db).meetings is first.meetings

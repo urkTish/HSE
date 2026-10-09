@@ -1,6 +1,8 @@
 """FastAPI application factory."""
 
 import os
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from typing import Any
 
 from fastapi import FastAPI
@@ -195,11 +197,20 @@ def _install_openapi(app: FastAPI) -> None:
     app.openapi = custom_openapi  # type: ignore[method-assign]
 
 
+@asynccontextmanager
+async def _lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    from app.kpi import warm  # noqa: PLC0415
+
+    warm.start()  # background: warm each project's and the all-projects KPI facts
+    yield
+
+
 def create_app() -> FastAPI:
     pin_from_env(
         os.environ.get("HSE_CLOCK_AT"), os.environ.get("HSE_CLOCK_MODE"), get_settings().environment
     )
     app = FastAPI(
+        lifespan=_lifespan,
         title="HSE Platform API",
         version=CONTRACT_VERSION,
         description=DESCRIPTION,

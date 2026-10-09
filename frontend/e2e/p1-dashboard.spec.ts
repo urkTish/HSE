@@ -89,8 +89,7 @@ test.describe("Dashboard", () => {
     await login(page, USERS.noura);
     await page.goto("/en");
     const item = page.locator("[data-testid=action-item][data-key=overdue_cas]");
-    // The page's own filters (compare=previous) are a separate, possibly cold KPI read; see AC55.
-    await expect(item.getByTestId("action-count")).toHaveText(k42?.display ?? "", { timeout: 30_000 });
+    await expect(item.getByTestId("action-count")).toHaveText(k42?.display ?? "");
     await item.locator("a").first().click();
     await expect(page).toHaveURL(/\/actions\?/);
     await expect(page.getByTestId("ca-table")).toBeVisible();
@@ -140,9 +139,7 @@ test.describe("Dashboard", () => {
     await page.goto(`/en?${SEP}`);
     await page.getByTestId("filter-all-projects").click();
     await expect(page).toHaveURL(/all=1/);
-    // First all-projects read of the run: the KPI cache is cold for three projects (about 4 s on its
-    // own, more while the charts load beside it), so the default 10 s can run out.
-    await expect(page.locator("[data-testid=dashboard-banner][data-code=MIXED_BASES], [data-testid=banner-mixed]").first()).toBeVisible({ timeout: 30_000 });
+    await expect(page.locator("[data-testid=dashboard-banner][data-code=MIXED_BASES], [data-testid=banner-mixed]").first()).toBeVisible();
   });
 
   test("Mobile (390 px, Arabic): no horizontal page scroll", async ({ page }) => {

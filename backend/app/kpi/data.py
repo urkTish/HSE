@@ -34,6 +34,7 @@ from app.core.hse_enums import (
     PersonType,
     WorkforceStatus,
 )
+from app.kpi import warm
 from app.kpi.access_facts import load_access
 from app.kpi.cases import CaseDates
 from app.kpi.facts import (
@@ -110,6 +111,11 @@ _NO_KPI_TABLES = frozenset(
         "dashboard_preferences",
         "email_outbox",
         "notifications",
+        # AI answers, logs and the insight cache: no KPI reads them, and the dashboard's
+        # insights panel writes the cache on a view, which cleared every scope per page load
+        "ai_answers",
+        "ai_logs",
+        "ai_insight_cache",
     }
 )
 # Row updates that touch only these columns are bookkeeping (every login sets them), not facts.
@@ -168,7 +174,10 @@ def _after_commit(session: Session) -> None:
     if session.info.pop("kpi_wrote", False):
         with _CACHE_LOCK:
             _GENERATION += 1
+            # most recently built first: the scope a reader just used is rebuilt first
+            dropped = list(reversed(_CACHE))
             _CACHE.clear()
+        warm.note(dropped)
         bind = session.get_bind()
         try:
             with bind.engine.connect() as conn:
@@ -185,12 +194,15 @@ def _sync_db_generation(db: Session) -> None:
     """Drop this process's cached facts when another process has committed a fact write."""
     global _GENERATION  # noqa: PLW0603
     n = db.execute(text(f"SELECT last_value FROM {_DB_SEQ}")).scalar_one()  # noqa: S608
+    dropped: list[tuple[uuid.UUID, ...]] = []
     with _CACHE_LOCK:
         if _DB_SEEN[0] != n:
             if _DB_SEEN[0] is not None:
                 _GENERATION += 1
+                dropped = list(reversed(_CACHE))
                 _CACHE.clear()
             _DB_SEEN[0] = n
+    warm.note(dropped)
 
 
 event.listen(Session, "after_flush", _mark_write)
@@ -239,6 +251,11 @@ def load(
                     _CACHE.clear()
                 _CACHE[key] = (at, gen, facts)
         return facts
+
+
+def cached(db: Session, key: tuple[uuid.UUID, ...]) -> Facts | None:
+    """The cached Facts of a scope (sorted project ids), with lazy sections bound to db."""
+    return _cached(db, key, get_settings().kpi_cache_seconds)
 
 
 def _cached(db: Session, key: tuple[uuid.UUID, ...], ttl: float) -> Facts | None:

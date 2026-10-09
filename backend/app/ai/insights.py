@@ -8,6 +8,7 @@ import time
 from datetime import timedelta
 from typing import Any
 
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session
 
 from app.ai import client as llm
@@ -332,10 +333,16 @@ def insights(db: Session, p: Principal, q: KpiQuery, refresh: bool) -> InsightsR
         cached=False,
         items=items,
     )
-    if row is None:
-        row = AiInsightCache(cache_key=key, project_id=project.id, payload={})
-        db.add(row)
-    row.payload = res.model_dump(mode="json")
-    row.created_at = now()
-    db.flush()
+    # upsert: the dashboard can ask twice at once (two tabs, a refetch), and both miss the cache
+    payload = res.model_dump(mode="json")
+    at = now()
+    db.execute(
+        pg_insert(AiInsightCache)
+        .values(cache_key=key, project_id=project.id, payload=payload, created_at=at)
+        .on_conflict_do_update(
+            index_elements=[AiInsightCache.cache_key], set_={"payload": payload, "created_at": at}
+        )
+    )
+    if row is not None:
+        db.expire(row)
     return res
