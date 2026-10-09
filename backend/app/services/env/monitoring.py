@@ -666,7 +666,7 @@ def background_ref(db: Session, pt: EnvPoint, ws: datetime, we: datetime) -> str
         select(BackgroundDeclaration)
         .where(
             BackgroundDeclaration.project_id == pt.project_id,
-            pt.site_id == any_(BackgroundDeclaration.site_ids),
+            any_(BackgroundDeclaration.site_ids) == pt.site_id,
             BackgroundDeclaration.from_at < we,
             BackgroundDeclaration.to_at > ws,
         )

@@ -1,3 +1,4 @@
+# ruff: noqa: E501
 """Phase 6e airside post-storm checks, spills, water and complaints (6e §9 AC 34-47)."""
 
 from __future__ import annotations
@@ -61,7 +62,7 @@ def _storm(db: Session, end_h: int) -> OpsEvent:
     src = db.scalar(select(OpsEvent).where(OpsEvent.ops_no == "OPS-ANIA-EXP-2026-0008"))
     assert src is not None
     ev = OpsEvent(
-        id=uuid.uuid4(), ops_no="OPS-ANIA-EXP-2026-0099", project_id=src.project_id,
+        id=uuid.uuid4(), ops_no="OPS-ANIA-EXP-2026-0099", year=2026, seq=99, project_id=src.project_id,
         site_id=src.site_id, type=src.type, zone_ids=src.zone_ids,
         default_zone_ids=src.default_zone_ids, source=src.source, source_ref="TEST",
         started_at=local(2026, 10, 6, end_h - 2), ended_at=local(2026, 10, 6, end_h),
@@ -142,7 +143,9 @@ FIELDS = {"actual_severity": 2, "potential_severity": 3, "activity": "paving_asp
           "shift": "day", "description": "Diesel spill at the bowser", "immediate_actions": "Kit used"}  # fmt: skip
 
 
-def test_spill_incident_kpis_and_notifications(env_seed: None, clock: None, api: Api, db: Session) -> None:
+def test_spill_incident_kpis_and_notifications(
+    env_seed: None, clock: None, api: Api, db: Session
+) -> None:
     """AC 37, 41, 43: EV7 (a) creates a Reported environmental incident (K-16 + 1) needing
     airport_operator; (b) no incident, K-124 + 1; (d) needs ncec 24 h; same client_uuid twice →
     one spill and one incident; September seed incidents unchanged."""
@@ -157,8 +160,15 @@ def test_spill_incident_kpis_and_notifications(env_seed: None, clock: None, api:
     again = spills.create_spill(db, p, pid, a)
     assert again.id == s.id
     inc = db.get(Incident, s.incident_id)
-    assert inc is not None and inc.status.value == "reported" and inc.incident_types == ["environmental"]
-    assert (inc.env_category.value if inc.env_category else None, inc.env_substance) == ("spill", "diesel")
+    assert (
+        inc is not None
+        and inc.status.value == "reported"
+        and inc.incident_types == ["environmental"]
+    )
+    assert (inc.env_category.value if inc.env_category else None, inc.env_substance) == (
+        "spill",
+        "diesel",
+    )
     assert (D(inc.env_quantity_l or 0), inc.env_contained, inc.env_reached.value if inc.env_reached else None,
             inc.zone_id) == (D(40), True, "none", zone(db, "Z-APR-21").id)  # fmt: skip
     assert {r.body.value for r in incidents.required_notifications(inc, [])} >= {"airport_operator"}
@@ -174,7 +184,11 @@ def test_spill_incident_kpis_and_notifications(env_seed: None, clock: None, api:
     assert int(kpi(kpis(f, pid, **oct_), "K124")["value"]) == k124 + 3
     sept = db.scalar(select(Incident).where(Incident.ref == "INC-ANIA-EXP-2026-0288"))
     assert sept is not None
-    assert not [r for r in incidents.required_notifications(sept, []) if r.body.value in ("ncec", "airport_operator")]
+    assert not [
+        r
+        for r in incidents.required_notifications(sept, [])
+        if r.body.value in ("ncec", "airport_operator")
+    ]
     k16 = f.get(f"{API}/kpi/metrics", params={"project_id": str(pid), "period": "custom",
                                               "start": "2026-09-01", "end": "2026-09-30", "metric": "K-16"})  # fmt: skip
     assert k16.status_code == 200, k16.text
@@ -188,8 +202,12 @@ def test_spill_links(env_seed: None, clock: None, db: Session) -> None:
     first = spills.create_spill(db, p, pid, _spill(db, "40", "Z-APR-21", "S-AIR", incident_fields=FIELDS,
                                                    occurred_at=local(2026, 10, 5, 23, 30)))  # fmt: skip
     n = len(db.scalars(select(Incident.id)).all())
-    linked = spills.create_spill(db, p, pid, _spill(db, "30", "Z-APR-21", "S-AIR", incident_id=first.incident_id))
-    assert linked.incident_id == first.incident_id and len(db.scalars(select(Incident.id)).all()) == n
+    linked = spills.create_spill(
+        db, p, pid, _spill(db, "30", "Z-APR-21", "S-AIR", incident_id=first.incident_id)
+    )
+    assert (
+        linked.incident_id == first.incident_id and len(db.scalars(select(Incident.id)).all()) == n
+    )
     injury = db.scalar(select(Incident).where(Incident.project_id == pid,
                                               ~Incident.incident_types.any("environmental")))  # type: ignore[arg-type]  # fmt: skip
     assert injury is not None
@@ -197,7 +215,10 @@ def test_spill_links(env_seed: None, clock: None, db: Session) -> None:
     db.flush()
     expect("INCIDENT_NOT_ENVIRONMENTAL", lambda: spills.create_spill(
         db, p, pid, _spill(db, "30", "Z-APR-21", "S-AIR", incident_id=injury.id)))  # fmt: skip
-    expect("INCIDENT_FIELDS_REQUIRED", lambda: spills.create_spill(db, p, pid, _spill(db, "30", "Z-APR-21", "S-AIR")))
+    expect(
+        "INCIDENT_FIELDS_REQUIRED",
+        lambda: spills.create_spill(db, p, pid, _spill(db, "30", "Z-APR-21", "S-AIR")),
+    )
 
 
 def test_spill_kit_used_and_closure(env_seed: None, clock: None, api: Api, db: Session) -> None:
@@ -208,8 +229,8 @@ def test_spill_kit_used_and_closure(env_seed: None, clock: None, api: Api, db: S
     f = api.as_("faisal.harbi")
     oct_ = {"start": "2026-10-01", "end": "2026-10-31"}
     before = kpi(kpis(f, pid, **oct_), "K125")["numerator"]
-    k = kit(db, "SK-SAIR-01")
-    s = spills.create_spill(db, p, pid, _spill(db, "40", "Z-APR-21", "S-AIR", incident_fields=FIELDS,
+    k = kit(db, "SK-SLAND-04")
+    s = spills.create_spill(db, p, pid, _spill(db, "40", "Z-LAY1", "S-LAND", incident_fields=FIELDS,
                                                spill_kit_asset_ids=[str(k.id)]))  # fmt: skip
     r = assets.readiness(db, k, date(2026, 10, 6))
     assert "USED_REPLENISH" in [x.value for x in r.reasons]
@@ -217,7 +238,10 @@ def test_spill_kit_used_and_closure(env_seed: None, clock: None, api: Api, db: S
     assert int(kpi(kpis(f, pid, **oct_), "K125")["numerator"]) == int(before) - 1
     spills.transition_spill(db, p, s.id, SpillTransition(action="clean_up",
                                                           cleanup_completed_at=local(2026, 10, 6, 9, 50)))  # fmt: skip
-    expect("CLEANUP_WASTE_UNTRACKED", lambda: spills.transition_spill(db, p, s.id, SpillTransition(action="close")))
+    expect(
+        "CLEANUP_WASTE_UNTRACKED",
+        lambda: spills.transition_spill(db, p, s.id, SpillTransition(action="close")),
+    )
     with pytest.raises(ApiError) as ei:
         spills.transition_spill(db, P(db, "fahad.mutairi"), s.id, SpillTransition(
             action="close", cleanup_storage_area_id=area(db, "HWS-SLAND-01").id))  # fmt: skip

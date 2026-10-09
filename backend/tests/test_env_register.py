@@ -1,3 +1,4 @@
+# ruff: noqa: E501
 """Phase 6e aspects, permits, licences, providers and settings (6e §9 AC 1-8, 55)."""
 
 from __future__ import annotations
@@ -138,7 +139,9 @@ def test_permit_alerts_expiry_and_producer_check(env_seed: None, db: Session) ->
         sent.append(count() - n0)
     assert sent == [1, 1, 1, 1, 1, 1, 1, 0]
     assert ke.permit_stats(db, [pid], date(2026, 11, 1))[:2] == (3, 4)
-    expect("PRODUCER_REGISTRATION_INVALID", lambda: waste.producer_check(db, pid, date(2026, 11, 1)))
+    expect(
+        "PRODUCER_REGISTRATION_INVALID", lambda: waste.producer_check(db, pid, date(2026, 11, 1))
+    )
     rbt = project(db, "RBT-52").id
     assert ke.permit_stats(db, [rbt], date(2026, 9, 30))[:2] == (3, 4)
 
@@ -193,7 +196,9 @@ def test_permissions_and_settings(env_seed: None, clock: None, api: Api, db: Ses
     r = api.as_("noura.qahtani").post(f"{API}/projects/{pid}/env-permits", json=body)
     assert r.status_code == 201, r.text
     f = api.as_("faisal.harbi")
-    r = f.patch(f"{API}/projects/{pid}/env-settings", json={"permit_alert_days": [60, 30, 14, 7, 0]})
+    r = f.patch(
+        f"{API}/projects/{pid}/env-settings", json={"permit_alert_days": [60, 30, 14, 7, 0]}
+    )
     assert r.status_code == 422 and err(r) == "SETTING_LOOSENING"
     for bad in ({"spill_reportable_l": 30}, {"manifest_return_days": 10},
                 {"airside_spill_always_reportable": False}):  # fmt: skip
@@ -232,7 +237,7 @@ def test_licence_checks(env_seed: None, clock: None, db: Session) -> None:
     expect("LICENCE_SCOPE_MISMATCH", lambda: w.create_consignment(
         db, p, pid, con_body(db, transporter_id=prov(db, "GREENHAUL").id, **oil)))  # fmt: skip
     register.transition_provider(db, P(db, "faisal.harbi"), prov(db, "GREENHAUL").id,
-                                 ProviderTransition(action="blacklist", reason="Fly-tipping"))  # fmt: skip
+                                 ProviderTransition(action="blacklist", reason="Fly-tipping found at two sites"))  # fmt: skip
     expect("PROVIDER_NOT_APPROVED", lambda: w.create_consignment(db, p, pid, con_body(db)))
     body = con_body(db, "sewage", storage_area_id=None, site_id=_site(db, "S-LAND"),
                     quantity=D("20"), unit="m3",

@@ -1,5 +1,6 @@
 import { expect, test } from "./fixtures/test";
-import { login, USERS } from "./helpers";
+import { apiAs, login, USERS } from "./helpers";
+import { admitDespiteDenial, projectIds } from "./p2-helpers";
 
 // Committed demo screenshots are only rewritten on demand (SCREENSHOTS=1).
 const SHOTS = process.env.SCREENSHOTS ? "../docs/screenshots/phase-2" : "test-results/shots";
@@ -72,6 +73,10 @@ test.describe.serial("Phase 2 — access settings and dashboard", () => {
 
   test("§8.1: Phase 2 action-panel items open the register with the same filter", async ({ page }) => {
     test.slow(); // every KPI request is slow on the full Phase 2 seed (reported to the backend)
+    // The seeded admissions despite denial are older than the item's 7-day window; make one here
+    // instead of depending on p2-gate having run first.
+    const api = await apiAs(USERS.faisal);
+    await admitDespiteDenial(api, await projectIds(api));
     await login(page, USERS.faisal);
     await page.goto("/en?period=month");
     const item = page.locator("[data-testid=action-item][data-key=admitted_despite_denial]");

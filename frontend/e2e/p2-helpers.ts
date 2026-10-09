@@ -211,3 +211,28 @@ export async function ensureCourse(api: APIRequestContext, pid: string, code: st
   expect(res.ok(), await res.text()).toBeTruthy();
   return ((await res.json()) as { id: string }).id;
 }
+
+/**
+ * GC-14 setup: a banned worker is DENIED at a new site gate and recorded as admitted anyway, so the
+ * dashboard's "admitted despite denial" item (last 7 days, §8.1) exists without relying on an earlier spec.
+ */
+export async function admitDespiteDenial(api: APIRequestContext, ids: Ids, site = "S-AIR"): Promise<string> {
+  const gen = await ensureGenCourse(api, ids.pid);
+  const bad = await createWorker(api, ids, `Admit Banned ${Date.now().toString(36)}`);
+  await recordInduction(api, ids.pid, bad.id, gen);
+  const ref = (await accessCard(api, bad.deploymentId)).printed_ref;
+  const ban = await api.post(`/api/v1/workers/${bad.id}/transitions`, { data: { to_status: "banned", reason: "Repeated unsafe acts on site (test)" } });
+  expect(ban.ok(), await ban.text()).toBeTruthy();
+  const gate = await api.post(`/api/v1/projects/${ids.pid}/gates`, {
+    data: { gate_code: `GA${Date.now().toString(36).slice(-6).toUpperCase()}`, name_en: "E2E admit gate", name_ar: "بوابة اختبار", site_id: ids.site(site), gate_type: "site_gate" },
+  });
+  expect(gate.ok(), await gate.text()).toBeTruthy();
+  const gateId = ((await gate.json()) as { id: string }).id;
+  const check = await api.post("/api/v1/gate-checks", { data: { gate_id: gateId, printed_ref: ref } });
+  expect(check.ok(), await check.text()).toBeTruthy();
+  const res = (await check.json()) as { check_id: string; result: string };
+  expect(res.result).toBe("DENIED");
+  const admit = await api.post(`/api/v1/gate-checks/${res.check_id}/admitted-despite-denial`, { data: { reason: "Escorted by site manager to collect tools" } });
+  expect(admit.ok(), await admit.text()).toBeTruthy();
+  return res.check_id;
+}

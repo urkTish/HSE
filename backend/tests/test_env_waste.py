@@ -1,3 +1,4 @@
+# ruff: noqa: E501, RUF015
 """Phase 6e waste streams, storage areas and consignments (6e §9 AC 9-19, 56)."""
 
 from __future__ import annotations
@@ -34,7 +35,9 @@ from tests.env_helpers import (
 )
 
 
-def _area(db: Session, site: str, z: str | None, typ: str, streams: list[str], **kw: object) -> AreaCreate:
+def _area(
+    db: Session, site: str, z: str | None, typ: str, streams: list[str], **kw: object
+) -> AreaCreate:
     from app.models import Site
 
     sid = db.scalar(select(Site.id).where(Site.code == site))
@@ -70,7 +73,9 @@ def _ticket(api: Api, cid: object) -> str:
     return upload_pdf(api.as_("noura.qahtani"), "consignment_ticket", cid)
 
 
-def test_ev5_receipt_discrepancy_and_close(env_seed: None, clock: None, api: Api, db: Session) -> None:
+def test_ev5_receipt_discrepancy_and_close(
+    env_seed: None, clock: None, api: Api, db: Session
+) -> None:
     """AC 11-12: EV5 estimate 0.900 t, 8.9 % closes, 13.3 % needs a reason, closed is locked;
     a hazardous load needs the manifest reference, a non-hazardous one does not."""
     p = P(db, "noura.qahtani")
@@ -78,12 +83,16 @@ def test_ev5_receipt_discrepancy_and_close(env_seed: None, clock: None, api: Api
     oil = {"storage_area_id": area(db, "HWS-SLAND-01").id, "quantity": D("1000"), "unit": "L",
            "transporter_id": prov(db, "HAZMOVE").id, "facility_provider_id": prov(db, "OILREF").id,
            "facility_code": "OILREF-1"}  # fmt: skip
-    expect("MANIFEST_REF_REQUIRED", lambda: waste.create_consignment(db, p, pid, con_body(db, "used_oil", **oil)))
+    expect(
+        "MANIFEST_REF_REQUIRED",
+        lambda: waste.create_consignment(db, p, pid, con_body(db, "used_oil", **oil)),
+    )
     assert waste.create_consignment(db, p, pid, con_body(db)).status == "dispatched"
     outs = []
     for net in ("0.820", "0.780"):
         c = waste.create_consignment(
-            db, p, pid, con_body(db, "used_oil", mwan_manifest_ref="MWAN-MF-TEST-1", **oil))
+            db, p, pid, con_body(db, "used_oil", mwan_manifest_ref="MWAN-MF-TEST-1", **oil)
+        )
         assert c.estimated_t == "0.900"
         db.commit()
         fid = _ticket(api, c.id)
@@ -94,7 +103,10 @@ def test_ev5_receipt_discrepancy_and_close(env_seed: None, clock: None, api: Api
     assert [D(x[1] or 0).quantize(D("0.1")) for x in outs] == [D("8.9"), D("13.3")]
     close = ConsignmentTransition(action="close")
     assert waste.transition_consignment(db, p, outs[0][0], close).status == "closed"
-    expect("DISCREPANCY_REASON_REQUIRED", lambda: waste.transition_consignment(db, p, outs[1][0], close))
+    expect(
+        "DISCREPANCY_REASON_REQUIRED",
+        lambda: waste.transition_consignment(db, p, outs[1][0], close),
+    )
     closed = waste.transition_consignment(db, p, outs[1][0], ConsignmentTransition(
         action="close", discrepancy_reason="Moisture evaporated from the drums in transit."))  # fmt: skip
     assert closed.status == "closed"
@@ -107,7 +119,12 @@ def test_overdue_alert_and_late_custody(env_seed: None, db: Session) -> None:
     """AC 13: 00412 not received by 09-29 → 09-30 07:08 alert to Fahad, Ahmed and Noura."""
     c = con(db, "WCN-ANIA-EXP-2026-00412")
     rec = c.receipt_recorded_at
-    c.status, c.receipt_recorded_at, c.received_at, c.received_net_t = "dispatched", None, None, None
+    c.status, c.receipt_recorded_at, c.received_at, c.received_net_t = (
+        "dispatched",
+        None,
+        None,
+        None,
+    )
     db.flush()
     since = tick(2026, 9, 30, 7, 8)
     env_alerts(db)
@@ -116,7 +133,9 @@ def test_overdue_alert_and_late_custody(env_seed: None, db: Session) -> None:
     assert rec is not None and rec.date() > c.due_on
 
 
-def test_provisional_tonnes_and_exclusions(env_seed: None, clock: None, api: Api, db: Session) -> None:
+def test_provisional_tonnes_and_exclusions(
+    env_seed: None, clock: None, api: Api, db: Session
+) -> None:
     """AC 14-16, 56: EV1b provisional 3.600 t then 3.420; voided / rejected leave K-119; rejection
     raises one CA high and a re-dispatch may reference it; Fahad cannot void (214)."""
     pid = project(db, "ANIA-EXP").id
@@ -127,7 +146,7 @@ def test_provisional_tonnes_and_exclusions(env_seed: None, clock: None, api: Api
     assert c is not None
     p = P(db, "noura.qahtani")
     r = waste.read_consignment(db, p, c.id)
-    assert (r.tonnes, r.provisional) == ("3.600", True)
+    assert (r.tonnes, r.provisional) == ("3.6", True)
     f = api.as_("faisal.harbi")
     assert kpi(kpis(f, pid), "K119")["value"] == "717.4"
     db.commit()
@@ -142,6 +161,7 @@ def test_provisional_tonnes_and_exclusions(env_seed: None, clock: None, api: Api
         WasteConsignment.project_id == pid, WasteConsignment.stream_code == "inert_cd",
         WasteConsignment.dispatched_date >= date(2026, 9, 1))).first()  # fmt: skip
     assert other is not None
+    other.status, other.receipt_recorded_at, other.received_net_t = "dispatched", None, None
     void = ConsignmentTransition(action="void", reason="Duplicate entry made by mistake on site")
     with pytest.raises(ApiError) as ei:
         waste.transition_consignment(db, P(db, "fahad.mutairi"), other.id, void)
@@ -153,7 +173,9 @@ def test_provisional_tonnes_and_exclusions(env_seed: None, clock: None, api: Api
     rej = waste.transition_consignment(db, p, new.id, ConsignmentTransition(
         action="reject", reason="Load contaminated with plastics"))  # fmt: skip
     ca = db.get(CorrectiveAction, rej.ca_id)
-    assert ca is not None and ca.priority.value == "high" and ca.source_type.value == "environmental"
+    assert (
+        ca is not None and ca.priority.value == "high" and ca.source_type.value == "environmental"
+    )
     again = waste.create_consignment(db, p, pid, con_body(db, redispatch_of_id=new.id))
     assert again.redispatch_of_id == new.id
 

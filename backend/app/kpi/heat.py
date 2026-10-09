@@ -9,6 +9,7 @@ and K-100, K-102 and K-103 to records of those engagements."""
 
 from __future__ import annotations
 
+import bisect
 import uuid
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -231,13 +232,41 @@ def _k97(e: Engine, a: Agg) -> Result:
 # ---- K-98 heat-stop zone-hours -----------------------------------------------------------------
 
 
+def _day_readings(hf: HeatFacts, pt: MonitoringPoint, d: date, cfg: Any) -> list[Any]:
+    """state.day_readings(d) sliced from the point's valid readings, loaded once per facts:
+    K-98 walks every (zone, work day) of a season, one query each was the season report's cost."""
+    from app.services.heat import common as hc  # noqa: PLC0415
+    from app.services.heat import state  # noqa: PLC0415
+
+    key = ("readings", pt.id)
+    got = hf.memo.get(key)
+    if got is None:
+        w = WbgtReading
+        rows = hf.db.execute(
+            select(
+                w.id, w.reading_no, w.point_id, w.measured_at, w.source, w.wbgt_c, w.regime_cells
+            )
+            .where(w.point_id == pt.id, w.status == RecordStatus.valid)
+            .order_by(w.measured_at, w.created_at)
+        )  # columns, not entities: a season holds thousands of readings per point
+        rs = [
+            state.Rd(i, no, p, m, src, Decimal(c), dict(cells or {}))
+            for i, no, p, m, src, c, cells in rows
+        ]
+        got = hf.memo[key] = (rs, [r.measured_at for r in rs])
+    rs, at = got
+    lo = bisect.bisect_left(at, hc.day_start(d) - cfg.relax)
+    hi = bisect.bisect_right(at, hc.day_start(d + timedelta(days=1)))
+    return list(rs[lo:hi])
+
+
 def _point_hours(hf: HeatFacts, p: Proj, pt: MonitoringPoint, d: date) -> dict[str, Decimal]:
     from app.services.heat import common as hc  # noqa: PLC0415
     from app.services.heat import state  # noqa: PLC0415
 
     key = ("hours", pt.id, d)
     if key not in hf.memo:
-        rs = state.day_readings(hf.db, pt.id, d, p.cfg)
+        rs = _day_readings(hf, pt, d, p.cfg)
         out: dict[str, Decimal] = defaultdict(Decimal)
         if not rs:
             s, t = p.cfg.monitoring(d)

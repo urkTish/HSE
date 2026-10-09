@@ -1,3 +1,4 @@
+# ruff: noqa: E501, RUF015
 """Phase 6e instruments, points, limits, readings and exceedances (6e §9 AC 20-33, 45)."""
 
 from __future__ import annotations
@@ -96,7 +97,7 @@ def test_manual_reading_rules(env_seed: None, clock: None, db: Session) -> None:
 
 def test_limits_tighten_only_and_permit_condition(env_seed: None, clock: None, db: Session) -> None:
     """AC 22: LIMIT_LOOSENING; 300 saved and audited; a permit condition of 280 wins."""
-    from app.models import AuditLog
+    from app.models import AuditEntry as AuditLog
 
     p = P(db, "noura.qahtani")
     pt = point(db, "D-SAIR-01")
@@ -171,7 +172,9 @@ def test_episodes(env_seed: None, clock: None, db: Session) -> None:
     assert D(xs[0].peak_value) == 620
 
 
-def test_background_auto_review_and_reclassify(env_seed: None, clock: None, api: Api, db: Session) -> None:
+def test_background_auto_review_and_reclassify(
+    env_seed: None, clock: None, api: Api, db: Session
+) -> None:
     """AC 25-26: EV2b background (OPS-0009), auto-reviewed, not in K-123; reclassified → CA high,
     counted. BGD-RBT-52-2026-001 flags the D-STWR-01 sample, not a noise reading."""
     x = exd(db, "ENX-ANIA-EXP-2026-0018")
@@ -228,7 +231,9 @@ def test_noise_ev3(env_seed: None, db: Session) -> None:
     assert D(r23.value).quantize(D("0.1")) == D("61.3") and r23.period.value == "night"
     assert r23.result.value == "exceedance" and r23.exceedance_id is not None
     assert (r21.result.value, r21.period.value, r21.exceedance_id) == ("alert", "day", None)
-    assert monitoring.mean(Parameter.laeq, [D(60), D(62), D(61), D(62)]).quantize(D("0.1")) == D("61.3")
+    assert monitoring.mean(Parameter.laeq, [D(60), D(62), D(61), D(62)]).quantize(D("0.1")) == D(
+        "61.3"
+    )
 
 
 def test_visual_review_and_overdue_review(env_seed: None, clock: None, db: Session) -> None:
@@ -258,7 +263,9 @@ def test_visual_review_and_overdue_review(env_seed: None, clock: None, db: Sessi
     out = exceedances.review(db, noura, three.exceedance_id, bad.model_copy(update={
         "responsible_engagement_id": eng(db, "ANIA-EXP", "GULFPAVE").id}))  # fmt: skip
     ca = db.get(CorrectiveAction, out.ca_id)
-    assert ca is not None and ca.priority.value == "high" and ca.owner_id == uid(db, "ahmed.zahrani")
+    assert (
+        ca is not None and ca.priority.value == "high" and ca.owner_id == uid(db, "ahmed.zahrani")
+    )
 
 
 def test_lab_results(env_seed: None, clock: None, db: Session) -> None:

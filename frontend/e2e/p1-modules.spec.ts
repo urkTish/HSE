@@ -73,13 +73,16 @@ test.describe("Observations, inspections, meetings, settings, reports", () => {
     await page.locator("#weekday").selectOption({ index: 1 });
     await page.locator("#start_date").fill("2026-10-10");
     await page.locator("#assignee_role").selectOption("hse_officer");
+    // 6d ISP-1: from the seeded switch date (inspection_template_required_from 2026-09-01) a new plan needs a checklist.
+    await page.getByTestId("plan-template").selectOption("SCA");
     await page.getByTestId("save-plan").click();
     await expect(page.getByTestId("plan-title")).toContainText(name);
 
     await page.goto("/en/inspections/new");
     await page.locator("#un-type").selectOption("housekeeping");
     await selectByPrefix(page.locator("#un-site"), "S-LAND");
-    await page.locator("#ins-completed").fill("2026-10-05T10:00");
+    // 6d EXE-3: Phase 1 manual counts are accepted only for results completed before the switch date.
+    await page.locator("#ins-completed").fill("2026-08-25T10:00");
     await page.locator("#ins-checked").fill("20");
     await page.locator("#ins-compliant").fill("18");
     await page.getByTestId("save-inspection").click();

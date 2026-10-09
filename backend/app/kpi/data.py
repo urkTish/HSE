@@ -19,6 +19,7 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import case, event, func, or_, select
+from sqlalchemy import inspect as sa_inspect
 from sqlalchemy.orm import ORMExecuteState, Session
 from sqlalchemy.sql.elements import TextClause
 
@@ -100,7 +101,22 @@ _GENERATION = 0
 # otherwise invalidate every scope's cache on each request. No KPI reads the audit log, and
 # reads are audited too (logins, sensitive medical reads in the 6a readiness behind the action
 # panel), so an audit row must not invalidate the cache either.
-_NO_KPI_TABLES = frozenset({"user_sessions", "gate_device_sessions", "audit_log"})
+_NO_KPI_TABLES = frozenset(
+    {
+        "user_sessions",
+        "gate_device_sessions",
+        "audit_log",
+        "dashboard_preferences",
+        "email_outbox",
+        "notifications",
+    }
+)
+# Row updates that touch only these columns are bookkeeping (every login sets them), not facts.
+_NO_KPI_COLUMNS = {
+    "users": frozenset(
+        {"last_login_at", "failed_login_count", "failed_window_started_at", "updated_at"}
+    )
+}
 
 
 def _table_of(obj: Any) -> str | None:
@@ -108,9 +124,21 @@ def _table_of(obj: Any) -> str | None:
     return t if isinstance(t, str) else None
 
 
+def _is_fact_write(obj: Any, dirty: bool) -> bool:
+    table = _table_of(obj)
+    if table in _NO_KPI_TABLES:
+        return False
+    cols = _NO_KPI_COLUMNS.get(table or "")
+    if not dirty or cols is None:
+        return True
+    st = sa_inspect(obj)
+    return any(a.key not in cols and a.history.has_changes() for a in st.attrs)
+
+
 def _mark_write(session: Session, *_: Any) -> None:
-    rows = [*session.new, *session.dirty, *session.deleted]
-    if not rows or any(_table_of(o) not in _NO_KPI_TABLES for o in rows):
+    rows = [(o, False) for o in (*session.new, *session.deleted)]
+    rows += [(o, True) for o in session.dirty]
+    if not rows or any(_is_fact_write(o, dirty) for o, dirty in rows):
         session.info["kpi_wrote"] = True
 
 

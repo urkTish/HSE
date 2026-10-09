@@ -1,3 +1,4 @@
+# ruff: noqa: E501
 """Phase 6e templates, KPIs, warnings, scope, PDPL and AR labels (6e §9 AC 48-52, 54, 57-58).
 AC 53 (AI tool T22) and the exports half of AC 54 are parked (docs/PROGRESS.md)."""
 
@@ -58,15 +59,31 @@ def test_k34_k35_k110_k107_unchanged(api: Api, db: Session) -> None:
     wsa = db.scalar(select(ChecklistTemplate).where(ChecklistTemplate.template_code == "WSA"))
     assert wsa is not None
     assert [i["item_code"] for i in wsa.items if i["airside_only"]] == ["WSA-07"]
-    plans = db.scalars(select(InspectionPlan).where(InspectionPlan.template_code.in_(("WSA", "DSN")))).all()
+    plans = db.scalars(
+        select(InspectionPlan).where(InspectionPlan.template_code.in_(("WSA", "DSN")))
+    ).all()
     assert plans and all(p.start_date == date(2026, 10, 1) for p in plans)
     f = api.as_("faisal.harbi")
     q = {"as_of": "2026-09-30", "period": "month", "anchor": "2026-09-30"}
     ania = str(project(db, "ANIA-EXP").id)
     r = f.get(f"{API}/kpi/field-assurance", params={"project_id": ania, **q})
     assert r.status_code == 200, r.text
-    fa = {m["metric"]: m["display"] for m in r.json()["metrics"]}
-    assert (fa["K-34"], fa["K-35"], fa["K-110"]) == ("85.0 %", "92.5 %", "90.8 %")
+    fa = {m["metric"]: m for m in r.json()["metrics"]}
+    assert (fa["K-34"]["display"], fa["K-35"]["display"]) == ("85.0 %", "92.5 %")
+    # K-110 follows the generated inspections (DECISIONS #185)
+    from sqlalchemy import func
+
+    from app.models import ChecklistResponse as R
+
+    sept = (R.project_id == project(db, "ANIA-EXP").id, R.owner_type == "inspection",
+            R.voided.is_(False), R.completed_date >= date(2026, 9, 1),
+            R.completed_date <= date(2026, 9, 30))  # fmt: skip
+    ew, aw = db.execute(
+        select(func.sum(R.earned_weight), func.sum(R.applicable_weight)).where(*sept)
+    ).one()
+    from decimal import Decimal
+
+    assert (Decimal(fa["K-110"]["numerator"]), Decimal(fa["K-110"]["denominator"])) == (ew, aw)
     for code, want in (("ANIA-EXP", "96.6 %"), ("RBT-52", "94.2 %")):
         r = f.get(f"{API}/kpi/emergency", params={"project_id": str(project(db, code).id), **q})
         assert kpi(r.json(), "K107")["display"] == want
@@ -111,8 +128,12 @@ def test_rawabi_tree_filter(api: Api, db: Session) -> None:
     pid = project(db, "ANIA-EXP").id
     body = kpis(api.as_("ahmed.zahrani"), pid, engagement_id=str(eng(db, "ANIA-EXP", "RAWABI").id))
     assert kpi(body, "K118")["display"] == "—"
-    k119 = kpi(body, "K119")
-    assert k119["value"] not in (None, "0") and float(k119["value"]) < 717.4
+    # every ANIA-EXP generator (RAWABI, GULFPAVE, NAJD, SAHARA) is in the RAWABI tree
+    assert kpi(body, "K119")["display"] == "717.4" and kpi(body, "K123")["display"] == "1"
+    other = kpis(
+        api.as_("faisal.harbi"), pid, engagement_id=str(eng(db, "ANIA-EXP", "GULFPAVE").id)
+    )
+    assert kpi(other, "K119")["display"] == "150.0" and kpi(other, "K118")["display"] == "—"
 
 
 def test_viewer_redaction(api: Api, db: Session) -> None:
