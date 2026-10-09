@@ -40,6 +40,7 @@ import { useSearchState } from "@/lib/url-state";
 import { EquipmentPicker } from "./deployments";
 import { DefectCategoryBadge, EquipmentLabel, EquipmentSubNav, Tick, UserName } from "./common";
 import { RecordActions } from "@/components/common/record-actions";
+import { ChoiceMark } from "@/components/heat/common";
 
 type S = Schemas;
 const PAGE_SIZE = 50;
@@ -251,6 +252,7 @@ export function DefectDialog({ project, equipment, scaffoldId, source: initialSo
         <legend className="mb-1 text-sm font-medium">{t("category")}</legend>
         {DEFECT_CATEGORIES.map((c) => (
           <Button key={c} type="button" variant={cat === c ? "default" : "outline"} aria-pressed={cat === c} onClick={() => setCat(c)} data-testid={`df-cat-${c}`}>
+            <ChoiceMark on={cat === c} />
             {te(`defectCategory.${c}`)}
           </Button>
         ))}

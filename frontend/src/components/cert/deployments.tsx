@@ -40,6 +40,7 @@ import { useSearchState } from "@/lib/url-state";
 import { useDebounced } from "@/lib/use-debounced";
 import { CertStatePanel, EquipmentLabel, EquipmentSubNav, ServiceStatusBadge, UserName, useReasonLabel } from "./common";
 import { RecordActions } from "@/components/common/record-actions";
+import { ChoiceMark } from "@/components/heat/common";
 
 type S = Schemas;
 const PAGE_SIZE = 50;
@@ -573,6 +574,7 @@ function ArrivalInspectionDialog({ d, onClose }: { d: S["EquipmentDeploymentRead
                 <span className="flex gap-1" role="radiogroup" aria-label={te(`aic.${i}`)}>
                   {(["pass", "fail", "n.a."] as const).map((r) => (
                     <Button key={r} type="button" size="sm" variant={l.result === r ? (r === "fail" ? "destructive" : "default") : "outline"} aria-pressed={l.result === r} onClick={() => set(i, { result: r })} data-testid={`aic-${i}-${r === "n.a." ? "na" : r}`}>
+                      <ChoiceMark on={l.result === r} />
                       {te(`checkResult.${r === "n.a." ? "na" : r}`)}
                     </Button>
                   ))}

@@ -38,6 +38,7 @@ import { useSearchState } from "@/lib/url-state";
 import { cn } from "@/lib/utils";
 import { CertStatePanel, ScaffoldStatusBadge, ScaffoldSubNav, TAG_BORDER, TAG_TONE, TagStatusBadge, Tick, UserName } from "./common";
 import { formatDate } from "@/lib/datetime";
+import { ChoiceMark } from "@/components/heat/common";
 
 type S = Schemas;
 const PAGE_SIZE = 50;
@@ -601,6 +602,7 @@ function InspectionDialog({ project, sc, onClose }: { project: S["ProjectRead"];
             <span className="flex gap-1" role="radiogroup" aria-label={te(`sic.${i}`)}>
               {(["pass", "fail", "n.a."] as const).map((r) => (
                 <Button key={r} type="button" size="sm" variant={lines[i] === r ? (r === "fail" ? "destructive" : "default") : "outline"} aria-pressed={lines[i] === r} onClick={() => setLines({ ...lines, [i]: r })} data-testid={`sic-${i}-${r === "n.a." ? "na" : r}`}>
+                  <ChoiceMark on={lines[i] === r} />
                   {te(`checkResult.${r === "n.a." ? "na" : r}`)}
                 </Button>
               ))}
@@ -615,6 +617,7 @@ function InspectionDialog({ project, sc, onClose }: { project: S["ProjectRead"];
         <legend className="mb-1 text-sm font-medium">{t("tagResult")}</legend>
         {SCAFFOLD_INSPECTION_RESULTS.map((r) => (
           <Button key={r} type="button" variant={result === r ? "default" : "outline"} aria-pressed={result === r} onClick={() => setResult(r)} data-testid={`si-result-${r}`}>
+            <ChoiceMark on={result === r} />
             <TagStatusBadge status={r} />
           </Button>
         ))}
