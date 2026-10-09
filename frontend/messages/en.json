@@ -192,7 +192,16 @@
     "occupationalHealth": "Health KPIs",
     "medicalCatalogue": "Fitness catalogue",
     "medicalImports": "Medical imports",
-    "medicalSettings": "Medical settings"
+    "medicalSettings": "Medical settings",
+    "heat": "Heat stress",
+    "heatBoard": "Heat board",
+    "wbgtReadings": "WBGT readings",
+    "heatWelfare": "Welfare checks",
+    "acclimatisation": "Acclimatisation",
+    "middayBan": "Midday ban",
+    "heatIllnessLog": "Heat-illness log",
+    "heatKpis": "Heat KPIs and report",
+    "heatSetup": "Heat setup"
   },
   "shell": {
     "projectSwitcher": "Project",
@@ -840,7 +849,19 @@
       "fitness_hold": "Fitness hold",
       "fitness_referral": "Fitness referral",
       "medical_import_batch": "Medical import",
-      "medical_settings": "Medical settings"
+      "medical_settings": "Medical settings",
+      "heat_instrument": "Heat instrument",
+      "monitoring_point": "Monitoring point",
+      "wbgt_reading": "WBGT reading",
+      "heat_regime_table": "Regime table",
+      "acclimatisation_plan": "Acclimatisation plan",
+      "rest_station": "Rest station",
+      "heat_welfare_check": "Heat welfare check",
+      "ban_patrol": "Midday-ban patrol",
+      "ban_exemption": "Midday-ban exemption",
+      "heat_illness_entry": "Heat-illness entry",
+      "heat_season_report": "Heat season report",
+      "heat_settings": "Heat settings"
     },
     "system": "System"
   },
@@ -1281,7 +1302,28 @@
       "RESTRICTION_CONFLICT": "A fitness restriction conflicts with this task.",
       "MEDICAL_REVIEW_DUE": "The restriction review date has passed.",
       "MEDICAL_EXPIRED": "The fitness certificate has expired.",
-      "WORKER_UNKNOWN": "The worker is not known on this project."
+      "WORKER_UNKNOWN": "The worker is not known on this project.",
+      "INSTRUMENT_NOT_COMPLIANT": "The instrument is not ISO 7243 compliant.",
+      "INSTRUMENT_CALIBRATION_EXPIRED": "The instrument calibration has expired for this date.",
+      "ZONE_ALREADY_COVERED": "A zone is already covered by another active point.",
+      "REGIME_LOOSENING": "Regime limits may only be lowered.",
+      "PERIOD_TOO_SHORT": "The controls period must contain the heat season and the midday-ban period.",
+      "HEAT_COVERAGE_INCOMPLETE": "Some required zones have no active monitoring point.",
+      "WBGT_REQUIRED": "Enter the WBGT or the wet-bulb and globe temperatures; air temperature alone is not enough.",
+      "VALUE_OUT_OF_RANGE": "A value is outside the allowed range.",
+      "BACKDATED_READING": "The reading is older than the back-dating limit.",
+      "WBGT_COMPONENT_MISMATCH": "The entered WBGT differs from the temperatures; the computed value is used.",
+      "STATION_INACTIVE": "The rest station is inactive.",
+      "NA_NOT_ALLOWED": "N/A is not allowed for this item now.",
+      "NOT_IN_BAN_WINDOW": "The time is not inside the midday-ban hours of a ban date.",
+      "NO_ACTIVE_EXEMPTION": "No active exemption covers this contractor and zone; record a violation.",
+      "OUTSIDE_BAN_PERIOD": "The dates are outside the midday-ban period.",
+      "TOO_LATE_TO_CHANGE": "It is too late to change this plan.",
+      "HEAT_STOP": "Outdoor work is stopped: the WBGT regime is R4.",
+      "WBGT_READING_REQUIRED": "A current WBGT reading for the zone is required.",
+      "HEAT_RESTRICTION": "Not eligible for heat work — HSE check.",
+      "HEAT_STOP_FOR_WORKER": "Not for heat work now — acclimatising.",
+      "WORKER_ACCLIMATISING": "The worker is acclimatising."
     }
   },
   "theme": {
@@ -1570,7 +1612,8 @@
       "ai_recommendation": "AI recommendation",
       "other": "Other",
       "ptw_audit": "PTW audit",
-      "equipment_defect": "Equipment defect"
+      "equipment_defect": "Equipment defect",
+      "heat_check": "Heat check"
     },
     "overdueBucket": {
       "1-7": "1–7 days",
@@ -2457,7 +2500,8 @@
       "rejected": "Rejected",
       "not_required": "Not required",
       "duplicate": "Duplicate",
-      "other": "Other"
+      "other": "Other",
+      "heat_stress_stop": "Heat stress stop"
     },
     "permitBlocker": {
       "JSA_MISSING": "No JSA attached",
@@ -2492,7 +2536,9 @@
       "BARRIER_NOT_VERIFIED": "Barrier not verified",
       "FIRE_IMPAIRMENT_NOT_APPROVED": "Fire-system impairment not approved",
       "UTILITY_CLEARANCE_MISSING": "Utility clearance missing",
-      "FALL_CLEARANCE_INSUFFICIENT": "Fall clearance insufficient"
+      "FALL_CLEARANCE_INSUFFICIENT": "Fall clearance insufficient",
+      "HEAT_STOP": "WBGT stop (regime R4)",
+      "WBGT_READING_REQUIRED": "Current WBGT reading required"
     },
     "permitWarning": {
       "HOOK_NOT_AVAILABLE": "Check available in a later phase",
@@ -2510,7 +2556,10 @@
       "POSSIBLE_ID_NUMBER": "Text may contain an ID number",
       "HOOK_NOT_MET_WARN": "Requirement not met (transition, not blocking yet)",
       "CERT_UNVERIFIED": "Certificate counted before verification",
-      "CARD_RESTRICTION_REVIEW": "Card restriction to review"
+      "CARD_RESTRICTION_REVIEW": "Card restriction to review",
+      "WORKER_ACCLIMATISING": "Worker acclimatising",
+      "HEAT_STOP_FOR_WORKER": "Not for heat work now — acclimatising",
+      "HEAT_REGIME": "Heat regime in force"
     },
     "permitAction": {
       "request": "Request",
@@ -3038,7 +3087,8 @@
       "break": "Break",
       "prayer": "Prayer",
       "weather": "Weather",
-      "other": "Other"
+      "other": "Other",
+      "heat_rest": "Heat rest"
     },
     "shiftEndType": {
       "handover": "Handover",
@@ -4167,6 +4217,188 @@
       "trade": "Trade",
       "month": "Month",
       "gap_reason": "Gap reason"
+    },
+    "workload": {
+      "light": "Light",
+      "moderate": "Moderate",
+      "heavy": "Heavy",
+      "very_heavy": "Very heavy"
+    },
+    "clothing": {
+      "work_clothes": "Work clothes",
+      "cloth_coveralls": "Cloth coveralls",
+      "double_layer_woven": "Double-layer woven / welding leathers",
+      "sms_coveralls": "SMS coveralls",
+      "polyolefin_coveralls": "Polyolefin coveralls",
+      "vapour_barrier_coveralls": "Vapour-barrier coveralls"
+    },
+    "regime": {
+      "R0": "R0 · continuous work",
+      "R1": "R1 · 45 work / 15 rest",
+      "R2": "R2 · 30 work / 30 rest",
+      "R3": "R3 · 15 work / 45 rest",
+      "R4": "R4 · stop outdoor work",
+      "unknown": "No reading"
+    },
+    "regimeShort": {
+      "R0": "R0",
+      "R1": "R1 45/15",
+      "R2": "R2 30/30",
+      "R3": "R3 15/45",
+      "R4": "R4 stop",
+      "unknown": "—"
+    },
+    "heatState": {
+      "current": "Current",
+      "stale": "Stale",
+      "unknown": "Unknown"
+    },
+    "heatRecordStatus": {
+      "valid": "Valid",
+      "voided": "Voided"
+    },
+    "readingSource": {
+      "manual": "Manual",
+      "station": "Station",
+      "import": "Import"
+    },
+    "instrumentKind": {
+      "handheld_meter": "Handheld meter",
+      "fixed_station": "Fixed station"
+    },
+    "instrumentStatus": {
+      "active": "Active",
+      "quarantined": "Quarantined",
+      "retired": "Retired"
+    },
+    "pointSource": {
+      "manual": "Manual",
+      "station": "Station"
+    },
+    "stationType": {
+      "cooled_cabin": "Cooled cabin",
+      "shaded_shelter": "Shaded shelter",
+      "mobile_shade_unit": "Mobile shade unit",
+      "indoor_rest_area": "Indoor rest area"
+    },
+    "cooling": {
+      "none": "None",
+      "fans": "Fans",
+      "misting": "Misting",
+      "air_conditioning": "Air conditioning"
+    },
+    "planType": {
+      "new_worker": "New worker",
+      "returner": "Returner after absence",
+      "post_heat_illness": "After heat illness",
+      "period_start": "Start of controls period"
+    },
+    "planTrigger": {
+      "mobilisation": "Mobilisation",
+      "absence": "Absence",
+      "hold_release": "Hold release",
+      "period_start": "Controls period start",
+      "manual": "Manual"
+    },
+    "planStatus": {
+      "planned": "Planned",
+      "waiting_restriction": "Waiting restriction",
+      "active": "Active",
+      "completed": "Completed",
+      "interrupted": "Interrupted",
+      "cancelled": "Cancelled"
+    },
+    "planStatusReason": {
+      "season_ended": "Season ended",
+      "demobilised": "Demobilised",
+      "superseded": "Superseded by a newer plan"
+    },
+    "acclStatus": {
+      "acclimatised": "Acclimatised",
+      "acclimatising": "Acclimatising",
+      "not_acclimatised": "Not acclimatised",
+      "na": "Not applicable"
+    },
+    "welfareItem": {
+      "HW01": "Cool drinking water available",
+      "HW02": "Water temperature within the limit",
+      "HW03": "Cups or bottles and refill available",
+      "HW04": "Electrolyte / ORS sachets available",
+      "HW05": "Shade adequate for the persons present",
+      "HW06": "Cooling working",
+      "HW07": "Seating available",
+      "HW08": "Heat first-aid kit and emergency number posted",
+      "HW09": "Current regime posted",
+      "HW10": "Workers following the rest regime"
+    },
+    "checkAnswer": {
+      "pass": "Pass",
+      "fail": "Fail",
+      "na": "N/A"
+    },
+    "welfareResult": {
+      "pass": "Pass",
+      "critical_fail": "Critical fail",
+      "none": "No check"
+    },
+    "patrolOutcome": {
+      "no_outdoor_work": "No outdoor work",
+      "compliant_shaded_or_indoor": "Work in shade or indoors",
+      "exempt_work": "Exempt work",
+      "violation": "Violation"
+    },
+    "banExemptionReason": {
+      "emergency_repair": "Emergency repair",
+      "exempt_activity_mhrsd": "Exempt activity (MHRSD)",
+      "shaded_and_cooled_workplace": "Shaded and cooled workplace"
+    },
+    "banExemptionStatus": {
+      "active": "Active",
+      "expired": "Expired",
+      "revoked": "Revoked"
+    },
+    "heatLogStatus": {
+      "open": "Open",
+      "reviewed": "Reviewed",
+      "voided": "Voided"
+    },
+    "heatLogSource": {
+      "injury_case": "Injury case",
+      "referral": "Fitness referral"
+    },
+    "reviewQuestion": {
+      "HC1": "Water available at the workface",
+      "HC2": "Shade / rest station within reach",
+      "HC3": "Regime in force was followed",
+      "HC4": "Acclimatisation plan followed",
+      "HC5": "Buddy / supervisor checks done",
+      "HC6": "Clothing and PPE appropriate to the regime"
+    },
+    "reviewAnswer": {
+      "yes": "Yes",
+      "no": "No",
+      "unknown": "Unknown",
+      "na": "N/A"
+    },
+    "heatKpiGroupBy": {
+      "zone": "Zone",
+      "site": "Site",
+      "contractor": "Contractor",
+      "month": "Month"
+    },
+    "seasonReportStatus": {
+      "draft": "Draft",
+      "issued": "Issued",
+      "superseded": "Superseded"
+    },
+    "heatKpi": {
+      "K-97": "WBGT monitoring coverage",
+      "K-98": "Heat-stop zone-hours",
+      "K-99": "Midday-ban patrol coverage",
+      "K-100": "Midday-ban violations",
+      "K-101": "Heat welfare compliance",
+      "K-102": "Acclimatisation compliance",
+      "K-103": "Heat-illness cases"
     }
   },
   "workforce": {
@@ -6495,7 +6727,15 @@
     "simopsHint": "Check this permit against every live permit nearby before you save.",
     "checkSimops": "Check SIMOPS",
     "fixErrors": "Fix the highlighted fields.",
-    "createDraft": "Create draft"
+    "createDraft": "Create draft",
+    "heatWorkload": "Heat workload",
+    "heatWorkloadHint": "Sets the WBGT regime of an outdoor permit.",
+    "heatByType": "Default for the work type",
+    "heatClothing": "Clothing",
+    "heatClothingHint": "Coveralls add to the effective WBGT.",
+    "heatHoodLabel": "Hood worn (+1.0 °C)",
+    "heatHood": "hood",
+    "heatRegimeNow": "Heat regime now"
   },
   "simops": {
     "title": "SIMOPS conflicts",
@@ -6721,7 +6961,8 @@
       "post_expiry": "Post-expiry check",
       "handover_accept": "Accept handover",
       "copy": "Copy",
-      "delete": "Delete draft"
+      "delete": "Delete draft",
+      "heat_resume": "Resume after heat stop"
     },
     "title": {
       "request": "Request this permit?",
@@ -6749,7 +6990,8 @@
       "post_expiry": "Post-expiry area check",
       "handover_accept": "Accept the handover",
       "copy": "Copy as a new draft",
-      "delete": "Delete this draft?"
+      "delete": "Delete this draft?",
+      "heat_resume": "Resume after a WBGT stop"
     },
     "hse": {
       "accepted": "Accept",
@@ -6833,7 +7075,8 @@
     "validTo": "Valid to",
     "deleted": "Draft deleted",
     "deleteHint": "The draft and its JSA are removed. This cannot be undone.",
-    "ambientTempHint": "Required for outdoor work (heat stress, HT-5)."
+    "ambientTempHint": "Required for outdoor work (heat stress, HT-5).",
+    "heatResumeHint": "Allowed once the zone regime is below R4 for long enough. No issuer cause text is needed."
   },
   "permitCrew": {
     "hseCheck": "HSE check",
@@ -9690,6 +9933,461 @@
       "clearedLine": "Every fitness requirement on this project is met.",
       "none": "No fitness requirements",
       "noneLine": "No fitness code applies to this worker on this project."
+    }
+  },
+  "heat": {
+    "nav": {
+      "board": "Board",
+      "readings": "Readings",
+      "welfare": "Welfare checks",
+      "duty": "Duty list",
+      "plans": "Acclimatisation",
+      "actions": "Actions",
+      "patrols": "Patrols",
+      "exemptions": "Exemptions",
+      "instruments": "Instruments",
+      "points": "Monitoring points",
+      "stations": "Rest stations",
+      "settings": "Settings and regime table",
+      "kpis": "KPIs",
+      "report": "Season report"
+    },
+    "common": {
+      "stopWork": "Stop outdoor work",
+      "normalBreaks": "Normal breaks",
+      "restPerHour": "{n} min rest per hour",
+      "sensitive": "Sensitive health data: each view is recorded.",
+      "back": "Back",
+      "reason": "Reason",
+      "reasonMin": "At least {min} characters ({n} so far)."
+    },
+    "board": {
+      "title": "Heat board",
+      "subtitle": "WBGT and the work/rest regime in force per zone, refreshed every minute.",
+      "record": "Record reading",
+      "at": "As of {time}",
+      "inControls": "Heat controls period",
+      "outsideControls": "Outside the controls period",
+      "banInForce": "Midday ban in force",
+      "acclimatising": "{n} acclimatising today",
+      "openReviews": "{n} open log reviews",
+      "coverageGaps": "Required zones without a monitoring point: {zones}",
+      "noZones": "No outdoor zones on this project.",
+      "point": "Point",
+      "noPoint": "No monitoring point",
+      "required": "required",
+      "age": "{n} min ago",
+      "headline": "Regime for acclimatised {workload} work",
+      "exemption": "Exemption",
+      "recordHere": "Record a reading here",
+      "basis": {
+        "acclimatised": "Acclimatised",
+        "unacclimatised": "Not acclimatised"
+      }
+    },
+    "duty": {
+      "title": "Heat duty list",
+      "subtitle": "Who is acclimatising today, who is not for heat work, and the zone regimes now.",
+      "day": "Day",
+      "engagement": "Contractor",
+      "acclimatising": "Acclimatising today",
+      "worker": "Worker",
+      "plan": "Plan",
+      "dayNo": "Day",
+      "maxPct": "Max % of shift",
+      "maxMinutes": "Max time in heat",
+      "minutes": "{n} min",
+      "noneAcclimatising": "Nobody is acclimatising today.",
+      "notForHeat": "Not for heat work",
+      "noneNotForHeat": "No worker is excluded from heat work.",
+      "zonesNow": "Zone regimes now"
+    },
+    "readings": {
+      "title": "WBGT readings",
+      "subtitle": "Manual, station and imported readings with the regime they set.",
+      "new": "Record reading",
+      "point": "Point",
+      "day": "Day",
+      "no": "Reading",
+      "measuredAt": "Measured",
+      "source": "Source",
+      "wbgt": "WBGT",
+      "headline": "Acclimatised heavy",
+      "recordedBy": "Recorded by",
+      "late": "Late entry",
+      "device": "Weather station",
+      "void": "Void",
+      "empty": "No WBGT readings yet.",
+      "voidTitle": "Void reading {no}",
+      "voidHint": "The zone regime, permit blockers and KPIs are recomputed within a minute."
+    },
+    "entry": {
+      "title": "Record a WBGT reading",
+      "subtitle": "From a calibrated ISO 7243 meter. Enter the WBGT shown, or the three temperatures.",
+      "point": "Monitoring point",
+      "instrument": "Meter",
+      "instrumentHint": "Active meter calibrated on the reading date.",
+      "measuredAt": "Measured at",
+      "measuredAtHint": "Back-dated readings are allowed up to the project limit and count as late entries.",
+      "wbgt": "WBGT (°C)",
+      "wbgtHint": "10.0–45.0. Not needed when the temperatures below are given.",
+      "components": "Temperatures (optional)",
+      "formulaSolar": "In sun: WBGT = 0.7 × Tnwb + 0.2 × Tg + 0.1 × Ta",
+      "formulaIndoor": "Without sun: WBGT = 0.7 × Tnwb + 0.3 × Tg",
+      "tnwb": "Natural wet bulb Tnwb (°C)",
+      "tg": "Globe Tg (°C)",
+      "ta": "Dry bulb Ta (°C)",
+      "rh": "Humidity (%)",
+      "dryBulbOnly": "Air temperature alone is not a WBGT reading.",
+      "save": "Save reading",
+      "savedTitle": "Reading saved",
+      "lateEntry": "Late entry: it counts for coverage and sends no live alert.",
+      "another": "Record another",
+      "toBoard": "Back to the heat board"
+    },
+    "instruments": {
+      "title": "Heat instruments",
+      "subtitle": "WBGT meters and weather stations, with ISO 7243 compliance and calibration.",
+      "new": "Register instrument",
+      "newHint": "Only an ISO 7243 instrument with a valid calibration can be activated.",
+      "register": "Register",
+      "registered": "Instrument {no} registered.",
+      "no": "Instrument",
+      "kind": "Kind",
+      "model": "Make / model",
+      "serial": "Serial number",
+      "iso": "ISO 7243 compliant",
+      "notIso": "Not ISO 7243",
+      "calibration": "Calibration valid until",
+      "calibrationUntil": "Calibration valid until",
+      "calibrationHint": "After today.",
+      "certRef": "Calibration certificate",
+      "points": "Points",
+      "devices": "Station devices",
+      "revoked": "Revoked",
+      "lastSeen": "Last seen {at}",
+      "revoke": "Revoke",
+      "revokeTitle": "Revoke device {device}",
+      "revokeHint": "Its sessions end and further readings are refused.",
+      "activate": "Activate",
+      "quarantine": "Quarantine",
+      "retire": "Retire",
+      "activateTitle": "Activate {no} with a new calibration",
+      "quarantineTitle": "Quarantine {no}",
+      "retireTitle": "Retire {no}",
+      "registerDevice": "Register station device",
+      "deviceHint": "The device may only send readings for this station.",
+      "deviceId": "Device ID",
+      "deviceLabel": "Label",
+      "tokenTitle": "Device token",
+      "tokenOnce": "Copy this token into the station now. It is shown only once.",
+      "empty": "No heat instruments registered."
+    },
+    "points": {
+      "title": "Monitoring points",
+      "subtitle": "Each outdoor zone in direct sun needs one active point (required zones).",
+      "new": "New point",
+      "hint": "A zone can be covered by one active point only.",
+      "editTitle": "Edit point {code}",
+      "code": "Point",
+      "site": "Site",
+      "zones": "Zones covered",
+      "source": "Measured by",
+      "instrument": "Instrument",
+      "instrumentManualHint": "Optional for manual points: the reading names the meter.",
+      "solar": "In sun",
+      "solarLabel": "Exposed to the sun (outdoor formula)",
+      "active": "Active",
+      "inactive": "Inactive",
+      "empty": "No monitoring points yet."
+    },
+    "stations": {
+      "title": "Rest stations",
+      "subtitle": "Shade, water and cooling points that the daily welfare checks cover.",
+      "new": "New rest station",
+      "editTitle": "Edit station {code}",
+      "code": "Station",
+      "type": "Type",
+      "cooling": "Cooling",
+      "capacity": "Capacity",
+      "empty": "No rest stations yet."
+    },
+    "plans": {
+      "title": "Acclimatisation plans",
+      "subtitle": "New starters, returners and workers coming back after a heat illness build up their time in the heat day by day.",
+      "no": "Plan",
+      "worker": "Worker",
+      "type": "Plan type",
+      "trigger": "Started by",
+      "schedule": "Daily limits",
+      "progress": "Days confirmed",
+      "progressValue": "{done} of {total}",
+      "empty": "No acclimatisation plans on this project.",
+      "detailTitle": "Acclimatisation plan",
+      "prior": "Record prior heat experience",
+      "priorHint": "Before day 2 of a new-worker plan. The plan switches to the returner schedule.",
+      "priorShown": "Prior heat experience",
+      "priorSave": "Save and switch schedule",
+      "cancel": "Cancel plan",
+      "cancelTitle": "Cancel plan {no}",
+      "statusReason": "Status reason",
+      "asPlanned": "Completed as planned",
+      "waitingHint": "Waits until a new accepted fitness assessment lifts the heat restriction. A lapsed review date does not lift it.",
+      "days": "Plan days",
+      "daysHint": "Day n is the n-th worked day. The supervisor confirms each worked day within the confirmation window.",
+      "dayNo": "Day",
+      "workDate": "Worked on",
+      "maxPct": "Max % of shift",
+      "maxMinutes": "Max time in heat",
+      "minutes": "{n} min",
+      "confirmed": "Confirmation",
+      "followed": "Followed",
+      "notFollowed": "Not followed",
+      "confirmDay": "Confirm day",
+      "confirmTitle": "Confirm day {n}",
+      "confirmHint": "Limit: {pct} % of the shift, {minutes} min in the heat.",
+      "followedQ": "Was the limit followed?",
+      "note": "Note",
+      "noteHint": "At least 10 characters when not followed."
+    },
+    "welfare": {
+      "title": "Heat welfare checks",
+      "subtitle": "Daily checks of water, shade, cooling and rest at each rest station.",
+      "new": "New welfare check",
+      "newHint": "Answer every item. A fail on a critical item raises a corrective action.",
+      "station": "Rest station",
+      "day": "Day",
+      "no": "Check",
+      "checkedAt": "Checked",
+      "result": "Result",
+      "water": "Water",
+      "ca": "Corrective action",
+      "criticalFail": "Critical fail",
+      "someFail": "Some items failed",
+      "allPass": "All pass",
+      "void": "Void",
+      "voidTitle": "Void check {no}",
+      "empty": "No welfare checks yet.",
+      "engagement": "Contractor responsible",
+      "engagementHint": "Optional: the CA goes to the site's tier-1 contractor when empty.",
+      "waterTemp": "Water temperature (°C)",
+      "waterHint": "Above the project limit, HW02 is stored as fail.",
+      "persons": "Persons present",
+      "allPassBtn": "Mark all as pass",
+      "critical": "Critical",
+      "notePlaceholder": "What is wrong?",
+      "answerAll": "Answer every item to save.",
+      "save": "Save check",
+      "savedTitle": "Check {no} saved",
+      "savedOk": "No critical item failed.",
+      "caRaised": "Critical fail: corrective action {refs} raised; the site engineer and HSE officer are alerted.",
+      "toList": "Back to welfare checks",
+      "toBoard": "Heat board"
+    },
+    "ban": {
+      "window": "Midday ban: {from} → {to}, {start}–{end} (Phase 3 settings).",
+      "patrolsTitle": "Midday-ban patrols",
+      "patrolsSubtitle": "Checks that no work without a permit runs in direct sun during the ban hours.",
+      "record": "Record patrol",
+      "recordHint": "Inside the ban hours of a ban date. Photograph the work, not faces.",
+      "zone": "Zone",
+      "outcome": "Outcome",
+      "day": "Day",
+      "no": "Patrol",
+      "checkedAt": "Checked",
+      "checkedAtHint": "Within the last 4 hours.",
+      "work": "Work seen",
+      "ca": "Corrective action",
+      "persons": "{n} persons",
+      "void": "Void",
+      "voidTitle": "Void patrol {no}",
+      "noPatrols": "No patrols recorded.",
+      "save": "Save patrol",
+      "recorded": "Patrol {no} recorded.",
+      "caRaised": "Violation: corrective action {ref} raised and the contractor and HSE are alerted.",
+      "contractor": "Contractor",
+      "headcount": "Headcount",
+      "activity": "Activity",
+      "violationHint": "A violation raises a corrective action and may lead to MHRSD fines.",
+      "exemptionsTitle": "Midday-ban exemptions",
+      "exemptionsSubtitle": "Exemptions for work without a permit, granted by the HSE Manager per contractor, zone and dates.",
+      "grant": "Grant exemption",
+      "grantHint": "Inside the ban period, at most 14 days. An exemption never relaxes a WBGT stop.",
+      "granted": "Exemption {no} granted.",
+      "zones": "Zones",
+      "dates": "Dates",
+      "from": "From",
+      "to": "To",
+      "maxDays": "14 days at most.",
+      "reason": "Reason",
+      "controls": "Controls",
+      "controlsEn": "Controls (English)",
+      "controlsAr": "Controls (Arabic)",
+      "oneLanguage": "At least 30 characters in one language.",
+      "revoke": "Revoke",
+      "revokeTitle": "Revoke exemption {no}",
+      "noExemptions": "No exemptions granted."
+    },
+    "log": {
+      "title": "Heat-illness log",
+      "subtitle": "Heat illness from injury cases and fitness referrals, with the exposure context and a controls review.",
+      "noClinical": "No clinical data is stored here: the nature and category stay with the injury case.",
+      "no": "Entry",
+      "worker": "Worker",
+      "event": "Event",
+      "source": "Source",
+      "controlGap": "Controls",
+      "gap": "Control gap",
+      "noGap": "No gap",
+      "reviewDue": "Review due",
+      "empty": "No heat-illness entries.",
+      "entryTitle": "Heat-illness entry",
+      "relatedReferral": "Related referral",
+      "hold": "Fitness hold",
+      "context": "Exposure context at the event",
+      "contextHint": "Computed when the entry was created; not changed by the review.",
+      "readingVoided": "The reading used here was voided later.",
+      "ctx": {
+        "reading": "WBGT reading",
+        "regime": "Regime in force",
+        "workload": "Workload (trade)",
+        "acclimatisation": "Acclimatisation",
+        "planDay": "day {n}",
+        "ban": "Midday ban in force",
+        "possibleBreach": "Possible ban breach",
+        "heatAwr": "HEAT-AWR training in force",
+        "welfare": "Last welfare check (24 h)",
+        "permits": "Permits",
+        "daysOnSite": "Days on site"
+      },
+      "review": "Controls review",
+      "reviewHint": "Answer HC1–HC6. Any 'No' marks a control gap.",
+      "factors": "Contributing factors",
+      "factorsHint": "Optional, up to 500 characters. No names, diagnosis or ID numbers.",
+      "saveReview": "Save review",
+      "reviewedBy": "Reviewed by",
+      "notReviewed": "Not reviewed yet.",
+      "reopen": "Re-open",
+      "reopenTitle": "Re-open {no}"
+    },
+    "settings": {
+      "title": "Heat settings",
+      "subtitle": "Register and PTW enforcement dates, monitoring rules and the work/rest regime table.",
+      "readOnly": "Only the HSE Manager edits heat settings and the regime table.",
+      "controlsFrom": "Controls period from",
+      "controlsTo": "Controls period to",
+      "mmdd": "MM-DD; only widens.",
+      "hoursFrom": "Monitoring from",
+      "hoursTo": "Monitoring to",
+      "validManual": "Manual reading valid (min)",
+      "validStation": "Station reading valid (min)",
+      "headlineHint": "Workload used for alerts and the board headline.",
+      "groupRegister": "Register and permits",
+      "groupReadings": "Readings and regime",
+      "groupAcclimatisation": "Acclimatisation",
+      "groupWelfare": "Welfare, patrols and log",
+      "groupReporting": "Warning thresholds",
+      "groupRetention": "Retention",
+      "readOnlyGroup": "From other settings (read only)",
+      "banPeriod": "Midday ban (Phase 3)",
+      "hint": {
+        "heat_register_from": "Not after today; may only move earlier.",
+        "heat_ptw_enforcement_from": "Needs every required zone covered by an active point."
+      },
+      "k": {
+        "heat_register_from": "Heat register from",
+        "heat_ptw_enforcement_from": "PTW enforcement from",
+        "heat_fitness_required": "Heat-exposure fitness required",
+        "regime_relax_minutes": "Relax after (min)",
+        "wbgt_limit_offset_c": "Project limit offset (°C)",
+        "reading_backdate_max_hours": "Manual back-dating (h)",
+        "wbgt_component_tolerance_c": "Component tolerance (°C)",
+        "standard_shift_hours": "Reference shift (h)",
+        "deacclimatisation_days": "Acclimatisation lost after (days)",
+        "acclimatisation_restart_gap_days": "Gap that restarts a plan (days)",
+        "plan_confirmation_hours": "Plan day confirmation (h)",
+        "cool_water_max_c": "Max drinking water temperature (°C)",
+        "welfare_checks_per_station_day": "Welfare checks per station per day",
+        "ban_patrols_per_zone_day": "Ban patrols per zone per day",
+        "heat_illness_review_days": "Log review within (days)",
+        "heat_case_merge_hours": "Merge referral and case within (h)",
+        "wbgt_coverage_warning_pct": "WBGT coverage warning (%)",
+        "welfare_compliance_warning_pct": "Welfare compliance warning (%)",
+        "ban_patrol_coverage_warning_pct": "Ban patrol coverage warning (%)",
+        "heat_photo_retention_months": "Keep patrol photos (months)",
+        "heat_record_retention_years": "Keep heat records (years)",
+        "headline_workload": "Alert workload",
+        "acclimatisation_schedules": "Acclimatisation schedules",
+        "trade_workload_defaults": "Default workload by trade"
+      },
+      "regimeTable": "Work/rest regime table",
+      "regimeHint": "Highest effective WBGT (°C) allowed for each regime. Limits may only be lowered. Project offset: {offset} °C.",
+      "basisTitle": {
+        "acclimatised": "Acclimatised workers (TLV)",
+        "unacclimatised": "Workers not acclimatised (Action Limit)"
+      },
+      "regime": "Regime",
+      "r4Note": "Above the R3 limit outdoor work stops (R4).",
+      "saveTable": "Save limits"
+    },
+    "kpi": {
+      "title": "Heat stress KPIs",
+      "subtitle": "K-97…K-103 for the period; heat-illness counts below 3 are suppressed for roles below the HSE Manager.",
+      "period": "Period",
+      "anchor": "Date in period",
+      "groupBy": "Breakdown by",
+      "computedAt": "Computed {at}",
+      "breakdown": "By {by}",
+      "suppressedHint": "Values as the server returns them.",
+      "noBreakdown": "No breakdown for this period.",
+      "key": "Group"
+    },
+    "actions": {
+      "title": "Heat actions",
+      "subtitle": "What needs attention now on this project.",
+      "open": "Open"
+    },
+    "report": {
+      "title": "Heat season report",
+      "subtitle": "Live draft for the season; issue it to freeze the figures for the client.",
+      "issue": "Issue report",
+      "reissue": "Re-issue report",
+      "issueHint": "Freezes the {year} season figures as a new revision.",
+      "issued": "Report {no} issued.",
+      "year": "Season",
+      "currentSeason": "Current or last season",
+      "revision": "Revision",
+      "latest": "Latest",
+      "period": "Period {from} – {to}",
+      "issuedBy": "issued by",
+      "draftHint": "Draft: the figures change as records are added or voided.",
+      "comments": "Comments",
+      "commentsEn": "Comments (English)",
+      "commentsAr": "Comments (Arabic)",
+      "commentsHint": "Optional, up to 2,000 characters.",
+      "empty": "No season report yet.",
+      "manHours": "Man-hours (K-01)",
+      "s1": "1. Coverage by month",
+      "s2": "2. WBGT by point and month",
+      "s3": "3. Zone-hours by regime (K-98)",
+      "s4": "4. Midday ban",
+      "s5": "5. Acclimatisation",
+      "s6": "6. Heat illness",
+      "s7": "7. HEAT-AWR compliance at the start of the period",
+      "s8": "8. Corrective actions from heat checks",
+      "month": "Month",
+      "point": "Point",
+      "zone": "Zone",
+      "max": "Max (°C)",
+      "meanMax": "Mean daily max (°C)",
+      "banLine": "{patrols} patrols, {violations} violations, {exemptions} exemptions granted; patrol coverage {k99}.",
+      "contractor": "Contractor",
+      "violations": "Violations",
+      "planType": "Plan type",
+      "plans": "Plans",
+      "illnessLine": "{cases} cases, rate {rate}; recordable {recordable}, rate {rrate}; control-gap share {gap} %.",
+      "previousSeason": "Previous season",
+      "caLine": "{raised} raised, {closed} closed."
     }
   }
 }

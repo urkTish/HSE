@@ -8,6 +8,7 @@ export function entityRoute(type: Schemas["EntityType"] | string | null | undefi
     if (type === "hook_policy_state") return "/hook-policy";
     if (type === "training_settings") return "/training-settings";
     if (type === "medical_settings") return "/medical-settings";
+    if (type === "heat_settings" || type === "heat_regime_table") return "/heat-settings";
     if (type === "project_settings" && projectId) return `/projects/${projectId}/settings`;
     if (type === "hse_settings" && projectId) return `/hse-settings?project=${projectId}`;
     return null;
@@ -198,6 +199,29 @@ export function entityRoute(type: Schemas["EntityType"] | string | null | undefi
       return `/medical-imports/${id}`;
     case "medical_settings":
       return `/medical-settings`;
+    case "heat_instrument":
+      return `/heat-instruments`;
+    case "monitoring_point":
+      return `/monitoring-points`;
+    case "rest_station":
+      return `/rest-stations`;
+    case "wbgt_reading":
+      return `/wbgt-readings`;
+    case "acclimatisation_plan":
+      return `/acclimatisation-plans/${id}`;
+    case "heat_welfare_check":
+      return `/heat-welfare-checks`;
+    case "ban_patrol":
+      return `/ban-patrols`;
+    case "ban_exemption":
+      return `/ban-exemptions`;
+    case "heat_illness_entry":
+      return `/heat-illness-log/${id}`;
+    case "heat_season_report":
+      return `/heat-season-report`;
+    case "heat_settings":
+    case "heat_regime_table":
+      return `/heat-settings`;
     case "training_profile":
     case "training_nomination":
     case "training_retraining_note":

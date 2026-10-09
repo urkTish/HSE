@@ -24,6 +24,8 @@ export PRIVACY_NOTICE_VERSION="${PRIVACY_NOTICE_VERSION:-PN-1.0}"
 
 uv run alembic upgrade head
 uv run python -m app.seed
+# The 6b heat seed (Appendix A) has its own entry point; app.seed does not call it yet (see PROGRESS).
+uv run python -m app.seed_heat
 # Shared e2e clock (e2e/clock.ts): the API runs at the same shifted instant as the tests and browsers,
 # by default the PTW seed instant 2026-10-06 10:00 Riyadh, with time moving on (HSE_CLOCK_MODE advancing).
 if [ -n "${E2E_CLOCK_OFFSET_MS:-}" ]; then
