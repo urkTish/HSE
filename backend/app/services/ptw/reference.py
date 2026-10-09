@@ -400,6 +400,7 @@ BLOCKER_REASON: dict[PermitBlocker, StatusReason] = {
     B.WIND_LIMIT_EXCEEDED: StatusReason.wind_limit,
     B.CONTRACTOR_SUSPENDED: StatusReason.contractor_suspended,
     B.ISOLATION_NOT_VERIFIED: StatusReason.isolation_breach,
+    B.HEAT_STOP: StatusReason.heat_stress_stop,  # 6b PH-3 / 3-ptw v1.3 SH-2
 }
 # blockers that suspend an Active permit automatically (SH-2); others only gate the next start
 AUTO_SUSPEND = frozenset(BLOCKER_REASON)

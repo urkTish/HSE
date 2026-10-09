@@ -565,6 +565,9 @@ def shift_read(
     ]
     rec, iss = refs.user(s.receiver_user_id), refs.user(s.issuer_user_id)
     assert rec is not None and iss is not None  # noqa: S101
+    from app.services.heat import ptw as heat_ptw  # noqa: PLC0415
+
+    regime, rest = heat_ptw.shift_regime(db, db.get(Permit, s.permit_id), s)
     return sch.PermitShiftRead(
         id=s.id,
         shift_no=s.shift_no,
@@ -581,6 +584,9 @@ def shift_read(
         ended_at=s.ended_at,
         end_type=s.end_type,
         gas_compliant=s.gas_compliant if s.gas_required else None,
+        wbgt_reading_id=s.wbgt_reading_id,
+        heat_regime=regime,
+        rest_minutes_per_hour=rest,
     )
 
 

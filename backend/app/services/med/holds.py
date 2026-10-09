@@ -417,6 +417,12 @@ def on_assessment_accepted(db: Session, a: FitnessAssessment) -> None:
         ):
             _restricted_days_prompt(db, h)
         _publish(db, h.worker_id)
+        from app.services.heat import plans as heat_plans  # noqa: PLC0415
+
+        heat_plans.on_hold_released(db, h)  # 6b AP-1c
+    from app.services.heat import plans as heat_plans  # noqa: PLC0415
+
+    heat_plans.on_assessment(db, a.worker_id)  # 6b AP-6
     db.flush()
 
 
@@ -558,8 +564,11 @@ def _rtw_check(db: Session, h: FitnessHold) -> bool:
 
 
 def on_incident_status(db: Session, inc: Incident, p: Principal | None = None) -> None:
+    from app.services.heat import log as heat_log  # noqa: PLC0415
+
     for c in db.scalars(select(InjuryCase).where(InjuryCase.incident_id == inc.id)):
         on_case(db, c, p)
+        heat_log.on_case(db, c)  # 6b HI-1 / §4.4
 
 
 # ---- work during hold (FH-8) ---------------------------------------------------------------------
@@ -609,6 +618,9 @@ def detect_gate(db: Session, row: Any) -> None:
         g = db.get(Gate, row.gate_id)
         ref_ = g.gate_code if g is not None else row.subject_ref
         _detect(db, row.worker_id, WorkDuringHoldType.gate_entry, ref_, row.occurred_at)
+        from app.services.heat import plans as heat_plans  # noqa: PLC0415
+
+        heat_plans.on_gate(db, row)  # 6b AP-4 worked day
 
 
 def detect_crew(db: Session, permit_no: str, worker_ids: list[uuid.UUID], at: datetime) -> None:
@@ -742,6 +754,9 @@ def raise_referral(
         )
         r.hold_id = h.id
         db.flush()
+    from app.services.heat import log as heat_log  # noqa: PLC0415
+
+    heat_log.on_referral(db, r)  # 6b HI-2
     n = alerts.wno(db, worker_id)
     alerts.send(
         db,

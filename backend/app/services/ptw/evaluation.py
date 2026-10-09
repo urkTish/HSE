@@ -540,7 +540,12 @@ def evaluate_line(
             ):
                 deny.append("EXPIRES_DURING_SHIFT")
                 break
-    line.eligibility = [_item_json(it, z) for z, it in items]
+    from app.services.heat import ptw as heat_ptw  # noqa: PLC0415
+
+    heat_item = heat_ptw.restriction_item(db, permit, w.id, at)  # 6b PH-6
+    if heat_item is not None:
+        deny.insert(0, "HEAT_RESTRICTION")
+    line.eligibility = [_item_json(it, z) for z, it in items] + ([heat_item] if heat_item else [])
     line.eligible = not deny
     line.evaluated_at = at
     key_role = line.crew_role in KEY_CREW_ROLES
@@ -1315,6 +1320,10 @@ def evaluate(db: Session, permit: Permit, ctx: Ctx | None = None) -> Result:
         bnow = in_ban_now(f, at)
         if bnow is not None and exemption(db, permit, ExemptionKind.midday_ban, bnow) is None:
             res.add(B.MIDDAY_BAN, "now inside the ban hours")
+    # heat stress (6b PH-2, PH-3, PH-5, PH-7; 3-ptw v1.3 §11.4)
+    from app.services.heat import ptw as heat_ptw  # noqa: PLC0415
+
+    heat_ptw.check(db, permit, ctx, res, lines)
     # window (PT-12)
     if ctx.start and common.current_instance(permit, at) is None:
         res.add(B.OUTSIDE_WINDOW)

@@ -562,7 +562,11 @@ def _med(db: Session, c: InjuryCase, p: Principal) -> list[ApiWarning]:
     """6a §11.2: fitness holds from injury cases (FH-1a, FH-4) and RW-2 warnings."""
     from app.services.med import holds as med_holds  # noqa: PLC0415
 
-    return med_holds.on_case(db, c, p)
+    warnings = med_holds.on_case(db, c, p)
+    from app.services.heat import log as heat_log  # noqa: PLC0415
+
+    heat_log.on_case(db, c)  # 6b HI-1
+    return warnings
 
 
 def _worker_no(db: Session, worker_id: uuid.UUID | None) -> str | None:

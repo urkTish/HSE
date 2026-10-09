@@ -334,6 +334,9 @@ def open_shift(
         gas_required=f.gas_required,
         alerts_sent=[],
     )
+    from app.services.heat import ptw as heat_ptw  # noqa: PLC0415
+
+    s.wbgt_reading_id = heat_ptw.shift_reading(db, permit, at)  # 3-ptw v1.3 §3.13 (6b)
     db.add(s)
     db.flush()
     permit.current_shift_id = s.id

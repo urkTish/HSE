@@ -11,6 +11,7 @@ from app.api.deps import (
     RawToken,
     bearer_scheme,
     cookie_scheme,
+    gate_device_forbidden,
     get_acked_principal,
     get_principal,
 )
@@ -47,6 +48,8 @@ def get_gate_caller(
         raise ApiError(401, ErrorCode.UNAUTHENTICATED, "Not authenticated.", "غير مسجل الدخول.")
     claims = decode_jwt(token)
     if claims and claims.get("typ") == "gate":
+        if claims.get("kind") == "weather_station":
+            raise gate_device_forbidden()  # 6b HS-4: a station may only ingest readings
         return gates.device_caller(db, claims)
     if not bearer and cookie is None and gate_cookie:
         raise ApiError(401, ErrorCode.UNAUTHENTICATED, "Invalid token.", "رمز غير صالح.")
