@@ -1,7 +1,7 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { Ban, Camera, CreditCard, FileDown, Pencil, Plus, Printer, RefreshCw, Search, ShieldCheck, UserCheck } from "lucide-react";
+import { Ban, Camera, CreditCard, FileDown, LogOut, Pencil, Plus, Printer, RefreshCw, Search, ShieldCheck, UserCheck } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -29,6 +29,8 @@ import { PageHeader } from "@/components/common/page-header";
 import { Pagination } from "@/components/common/pagination";
 import { useProjectOptions } from "@/components/common/pickers";
 import { EmptyState, ErrorState, LoadingState, MutationError } from "@/components/common/states";
+import { RecordActions } from "@/components/common/record-actions";
+import { StackedDate } from "@/components/medical/common";
 import { StatusBadge } from "@/components/common/status-badge";
 import { useMeData } from "@/components/shell/me-context";
 import { Link, useRouter } from "@/i18n/navigation";
@@ -637,12 +639,6 @@ export function WorkerDetail({ id }: { id: string }) {
                     </Button>
                   </>
                 ) : null}
-                {canWrite(me, "worker.ban", pid) && (w.status === "active" || w.status === "inactive") ? (
-                  <Button size="sm" variant="destructive" onClick={() => setBan("banned")} data-testid="ban-worker">
-                    <Ban aria-hidden />
-                    {t("ban")}
-                  </Button>
-                ) : null}
                 {canWrite(me, "worker.ban", pid) && w.status === "banned" ? (
                   <Button size="sm" variant="outline" onClick={() => setBan("active")} data-testid="lift-ban">
                     <UserCheck aria-hidden />
@@ -659,7 +655,9 @@ export function WorkerDetail({ id }: { id: string }) {
                 <FieldItem label={t("fields.id_number")}>
                   <MaskedIdNumber worker={w} />
                 </FieldItem>
-                <FieldItem label={t("fields.id_expiry_date")}>{date(w.id_expiry_date)}</FieldItem>
+                <FieldItem label={t("fields.id_expiry_date")}>
+                  <StackedDate v={w.id_expiry_date} projectId={pid} />
+                </FieldItem>
                 <FieldItem label={t("fields.person_type")}>{te(`workerPersonType.${w.person_type}`)}</FieldItem>
                 <FieldItem label={t("fields.nationality")}>
                   <Code>{w.nationality ?? "—"}</Code>
@@ -710,6 +708,15 @@ export function WorkerDetail({ id }: { id: string }) {
           {can(me, "history.view", pid) ? <HistoryPanel entityType="worker" entityId={w.id} projectId={pid} /> : null}
         </div>
       </div>
+      {canWrite(me, "worker.ban", pid) && (w.status === "active" || w.status === "inactive") ? (
+        // Banning removes the worker from every project: at the page end, away from Edit and the photo.
+        <RecordActions>
+          <Button variant="destructive-outline" onClick={() => setBan("banned")} data-testid="ban-worker">
+            <Ban aria-hidden />
+            {t("ban")}
+          </Button>
+        </RecordActions>
+      ) : null}
       {ban ? <BanDialog worker={w} to={ban} onClose={() => setBan(null)} /> : null}
     </div>
   );
@@ -789,11 +796,6 @@ function DeploymentCard({ id, worker }: { id: string; worker: Schemas["WorkerRea
               {tc("edit")}
             </Button>
           ) : null}
-          {canEdit && d.status === "mobilised" ? (
-            <Button size="sm" variant="destructive" onClick={() => setDemob(true)} data-testid="demobilise">
-              {t("demobilise")}
-            </Button>
-          ) : null}
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
@@ -805,9 +807,17 @@ function DeploymentCard({ id, worker }: { id: string; worker: Schemas["WorkerRea
             <Code>{d.employee_no ?? "—"}</Code>
           </FieldItem>
           <FieldItem label={t("fields.sites")}>{d.sites.map((s) => s.code).join(", ")}</FieldItem>
-          <FieldItem label={t("fields.mobilised_on")}>{date(d.mobilised_on)}</FieldItem>
-          <FieldItem label={t("fields.planned_demob_on")}>{date(d.planned_demob_on)}</FieldItem>
-          {d.demobilised_on ? <FieldItem label={t("fields.demobilised_on")}>{date(d.demobilised_on)}</FieldItem> : null}
+          <FieldItem label={t("fields.mobilised_on")}>
+            <StackedDate v={d.mobilised_on} projectId={d.project_id} />
+          </FieldItem>
+          <FieldItem label={t("fields.planned_demob_on")}>
+            <StackedDate v={d.planned_demob_on} projectId={d.project_id} />
+          </FieldItem>
+          {d.demobilised_on ? (
+            <FieldItem label={t("fields.demobilised_on")}>
+              <StackedDate v={d.demobilised_on} projectId={d.project_id} />
+            </FieldItem>
+          ) : null}
         </FieldList>
         <div className="flex flex-col gap-2">
           <p className="text-xs font-medium text-muted-foreground">{t("inductions")}</p>
@@ -839,7 +849,7 @@ function DeploymentCard({ id, worker }: { id: string; worker: Schemas["WorkerRea
                       {c.detail ? <span className="ms-2 text-xs text-muted-foreground">{c.detail}</span> : null}
                     </span>
                     <span className="flex items-center gap-2 text-xs">
-                      {c.effective_valid_until ? date(c.effective_valid_until) : null}
+                      {c.effective_valid_until ? <StackedDate v={c.effective_valid_until} projectId={d.project_id} className="items-end" /> : null}
                       <StatusBadge status={c.validity_status} label={te(`validityStatus.${c.validity_status}`)} />
                     </span>
                   </li>
@@ -849,6 +859,15 @@ function DeploymentCard({ id, worker }: { id: string; worker: Schemas["WorkerRea
           </div>
         ) : null}
         <AccessCardBlock deployment={d} />
+        {canEdit && d.status === "mobilised" ? (
+          // Ends the deployment and the access card: at the end of the card, not beside Edit.
+          <div className="flex justify-end border-t pt-3">
+            <Button variant="destructive-outline" onClick={() => setDemob(true)} data-testid="demobilise">
+              <LogOut aria-hidden className="rtl:-scale-x-100" />
+              {t("demobilise")}
+            </Button>
+          </div>
+        ) : null}
       </CardContent>
       {demob ? <DemobiliseDialog deployment={d} onClose={() => setDemob(false)} /> : null}
       {edit ? <EditDeploymentDialog deployment={d} onClose={() => setEdit(false)} /> : null}

@@ -39,6 +39,7 @@ import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
 import { AirportOnly, Code, DaysLeft, DeploymentPicker, StepDialog, SubNav, ValidityBadge, ValidityLine, VehicleSelect, personName } from "./common";
 import { CredentialPanel } from "./credential-actions";
+import { RecordActions } from "@/components/common/record-actions";
 
 const PAGE_SIZE = 50;
 type Adp = Schemas["AdpRead"];
@@ -313,7 +314,7 @@ export function AdpDetail({ id }: { id: string }) {
           actions={<ValidityBadge status={a.validity.validity_status} />}
         />
       </div>
-      {pending && (issue || apply) ? (
+      {pending && issue ? (
         <div className="flex flex-wrap gap-2" data-testid="adp-actions">
           {issue ? (
             <>
@@ -326,9 +327,6 @@ export function AdpDetail({ id }: { id: string }) {
               </Button>
             </>
           ) : null}
-          <Button variant="destructive" onClick={() => setStep("withdraw")} data-testid="withdraw-adp">
-            {t("withdraw")}
-          </Button>
         </div>
       ) : null}
       {!pending ? <ValidityLine v={a.validity} projectId={a.project_id} /> : null}
@@ -419,6 +417,13 @@ export function AdpDetail({ id }: { id: string }) {
           }}
           onClose={() => setStep(null)}
         />
+      ) : null}
+      {pending && (issue || apply) ? (
+        <RecordActions className="mt-0">
+          <Button variant="destructive-outline" onClick={() => setStep("withdraw")} data-testid="withdraw-adp">
+            {t("withdraw")}
+          </Button>
+        </RecordActions>
       ) : null}
     </div>
   );

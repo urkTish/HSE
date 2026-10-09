@@ -1,5 +1,6 @@
 "use client";
 import { useQueryClient } from "@tanstack/react-query";
+import { TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -20,6 +21,7 @@ import { DEFAULT_TIME_ZONE, utcToZonedInput, zonedInputToUtc } from "@/lib/datet
 import { useLocalizedName } from "@/lib/i18n-helpers";
 import { canWrite } from "@/lib/permissions";
 import { useFormatters } from "@/lib/use-formatters";
+import { StackedDate } from "@/components/medical/common";
 import { DaysLeft } from "./common";
 
 type Kind = Exclude<Schemas["CredentialKind"], "wap" | "worker">;
@@ -83,7 +85,7 @@ export function CredentialPanel({ kind, id, projectId, onChanged }: { kind: Kind
             <div>
               <dt className="text-xs text-muted-foreground">{t("effectiveUntil")}</dt>
               <dd className="flex flex-wrap items-center gap-2">
-                {date(s.effective_valid_until)}
+                <StackedDate v={s.effective_valid_until} projectId={projectId} />
                 {active ? <DaysLeft days={days} /> : null}
               </dd>
             </div>
@@ -123,7 +125,10 @@ export function CredentialPanel({ kind, id, projectId, onChanged }: { kind: Kind
           {s.lost_reported_at ? (
             <div>
               <dt className="text-xs text-muted-foreground">{t("authorityNotifiedAt")}</dt>
-              <dd data-testid="authority-notified">{s.authority_notified_at ? dateTime(s.authority_notified_at) : <span className="font-medium text-warning">{t("authorityNotYet")}</span>}</dd>
+              <dd data-testid="authority-notified">{s.authority_notified_at ? dateTime(s.authority_notified_at) : <span className="inline-flex items-center gap-1 font-medium text-warning">
+                    <TriangleAlert aria-hidden className="size-3.5 shrink-0" />
+                    {t("authorityNotYet")}
+                  </span>}</dd>
             </div>
           ) : null}
         </dl>
@@ -148,14 +153,30 @@ export function CredentialPanel({ kind, id, projectId, onChanged }: { kind: Kind
           </ul>
         ) : null}
         {actions.some((x) => x.show) ? (
-          <div className="flex flex-wrap gap-2" role="group" aria-label={t("actions")}>
-            {actions
-              .filter((x) => x.show)
-              .map((x) => (
-                <Button key={x.a} size="sm" variant={x.destructive ? "destructive" : "outline"} onClick={() => setAction(x.a)} data-testid={`cred-${x.a}`}>
-                  {x.a === "suspend" ? (confirmCap || kind === "induction" ? t("action.suspend") : t("action.raise")) : t(`action.${x.a}`)}
-                </Button>
-              ))}
+          // Everyday steps first; Revoke / Report loss at the end of the card, outlined and set apart (record-actions pattern).
+          <div className="flex flex-col gap-2" role="group" aria-label={t("actions")}>
+            {actions.some((x) => x.show && !x.destructive) ? (
+              <div className="flex flex-wrap gap-2">
+                {actions
+                  .filter((x) => x.show && !x.destructive)
+                  .map((x) => (
+                    <Button key={x.a} size="sm" variant="outline" onClick={() => setAction(x.a)} data-testid={`cred-${x.a}`}>
+                      {x.a === "suspend" ? (confirmCap || kind === "induction" ? t("action.suspend") : t("action.raise")) : t(`action.${x.a}`)}
+                    </Button>
+                  ))}
+              </div>
+            ) : null}
+            {actions.some((x) => x.show && x.destructive) ? (
+              <div className="flex flex-wrap justify-end gap-2 border-t pt-2">
+                {actions
+                  .filter((x) => x.show && x.destructive)
+                  .map((x) => (
+                    <Button key={x.a} size="sm" variant="destructive-outline" onClick={() => setAction(x.a)} data-testid={`cred-${x.a}`}>
+                      {t(`action.${x.a}`)}
+                    </Button>
+                  ))}
+              </div>
+            ) : null}
           </div>
         ) : null}
         {s.events.length > 0 ? (

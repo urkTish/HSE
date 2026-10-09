@@ -37,6 +37,7 @@ import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
 import { AccessPrintHeader, AirportOnly, BiLabel, Code, DaysLeft, Plate, QrImage, StepDialog, SubNav, ValidityBadge, ValidityLine } from "./common";
 import { CredentialPanel } from "./credential-actions";
+import { RecordActions } from "@/components/common/record-actions";
 
 const PAGE_SIZE = 50;
 type Vehicle = Schemas["VehicleRead"];
@@ -703,7 +704,7 @@ export function AvpDetail({ id }: { id: string }) {
         <Breadcrumbs items={[{ label: t("avps"), href: "/avps" }, { label: a.avp_no ?? t("pending") }]} />
         <PageHeader title={a.avp_no ?? t("pendingTitle")} description={`${a.vehicle.vehicle_no} · ${a.vehicle.fleet_no} · ${a.engagement.short_code}`} actions={<ValidityBadge status={a.validity.validity_status} />} />
       </div>
-      {pending && (issueCap || editCap) ? (
+      {pending && issueCap ? (
         <div className="flex flex-wrap gap-2">
           {issueCap ? (
             <>
@@ -716,9 +717,6 @@ export function AvpDetail({ id }: { id: string }) {
               </Button>
             </>
           ) : null}
-          <Button variant="destructive" onClick={() => setStep("withdraw")} data-testid="withdraw-avp">
-            {t("withdrawAvp")}
-          </Button>
         </div>
       ) : null}
       {pending && a.checklist_problems.length ? (
@@ -783,6 +781,13 @@ export function AvpDetail({ id }: { id: string }) {
         />
       ) : null}
       {step === "reissue" ? <ReissueStickerDialog avp={a} onClose={() => setStep(null)} /> : null}
+      {pending && (issueCap || editCap) ? (
+        <RecordActions className="mt-0">
+          <Button variant="destructive-outline" onClick={() => setStep("withdraw")} data-testid="withdraw-avp">
+            {t("withdrawAvp")}
+          </Button>
+        </RecordActions>
+      ) : null}
     </div>
   );
 }

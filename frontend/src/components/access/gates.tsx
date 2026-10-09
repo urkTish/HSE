@@ -1,6 +1,6 @@
 "use client";
 import { useQueryClient } from "@tanstack/react-query";
-import { Ban, Copy, DoorOpen, KeyRound, Pencil, Plus, ScanLine, ShieldAlert } from "lucide-react";
+import { Ban, Clock, Copy, DoorOpen, KeyRound, Pencil, Plus, ScanLine, ShieldAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -25,6 +25,7 @@ import { useProjectOptions } from "@/components/common/pickers";
 import { ProjectById, ProjectGate } from "@/components/common/project-gate";
 import { EmptyState, ErrorState, LoadingState, MutationError } from "@/components/common/states";
 import { StatusBadge } from "@/components/common/status-badge";
+import { StackedDate } from "@/components/medical/common";
 import { useMeData } from "@/components/shell/me-context";
 import { Link } from "@/i18n/navigation";
 import { AREA_CATEGORIES, CREW_ROLES, GATE_REASON_CODES, GATE_RESULTS, GATE_SUBJECT_KINDS, GATE_TYPES, HOOK_KINDS, HOOK_POLICIES, SUSPENDED_CONTRACTOR_GATE_MODES, VEHICLE_CATEGORIES } from "@/lib/access-enums";
@@ -548,7 +549,6 @@ function GateLog({ project }: { project: Schemas["ProjectRead"] }) {
   const tc = useTranslations("common");
   const me = useMeData();
   const name = useLocalizedName();
-  const { dateTime } = useFormatters(project.id);
   const gates = useGates(project.id);
   const opts = useProjectOptions(project.id);
   const s = useSearchState();
@@ -628,7 +628,7 @@ function GateLog({ project }: { project: Schemas["ProjectRead"] }) {
                   <TD label={t("occurredAt")}>
                     {/* One wrapper per cell: on phones the stacked card puts each child of a cell on its own grid row. */}
                     <span className="flex flex-col items-start">
-                      <span className="tabular-nums">{dateTime(r.occurred_at)}</span>
+                      <StackedDate v={r.occurred_at} time projectId={project.id} className="tabular-nums" />
                       <span className="text-xs text-muted-foreground">{te(`gateDirection.${r.direction}`)}</span>
                     </span>
                   </TD>
@@ -646,7 +646,12 @@ function GateLog({ project }: { project: Schemas["ProjectRead"] }) {
                   <TD label={t("result")}>
                     <span className="flex flex-col items-start gap-1">
                       <GateResultBadge result={r.result} />
-                      {r.late_exit ? <span className="text-xs text-warning">{t("lateExit")}</span> : null}
+                      {r.late_exit ? (
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-warning">
+                          <Clock aria-hidden className="size-3.5 shrink-0" />
+                          {t("lateExit")}
+                        </span>
+                      ) : null}
                       {r.admitted_despite_denial ? (
                         <span className="flex items-start gap-1 text-xs font-medium text-danger" data-testid="admitted-flag">
                           <ShieldAlert aria-hidden className="mt-0.5 size-3.5 shrink-0" />

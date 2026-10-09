@@ -5,7 +5,7 @@
  * are cleared after clear_after_seconds; nothing personal is cached (GC-7).
  */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Camera, CameraOff, Check, CircleAlert, CircleCheck, Clock, Info, KeyRound, LogIn, LogOut, ShieldAlert, Truck, UserRound, WifiOff, X } from "lucide-react";
+import { Camera, CameraOff, Check, CircleAlert, CircleCheck, Clock, Info, KeyRound, LogIn, LogOut, ShieldAlert, Truck, UserRound, Users, WifiOff, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { createPortal } from "react-dom";
@@ -19,7 +19,7 @@ import { LanguageSwitch } from "@/components/shell/language-switch";
 import { ThemeToggle } from "@/components/shell/theme-toggle";
 import { Link } from "@/i18n/navigation";
 import { ApiError, api, unwrap, type Schemas } from "@/lib/api/client";
-import { DEFAULT_TIME_ZONE, formatDate, type DateDisplayPrefs } from "@/lib/datetime";
+import { DEFAULT_TIME_ZONE, formatDate, formatDateTime, type DateDisplayPrefs } from "@/lib/datetime";
 import { cn } from "@/lib/utils";
 import { GasStatusBadge, PermitStatusBadge } from "@/components/ptw/common";
 
@@ -702,7 +702,12 @@ function ResultView({
             </>
           ) : null}
         </p>
-        {res.late_exit ? <p className="mt-1 rounded bg-black/25 px-2 py-0.5 text-sm font-semibold">{t("lateExit")}</p> : null}
+        {res.late_exit ? (
+          <p className="mt-1 inline-flex items-center gap-1.5 rounded bg-black/25 px-2 py-0.5 text-sm font-semibold">
+            <Clock aria-hidden className="size-4" />
+            {t("lateExit")}
+          </p>
+        ) : null}
         {pending && pairing ? (
           <div className="mt-2 w-full" data-testid="pairing">
             <p className="text-lg font-semibold">{t(`waitingFor.${pairing.waiting_for}`)}</p>
@@ -935,7 +940,8 @@ function PersonCard({ p }: { p: Schemas["GatePersonCard"] }) {
             {p.trade ? <> · {te(`trade.${p.trade}`)}</> : null}
           </p>
           {p.escort_required ? (
-            <p className="mt-1 inline-block rounded bg-verdict-pending px-2 py-0.5 text-sm font-bold text-verdict-pending-fg" data-testid="escort-required">
+            <p className="mt-1 inline-flex items-center gap-1.5 rounded bg-verdict-pending px-2 py-0.5 text-sm font-bold text-verdict-pending-fg" data-testid="escort-required">
+              <Users aria-hidden className="size-4 shrink-0" />
               {t("escortRequired")}
             </p>
           ) : null}
@@ -978,7 +984,18 @@ function WapCard({ w }: { w: Schemas["GateWapCard"] }) {
     <article className="rounded-xl border bg-surface p-3" data-testid="wap-card">
       <p className="ltr text-xl font-bold">{w.wap_no}</p>
       <p className="text-sm">
-        {te(`wapStatus.${w.status}`)} · {w.in_window_now ? <span className="font-semibold text-success">{t("inWindow")}</span> : <span className="font-semibold text-danger">{t("outsideWindow")}</span>}
+        {te(`wapStatus.${w.status}`)} ·{" "}
+        {w.in_window_now ? (
+          <span className="inline-flex items-center gap-1 font-semibold text-success">
+            <Check aria-hidden className="size-4" />
+            {t("inWindow")}
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 font-semibold text-danger">
+            <X aria-hidden className="size-4" />
+            {t("outsideWindow")}
+          </span>
+        )}
         {w.window_today ? (
           <>
             {" "}
@@ -989,7 +1006,8 @@ function WapCard({ w }: { w: Schemas["GateWapCard"] }) {
       {w.blockers.length ? (
         <ul className="mt-2 flex flex-wrap gap-1">
           {w.blockers.map((b) => (
-            <li key={b} className="rounded bg-verdict-denied px-2 py-0.5 text-xs font-semibold text-verdict-denied-fg">
+            <li key={b} className="inline-flex items-center gap-1 rounded bg-verdict-denied px-2 py-0.5 text-xs font-semibold text-verdict-denied-fg">
+              <X aria-hidden className="size-3.5" />
               {te(`wapBlocker.${b}`)}
             </li>
           ))}
@@ -1023,6 +1041,7 @@ function PermitCard({ w }: { w: Schemas["GatePermitCard"] }) {
   const t = useTranslations("gate");
   const te = useTranslations("enums");
   const locale = useLocale();
+  const prefs = usePrefs();
   return (
     <article className="rounded-xl border bg-surface p-3" data-testid="permit-card" data-status={w.status}>
       <p className="ltr text-xl font-bold">{w.display_no}</p>
@@ -1051,7 +1070,9 @@ function PermitCard({ w }: { w: Schemas["GatePermitCard"] }) {
         {w.current_shift_no ? <> · {t("ptwShift", { n: w.current_shift_no })}</> : null}
       </p>
       <p className="text-sm">
-        {t("ptwValidTo")}: <span className="ltr">{new Date(w.valid_to_at).toLocaleString(locale === "ar" ? "ar-SA-u-nu-latn" : "en-GB", { dateStyle: "medium", timeStyle: "short" })}</span> </p>
+        {/* Same date format as the rest of the gate screen; not forced LTR, so an Arabic date reads in order. */}
+        {t("ptwValidTo")}: <bdi className="font-medium whitespace-nowrap">{formatDateTime(w.valid_to_at, prefs)}</bdi>
+      </p>
       {w.gas_status !== "not_required" ? (
         <p className="mt-1">
           <GasStatusBadge status={w.gas_status} />
