@@ -1,5 +1,8 @@
 "use client";
 import {
+  FireExtinguisher,
+  LifeBuoy,
+  Megaphone,
   Droplets,
   FileBarChart,
   Siren,
@@ -269,6 +272,18 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
       ]
     : [];
 
+  const emergencyItems: Item[] = pid
+    ? [
+        ...(ac("emergency.view") ? [{ href: "/emergency-board", label: t("emergencyBoard"), Icon: ShieldAlert, testId: "nav-emergency-board" }] : []),
+        ...(ac("emergency.view") ? [{ href: "/emergency-events", label: t("emergencyEvents"), Icon: Siren, testId: "nav-emergency-events" }] : []),
+        ...(ac("emergency.view") ? [{ href: "/drills", label: t("drills"), Icon: Megaphone, testId: "nav-drills" }] : []),
+        ...(ac("emergency.view") ? [{ href: "/emergency-assets", label: t("emergencyAssets"), Icon: FireExtinguisher, testId: "nav-emergency-assets" }] : []),
+        ...(ac("emergency.view") ? [{ href: "/emergency-roster", label: t("emergencyRoster"), Icon: Users, testId: "nav-emergency-roster" }] : []),
+        ...(ac("emergency.view") ? [{ href: "/emergency-plans", label: t("emergencyPlans"), Icon: LifeBuoy, testId: "nav-emergency-plans" }] : []),
+        ...(ac("emergency_kpi.view") ? [{ href: "/emergency-kpis", label: t("emergencyKpis"), Icon: FileBarChart, testId: "nav-emergency-kpis" }] : []),
+      ]
+    : [];
+
   return (
     <nav aria-label={t("main")} className="flex flex-1 flex-col gap-5 p-3">
       <ul className="flex flex-col gap-1">
@@ -362,6 +377,18 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
               <p className="px-3 pt-1 pb-1 text-xs font-medium text-sidebar-muted">{t("heat")}</p>
               <ul className="mb-3 flex flex-col gap-1" data-testid="nav-heat">
                 {heatItems.map((i) => (
+                  <li key={i.href}>
+                    <NavLink item={i} onNavigate={onNavigate} />
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : null}
+          {emergencyItems.length > 0 ? (
+            <>
+              <p className="px-3 pt-1 pb-1 text-xs font-medium text-sidebar-muted">{t("emergency")}</p>
+              <ul className="mb-3 flex flex-col gap-1" data-testid="nav-emergency">
+                {emergencyItems.map((i) => (
                   <li key={i.href}>
                     <NavLink item={i} onNavigate={onNavigate} />
                   </li>

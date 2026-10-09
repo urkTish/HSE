@@ -135,13 +135,13 @@ export function useDrill(id: string, o: Opt = {}) {
   return useQuery({ queryKey: ek.drill(id), queryFn: () => unwrap(api.GET("/api/v1/drills/{drill_id}", { params: { path: { drill_id: id } } })), enabled: on(id, o) });
 }
 
-/** An open muster is refreshed every 10 s: scans arrive from reader devices and other phones. */
+/** A live (open / reconciled) muster is refreshed every 10 s when `live`: scans arrive from reader devices and other phones. */
 export function useMuster(id: string, o: Opt & { live?: boolean } = {}) {
   return useQuery({
     queryKey: ek.muster(id),
     queryFn: () => unwrap(api.GET("/api/v1/musters/{muster_id}", { params: { path: { muster_id: id } } })),
     enabled: on(id, o),
-    refetchInterval: o.live ? 10_000 : false,
+    refetchInterval: (q) => (o.live && (q.state.data?.status === "open" || q.state.data?.status === "reconciled") ? 10_000 : false),
   });
 }
 

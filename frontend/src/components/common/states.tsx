@@ -86,6 +86,8 @@ export function MutationError({ error }: { error: unknown }) {
   const te = useTranslations("enums");
   if (!error) return null;
   const blockers = metaBlockers(error);
+  // 6c ERP_INCOMPLETE / evaluation: meta.missing lists what is still to be filled (codes or field paths).
+  const missing = error instanceof ApiError && Array.isArray(error.meta.missing) ? (error.meta.missing as unknown[]).map(String) : [];
   return (
     <Alert tone="danger" data-testid="form-error" data-code={error instanceof ApiError ? error.code : undefined}>
       {msg(error)}
@@ -120,6 +122,15 @@ export function MutationError({ error }: { error: unknown }) {
               </li>
             );
           })}
+        </ul>
+      ) : null}
+      {missing.length ? (
+        <ul className="mt-1 list-inside list-disc text-xs" data-testid="error-missing">
+          {missing.map((m) => (
+            <li key={m}>
+              <bdi className="ltr font-mono">{m}</bdi>
+            </li>
+          ))}
         </ul>
       ) : null}
     </Alert>
