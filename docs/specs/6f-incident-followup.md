@@ -479,7 +479,7 @@ Each has a default so the build can start.
 6. **Lessons:** required for L3 investigations, published within 14 days, acknowledged within 7 days, checked after 90 days. Should L2 lessons also be required?
 7. **Client forms:** should the platform fill the client's own flash-report template (field mapping), or is the platform's bilingual layout acceptable?
 
-## 11. Changes required in earlier specs (to be applied by the coordinator; this spec does not edit them)
+## 11. Changes required in earlier specs (applied 2026-10-09: 0-foundation v1.4, 1-dashboard v1.9, 6d-field-assurance v1.2, 6e-environmental v1.1)
 
 ### 11.1 `0-foundation.md` v1.2 (v1.3 after 6e) → next
 1. Matrix rows 215–223 (§5.10).

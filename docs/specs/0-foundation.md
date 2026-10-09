@@ -1,6 +1,6 @@
 # Module Spec — Phase 0: Foundation
 
-**Version:** v1.3 · **Date:** 2026-10-09 · **Author:** HSE Consultant Agent · **Status:** Draft for HSE Manager review
+**Version:** v1.4 · **Date:** 2026-10-09 · **Author:** HSE Consultant Agent · **Status:** Draft for HSE Manager review
 **Covers:** auth & roles, permission matrix & scoping, projects → sites → zones, contractors, users, audit log, project settings, i18n EN/AR, PDPL baseline.
 **Out of scope:** dashboard, man-hours, incidents (Phase 1); permits, certificates, training (Phases 2–5). Anything found for later phases goes to `docs/PROGRESS.md` → "Parked".
 
@@ -95,6 +95,7 @@ Phase 0 only stores these attributes; Phases 2–3 will enforce them (escort, AD
 | primary_contact_mobile | جوال جهة الاتصال | string(13) | Y | E.164 KSA mobile `^\+9665\d{8}$` (foreign E.164 allowed) | +966500000101 | personal |
 | primary_contact_email | بريد جهة الاتصال | email | Y | RFC 5322 | rawabi.hse@example.com | personal |
 | status | الحالة | enum | Y | see §4.2 | approved | none |
+| gosi_establishment_no | رقم المنشأة في التأمينات | string(20) | N | v1.4 (6f §11.1); used by the 6f GOSI-WIR pack | 1000000001 | none |
 | status_reason | سبب الحالة | text(500) | cond. | required for suspended/blacklisted | — | none |
 
 ### 3.5 Project engagement (contractor on a project) — ارتباط المقاول بالمشروع
@@ -486,3 +487,4 @@ Phase 0 computes no HSE KPIs; it supplies the dimensions and settings every KPI 
 - v1.1 (2026-10-09) — changes required by Phase 6c (`6c-emergency-drills.md` v1.0 §11.1), adding to the 6a/6b matrix rows: capability rows 178–190 (6c §5.13: view, ERP drafts, ERP approval and settings, roster and rescue teams, assets, asset checks, drill planning, drill execution and muster, drill evaluation, event declaration, All Clear and review, 6c KPIs, voids). No existing rule changes.
 - v1.2 (2026-10-09) — changes required by Phase 6d (`6d-field-assurance.md` v1.0 §11.1): capability rows 191–201 (6d §5.13: view libraries, author drafts, publish / retire and 6d settings, audits, audit report issue, stop-work release, briefing campaigns, record toolbox talks, view attendance names, view 6d registers and KPIs, voids). No existing rule changes.
 - v1.3 (2026-10-09) — changes required by Phase 6e (`6e-environmental.md` v1.0 §11.1): capability rows 202–214 (6e §5.17: view 6e registers and KPIs, aspects, permits / licences / providers, waste streams and storage, consignments, consignment close, instruments / points / limits / devices, readings and water, exceedance review and spill close, spills, complaints, 6e settings and provider decisions, voids). No existing rule changes.
+- v1.4 (2026-10-09) — changes required by Phase 6f (`6f-incident-followup.md` v1.0 §11.1): capability rows 215–223 (6f §5.10: view requirements / submissions / follow-up KPIs, generate packs and record submissions, approve packs and void submissions, rule profile / recipients / body directory / 6f settings and waivers, draft lessons and 6d links, publish / return / archive lessons, acknowledge lessons, view the lesson library, complete effectiveness checks); §3.4 contractor gains optional `gosi_establishment_no` (string(20), PDPL none, used by GOSI-WIR). No existing rule changes.
