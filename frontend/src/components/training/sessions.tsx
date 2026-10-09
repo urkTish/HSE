@@ -28,6 +28,8 @@ import { UserSelect, useProjectOptions } from "@/components/common/pickers";
 import { ProjectById, ProjectGate } from "@/components/common/project-gate";
 import { EmptyState, ErrorState, LoadingState, MutationError } from "@/components/common/states";
 import { Code, DeploymentPicker, SignaturePad, StepDialog, WorkerLabel } from "@/components/access/common";
+import { ChoiceMark } from "@/components/heat/common";
+import { StackedDate } from "@/components/medical/common";
 import { UploadField, UserName } from "@/components/cert/common";
 import { Link, useRouter } from "@/i18n/navigation";
 import { ApiError, api, postForm, unwrap, type Schemas } from "@/lib/api/client";
@@ -55,7 +57,6 @@ function SessionList({ project }: { project: S["ProjectRead"] }) {
   const locale = useLocale();
   const caps = useTrainingCaps(project.id);
   const { courses } = useCourseCatalogue(project.id);
-  const { date } = useFormatters(project.id);
   const s = useSearchState();
   const page = s.getInt("page", 1) ?? 1;
   const status = s.getAll("status") as S["SessionStatus"][];
@@ -122,13 +123,15 @@ function SessionList({ project }: { project: S["ProjectRead"] }) {
                     <span className="block text-xs text-muted-foreground">{locale === "ar" ? x.course.name_ar : x.course.name_en}</span>
                   </TD>
                   <TD label={t("dates")}>
-                    <span className="ltr">{date(x.first_day)}</span>
-                    {x.last_day !== x.first_day ? (
-                      <>
-                        {" – "}
-                        <span className="ltr">{date(x.last_day)}</span>
-                      </>
-                    ) : null}
+                    <span className="flex items-start gap-1">
+                      <StackedDate v={x.first_day} projectId={project.id} />
+                      {x.last_day !== x.first_day ? (
+                        <>
+                          <span>–</span>
+                          <StackedDate v={x.last_day} projectId={project.id} />
+                        </>
+                      ) : null}
+                    </span>
                     <span className="block text-xs text-muted-foreground">
                       {te(`workerLanguage.${x.language}`)}
                       {x.site_code ? ` · ${x.site_code}` : ""}
@@ -881,11 +884,12 @@ function AttendanceRegister({ session, project, course }: { session: S["SessionR
                               })
                             }
                             className={cn(
-                              "min-h-touch rounded-md border px-2 text-sm font-medium",
-                              l.status === st ? (st === "absent" ? "border-destructive bg-danger-bg text-destructive" : st === "partial" ? "border-warning bg-warning-bg" : "border-success bg-success-bg text-success") : "bg-background",
+                              "flex min-h-12 items-center justify-center gap-1.5 rounded-md border px-1.5 text-sm font-medium",
+                              l.status === st ? (st === "absent" ? "border-2 border-destructive bg-danger-bg text-destructive" : st === "partial" ? "border-2 border-warning bg-warning-bg" : "border-2 border-success bg-success-bg text-success") : "bg-background",
                             )}
                             data-testid={`att-${st}`}
                           >
+                            <ChoiceMark on={l.status === st} />
                             {te(`nominationStatus.${st}`)}
                           </button>
                         ))}

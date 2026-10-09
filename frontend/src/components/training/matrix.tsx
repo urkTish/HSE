@@ -21,6 +21,7 @@ import { EmptyState, ErrorState, LoadingState } from "@/components/common/states
 import { StatusBadge } from "@/components/common/status-badge";
 import { Code, StepDialog } from "@/components/access/common";
 import { UserName } from "@/components/cert/common";
+import { StackedDate } from "@/components/medical/common";
 import { Link } from "@/i18n/navigation";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
 import { useMatrixLineVersions, useTrainingMatrix, useTrainingRefresh } from "@/lib/api/training";
@@ -43,8 +44,7 @@ function Matrix({ project }: { project: S["ProjectRead"] }) {
   const t = useTranslations("training.matrix");
   const te = useTranslations("enums");
   const caps = useTrainingCaps(project.id);
-  const { date } = useFormatters(project.id);
-  const { courses } = useCourseCatalogue(project.id);
+  const { courses, label: courseName } = useCourseCatalogue(project.id);
   const s = useSearchState();
   const kinds = s.getAll("kind") as S["MatrixAppliesTo"][];
   const q = useTrainingMatrix(project.id, {
@@ -112,7 +112,10 @@ function Matrix({ project }: { project: S["ProjectRead"] }) {
               <TR key={l.id} data-testid="matrix-line" data-line={l.line_no} data-source={l.source} data-counted={l.kpi_counted ? "yes" : "no"}>
                 <TD label={t("lineNo")}>
                   <Code className="font-medium">{l.line_no}</Code>
-                  <span className="block text-xs text-muted-foreground">{t("from", { date: date(l.effective_from) })}</span>
+                  <span className="mt-0.5 flex gap-1 text-xs text-muted-foreground">
+                    <span>{t("fromLabel")}</span>
+                    <StackedDate v={l.effective_from} projectId={project.id} />
+                  </span>
                 </TD>
                 <TD label={t("appliesTo")}>
                   <span className="text-sm font-medium">{te(`matrixAppliesTo.${l.applies_to_kind}`)}</span>
@@ -120,6 +123,7 @@ function Matrix({ project }: { project: S["ProjectRead"] }) {
                 </TD>
                 <TD label={t("requirement")}>
                   <RequirementText r={l.requirement} />
+                  {l.requirement.course_code ? <span className="block max-w-56 text-xs text-muted-foreground">{courseName(l.requirement.course_code)}</span> : null}
                 </TD>
                 <TD label={t("level")}>
                   <StatusBadge status={l.level} label={te(`matrixLevel.${l.level}`)} />
@@ -149,7 +153,7 @@ function Matrix({ project }: { project: S["ProjectRead"] }) {
                   )}
                 </TD>
                 <TD label={t("actions")}>
-                  <span className="flex flex-wrap gap-1">
+                  <span className="flex gap-1">
                     <Button size="sm" variant="ghost" onClick={() => setVersions(l)} data-testid="line-versions">
                       <History aria-hidden />
                       <span className="sr-only">{t("versions")}</span>

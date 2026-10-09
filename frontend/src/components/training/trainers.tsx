@@ -24,6 +24,7 @@ import { ProjectById, ProjectGate } from "@/components/common/project-gate";
 import { EmptyState, ErrorState, LoadingState } from "@/components/common/states";
 import { Code, DaysLeft, DeploymentPicker, StepDialog, WorkerLabel } from "@/components/access/common";
 import { UploadField, UserName } from "@/components/cert/common";
+import { StackedDate } from "@/components/medical/common";
 import { Link, useRouter } from "@/i18n/navigation";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
 import { useTrainerAuthorisation, useTrainerAuthorisations, useTrainingProviders, useTrainingRefresh } from "@/lib/api/training";
@@ -53,7 +54,6 @@ function TrainerList({ project }: { project: S["ProjectRead"] }) {
   const te = useTranslations("enums");
   const tc = useTranslations("common");
   const caps = useTrainingCaps(project.id);
-  const { date } = useFormatters(project.id);
   const { courses } = useCourseCatalogue(project.id);
   const providers = useTrainingProviders({ page_size: 200, kind: ["internal", "contractor_internal"] });
   const s = useSearchState();
@@ -129,7 +129,12 @@ function TrainerList({ project }: { project: S["ProjectRead"] }) {
                   </TD>
                   <TD label={t("roles")}>{a.roles.map((r) => te(`trainerRole.${r}`)).join(" · ")}</TD>
                   <TD label={t("validTo")}>
-                    {date(a.valid_to)} {a.status === "active" ? <DaysLeft days={a.days_left} /> : null}
+                    <StackedDate v={a.valid_to} projectId={project.id} />
+                    {a.status === "active" ? (
+                      <span className="mt-0.5 block">
+                        <DaysLeft days={a.days_left} />
+                      </span>
+                    ) : null}
                   </TD>
                   <TD label={tc("status")}>
                     <TrainerStatusBadge status={a.status} />

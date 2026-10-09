@@ -674,6 +674,12 @@
 - E2E (Playwright, real backend): full suite 71 passed, 2 skipped (screenshot specs, on demand) on a fresh migrated + seeded DB — 35 Phase 0 + 36 Phase 1 tests in `e2e/p1-*.spec.ts` — dashboard (AC55, 59, 60, 61, 62, 63, 64, filters in URL, drill-down, charts, mobile), AI (AC65, 72, 73, 74, 75, insufficient data, errors, Arabic) via a recorded SSE stream in `e2e/fixtures/ai-stream.ts` (typed against the contract, replayed with `page.route`; test-only), workforce/import (AC2, 3, 4, 7, 10), incidents/PDPL (AC13, 19, 20, 21, 29, 30, 31, 33), CAs (AC40, 41, 42, 43), observations (AC35) and create flows for observations, inspections, meetings, settings, reports. Phase 0 specs unchanged except a wait in AC12 (options load asynchronously).
 - Screenshots: `docs/screenshots/phase-1/` (run `SCREENSHOTS=1 npx playwright test e2e/screenshots-p1.spec.ts`).
 
+### Design pass — Phase 5 (UI/UX Designer)
+- Phase 5 design pass done (training is still parked; its screens were polished).
+  - Findings, ranking and proposals: `docs/design/phase-5-findings.md`. Before/after screenshots: `docs/screenshots/phase-5/design/`; the Phase 5 set was regenerated and extended (Arabic desktop views, Arabic phone matrix, sessions list, full record page, printed TR certificate, attendance after "All present").
+  - Done: gap breakdown tables no longer run numbers together ("4679118"), with an icon on gaps; refresher plan state column visible at 1440 px; `StackedDate` across the training registers, record fields and the shared hook policy card; radio marks on the attendance buttons (48 px); Suspend / Revoke moved from the record header to a band at the page end; expiring vs in force shown by icon too; matrix rows shorter, with course names; Transition policy gets an hourglass; ICU plurals for the import commit lines.
+  - No logic, API, permission or data change; e2e selectors unchanged (new: `record-later-actions`). Lint, typecheck and i18n check green. Strings in `scripts/i18n/p5-design.py`, merged on their own (not with `merge.py`, which would overwrite JSON fixes such as `training.imports.scansHint`).
+
 ### Design pass — Phase 6c (UI/UX Designer)
 - Design pass: done (Phase 6c).
   - Findings, ranking and the Phase 6c design-system additions: `docs/design/phase-6c-findings.md`.
@@ -917,6 +923,12 @@ L items from the Phase 6b design pass (details in `docs/design/phase-6b-findings
 - **P22. Heat board for the field and site offices.** "Changed since you looked" marker per zone, worst-first sort, the P17 kiosk / TV mode for heat, optional "sun mode" (forced light, heavier weights and borders).
 - **P23. Offline queue for manual WBGT readings.** Readings typed without signal kept on the device and sent on reconnect (needs idempotency keys with the backend).
 - **P24. Zone headline on the saved reading.** `zones: [{zone_code, headline_regime, rest_minutes_per_hour}]` on the reading response (contract change), shown with the large regime panel.
+
+Items from the Phase 5 design pass (details in `docs/design/phase-5-findings.md`):
+- **P28. Pass / Fail buttons for the practical result in attendance** (instead of the drop-down). Small, but the p5-sessions spec drives the select, so it waits for that spec's owner.
+- **P29. Side-by-side certificate review.** Scan viewer next to the typed fields and name / ID match, Accept / Reject under them; stacked on phones.
+- **P30. Gaps chart.** Gap count by contractor as a sorted bar chart with drill-down; the three breakdown tables behind a toggle.
+- **P31. Live work on the refresher plan.** Show live permits / WAPs per plan item (contract change), as the gaps register does.
 
 L items from the Phase 6a design pass (details in `docs/design/phase-6a-findings.md`):
 - **P18. Server verdict for "may this worker work today".** The worker page panel combines `on_hold` and each item's `band` / `hard_stop`; a `work_state` (removed / stop / check / cleared / none) with its codes on `WorkerFitnessRead`, in P6-7 words, would make it a server decision reusable by the field check (contract change).

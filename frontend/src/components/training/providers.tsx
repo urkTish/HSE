@@ -24,6 +24,7 @@ import { Pagination } from "@/components/common/pagination";
 import { EmptyState, ErrorState, LoadingState, MutationError } from "@/components/common/states";
 import { Code, DaysLeft, StepDialog, WorkerLabel } from "@/components/access/common";
 import { UploadField, UserName } from "@/components/cert/common";
+import { StackedDate } from "@/components/medical/common";
 import { Link, useRouter } from "@/i18n/navigation";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
 import { useContractors } from "@/lib/api/queries";
@@ -61,7 +62,6 @@ export function ProviderListPage() {
   const tc = useTranslations("common");
   const locale = useLocale();
   const caps = useTrainingCaps();
-  const { date } = useFormatters();
   const { courses } = useCourseCatalogue();
   const s = useSearchState();
   const page = s.getInt("page", 1) ?? 1;
@@ -144,7 +144,9 @@ export function ProviderListPage() {
                   <TD label={t("accreditedCourses")}>
                     <span className="text-xs">{p.accredited_course_codes.join(" · ") || "—"}</span>
                   </TD>
-                  <TD label={t("nextExpiry")}>{p.next_accreditation_expiry ? date(p.next_accreditation_expiry) : "—"}</TD>
+                  <TD label={t("nextExpiry")}>
+                    <StackedDate v={p.next_accreditation_expiry} />
+                  </TD>
                   <TD label={tc("status")}>
                     <Accepted status={p.status} accepted={p.accepted_for_use} />
                   </TD>

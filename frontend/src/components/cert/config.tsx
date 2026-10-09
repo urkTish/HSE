@@ -1,5 +1,5 @@
 "use client";
-import { Lock, Plus, ShieldAlert, ShieldCheck } from "lucide-react";
+import { Hourglass, Lock, Plus, ShieldAlert, ShieldCheck } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { Fragment, useMemo, useState } from "react";
@@ -19,6 +19,7 @@ import { PageHeader } from "@/components/common/page-header";
 import { ProjectGate } from "@/components/common/project-gate";
 import { EmptyState, ErrorState, LoadingState, MutationError } from "@/components/common/states";
 import { Code, StepDialog } from "@/components/access/common";
+import { StackedDate } from "@/components/medical/common";
 import { useMeData } from "@/components/shell/me-context";
 import { Link } from "@/i18n/navigation";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
@@ -745,19 +746,27 @@ export function HookKindCard({ project, k, editable, asOf }: { project: Project;
         <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           <div>
             <dt className="text-xs text-muted-foreground">{t("registeredOn")}</dt>
-            <dd>{k.provider_registered_on ? date(k.provider_registered_on) : "—"}</dd>
+            <dd>
+              <StackedDate v={k.provider_registered_on} projectId={project.id} />
+            </dd>
           </div>
           <div>
             <dt className="text-xs text-muted-foreground">{t("criticalBlockFrom")}</dt>
-            <dd data-testid={`critical-from-${k.kind}`}>{k.critical_block_from ? date(k.critical_block_from) : "—"}</dd>
+            <dd data-testid={`critical-from-${k.kind}`}>
+              <StackedDate v={k.critical_block_from} projectId={project.id} />
+            </dd>
           </div>
           <div>
             <dt className="text-xs text-muted-foreground">{t("generalBlockFrom")}</dt>
-            <dd data-testid={`general-from-${k.kind}`}>{k.general_block_from ? date(k.general_block_from) : "—"}</dd>
+            <dd data-testid={`general-from-${k.kind}`}>
+              <StackedDate v={k.general_block_from} projectId={project.id} />
+            </dd>
           </div>
           <div>
             <dt className="text-xs text-muted-foreground">{t("nextBlock")}</dt>
-            <dd>{k.next_block_date ? date(k.next_block_date) : "—"}</dd>
+            <dd>
+              <StackedDate v={k.next_block_date} projectId={project.id} />
+            </dd>
           </div>
         </dl>
         {k.deferral ? (
@@ -795,11 +804,16 @@ export function HookKindCard({ project, k, editable, asOf }: { project: Project;
                       {te(`hookCodePolicy.${c.policy}`)}
                     </span>
                   ) : (
-                    <span className="text-warning">{te(`hookCodePolicy.${c.policy}`)}</span>
+                    <span className="inline-flex items-center gap-1 font-medium text-warning">
+                      <Hourglass className="size-3.5" aria-hidden />
+                      {te(`hookCodePolicy.${c.policy}`)}
+                    </span>
                   )}
                   {c.switched_early_at ? <span className="block text-xs text-muted-foreground">{t("switchedEarly", { at: dateTime(c.switched_early_at) })}</span> : null}
                 </TD>
-                <TD label={t("blockFrom")}>{c.block_from ? date(c.block_from) : "—"}</TD>
+                <TD label={t("blockFrom")}>
+                  <StackedDate v={c.block_from} projectId={project.id} />
+                </TD>
               </TR>
             ))}
           </TBody>

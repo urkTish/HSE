@@ -1,6 +1,6 @@
 "use client";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Eye, FileImage, IdCard, Pencil, Plus, Printer, RefreshCcw, ShieldCheck } from "lucide-react";
+import { CalendarClock, CircleCheck, Eye, FileImage, IdCard, Pencil, Plus, Printer, RefreshCcw, ShieldCheck } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
@@ -28,6 +28,7 @@ import { ProjectById, ProjectGate } from "@/components/common/project-gate";
 import { EmptyState, ErrorState, LoadingState, MutationError } from "@/components/common/states";
 import { AccessPrintHeader, BiLabel, Code, DaysLeft, DeploymentPicker, QrImage, StepDialog, WorkerLabel } from "@/components/access/common";
 import { Tick, UploadField, UserName } from "@/components/cert/common";
+import { StackedDate } from "@/components/medical/common";
 import { DateTimeInput } from "@/components/ptw/common";
 import { Link, useRouter } from "@/i18n/navigation";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
@@ -57,7 +58,6 @@ function RecordList({ project }: { project: S["ProjectRead"] }) {
   const caps = useTrainingCaps(project.id);
   const opts = useProjectOptions(project.id);
   const { courses } = useCourseCatalogue(project.id);
-  const { date } = useFormatters(project.id);
   const s = useSearchState();
   const page = s.getInt("page", 1) ?? 1;
   const status = s.getAll("status") as S["TrainingRecordStatus"][];
@@ -168,9 +168,17 @@ function RecordList({ project }: { project: S["ProjectRead"] }) {
                     </span>
                   </TD>
                   <TD label={t("validUntil")}>
-                    {r.valid_until ? <span className="ltr">{date(r.valid_until)}</span> : t("noExpiry")} {r.in_force ? <DaysLeft days={r.days_left} /> : null}
-                    <span className="mt-0.5 block">
-                      {r.in_force ? <Badge tone={r.expiring ? "warning" : "success"}>{t("inForce")}</Badge> : r.historic ? <Badge tone="neutral">{t("historic")}</Badge> : null}
+                    {r.valid_until ? <StackedDate v={r.valid_until} projectId={project.id} /> : t("noExpiry")}
+                    <span className="mt-0.5 flex flex-wrap items-center gap-1">
+                      {r.in_force ? (
+                        <Badge tone={r.expiring ? "warning" : "success"}>
+                          {r.expiring ? <CalendarClock aria-hidden /> : <CircleCheck aria-hidden />}
+                          {t("inForce")}
+                        </Badge>
+                      ) : r.historic ? (
+                        <Badge tone="neutral">{t("historic")}</Badge>
+                      ) : null}
+                      {r.in_force ? <DaysLeft days={r.days_left} /> : null}
                     </span>
                   </TD>
                   <TD label={t("verification")}>
@@ -465,6 +473,8 @@ export function RecordDetail({ id }: { id: string }) {
 
 const REASON_MIN: Partial<Record<S["TrainingRecordAction"], number>> = { return: 10, reject: 5, suspend: 20, reinstate: 5, revoke: 20 };
 const DESTRUCTIVE: S["TrainingRecordAction"][] = ["reject", "suspend", "revoke"];
+/** Actions on an accepted record, shown at the page end instead of next to the review decision. */
+const LATER: S["TrainingRecordAction"][] = ["suspend", "revoke"];
 
 function RecordView({ project, r }: { project: S["ProjectRead"] | null; r: S["TrainingRecordRead"] }) {
   const t = useTranslations("training.records");
@@ -475,7 +485,6 @@ function RecordView({ project, r }: { project: S["ProjectRead"] | null; r: S["Tr
   const qc = useQueryClient();
   const pid = project?.id ?? null;
   const caps = useTrainingCaps(pid);
-  const { date, dateTime } = useFormatters(pid);
   const refresh = useTrainingRefresh();
   const verifs = useTrainingVerifications(r.id, { enabled: caps.recordReview || caps.recordView });
   const [action, setAction] = useState<S["TrainingRecordAction"] | null>(null);
@@ -486,6 +495,7 @@ function RecordView({ project, r }: { project: S["ProjectRead"] | null; r: S["Tr
   const [verify, setVerify] = useState(false);
   const [reissue, setReissue] = useState(false);
   const notAccepted = locale === "ar" ? r.not_accepted_message_ar : r.not_accepted_message_en;
+  const laterActions = r.allowed_actions.filter((a) => LATER.includes(a));
   async function setScanId(id: string | null) {
     const x = await unwrap(api.PATCH("/api/v1/training-records/{record_id}", { params: { path: { record_id: r.id } }, body: { scan_attachment_id: id } }));
     qc.setQueryData(tk.record(r.id, ""), x);
@@ -520,7 +530,7 @@ function RecordView({ project, r }: { project: S["ProjectRead"] | null; r: S["Tr
                   {tc("edit")}
                 </Button>
               ) : null}
-              {r.allowed_actions.map((a) => (
+              {r.allowed_actions.filter((a) => !LATER.includes(a)).map((a) => (
                 <Button key={a} variant={a === "accept" || a === "submit" ? "default" : DESTRUCTIVE.includes(a) ? "destructive-outline" : "outline"} onClick={() => setAction(a)} data-testid={`record-${a}`}>
                   {te(`recordAction.${a}`)}
                 </Button>
@@ -579,10 +589,14 @@ function RecordView({ project, r }: { project: S["ProjectRead"] | null; r: S["Tr
               <FieldItem label={t("certificateNo")} ltr>
                 {r.certificate_no}
               </FieldItem>
-              <FieldItem label={t("completedOn")}>{date(r.completed_on)}</FieldItem>
-              <FieldItem label={t("printedExpiry")}>{r.printed_expiry ? date(r.printed_expiry) : "—"}</FieldItem>
+              <FieldItem label={t("completedOn")}>
+                <StackedDate v={r.completed_on} projectId={pid} />
+              </FieldItem>
+              <FieldItem label={t("printedExpiry")}>
+                <StackedDate v={r.printed_expiry} projectId={pid} />
+              </FieldItem>
               <FieldItem label={t("storedValidUntil")}>
-                {r.valid_until ? date(r.valid_until) : t("noExpiry")}
+                {r.valid_until ? <StackedDate v={r.valid_until} projectId={pid} /> : t("noExpiry")}
                 <span className="block text-xs text-muted-foreground">{te(`trainingLimitingFactor.${r.limiting_factor}`)}</span>
               </FieldItem>
               {r.theory_score_pct !== undefined && r.theory_score_pct !== null ? (
@@ -617,7 +631,10 @@ function RecordView({ project, r }: { project: S["ProjectRead"] | null; r: S["Tr
               <FieldItem label={t("submitted")}>
                 {r.submitted_by ? (
                   <>
-                    <UserName u={r.submitted_by} /> · {r.submitted_at ? dateTime(r.submitted_at) : ""}
+                    <UserName u={r.submitted_by} />
+                    <span className="block">
+                      <StackedDate v={r.submitted_at} time projectId={pid} />
+                    </span>
                   </>
                 ) : (
                   "—"
@@ -626,13 +643,18 @@ function RecordView({ project, r }: { project: S["ProjectRead"] | null; r: S["Tr
               <FieldItem label={t("reviewed")}>
                 {r.reviewed_by ? (
                   <>
-                    <UserName u={r.reviewed_by} /> · {r.reviewed_at ? dateTime(r.reviewed_at) : ""}
+                    <UserName u={r.reviewed_by} />
+                    <span className="block">
+                      <StackedDate v={r.reviewed_at} time projectId={pid} />
+                    </span>
                   </>
                 ) : (
                   "—"
                 )}
               </FieldItem>
-              <FieldItem label={t("verificationDue")}>{r.verification_due_on ? date(r.verification_due_on) : "—"}</FieldItem>
+              <FieldItem label={t("verificationDue")}>
+                <StackedDate v={r.verification_due_on} projectId={pid} />
+              </FieldItem>
               {r.superseded_by_id ? (
                 <FieldItem label={te("recordStatus.superseded")} wide>
                   <Link href={`/training-records/${r.superseded_by_id}`} className="text-primary hover:underline">
@@ -689,6 +711,19 @@ function RecordView({ project, r }: { project: S["ProjectRead"] | null; r: S["Tr
             <VerificationTable items={verifs.data?.items ?? []} projectId={pid} loading={verifs.isLoading} error={verifs.error} onRetry={() => void verifs.refetch()} />
           </CardContent>
         </Card>
+      ) : null}
+      {laterActions.length ? (
+        // Suspend / revoke are kept away from the review decision at the top (same as the 6c muster Void).
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-4" data-testid="record-later-actions">
+          <span className="text-xs text-muted-foreground">{t("laterActions")}</span>
+          <span className="flex flex-wrap gap-2">
+            {laterActions.map((a) => (
+              <Button key={a} variant="destructive-outline" onClick={() => setAction(a)} data-testid={`record-${a}`}>
+                {te(`recordAction.${a}`)}
+              </Button>
+            ))}
+          </span>
+        </div>
       ) : null}
       {/* P5-4: status reasons are for HSE staff; a contractor rep sees only "not accepted", so the change history is not shown to him. */}
       {caps.recordReview || caps.manager ? <HistoryPanel entityType="training_record" entityId={r.id} projectId={pid ?? undefined} /> : null}

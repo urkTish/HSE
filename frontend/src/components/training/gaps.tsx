@@ -1,5 +1,5 @@
 "use client";
-import { CalendarPlus, Plus } from "lucide-react";
+import { CalendarPlus, Plus, TriangleAlert } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -33,6 +33,7 @@ import {
   WorkerLabel,
 } from "@/components/access/common";
 import { Stat, UserName } from "@/components/cert/common";
+import { StackedDate } from "@/components/medical/common";
 import { Link, useRouter } from "@/i18n/navigation";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
 import {
@@ -178,13 +179,13 @@ function Gaps({ project }: { project: S["ProjectRead"] }) {
                       >
                         <thead>
                           <tr className="text-xs text-muted-foreground">
-                            <th className="text-start font-medium">
+                            <th className="pb-1 text-start align-bottom font-medium">
                               {t("item")}
                             </th>
-                            <th className="text-end font-medium">
+                            <th className="w-20 ps-3 pb-1 text-end align-bottom font-medium">
                               {t("counted")}
                             </th>
-                            <th className="text-end font-medium">
+                            <th className="w-14 ps-3 pb-1 text-end align-bottom font-medium">
                               {te("requirementState.gap")}
                             </th>
                           </tr>
@@ -200,13 +201,19 @@ function Gaps({ project }: { project: S["ProjectRead"] }) {
                                 className="border-t"
                                 data-key={r.key}
                               >
-                                <td className="py-1">{label(r)}</td>
-                                <td className="ltr py-1 text-end tabular-nums">
+                                <td className="py-1.5">{label(r)}</td>
+                                <td className="ltr ps-3 py-1.5 text-end whitespace-nowrap tabular-nums">
                                   {r.counted}
                                 </td>
                                 <td
-                                  className={`ltr py-1 text-end tabular-nums ${r.gap ? "font-semibold text-destructive" : ""}`}
+                                  className={`ltr ps-3 py-1.5 text-end whitespace-nowrap tabular-nums ${r.gap ? "font-semibold text-destructive" : "text-muted-foreground"}`}
                                 >
+                                  {r.gap ? (
+                                    <TriangleAlert
+                                      aria-hidden
+                                      className="me-1 inline size-3.5 align-[-2px]"
+                                    />
+                                  ) : null}
                                   {r.gap}
                                 </td>
                               </tr>
@@ -364,7 +371,7 @@ function Gaps({ project }: { project: S["ProjectRead"] }) {
                         </span>
                       </TD>
                       <TD label={t("due")}>
-                        <span className="ltr">{date(g.due_date)}</span>
+                        <StackedDate v={g.due_date} projectId={project.id} />
                         {g.days_overdue ? (
                           <span className="block text-xs font-medium text-destructive">
                             {t("daysOverdue", { n: g.days_overdue })}
@@ -782,7 +789,6 @@ function RefresherPlan({ project }: { project: S["ProjectRead"] }) {
   const opts = useProjectOptions(project.id);
   const router = useRouter();
   const { courses } = useCourseCatalogue(project.id);
-  const { date } = useFormatters(project.id);
   const s = useSearchState();
   const page = s.getInt("page", 1) ?? 1;
   const states = s.getAll("state") as S["RefresherPlanState"][];
@@ -950,11 +956,13 @@ function RefresherPlan({ project }: { project: S["ProjectRead"] }) {
                     </span>
                   </TD>
                   <TD label={t("validUntil")}>
-                    <span className="ltr">{date(i.valid_until)}</span>{" "}
-                    <DaysLeft days={i.days_left} />
+                    <StackedDate v={i.valid_until} projectId={project.id} />
+                    <span className="mt-0.5 block">
+                      <DaysLeft days={i.days_left} />
+                    </span>
                   </TD>
                   <TD label={t("dueFrom")}>
-                    <span className="ltr">{date(i.refresher_due_from)}</span>
+                    <StackedDate v={i.refresher_due_from} projectId={project.id} />
                     {i.reason_required ? (
                       <span className="block text-xs text-muted-foreground">
                         {i.reason_required}
@@ -968,15 +976,18 @@ function RefresherPlan({ project }: { project: S["ProjectRead"] }) {
                         className="text-primary hover:underline"
                       >
                         <Code>{i.booked_session.session_no}</Code>
-                        <span className="block text-xs text-muted-foreground ltr">
-                          {date(i.booked_session.first_day)}
+                        <span className="block text-xs text-muted-foreground">
+                          <StackedDate
+                            v={i.booked_session.first_day}
+                            projectId={project.id}
+                          />
                         </span>
                       </Link>
                     ) : (
                       "—"
                     )}
                   </TD>
-                  <TD label={t("state")}>
+                  <TD label={t("state")} className="whitespace-nowrap">
                     <PlanStateBadge state={i.state} />
                   </TD>
                 </TR>

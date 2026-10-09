@@ -38,6 +38,29 @@ test("Phase 5 screenshots", async ({ page }) => {
   await page.goto(`/en/training-records/${rec.id}`);
   await expect(page.getByTestId("tr-certificate")).toBeVisible();
   await shot(page, "04-record-tr-certificate.png");
+  await shot(page, "04-record-tr-certificate-full.png", true);
+  await page.goto(`/en/training-records/${rec.id}/certificate`);
+  await expect(page.getByTestId("certificate-print")).toBeVisible();
+  await shot(page, "09-tr-certificate-print.png");
+
+  // Arabic desktop (design pass): gaps, refresher plan, record, sessions list.
+  await page.goto("/ar/training-gaps");
+  await expect(page.getByTestId("gaps-table")).toBeVisible();
+  await shot(page, "02-training-gaps-ar.png");
+  await page.goto("/ar/refresher-plan");
+  await expect(page.getByTestId("plan-table")).toBeVisible();
+  await shot(page, "05-refresher-plan-ar.png");
+  await page.goto(`/ar/training-records/${rec.id}`);
+  await expect(page.getByTestId("tr-certificate")).toBeVisible();
+  await shot(page, "04-record-tr-certificate-ar.png", true);
+  await page.goto("/en/training-sessions");
+  await expect(page.getByTestId("sessions-table")).toBeVisible();
+  await shot(page, "10-sessions-list.png");
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/ar/training-matrix?as_of=2026-09-30");
+  await expect(page.locator('[data-testid="matrix-line"]').first()).toBeVisible();
+  await shot(page, "01-training-matrix-phone-ar.png");
+  await page.setViewportSize({ width: 1440, height: 900 });
 
   const sfx = uid();
   const csv = [
@@ -60,6 +83,11 @@ test("Phase 5 screenshots", async ({ page }) => {
   await page.getByTestId("hook-kind-training_course").evaluate((el) => el.scrollIntoView({ block: "start" }));
   await page.evaluate(() => window.scrollBy(0, -80));
   await shot(page, "06-hook-policy-training.png");
+  await page.goto("/ar/hook-policy?kind=training_course");
+  await expect(page.getByTestId("hook-kind-training_course")).toBeVisible();
+  await page.getByTestId("hook-kind-training_course").evaluate((el) => el.scrollIntoView({ block: "start" }));
+  await page.evaluate(() => window.scrollBy(0, -80));
+  await shot(page, "06-hook-policy-training-ar.png");
 
   await page.goto("/en");
   const band = page.getByTestId("training-band");
@@ -77,4 +105,7 @@ test("Phase 5 screenshots", async ({ page }) => {
   await expect(page.getByTestId("attendance-register")).toBeVisible();
   await page.getByTestId("attendance-register").scrollIntoViewIfNeeded();
   await shot(page, "03-session-attendance-phone-ar.png");
+  await page.getByTestId("all-present").click();
+  await page.getByTestId("attendee").first().scrollIntoViewIfNeeded();
+  await shot(page, "03-session-attendance-phone-ar-marked.png");
 });

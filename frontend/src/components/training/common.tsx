@@ -313,7 +313,7 @@ export function TrainingValidityView({ v, projectId, compact, hideBadge }: { v: 
       <span className="flex flex-wrap items-center gap-2">
         {hideBadge ? null : v.in_force ? (
           <Badge tone={v.expiring ? "warning" : "success"}>
-            <CircleCheck aria-hidden />
+            {v.expiring ? <CalendarClock aria-hidden /> : <CircleCheck aria-hidden />}
             {t("inForce")}
           </Badge>
         ) : (
