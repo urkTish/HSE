@@ -221,6 +221,7 @@ def required_notifications(inc: Incident, cases: Sequence[InjuryCase]) -> list[R
         why = "Airside flag: " + ", ".join(sorted(f.value for f in flags))
         need(ExternalBody.gaca, why, at)
         need(ExternalBody.airport_operator, why, at)
+    _env_rules(inc, need)
     cats = {c.category for c in cases}
     client_why = None
     if CaseCategory.FAT in cats:
@@ -235,6 +236,34 @@ def required_notifications(inc: Incident, cases: Sequence[InjuryCase]) -> list[R
         need(ExternalBody.client, client_why, at + timedelta(hours=24))
     order = list(ExternalBody)
     return sorted(out.values(), key=lambda r: order.index(r.body))
+
+
+def _env_rules(inc: Incident, need: Any) -> None:
+    """1-dashboard v1.8 I-20 (6e §11.2): from `env_notifications_from` (null = off), `ncec` for
+    environmental incidents reaching a drain / water body or with actual severity ≥ 3 (24 h), and
+    `airport_operator` for environmental incidents in airside zones (immediately)."""
+    from sqlalchemy.orm import object_session  # noqa: PLC0415
+
+    if IncidentType.environmental.value not in (inc.incident_types or []):
+        return
+    db = object_session(inc)
+    if db is None:
+        return
+    from app.models import Zone  # noqa: PLC0415
+    from app.services.env import common as env_common  # noqa: PLC0415
+
+    start = env_common.cfg(db, inc.project_id).notifications_from
+    if start is None or inc.occurred_date < start:
+        return
+    at = inc.occurred_at
+    if inc.env_reached in (EnvReached.drain, EnvReached.water_body) or (
+        (inc.actual_severity or 0) >= 3
+    ):
+        need(ExternalBody.ncec, "Environmental incident (drain / water body or severity ≥ 3)",
+             at + timedelta(hours=24))  # fmt: skip
+    z = db.get(Zone, inc.zone_id) if inc.zone_id else None
+    if z is not None and z.zone_type == ZoneType.airside:
+        need(ExternalBody.airport_operator, "Environmental incident in an airside zone", at)
 
 
 def notification_reads(

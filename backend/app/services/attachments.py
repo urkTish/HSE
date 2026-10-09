@@ -177,6 +177,10 @@ def _owner(
 
     if owner_type in field_files.FIELD_OWNERS:
         return field_files.owner(db, p, owner_type, owner_id, write)
+    from app.services.env import files as env_files  # noqa: PLC0415
+
+    if owner_type in env_files.ENV_OWNERS:
+        return env_files.owner(db, p, owner_type, owner_id, write)
     if owner_type in PERSONAL:
         return _access_owner(db, p, owner_type, owner_id, write)
     m = db.get(HseMeeting, owner_id)

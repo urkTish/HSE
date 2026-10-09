@@ -163,9 +163,7 @@ def _link_incident(db: Session, project_id: uuid.UUID, iid: uuid.UUID, body: Spi
         )  # fmt: skip
 
 
-def _new_incident(
-    db: Session, p: Principal, project_id: uuid.UUID, body: SpillCreate
-) -> Incident:
+def _new_incident(db: Session, p: Principal, project_id: uuid.UUID, body: SpillCreate) -> Incident:
     """SPL-3: a Phase 1 incident, Reported, with spill facts only (P6e-4)."""
     from app.services import incidents  # noqa: PLC0415
 
@@ -322,9 +320,7 @@ def _cleanup_tracked(db: Session, s: Spill, body: SpillTransition) -> bool:
     return False
 
 
-def transition_spill(
-    db: Session, p: Principal, sid: uuid.UUID, body: SpillTransition
-) -> SpillRead:
+def transition_spill(db: Session, p: Principal, sid: uuid.UUID, body: SpillTransition) -> SpillRead:
     s = _spill(db, p, sid)
     pid = s.project_id
     if s.status in (SS.closed, SS.voided):

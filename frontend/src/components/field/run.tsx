@@ -185,7 +185,7 @@ export function ItemAnswer({ it, a, onChange, audit = false, readOnly = false }:
   const base = fail || (audit && a.answer === "2") ? baseSeverity(it, a, audit) : "";
   const sev = a.severity || base;
   const ladder = audit ? ["observation", "minor_nc", "major_nc"] : ["minor", "major", "critical"];
-  const canRaise = ladder.filter((s) => SEVERITY_RANK[s] >= (SEVERITY_RANK[base] ?? 0));
+  const canRaise = ladder.filter((s) => (SEVERITY_RANK[s] ?? 0) >= (SEVERITY_RANK[base] ?? 0));
   const minor = sev === "minor" || sev === "minor_nc" || sev === "observation";
   const set = (p: Partial<AnswerState>) => onChange({ ...a, ...p });
   const photoNeeded = fail && (it.photo_required_on_fail || it.critical);
@@ -424,7 +424,7 @@ function Chooser({ project, preset, onStart }: { project: Project; preset: strin
   const opts = useProjectOptions(project.id);
   const { packs } = useFieldOffline();
   const pack = packs[project.id]?.pack;
-  const live = useTemplates({ kind: "inspection", status: "published", project_id: project.id });
+  const live = useTemplates({ kind: "inspection", status: ["published"], project_id: project.id });
   const templates = (live.data?.items ?? pack?.templates.filter((x) => x.kind === "inspection" && x.status === "published") ?? []).filter((x) => x.kind === "inspection" && x.status === "published");
   const ins = useInspection(preset);
   const plan = useInspectionPlan(ins.data?.plan_id ?? "");

@@ -272,3 +272,6 @@ def stream_class(code: str) -> WasteClass:
 
 def unit_of(p: Parameter) -> str:
     return PA[p][2]
+
+
+SS_LABELS_BY_CODE = {k.value: v for k, v in SS_LABELS.items()}

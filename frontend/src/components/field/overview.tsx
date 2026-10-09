@@ -163,7 +163,7 @@ function useNote() {
     let m = /^K-36 source: (.+)$/.exec(n);
     if (m) {
       const src = { "Toolbox register": "register", "Daily returns": "returns", Mixed: "mixed" }[m[1] ?? ""];
-      return src ? t("noteSource", { src: t(`src.${src}`) }) : n;
+      return src ? t("noteSource", { src: t(`src.${src as "register"}`) }) : n;
     }
     m = /^Daily returns differ from the toolbox register by (.+)$/.exec(n);
     if (m) {

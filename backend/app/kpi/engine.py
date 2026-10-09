@@ -937,11 +937,12 @@ _DISPATCH: dict[KpiMetric, Callable[[Engine, Agg], Result]] = {
     **{m: _not_yet(m) for m in PHASE6B_METRICS},  # Phase 6b stage 2: app.kpi.heat
     **{m: _not_yet(m) for m in PHASE6C_METRICS},  # Phase 6c stage 2: app.kpi.emergency
     **{m: _not_yet(m) for m in PHASE6D_METRICS},  # replaced by app.kpi.field
-    **{m: _not_yet(m) for m in PHASE6E_METRICS},  # Phase 6e stage 2: app.kpi.env
+    **{m: _not_yet(m) for m in PHASE6E_METRICS},  # replaced by app.kpi.env
 }
 import app.kpi.access  # noqa: E402  (registers K-48…K-60 into _DISPATCH)
 import app.kpi.cert  # noqa: E402  (registers K-72…K-81 into _DISPATCH)
 import app.kpi.emergency  # noqa: E402  (registers K-104…K-109 into _DISPATCH)
+import app.kpi.env  # noqa: E402  (registers K-118…K-126 into _DISPATCH)
 import app.kpi.field  # noqa: E402  (registers K-110…K-117 into _DISPATCH)
 import app.kpi.heat  # noqa: E402  (registers K-97…K-103 into _DISPATCH)
 import app.kpi.medical  # noqa: E402  (registers K-89…K-96 into _DISPATCH)

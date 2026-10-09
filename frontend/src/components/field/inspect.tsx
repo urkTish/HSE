@@ -296,7 +296,7 @@ function Findings({ project }: { project: Project }) {
   const page = Number(s.get("page") ?? 1);
   const q = useFieldFindings(
     project.id,
-    { site_id: site || null, engagement_id: eng || null, severity: sev ? (sev as S["app__core__field_enums__FindingSeverity"]) : null, repeat: repeat ? repeat === "yes" : null, date_from: from || null, date_to: to || null, page, page_size: 50 },
+    { site_id: site || null, engagement_id: eng || null, severity: sev ? [sev as S["app__core__field_enums__FindingSeverity"]] : null, repeat: repeat ? repeat === "yes" : null, date_from: from || null, date_to: to || null, page, page_size: 50 },
     { enabled: caps.view },
   );
   if (!caps.view) return <Alert tone="info">{tc("notAllowed")}</Alert>;
@@ -345,7 +345,7 @@ function Stops({ project }: { project: Project }) {
   const status = (s.get("status") ?? "") as S["StopOrderStatus"] | "";
   const site = s.get("site") ?? "";
   const page = Number(s.get("page") ?? 1);
-  const q = useStopWorkOrders(project.id, { status: status || null, site_id: site || null, page, page_size: 50 }, { enabled: caps.view });
+  const q = useStopWorkOrders(project.id, { status: status ? [status] : null, site_id: site || null, page, page_size: 50 }, { enabled: caps.view });
   if (!caps.view) return <Alert tone="info">{tc("notAllowed")}</Alert>;
   return (
     <div>

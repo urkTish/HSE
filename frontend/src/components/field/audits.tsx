@@ -58,7 +58,7 @@ function Audits({ project }: { project: Project }) {
   const status = (s.get("status") ?? "") as S["AuditStatus"] | "";
   const eng = s.get("eng") ?? "";
   const page = Number(s.get("page") ?? 1);
-  const q = useFieldAudits(project.id, { audit_type: type || null, status: status || null, auditee_engagement_id: eng || null, page, page_size: 50 }, { enabled: caps.view || caps.audit });
+  const q = useFieldAudits(project.id, { audit_type: type || null, status: status ? [status] : null, auditee_engagement_id: eng || null, page, page_size: 50 }, { enabled: caps.view || caps.audit });
   const [planning, setPlanning] = useState(false);
   if (!caps.view && !caps.audit) return <Alert tone="info">{tc("notAllowed")}</Alert>;
   return (
@@ -174,7 +174,7 @@ function PlanAuditDialog({ project, onClose }: { project: Project; onClose: () =
   const router = useRouter();
   const refresh = useFieldRefresh();
   const [type, setType] = useState<S["AuditType"]>("contractor_hse");
-  const tpls = useTemplates({ kind: "audit", status: "published", project_id: project.id });
+  const tpls = useTemplates({ kind: "audit", status: ["published"], project_id: project.id });
   const choices = (tpls.data?.items ?? []).filter((x) => x.audit_type === type || (type === "client_requested" && x.audit_type === "contractor_hse"));
   const [tpl, setTpl] = useState("");
   const [eng, setEng] = useState("");
@@ -293,7 +293,7 @@ function AuditDetail({ a }: { a: Audit }) {
   async function step(action: S["app__core__field_enums__AuditAction"]) {
     setError(null);
     try {
-      await unwrap(api.POST("/api/v1/field-audits/{audit_id}/transitions", { params: { path: { audit_id: a.id } }, body: { action } }));
+      await unwrap(api.POST("/api/v1/field-audits/{audit_id}/transitions", { params: { path: { audit_id: a.id } }, body: { action, ca_for_observations: false } }));
       await refresh();
       toast.success(t("saved"));
     } catch (e) {
@@ -472,7 +472,7 @@ function AuditDetail({ a }: { a: Audit }) {
         <FieldReasonDialog
           title={t("cancel")}
           confirmLabel={t("cancel")}
-          onConfirm={(reason) => unwrap(api.POST("/api/v1/field-audits/{audit_id}/transitions", { params: { path: { audit_id: a.id } }, body: { action: "cancel", reason } }))}
+          onConfirm={(reason) => unwrap(api.POST("/api/v1/field-audits/{audit_id}/transitions", { params: { path: { audit_id: a.id } }, body: { action: "cancel", reason, ca_for_observations: false } }))}
           onClose={() => setDialog(null)}
         />
       ) : null}
@@ -481,7 +481,7 @@ function AuditDetail({ a }: { a: Audit }) {
           title={t("void")}
           description={t("voidHint")}
           confirmLabel={t("void")}
-          onConfirm={(reason) => unwrap(api.POST("/api/v1/field-audits/{audit_id}/transitions", { params: { path: { audit_id: a.id } }, body: { action: "void", reason } }))}
+          onConfirm={(reason) => unwrap(api.POST("/api/v1/field-audits/{audit_id}/transitions", { params: { path: { audit_id: a.id } }, body: { action: "void", reason, ca_for_observations: false } }))}
           onClose={() => setDialog(null)}
         />
       ) : null}

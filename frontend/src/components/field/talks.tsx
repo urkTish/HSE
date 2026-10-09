@@ -64,7 +64,7 @@ function Talks({ project }: { project: Project }) {
   const to = s.get("to") ?? "";
   const topic = s.get("topic") ?? "";
   const page = Number(s.get("page") ?? 1);
-  const q = useToolboxTalks(project.id, { site_id: site || null, host_engagement_id: host || null, status: status || null, date_from: from || null, date_to: to || null, topic_code: topic || null, page, page_size: 50 }, { enabled: caps.view || caps.talk });
+  const q = useToolboxTalks(project.id, { site_id: site || null, host_engagement_id: host || null, status: status ? [status] : null, date_from: from || null, date_to: to || null, topic_code: topic || null, page, page_size: 50 }, { enabled: caps.view || caps.talk });
   if (!caps.view && !caps.talk) return <Alert tone="info">{tc("notAllowed")}</Alert>;
   return (
     <div>
@@ -228,7 +228,7 @@ function TalkForm({ project, onDone }: { project: Project; onDone: (d: { talk: S
   const settings = useFieldSettings(project.id);
   const { packs } = useFieldOffline();
   const pack = packs[project.id]?.pack;
-  const live = useTopics({ status: "published" });
+  const live = useTopics({ status: ["published"] });
   const topics = live.data?.items ?? pack?.topics.filter((x) => x.status === "published") ?? [];
   const [site, setSite] = useState("");
   const [zones, setZones] = useState<string[]>([]);
@@ -254,7 +254,7 @@ function TalkForm({ project, onDone }: { project: Project; onDone: (d: { talk: S
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const sugg = useToolboxSuggestions(project.id, { site_id: site, host_engagement_id: host });
-  const campaigns = useCampaigns(project.id, { status: "issued", page_size: 100 });
+  const campaigns = useCampaigns(project.id, { status: ["issued"], page_size: 100 });
   const pickedTopics = topics.filter((x) => picked.includes(x.id));
   const campaignChoices = (campaigns.data?.items ?? []).filter((c) => pickedTopics.some((p) => p.topic_code === c.topic_code));
   const min = settings.data?.tbt_min_minutes ?? 10;
@@ -515,7 +515,7 @@ function Attendance({ rows, setRows, deployments, host, lang, interp }: { rows: 
   const [search, setSearch] = useState("");
   const [allEng, setAllEng] = useState(false);
   const [signing, setSigning] = useState<string | null>(null);
-  const chosen = new Set(rows.map((r) => r.deployment?.deployment_id).filter(Boolean));
+  const chosen = useMemo(() => new Set(rows.map((r) => r.deployment?.deployment_id).filter(Boolean)), [rows]);
   const tokens = new Set(rows.map((r) => r.token).filter(Boolean));
   const matches = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -936,7 +936,7 @@ function Campaigns({ project }: { project: Project }) {
   const s = useSearchState();
   const status = (s.get("status") ?? "") as S["CampaignStatus"] | "";
   const page = Number(s.get("page") ?? 1);
-  const q = useCampaigns(project.id, { status: status || null, page, page_size: 50 }, { enabled: caps.view || caps.campaign });
+  const q = useCampaigns(project.id, { status: status ? [status] : null, page, page_size: 50 }, { enabled: caps.view || caps.campaign });
   const [creating, setCreating] = useState(false);
   if (!caps.view && !caps.campaign) return <Alert tone="info">{tc("notAllowed")}</Alert>;
   return (
@@ -1021,7 +1021,7 @@ function CampaignDialog({ project, c, onClose }: { project: Project; c?: S["Camp
   const opts = useProjectOptions(project.id);
   const router = useRouter();
   const refresh = useFieldRefresh();
-  const topics = useTopics({ status: "published" });
+  const topics = useTopics({ status: ["published"] });
   const [topic, setTopic] = useState(c?.topic_id ?? "");
   const [reason, setReason] = useState<string>(c?.reason ?? "incident");
   const [ref, setRef] = useState(c?.reason_ref ?? "");

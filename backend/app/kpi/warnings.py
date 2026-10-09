@@ -186,6 +186,7 @@ def evaluate_engine(
         out += heat_warnings(engine, project_id, tree, m, label_en, label_ar, who_en, who_ar)
         out += emergency_warnings(engine, project_id, tree, m, label_en, label_ar, who_en, who_ar)
         out += field_warnings(engine, project_id, tree, m, label_en, label_ar, who_en, who_ar)
+        out += env_warnings(engine, project_id, tree, m, label_en, label_ar, who_en, who_ar)
     return out
 
 
@@ -756,6 +757,139 @@ def field_warnings(
                  Input("k117_numerator", "Pairs met on time", "أزواج في الموعد", Decimal(ok), 0),
                  Input("k117_denominator", "Pairs due", "الأزواج المستحقة",
                        Decimal(len(pairs)), 0)],
+            )
+        )  # fmt: skip
+    return out
+
+
+def env_warnings(
+    engine: Engine,
+    project_id: uuid.UUID,
+    tree: EngFact | None,
+    m: Window,
+    label_en: str,
+    label_ar: str,
+    who_en: str,
+    who_ar: str,
+) -> list[Warn]:
+    """E22-E23 (6e-environmental §6.8); unrounded comparisons. K-118, K-122, storage deadlines and
+    authority complaints at project level only. T13 inputs: numerators, denominators, thresholds
+    and record numbers only."""
+    from app.core.env_enums import ComplaintChannel, ComplaintStatus  # noqa: PLC0415
+    from app.kpi import env as ke  # noqa: PLC0415
+    from app.models import EnvComplaint, WasteStorageArea  # noqa: PLC0415
+    from app.services.env import common as ec  # noqa: PLC0415
+    from app.services.env import waste  # noqa: PLC0415
+
+    f = ke.efacts(engine)
+    if f is None or project_id not in f.pids:
+        return []
+    db = f.db
+    c = ec.cfg(db, project_id)
+    out: list[Warn] = []
+    a = engine.aggregate(m)
+    project_level = tree is None
+
+    def pct(num: Decimal | int, den: Decimal | int) -> Decimal | None:
+        return Decimal(num) / Decimal(den) * HUNDRED if den else None
+
+    k118 = k122 = None
+    n118 = d118 = 0
+    haz: list[str] = []
+    if project_level:
+        n118, d118, _exp = ke.permit_stats(db, [project_id], m.end)
+        k118 = pct(n118, d118)
+        ss = ke.slots(engine, m)
+        k122 = pct(sum(1 for s in ss if s[2]), len(ss))
+        for ar in db.scalars(
+            select(WasteStorageArea).where(WasteStorageArea.project_id == project_id)
+        ):
+            haz += [
+                f"{ar.area_code}·{h.stream_code}"
+                for h in waste.haz_deadlines(db, ar, m.end)
+                if m.start <= h.deadline < m.end
+            ]
+    on, n121, _late = ke.custody(engine, m)
+    k121 = pct(on, n121)
+    long_cons = sorted(
+        x.no
+        for x in ke.consignments(f)
+        if x.pid == project_id
+        and x.status not in ("voided", "rejected")
+        and x.d < m.end - timedelta(days=30)
+        and (x.received is None or x.received > m.end)
+        and engine.flt.eng_ok(x.eng)
+    )
+    t121, t122 = c.dec("custody_warning_pct"), c.dec("monitoring_warning_pct")
+    if (
+        (k118 is not None and k118 < 100)
+        or (n121 >= 10 and k121 is not None and k121 < t121)
+        or (k122 is not None and k122 < t122)
+        or haz
+        or long_cons
+    ):
+        recs = haz + long_cons
+        out.append(
+            Warn(
+                E.E22, m, project_id, tree,
+                f"Environmental compliance below target in {label_en}{who_en}"
+                + (f": {', '.join(recs)}" if recs else ""),
+                f"الالتزام البيئي دون المستهدف في {label_ar}{who_ar}",
+                [Input("k118", "Permit compliance at month end", "الالتزام بالتصاريح", k118, 1,
+                       " %"),
+                 Input("k118_numerator", "In force", "سارية", Decimal(n118), 0),
+                 Input("k118_denominator", "Applicable", "مطلوبة", Decimal(d118), 0),
+                 Input("k121", "Custody on time", "الاستلام في الموعد", k121, 1, " %"),
+                 Input("k121_numerator", "On time", "في الموعد", Decimal(on), 0),
+                 Input("k121_denominator", "Due", "المستحقة", Decimal(n121), 0),
+                 Input("k121_threshold_pct", "Custody threshold", "حد الاستلام", t121, 1, " %"),
+                 Input("k122", "Monitoring compliance", "الالتزام بخطة الرصد", k122, 1, " %"),
+                 Input("k122_threshold_pct", "Monitoring threshold", "حد الرصد", t122, 1, " %"),
+                 Input("haz_deadlines_passed", "Hazardous storage deadlines passed",
+                       "تجاوز مهلة التخزين", Decimal(len(haz)), 0),
+                 Input("dispatched_over_30d", "Consignments dispatched > 30 days",
+                       "إشعارات مرسلة منذ أكثر من 30 يوماً", Decimal(len(long_cons)), 0)],
+            )
+        )  # fmt: skip
+    k123 = engine.result(KpiMetric.K123, a).value or Decimal(0)
+    spl = [s for s in ke.spills(engine, m) if s.project_id == project_id and s.reportable]
+    k119 = engine.result(KpiMetric.K119, a).value or Decimal(0)
+    k120 = engine.result(KpiMetric.K120, a).value
+    tdiv = c.dec("diversion_target_pct")
+    tcount = int(c["exceedance_warning_count"])
+    auth: list[str] = []
+    if project_level:
+        auth = sorted(
+            x.complaint_no
+            for x in db.scalars(
+                select(EnvComplaint).where(
+                    EnvComplaint.project_id == project_id,
+                    EnvComplaint.channel == ComplaintChannel.via_authority,
+                    EnvComplaint.status != ComplaintStatus.voided,
+                    EnvComplaint.received_date >= m.start,
+                    EnvComplaint.received_date <= m.end,
+                )
+            )
+        )
+    low_div = k119 >= 10 and k120 is not None and k120 < tdiv
+    if k123 >= tcount or spl or low_div or auth:
+        recs = sorted(s.spill_no for s in spl) + auth
+        out.append(
+            Warn(
+                E.E23, m, project_id, tree,
+                f"Environmental performance warning in {label_en}{who_en}"
+                + (f": {', '.join(recs)}" if recs else ""),
+                f"إنذار الأداء البيئي في {label_ar}{who_ar}",
+                [Input("k123", "Project-caused exceedances", "التجاوزات بسبب المشروع", k123, 0),
+                 Input("k123_threshold", "Exceedance threshold", "حد التجاوزات",
+                       Decimal(tcount), 0),
+                 Input("reportable_spills", "Reportable spills", "انسكابات واجبة الإبلاغ",
+                       Decimal(len(spl)), 0),
+                 Input("k119_t", "Waste generated (t)", "النفايات المتولدة", k119, 1),
+                 Input("k120", "Diversion rate", "نسبة التحويل", k120, 1, " %"),
+                 Input("k120_target_pct", "Diversion target", "هدف التحويل", tdiv, 1, " %"),
+                 Input("authority_complaints", "Complaints via an authority",
+                       "شكاوى عن طريق جهة رسمية", Decimal(len(auth)), 0)],
             )
         )  # fmt: skip
     return out

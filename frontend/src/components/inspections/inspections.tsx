@@ -986,7 +986,7 @@ export function PlanDetail({ id }: { id: string }) {
             </FieldItem>
             <FieldItem label={t("fields.rotation")}>
               {te(`fdRotation.${p.rotation}`)}
-              {p.rotation_list.length ? ` · ${p.rotation_list.length}` : ""}
+              {p.rotation_list?.length ? ` · ${p.rotation_list.length}` : ""}
             </FieldItem>
           </FieldList>
           {p.without_checklist ? (

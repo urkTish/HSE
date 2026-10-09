@@ -134,10 +134,10 @@ def readiness(
         r.check_due = a.registered_on
     if last is None or (r.check_due is not None and d > r.check_due):
         r.reasons.append(NR.CHECK_OVERDUE)
-    if a.used_at is not None and ec.local_day(a.used_at) <= d:
-        # 6c v1.2 / 6e SPL-5: used in a spill, not ready until a later passing check
-        if last is None or last.checked_at <= a.used_at or last.result == CheckResult.fail:
-            r.reasons.append(NR.USED_REPLENISH)
+    # 6c v1.2 / 6e SPL-5: used in a spill, not ready until a later passing check
+    used = a.used_at if a.used_at is not None and ec.local_day(a.used_at) <= d else None
+    if used and (last is None or last.checked_at <= used or last.result == CheckResult.fail):
+        r.reasons.append(NR.USED_REPLENISH)
     r.service_due = service_due(a)
     if ref.ASSET_TYPES[a.asset_type][3] is not None and (
         r.service_due is None or d > r.service_due

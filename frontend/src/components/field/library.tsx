@@ -48,7 +48,7 @@ export function TemplatesPage() {
   const s = useSearchState();
   const kind = (s.get("kind") ?? "") as S["TemplateKind"] | "";
   const status = (s.get("status") ?? "") as S["VersionStatus"] | "";
-  const q = useTemplates({ kind: kind || null, status: status || null }, { enabled: caps.libraryView });
+  const q = useTemplates({ kind: kind || null, status: status ? [status] : null }, { enabled: caps.libraryView });
   const [creating, setCreating] = useState(false);
   if (!caps.libraryView) return <Alert tone="info">{tc("notAllowed")}</Alert>;
   const items = q.data?.items ?? [];
@@ -704,7 +704,7 @@ export function TopicsPage() {
   const s = useSearchState();
   const cat = (s.get("category") ?? "") as S["TopicCategory"] | "";
   const status = (s.get("status") ?? "") as S["VersionStatus"] | "";
-  const q = useTopics({ category: cat || null, status: status || null }, { enabled: caps.libraryView });
+  const q = useTopics({ category: cat || null, status: status ? [status] : null }, { enabled: caps.libraryView });
   const [creating, setCreating] = useState(false);
   if (!caps.libraryView) return <Alert tone="info">{tc("notAllowed")}</Alert>;
   const items = q.data?.items ?? [];

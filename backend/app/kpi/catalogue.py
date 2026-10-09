@@ -59,8 +59,8 @@ PHASE6D_PENDING: frozenset[KpiMetric] = frozenset()
 PHASE6E_METRICS: frozenset[KpiMetric] = frozenset(
     {M.K118, M.K119, M.K120, M.K121, M.K122, M.K123, M.K124, M.K125, M.K126}
 )
-PHASE6E_PENDING: frozenset[KpiMetric] = PHASE6E_METRICS
-"""Environmental KPIs not computed yet (stage 1)."""
+PHASE6E_PENDING: frozenset[KpiMetric] = frozenset()
+"""Environmental KPIs not computed yet (none since Phase 6e stage 2)."""
 _PENDING = (
     PHASE2_PENDING | PHASE3_PENDING | PHASE4_PENDING | PHASE5_PENDING | PHASE6A_PENDING
     | PHASE6B_PENDING | PHASE6C_PENDING | PHASE6D_PENDING | PHASE6E_PENDING
