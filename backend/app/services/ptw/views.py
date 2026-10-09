@@ -1030,6 +1030,9 @@ def permit_read(
         scope_en=permit.scope_en,
         scope_ar=permit.scope_ar,
         exposure=permit.exposure,
+        heat_workload=_heat_workload(permit),
+        heat_clothing=permit.heat_clothing or None,
+        heat_hood=bool(permit.heat_hood),
         flammables_in_use=permit.flammables_in_use,
         combustion_engine_plant=permit.combustion_engine_plant,
         valid_from_at=permit.valid_from_at,
@@ -1142,3 +1145,13 @@ def list_item(db: Session, permit: Permit, refs: Refs, at: datetime) -> sch.Perm
 
 
 _ = (PermitDocument, PermitEquipment)
+
+
+def _heat_workload(permit: Permit) -> Any:
+    """6b PH-1: the effective workload of an outdoor permit (type default when unset)."""
+    from app.core.ptw_enums import Exposure  # noqa: PLC0415
+    from app.services.heat import ptw as heat_ptw  # noqa: PLC0415
+
+    if permit.exposure not in (Exposure.outdoor_direct_sun, Exposure.outdoor_shaded):
+        return None
+    return heat_ptw.workload(permit)

@@ -43,12 +43,14 @@ def test_AC54_hs7(api: Api, db: Session, code: str) -> None:
         assert kpi(body, metric)["display"].startswith(display), (metric, kpi(body, metric))
     k100, k101, k103 = (comps(kpi(body, m)) for m in ("K100", "K101", "K103"))
     if code == "ANIA-EXP":
-        assert k100["rate_per_100_patrols"] == "2.86" and k101["station_days_checked_pct"] == "96.7 %"
+        assert k100["rate_per_100_patrols"] == "2.86"
+        assert k101["station_days_checked_pct"] == "96.7 %"
         assert (k103["rate"], k103["recordable"], k103["recordable_rate"]) == ("0.23", "1", "0.23")
         k97 = kpi(body, "K97")
         assert (k97["numerator"], k97["denominator"]) == ("640", "660")
     else:
-        assert k100["rate_per_100_patrols"] == "0.00" and k101["station_days_checked_pct"] == "100.0 %"
+        assert k100["rate_per_100_patrols"] == "0.00"
+        assert k101["station_days_checked_pct"] == "100.0 %"
     assert body["breakdowns"], "zone/contractor breakdowns"
 
 

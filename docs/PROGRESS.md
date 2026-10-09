@@ -1,10 +1,9 @@
 # Progress
 
 ## Current
-- Phase: 6a — Occupational health & medical fitness (Phase 5 Training is PARKED, see below)
-- Module: occupational health (spec `docs/specs/6a-occupational-health.md` v1.0)
-- Step: Design done (design pass 2026-10-09, `docs/design/phase-6a-findings.md`; p6a e2e green, screenshots regenerated); phase demo next
-- Next module spec: 6b spec v1.0 written (`docs/specs/6b-heat-stress.md`, 61 ACs; earlier-spec changes in its §11 not yet applied)
+- Phase: 6b — Heat stress (Phase 5 Training is PARKED, see below; Phase 6a design done, demo pending)
+- Module: heat stress (spec `docs/specs/6b-heat-stress.md` v1.0, §11 earlier-spec changes applied)
+- Phase 6b step = Backend done (contract v0.8.0, stage 2 built and tested); frontend next
 
 ## Phase log
 - Phase 0 — Foundation: built, e2e green, design pass done (2026-10-05). The user asked to continue phase after phase without per-phase approval; open questions are collected below for a single review.
@@ -14,6 +13,14 @@
 - Phase 4 — Third-party certification: built, e2e green, design pass done (2026-10-08).
 
 ## Done
+
+### Backend — Phase 6b heat stress (contract v0.8.0, stage 2)
+- Services under `app/services/heat/`: settings and regime table (§3.14), instruments, monitoring points, weather stations (device sessions), WBGT readings (HS1, entry / station / void), zone state computed on read (WR-8/WR-9, HS3), heat board, alerts (HA-1…HA-6), acclimatisation plans (HS4a–c, prior experience, period start, season end), welfare checks and rest stations, midday-ban patrols and exemptions, heat-illness log (HI-1…HI-4, HS6 context, review, P6b-2), action panel (11 items), season report (draft / issue / re-issue).
+- Phase 3 wiring: permit `heat_workload` / `heat_clothing` / `heat_hood`, WBGT_READING_REQUIRED and HEAT_STOP blockers, heat_stress_stop suspension and receiver resume, PH-6 eligibility.
+- KPIs K-97…K-103 (`app/kpi/heat.py`, `GET /kpi/heat-stress` with zone / site / contractor / month breakdowns, "<3" suppression); warnings E16 / E17.
+- Jobs: `heat_daily` 00:07, `heat_alerts` 07:04, `heat_minute` every 60 s.
+- Seed `app/seed_heat.py` (Appendix A; HS7 / HS8 figures verified).
+- Tests: `test_heat_config`, `test_heat_readings`, `test_heat_plans`, `test_heat_welfare_ban`, `test_heat_log`, `test_heat_ptw`, `test_heat_kpis` (32 tests, plus the stage 1 contract test); defaults D-143…D-149.
 
 ### Frontend — Phase 6a occupational health (contract v0.7.0, integrated with the stage 2 backend)
 - Screens (EN/AR, RTL), all under the new "Occupational health" nav section:
@@ -697,6 +704,7 @@
 - Phase 1 demo; then Phase 2 per the roadmap
 
 ## Parked
+- **Phase 6b backend (2026-10-09):** not built or not tested yet: AI tool T19 and T9 heat dimensions, charts C25–C27 data, heat exports (capability 176), expiring-items / dashboard band integration, WR-7 permit-only readings, GP-6 (heat training gap in `train/gaps.py`), retention purge (AC60, untested), season report `heat_awr_compliance` (null), AC61 i18n check. ACs 18, 19, 21, 25, 26, 28, 46, 50 and the AC20 resume steps have no dedicated backend test.
 - **Full e2e run after Phase 6a frontend (2026-10-09):** 203 passed, 8 failed, 7 skipped, 3 did not run (43.9 min). All p6a specs green. Failures outside 6a, left as TODO: p1-dashboard ×4 and p4-dashboard AC103 (dashboard load timeouts, as parked for Phase 5); p2-smoke (networkidle timeout); p5-smoke `/training-imports` shows the raw key `training.imports.scansHint` (the message contains `<certificate_no>`, which ICU reads as a tag); p2-settings HK-4 expects "block without a registered provider" to be refused for `medical_fitness`, but the 6a seed now registers a medical provider, so the test needs another kind or project.
 - **Phase 6a backend (2026-10-08):** not built or not tested yet: AI tools T18 / T9 `medical_gap_at_event` (AC106/107/108), the monthly E14 / E15 warning wiring (AC103/104), register exports with tier columns (AC124), retention / anonymisation of scans and fitness lines (AC126/127, untested), action-panel items for 6a, charts C22–C24 data, the field-check / competence Fitness section (AC133). ACs 19, 34, 45, 49, 56, 96, 98, 110, 112-113, 115, 125, 130-132, 134-135 have no dedicated backend test (several are frontend or covered by shared Phase 4 mechanisms).
 - **Phase 5 Training (parked 2026-10-08 at the HSE Manager's request, to resume after Phase 6):** backend and frontend built against contract v0.6.0; remaining: ~47 ACs without backend tests, 2 action-panel items, dashboard cold-load speed (~7 s), frontend e2e not yet green (dashboard timeouts), and the Phase 5 design pass.
@@ -710,6 +718,8 @@
 - Per-entity retention/anonymisation (P7) — no personal-data entities with retention defaults in Phase 0 beyond the audit log.
 
 ## Open questions for the HSE Manager
+- (Backend, Phase 6b, AC34 / AC53) The 6a matrix gives HSE Reps capabilities 156 and 29, so Ahmed sees the plan trigger and worker names that AC34 / AC53 say are hidden from him (D-149). Change the ACs or the matrix?
+- (Backend, Phase 6b, Appendix A) Seed CA refs for MBP 188 / 214 are new 5-digit refs, not the spec's 0598 / 0611; Phase 1 June–August cases were re-natured to heat_exhaustion to match HS8 (D-148). Accept?
 - (Backend, Phase 6a, AC59) A held worker who is a non-key crew member (Kamal, entrant on PTW-0413) is excluded from the crew by the 3-ptw rule; the permit is not suspended (D-126). Should a medical hard stop on any crew member suspend the permit?
 - (Backend, Phase 6a, A.9) The Phase 2–5 bulk population gives ANIA-EXP 5,105 counted requirements, not the A.9 split; K-89…K-96 displays match MF4 (D-121). Accept, or re-base A.9 on the seed?
 - (Backend, Phase 5, AC15) The seeded QUICKTRAIN SRCA accreditation was never found on the SRCA register (Appendix A.3), so a QUICKTRAIN FIRST-AID record completed 2026-09-21 is refused for `ACCREDITATION_INVALID`, not accepted as AC15 says. The suspension date rule itself works (09-22 → `PROVIDER_SUSPENDED`). Mark the accreditation as register-checked in the seed, or change AC15?

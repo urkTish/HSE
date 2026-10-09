@@ -777,10 +777,48 @@ def _heat_cases(ctx: Ctx) -> dict[str, list[tuple[InjuryCase, Incident]]]:
     return out
 
 
+def _heat_awr(ctx: Ctx) -> None:
+    """HS6: Ganesh's HEAT-AWR is in force on 2026-09-22. The Phase 5 seed gives him a record
+    completed 2026-09-24 only, so the previous year's record (2025-09-24 → 2026-09-23) is added
+    (a clone of that record with its own number and certificate)."""
+    from sqlalchemy import func  # noqa: PLC0415
+
+    from app.models import TrainingRecord  # noqa: PLC0415
+
+    db = ctx.db
+    g = db.scalar(select(Worker).where(Worker.worker_no == "WKR-000033"))
+    if g is None:
+        return
+    cur = db.scalar(
+        select(TrainingRecord).where(
+            TrainingRecord.worker_id == g.id, TrainingRecord.course_code == "HEAT-AWR"
+        )
+    )
+    if cur is None or cur.completed_on <= date(2026, 9, 22):
+        return
+    seq = int(db.scalar(select(func.max(TrainingRecord.seq))) or 0) + 1
+    cols = {c.key: getattr(cur, c.key) for c in TrainingRecord.__mapper__.column_attrs}
+    for k, v in list(cols.items()):  # the year-earlier record was submitted/reviewed a year ago
+        if isinstance(v, datetime):
+            cols[k] = v - timedelta(days=365)
+    cols.update(
+        id=uuid.uuid4(),
+        seq=seq,
+        record_no=f"TRR-{seq:06d}",
+        certificate_no=f"{cur.certificate_no}-2025"[:40],
+        completed_on=date(2025, 9, 24),
+        valid_until=date(2026, 9, 23),
+        printed_expiry=date(2026, 9, 23) if cur.printed_expiry else None,
+    )
+    db.add(TrainingRecord(**cols))
+    db.flush()
+
+
 def _log(ctx: Ctx) -> None:
     from app.services.heat import log as heat_log  # noqa: PLC0415
 
     db = ctx.db
+    _heat_awr(ctx)
     sept_case = None
     for c, inc in _cases(ctx, "ANIA-EXP"):
         if inc.occurred_date == date(2026, 9, 22) and c.nature.value == "heat_exhaustion":
