@@ -9,7 +9,7 @@ P = {
       "registerHint": ["The provider's own register, sent by email. Records get a confirmed verification and are still reviewed.", "سجل الجهة نفسها مرسلاً بالبريد. تحصل السجلات على تحقق مؤكد وتبقى خاضعة للمراجعة."],
       "session": ["Session", "الجلسة"], "sessionHint": ["Delivered sessions only. Closing stays a separate step.", "الجلسات المنفذة فقط. يبقى الإغلاق خطوة منفصلة."],
       "file": ["File", "الملف"], "fileHint": [".csv or .xlsx, up to 5 MB and 5,000 rows. English or Arabic headers.", "‎.csv أو ‎.xlsx، حتى 5 ميغابايت و5,000 صف. عناوين إنجليزية أو عربية."],
-      "scansZip": ["Certificate scans (.zip)", "صور الشهادات (‎.zip)"], "scansHint": ["Optional. Files named <certificate_no>.pdf, .jpg or .png. Rows without a scan stay Draft.", "اختياري. ملفات باسم <رقم_الشهادة>.pdf أو ‎.jpg أو ‎.png. تبقى الصفوف دون صورة مسودة."],
+      "scansZip": ["Certificate scans (.zip)", "صور الشهادات (‎.zip)"], "scansHint": ["Optional. Files named [certificate_no].pdf, .jpg or .png. Rows without a scan stay Draft.", "اختياري. ملفات باسم [رقم_الشهادة].pdf أو ‎.jpg أو ‎.png. تبقى الصفوف دون صورة مسودة."],
       "provider": ["Provider", "الجهة"],
       "evidence": ["Provider's email (PDF / EML)", "بريد الجهة (PDF / EML)"], "evidenceHint": ["Must come from one of the provider's verification domains.", "يجب أن يكون من أحد نطاقات التحقق الخاصة بالجهة."],
       "templates": ["Templates", "القوالب"], "excelEn": ["Excel (English)", "Excel (إنجليزي)"], "excelAr": ["Excel (Arabic)", "Excel (عربي)"],
