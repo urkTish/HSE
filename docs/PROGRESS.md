@@ -6,6 +6,7 @@
 - Phase 6b step = Design done (findings `docs/design/phase-6b-findings.md`; contract v0.8.0); phase demo next
 - Phase 6c — Emergency preparedness & drills (spec `docs/specs/6c-emergency-drills.md` v1.0, §11 earlier-spec changes applied; contract v0.9.0)
 - Phase 6c step = Backend done (stage 2); frontend next
+- Phase 6d — Field assurance (checklists, audits, toolbox talks): spec `docs/specs/6d-field-assurance.md` v1.0 written (61 ACs; §11 earlier-spec changes not yet applied); contract next
 
 ## Phase log
 - Phase 0 — Foundation: built, e2e green, design pass done (2026-10-05). The user asked to continue phase after phase without per-phase approval; open questions are collected below for a single review.
