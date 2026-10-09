@@ -1,6 +1,6 @@
 "use client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Plus, Replace } from "lucide-react";
+import { Pencil, Plus, Replace, TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -703,7 +703,7 @@ function ObstacleList({ project }: { project: Schemas["ProjectRead"] }) {
                     <span data-testid="obstacle-row-status" data-status={o.status}>
                       <StatusBadge status={o.status} label={te(`obstacleStatus.${o.status}`)} />
                     </span>
-                    {o.system_suspended ? <span className="block text-xs text-warning">{t("systemSuspended")}</span> : null}
+                    {o.system_suspended ? <span className="flex items-center gap-1 text-xs text-warning font-medium"><TriangleAlert aria-hidden className="size-3.5 shrink-0" />{t("systemSuspended")}</span> : null}
                   </TD>
                 </TR>
               ))}

@@ -38,6 +38,7 @@ import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
 import { AirportOnly, Code, DaysLeft, DeploymentPicker, EligibilityItems, StepDialog, SubNav, ValidityBadge, ValidityLine, personName } from "./common";
 import { CredentialPanel } from "./credential-actions";
+import { StackedDate } from "@/components/medical/common";
 
 const PAGE_SIZE = 50;
 type App = Schemas["PassApplicationRead"];
@@ -70,7 +71,6 @@ function ApplicationList({ project }: { project: Schemas["ProjectRead"] }) {
   const tc = useTranslations("common");
   const me = useMeData();
   const locale = useLocale();
-  const { date } = useFormatters(project.id);
   const opts = useProjectOptions(project.id);
   const s = useSearchState();
   const page = s.getInt("page", 1) ?? 1;
@@ -156,7 +156,7 @@ function ApplicationList({ project }: { project: Schemas["ProjectRead"] }) {
                   <TD label={t("fields.requested_area_codes")}>
                     <span className="ltr">{a.requested_area_codes.join(", ")}</span>
                   </TD>
-                  <TD label={t("fields.requested_valid_until")}>{date(a.requested_valid_until)}</TD>
+                  <TD label={t("fields.requested_valid_until")}><StackedDate v={a.requested_valid_until} /></TD>
                   <TD label={t("daysLodged")}>
                     {a.days_lodged != null ? a.days_lodged : "—"}
                     {a.stale ? (
@@ -691,7 +691,6 @@ function PassList({ project }: { project: Schemas["ProjectRead"] }) {
   const tc = useTranslations("common");
   const me = useMeData();
   const locale = useLocale();
-  const { date } = useFormatters(project.id);
   const opts = useProjectOptions(project.id);
   const cats = usePassCategories(project.id);
   const areas = usePassAreas(project.id);
@@ -765,10 +764,13 @@ function PassList({ project }: { project: Schemas["ProjectRead"] }) {
                   <TD label={t("fields.area_codes")}>
                     <span className="ltr">{p.area_codes.join(", ")}</span>
                   </TD>
-                  <TD label={t("fields.card_expiry_date")}>{date(p.card_expiry_date)}</TD>
+                  <TD label={t("fields.card_expiry_date")}><StackedDate v={p.card_expiry_date} /></TD>
                   <TD label={t("effectiveUntil")}>
-                    {date(p.validity.effective_valid_until)} {p.validity.validity_status === "active" ? <DaysLeft days={p.validity.days_left} /> : null}
-                    {p.validity.limiting_factor ? <span className="block text-xs text-muted-foreground">{te(`limitingFactor.${p.validity.limiting_factor}`)}</span> : null}
+                    <span className="flex flex-col items-start gap-0.5">
+                      <StackedDate v={p.validity.effective_valid_until} />
+                      {p.validity.validity_status === "active" ? <DaysLeft days={p.validity.days_left} /> : null}
+                      {p.validity.limiting_factor ? <span className="text-xs text-muted-foreground">{te(`limitingFactor.${p.validity.limiting_factor}`)}</span> : null}
+                    </span>
                   </TD>
                   <TD label={t("custody")}>
                     {p.validity.custody_status ? <StatusBadge status={p.validity.return_overdue ? "return_overdue" : p.validity.custody_status} label={p.validity.return_overdue ? t("returnOverdue") : te(`custodyStatus.${p.validity.custody_status}`)} /> : "—"}

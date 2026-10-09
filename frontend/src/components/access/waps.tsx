@@ -92,6 +92,7 @@ import {
   VehicleSelect,
   personName,
 } from "./common";
+import { StackedDate } from "@/components/medical/common";
 
 const PAGE_SIZE = 50;
 type Wap = Schemas["WapRead"];
@@ -174,7 +175,6 @@ function WapList({ project }: { project: Schemas["ProjectRead"] }) {
   const te = useTranslations("enums");
   const tc = useTranslations("common");
   const me = useMeData();
-  const { date } = useFormatters(project.id);
   const opts = useProjectOptions(project.id);
   const s = useSearchState();
   const page = s.getInt("page", 1) ?? 1;
@@ -312,7 +312,11 @@ function WapList({ project }: { project: Schemas["ProjectRead"] }) {
                   </TD>
                   <TD label={tc("contractor")}>{w.engagement.short_code}</TD>
                   <TD label={t("fields.dates")}>
-                    {date(w.valid_from)} – {date(w.valid_to)}
+                    <span className="inline-flex flex-wrap items-start gap-x-1.5 gap-y-1">
+                      <StackedDate v={w.valid_from} />
+                      <span aria-hidden>–</span>
+                      <StackedDate v={w.valid_to} />
+                    </span>
                   </TD>
                   <TD label={t("fields.windows")}>
                     <WindowsText windows={w.windows} />
