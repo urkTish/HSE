@@ -1,5 +1,5 @@
 "use client";
-import { CheckCircle2, ClipboardCheck, Hourglass, OctagonAlert, Plus, Trash2, XCircle } from "lucide-react";
+import { ArrowDown, CheckCircle2, ClipboardCheck, Hourglass, OctagonAlert, Plus, Send, Trash2, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { Alert } from "@/components/ui/alert";
@@ -29,7 +29,8 @@ import { cacheHoursOf, newUuid, submitWithOutbox, useFieldOffline } from "@/lib/
 import { useSearchState } from "@/lib/url-state";
 import { cn } from "@/lib/utils";
 import { CriticalMark, FieldInspectSubNav, NoNamesHint, PhotoPicker, ResultBadge, Score, useBi, useFieldCaps, useFieldRef } from "./common";
-import { OfflinePackCard, OutboxPanel } from "./offline";
+import { OfflinePackCard, OfflineSubmitNote, OutboxPanel } from "./offline";
+import { useOnline } from "@/lib/local-draft";
 import { fromLocalInput, nowLocal } from "@/components/emergency/common";
 
 type S = Schemas;
@@ -138,9 +139,13 @@ export function toAnswerInput(it: Item, a: AnswerState | undefined, audit: boole
   return out;
 }
 
-function AnswerChoices({ it, a, onPick }: { it: Item; a: AnswerState; onPick: (v: string) => void }) {
+function AnswerChoices({ it, a, onPick, audit }: { it: Item; a: AnswerState; onPick: (v: string) => void; audit: boolean }) {
   const te = useTranslations("enums");
+  const td = useTranslations("fdDesign");
   const bi = useBi();
+  const { severity: sevLabel } = useFieldRef();
+  // Audits (AUD-2): say on the button which finding grade a rating raises, before it is tapped.
+  const consequence = (v: string) => (audit && it.item_type === "rating_0_3" && v !== "3" ? td("consequence", { grade: sevLabel(baseSeverity(it, { ...a, answer: v }, true)) }) : null);
   const opts: { value: string; label: string; bad?: boolean }[] =
     it.item_type === "yes_no"
       ? [
@@ -152,9 +157,15 @@ function AnswerChoices({ it, a, onPick }: { it: Item; a: AnswerState; onPick: (v
         : (it.options ?? []).map((o) => ({ value: o.code, label: bi(o.label_en, o.label_ar), bad: o.maps_to === "non_compliant" }));
   if (it.na_allowed) opts.push({ value: "na", label: te("fdAnswer.na") });
   return (
-    <div role="radiogroup" className={cn("grid gap-2", opts.length <= 3 ? "grid-cols-3" : "grid-cols-2 sm:grid-cols-4")} data-testid={`ans-${it.item_code}`}>
+    <div
+      role="radiogroup"
+      aria-label={bi(it.text_en, it.text_ar)}
+      className={cn("grid gap-2", opts.length === 2 ? "grid-cols-2" : opts.length === 3 ? "grid-cols-3" : "grid-cols-2 sm:grid-cols-4")}
+      data-testid={`ans-${it.item_code}`}
+    >
       {opts.map((o) => {
         const on = a.answer === o.value;
+        const c = consequence(o.value);
         return (
           <Button
             key={o.value}
@@ -162,12 +173,15 @@ function AnswerChoices({ it, a, onPick }: { it: Item; a: AnswerState; onPick: (v
             role="radio"
             aria-checked={on}
             variant={on ? (o.bad ? "destructive" : "default") : "outline"}
-            className="h-auto min-h-11 justify-start gap-2 px-2 py-2 text-start text-sm whitespace-normal"
+            className={cn("h-auto min-h-12 justify-start gap-2 px-3 py-2 text-start text-base whitespace-normal", !on && o.bad && "border-danger/40")}
             onClick={() => onPick(o.value)}
             data-testid={`ans-${it.item_code}-${o.value}`}
           >
             <ChoiceMark on={on} />
-            {o.label}
+            <span className="flex min-w-0 flex-col">
+              <span className="font-medium">{o.label}</span>
+              {c ? <span className={cn("text-xs", on ? "opacity-90" : "text-muted-foreground")}>{c}</span> : null}
+            </span>
           </Button>
         );
       })}
@@ -206,7 +220,7 @@ export function ItemAnswer({ it, a, onChange, audit = false, readOnly = false }:
         {it.critical ? <CriticalMark /> : null}
       </div>
       {readOnly ? null : it.item_type === "yes_no" || it.item_type === "rating_0_3" || it.item_type === "single_select" ? (
-        <AnswerChoices it={it} a={a} onPick={(v) => set({ answer: v, severity: "" })} />
+        <AnswerChoices it={it} a={a} audit={audit} onPick={(v) => set({ answer: v, severity: "" })} />
       ) : it.item_type === "numeric" ? (
         <div className="flex flex-wrap items-end gap-2">
           <FormField id={`num-${it.item_code}`} label={t("value", { unit: it.numeric_rule?.unit ?? "" })} hint={it.numeric_rule ? t("range", { min: it.numeric_rule.min, max: it.numeric_rule.max, unit: it.numeric_rule.unit }) : undefined}>
@@ -728,10 +742,85 @@ function Answering({ project, start, onBack, onDone }: { project: Project; start
         </Alert>
       ) : null}
       <MutationError error={error} />
-      {!ready ? <p className="text-sm text-muted-foreground">{t("toSubmit")}</p> : null}
-      <Button className="min-h-12 text-base" disabled={busy || !ready} onClick={() => void submit()} data-testid="run-submit">
-        {busy ? t("sending") : t("submit")}
-      </Button>
+      <RunBar
+        done={doneCount}
+        total={scored.length}
+        failingCount={all.filter((i) => failing(i, answers[i.item_code])).length}
+        open={all.filter((i) => !answered(i, answers[i.item_code])).map((i) => i.item_code)}
+        incomplete={all.filter((i) => answered(i, answers[i.item_code]) && !answerReady(i, answers[i.item_code])).map((i) => i.item_code)}
+        manualMissing={!manual.every((m) => m.description.trim().length > 0)}
+        stopMissing={stopItems.length > 0 && !(activity.trim().length > 0 && Boolean(instructedAt))}
+        ready={ready}
+        busy={busy}
+        onSubmit={() => void submit()}
+      />
+    </div>
+  );
+}
+
+function scrollToTestId(sel: string) {
+  const el = document.querySelector<HTMLElement>(sel);
+  if (!el) return;
+  el.scrollIntoView({ behavior: "smooth", block: "center" });
+  const f = el.querySelector<HTMLElement>("button[role=radio], textarea, input");
+  f?.focus({ preventScroll: true });
+}
+
+/**
+ * Sticky at the bottom of the phone screen while answering: progress, what still blocks sending (with a jump to the
+ * next item), and the submit button under the thumb. Nothing here is new logic: the counts are the ones the page used.
+ */
+function RunBar(p: { done: number; total: number; failingCount: number; open: string[]; incomplete: string[]; manualMissing: boolean; stopMissing: boolean; ready: boolean; busy: boolean; onSubmit: () => void }) {
+  const t = useTranslations("field.run");
+  const td = useTranslations("fdDesign");
+  const online = useOnline();
+  const pct = p.total ? Math.round((p.done / p.total) * 100) : 100;
+  const next = p.open[0] ?? p.incomplete[0] ?? null;
+  const goNext = () => {
+    if (next) scrollToTestId(`[data-testid="run-item"][data-code="${next}"]`);
+    else if (p.manualMissing) scrollToTestId('[data-testid="manual-findings"]');
+    else if (p.stopMissing) scrollToTestId('[data-testid="stop-fields"]');
+  };
+  return (
+    <div className="sticky bottom-0 z-20 -mx-1 flex flex-col gap-2 rounded-t-xl border border-b-0 bg-surface/95 p-3 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-surface/90" data-testid="run-bar">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+        <span className="font-semibold tabular-nums">{td("answeredOf", { done: p.done, total: p.total })}</span>
+        {p.failingCount ? (
+          <span className="inline-flex items-center gap-1 font-medium text-danger" data-testid="run-failing" data-n={p.failingCount}>
+            <XCircle aria-hidden className="size-4" />
+            {td("failingN", { n: p.failingCount })}
+          </span>
+        ) : null}
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-muted" role="progressbar" aria-valuemin={0} aria-valuemax={p.total} aria-valuenow={p.done} aria-label={td("answeredOf", { done: p.done, total: p.total })}>
+        <div className="h-full rounded-full bg-primary transition-[width]" style={{ width: `${pct}%` }} />
+      </div>
+      {p.ready ? (
+        <p className="flex items-center gap-1.5 text-sm text-success" data-testid="run-ready">
+          <CheckCircle2 aria-hidden className="size-4" />
+          {td("readyToSend")}
+        </p>
+      ) : (
+        <ul className="flex flex-col gap-0.5 text-sm text-muted-foreground" data-testid="run-blockers">
+          {p.open.length ? <li>{td("toAnswer", { n: p.open.length })}</li> : null}
+          {p.incomplete.length ? <li className="text-warning">{td("toComplete", { n: p.incomplete.length })}</li> : null}
+          {p.manualMissing ? <li>{td("manualMissing")}</li> : null}
+          {p.stopMissing ? <li className="font-medium text-danger">{td("stopMissing")}</li> : null}
+        </ul>
+      )}
+      <OfflineSubmitNote />
+      <div className={cn("grid gap-2", p.ready ? "grid-cols-1" : "grid-cols-2")}>
+        {!p.ready ? (
+          <Button type="button" variant="outline" className="min-h-12 text-base" onClick={goNext} data-testid="run-next">
+            <ArrowDown aria-hidden />
+            {td("nextItem")}
+          </Button>
+        ) : null}
+        <Button className="min-h-12 text-base" disabled={p.busy || !p.ready} onClick={p.onSubmit} data-testid="run-submit">
+          {online ? <Send aria-hidden /> : <Hourglass aria-hidden />}
+          {p.busy ? t("sending") : online ? t("submit") : td("saveOnPhone")}
+        </Button>
+      </div>
     </div>
   );
 }

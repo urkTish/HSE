@@ -1,5 +1,5 @@
 "use client";
-import { Ban, ClipboardList, FileText, Play, Plus, Save, Send, ShieldAlert, XCircle } from "lucide-react";
+import { Ban, CheckCircle2, ClipboardList, FileText, Play, Plus, Save, Send, ShieldAlert, TrendingDown, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -29,10 +29,11 @@ import { StackedDate } from "@/components/medical/common";
 import { Link, useRouter } from "@/i18n/navigation";
 import { api, ApiError, unwrap, type Schemas } from "@/lib/api/client";
 import { useAuditProgramme, useFieldAudit, useFieldAudits, useFieldRefresh, useTemplates } from "@/lib/api/field";
-import { AUDIT_STATUSES } from "@/lib/field-enums";
+import { AUDIT_STATUSES, SEVERITY_RANK } from "@/lib/field-enums";
+import { cn } from "@/lib/utils";
 import { useSearchState } from "@/lib/url-state";
 import { fromLocalInput, toLocalInput } from "@/components/emergency/common";
-import { AuditStatusBadge, FieldAuditSubNav, FieldReasonDialog, GradeBadge, NoNamesHint, Score, useBi, useFieldCaps, useFieldRef } from "./common";
+import { AuditStatusBadge, FieldAuditSubNav, FieldReasonDialog, FieldSeverityBadge, GradeBadge, NoNamesHint, Score, useBi, useFieldCaps, useFieldRef } from "./common";
 import { FindingsTable } from "./inspect";
 import { answerReady, emptyAnswer, ItemAnswer, ManualFindings, toAnswerInput, toManualInput, useSections, type AnswerState, type ManualFinding } from "./run";
 
@@ -267,6 +268,7 @@ function fromRead(a: S["AnswerRead"]): AnswerState {
 
 function AuditDetail({ a }: { a: Audit }) {
   const t = useTranslations("field.audits");
+  const td = useTranslations("fdDesign");
   const { label } = useFieldRef();
   const caps = useFieldCaps(a.project_id);
   const refresh = useFieldRefresh();
@@ -336,12 +338,6 @@ function AuditDetail({ a }: { a: Audit }) {
               <Button size="sm" variant="outline" onClick={() => setDialog("cancel")} data-testid="audit-cancel">
                 <XCircle aria-hidden />
                 {t("cancel")}
-              </Button>
-            ) : null}
-            {(a.status === "in_progress" || a.status === "fieldwork_complete" || a.status === "issued") && caps.void ? (
-              <Button size="sm" variant="ghost" onClick={() => setDialog("void")} data-testid="audit-void">
-                <Ban aria-hidden />
-                {t("void")}
               </Button>
             ) : null}
           </div>
@@ -421,39 +417,28 @@ function AuditDetail({ a }: { a: Audit }) {
           <CardHeader>
             <CardTitle className="flex flex-wrap items-center gap-3 text-base">
               {t("result")}
-              <Score v={r.score_pct} className="text-2xl font-semibold" testId="audit-score" />
-              <GradeBadge grade={r.grade} />
               {!r.submitted ? <StatusBadge status="draft" label={t("provisional")} /> : null}
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            {r.section_scores.length ? (
-              <Table data-testid="section-scores">
-                <THead>
-                  <TR>
-                    <TH>{t("section")}</TH>
-                    <TH className="text-end">{t("score")}</TH>
-                  </TR>
-                </THead>
-                <TBody>
-                  {r.section_scores.map((s) => (
-                    <TR key={s.section_code}>
-                      <TD label={t("section")}>
-                        <Code>{s.section_code}</Code> <SectionTitle s={s} />
-                      </TD>
-                      <TD label={t("score")} className="text-end">
-                        <Score v={s.score_pct} testId="section-score" />
-                      </TD>
-                    </TR>
-                  ))}
-                </TBody>
-              </Table>
-            ) : null}
-            <FindingsTable findings={r.findings} />
+          <CardContent className="flex flex-col gap-5">
+            <GradePanel score={r.score_pct} grade={r.grade} />
+            <FindingCounts findings={r.findings} />
+            {r.section_scores.length ? <SectionScores sections={r.section_scores} /> : null}
+            <FindingsTable findings={[...r.findings].sort((x, y) => (SEVERITY_RANK[y.severity] ?? 0) - (SEVERITY_RANK[x.severity] ?? 0))} />
           </CardContent>
         </Card>
       ) : null}
       {conducting ? <Conduct a={a} onClose={() => setConducting(false)} /> : null}
+      {(a.status === "in_progress" || a.status === "fieldwork_complete" || a.status === "issued") && caps.void ? (
+        // At the page end, away from Start / Conduct / Issue: voiding an issued audit must be a deliberate act.
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-4">
+          <span className="text-xs text-muted-foreground">{td("dangerZone")}</span>
+          <Button variant="destructive-outline" onClick={() => setDialog("void")} data-testid="audit-void">
+            <Ban aria-hidden />
+            {t("void")}
+          </Button>
+        </div>
+      ) : null}
       {dialog === "meetings" ? <MeetingsDialog a={a} onClose={() => setDialog(null)} /> : null}
       {dialog === "issue" ? <IssueDialog a={a} onClose={() => setDialog(null)} /> : null}
       {dialog === "cancel" ? (
@@ -480,6 +465,132 @@ function AuditDetail({ a }: { a: Audit }) {
 function SectionTitle({ s }: { s: S["SectionScore"] }) {
   const bi = useBi();
   return <>{bi(s.title_en, s.title_ar)}</>;
+}
+
+/** List AG (§6.2), for the legend only: the grade shown is always the server's. */
+const GRADE_SCALE: { g: S["AuditGrade"]; range: string; min: number }[] = [
+  { g: "A", range: "≥ 90", min: 90 },
+  { g: "B", range: "75–89.9", min: 75 },
+  { g: "C", range: "60–74.9", min: 60 },
+  { g: "D", range: "< 60", min: -1 },
+];
+
+/** Score and grade read together: big letter, its words, the scale with the achieved band marked, and why when capped. */
+function GradePanel({ score, grade }: { score: string | null | undefined; grade: S["AuditGrade"] | null | undefined }) {
+  const td = useTranslations("fdDesign");
+  const { label } = useFieldRef();
+  const n = score == null ? null : Number(score);
+  const band = n == null || !Number.isFinite(n) ? null : (GRADE_SCALE.find((x) => n >= x.min)?.g ?? null);
+  const capped = Boolean(grade && band && grade !== band && (band === "A" || band === "B") && grade === "C");
+  const tone = grade === "A" ? "border-success/50 bg-success-bg text-success" : grade === "B" ? "border-info/50 bg-info-bg text-info" : grade === "C" ? "border-warning/50 bg-warning-bg text-warning" : "border-danger/50 bg-danger-bg text-danger";
+  return (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch" data-testid="grade-panel">
+      <div className={cn("flex items-center gap-4 rounded-lg border-2 px-4 py-3", grade ? tone : "border-border")}>
+        <span className="text-5xl leading-none font-bold ltr" aria-hidden>
+          {grade ?? "—"}
+        </span>
+        <span className="flex flex-col">
+          <GradeBadge grade={grade} />
+          <Score v={score} className="mt-1 text-2xl font-semibold text-foreground" testId="audit-score" />
+        </span>
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <span className="text-xs font-medium text-muted-foreground">{td("gradeScale")}</span>
+        <ol className="grid grid-cols-2 gap-1.5 sm:grid-cols-4" data-testid="grade-scale">
+          {GRADE_SCALE.map((x) => {
+            const on = x.g === grade;
+            return (
+              <li key={x.g} className={cn("flex items-center gap-2 rounded-md border px-2 py-1.5 text-xs", on ? "border-2 border-foreground font-semibold" : "text-muted-foreground")} aria-current={on ? "true" : undefined}>
+                {on ? <CheckCircle2 aria-hidden className="size-4 shrink-0" /> : null}
+                <span className="font-bold ltr">{x.g}</span>
+                <span className="min-w-0">
+                  <span className="block truncate">{label("audit_grades", x.g)}</span>
+                  <bdi className="ltr tabular-nums">{x.range} %</bdi>
+                </span>
+              </li>
+            );
+          })}
+        </ol>
+        {capped ? (
+          <p className="flex items-center gap-1.5 text-sm font-medium text-warning" data-testid="grade-capped">
+            <ShieldAlert aria-hidden className="size-4 shrink-0" />
+            {td("gradeCapped")}
+          </p>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+const FINDING_GRADES = ["major_nc", "minor_nc", "observation", "ofi"] as const;
+
+function FindingCounts({ findings }: { findings: S["FieldFindingRead"][] }) {
+  const td = useTranslations("fdDesign");
+  if (!findings.length) return null;
+  return (
+    <div className="flex flex-col gap-1.5" data-testid="finding-counts">
+      <span className="text-xs font-medium text-muted-foreground">{td("findingsBy")}</span>
+      <ul className="flex flex-wrap gap-2">
+        {FINDING_GRADES.map((g) => {
+          const n = findings.filter((f) => f.severity === g).length;
+          return (
+            <li key={g} className={cn("flex items-center gap-2 rounded-md border px-2.5 py-1.5", !n && "opacity-60")} data-grade={g} data-n={n}>
+              <span className="text-xl font-semibold tabular-nums">{n}</span>
+              <FieldSeverityBadge severity={g} />
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+/** Section scores as bars (C31 data), lowest section marked; the numbers are the server's. */
+function SectionScores({ sections }: { sections: S["SectionScore"][] }) {
+  const t = useTranslations("field.audits");
+  const td = useTranslations("fdDesign");
+  const vals = sections.map((x) => (x.score_pct == null ? null : Number(x.score_pct)));
+  const known = vals.filter((v): v is number => v != null && Number.isFinite(v));
+  const low = known.length > 1 ? Math.min(...known) : null;
+  return (
+    <Table data-testid="section-scores">
+      <THead>
+        <TR>
+          <TH>{t("section")}</TH>
+          <TH className="w-2/5">{t("score")}</TH>
+        </TR>
+      </THead>
+      <TBody>
+        {sections.map((s, i) => {
+          const v = vals[i];
+          const isLow = low != null && v === low;
+          return (
+            <TR key={s.section_code} data-testid="section-row" data-low={isLow ? "yes" : "no"}>
+              <TD label={t("section")}>
+                <span className="inline-flex flex-wrap items-center gap-2">
+                  <Code className="font-semibold">{s.section_code}</Code> <SectionTitle s={s} />
+                  {isLow ? (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-warning">
+                      <TrendingDown aria-hidden className="size-3.5" />
+                      {td("weakest")}
+                    </span>
+                  ) : null}
+                </span>
+              </TD>
+              <TD label={t("score")}>
+                <span className="flex items-center gap-3">
+                  <span className="h-2.5 min-w-16 flex-1 overflow-hidden rounded-full bg-muted" aria-hidden>
+                    <span className={cn("block h-full rounded-full", isLow ? "bg-warning" : "bg-primary")} style={{ width: `${Math.max(0, Math.min(100, v ?? 0))}%` }} />
+                  </span>
+                  <Score v={s.score_pct} testId="section-score" className="w-16 text-end font-medium" />
+                </span>
+              </TD>
+            </TR>
+          );
+        })}
+      </TBody>
+    </Table>
+  );
 }
 
 function Conduct({ a, onClose }: { a: Audit; onClose: () => void }) {

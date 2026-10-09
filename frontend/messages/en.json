@@ -4756,6 +4756,21 @@
       "zone": "Zone",
       "month": "Month",
       "language": "Language"
+    },
+    "fdInspectionType": {
+      "general_site": "General site",
+      "scaffold": "Scaffold",
+      "lifting_equipment": "Lifting equipment",
+      "electrical": "Electrical",
+      "excavation": "Excavation",
+      "housekeeping": "Housekeeping",
+      "fire_safety": "Fire safety",
+      "welfare": "Welfare",
+      "airside_fod_walk": "Airside FOD walk",
+      "plant_vehicle": "Plant & vehicles",
+      "environmental": "Environmental",
+      "ppe": "PPE",
+      "leadership_walk": "Leadership walk"
     }
   },
   "workforce": {
@@ -11971,7 +11986,7 @@
       "signed": "Signed",
       "sign": "Sign",
       "removeRow": "Remove",
-      "mismatchNote": "{n} attendee(s) may not have understood: consider an interpreter.",
+      "mismatchNote": "{n, plural, one {# attendee may not have understood: consider an interpreter.} other {# attendees may not have understood: consider an interpreter.}}",
       "queuedTitle": "Saved on this device",
       "queuedText": "No signal. \"{label}\" is waiting to send and will go automatically.",
       "again": "Record another",
@@ -12113,5 +12128,25 @@
         "photo_retention_months": "Photo retention (months)"
       }
     }
+  },
+  "fdDesign": {
+    "answeredOf": "{done} of {total} answered",
+    "failingN": "{n, plural, one {# not compliant} other {# not compliant}}",
+    "nextItem": "Next item to do",
+    "toAnswer": "{n, plural, one {# item to answer} other {# items to answer}}",
+    "toComplete": "{n, plural, one {# not-compliant item needs a note or photo} other {# not-compliant items need a note or photo}}",
+    "manualMissing": "Describe each added finding",
+    "stopMissing": "Fill in the stop-work details",
+    "readyToSend": "Every item answered. Ready to submit.",
+    "saveOnPhone": "Save on this phone",
+    "offlineSubmit": "No signal: it is kept on this phone and sent when the signal returns.",
+    "consequence": "Finding: {grade}",
+    "gradeScale": "Grade scale",
+    "gradeCapped": "Capped at C: a major nonconformity on a critical item.",
+    "findingsBy": "Findings by grade",
+    "weakest": "Lowest section",
+    "dangerZone": "Record actions",
+    "suggestedWhy": "Why suggested",
+    "talkLanguage": "Understands the talk language"
   }
 }

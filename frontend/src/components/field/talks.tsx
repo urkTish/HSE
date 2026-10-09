@@ -1,5 +1,5 @@
 "use client";
-import { Ban, Camera, CheckCircle2, Hourglass, Megaphone, PenLine, Plus, ScanLine, Send, Trash2, UserPlus, XCircle } from "lucide-react";
+import { Ban, Camera, CheckCircle2, History, Hourglass, Languages, ListChecks, Megaphone, PenLine, Plus, ScanLine, Send, Trash2, UserPlus, Users, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -34,10 +34,11 @@ import { useCampaign, useCampaigns, useFieldRefresh, useFieldSettings, useToolbo
 import { CAMPAIGN_STATUSES, TALK_SHIFTS, TALK_STATUSES, WORKER_LANGUAGES } from "@/lib/field-enums";
 import { cacheHoursOf, downloadPack, newUuid, submitWithOutbox, useFieldOffline } from "@/lib/field-offline";
 import { useOnline } from "@/lib/local-draft";
+import { cn } from "@/lib/utils";
 import { useSearchState } from "@/lib/url-state";
 import { fromLocalInput, nowLocal } from "@/components/emergency/common";
 import { CampaignStatusBadge, FieldReasonDialog, FieldTalkSubNav, NoNamesHint, OfflineLabel, PhotoPicker, SignaturePad, TalkStatusBadge, useBi, useFieldCaps, useFieldRef } from "./common";
-import { OfflinePackCard, OutboxPanel } from "./offline";
+import { OfflinePackCard, OfflineSubmitNote, OutboxPanel } from "./offline";
 
 type S = Schemas;
 type Project = S["ProjectRead"];
@@ -227,6 +228,7 @@ function TalkForm({ project, onDone }: { project: Project; onDone: (d: { talk: S
   const opts = useProjectOptions(project.id);
   const settings = useFieldSettings(project.id);
   const { packs } = useFieldOffline();
+  const online = useOnline();
   const pack = packs[project.id]?.pack;
   const live = useTopics({ status: ["published"] });
   const topics = live.data?.items ?? pack?.topics.filter((x) => x.status === "published") ?? [];
@@ -383,20 +385,36 @@ function TalkForm({ project, onDone }: { project: Project; onDone: (d: { talk: S
                       <Button
                         type="button"
                         variant={on ? "default" : "outline"}
-                        className="h-auto min-h-11 w-full justify-start gap-2 py-2 text-start whitespace-normal"
+                        className="h-auto min-h-12 w-full items-start justify-start gap-3 px-3 py-2.5 text-start whitespace-normal"
+                        aria-pressed={on}
                         onClick={() => setPicked(on ? picked.filter((p) => p !== x.topic_id) : [...picked, x.topic_id].slice(0, 3))}
                         data-testid="suggestion"
                         data-code={x.topic_code}
                         data-source={x.source}
                       >
-                        {on ? <CheckCircle2 aria-hidden /> : <Plus aria-hidden />}
-                        <Code>{x.topic_code}</Code>
-                        <span className="flex-1">{bi(x.title_en, x.title_ar)}</span>
-                        <Badge tone={x.source === "campaign" ? "warning" : "neutral"}>
-                          {te(`fdSuggestionSource.${x.source}`)}
-                          {x.reason_ref ? ` · ${x.reason_ref}` : ""}
-                        </Badge>
-                        {x.delivered_recently ? <span className="text-xs opacity-80">{t("recently")}</span> : null}
+                        {on ? <CheckCircle2 aria-hidden className="mt-0.5 size-5 shrink-0" /> : <Plus aria-hidden className="mt-0.5 size-5 shrink-0" />}
+                        {/* Title on its own line, the reason under it: the reason badge no longer squeezes the title to one word per line. */}
+                        <span className="flex min-w-0 flex-1 flex-col gap-1">
+                          <span className="text-sm font-medium">
+                            <Code className="me-1.5 font-semibold">{x.topic_code}</Code>
+                            {bi(x.title_en, x.title_ar)}
+                          </span>
+                          <span className="flex flex-wrap items-center gap-2 text-xs">
+                            <Badge tone={x.source === "campaign" ? "warning" : "neutral"} className="max-w-full">
+                              <span className="truncate">
+                                {te(`fdSuggestionSource.${x.source}`)}
+                                {x.reason_ref ? " · " : ""}
+                                {x.reason_ref ? <bdi className="ltr">{x.reason_ref}</bdi> : null}
+                              </span>
+                            </Badge>
+                            {x.delivered_recently ? (
+                              <span className="inline-flex items-center gap-1 opacity-80">
+                                <History aria-hidden className="size-3.5" />
+                                {t("recently")}
+                              </span>
+                            ) : null}
+                          </span>
+                        </span>
                       </Button>
                     </li>
                   );
@@ -483,7 +501,9 @@ function TalkForm({ project, onDone }: { project: Project; onDone: (d: { talk: S
         </CardContent>
       </Card>
       <MutationError error={error} />
+      <OfflineSubmitNote />
       <Button className="min-h-12 text-base" disabled={busy || !valid} onClick={() => void submit()} data-testid="tf-submit">
+        {online ? <Send aria-hidden /> : <Hourglass aria-hidden />}
         {busy ? t("sending") : t("submit", { n: named + (Number(unnamed) || 0) })}
       </Button>
     </div>
@@ -538,7 +558,8 @@ function Attendance({ rows, setRows, deployments, host, lang, interp }: { rows: 
     <Card data-testid="attendance">
       <CardHeader className="flex-row flex-wrap items-center justify-between gap-2">
         <CardTitle className="text-base">{t("attendanceTitle")}</CardTitle>
-        <span className="text-sm font-semibold tabular-nums" data-testid="att-count">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-base font-semibold tabular-nums" data-testid="att-count">
+          <Users aria-hidden className="size-4" />
           {t("namedN", { n: rows.length })}
         </span>
       </CardHeader>
@@ -596,20 +617,14 @@ function Attendance({ rows, setRows, deployments, host, lang, interp }: { rows: 
             {rows.map((r) => {
               const u = understood(r.deployment, lang, interp);
               return (
-                <li key={r.key} className="flex flex-col gap-2 p-3 text-sm" data-testid="att-row" data-method={r.method} data-signed={r.signature ? "yes" : "no"}>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {r.method === "card_scan" ? (
-                      <Badge tone="info">
-                        <ScanLine aria-hidden />
-                        {t("cardScan")}
-                      </Badge>
-                    ) : (
-                      <Badge tone="neutral">{t("fromList")}</Badge>
-                    )}
-                    <span className="flex-1">
+                <li key={r.key} className={cn("flex flex-col gap-2 p-3 text-sm", u === "none" && "border-s-4 border-s-warning")} data-testid="att-row" data-method={r.method} data-signed={r.signature ? "yes" : "no"}>
+                  {/* Who first (name, then how they were added), then the language state, then the actions in thumb-sized buttons. */}
+                  <div className="flex items-start gap-2">
+                    <span className="min-w-0 flex-1">
                       {r.deployment ? (
                         <>
-                          <Code>{r.deployment.worker_no}</Code> {bi(r.deployment.name_en, r.deployment.name_ar)}
+                          <span className="block font-medium">{bi(r.deployment.name_en, r.deployment.name_ar)}</span>
+                          <Code className="text-xs text-muted-foreground">{r.deployment.worker_no}</Code>
                         </>
                       ) : (
                         <span className="text-muted-foreground">
@@ -617,25 +632,44 @@ function Attendance({ rows, setRows, deployments, host, lang, interp }: { rows: 
                         </span>
                       )}
                     </span>
-                    {u === "none" ? (
-                      <Badge tone="warning" data-testid="lang-mismatch">
-                        {t("langMismatch")}
+                    {r.method === "card_scan" ? (
+                      <Badge tone="info" className="shrink-0">
+                        <ScanLine aria-hidden />
+                        {t("cardScan")}
                       </Badge>
-                    ) : u === "interpreter" ? (
-                      <Badge tone="info">{te("fdUnderstood.interpreter")}</Badge>
-                    ) : null}
+                    ) : (
+                      <Badge tone="neutral" className="shrink-0">
+                        <ListChecks aria-hidden />
+                        {t("fromList")}
+                      </Badge>
+                    )}
+                  </div>
+                  {u === "none" ? (
+                    <span className="inline-flex items-center gap-1.5 font-medium text-warning" data-testid="lang-mismatch">
+                      <Languages aria-hidden className="size-4 shrink-0" />
+                      {t("langMismatch")}
+                    </span>
+                  ) : u === "interpreter" ? (
+                    <span className="inline-flex items-center gap-1.5 text-info">
+                      <Languages aria-hidden className="size-4 shrink-0" />
+                      {te("fdUnderstood.interpreter")}
+                    </span>
+                  ) : null}
+                  <div className="grid grid-cols-[1fr_auto] items-center gap-2">
                     {r.signature ? (
-                      <Badge tone="success">
+                      <Badge tone="success" className="justify-self-start">
                         <PenLine aria-hidden />
                         {t("signed")}
                       </Badge>
                     ) : r.method === "list" ? (
-                      <Button type="button" size="sm" variant="outline" className="min-h-11" onClick={() => setSigning(r.key)} data-testid="att-sign">
+                      <Button type="button" variant="outline" className="min-h-12" onClick={() => setSigning(r.key)} data-testid="att-sign">
                         <PenLine aria-hidden />
                         {t("sign")}
                       </Button>
-                    ) : null}
-                    <Button type="button" size="sm" variant="ghost" className="min-h-11" onClick={() => setRows(rows.filter((x) => x.key !== r.key))} aria-label={t("removeRow")}>
+                    ) : (
+                      <span />
+                    )}
+                    <Button type="button" variant="ghost" className="min-h-12 min-w-12" onClick={() => setRows(rows.filter((x) => x.key !== r.key))} aria-label={t("removeRow")}>
                       <Trash2 aria-hidden />
                     </Button>
                   </div>

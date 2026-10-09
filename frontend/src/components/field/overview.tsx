@@ -1,5 +1,5 @@
 "use client";
-import { ArrowRight, CalendarClock, ClipboardCheck, ClipboardX, Megaphone, OctagonAlert } from "lucide-react";
+import { ArrowRight, CalendarClock, ClipboardCheck, ClipboardX, Megaphone, OctagonAlert, TriangleAlert } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Fragment, useState } from "react";
 import { toast } from "sonner";
@@ -242,6 +242,13 @@ function Kpis({ project }: { project: Project }) {
                   <span className={cn("text-3xl font-semibold tabular-nums", m.rag === "red" && "text-danger", m.rag === "amber" && "text-warning")} data-testid="fk-value">
                     {show(m.display)}
                   </span>
+                  {m.rag && m.rag !== "green" ? (
+                    // Not colour alone: an icon and the words with the red / amber figure.
+                    <span className={cn("inline-flex items-center gap-1 text-xs font-medium", m.rag === "red" ? "text-danger" : "text-warning")} data-testid="fk-rag" data-rag={m.rag}>
+                      <TriangleAlert aria-hidden className="size-3.5" />
+                      {te(`rag.${m.rag}`)}
+                    </span>
+                  ) : null}
                   {m.null_reason ? <span className="text-xs text-muted-foreground">{te(`nullReason.${m.null_reason}`)}</span> : null}
                   {m.components.length ? (
                     <span className="flex flex-wrap gap-x-3 text-xs text-muted-foreground">
@@ -270,7 +277,7 @@ function Kpis({ project }: { project: Project }) {
               <p className="text-xs text-muted-foreground">{t("aggregatesHint")}</p>
             </CardHeader>
             <CardContent>
-              <Breakdown breakdowns={d.breakdowns} metrics={d.metrics} show={show} />
+              <Breakdown breakdowns={d.breakdowns} metrics={d.metrics} show={show} groupBy={groupBy} />
             </CardContent>
           </Card>
         </div>
@@ -279,12 +286,19 @@ function Kpis({ project }: { project: Project }) {
   );
 }
 
-function Breakdown({ breakdowns, metrics, show }: { breakdowns: S["FieldBreakdown"][]; metrics: S["KpiValue"][]; show: (v: string) => string }) {
+function Breakdown({ breakdowns, metrics, show, groupBy }: { breakdowns: S["FieldBreakdown"][]; metrics: S["KpiValue"][]; show: (v: string) => string; groupBy: S["FieldKpiGroupBy"] }) {
   const t = useTranslations("field.kpi");
+  const te = useTranslations("enums");
   const ar = useLocale() === "ar";
   if (!breakdowns.length || breakdowns.every((b) => !b.rows.length)) return <EmptyState message={t("noBreakdown")} />;
+  // The server sends the raw code as the label for inspection types and talk languages: name them here (EN / AR).
+  const named = (key: string, fallback: string) => {
+    if (groupBy === "inspection_type" && te.has(`fdInspectionType.${key}` as "fdInspectionType.general_site")) return te(`fdInspectionType.${key}` as "fdInspectionType.general_site");
+    if (groupBy === "language" && te.has(`fdLanguage.${key}` as "fdLanguage.en")) return te(`fdLanguage.${key}` as "fdLanguage.en");
+    return fallback;
+  };
   const keys: { key: string; label: string }[] = [];
-  for (const b of breakdowns) for (const r of b.rows) if (!keys.some((k) => k.key === r.key)) keys.push({ key: r.key, label: ar ? r.label_ar : r.label_en });
+  for (const b of breakdowns) for (const r of b.rows) if (!keys.some((k) => k.key === r.key)) keys.push({ key: r.key, label: named(r.key, ar ? r.label_ar : r.label_en) });
   const metricLabel = (id: string) => {
     const m = metrics.find((x) => x.metric === id);
     return m ? (ar ? m.short_label_ar : m.short_label_en) : id;

@@ -168,3 +168,16 @@ export function OutboxPanel({ kind, projectId }: { kind: OutboxKind; projectId: 
     </div>
   );
 }
+
+/** Said next to the submit button while there is no signal: the record waits on this phone ("waiting to send"). */
+export function OfflineSubmitNote() {
+  const t = useTranslations("fdDesign");
+  const online = useOnline();
+  if (online) return null;
+  return (
+    <p className="flex items-start gap-2 rounded-md border border-warning/50 bg-warning-bg px-3 py-2 text-sm font-medium text-warning" data-testid="offline-submit-note">
+      <WifiOff aria-hidden className="mt-0.5 size-4 shrink-0" />
+      <span className="text-foreground">{t("offlineSubmit")}</span>
+    </p>
+  );
+}
