@@ -1,5 +1,10 @@
 "use client";
 import {
+  Droplets,
+  FileBarChart,
+  Siren,
+  Sun,
+  Thermometer,
   Activity,
   BookMarked,
   HeartPulse,
@@ -251,6 +256,19 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
       ]
     : [];
 
+  const heatItems: Item[] = pid
+    ? [
+        ...(ac("heat.view") ? [{ href: "/heat-board", label: t("heatBoard"), Icon: Sun, testId: "nav-heat-board" }] : []),
+        ...(ac("heat.view") ? [{ href: "/wbgt-readings", label: t("wbgtReadings"), Icon: Thermometer, testId: "nav-wbgt-readings" }] : []),
+        ...(ac("heat.view") ? [{ href: "/heat-welfare-checks", label: t("heatWelfare"), Icon: Droplets, testId: "nav-heat-welfare" }] : []),
+        ...(ac("heat.view") ? [{ href: "/acclimatisation-plans", label: t("acclimatisation"), Icon: CalendarCheck, testId: "nav-acclimatisation" }] : []),
+        ...(ac("heat.view") ? [{ href: "/ban-patrols", label: t("middayBan"), Icon: Ban, testId: "nav-midday-ban" }] : []),
+        ...(ac("heat_log.view") ? [{ href: "/heat-illness-log", label: t("heatIllnessLog"), Icon: Siren, testId: "nav-heat-log" }] : []),
+        ...(ac("heat_kpi.view") ? [{ href: "/heat-stress", label: t("heatKpis"), Icon: FileBarChart, testId: "nav-heat-kpis" }] : []),
+        ...(ac("heat.view") ? [{ href: "/heat-instruments", label: t("heatSetup"), Icon: Cog, testId: "nav-heat-setup" }] : []),
+      ]
+    : [];
+
   return (
     <nav aria-label={t("main")} className="flex flex-1 flex-col gap-5 p-3">
       <ul className="flex flex-col gap-1">
@@ -332,6 +350,18 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
               <p className="px-3 pt-1 pb-1 text-xs font-medium text-sidebar-muted">{t("medical")}</p>
               <ul className="mb-3 flex flex-col gap-1" data-testid="nav-medical">
                 {medicalItems.map((i) => (
+                  <li key={i.href}>
+                    <NavLink item={i} onNavigate={onNavigate} />
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : null}
+          {heatItems.length > 0 ? (
+            <>
+              <p className="px-3 pt-1 pb-1 text-xs font-medium text-sidebar-muted">{t("heat")}</p>
+              <ul className="mb-3 flex flex-col gap-1" data-testid="nav-heat">
+                {heatItems.map((i) => (
                   <li key={i.href}>
                     <NavLink item={i} onNavigate={onNavigate} />
                   </li>
