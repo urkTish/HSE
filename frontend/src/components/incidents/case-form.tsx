@@ -157,7 +157,7 @@ export function CaseForm({ incident, kase }: { incident: Schemas["IncidentRead"]
       employer_engagement_id: v.person_type === "contractor_worker" ? v.employer_engagement_id || null : null,
       trade: v.trade as Schemas["Trade"],
       mechanism: v.mechanism as Schemas["Mechanism"],
-      agency: v.agency as Schemas["Agency"],
+      agency: v.agency as Schemas["app__core__hse_enums__Agency"],
       commuting: v.commuting,
     };
     const identity = hideIdentity

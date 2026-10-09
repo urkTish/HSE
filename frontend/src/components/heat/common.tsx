@@ -210,7 +210,7 @@ export function PlanStatusBadge({ status }: { status: S["PlanStatus"] }) {
   );
 }
 
-export function RecordStatusBadge({ status }: { status: S["RecordStatus"] }) {
+export function RecordStatusBadge({ status }: { status: S["app__core__heat_enums__RecordStatus"] }) {
   const te = useTranslations("enums");
   return (
     <span data-testid="record-status" data-status={status}>

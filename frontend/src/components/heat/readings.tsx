@@ -55,7 +55,7 @@ function Readings({ project }: { project: Project }) {
   const s = useSearchState();
   const page = s.getInt("page", 1) ?? 1;
   const point = s.get("point") ?? "";
-  const status = (s.get("status") ?? "") as S["RecordStatus"] | "";
+  const status = (s.get("status") ?? "") as S["app__core__heat_enums__RecordStatus"] | "";
   const day = s.get("day") ?? "";
   const points = useMonitoringPoints(project.id, { page_size: 200 }, { enabled: caps.view });
   const q = useWbgtReadings(

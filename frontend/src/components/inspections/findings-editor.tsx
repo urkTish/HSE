@@ -13,7 +13,7 @@ import { CA_PRIORITIES, CONTROL_LEVELS, FINDING_SEVERITIES } from "@/lib/enums";
 
 export interface FindingDraft {
   description: string;
-  severity: Schemas["FindingSeverity"];
+  severity: Schemas["app__core__hse_enums__FindingSeverity"];
   ca_required: boolean;
   ca_title: string;
   control_level: Schemas["ControlLevel"];
@@ -36,7 +36,7 @@ export const emptyFinding = (): FindingDraft => ({
 });
 
 /** Inspection findings; a finding that needs a CA creates it atomically with the inspection (N-4). */
-export function toFindingInput(f: FindingDraft): Schemas["FindingInput"] {
+export function toFindingInput(f: FindingDraft): Schemas["app__schemas__inspections__FindingInput"] {
   return {
     description: f.description.trim(),
     severity: f.severity,
@@ -74,7 +74,7 @@ export function FindingsEditor({ projectId, value, onChange }: { projectId: stri
             <Textarea rows={2} maxLength={1000} value={f.description} onChange={(e) => set(i, { description: e.target.value })} />
           </FormField>
           <FormField id={`f-${i}-sev`} label={t("fields.severity")} required>
-            <Select value={f.severity} onChange={(e) => set(i, { severity: e.target.value as Schemas["FindingSeverity"] })}>
+            <Select value={f.severity} onChange={(e) => set(i, { severity: e.target.value as Schemas["app__core__hse_enums__FindingSeverity"] })}>
               {FINDING_SEVERITIES.map((x) => (
                 <option key={x} value={x}>
                   {te(`findingSeverity.${x}`)}

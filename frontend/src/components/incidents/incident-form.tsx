@@ -167,7 +167,7 @@ export function IncidentForm({ project, incident }: { project: Schemas["ProjectR
       potential_severity: v.potential_severity ? Number(v.potential_severity) : null,
       ambient_temp_c: v.ambient_temp_c || null,
       airside_flags: airside ? v.airside_flags : [],
-      property_damage: has("property_damage") ? { asset_type: v.pd_asset_type as Schemas["AssetType"], estimated_cost_sar: v.pd_cost } : null,
+      property_damage: has("property_damage") ? { asset_type: v.pd_asset_type as Schemas["app__core__hse_enums__AssetType"], estimated_cost_sar: v.pd_cost } : null,
       environmental: has("environmental")
         ? {
             category: v.env_category as Schemas["EnvCategory"],
