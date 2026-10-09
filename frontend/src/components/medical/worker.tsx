@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { Breadcrumbs } from "@/components/common/breadcrumbs";
+import { RecordActions } from "@/components/common/record-actions";
 import { CheckboxGroup } from "@/components/common/checkbox-group";
 import { FormField } from "@/components/common/form-field";
 import { PageHeader } from "@/components/common/page-header";
@@ -135,12 +136,6 @@ function WorkerHealth({ project, workerId }: { project: Project; workerId: strin
             {caps.refer ? (
               <Button variant="outline" onClick={() => setRefer(true)} data-testid="wh-refer">
                 {t("refer")}
-              </Button>
-            ) : null}
-            {caps.holdManage ? (
-              <Button variant="destructive-outline" onClick={() => setHold(true)} data-testid="wh-hold">
-                <ShieldAlert aria-hidden />
-                {t("hold")}
               </Button>
             ) : null}
             {caps.subjectReport ? (
@@ -328,6 +323,15 @@ function WorkerHealth({ project, workerId }: { project: Project; workerId: strin
           </Card>
         ) : null}
       </div>
+      {caps.holdManage ? (
+        // A hold removes the worker from all work: at the page end, apart from the assessment and referral steps.
+        <RecordActions>
+          <Button variant="destructive-outline" onClick={() => setHold(true)} data-testid="wh-hold">
+            <ShieldAlert aria-hidden />
+            {t("hold")}
+          </Button>
+        </RecordActions>
+      ) : null}
       {editProfile && profile.data ? <ExposureDialog profile={profile.data} onClose={() => setEditProfile(false)} /> : null}
       {refer ? <RaiseReferralDialog project={project} worker={d} onClose={() => setRefer(false)} /> : null}
       {hold ? <PlaceHoldDialog project={project} worker={d} onClose={() => setHold(false)} /> : null}

@@ -376,7 +376,7 @@ function FileErrorDetail({ error }: { error: unknown }) {
   const code = typeof error.meta.code === "string" ? error.meta.code : "";
   return (
     <p className="text-sm text-destructive" data-testid="mi-file-error" data-code={code}>
-      {code ? <span className="me-1 font-mono ltr">{code}</span> : null}
+      {code ? <span className="me-1 font-mono ltr rtl:me-0 rtl:ms-1">{code}</span> : null}
       {locale === "ar" && error.messageAr ? error.messageAr : error.message}
     </p>
   );
