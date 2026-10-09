@@ -468,7 +468,7 @@ function NewReading({ project }: { project: Project }) {
             <FormField id="rd-start" label={lab ? t("sampleStart") : t("start")} required>
               <Input id="rd-start" type="datetime-local" dir="ltr" className={big} value={start} onChange={(e) => setStart(e.target.value)} data-testid="rd-start" />
             </FormField>
-            <FormField id="rd-end" label={lab ? t("sampleEnd") : t("end")} required hint={lab ? t("labHint") : t("endHint")}>
+            <FormField id="rd-end" label={lab ? t("sampleEnd") : t("end")} required hint={lab ? t("labHint") : laeq ? t("endHint") : undefined}>
               <Input id="rd-end" type="datetime-local" dir="ltr" className={big} value={end} onChange={(e) => setEnd(e.target.value)} data-testid="rd-end" />
             </FormField>
           </div>
@@ -667,7 +667,7 @@ function ExceedanceDetail({ project, id }: { project: Project; id: string }) {
           ) : null
         }
       />
-      {x.airside ? (
+      {x.airside && x.status === "open" ? (
         <Alert tone="danger" className="mb-4" data-testid="airside-alert">
           <Plane aria-hidden className="me-1 inline size-4" />
           {t("airsideHint")}{" "}
@@ -683,7 +683,7 @@ function ExceedanceDetail({ project, id }: { project: Project; id: string }) {
         </Alert>
       ) : null}
       <Card className="mb-4">
-        <CardContent className="pt-4">
+        <CardContent className="pt-4 sm:pt-5 sm:pt-5">
           <FieldList>
             <FieldItem label={t("peak")}>
               <span data-testid="exceedance-peak">

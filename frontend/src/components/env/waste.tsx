@@ -413,7 +413,7 @@ function AreaDetail({ project, id }: { project: Project; id: string }) {
           ) : null}
         </div>
         <Card>
-          <CardContent className="pt-4">
+          <CardContent className="pt-4 sm:pt-5 sm:pt-5">
             <FieldList>
               <FieldItem label={t("streams")} wide>
                 {a.accepted_streams.map(streamLabel).join(" · ")}
@@ -1151,7 +1151,7 @@ function ConsignmentDetail({ project, id }: { project: Project; id: string }) {
         </Card>
         {c.rejection_reason || c.status_reason || c.ca_id ? (
           <Card>
-            <CardContent className="pt-4">
+            <CardContent className="pt-4 sm:pt-5 sm:pt-5">
               <FieldList className="lg:grid-cols-2">
                 {c.rejection_reason ? (
                   <FieldItem label={t("rejectionReason")} wide>

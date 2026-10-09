@@ -233,6 +233,7 @@ function Kpis({ project }: { project: Project }) {
   const te = useTranslations("enums");
   const tc = useTranslations("common");
   const ar = useLocale() === "ar";
+  const ref = useEnvRef();
   const caps = useEnvCaps(project.id);
   const show = useDisplay(project.id);
   const { dateTime } = useFormatters(project.id);
@@ -305,7 +306,7 @@ function Kpis({ project }: { project: Project }) {
                     <span className="flex flex-wrap gap-x-3 text-xs text-muted-foreground" data-testid="ek-chips">
                       {m.components.map((c) => (
                         <span key={c.key}>
-                          {/^[A-Z_]+$/.test(c.key) && te.has(`emNotReady.${c.key}` as "emNotReady.MISSING") ? te(`emNotReady.${c.key}` as "emNotReady.MISSING") : label(c)}: <span className="font-medium tabular-nums text-foreground">{show(c.display)}</span>
+                          {/^[A-Z_]+$/.test(c.key) && te.has(`emNotReady.${c.key}` as "emNotReady.MISSING") ? te(`emNotReady.${c.key}` as "emNotReady.MISSING") : ref.items("parameters").some((x) => x.code === c.key) ? ref.label("parameters", c.key) : label(c)}: <span className="font-medium tabular-nums text-foreground">{show(c.display)}</span>
                         </span>
                       ))}
                     </span>

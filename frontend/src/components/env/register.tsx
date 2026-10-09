@@ -383,7 +383,7 @@ function AspectDetail({ project, id }: { project: Project; id: string }) {
         </Alert>
       ) : null}
       <Card className="mb-4">
-        <CardContent className="pt-4">
+        <CardContent className="pt-4 sm:pt-5 sm:pt-5">
           <FieldList>
             <FieldItem label={t("activity")}>{refs.label("activity", a.activity)}</FieldItem>
             <FieldItem label={t("aspect")}>{ref.label("aspects", a.aspect)}</FieldItem>
@@ -841,7 +841,7 @@ function PermitDetail({ project, id }: { project: Project; id: string }) {
         }
       />
       <Card className="mb-4">
-        <CardContent className="pt-4">
+        <CardContent className="pt-4 sm:pt-5 sm:pt-5">
           <FieldList>
             <FieldItem label={t("issuer")}>{ref.label("issuers", p.issuer)}</FieldItem>
             <FieldItem label={t("reference")}>{p.reference_no ? <Code>{p.reference_no}</Code> : "—"}</FieldItem>
@@ -1128,7 +1128,7 @@ function ProviderDetail({ project, id }: { project: Project; id: string }) {
         }
       />
       <Card className="mb-4">
-        <CardContent className="pt-4">
+        <CardContent className="pt-4 sm:pt-5 sm:pt-5">
           <FieldList>
             <FieldItem label={t("kind")}>{p.kinds.map((k) => ref.label("provider_kinds", k)).join(", ")}</FieldItem>
             <FieldItem label={t("cr")}>

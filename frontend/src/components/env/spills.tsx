@@ -540,7 +540,7 @@ function SpillDetail({ project, id }: { project: Project; id: string }) {
         </Alert>
       ) : null}
       <Card className="mb-4">
-        <CardContent className="pt-4">
+        <CardContent className="pt-4 sm:pt-5 sm:pt-5">
           <FieldList>
             <FieldItem label={t("occurred")}>
               <StackedDate v={x.occurred_at} time projectId={project.id} />
@@ -909,7 +909,7 @@ function ComplaintDetail({ project, id }: { project: Project; id: string }) {
         }
       />
       <Card className="mb-4">
-        <CardContent className="pt-4">
+        <CardContent className="pt-4 sm:pt-5 sm:pt-5">
           <FieldList>
             <FieldItem label={t("received")}>
               <StackedDate v={c.received_at} time projectId={project.id} />
