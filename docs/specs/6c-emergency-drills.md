@@ -1,6 +1,6 @@
 # Module Spec — Phase 6c: Emergency Preparedness & Drills (emergency response plan, assembly points and contacts, emergency organisation and coverage, emergency equipment readiness, drill programme, drill execution and evaluation, muster, real emergency event log)
 
-**Version:** v1.0 · **Date:** 2026-10-09 · **Author:** HSE Consultant Agent · **Status:** Draft. The HSE Manager asked to proceed without waiting for approval and will review the choices later (§10).
+**Version:** v1.1 · **Date:** 2026-10-09 · **Author:** HSE Consultant Agent · **Status:** Draft. The HSE Manager asked to proceed without waiting for approval and will review the choices later (§10).
 **Builds on:**
 - `0-foundation.md` v1.0: projects, sites, zones (airside attributes `in_movement_area`, `airside_area`), roles, scoping legend, rules 28, 33, 35 and 48, PDPL P1–P13, the capability matrix (6b ends at 177).
 - `1-dashboard.md` v1.5: daily returns (§3.1: site, zone, engagement, shift, headcount), incidents (§3.3) and injury cases, CA source types (§3.8), K-01, warnings E1–E17, AI tools T1–T19, T9/T13, AI-19, charts up to C27, the action panel and expiring-items endpoint, seed W1.
@@ -801,3 +801,4 @@ All 6c settings at the §3.15 defaults on both projects, except the dates in A.1
 | Version | Date | Author | Change |
 |---|---|---|---|
 | v1.0 | 2026-10-09 | HSE Consultant Agent | First issue. §1–§11 and Appendix A: ERP with scenarios, assembly points, contacts and zone profiles; emergency roster and coverage per site, shift and zone from Phase 5 records and gate presence; rescue teams and readiness; emergency asset register with checks, service and expiries; drill programme; drills with muster (roll from gate logs or counts), evaluation and findings → CAs; real emergency event log; Phase 3 suspensions on alarm, rescue-readiness blockers and emergency information. Capabilities 178–190, KPIs K-104…K-109, warnings E18–E19, AI tool T20, charts C28–C30, QR kinds EA and MP. 66 acceptance criteria. Earlier-spec changes in §11, not yet applied: 0-foundation, 1-dashboard v1.6, 2-access-permits v1.5, 3-ptw v1.4, 4-third-party-cert v1.2, 5-training v1.2. |
+| v1.1 | 2026-10-09 | HSE Consultant Agent | Note required by Phase 6d (`6d-field-assurance.md` v1.0 §11.5); no rule changes: emergency asset checks (list EC) and drill evaluations keep their fixed lists outside 6d templates in 6d v1.0 and are never counted by 6d KPIs (BD6d-3). |

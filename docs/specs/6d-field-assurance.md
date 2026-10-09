@@ -669,7 +669,7 @@ Each has a default so the build can start.
 7. **6b and 6c checks:** keep their fixed lists, or move heat welfare and emergency asset checks onto 6d templates in a later version?
 8. **Client forms:** does the airport operator or the client require their own FOD walk or audit form to be reproduced exactly?
 
-## 11. Changes required in earlier specs (not yet applied)
+## 11. Changes required in earlier specs (applied 2026-10-09: 0-foundation v1.2, 1-dashboard v1.7, 2-access-permits v1.6, 3-ptw v1.5, 4-third-party-cert v1.3, 5-training v1.3, 6b-heat-stress v1.1, 6c-emergency-drills v1.1)
 
 ### 11.1 `0-foundation.md` v1.1 → v1.2
 1. Matrix rows 191–201 (§5.13).
