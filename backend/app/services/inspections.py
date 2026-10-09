@@ -316,17 +316,7 @@ def reads(db: Session, items: Sequence[Inspection]) -> list[InspectionRead]:
                 items_checked=i.items_checked,
                 items_compliant=i.items_compliant,
                 score_pct=_rscore(r) if r is not None else score(i),
-                findings=[
-                    FindingRead(
-                        id=uuid.UUID(f["id"]),
-                        description=f["description"],
-                        severity=f["severity"],
-                        ca_required=bool(f.get("ca_required")),
-                        ca_id=uuid.UUID(f["ca_id"]) if f.get("ca_id") else None,
-                        ca_ref=ca_refs.get(uuid.UUID(f["ca_id"])) if f.get("ca_id") else None,
-                    )
-                    for f in i.findings or []
-                ],
+                findings=[_finding_read(i, n, f, ca_refs) for n, f in enumerate(i.findings or [])],
                 status=i.status,
                 timeliness=timeliness(i, grace),
                 cancel_reason=i.cancel_reason,
@@ -340,6 +330,24 @@ def reads(db: Session, items: Sequence[Inspection]) -> list[InspectionRead]:
             )
         )
     return out
+
+
+def _finding_read(
+    ins: Inspection, n: int, f: dict[str, Any], ca_refs: dict[uuid.UUID, str]
+) -> FindingRead:
+    """One stored finding. Rows written before the Phase 1 shape was fixed carry no id and
+    `item` for the description (seed_hse until 2026-10-09); they get a stable id derived from
+    the inspection and position instead of failing the whole read."""
+    ca = uuid.UUID(f["ca_id"]) if f.get("ca_id") else None
+    fid = f.get("id")
+    return FindingRead(
+        id=uuid.UUID(fid) if fid else uuid.uuid5(ins.id, f"finding-{n}"),
+        description=f.get("description") or f.get("item") or "",
+        severity=f["severity"],
+        ca_required=bool(f.get("ca_required")),
+        ca_id=ca,
+        ca_ref=ca_refs.get(ca) if ca else None,
+    )
 
 
 def _rscore(r: ChecklistResponse) -> Decimal | None:

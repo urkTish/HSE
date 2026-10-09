@@ -1512,7 +1512,16 @@ def _ins(
     ok = rng.randint(15, 20) if done else None
     findings = []
     if done and ok is not None and ok < 18:
-        findings = [{"item": "Deficiency noted", "severity": "medium", "ca_id": None}]
+        # the stored shape of inspections._findings (id, description, severity, ca_required, ca_id)
+        findings = [
+            {
+                "id": str(uuid.uuid4()),
+                "description": "Deficiency noted",
+                "severity": "medium",
+                "ca_required": False,
+                "ca_id": None,
+            }
+        ]
     return Inspection(
         id=uuid.uuid4(),
         project_id=ctx.project.id,
