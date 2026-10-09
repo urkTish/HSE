@@ -297,8 +297,12 @@ function AuditDetail({ a }: { a: Audit }) {
         <CardHeader className="flex-row flex-wrap items-start justify-between gap-2">
           <div>
             <p className="text-sm text-muted-foreground">
-              {label("audit_types", a.audit_type)} · <Code>{a.template_code}</Code>
-              {a.template_version ? <span className="ltr"> v{a.template_version}</span> : null}
+              {label("audit_types", a.audit_type)} ·{" "}
+              {/* One LTR isolate for "CHA v1": in Arabic the version no longer jumps before the code ("v1CHA"). */}
+              <bdi className="ltr">
+                <Code>{a.template_code}</Code>
+                {a.template_version ? ` v${a.template_version}` : null}
+              </bdi>
             </p>
             <CardTitle className="flex flex-wrap items-center gap-2">
               <Code>{a.audit_no}</Code>

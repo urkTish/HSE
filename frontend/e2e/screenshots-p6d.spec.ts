@@ -145,6 +145,13 @@ for (const locale of ["en", "ar"] as const) {
     await page.getByTestId("note-GSI-05").fill("Open slab edge at grid C-14, no barrier");
     await page.getByTestId("sw-activity").fill("Formwork at level 3 slab edge");
     await shot(page, `20-checklist-run-phone-${locale}.png`, true);
+    // Design 6d: the run as the phone shows it mid-checklist with no signal (sticky progress bar, "waiting to send").
+    await page.context().setOffline(true);
+    await page.locator('[data-testid="run-item"][data-code="GSI-09"]').scrollIntoViewIfNeeded();
+    await expect(page.getByTestId("offline-submit-note")).toBeVisible();
+    await page.waitForTimeout(500);
+    await page.screenshot({ path: join(OUT, `23-checklist-run-offline-phone-${locale}.png`) });
+    await page.context().setOffline(false);
 
     await go("/toolbox-talks/new");
     await expect(page.getByTestId("offline-pack")).toHaveAttribute("data-cached", "yes", { timeout: 30_000 });

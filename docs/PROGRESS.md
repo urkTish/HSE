@@ -7,7 +7,7 @@
 - Phase 6c — Emergency preparedness & drills (spec `docs/specs/6c-emergency-drills.md` v1.0, §11 earlier-spec changes applied; contract v0.9.0)
 - Phase 6c step = Design done (findings `docs/design/phase-6c-findings.md`; contract v0.9.0); phase demo next
 - Phase 6d — Field assurance (checklists, audits, toolbox talks): spec `docs/specs/6d-field-assurance.md` v1.0 (61 ACs; §11 earlier-spec changes applied; contract v0.10.0)
-- Phase 6d step = Frontend done
+- Phase 6d step = Design done (findings `docs/design/phase-6d-findings.md`; contract v0.10.0); phase demo next
 - Phase 6e — Environmental management: spec `docs/specs/6e-environmental.md` v1.0 (58 ACs; §11 earlier-spec changes applied; contract v0.11.0)
 - Phase 6e step = Backend done
 - Phase 6f — Incident follow-up (notification packs, lessons learned): spec `docs/specs/6f-incident-followup.md` v1.0 written (48 ACs; §11 earlier-spec changes not yet applied); contract next, after 6e
@@ -690,6 +690,11 @@
   - Done: gap breakdown tables no longer run numbers together ("4679118"), with an icon on gaps; refresher plan state column visible at 1440 px; `StackedDate` across the training registers, record fields and the shared hook policy card; radio marks on the attendance buttons (48 px); Suspend / Revoke moved from the record header to a band at the page end; expiring vs in force shown by icon too; matrix rows shorter, with course names; Transition policy gets an hourglass; ICU plurals for the import commit lines.
   - No logic, API, permission or data change; e2e selectors unchanged (new: `record-later-actions`). Lint, typecheck and i18n check green. Strings in `scripts/i18n/p5-design.py`, merged on their own (not with `merge.py`, which would overwrite JSON fixes such as `training.imports.scansHint`).
 
+### Design pass — Phase 6d (UI/UX Designer)
+- Design pass: done (Phase 6d). Findings, ranking and the 6d design-system additions: `docs/design/phase-6d-findings.md`; before/after screenshots: `docs/screenshots/phase-6d/design/`.
+- Done: EN / AR names for the KPI breakdown by inspection type and language (were raw codes); sticky bottom bar on the phone checklist run (progress, what blocks sending, "Next item to do", Submit under the thumb); "No signal: kept on this phone" note and "Save on this phone" button while offline (run and talk form); half-width 48 px Yes / No answers; audit grade panel with the AG scale, the capped-at-C reason, findings counts by grade, findings sorted by grade, section score bars with the lowest marked, Void moved to the page end; finding consequence on audit rating buttons; phone layout of suggested topics and attendance rows; ICU plural for the language note; RAG icon and words on KPI tiles.
+- p6d e2e specs green (14 passed); lint, typecheck, i18n check green. Backend and frontend run from a clean `git archive HEAD` export on their own ports and database.
+
 ### Design pass — Phase 6c (UI/UX Designer)
 - Design pass: done (Phase 6c).
   - Findings, ranking and the Phase 6c design-system additions: `docs/design/phase-6c-findings.md`.
@@ -922,6 +927,11 @@ L items from the Phase 4 design pass (details in `docs/design/phase-4-findings.m
 - **P16. Certificate line on the deployment page.** The equipment-on-project page (the one an engineer opens for "the crane on my site") shows usable / not usable but not the certificate number, TPI, SWL and limitations. Needs `current_line` on `EquipmentDeploymentRead`.
 - **P17. Tag board field display.** A "problems only" toggle and a kiosk / TV mode for site offices (large tiles, problems first per zone, auto-refresh, no navigation chrome).
 - **P1 / P2 also apply to Phase 4.** Two-calendar dates make certificate rows 4–5 lines; equipment, scaffold and personnel-card actions come before the state on phones.
+
+L items from the Phase 6d design pass (details in `docs/design/phase-6d-findings.md`):
+- **P32. One item per screen.** Optional focus mode for the checklist run and audit Conduct on phones (one item, Next / swipe, the sticky bar as now).
+- **P33. Outbox badge in the top bar.** "2 waiting to send" on every page and a warning in the logout menu while items wait (AC59 wipes the cache at logout). Shared shell change.
+- Contract requests: names (not codes) in `FieldBreakdownRow.label_en` / `label_ar` for inspection type and language; optional `grade_scale` on the audit response if list AG becomes a setting.
 
 L items from the Phase 6c design pass (details in `docs/design/phase-6c-findings.md`):
 - **P25. Muster controller view.** Read-only view of an open muster for the incident controller on a tablet / TV: the missing panel and the missing names grouped by contractor with the last gate entry, auto-refresh, no chrome (shares the P17 / P22 kiosk mode). Needs the last gate row per entry on `MusterEntryRead` (contract change).
