@@ -9763,7 +9763,7 @@
       "file": "File",
       "fileHint": ".csv or .xlsx, up to 5 MB and 5,000 rows. English or Arabic headers.",
       "scansZip": "Certificate scans (.zip)",
-      "scansHint": "Optional. Files named <certificate_no>.pdf, .jpg or .png. Rows without a scan stay Draft.",
+      "scansHint": "Optional. Files named [certificate_no].pdf, .jpg or .png. Rows without a scan stay Draft.",
       "provider": "Provider",
       "evidence": "Provider's email (PDF / EML)",
       "evidenceHint": "Must come from one of the provider's verification domains.",

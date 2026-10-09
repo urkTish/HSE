@@ -502,8 +502,16 @@ def point_read(db: Session, pt: EnvPoint) -> PointRead:
 
 
 def airside(db: Session, pt: EnvPoint) -> bool:
-    z = db.get(Zone, pt.zone_id) if pt.zone_id else None
-    return pt.kind == PointKind.airside or ec.is_airside(z)
+    """AIR-1: an airside point, a point in an airside zone, or (no zone) on an airside site."""
+    from app.core.enums import SiteSide  # noqa: PLC0415
+    from app.models import Site  # noqa: PLC0415
+
+    if pt.kind == PointKind.airside:
+        return True
+    if pt.zone_id:
+        return ec.is_airside(db.get(Zone, pt.zone_id))
+    s = db.get(Site, pt.site_id)
+    return s is not None and s.site_side == SiteSide.airside
 
 
 def _point(db: Session, p: Principal, point_id: uuid.UUID) -> EnvPoint:

@@ -23,6 +23,25 @@ test.describe.serial("Phase 2 — access settings and dashboard", () => {
   });
 
   test("HK-4: switching a hook to block without a registered provider is refused with a clear message", async ({ page }) => {
+    // On the full seed every hook kind has a live provider (Phase 4 per project, Phase 5 training,
+    // Phase 6a medical_fitness, spec 6a §6a.7), so the backend refusal cannot be
+    // reached from the seed; it is covered by backend test_P2AC22 (HOOK_PROVIDER_MISSING). Here the
+    // PATCH answers as the backend does without a provider, and the screen must surface it unsaved.
+    await page.route("**/access-settings", async (route) => {
+      if (route.request().method() !== "PATCH") return route.fallback();
+      await route.fulfill({
+        status: 422,
+        contentType: "application/json",
+        body: JSON.stringify({
+          detail: {
+            code: "HOOK_PROVIDER_MISSING",
+            message: "No provider is registered for medical_fitness; it can only warn until its module is live (HK-4).",
+            message_ar: "لا يوجد مزوّد مسجل لهذا المتطلب؛ يبقى تنبيهًا حتى تشغيل الوحدة.",
+            errors: [{ loc: ["body", "hook_policy.medical_fitness"], msg: "Provider missing.", msg_ar: null, type: "HOOK_PROVIDER_MISSING" }],
+          },
+        }),
+      });
+    });
     await login(page, USERS.faisal);
     await page.goto("/en/access-settings");
     await page.getByTestId("hook-policy-medical_fitness").selectOption("block");

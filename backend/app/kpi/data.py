@@ -20,6 +20,7 @@ from zoneinfo import ZoneInfo
 
 from sqlalchemy import case, event, func, or_, select
 from sqlalchemy.orm import ORMExecuteState, Session
+from sqlalchemy.sql.elements import TextClause
 
 from app.core.access_enums import InductionResult, InductionType
 from app.core.config import get_settings
@@ -96,8 +97,10 @@ _GENERATION = 0
 
 
 # Writes that never change a KPI fact; the 30-second session heartbeat (deps.py) would
-# otherwise invalidate every scope's cache on each request.
-_NO_KPI_TABLES = frozenset({"user_sessions", "gate_device_sessions"})
+# otherwise invalidate every scope's cache on each request. No KPI reads the audit log, and
+# reads are audited too (logins, sensitive medical reads in the 6a readiness behind the action
+# panel), so an audit row must not invalidate the cache either.
+_NO_KPI_TABLES = frozenset({"user_sessions", "gate_device_sessions", "audit_log"})
 
 
 def _table_of(obj: Any) -> str | None:
@@ -114,6 +117,10 @@ def _mark_write(session: Session, *_: Any) -> None:
 def _mark_statement(state: ORMExecuteState) -> None:
     if state.is_select:
         return
+    if isinstance(state.statement, TextClause) and state.statement.text.lstrip()[:7].upper() == (
+        "SELECT "
+    ):
+        return  # e.g. the audit chain's pg_advisory_xact_lock
     table = getattr(getattr(state.statement, "table", None), "name", None)
     if table not in _NO_KPI_TABLES:
         state.session.info["kpi_wrote"] = True
