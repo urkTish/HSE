@@ -325,7 +325,7 @@ export function CertValidityView({ v, projectId, compact, hideBadge }: { v: S["C
           {te(`hookReason.${v.not_in_force_reason}`)}
         </span>
       ) : null}
-      {v.unverified_window_until ? <span className="text-xs text-warning">{t("unverifiedWindow", { until: dateTime(v.unverified_window_until) })}</span> : null}
+      {v.unverified_window_until ? <span className="inline-flex items-center gap-1 text-xs text-warning font-medium"><TriangleAlert aria-hidden className="size-3.5 shrink-0" />{t("unverifiedWindow", { until: dateTime(v.unverified_window_until) })}</span> : null}
       {!compact && v.in_force_from ? <span className="text-xs text-muted-foreground">{t("inForceFrom", { at: dateTime(v.in_force_from) })}</span> : null}
     </div>
   );

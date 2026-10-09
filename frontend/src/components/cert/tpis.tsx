@@ -1,6 +1,6 @@
 "use client";
 import { useQueryClient } from "@tanstack/react-query";
-import { BadgeCheck, Pencil, Plus } from "lucide-react";
+import { BadgeCheck, OctagonAlert, Pencil, Plus } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -465,7 +465,7 @@ function TpiView({ tpi }: { tpi: S["TpiRead"] }) {
                           {t("notChecked")}
                         </Badge>
                       )}
-                      {!a.counts ? <span className="block text-xs text-destructive">{t("doesNotCount")}</span> : null}
+                      {!a.counts ? <span className="flex items-center gap-1 text-xs text-destructive font-medium"><OctagonAlert aria-hidden className="size-3.5 shrink-0" />{t("doesNotCount")}</span> : null}
                     </TD>
                     <TD label={tc("actions")}>
                       {edit ? (

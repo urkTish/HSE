@@ -57,6 +57,7 @@ import { can, canWrite } from "@/lib/permissions";
 import { useDebounced } from "@/lib/use-debounced";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
+import { StackedDate } from "@/components/medical/common";
 import {
   CertStatusBadge,
   CertTransitionButtons,
@@ -820,7 +821,6 @@ function VerificationLog({ project }: { project: S["ProjectRead"] }) {
   const tv = useTranslations("cert");
   const te = useTranslations("enums");
   const me = useMeData();
-  const { dateTime } = useFormatters(project.id);
   const s = useSearchState();
   const page = s.getInt("page", 1) ?? 1;
   const outcome = s.getAll("outcome") as S["VerificationOutcome"][];
@@ -862,7 +862,7 @@ function VerificationLog({ project }: { project: S["ProjectRead"] }) {
             <TBody>
               {items.map((v) => (
                 <TR key={v.id} data-testid="verification-log-row">
-                  <TD label={tv("performedAt")}>{dateTime(v.performed_at)}</TD>
+                  <TD label={tv("performedAt")}><StackedDate v={v.performed_at} time /></TD>
                   <TD label={t("certNo")}>
                     <Link href={v.cert_kind === "equipment" ? `/equipment-certificates/${v.cert_id}` : `/personnel-certificates/${v.cert_id}`} className="text-primary hover:underline">
                       <Code>{v.cert_no}</Code>

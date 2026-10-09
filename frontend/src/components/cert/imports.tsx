@@ -1,5 +1,5 @@
 "use client";
-import { AlertTriangle, CheckCircle2, Download, FileUp, Trash2, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Download, FileUp, Trash2, TriangleAlert, XCircle } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -323,7 +323,7 @@ export function CertImportDetail({ id }: { id: string }) {
         <span className="ltr">SHA-256 {b.file_sha256.slice(0, 12)}…</span>
         {b.scans_zip_name ? <span>{t("scansFound", { name: b.scans_zip_name, n: b.scans_count ?? 0 })}</span> : null}
         {b.evidence_file_name ? <span>{t("evidenceFile", { name: b.evidence_file_name })}</span> : null}
-        {b.sensitive ? <span className="font-medium text-warning">{t("sensitive")}</span> : null}
+        {b.sensitive ? <span className="inline-flex items-center gap-1 font-medium text-warning"><TriangleAlert aria-hidden className="size-3.5 shrink-0" />{t("sensitive")}</span> : null}
       </div>
       {b.file_issues.length > 0 ? (
         <Alert tone="danger" className="mb-4">
