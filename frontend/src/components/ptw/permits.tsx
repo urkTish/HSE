@@ -32,6 +32,7 @@ import { useAppointments, useIsolations, useJsaTemplates, usePermit, usePermits 
 import { WEEKDAYS } from "@/lib/access-enums";
 import { useFieldErrorTranslator } from "@/lib/i18n-helpers";
 import { can, canWrite } from "@/lib/permissions";
+import { CLOTHING, WORKLOADS } from "@/lib/heat-enums";
 import { PERMIT_BLOCKERS, PERMIT_REGISTER_SORTS, PERMIT_STATUSES, PERMIT_TYPES, PTW_EXPOSURES } from "@/lib/ptw-enums";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
@@ -269,6 +270,9 @@ function PermitForm({ project, permit }: { project: S["ProjectRead"]; permit?: P
   const [scopeEn, setScopeEn] = useState(permit?.scope_en ?? "");
   const [scopeAr, setScopeAr] = useState(permit?.scope_ar ?? "");
   const [exposure, setExposure] = useState<S["Exposure"] | "">(permit?.exposure ?? "");
+  const [heatWorkload, setHeatWorkload] = useState<S["Workload"] | "">(permit?.heat_workload ?? "");
+  const [heatClothing, setHeatClothing] = useState<S["Clothing"]>(permit?.heat_clothing ?? "work_clothes");
+  const [heatHood, setHeatHood] = useState(permit?.heat_hood ?? false);
   const [flammables, setFlammables] = useState(permit?.flammables_in_use ?? false);
   const [engine, setEngine] = useState(permit?.combustion_engine_plant ?? false);
   const [from, setFrom] = useState(permit?.valid_from_at ?? "");
@@ -317,6 +321,9 @@ function PermitForm({ project, permit }: { project: S["ProjectRead"]; permit?: P
       scope_en: scopeEn.trim(),
       scope_ar: scopeAr.trim() || null,
       exposure: exposure || null,
+      heat_workload: exposure === "indoor" ? null : heatWorkload || null,
+      heat_clothing: exposure === "indoor" ? null : heatClothing,
+      heat_hood: exposure !== "indoor" && heatHood,
       flammables_in_use: flammables,
       combustion_engine_plant: engine,
       valid_from_at: from,
@@ -538,6 +545,32 @@ function PermitForm({ project, permit }: { project: S["ProjectRead"]; permit?: P
             ))}
           </Select>
         </FormField>
+        {exposure !== "indoor" ? (
+          <>
+            <FormField id="pf-heat-workload" label={t("heatWorkload")} hint={t("heatWorkloadHint")}>
+              <Select value={heatWorkload} onChange={(e) => setHeatWorkload(e.target.value as S["Workload"] | "")} data-testid="pf-heat-workload">
+                <option value="">{t("heatByType")}</option>
+                {WORKLOADS.map((x) => (
+                  <option key={x} value={x}>
+                    {te(`workload.${x}`)}
+                  </option>
+                ))}
+              </Select>
+            </FormField>
+            <FormField id="pf-heat-clothing" label={t("heatClothing")} hint={t("heatClothingHint")}>
+              <Select value={heatClothing} onChange={(e) => setHeatClothing(e.target.value as S["Clothing"])} data-testid="pf-heat-clothing">
+                {CLOTHING.map((x) => (
+                  <option key={x} value={x}>
+                    {te(`clothing.${x}`)}
+                  </option>
+                ))}
+              </Select>
+            </FormField>
+            <CheckboxField id="pf-heat-hood" label={t("heatHoodLabel")}>
+              <Checkbox checked={heatHood} onChange={(e) => setHeatHood(e.target.checked)} data-testid="pf-heat-hood" />
+            </CheckboxField>
+          </>
+        ) : null}
         <CheckboxField id="pf-flam" label={t("flammables")}>
           <Checkbox checked={flammables} onChange={(e) => setFlammables(e.target.checked)} />
         </CheckboxField>

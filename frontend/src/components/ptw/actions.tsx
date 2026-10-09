@@ -37,7 +37,8 @@ export type Step =
   | "post_expiry"
   | "handover_accept"
   | "copy"
-  | "delete";
+  | "delete"
+  | "heat_resume";
 
 /** Lifecycle actions offered by the server (allowed_actions) plus field actions derived from role and status. */
 /** primary = the safe next step; outline = other steps; stop = stop work (always reachable); alarm = emergency;
@@ -72,6 +73,8 @@ export function usePermitSteps(p: Permit): { k: Step; tone: StepTone }[] {
   for (const [k, tone] of order) if (a.has(k)) out.push({ k, tone });
   const awaitingAcceptance = receiver && (p.status === "approved" || p.status === "suspended") && !(p.receiver_acceptance && new Date(p.receiver_acceptance.valid_until).getTime() > now);
   if (awaitingAcceptance && can(me, "permit.receive", p.project_id)) out.push({ k: "accept", tone: "outline" });
+  // 6b PH-3: after a WBGT stop the receiver resumes (no issuer cause text) once HEAT_STOP clears.
+  if (p.status === "suspended" && p.status_reason === "heat_stress_stop" && receiver && can(me, "permit.receive", p.project_id)) out.push({ k: "heat_resume", tone: "primary" });
   if (p.status === "active" && receiver) {
     if (p.current_shift?.paused_now) out.push({ k: "pause_end", tone: "primary" });
     else out.push({ k: "pause", tone: "outline" });
@@ -89,6 +92,7 @@ export function usePermitSteps(p: Permit): { k: Step; tone: StepTone }[] {
 
 const ICON: Partial<Record<Step, typeof Play>> = {
   start: Play,
+  heat_resume: Play,
   pause: Pause,
   pause_end: Play,
   gas_alarm: Siren,
@@ -299,11 +303,11 @@ export function PermitStepDialog({ permit, step, onClose }: { permit: Permit; st
     await refresh(p ?? undefined);
     toast.success(msg);
   };
-  const suspendReasons = STATUS_REASONS.filter((r) => !["shift_end", "rejected", "not_required", "duplicate", "shift_lapsed"].includes(r));
+  const suspendReasons = STATUS_REASONS.filter((r) => !["shift_end", "rejected", "not_required", "duplicate", "shift_lapsed", "heat_stress_stop"].includes(r));
   const cancelReasons: S["StatusReason"][] = ["rejected", "not_required", "duplicate", "contractor_suspended", "contractor_blacklisted", "other"];
-  const routineSuspension = permit.status_reason === "shift_end" || permit.status_reason === "shift_lapsed" || permit.status_reason === "midday_ban";
+  const routineSuspension = permit.status_reason === "shift_end" || permit.status_reason === "shift_lapsed" || permit.status_reason === "midday_ban" || permit.status_reason === "heat_stress_stop";
   const purpose: S["AcceptancePurpose"] = permit.status === "approved" ? "issue" : routineSuspension ? "revalidate" : "resume";
-  const readinessAction: S["PermitAction"] | null = (["request", "review", "hse_review", "approve", "issue", "start", "end_shift", "revalidate", "resume", "request_closure", "close", "handover"] as const).includes(step as "request")
+  const readinessAction: S["PermitAction"] | null = step === "heat_resume" ? "resume" : (["request", "review", "hse_review", "approve", "issue", "start", "end_shift", "revalidate", "resume", "request_closure", "close", "handover"] as const).includes(step as "request")
     ? (step as S["PermitAction"])
     : null;
   const title = t(`title.${step}`);
@@ -496,6 +500,25 @@ export function PermitStepDialog({ permit, step, onClose }: { permit: Permit; st
       );
       break;
     }
+    case "heat_resume":
+      disabled = !Object.values(crew).some((x) => x.present) || (outdoor(permit) && !temp);
+      run = async () => done(await unwrap(api.POST("/api/v1/permits/{permit_id}/heat-resume", { ...path, body: { crew_present: crewBody(crew), ambient_temp_c: temp || null, wind_reading: windBody(wind) } })), te("permitStatus.active"));
+      body = (
+        <>
+          <Alert tone="warning">{t("suspendedFor", { reason: te("statusReason.heat_stress_stop") })}</Alert>
+          <p className="text-sm text-muted-foreground" data-testid="heat-resume-hint">
+            {t("heatResumeHint")}
+          </p>
+          <CrewPresent permit={permit} value={crew} onChange={setCrew} />
+          {outdoor(permit) ? (
+            <FormField id="st-temp" label={t("ambientTemp")} required hint={t("ambientTempHint")}>
+              <DecimalInput value={temp} onChange={setTemp} data-testid="st-temp" />
+            </FormField>
+          ) : null}
+          {needsWind(permit) ? <WindFields value={wind} onChange={setWind} /> : null}
+        </>
+      );
+      break;
     case "end_shift":
       run = async () => done(await unwrap(api.POST("/api/v1/permits/{permit_id}/end-shift", { ...path, body: { note: comment || null } })), t("shiftEnded"));
       body = (

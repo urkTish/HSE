@@ -20,6 +20,7 @@ import type { Schemas } from "@/lib/api/client";
 import { useHandovers, usePermit, usePermitGasTests, useShifts, useSuspensions } from "@/lib/api/ptw";
 import { joinList, useLocalizedName } from "@/lib/i18n-helpers";
 import { can } from "@/lib/permissions";
+import { RegimeBadge, RestMinutes } from "@/components/heat/common";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
 import { cn } from "@/lib/utils";
@@ -365,6 +366,25 @@ function Overview({ p }: { p: Permit }) {
             </FieldItem>
             <FieldItem label={tc("contractor")}>{p.engagement.short_code}</FieldItem>
             <FieldItem label={tp("exposure")}>{te(`exposure.${p.exposure}`)}</FieldItem>
+            {p.heat_workload ? (
+              <FieldItem label={tp("heatWorkload")}>
+                <span data-testid="permit-heat-workload" data-workload={p.heat_workload}>
+                  {te(`workload.${p.heat_workload}`)}
+                </span>
+                <span className="block text-xs text-muted-foreground">
+                  {te(`clothing.${p.heat_clothing ?? "work_clothes"}`)}
+                  {p.heat_hood ? ` · ${tp("heatHood")}` : ""}
+                </span>
+              </FieldItem>
+            ) : null}
+            {p.current_shift?.heat_regime ? (
+              <FieldItem label={tp("heatRegimeNow")}>
+                <span className="flex flex-wrap items-center gap-2" data-testid="permit-heat-regime">
+                  <RegimeBadge regime={p.current_shift.heat_regime} />
+                  <RestMinutes regime={p.current_shift.heat_regime} minutes={p.current_shift.rest_minutes_per_hour} />
+                </span>
+              </FieldItem>
+            ) : null}
             <FieldItem label={tp("validity")}>
               <span className="ltr">{dateTime(p.valid_from_at)}</span> – <span className="ltr">{dateTime(p.valid_to_at)}</span>
             </FieldItem>
@@ -671,6 +691,12 @@ function ShiftsTab({ p }: { p: Permit }) {
                 <span className="text-xs text-muted-foreground">
                   {userLabel(x.receiver, locale)} · {userLabel(x.issuer, locale)} · {t("crewPresent", { n: x.crew_present_count })}
                   {x.ambient_temp_c ? <> · <bdi className="ltr">{x.ambient_temp_c} °C</bdi></> : null}
+                  {x.heat_regime ? (
+                    <>
+                      {" "}
+                      · <RegimeBadge regime={x.heat_regime} short />
+                    </>
+                  ) : null}
                   {x.gas_compliant === false ? <span className="ms-1 text-danger">{t("gasNonCompliant")}</span> : null}
                 </span>
                 {x.pauses.length ? (
