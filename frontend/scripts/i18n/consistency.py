@@ -83,6 +83,12 @@ P = {
     },
     # Phase 6a
     "medical": {
+        "settings": {
+            "saved": [
+                "{n, plural, one {# setting saved.} other {# settings saved.}}",
+                "{n, plural, zero {لم يُحفظ أي إعداد.} one {تم حفظ إعداد واحد.} two {تم حفظ إعدادين.} few {تم حفظ # إعدادات.} many {تم حفظ # إعدادًا.} other {تم حفظ # إعداد.}}",
+            ],
+        },
         "imports": {
             "commit": [
                 "{n, plural, one {Commit # row} other {Commit # rows}}",

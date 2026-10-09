@@ -16,7 +16,7 @@ test.describe("Medical settings and imports", () => {
     await expect(page.getByTestId("form-error")).toBeVisible();
     await page.getByTestId("ms-referral_assessment_hours").fill("48");
     await page.getByTestId("save-medical-settings").click();
-    await expect(page.getByText("1 settings saved.")).toBeVisible();
+    await expect(page.getByText("1 setting saved.")).toBeVisible();
   });
 
   test("the HSE Officer sees settings read-only", async ({ page }) => {

@@ -56,21 +56,40 @@ test.describe.serial("Contractors and engagements", () => {
   test("AC17: tier-3 parents are limited to tier 2; approved contractor engaged as tier 2", async ({ page }) => {
     const api = await apiAs(USERS.faisal);
     const ania = await projectId(api, "ANIA-EXP");
+    // its own contractor, pending approval (not the one AC18 creates and AC20 blacklists)
+    const own = `E2T${uid()}`;
+    const made = await api.post("/api/v1/contractors", {
+      data: {
+        legal_name_en: `E2E Tier Two ${own}`,
+        legal_name_ar: "شركة المستوى الثاني التجريبية",
+        short_code: own,
+        cr_number: `7${String(Date.now() + 1).slice(-9)}`,
+        contractor_category: "civil",
+        primary_contact_name: "E2E Contact",
+        primary_contact_mobile: "+966500009998",
+        primary_contact_email: "e2e.tier2@example.com",
+      },
+    });
+    expect(made.ok(), await made.text()).toBeTruthy();
+    const c = (await made.json()) as { id: string };
+    const sent = await api.post(`/api/v1/contractors/${c.id}/transitions`, { data: { to_status: "pending_approval" } });
+    expect(sent.ok(), await sent.text()).toBeTruthy();
     await login(page, USERS.faisal);
-    const contractors = await (await api.get(`/api/v1/contractors?q=${short}`)).json();
-    await page.goto(`/en/contractors/${contractors.items[0].id}`);
+    await page.goto(`/en/contractors/${c.id}`);
     await page.getByTestId("transition-approved").click();
     await page.getByTestId("transition-confirm").click();
     await expect(page.locator("[data-status=approved]")).toBeVisible();
 
     await page.goto(`/en/projects/${ania}/engagements/new`);
     await page.locator("#tier").selectOption("3");
+    // the parent list comes from the project's engagements, loaded after the form renders
+    await expect(page.locator("#parent_engagement_id option")).not.toHaveCount(1);
     const parents = (await page.locator("#parent_engagement_id option").allTextContents()).slice(1);
     expect(parents.length).toBeGreaterThan(0);
     for (const p of parents) expect(p).toContain("Tier 2");
     expect(parents.join()).not.toContain("RAWABI");
 
-    await selectByPrefix(page.locator("#contractor_id"), short);
+    await selectByPrefix(page.locator("#contractor_id"), own);
     await page.locator("#tier").selectOption("2");
     await selectByPrefix(page.locator("#parent_engagement_id"), "RAWABI");
     await page.locator("#scope_of_work_en").fill("E2E works");
@@ -78,7 +97,7 @@ test.describe.serial("Contractors and engagements", () => {
     await page.locator("#mobilisation_date").fill("2026-10-01");
     await page.getByLabel(/S-LAND/).check();
     await page.getByTestId("save").click();
-    await expect(page.getByTestId("engagement-title")).toContainText(short);
+    await expect(page.getByTestId("engagement-title")).toContainText(own);
   });
 
   test("AC20: blacklisting requires a reason and is applied", async ({ page }) => {

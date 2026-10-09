@@ -73,11 +73,34 @@ test.describe.serial("Phase 2 — workers, inductions, zone profiles", () => {
   });
 
   test("IN: recording an induction in a language the worker does not speak shows an amber warning, not an error", async ({ page }) => {
+    // Self-contained: its own Urdu-speaking worker (site general induction passed) and its own
+    // zone course offered in English and Arabic.
+    const api = await apiAs(USERS.faisal);
+    const ids = await projectIds(api);
+    const w = await createWorker(api, ids, `Induction Lang ${uid()}`, "RAWABI", "ur");
+    await recordInduction(api, ids.pid, w.id, await ensureGenCourse(api, ids.pid), "ur");
+    const own = `L${uid()}`.slice(0, 8);
+    const made = await api.post(`/api/v1/projects/${ids.pid}/induction-courses`, {
+      data: {
+        code: own,
+        induction_type: "zone_specific",
+        name_en: `Zone briefing ${own}`,
+        name_ar: "تعريف المنطقة",
+        version: "1.0",
+        validity_months: 12,
+        min_duration_minutes: 60,
+        test_required: false,
+        languages_offered: ["en", "ar"],
+        delivered_by_roles: ["hse_manager", "hse_officer"],
+        prerequisite_codes: [],
+      },
+    });
+    expect(made.ok(), await made.text()).toBeTruthy();
     await login(page, USERS.faisal);
     await page.goto("/en/inductions/new");
-    await page.getByTestId("in-worker-search").fill(workerNo);
-    await selectContaining(page.getByTestId("in-worker"), workerNo);
-    await selectContaining(page.getByTestId("in-course-sel"), code);
+    await page.getByTestId("in-worker-search").fill(w.worker_no);
+    await selectContaining(page.getByTestId("in-worker"), w.worker_no);
+    await selectContaining(page.getByTestId("in-course-sel"), own);
     await page.getByTestId("in-lang").selectOption("en");
     const warn = page.getByTestId("language-mismatch");
     await expect(warn).toBeVisible();
@@ -97,6 +120,11 @@ test.describe.serial("Phase 2 — workers, inductions, zone profiles", () => {
     const worker = found.items.find((w) => w.worker_no === workerNo);
     expect(worker).toBeTruthy();
     await recordInduction(api, ids.pid, worker!.id, await ensureGenCourse(api, ids.pid));
+    // and the zone course required on Z-TWB (created by the IN test above)
+    const courses = await getJson<{ items: { id: string; code: string }[] }>(api, `/api/v1/projects/${ids.pid}/induction-courses`);
+    const zone = courses.items.find((c) => c.code === code);
+    expect(zone).toBeTruthy();
+    await recordInduction(api, ids.pid, worker!.id, zone!.id);
     await login(page, USERS.faisal);
     await page.goto(`/en/workers?q=${workerNo}`);
     await page.locator(`[data-testid=worker-row][data-worker-no='${workerNo}'] a`).first().click();

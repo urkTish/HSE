@@ -1,6 +1,13 @@
+import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures/test";
 import en from "../messages/en.json" with { type: "json" };
-import { apiAs, login, PASSWORD, USERS, userId } from "./helpers";
+import { apiAs, login, PASSWORD, sql, USERS, userId } from "./helpers";
+
+/** Khalid back to active with no failure count: AC3 must not inherit failures from earlier tests (re-auth
+ * and co-sign attempts count too) nor leave him locked for later specs (p2-waps, p3-config, p3-lifecycle). */
+function resetKhalid(): void {
+  sql(`UPDATE users SET status = 'active', locked_until = NULL, failed_login_count = 0, failed_window_started_at = NULL WHERE email = '${USERS.khalid}'`);
+}
 
 test.describe("Authentication", () => {
   test("AC1: Faisal signs in (EN), reaches home and a login_success audit entry exists", async ({ page }) => {
@@ -84,30 +91,45 @@ test.describe("Authentication", () => {
   });
 
   test("AC3: 5 failures lock the account; HSE Manager unlocks it", async ({ page }) => {
-    await page.goto("/en/login");
-    for (let i = 0; i < 5; i++) {
-      await page.locator("#email").fill(USERS.khalid);
-      await page.locator("#password").fill(`Wrong-Password-${i}!`);
-      await page.locator("button[type=submit]").click();
-      await expect(page.getByTestId("login-error")).toBeVisible();
+    resetKhalid();
+    try {
+      await ac3(page);
+    } finally {
+      resetKhalid();
     }
-    await page.locator("#email").fill(USERS.khalid);
-    await page.locator("#password").fill(PASSWORD);
-    await page.locator("button[type=submit]").click();
-    await expect(page.getByTestId("login-error")).toContainText(en.auth.login.lockedTitle);
-    await expect(page.getByTestId("login-error")).toContainText(en.errors.code.ACCOUNT_LOCKED);
-
-    const api = await apiAs(USERS.faisal);
-    const id = await userId(api, USERS.khalid);
-    await login(page, USERS.faisal);
-    await page.goto(`/en/users/${id}`);
-    await expect(page.locator("[data-status=locked]")).toBeVisible();
-    await page.getByTestId("transition-active").click();
-    await page.getByTestId("transition-confirm").click();
-    await expect(page.locator("[data-status=active]").first()).toBeVisible();
-
-    await page.goto("/en/audit-log");
-    await page.locator("#audit-action").selectOption("account_locked");
-    await expect(page.getByTestId("audit-row").first()).toBeVisible();
   });
 });
+
+/** Submit the login form and wait for the API's answer (the previous attempt's error is still on screen,
+ * so waiting for an error to be visible would not wait for this attempt to be counted). */
+async function attempt(page: Page, password: string): Promise<void> {
+  await page.locator("#email").fill(USERS.khalid);
+  await page.locator("#password").fill(password);
+  const answered = page.waitForResponse((r) => r.url().includes("/api/v1/auth/login") && r.request().method() === "POST");
+  await page.locator("button[type=submit]").click();
+  await answered;
+}
+
+async function ac3(page: Page): Promise<void> {
+  await page.goto("/en/login");
+  for (let i = 0; i < 5; i++) {
+    await attempt(page, `Wrong-Password-${i}!`);
+    await expect(page.getByTestId("login-error")).toBeVisible();
+  }
+  await attempt(page, PASSWORD);
+  await expect(page.getByTestId("login-error")).toContainText(en.auth.login.lockedTitle);
+  await expect(page.getByTestId("login-error")).toContainText(en.errors.code.ACCOUNT_LOCKED);
+
+  const api = await apiAs(USERS.faisal);
+  const id = await userId(api, USERS.khalid);
+  await login(page, USERS.faisal);
+  await page.goto(`/en/users/${id}`);
+  await expect(page.locator("[data-status=locked]")).toBeVisible();
+  await page.getByTestId("transition-active").click();
+  await page.getByTestId("transition-confirm").click();
+  await expect(page.locator("[data-status=active]").first()).toBeVisible();
+
+  await page.goto("/en/audit-log");
+  await page.locator("#audit-action").selectOption("account_locked");
+  await expect(page.getByTestId("audit-row").first()).toBeVisible();
+}
