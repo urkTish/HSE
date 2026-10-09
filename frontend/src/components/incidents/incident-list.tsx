@@ -1,5 +1,5 @@
 "use client";
-import { Plus, ShieldOff } from "lucide-react";
+import { Plus, ShieldOff, TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -23,8 +23,8 @@ import { Breadcrumbs } from "@/components/common/breadcrumbs";
 import { useDisplay } from "@/lib/digits";
 import { CASE_CATEGORIES, INCIDENT_STATUSES, INCIDENT_TYPES } from "@/lib/enums";
 import { can, canWrite } from "@/lib/permissions";
-import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
+import { StackedDate } from "@/components/medical/common";
 
 const PAGE_SIZE = 50;
 
@@ -34,7 +34,6 @@ export function IncidentList({ project }: { project: Schemas["ProjectRead"] }) {
   const tc = useTranslations("common");
   const me = useMeData();
   const show = useDisplay(project.id);
-  const { dateTime } = useFormatters(project.id);
   const opts = useProjectOptions(project.id);
   const s = useSearchState();
   const page = s.getInt("page", 1) ?? 1;
@@ -175,7 +174,7 @@ export function IncidentList({ project }: { project: Schemas["ProjectRead"] }) {
                       {r.ref}
                     </Link>
                   </TD>
-                  <TD label={t("list.occurred")} className="md:min-w-40">{dateTime(r.occurred_at)}</TD>
+                  <TD label={t("list.occurred")} className="md:min-w-40"><StackedDate v={r.occurred_at} time /></TD>
                   <TD label={t("list.type")}>
                     <span className="inline-flex flex-wrap gap-1">
                       {r.incident_types.map((x) => (
@@ -209,7 +208,7 @@ export function IncidentList({ project }: { project: Schemas["ProjectRead"] }) {
                             {c}
                           </span>
                         ))}
-                        {r.provisional_cases > 0 ? <span className="text-warning">{te("classificationStatus.provisional")} {show(r.provisional_cases)}</span> : null}
+                        {r.provisional_cases > 0 ? <span className="inline-flex items-center gap-1 text-warning font-medium"><TriangleAlert aria-hidden className="size-3.5 shrink-0" />{te("classificationStatus.provisional")} {show(r.provisional_cases)}</span> : null}
                         {r.excluded_cases > 0 ? <span className="text-muted-foreground">{t("excludedFromRates")} {show(r.excluded_cases)}</span> : null}
                       </span>
                     ) : (
@@ -250,7 +249,6 @@ export function ExcludedCases({ project }: { project: Schemas["ProjectRead"] }) 
   const tcs = useTranslations("cases");
   const te = useTranslations("enums");
   const tn = useTranslations("nav");
-  const { date } = useFormatters(project.id);
   const s = useSearchState();
   const q = { date_from: s.get("date_from") || null, date_to: s.get("date_to") || null };
   const query = useExcludedCases(project.id, q);
@@ -285,7 +283,7 @@ export function ExcludedCases({ project }: { project: Schemas["ProjectRead"] }) 
                   </Link>
                 </TD>
                 <TD label={tcs("fields.case_no")}>{r.case_no ? <span className="ltr">{r.case_no}</span> : "—"}</TD>
-                <TD label={t("list.occurred")}>{date(r.occurred_at)}</TD>
+                <TD label={t("list.occurred")}><StackedDate v={r.occurred_at} /></TD>
                 <TD label={tcs("fields.case_category")}>{r.case_category ? te(`caseCategory.${r.case_category}`) : "—"}</TD>
                 <TD label={tcs("fields.exclusion")}>
                   {r.reasons.map((x) => te(`rateExclusion.${x}`)).join(" · ")}

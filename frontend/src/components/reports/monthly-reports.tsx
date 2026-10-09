@@ -1,6 +1,6 @@
 "use client";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FilePlus2, Loader2, Pencil, Printer, ShieldCheck } from "lucide-react";
+import { FilePlus2, Loader2, Pencil, Printer, ShieldCheck, TriangleAlert } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
@@ -118,7 +118,7 @@ export function ReportList({ project }: { project: Schemas["ProjectRead"] }) {
                     <Link href={`/reports/${r.id}`} className="font-medium text-primary hover:underline">
                       {monthLabel(locale, r.month)}
                     </Link>
-                    {r.revised_since_publication ? <span className="ms-2 text-xs text-warning">{t("revised")}</span> : null}
+                    {r.revised_since_publication ? <span className="inline-flex items-center gap-1 ms-2 text-xs text-warning font-medium"><TriangleAlert aria-hidden className="size-3.5 shrink-0" />{t("revised")}</span> : null}
                   </TD>
                   <TD label={t("status")}>
                     <StatusBadge status={r.status} label={te(`reportStatus.${r.status}`)} />

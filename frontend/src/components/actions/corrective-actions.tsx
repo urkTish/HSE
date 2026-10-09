@@ -1,5 +1,5 @@
 "use client";
-import { CalendarPlus, Pencil, Plus } from "lucide-react";
+import { AlertTriangle, CalendarPlus, Pencil, Plus } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -44,6 +44,7 @@ import { can, canWrite } from "@/lib/permissions";
 import { entityRoute } from "@/lib/routes";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
+import { StackedDate } from "@/components/medical/common";
 
 const PAGE_SIZE = 50;
 type CaStatus = Schemas["CaStatus"];
@@ -55,7 +56,6 @@ export function CaList({ project }: { project: Schemas["ProjectRead"] }) {
   const me = useMeData();
   const name = useLocalizedName();
   const show = useDisplay(project.id);
-  const { date } = useFormatters(project.id);
   const opts = useProjectOptions(project.id);
   const s = useSearchState();
   const page = s.getInt("page", 1) ?? 1;
@@ -169,8 +169,15 @@ export function CaList({ project }: { project: Schemas["ProjectRead"] }) {
                     <span className="ltr">{c.responsible_engagement.short_code}</span>
                   </TD>
                   <TD label={t("fields.due_date")} className="md:min-w-40">
-                    {date(c.due_date)}
-                    {c.overdue && c.days_overdue ? <span className="block text-xs text-destructive">{t("daysOverdue", { days: show(c.days_overdue), n: c.days_overdue })}</span> : null}
+                    <span className="flex flex-col items-start">
+                      <StackedDate v={c.due_date} />
+                      {c.overdue && c.days_overdue ? (
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-destructive">
+                          <AlertTriangle aria-hidden className="size-3.5 shrink-0" />
+                          {t("daysOverdue", { days: show(c.days_overdue), n: c.days_overdue })}
+                        </span>
+                      ) : null}
+                    </span>
                   </TD>
                   <TD label={t("fields.status")}>
                     <span className="inline-flex flex-wrap gap-1">

@@ -46,6 +46,7 @@ import { can, canWrite } from "@/lib/permissions";
 import { useRefLists } from "@/lib/reference";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
+import { StackedDate } from "@/components/medical/common";
 
 const PAGE_SIZE = 50;
 const isUnsafe = (t: string) => t === "unsafe_act" || t === "unsafe_condition";
@@ -56,7 +57,6 @@ export function ObservationList({ project }: { project: Schemas["ProjectRead"] }
   const tc = useTranslations("common");
   const me = useMeData();
   const ref = useRefLists();
-  const { dateTime } = useFormatters(project.id);
   const opts = useProjectOptions(project.id);
   const s = useSearchState();
   const page = s.getInt("page", 1) ?? 1;
@@ -153,7 +153,7 @@ export function ObservationList({ project }: { project: Schemas["ProjectRead"] }
                       {o.ref}
                     </Link>
                   </TD>
-                  <TD label={t("fields.observed_at")}>{dateTime(o.observed_at)}</TD>
+                  <TD label={t("fields.observed_at")}><StackedDate v={o.observed_at} time /></TD>
                   <TD label={t("fields.obs_type")}>{te(`observationType.${o.obs_type}`)}</TD>
                   <TD label={t("fields.category")}>{ref.label("observation_category", o.category)}</TD>
                   <TD label={t("fields.risk_rating")}>{o.risk_rating ? <StatusBadge status={`risk_${o.risk_rating}`} label={te(`riskRating.${o.risk_rating}`)} /> : "—"}</TD>

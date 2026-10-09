@@ -31,6 +31,7 @@ import { useErrorMessage } from "@/lib/i18n-helpers";
 import { can, canWrite } from "@/lib/permissions";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
+import { StackedDate } from "@/components/medical/common";
 
 const PAGE_SIZE = 50;
 /** Meetings have no capability of their own in §5.10; editing follows the HSE settings/officer roles (ASSUMPTION). */
@@ -42,7 +43,6 @@ export function MeetingList({ project }: { project: Schemas["ProjectRead"] }) {
   const tc = useTranslations("common");
   const me = useMeData();
   const show = useDisplay(project.id);
-  const { date } = useFormatters(project.id);
   const s = useSearchState();
   const page = s.getInt("page", 1) ?? 1;
   const type = (s.get("meeting_type") ?? "") as Schemas["MeetingType"] | "";
@@ -100,13 +100,13 @@ export function MeetingList({ project }: { project: Schemas["ProjectRead"] }) {
                 <TR key={m.id} data-testid="meeting-row">
                   <TD label={t("fields.planned_date")}>
                     <Link href={`/meetings/${m.id}`} className="font-medium text-primary hover:underline">
-                      {date(m.planned_date)}
+                      <StackedDate v={m.planned_date} />
                     </Link>
                   </TD>
                   <TD label={t("fields.meeting_type")}>{te(`meetingType.${m.meeting_type}`)}</TD>
                   <TD label={t("fields.title")}>{m.title ?? "—"}</TD>
                   <TD label={t("fields.engagement")}>{m.engagement ? <span className="ltr">{m.engagement.short_code}</span> : "—"}</TD>
-                  <TD label={t("fields.held_date")}>{date(m.held_date)}</TD>
+                  <TD label={t("fields.held_date")}><StackedDate v={m.held_date} /></TD>
                   <TD label={t("fields.attended_count")} className="text-end tabular-nums">
                     {m.attended_count === null ? "—" : `${show(m.attended_count)} / ${show(m.invited_count)}`}
                   </TD>

@@ -48,6 +48,7 @@ import { can, canWrite } from "@/lib/permissions";
 import { useRefLists } from "@/lib/reference";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
+import { StackedDate } from "@/components/medical/common";
 
 const PAGE_SIZE = 50;
 
@@ -58,7 +59,6 @@ export function InspectionList({ project }: { project: Schemas["ProjectRead"] })
   const me = useMeData();
   const ref = useRefLists();
   const show = useDisplay(project.id);
-  const { date } = useFormatters(project.id);
   const opts = useProjectOptions(project.id);
   const s = useSearchState();
   const page = s.getInt("page", 1) ?? 1;
@@ -161,8 +161,8 @@ export function InspectionList({ project }: { project: Schemas["ProjectRead"] })
                     </span>
                   </TD>
                   <TD label={t("fields.engagement")}>{i.engagement ? <span className="ltr">{i.engagement.short_code}</span> : "—"}</TD>
-                  <TD label={t("fields.planned_date")}>{date(i.planned_date)}</TD>
-                  <TD label={t("fields.completed_at")}>{date(i.completed_at)}</TD>
+                  <TD label={t("fields.planned_date")}><StackedDate v={i.planned_date} /></TD>
+                  <TD label={t("fields.completed_at")}><StackedDate v={i.completed_at} /></TD>
                   <TD label={t("fields.score_pct")} className="text-end tabular-nums">
                     {show(i.score_pct)}
                   </TD>
@@ -581,7 +581,6 @@ export function PlanList({ project }: { project: Schemas["ProjectRead"] }) {
   const me = useMeData();
   const locale = useLocale();
   const ref = useRefLists();
-  const { date } = useFormatters(project.id);
   const s = useSearchState();
   const page = s.getInt("page", 1) ?? 1;
   const activeOnly = s.getBool("active") ?? true;
@@ -650,7 +649,7 @@ export function PlanList({ project }: { project: Schemas["ProjectRead"] }) {
                     {p.weekday ? ` · ${te(`weekday.${p.weekday}`)}` : ""}
                   </TD>
                   <TD label={t("fields.assignee_role")}>{te(`assigneeRole.${p.assignee_role}`)}</TD>
-                  <TD label={t("nextPlanned")}>{date(p.next_planned_date)}</TD>
+                  <TD label={t("nextPlanned")}><StackedDate v={p.next_planned_date} /></TD>
                   <TD label={t("fields.active")}>
                     <YesNo value={p.active} yes={tc("yes")} no={tc("no")} />
                   </TD>
