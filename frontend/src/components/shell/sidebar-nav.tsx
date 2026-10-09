@@ -1,6 +1,9 @@
 "use client";
 import {
   FireExtinguisher,
+  OctagonAlert,
+  MessagesSquare,
+  FileSearch,
   LifeBuoy,
   Megaphone,
   Droplets,
@@ -272,6 +275,19 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
       ]
     : [];
 
+  /* Phase 6d field assurance (191–201; 33 records inspections). */
+  const fieldItems: Item[] = pid
+    ? [
+        ...(ac("field.view") ? [{ href: "/field-overview", label: t("fieldOverview"), Icon: LayoutGrid, testId: "nav-field-overview" }] : []),
+        ...(ac("inspection.record") ? [{ href: "/field-inspections/new", label: t("fieldRun"), Icon: ClipboardCheck, testId: "nav-field-run" }] : []),
+        ...(ac("field.view") ? [{ href: "/stop-work-orders", label: t("stopWork"), Icon: OctagonAlert, testId: "nav-stop-work" }] : []),
+        ...(ac("field.view", "field_audit.conduct") ? [{ href: "/field-audits", label: t("fieldAudits"), Icon: FileSearch, testId: "nav-field-audits" }] : []),
+        ...(ac("field.view", "toolbox.record") ? [{ href: "/toolbox-talks", label: t("toolboxTalks"), Icon: MessagesSquare, testId: "nav-toolbox-talks" }] : []),
+        ...(ac("field_library.view") ? [{ href: "/checklist-templates", label: t("fieldLibrary"), Icon: ListChecks, testId: "nav-checklist-templates" }] : []),
+        ...(ac("field.view") ? [{ href: "/field-kpis", label: t("fieldKpis"), Icon: FileBarChart, testId: "nav-field-kpis" }] : []),
+      ]
+    : [];
+
   const emergencyItems: Item[] = pid
     ? [
         ...(ac("emergency.view") ? [{ href: "/emergency-board", label: t("emergencyBoard"), Icon: ShieldAlert, testId: "nav-emergency-board" }] : []),
@@ -377,6 +393,18 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
               <p className="px-3 pt-1 pb-1 text-xs font-medium text-sidebar-muted">{t("heat")}</p>
               <ul className="mb-3 flex flex-col gap-1" data-testid="nav-heat">
                 {heatItems.map((i) => (
+                  <li key={i.href}>
+                    <NavLink item={i} onNavigate={onNavigate} />
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : null}
+          {fieldItems.length > 0 ? (
+            <>
+              <p className="px-3 pt-1 pb-1 text-xs font-medium text-sidebar-muted">{t("field")}</p>
+              <ul className="mb-3 flex flex-col gap-1" data-testid="nav-field">
+                {fieldItems.map((i) => (
                   <li key={i.href}>
                     <NavLink item={i} onNavigate={onNavigate} />
                   </li>

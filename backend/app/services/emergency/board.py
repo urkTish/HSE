@@ -262,7 +262,11 @@ def action_items(db: Session, project_id: uuid.UUID, at: datetime) -> list[Emerg
     ):
         if ev.all_clear_at and today > ec.local_day(ev.all_clear_at) + timedelta(days=rdays):
             found[K.event_review_overdue].append(ev.event_no)
-    assets = list(db.scalars(select(EmergencyAsset).where(EmergencyAsset.project_id == project_id)))
+    assets = [
+        a
+        for a in db.scalars(select(EmergencyAsset).where(EmergencyAsset.project_id == project_id))
+        if a.asset_type.value != "spill_kit"  # 6c v1.2: shown on the 6e pages (K-125)
+    ]
     by_id = {a.id: a for a in assets}
     for a in assets:
         if a.status in (AssetStatus.out_of_service, AssetStatus.missing):

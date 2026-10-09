@@ -11,6 +11,7 @@ import { LanguageSwitch } from "@/components/shell/language-switch";
 import { NotificationsBell } from "@/components/shell/notifications-bell";
 import { ThemeToggle } from "@/components/shell/theme-toggle";
 import { UserMenu } from "@/components/shell/user-menu";
+import { FieldOfflineSync } from "@/components/field/offline";
 
 function Brand({ onNavigate }: { onNavigate?: () => void }) {
   const t = useTranslations("meta");
@@ -39,6 +40,7 @@ export function Shell({ children }: { children: ReactNode }) {
       >
         {t("skipToContent")}
       </a>
+      <FieldOfflineSync />
       <aside
         className="sticky top-0 hidden h-dvh w-(--sidebar-width) shrink-0 print:!hidden flex-col overflow-y-auto border-e border-white/5 bg-sidebar lg:flex"
         data-testid="sidebar"

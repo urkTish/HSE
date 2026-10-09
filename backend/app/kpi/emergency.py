@@ -278,7 +278,13 @@ def asset_stats(e: Engine, w: Window) -> AssetStats:
     end = _end(e, w)
     for pid in ef.active():
         rows = list(ef.db.scalars(select(EmergencyAsset).where(EmergencyAsset.project_id == pid)))
-        rows = [x for x in rows if e.flt.site_ok(x.site_id) and e.flt.eng_ok(x.owner_engagement_id)]
+        rows = [
+            x
+            for x in rows
+            if e.flt.site_ok(x.site_id)
+            and e.flt.eng_ok(x.owner_engagement_id)
+            and x.asset_type.value != "spill_kit"  # 6c v1.2: reported as 6e K-125
+        ]
         by_id = {x.id: x for x in rows}
         rm = _memo(
             ef, ("ready", pid, end, e.flt.sites, e.flt.engs),

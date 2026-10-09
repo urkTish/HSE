@@ -38,6 +38,10 @@ import { useProjectSettings } from "@/lib/api/queries";
 import { ARABIC_SCRIPT, applyServerErrors } from "@/lib/forms";
 import { DEFAULT_TIME_ZONE, todayInZone, utcToZonedInput, zonedInputToUtc } from "@/lib/datetime";
 import { useDisplay } from "@/lib/digits";
+import { InspectionChecklistPanel } from "@/components/field/inspect";
+import { OfflineLabel, ResultBadge } from "@/components/field/common";
+import { useTemplates } from "@/lib/api/field";
+import { ROTATIONS } from "@/lib/field-enums";
 import { ASSIGNEE_ROLES, INSPECTION_FREQUENCIES, INSPECTION_STATUSES, INSPECTION_TIMELINESS, WEEKDAYS } from "@/lib/enums";
 import { useFieldErrorTranslator, useLocalizedName } from "@/lib/i18n-helpers";
 import { can, canWrite } from "@/lib/permissions";
@@ -444,6 +448,8 @@ export function InspectionDetail({ id }: { id: string }) {
                   <span data-testid="inspection-title">{ref.label("inspection_type", i.inspection_type)}</span>
                   <StatusBadge status={i.status} label={te(`inspectionStatus.${i.status}`)} />
                   <StatusBadge status={i.timeliness} label={te(`timeliness.${i.timeliness}`)} />
+                  {i.result ? <ResultBadge result={i.result} testId="inspection-result" /> : null}
+                  <OfflineLabel show={i.recorded_offline} minutes={i.offline_delay_min} />
                 </CardTitle>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -481,6 +487,7 @@ export function InspectionDetail({ id }: { id: string }) {
               </FieldList>
             </CardContent>
           </Card>
+          <InspectionChecklistPanel inspection={i} />
           {completing ? (
             <Card data-testid="complete-card">
               <CardHeader>
@@ -660,6 +667,7 @@ export function PlanList({ project }: { project: Schemas["ProjectRead"] }) {
 
 export function PlanForm({ project, plan }: { project: Schemas["ProjectRead"]; plan?: Schemas["InspectionPlanRead"] }) {
   const t = useTranslations("inspections");
+  const locale = useLocale();
   const te = useTranslations("enums");
   const tv = useTranslations("validation");
   const tc = useTranslations("common");
@@ -686,6 +694,8 @@ export function PlanForm({ project, plan }: { project: Schemas["ProjectRead"]; p
           assignee_role: z.enum(ASSIGNEE_ROLES),
           assignee_user_id: z.string(),
           active: z.boolean(),
+          template_code: z.string(),
+          rotation: z.enum(ROTATIONS),
         })
         .superRefine((v, ctx) => {
           if ((v.frequency === "weekly" || v.frequency === "fortnightly") && !v.weekday) ctx.addIssue({ code: "custom", path: ["weekday"], message: tv("required") });
@@ -710,12 +720,19 @@ export function PlanForm({ project, plan }: { project: Schemas["ProjectRead"]; p
       assignee_role: plan?.assignee_role ?? "hse_officer",
       assignee_user_id: plan?.assignee?.id ?? "",
       active: plan?.active ?? true,
+      template_code: plan?.template_code ?? "",
+      rotation: plan?.rotation ?? "none",
     },
   });
+  const [rotationList, setRotationList] = useState<string[]>(plan?.rotation_list ?? []);
   const { errors, isSubmitting } = form.formState;
   const siteId = useWatch({ control: form.control, name: "site_id" });
   const freq = useWatch({ control: form.control, name: "frequency" });
   const role = useWatch({ control: form.control, name: "assignee_role" });
+  const itype = useWatch({ control: form.control, name: "inspection_type" });
+  const rotation = useWatch({ control: form.control, name: "rotation" });
+  const templates = useTemplates({ kind: "inspection", status: ["published"], project_id: project.id, inspection_type: (itype || null) as Schemas["InspectionType"] | null }, { enabled: Boolean(itype) });
+  const rotationOptions = rotation === "zones" ? opts.zones.filter((z) => z.siteId === siteId) : opts.engagements.filter((e) => !siteId || e.siteIds.includes(siteId));
 
   async function save(v: Values) {
     setError(null);
@@ -736,6 +753,9 @@ export function PlanForm({ project, plan }: { project: Schemas["ProjectRead"]; p
                 assignee_role: v.assignee_role,
                 assignee_user_id: v.assignee_user_id || null,
                 active: v.active,
+                template_code: v.template_code || null,
+                rotation: v.rotation,
+                rotation_list: v.rotation === "none" ? [] : rotationList,
               },
             }),
           )
@@ -756,6 +776,9 @@ export function PlanForm({ project, plan }: { project: Schemas["ProjectRead"]; p
                 assignee_role: v.assignee_role,
                 assignee_user_id: v.assignee_user_id || null,
                 active: v.active,
+                template_code: v.template_code || null,
+                rotation: v.rotation,
+                rotation_list: v.rotation === "none" ? [] : rotationList,
               },
             }),
           );
@@ -858,6 +881,28 @@ export function PlanForm({ project, plan }: { project: Schemas["ProjectRead"]; p
         <FormField id="assignee_user_id" label={t("fields.assignee")}>
           <UserSelect projectId={project.id} role={role} {...form.register("assignee_user_id")} />
         </FormField>
+        <FormField id="template_code" label={t("fields.template")} hint={t("templateHint")}>
+          <Select {...form.register("template_code")} data-testid="plan-template">
+            <option value="">{t("noTemplate")}</option>
+            {(templates.data?.items ?? []).map((x) => (
+              <option key={x.id} value={x.template_code}>
+                {x.template_code} — {locale === "ar" ? x.title_ar : x.title_en}
+              </option>
+            ))}
+          </Select>
+        </FormField>
+        <FormField id="rotation" label={t("fields.rotation")} hint={t("rotationHint")}>
+          <Select {...form.register("rotation", { onChange: () => setRotationList([]) })} data-testid="plan-rotation">
+            {ROTATIONS.map((x) => (
+              <option key={x} value={x}>
+                {te(`fdRotation.${x}`)}
+              </option>
+            ))}
+          </Select>
+        </FormField>
+        {rotation !== "none" ? (
+          <MultiSelect id="rotation_list" label={t("fields.rotation_list")} options={rotationOptions} value={rotationList} onChange={setRotationList} allLabel={tc("select")} testId="plan-rotation-list" />
+        ) : null}
         <CheckboxField id="active" label={t("fields.active")}>
           <Checkbox {...form.register("active")} />
         </CheckboxField>
@@ -930,7 +975,25 @@ export function PlanDetail({ id }: { id: string }) {
             <FieldItem label={t("fields.assignee_role")}>{te(`assigneeRole.${p.assignee_role}`)}</FieldItem>
             <FieldItem label={t("fields.assignee")}>{p.assignee ? name(p.assignee.full_name_en, p.assignee.full_name_ar) : "—"}</FieldItem>
             <FieldItem label={t("nextPlanned")}>{date(p.next_planned_date)}</FieldItem>
+            <FieldItem label={t("fields.template")}>
+              {p.template_code ? (
+                <span className="ltr font-mono" data-testid="plan-template-code">
+                  {p.template_code}
+                </span>
+              ) : (
+                t("noTemplate")
+              )}
+            </FieldItem>
+            <FieldItem label={t("fields.rotation")}>
+              {te(`fdRotation.${p.rotation}`)}
+              {p.rotation_list.length ? ` · ${p.rotation_list.length}` : ""}
+            </FieldItem>
           </FieldList>
+          {p.without_checklist ? (
+            <Alert tone="warning" className="mt-4" data-testid="plan-without-checklist">
+              {t("withoutChecklist")}
+            </Alert>
+          ) : null}
         </CardContent>
       </Card>
       {can(me, "history.view", p.project_id) ? (
