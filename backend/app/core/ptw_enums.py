@@ -312,10 +312,11 @@ class StatusReason(StrEnum):
     not_required = "not_required"
     duplicate = "duplicate"
     other = "other"
+    heat_stress_stop = "heat_stress_stop"  # 3-ptw v1.3 / 6b PH-3 (routine)
 
 
 ROUTINE_REASONS: frozenset[StatusReason] = frozenset(
-    {StatusReason.shift_end, StatusReason.midday_ban}
+    {StatusReason.shift_end, StatusReason.midday_ban, StatusReason.heat_stress_stop}
 )
 CANCEL_REASONS: frozenset[StatusReason] = frozenset(
     {
@@ -376,6 +377,9 @@ class PermitBlocker(StrEnum):
     FIRE_IMPAIRMENT_NOT_APPROVED = "FIRE_IMPAIRMENT_NOT_APPROVED"
     UTILITY_CLEARANCE_MISSING = "UTILITY_CLEARANCE_MISSING"
     FALL_CLEARANCE_INSUFFICIENT = "FALL_CLEARANCE_INSUFFICIENT"
+    # 3-ptw v1.3 (6b PH-2, PH-3), from heat_ptw_enforcement_from
+    HEAT_STOP = "HEAT_STOP"
+    WBGT_READING_REQUIRED = "WBGT_READING_REQUIRED"
 
 
 class PermitWarningCode(StrEnum):
@@ -398,6 +402,10 @@ class PermitWarningCode(StrEnum):
     HOOK_NOT_MET_WARN = "HOOK_NOT_MET_WARN"
     CERT_UNVERIFIED = "CERT_UNVERIFIED"
     CARD_RESTRICTION_REVIEW = "CARD_RESTRICTION_REVIEW"
+    # 3-ptw v1.3 (6b PH-5, PH-7)
+    WORKER_ACCLIMATISING = "WORKER_ACCLIMATISING"
+    HEAT_STOP_FOR_WORKER = "HEAT_STOP_FOR_WORKER"
+    HEAT_REGIME = "HEAT_REGIME"  # PH-4: regime and rest minutes per hour (informational)
 
 
 class ChecklistAnswer(StrEnum):
@@ -1026,6 +1034,7 @@ class PauseReason(StrEnum):
     prayer = "prayer"
     weather = "weather"
     other = "other"
+    heat_rest = "heat_rest"  # 3-ptw v1.3 (6b PH-4)
 
 
 class HandoverStatus(StrEnum):

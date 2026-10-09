@@ -36,6 +36,9 @@ from app.api.routers import (
     gas,
     gates,
     health,
+    heat_config,
+    heat_field,
+    heat_readings,
     hse_settings,
     incidents,
     inductions,
@@ -84,12 +87,13 @@ from app.schemas.ai import AiStreamEvent
 
 DESCRIPTION = """
 HSE platform API — Phase 0 Foundation (spec `docs/specs/0-foundation.md` v1.0), Phase 1
-Dashboard & core data with AI (spec `docs/specs/1-dashboard.md` v1.4), Phase 2 Site/Airport
-access permits (spec `docs/specs/2-access-permits.md` v1.3), Phase 3 Permit to Work (spec
-`docs/specs/3-ptw.md` v1.2), Phase 4 Third-party inspection & certification (spec
+Dashboard & core data with AI (spec `docs/specs/1-dashboard.md` v1.5), Phase 2 Site/Airport
+access permits (spec `docs/specs/2-access-permits.md` v1.4), Phase 3 Permit to Work (spec
+`docs/specs/3-ptw.md` v1.3), Phase 4 Third-party inspection & certification (spec
 `docs/specs/4-third-party-cert.md` v1.1), Phase 5 Training certificates (spec
-`docs/specs/5-training.md` v1.0) and Phase 6a Occupational health & medical fitness (spec
-`docs/specs/6a-occupational-health.md` v1.0).
+`docs/specs/5-training.md` v1.1), Phase 6a Occupational health & medical fitness (spec
+`docs/specs/6a-occupational-health.md` v1.1) and Phase 6b Heat stress management (spec
+`docs/specs/6b-heat-stress.md` v1.0).
 
 * Auth: `POST /api/v1/auth/login` sets the httpOnly SameSite=Lax cookie `hse_session` (JWT) and
   returns `{access_token, user}`. Send the cookie or `Authorization: Bearer <token>`.
@@ -259,6 +263,10 @@ def create_app() -> FastAPI:
         medical_plan,
         fitness_assessments,
         fitness_holds,
+        # Phase 6b
+        heat_config,
+        heat_readings,
+        heat_field,
     ):
         app.include_router(module.router, prefix=API_PREFIX)
     app.include_router(auth.public_router, prefix=API_PREFIX)

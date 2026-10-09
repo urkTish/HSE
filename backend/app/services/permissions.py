@@ -493,6 +493,54 @@ PHASE6A_MATRIX: dict[Role, dict[Capability, CapabilityScope]] = {
 for _role, _caps in PHASE6A_MATRIX.items():
     MATRIX[_role].update(_caps)
 
+# 6b-heat-stress §5.13 (capabilities 166-177). 171 and 175 are HSE Manager only. Parenthesised
+# narrowing (173 view-only for site engineers / reps / OH; Viewer/Client aggregates and issued
+# reports only) is enforced in the services.
+PHASE6B_MATRIX: dict[Role, dict[Capability, CapabilityScope]] = {
+    Role.hse_officer: dict.fromkeys(
+        [
+            C.heat_view, C.heat_reading_record, C.heat_register_manage, C.heat_welfare_record,
+            C.heat_patrol_record, C.heat_plan_manage, C.heat_log_view, C.heat_kpi_view,
+            C.export_heat, C.heat_void,
+        ],
+        S.project,
+    ),
+    Role.site_engineer: dict.fromkeys(
+        [
+            C.heat_view, C.heat_reading_record, C.heat_welfare_record, C.heat_patrol_record,
+            C.heat_plan_manage, C.heat_log_view, C.heat_kpi_view, C.export_heat,
+        ],
+        S.sites,
+    ),
+    Role.permit_issuer: dict.fromkeys(
+        [
+            C.heat_view, C.heat_reading_record, C.heat_welfare_record, C.heat_patrol_record,
+            C.heat_kpi_view,
+        ],
+        S.sites,
+    ),
+    Role.permit_receiver: dict.fromkeys(
+        [
+            C.heat_view, C.heat_reading_record, C.heat_welfare_record, C.heat_plan_manage,
+            C.heat_kpi_view,
+        ],
+        S.own_engagement,
+    ),
+    Role.contractor_hse_rep: dict.fromkeys(
+        [
+            C.heat_view, C.heat_reading_record, C.heat_welfare_record, C.heat_plan_manage,
+            C.heat_log_view, C.heat_kpi_view, C.export_heat,
+        ],
+        S.contractor_tree,
+    ),
+    Role.viewer_client: dict.fromkeys([C.heat_view, C.heat_kpi_view, C.export_heat], S.project),
+    Role.oh_practitioner: dict.fromkeys(
+        [C.heat_view, C.heat_plan_manage, C.heat_log_view, C.heat_kpi_view], S.project
+    ),
+}  # fmt: skip
+for _role, _caps in PHASE6B_MATRIX.items():
+    MATRIX[_role].update(_caps)
+
 SCOPE_RANK = {S.own_engagement: 1, S.contractor_tree: 2, S.sites: 3, S.project: 4, S.all: 5}
 ROLE_RANK = {r: i for i, r in enumerate(Role)}  # lower index = more senior
 OFFICER_ASSIGNABLE = frozenset(

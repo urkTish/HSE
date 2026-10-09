@@ -43,7 +43,15 @@ PHASE6A_METRICS: frozenset[KpiMetric] = frozenset(
 )
 PHASE6A_PENDING: frozenset[KpiMetric] = frozenset()
 """Occupational health KPIs not computed yet (none since Phase 6a stage 2)."""
-_PENDING = PHASE2_PENDING | PHASE3_PENDING | PHASE4_PENDING | PHASE5_PENDING | PHASE6A_PENDING
+PHASE6B_METRICS: frozenset[KpiMetric] = frozenset(
+    {M.K97, M.K98, M.K99, M.K100, M.K101, M.K102, M.K103}
+)
+PHASE6B_PENDING: frozenset[KpiMetric] = frozenset()
+"""Heat-stress KPIs not computed yet (none since Phase 6b stage 2)."""
+_PENDING = (
+    PHASE2_PENDING | PHASE3_PENDING | PHASE4_PENDING | PHASE5_PENDING | PHASE6A_PENDING
+    | PHASE6B_PENDING
+)  # fmt: skip
 
 
 @dataclass(frozen=True)
@@ -77,6 +85,8 @@ class KpiDef:
             return f"5-training §6.8 {self.metric.value}"
         if self.metric in PHASE6A_METRICS:
             return f"6a-occupational-health §6.6 {self.metric.value}"
+        if self.metric in PHASE6B_METRICS:
+            return f"6b-heat-stress §6.6 {self.metric.value}"
         return f"1-dashboard §6.1 {self.metric.value}"
 
 
@@ -480,6 +490,36 @@ CATALOGUE: dict[KpiMetric, KpiDef] = {
                "On restrictions", "عليهم قيود", G.leading, NONE,
                "at as_of: Mobilised contractor_worker deployments whose worker has ≥ 1 "
                "restriction in force with review_required (MK-3)"),
+        # ---- Phase 6b heat stress (6b-heat-stress §6.6) ----
+        _pct(M.K97, "WBGT monitoring coverage", "تغطية قياس المؤشر الحراري",
+             "WBGT coverage", "تغطية القياس",
+             "covered monitoring slots ÷ required slots × 100 (required zones × days with work "
+             "in the controls period × hours of heat_monitoring_hours)",
+             numerator="Covered slots", denominator="Required slots"),
+        KpiDef(M.K98, "Heat-stop zone-hours", "ساعات الإيقاف الحراري", "Heat-stop hours",
+               "ساعات الإيقاف", K.hours, G.leading, NONE, "h", "ساعة",
+               "Σ over required zones of monitoring hours with the headline cell at R4; "
+               "components: hours by regime R0…R4 / stale / unknown", 1),
+        _pct(M.K99, "Midday-ban patrol coverage", "تغطية جولات حظر الظهيرة",
+             "Ban patrol coverage", "تغطية الجولات",
+             "patrolled zone-days ÷ required zone-days (required zones × ban dates with work) × "
+             "100", numerator="Patrolled zone-days", denominator="Required zone-days"),
+        _count(M.K100, "Midday-ban violations", "مخالفات حظر الظهيرة", "Ban violations",
+               "مخالفات الحظر", G.leading, LOW,
+               "valid violation patrols; component: rate per 100 valid patrols (2 dp)"),
+        _pct(M.K101, "Heat welfare compliance", "الامتثال لتدابير الراحة والماء",
+             "Welfare compliance", "امتثال الراحة والماء",
+             "compliant items ÷ applicable items (pass + fail) × 100; component: checked "
+             "station-days ÷ required × 100",
+             numerator="Compliant items", denominator="Applicable items"),
+        _pct(M.K102, "Acclimatisation compliance", "الالتزام بخطط التأقلم",
+             "Acclimatisation", "خطط التأقلم",
+             "plans Completed in period and completed as planned ÷ plans Completed in period × "
+             "100", numerator="Completed as planned", denominator="Completed plans"),
+        _count(M.K103, "Heat-illness cases", "حالات الإجهاد الحراري", "Heat illness",
+               "الإجهاد الحراري", G.lagging, LOW,
+               "heat-illness log entries with source injury_case, event in period, not voided; "
+               "components: rate × 200,000 ÷ K-01, recordable count and rate (category ≠ FAC)"),
     ]
 }  # fmt: skip
 

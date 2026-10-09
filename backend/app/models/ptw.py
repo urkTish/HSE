@@ -270,6 +270,10 @@ class Permit(Audited, Numbered, Base):
     scope_en: Mapped[str] = mapped_column(String(1000))
     scope_ar: Mapped[str | None] = mapped_column(String(1000))
     exposure: Mapped[Exposure] = enum_col(Exposure)
+    # 3-ptw v1.3 (6b PH-1): set for outdoor exposure; null = the type default (§11.4 item 1)
+    heat_workload: Mapped[str | None] = mapped_column(String(20))
+    heat_clothing: Mapped[str | None] = mapped_column(String(40))
+    heat_hood: Mapped[bool] = mapped_column(Boolean, default=False)
     flammables_in_use: Mapped[bool] = mapped_column(Boolean, default=False)
     combustion_engine_plant: Mapped[bool] = mapped_column(Boolean, default=False)
     valid_from_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
@@ -413,6 +417,7 @@ class PermitShift(UUIDPk, Base):
     issuer_user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
     gas_test_id: Mapped[uuid.UUID | None] = mapped_column(PG_UUID(as_uuid=True))
     ambient_temp_c: Mapped[Decimal | None] = mapped_column(Numeric(4, 1))
+    wbgt_reading_id: Mapped[uuid.UUID | None] = mapped_column(PG_UUID(as_uuid=True))  # v1.3
     crew_present: Mapped[list[uuid.UUID]] = mapped_column(UUIDS, default=list)
     briefed: Mapped[list[uuid.UUID]] = mapped_column(UUIDS, default=list)
     pauses: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list)

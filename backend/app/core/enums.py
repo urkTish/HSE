@@ -216,6 +216,20 @@ class Capability(StrEnum):
     medical_settings_edit = "medical_settings.edit"  # 164 settings, enable hooks, switch,
     # deferral (HSE Manager only)
     fitness_subject_report = "fitness.subject_report"  # 165 per-worker data-subject report
+    # ---- Phase 6b (6b-heat-stress §5.13) ----
+    heat_view = "heat.view"  # 166 heat board, readings, stations, exemptions, patrols, duty list
+    heat_reading_record = "heat_reading.record"  # 167 manual WBGT readings
+    heat_register_manage = "heat_register.manage"  # 168 instruments, points, devices, stations,
+    # reading imports
+    heat_welfare_record = "heat_welfare.record"  # 169 welfare checks
+    heat_patrol_record = "heat_patrol.record"  # 170 midday-ban patrols
+    heat_exemption_grant = "heat_exemption.grant"  # 171 non-permit ban exemptions (Manager)
+    heat_plan_manage = "heat_plan.manage"  # 172 confirm plan days, prior experience, cancel
+    heat_log_view = "heat_log.view"  # 173 view / review the heat-illness log
+    heat_kpi_view = "heat_kpi.view"  # 174 KPIs, action panel, season report
+    heat_settings_edit = "heat_settings.edit"  # 175 settings, regime table, enforcement, issue
+    export_heat = "export.heat"  # 176 registers (never photos or review texts below 173)
+    heat_void = "heat.void"  # 177 void readings, checks and patrols
 
 
 class CapabilityScope(StrEnum):
@@ -543,6 +557,19 @@ class EntityType(StrEnum):
     fitness_referral = "fitness_referral"
     medical_import_batch = "medical_import_batch"
     medical_settings = "medical_settings"
+    # Phase 6b
+    heat_instrument = "heat_instrument"
+    monitoring_point = "monitoring_point"
+    wbgt_reading = "wbgt_reading"
+    heat_regime_table = "heat_regime_table"
+    acclimatisation_plan = "acclimatisation_plan"
+    rest_station = "rest_station"
+    heat_welfare_check = "heat_welfare_check"
+    ban_patrol = "ban_patrol"
+    ban_exemption = "ban_exemption"
+    heat_illness_entry = "heat_illness_entry"
+    heat_season_report = "heat_season_report"
+    heat_settings = "heat_settings"
 
 
 class ExportDataset(StrEnum):
@@ -809,3 +836,17 @@ class NotificationKind(StrEnum):
     exposure_group_removed = "exposure_group_removed"  # WP-2
     fitness_catalogue_shortened = "fitness_catalogue_shortened"  # MC-3
     medical_import_update = "medical_import_update"
+    # ---- Phase 6b (6b-heat-stress §7) ----
+    heat_regime_raised = "heat_regime_raised"  # HA-1 / HA-2 (stop, may resume)
+    heat_reading_overdue = "heat_reading_overdue"  # HA-4
+    heat_ban_prewarn = "heat_ban_prewarn"  # HA-6
+    heat_ban_violation = "heat_ban_violation"  # MB-3
+    heat_exemption = "heat_exemption"  # granted / ending tomorrow / revoked
+    heat_welfare_fail = "heat_welfare_fail"  # RS-3
+    heat_welfare_missing = "heat_welfare_missing"
+    heat_plan_created = "heat_plan_created"
+    heat_plan_unconfirmed = "heat_plan_unconfirmed"  # AP-8
+    heat_illness_entry = "heat_illness_entry"
+    heat_review_overdue = "heat_review_overdue"  # HI-4
+    heat_calibration_expiry = "heat_calibration_expiry"
+    heat_coverage_gap = "heat_coverage_gap"  # required zone without an active point

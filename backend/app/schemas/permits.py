@@ -10,6 +10,7 @@ from typing import Annotated, Literal
 from pydantic import Field
 
 from app.core.access_enums import FodCheckResult, NotamStatus, WapStatus
+from app.core.heat_enums import Clothing, Regime, Workload
 from app.core.ptw_enums import (
     AcceptancePurpose,
     AccessMethod,
@@ -694,6 +695,12 @@ class PermitFields(StrictInput):
     scope_en: str = Field(min_length=1, max_length=1000, description=P3_HINT)
     scope_ar: str | None = Field(default=None, max_length=1000)
     exposure: Exposure | None = Field(default=None, description="Default: zone profile.")
+    heat_workload: Workload | None = Field(
+        default=None,
+        description="3-ptw v1.3 (6b PH-1): outdoor permits; default by type, heaviest wins.",
+    )
+    heat_clothing: Clothing | None = Field(default=None, description="Default work_clothes.")
+    heat_hood: bool = False
     flammables_in_use: bool = Field(
         default=False,
         description="Painting, coating, fuel transfer, solvent cleaning (GT-1, SM-R03).",
@@ -784,6 +791,9 @@ class PermitUpdate(PatchInput):
     scope_en: str | None = Field(default=None, min_length=1, max_length=1000)
     scope_ar: str | None = Field(default=None, max_length=1000)
     exposure: Exposure | None = None
+    heat_workload: Workload | None = None
+    heat_clothing: Clothing | None = None
+    heat_hood: bool | None = None
     flammables_in_use: bool | None = None
     combustion_engine_plant: bool | None = None
     valid_from_at: datetime | None = None
@@ -877,6 +887,13 @@ class PermitShiftRead(ApiModel):
     issuer: UserRef
     gas_test_id: uuid.UUID | None
     ambient_temp_c: DecimalStr | None
+    wbgt_reading_id: uuid.UUID | None = Field(
+        default=None, description="3-ptw v1.3: the zone reading in force at shift start."
+    )
+    heat_regime: Regime | None = Field(
+        default=None, description="6b PH-4: the permit's regime now (outdoor, enforcement on)."
+    )
+    rest_minutes_per_hour: int | None = None
     crew_present: list[WorkerRef | None] = Field(description="Null entries without capability 46.")
     crew_present_count: int
     pauses: list[PauseRead]
@@ -976,6 +993,11 @@ class PermitRead(ApiModel):
     scope_en: str
     scope_ar: str | None
     exposure: Exposure
+    heat_workload: Workload | None = Field(
+        default=None, description="Effective workload (outdoor permits; type default if unset)."
+    )
+    heat_clothing: Clothing | None = None
+    heat_hood: bool = False
     flammables_in_use: bool
     combustion_engine_plant: bool
     valid_from_at: datetime

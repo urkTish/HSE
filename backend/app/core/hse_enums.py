@@ -690,6 +690,7 @@ class CaSourceType(StrEnum):
     inspection = "inspection"
     ptw_audit = "ptw_audit"  # 1-dashboard v1.2: source_id = PTW audit (3-ptw §3.15)
     equipment_defect = "equipment_defect"  # 1-dashboard v1.3: DEF number (manual only, DF-10)
+    heat_check = "heat_check"  # 1-dashboard v1.5: 6b welfare check or midday-ban patrol
     ai_recommendation = "ai_recommendation"
     other = "other"
 
@@ -929,6 +930,14 @@ class KpiMetric(StrEnum):
     K94 = "K-94"
     K95 = "K-95"
     K96 = "K-96"
+    # Phase 6b heat-stress KPIs (6b-heat-stress §6.6)
+    K97 = "K-97"
+    K98 = "K-98"
+    K99 = "K-99"
+    K100 = "K-100"
+    K101 = "K-101"
+    K102 = "K-102"
+    K103 = "K-103"
 
 
 class KpiKind(StrEnum):
@@ -1129,6 +1138,8 @@ class LeadingWarningCode(StrEnum):
     E13 = "E13"  # ≥ 1 failed training verification or ≥ 1 voided session in the month
     E14 = "E14"  # 6a §6.7: K-89 < medical_compliance_warning_pct (month end, unrounded)
     E15 = "E15"  # 6a §6.7: ≥ 1 hold with work during the hold (K-94 < 100 %)
+    E16 = "E16"  # 6b §6.8: ≥ 1 ban violation or K-99 below threshold (months with ban dates)
+    E17 = "E17"  # 6b §6.8: control-gap heat illness, or K-97 / K-101 below threshold
 
 
 class ChartId(StrEnum):
@@ -1356,6 +1367,7 @@ class AiTool(StrEnum):
     get_certification_kpis = "get_certification_kpis"  # T16 (1-dashboard v1.3, KC-4)
     get_training_kpis = "get_training_kpis"  # T17 (1-dashboard v1.4, 5-training TK-4)
     get_occupational_health_kpis = "get_occupational_health_kpis"  # T18 (6a MK-4)
+    get_heat_stress_kpis = "get_heat_stress_kpis"  # T19 (6b HM-2)
 
 
 class GroundingResult(StrEnum):

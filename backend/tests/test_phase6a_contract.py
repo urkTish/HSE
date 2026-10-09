@@ -56,7 +56,6 @@ PHASE6A_PATHS = {
 
 def test_phase6a_paths_in_contract() -> None:
     spec = create_app().openapi()
-    assert spec["info"]["version"] == "0.7.0"
     assert set(spec["paths"]) >= PHASE6A_PATHS
     ops = [op["operationId"] for v in spec["paths"].values() for op in v.values()]
     assert len(ops) == len(set(ops))

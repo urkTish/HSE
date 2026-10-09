@@ -74,6 +74,7 @@ from app.schemas.permits import (
     RevalidateInput,
     SectionsInput,
     ShiftList,
+    ShiftStartFields,
     SourceReturnInput,
     StartInput,
     SuspendInput,
@@ -523,6 +524,22 @@ def revalidate_permit(
 )
 def resume_permit(permit_id: uuid.UUID, body: ResumeInput, user: CurrentUser, db: DB) -> PermitRead:
     return lifecycle.resume(db, user, permit_id, body)
+
+
+@router.post(
+    "/permits/{permit_id}/heat-resume",
+    response_model=PermitRead,
+    summary="Resume after heat_stress_stop by the receiver (3-ptw v1.3 SH-3, 6b PH-3)",
+    description="Allowed once HEAT_STOP clears (WR-8) and the other Issue-time blockers are "
+    "empty; no issuer cause text; the GT-4 test where gas testing applies. " + BLOCKED_DOC,
+    responses=error_responses(401, 403, 404, 409, 422),
+)
+def heat_resume_permit(
+    permit_id: uuid.UUID, body: ShiftStartFields, user: CurrentUser, db: DB
+) -> PermitRead:
+    from app.services.heat import ptw as heat_ptw  # noqa: PLC0415
+
+    return heat_ptw.heat_resume(db, user, permit_id, body)
 
 
 @router.post(

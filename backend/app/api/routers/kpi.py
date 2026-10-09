@@ -13,6 +13,7 @@ from app.core.access_enums import AccessKpiGroupBy
 from app.core.cert_enums import CertKpiGroupBy
 from app.core.enums import Capability, ExportFormat
 from app.core.errors import error_responses
+from app.core.heat_enums import HeatKpiGroupBy
 from app.core.hse_enums import (
     BreakdownDimension,
     BreakdownMeasure,
@@ -28,6 +29,7 @@ from app.kpi import (
     access_views,
     cert_views,
     charts,
+    heat_views,
     med_views,
     ptw_views,
     scope,
@@ -37,6 +39,7 @@ from app.kpi import (
 )
 from app.schemas.access_kpi import AccessKpiResponse
 from app.schemas.cert_kpi import CertKpiResponse
+from app.schemas.heat import HeatKpiResponse
 from app.schemas.kpi import (
     BreakdownResponse,
     ChartResponse,
@@ -458,3 +461,22 @@ def get_occupational_health_kpis(
 ) -> MedicalKpiResponse:
     sc = scope.build(db, user, q, Capability.medical_kpi_view)
     return med_views.medical_kpis(db, sc, metric, group_by, code or [], code_category or [])
+
+
+@router.get(
+    "/heat-stress",
+    response_model=HeatKpiResponse,
+    summary="Heat-stress KPIs K-97…K-103 with breakdowns (6b-heat-stress §6.6)",
+    description=FILTERS + " Capability 174; aggregates only (HM-2). Heat-illness counts of 1–2 "
+    'are shown as "<3" to roles below the HSE Manager (HM-3).',
+    responses=KPI_ERRORS,
+)
+def get_heat_stress_kpis(
+    user: CurrentUser,
+    db: DB,
+    q: KpiParams,
+    metric: Annotated[list[KpiMetric] | None, Query(description="Default: K-97…K-103.")] = None,
+    group_by: Annotated[list[HeatKpiGroupBy] | None, Query()] = None,
+) -> HeatKpiResponse:
+    sc = scope.build(db, user, q, Capability.heat_kpi_view)
+    return heat_views.heat_kpis(db, sc, metric, group_by)

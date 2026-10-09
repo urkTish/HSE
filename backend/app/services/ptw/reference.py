@@ -373,6 +373,8 @@ BLOCKER_TEXT: dict[PermitBlocker, tuple[str, str]] = {
     B.FIRE_IMPAIRMENT_NOT_APPROVED: ("Fire-system impairment not approved", "تعطيل نظام الحريق غير معتمد"),
     B.UTILITY_CLEARANCE_MISSING: ("Utility clearance reference missing", "مرجع تصريح الخدمات المدفونة غير موجود"),
     B.FALL_CLEARANCE_INSUFFICIENT: ("Fall clearance insufficient", "الخلوص أسفل نقطة العمل غير كافٍ"),
+    B.HEAT_STOP: ("WBGT heat stop: outdoor work must stop", "إيقاف بسبب الإجهاد الحراري: يجب إيقاف العمل الخارجي"),
+    B.WBGT_READING_REQUIRED: ("A current WBGT reading is required", "مطلوب قراءة حديثة لمؤشر WBGT"),
 }  # fmt: skip
 BLOCKER_ORDER = {b: i for i, b in enumerate(PermitBlocker)}
 APPROVE_TIME: frozenset[PermitBlocker] = frozenset(
@@ -419,6 +421,9 @@ WARNING_TEXT: dict[PermitWarningCode, tuple[str, str]] = {
     W.HOOK_NOT_MET_WARN: ("Certificate requirement not met (warning stage)", "متطلب الشهادة غير مستوفى (مرحلة التحذير)"),
     W.CERT_UNVERIFIED: ("Certificate not yet verified with the issuer", "الشهادة لم يتم التحقق منها بعد لدى الجهة المصدرة"),
     W.CARD_RESTRICTION_REVIEW: ("Card restriction needs HSE review", "قيد على البطاقة يحتاج مراجعة السلامة"),
+    W.WORKER_ACCLIMATISING: ("Crew member acclimatising (limited minutes)", "عضو طاقم في فترة التأقلم (دقائق محدودة)"),
+    W.HEAT_STOP_FOR_WORKER: ("Not for heat work now — acclimatising", "غير مسموح بالعمل في الحرارة الآن — في فترة التأقلم"),
+    W.HEAT_REGIME: ("Work/rest regime in force", "نظام العمل والراحة الساري"),
 }  # fmt: skip
 
 REASON_TEXT: dict[StatusReason, tuple[str, str]] = {
@@ -447,6 +452,7 @@ REASON_TEXT: dict[StatusReason, tuple[str, str]] = {
     StatusReason.not_required: ("Not required", "غير مطلوب"),
     StatusReason.duplicate: ("Duplicate", "مكرر"),
     StatusReason.other: ("Other", "أخرى"),
+    StatusReason.heat_stress_stop: ("Heat stress stop", "إيقاف بسبب الإجهاد الحراري"),
 }
 
 TYPE_LABEL_AR = {t: i.label_ar for t, i in TYPES.items()}
