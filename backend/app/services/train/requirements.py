@@ -248,6 +248,30 @@ class Base:
     workers: dict[uuid.UUID, Worker]
     records: dict[uuid.UUID, list[TrainingRecord]]
     bookings: list[tuple[TrainingNomination, TrainingSession]]
+    # date-filtered in load(): loaded once here instead of once per evaluated date
+    profiles: list[TrainingProfile] | None = None
+    passes: list[AirportPass] | None = None
+    adps: list[Adp] | None = None
+    exemptions: list[TrainingExemption] | None = None
+    inductions: list[tuple[InductionRecord, str]] | None = None
+
+
+def _inductions_q(project_id: uuid.UUID) -> Any:
+    return (
+        select(InductionRecord, InductionCourse.code)
+        .join(InductionCourse, InductionCourse.id == InductionRecord.course_id)
+        .where(
+            InductionRecord.project_id == project_id,
+            InductionRecord.result == InductionResult.passed,
+            InductionRecord.status.in_(IND_OK),
+        )
+    )
+
+
+def _ind_valid(ir: InductionRecord, d: date) -> bool:
+    return (ir.valid_from is None or ir.valid_from <= d) and (
+        ir.valid_until is None or ir.valid_until >= d
+    )
 
 
 def load_base(db: Session, project_id: uuid.UUID) -> Base:
@@ -266,7 +290,20 @@ def load_base(db: Session, project_id: uuid.UUID) -> Base:
         ).all()
         if n.worker_id in wids
     ]
-    return Base(deps, workers, records, bookings)
+    dids = [x.id for x in deps]
+    return Base(
+        deps,
+        workers,
+        records,
+        bookings,
+        profiles=_chunked(db, TrainingProfile, TrainingProfile.deployment_id, dids),
+        passes=list(db.scalars(select(AirportPass).where(AirportPass.project_id == project_id))),
+        adps=list(db.scalars(select(Adp).where(Adp.project_id == project_id))),
+        exemptions=list(
+            db.scalars(select(TrainingExemption).where(TrainingExemption.project_id == project_id))
+        ),
+        inductions=[(ir, code) for ir, code in db.execute(_inductions_q(project_id))],
+    )
 
 
 def load(
@@ -318,7 +355,13 @@ def load(
     zones: dict[uuid.UUID, dict[str, date]] = {}
     kinds = {ln.row.applies_to_kind for ln in lines}
     if kinds & {A.matrix_role, A.zone}:
-        for pr in _chunked(db, TrainingProfile, TrainingProfile.deployment_id, dids):
+        dset = set(dids)
+        profs = (
+            [x for x in base.profiles if x.deployment_id in dset]
+            if base is not None and base.profiles is not None
+            else _chunked(db, TrainingProfile, TrainingProfile.deployment_id, dids)
+        )
+        for pr in profs:
             created = acommon.local_day(pr.created_at) if pr.created_at else d
             roles[pr.deployment_id] = _history_since(
                 pr.history, "matrix_roles", d, list(pr.matrix_roles or []), created
@@ -329,24 +372,39 @@ def load(
     passes: dict[uuid.UUID, dict[str, date]] = defaultdict(dict)
     adps: dict[uuid.UUID, dict[str, date]] = defaultdict(dict)
     if A.pass_category in kinds:
-        for ap in db.scalars(select(AirportPass).where(AirportPass.project_id == project_id)):
+        aps = (
+            base.passes
+            if base is not None and base.passes is not None
+            else db.scalars(select(AirportPass).where(AirportPass.project_id == project_id))
+        )
+        for ap in aps:
             if ap.worker_id in wids and _active_cred(ap, d):
                 cur = passes[ap.worker_id].get(ap.pass_category)
                 passes[ap.worker_id][ap.pass_category] = min(cur or ap.issued_on, ap.issued_on)
     if A.adp_category in kinds:
-        for adp in db.scalars(select(Adp).where(Adp.project_id == project_id)):
+        adp_rows = (
+            base.adps
+            if base is not None and base.adps is not None
+            else db.scalars(select(Adp).where(Adp.project_id == project_id))
+        )
+        for adp in adp_rows:
             if adp.worker_id in wids and adp.issued_on is not None and _active_cred(adp, d):
                 cat = adp.category.value
                 cur = adps[adp.worker_id].get(cat)
                 adps[adp.worker_id][cat] = min(cur or adp.issued_on, adp.issued_on)
     exemptions: dict[tuple[uuid.UUID, uuid.UUID], uuid.UUID] = {}
-    for ex in db.scalars(
-        select(TrainingExemption).where(
-            TrainingExemption.project_id == project_id,
-            TrainingExemption.valid_from <= d,
-            TrainingExemption.valid_until >= d,
+    exs = (
+        [x for x in base.exemptions if x.valid_from <= d <= x.valid_until]
+        if base is not None and base.exemptions is not None
+        else db.scalars(
+            select(TrainingExemption).where(
+                TrainingExemption.project_id == project_id,
+                TrainingExemption.valid_from <= d,
+                TrainingExemption.valid_until >= d,
+            )
         )
-    ):
+    )
+    for ex in exs:
         if ex.status == ExemptionStatus.withdrawn and (
             ex.withdrawn_at is None or acommon.local_day(ex.withdrawn_at) <= d
         ):
@@ -367,17 +425,15 @@ def load(
         for ln in lines
         for c in ln.codes
     ):
-        rows = db.execute(
-            select(InductionRecord, InductionCourse.code)
-            .join(InductionCourse, InductionCourse.id == InductionRecord.course_id)
-            .where(
-                InductionRecord.project_id == project_id,
-                InductionRecord.result == InductionResult.passed,
-                InductionRecord.status.in_(IND_OK),
-                or_(InductionRecord.valid_from.is_(None), InductionRecord.valid_from <= d),
-                or_(InductionRecord.valid_until.is_(None), InductionRecord.valid_until >= d),
+        if base is not None and base.inductions is not None:
+            rows: Iterable[Any] = [(ir, c) for ir, c in base.inductions if _ind_valid(ir, d)]
+        else:
+            rows = db.execute(
+                _inductions_q(project_id).where(
+                    or_(InductionRecord.valid_from.is_(None), InductionRecord.valid_from <= d),
+                    or_(InductionRecord.valid_until.is_(None), InductionRecord.valid_until >= d),
+                )
             )
-        )
         for ir, code in rows:
             if ir.worker_id in wids:
                 inductions[ir.worker_id].append((ir, code))

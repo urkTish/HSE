@@ -22,7 +22,9 @@ test.describe("Training competence check", () => {
     await expect(card).not.toContainText(/%|\d{10}|\d\*{4,}\d/);
   });
 
-  test("AC124: Fahad opens Biju Thomas's access card and sees the Training section with CSE-ATTENDANT not in force", async ({ page }) => {
+  // Since the 6c seed (6c-emergency-drills §11.6 item 3, A.4 RT-ANIA-CSE-01) Biju holds CSE-RESCUE, which
+  // satisfies CSE-ATTENDANT, so the line is now in force (5-training TR5(a) predates 6c).
+  test("AC124: Fahad opens Biju Thomas's access card and sees the Training section with CSE-ATTENDANT in force", async ({ page }) => {
     const api = await apiAs(USERS.faisal);
     const biju = await deploymentOf("ANIA-EXP", "WKR-000017");
     const card = await accessCard(api, biju.id);
@@ -30,7 +32,7 @@ test.describe("Training competence check", () => {
     await scan(page, card.qr_payload);
     const section = page.getByTestId("person-training");
     await expect(section).toBeVisible();
-    await expect(section.locator('[data-testid="person-training-item"][data-code="CSE-ATTENDANT"]')).toHaveAttribute("data-in-force", "0");
+    await expect(section.locator('[data-testid="person-training-item"][data-code="CSE-ATTENDANT"]')).toHaveAttribute("data-in-force", "1");
     await expect(section.getByTestId("person-training-item").first()).toBeVisible();
   });
 });

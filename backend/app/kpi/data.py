@@ -18,8 +18,9 @@ from decimal import Decimal
 from typing import Any
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import case, event, func, or_, select
+from sqlalchemy import case, event, func, or_, select, text
 from sqlalchemy import inspect as sa_inspect
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import ORMExecuteState, Session
 from sqlalchemy.sql.elements import TextClause
 
@@ -154,12 +155,42 @@ def _mark_statement(state: ORMExecuteState) -> None:
         state.session.info["kpi_wrote"] = True
 
 
+# Cross-process invalidation: every committed fact write also advances this database sequence
+# (migration 0013), and each cached read first compares it with the value this process last
+# saw. Writes from other API workers or the scheduler therefore clear the cache at once, so the
+# TTL only bounds how long one snapshot is reused (it no longer has to be short; D-42).
+_DB_SEQ = "kpi_generation_seq"
+_DB_SEEN: list[int | None] = [None]
+
+
 def _after_commit(session: Session) -> None:
     global _GENERATION  # noqa: PLW0603
     if session.info.pop("kpi_wrote", False):
         with _CACHE_LOCK:
             _GENERATION += 1
             _CACHE.clear()
+        bind = session.get_bind()
+        try:
+            with bind.engine.connect() as conn:
+                n = conn.execute(text(f"SELECT nextval('{_DB_SEQ}')")).scalar_one()
+                conn.commit()
+        except DBAPIError:  # sequence missing (database not migrated): local invalidation only
+            return
+        with _CACHE_LOCK:
+            if _DB_SEEN[0] is not None and n == _DB_SEEN[0] + 1:
+                _DB_SEEN[0] = n  # only our own write since the last check: nothing new to drop
+
+
+def _sync_db_generation(db: Session) -> None:
+    """Drop this process's cached facts when another process has committed a fact write."""
+    global _GENERATION  # noqa: PLW0603
+    n = db.execute(text(f"SELECT last_value FROM {_DB_SEQ}")).scalar_one()  # noqa: S608
+    with _CACHE_LOCK:
+        if _DB_SEEN[0] != n:
+            if _DB_SEEN[0] is not None:
+                _GENERATION += 1
+                _CACHE.clear()
+            _DB_SEEN[0] = n
 
 
 event.listen(Session, "after_flush", _mark_write)
@@ -188,6 +219,7 @@ def load(
     if ttl <= 0:
         return _load(db, plist, hse)
     key = tuple(sorted(p.id for p in plist))
+    _sync_db_generation(db)
     hit = _cached(db, key, ttl)
     if hit is not None:
         return hit

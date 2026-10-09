@@ -55,9 +55,9 @@ class Settings(BaseSettings):
     ai_timeout_seconds: float = 60.0
     ai_max_tool_rounds: int = 8
     # KPI facts cache (per API process): a dashboard fires ~15 /kpi requests over the same
-    # facts. Any committed write in this process clears it; writes made by other processes
-    # show after at most this many seconds. 0 disables (the test suite runs with 0).
-    kpi_cache_seconds: int = 20
+    # facts. A committed fact write in any process clears it (kpi_generation_seq); this bounds
+    # how long one snapshot is reused. 0 disables (the test suite runs with 0).
+    kpi_cache_seconds: int = 300
     ai_questions_per_user_day: int = 60  # AI-17
     ai_reports_per_project_month: int = 10  # AI-17
     ai_insights_cache_minutes: int = 360
