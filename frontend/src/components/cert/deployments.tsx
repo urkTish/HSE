@@ -39,6 +39,7 @@ import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
 import { useDebounced } from "@/lib/use-debounced";
 import { CertStatePanel, EquipmentLabel, EquipmentSubNav, ServiceStatusBadge, UserName, useReasonLabel } from "./common";
+import { RecordActions } from "@/components/common/record-actions";
 
 type S = Schemas;
 const PAGE_SIZE = 50;
@@ -372,11 +373,6 @@ function DeploymentView({ project, d }: { project: S["ProjectRead"]; d: S["Equip
                   {t("demobilise")}
                 </Button>
               ) : null}
-              {mobilise && (d.status === "planned" || d.status === "approved") ? (
-                <Button variant="destructive-outline" onClick={() => setStep("cancel")} data-testid="cancel-eq-deployment">
-                  {t("cancel")}
-                </Button>
-              ) : null}
             </>
           }
         />
@@ -485,6 +481,13 @@ function DeploymentView({ project, d }: { project: S["ProjectRead"]; d: S["Equip
             </FormField>
           ) : null}
         </StepDialog>
+      ) : null}
+      {mobilise && (d.status === "planned" || d.status === "approved") ? (
+        <RecordActions className="mt-0">
+          <Button variant="destructive-outline" onClick={() => setStep("cancel")} data-testid="cancel-eq-deployment">
+            {t("cancel")}
+          </Button>
+        </RecordActions>
       ) : null}
     </div>
   );

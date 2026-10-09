@@ -20,6 +20,7 @@ import { HistoryPanel } from "@/components/common/history-panel";
 import { ListToolbar, SearchFilter, SelectFilter } from "@/components/common/list-toolbar";
 import { MultiSelect } from "@/components/common/multi-select";
 import { PageHeader } from "@/components/common/page-header";
+import { RecordActions } from "@/components/common/record-actions";
 import { Pagination } from "@/components/common/pagination";
 import { useProjectOptions } from "@/components/common/pickers";
 import { ProjectById, ProjectGate } from "@/components/common/project-gate";
@@ -395,11 +396,6 @@ function ScaffoldView({ project, sc }: { project: S["ProjectRead"]; sc: S["Scaff
                   {t("close_red")}
                 </Button>
               ) : null}
-              {edit && live && sc.status !== "in_use" ? (
-                <Button variant="destructive-outline" onClick={() => setStep("dismantle")} data-testid="scaffold-dismantle">
-                  {t("dismantle")}
-                </Button>
-              ) : null}
             </>
           }
         />
@@ -509,6 +505,14 @@ function ScaffoldView({ project, sc }: { project: S["ProjectRead"]; sc: S["Scaff
         </CardContent>
       </Card>
       <HistoryPanel entityType="scaffold" entityId={sc.id} />
+      {edit && live && sc.status !== "in_use" ? (
+        // Dismantling ends the scaffold's record: at the page end (red-tag "Close" stays at the top as a stop-use step).
+        <RecordActions className="mt-0">
+          <Button variant="destructive-outline" onClick={() => setStep("dismantle")} data-testid="scaffold-dismantle">
+            {t("dismantle")}
+          </Button>
+        </RecordActions>
+      ) : null}
       {step === "edit" ? <ScaffoldDialog project={project} sc={sc} onClose={() => setStep(null)} /> : null}
       {step === "inspect" ? <InspectionDialog project={project} sc={sc} onClose={() => setStep(null)} /> : null}
       {step === "reissue" ? (
@@ -637,6 +641,7 @@ export function ScaffoldBoardPage() {
 
 function ScaffoldBoard({ project }: { project: S["ProjectRead"] }) {
   const t = useTranslations("scaffolds");
+  const tx = useTranslations("consistency");
   const te = useTranslations("enums");
   const tc = useTranslations("common");
   const me = useMeData();
@@ -649,18 +654,7 @@ function ScaffoldBoard({ project }: { project: S["ProjectRead"] }) {
   const zones = q.data?.zones ?? [];
   return (
     <div>
-      <PageHeader
-        title={t("boardTitle")}
-        description={t("boardSubtitle", { date: q.data ? date(q.data.as_of) : "" })}
-        actions={
-          canWrite(me, "defect.close", project.id) ? (
-            <Button variant="destructive-outline" onClick={() => setReinspect(true)} data-testid="request-reinspection">
-              <CloudLightning aria-hidden />
-              {t("requestReinspection")}
-            </Button>
-          ) : null
-        }
-      />
+      <PageHeader title={t("boardTitle")} description={t("boardSubtitle", { date: q.data ? date(q.data.as_of) : "" })} />
       <ScaffoldSubNav />
       <ListToolbar>
         <SelectFilter id="sb-site" label={tc("site")} value={s.get("site_id") ?? ""} onChange={(v) => s.set({ site_id: v })} options={opts.sites.map((x) => ({ value: x.value, label: x.label }))} />
@@ -711,6 +705,15 @@ function ScaffoldBoard({ project }: { project: S["ProjectRead"] }) {
       ) : (
         <EmptyState />
       )}
+      {canWrite(me, "defect.close", project.id) ? (
+        // A site-wide hard stop after a storm: at the board's end, not under the thumb while reading tags.
+        <RecordActions label={tx("siteActions")}>
+          <Button variant="destructive-outline" onClick={() => setReinspect(true)} data-testid="request-reinspection">
+            <CloudLightning aria-hidden />
+            {t("requestReinspection")}
+          </Button>
+        </RecordActions>
+      ) : null}
       {reinspect ? <ReinspectionDialog project={project} onClose={() => setReinspect(false)} /> : null}
     </div>
   );

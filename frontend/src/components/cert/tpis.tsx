@@ -37,6 +37,7 @@ import { can, canWrite } from "@/lib/permissions";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
 import { CertSetupSubNav, TpiLabel, TpiSelect, UploadField, UserName, useCertTypes } from "./common";
+import { RecordActions } from "@/components/common/record-actions";
 
 type S = Schemas;
 const PAGE_SIZE = 50;
@@ -355,11 +356,6 @@ function TpiView({ tpi }: { tpi: S["TpiRead"] }) {
                   {t("reinstate")}
                 </Button>
               ) : null}
-              {manager && st !== "blacklisted" ? (
-                <Button variant="destructive-outline" onClick={() => setStep("blacklist")} data-testid="tpi-blacklist">
-                  {t("blacklist")}
-                </Button>
-              ) : null}
               {manager && st === "blacklisted" ? (
                 <Button variant="outline" onClick={() => setStep("lift")} data-testid="tpi-lift">
                   {t("lift")}
@@ -537,6 +533,13 @@ function TpiView({ tpi }: { tpi: S["TpiRead"] }) {
             </FormField>
           ) : null}
         </StepDialog>
+      ) : null}
+      {manager && st !== "blacklisted" ? (
+        <RecordActions className="mt-0">
+          <Button variant="destructive-outline" onClick={() => setStep("blacklist")} data-testid="tpi-blacklist">
+            {t("blacklist")}
+          </Button>
+        </RecordActions>
       ) : null}
     </div>
   );

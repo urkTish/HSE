@@ -39,6 +39,7 @@ import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
 import { EquipmentPicker } from "./deployments";
 import { DefectCategoryBadge, EquipmentLabel, EquipmentSubNav, Tick, UserName } from "./common";
+import { RecordActions } from "@/components/common/record-actions";
 
 type S = Schemas;
 const PAGE_SIZE = 50;
@@ -339,11 +340,6 @@ function DefectView({ project, d }: { project: S["ProjectRead"]; d: S["DefectRea
                   {t("reopen")}
                 </Button>
               ) : null}
-              {caps.close && allowed("destroy") ? (
-                <Button variant="destructive-outline" onClick={() => setStep("destroy")} data-testid="defect-destroy">
-                  {t("destroy")}
-                </Button>
-              ) : null}
               {caps.raise && allowed("cancel") ? (
                 <Button variant="outline" onClick={() => setStep("cancel")} data-testid="defect-cancel">
                   {t("cancel")}
@@ -486,6 +482,13 @@ function DefectView({ project, d }: { project: S["ProjectRead"]; d: S["DefectRea
             <Textarea value={text} onChange={(e) => setText(e.target.value)} maxLength={1000} data-testid="df-step-text" />
           </FormField>
         </StepDialog>
+      ) : null}
+      {caps.close && allowed("destroy") ? (
+        <RecordActions className="mt-0">
+          <Button variant="destructive-outline" onClick={() => setStep("destroy")} data-testid="defect-destroy">
+            {t("destroy")}
+          </Button>
+        </RecordActions>
       ) : null}
     </div>
   );

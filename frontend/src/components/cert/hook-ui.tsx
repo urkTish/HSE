@@ -37,7 +37,7 @@ export function HookConditions({ items }: { items: S["HookCondition"][] | null |
         {items.map((c, i) => (
           <li key={`${c.code}-${i}`} data-code={c.code}>
             {locale === "ar" ? c.text_ar : c.text_en}
-            {c.value ? <bdi className="ltr ms-1 font-medium">{c.value}</bdi> : null}
+            {c.value ? <bdi className="ltr ms-1 font-medium rtl:ms-0 rtl:me-1">{c.value}</bdi> : null}
             {c.source_ref ? (
               <span className="ms-1 text-xs text-muted-foreground">
                 (<bdi className="ltr">{c.source_ref}</bdi>)

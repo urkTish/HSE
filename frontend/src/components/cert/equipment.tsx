@@ -1,6 +1,6 @@
 "use client";
 import { useQueryClient } from "@tanstack/react-query";
-import { Archive, Ban, CircleCheck, Hourglass, OctagonX, Pencil, Plus, Search, Tag, Trash2, Undo2, Wrench } from "lucide-react";
+import { Archive, Ban, CircleCheck, Clock, Hourglass, OctagonX, Pencil, Plus, Search, Tag, Trash2, TriangleAlert, Undo2, Wrench } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -25,6 +25,8 @@ import { Pagination } from "@/components/common/pagination";
 import { ProjectGate } from "@/components/common/project-gate";
 import { EmptyState, ErrorState, LoadingState, MutationError } from "@/components/common/states";
 import { StatusBadge } from "@/components/common/status-badge";
+import { RecordActions } from "@/components/common/record-actions";
+import { StackedDate } from "@/components/medical/common";
 import { Code, DaysLeft, StepDialog, VehicleSelect } from "@/components/access/common";
 import { DateTimeInput, DecimalInput } from "@/components/ptw/common";
 import { useMeData } from "@/components/shell/me-context";
@@ -512,18 +514,6 @@ function EquipmentView({ e }: { e: S["EquipmentRead"] }) {
                   {t("returnToService")}
                 </Button>
               ) : null}
-              {(caps.close && !terminal) || (caps.blacklist && e.service_status !== "blacklisted") ? <span aria-hidden className="mx-1 hidden h-8 w-px self-center bg-border sm:block" /> : null}
-              {caps.close && !terminal ? (
-                <Button variant="destructive-outline" onClick={() => setStep("retire")} data-testid="retire-equipment">
-                  {t("retire")}
-                </Button>
-              ) : null}
-              {caps.blacklist && e.service_status !== "blacklisted" ? (
-                <Button variant="destructive-outline" onClick={() => setStep("blacklist")} data-testid="blacklist-equipment">
-                  <Ban aria-hidden />
-                  {t("blacklist")}
-                </Button>
-              ) : null}
               {caps.blacklist && e.service_status === "blacklisted" ? (
                 <Button variant="outline" onClick={() => setStep("lift")} data-testid="lift-blacklist">
                   {t("liftBlacklist")}
@@ -547,10 +537,20 @@ function EquipmentView({ e }: { e: S["EquipmentRead"] }) {
                   <Code>{line.line.cert_no}</Code>
                 </Link>
                 <Code className="text-muted-foreground">{line.line.tpi_code}</Code>
-                {line.in_force ? <Badge tone="success">{t("inForce")}</Badge> : <Badge tone="danger">{t("notInForce")}</Badge>}
+                {line.in_force ? (
+                  <Badge tone="success">
+                    <CircleCheck aria-hidden />
+                    {t("inForce")}
+                  </Badge>
+                ) : (
+                  <Badge tone="danger">
+                    <OctagonX aria-hidden />
+                    {t("notInForce")}
+                  </Badge>
+                )}
                 {line.line.valid_until ? (
-                  <span>
-                    {t("validUntil")}: <span className="font-medium">{date(line.line.valid_until)}</span>
+                  <span className="inline-flex items-start gap-1">
+                    {t("validUntil")}: <StackedDate v={line.line.valid_until} projectId={project?.id} className="font-medium" />
                   </span>
                 ) : null}
                 {line.in_force ? <DaysLeft days={line.days_left} /> : null}
@@ -560,7 +560,12 @@ function EquipmentView({ e }: { e: S["EquipmentRead"] }) {
                 {line.swl_t ? ` · ${t("swlT", { swl: line.swl_t })}` : ""}
               </span>
               <EquipmentLimitations items={line.limitations} />
-              {line.tpi_accreditation_lapsed ? <span className="text-xs text-warning">{t("accreditationLapsedNote")}</span> : null}
+              {line.tpi_accreditation_lapsed ? (
+                <span className="inline-flex items-start gap-1 text-xs font-medium text-warning">
+                  <TriangleAlert aria-hidden className="mt-px size-3.5 shrink-0" />
+                  {t("accreditationLapsedNote")}
+                </span>
+              ) : null}
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">{t("noCertificate")}</p>
@@ -697,7 +702,7 @@ function EquipmentView({ e }: { e: S["EquipmentRead"] }) {
             <ol className="flex flex-col gap-2 border-s ps-4" data-testid="status-events">
               {(events.data?.items ?? []).map((ev) => (
                 <li key={ev.id} className="text-sm">
-                  <span className="text-xs text-muted-foreground">{dateTime(ev.occurred_at)}</span>{" "}
+                  <StackedDate v={ev.occurred_at} time projectId={project?.id} className="text-xs text-muted-foreground" />{" "}
                   {ev.from_status ? <span className="text-muted-foreground">{te(`serviceStatus.${ev.from_status}`)} → </span> : null}
                   <span className="font-medium">{te(`serviceStatus.${ev.to_status}`)}</span>
                   {ev.reason ? <span className="text-muted-foreground"> · {te(`serviceStatusReason.${ev.reason}`)}</span> : null}
@@ -740,8 +745,13 @@ function EquipmentView({ e }: { e: S["EquipmentRead"] }) {
                 {(configs.data?.items ?? []).map((c) => (
                   <TR key={c.id}>
                     <TD label={t("occurredAt")}>
-                      {dateTime(c.occurred_at)}
-                      {c.late_record ? <span className="block text-xs text-warning">{t("lateRecord")}</span> : null}
+                      <StackedDate v={c.occurred_at} time projectId={project?.id} />
+                      {c.late_record ? (
+                        <span className="flex items-center gap-1 text-xs font-medium text-warning">
+                          <Clock aria-hidden className="size-3.5 shrink-0" />
+                          {t("lateRecord")}
+                        </span>
+                      ) : null}
                     </TD>
                     <TD label={t("eventType")}>{te(`configEventType.${c.event_type}`)}</TD>
                     <TD label={t("newConfiguration")}>
@@ -755,7 +765,16 @@ function EquipmentView({ e }: { e: S["EquipmentRead"] }) {
                         </Code>
                       ))}
                     </TD>
-                    <TD label={t("clearedBy")}>{c.cleared_by ? <Code>{c.cleared_by.cert_no}</Code> : <Badge tone="warning">{t("notCleared")}</Badge>}</TD>
+                    <TD label={t("clearedBy")}>
+                      {c.cleared_by ? (
+                        <Code>{c.cleared_by.cert_no}</Code>
+                      ) : (
+                        <Badge tone="warning">
+                          <Hourglass aria-hidden />
+                          {t("notCleared")}
+                        </Badge>
+                      )}
+                    </TD>
                   </TR>
                 ))}
               </TBody>
@@ -764,6 +783,23 @@ function EquipmentView({ e }: { e: S["EquipmentRead"] }) {
         </Card>
       ) : null}
       <HistoryPanel entityType="equipment_item" entityId={e.id} />
+      {(caps.close && !terminal) || (caps.blacklist && e.service_status !== "blacklisted") ? (
+        // Retire / Blacklist cannot be undone: at the page end, apart from Tag out (a stop-use step, kept at the top).
+        <RecordActions className="mt-0" label={td("irreversible")}>
+          {caps.close && !terminal ? (
+            <Button variant="destructive-outline" onClick={() => setStep("retire")} data-testid="retire-equipment">
+              <Archive aria-hidden />
+              {t("retire")}
+            </Button>
+          ) : null}
+          {caps.blacklist && e.service_status !== "blacklisted" ? (
+            <Button variant="destructive-outline" onClick={() => setStep("blacklist")} data-testid="blacklist-equipment">
+              <Ban aria-hidden />
+              {t("blacklist")}
+            </Button>
+          ) : null}
+        </RecordActions>
+      ) : null}
       {step === "edit" ? <EquipmentEditDialog e={e} projectId={pid} onClose={() => setStep(null)} /> : null}
       {step === "config" && pid ? <ConfigEventDialog e={e} projectId={pid} onClose={() => setStep(null)} /> : null}
       {step && step !== "edit" && step !== "config" ? (

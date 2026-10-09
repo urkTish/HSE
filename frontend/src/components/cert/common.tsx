@@ -305,7 +305,7 @@ export function CertValidityView({ v, projectId, compact, hideBadge }: { v: S["C
         )}
         {v.valid_until ? (
           <span>
-            {t("validUntil")}: <span className="ltr font-medium">{date(v.valid_until)}</span>
+            {t("validUntil")}: <span className="[unicode-bidi:isolate] font-medium">{date(v.valid_until)}</span>
           </span>
         ) : null}
         {v.in_force ? <DaysLeft days={v.days_left} /> : null}
@@ -340,7 +340,7 @@ export function EquipmentLimitations({ items }: { items: S["EquipmentLimitationR
         <li key={`${l.code}-${i}`}>
           <Badge tone="warning" data-code={l.code}>
             {locale === "ar" ? l.label_ar : l.label_en}
-            {l.value ? <bdi className="ltr ms-1">{l.value}</bdi> : null}
+            {l.value ? <bdi className="ltr ms-1 rtl:ms-0 rtl:me-1">{l.value}</bdi> : null}
             {l.text ? <span className="ms-1">· {l.text}</span> : null}
           </Badge>
         </li>
