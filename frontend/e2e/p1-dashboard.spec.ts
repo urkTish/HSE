@@ -89,7 +89,8 @@ test.describe("Dashboard", () => {
     await login(page, USERS.noura);
     await page.goto("/en");
     const item = page.locator("[data-testid=action-item][data-key=overdue_cas]");
-    await expect(item.getByTestId("action-count")).toHaveText(k42?.display ?? "");
+    // The page's own filters (compare=previous) are a separate, possibly cold KPI read; see AC55.
+    await expect(item.getByTestId("action-count")).toHaveText(k42?.display ?? "", { timeout: 30_000 });
     await item.locator("a").first().click();
     await expect(page).toHaveURL(/\/actions\?/);
     await expect(page.getByTestId("ca-table")).toBeVisible();
