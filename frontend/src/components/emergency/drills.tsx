@@ -1,5 +1,5 @@
 "use client";
-import { CalendarPlus, Play, Plus, Siren, Trash2, Users } from "lucide-react";
+import { CalendarPlus, CheckCircle2, MinusCircle, Play, Plus, Siren, Trash2, Users, XCircle } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -28,6 +28,7 @@ import { FreeText, StackedDate } from "@/components/medical/common";
 import { useMeData } from "@/components/shell/me-context";
 import { Link, useRouter } from "@/i18n/navigation";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
+import { cn } from "@/lib/utils";
 import { useDrill, useDrillProgramme, useDrills, useEmergencyRefresh, useErps, useRescueTeams } from "@/lib/api/emergency";
 import { useUsers } from "@/lib/api/queries";
 import { CHECK_ANSWERS, DRILL_SHIFTS, DRILL_STATUSES, MUSTER_DRILLS, PROJECT_DRILLS, SEVERITIES, TEAM_DRILLS, TIMELINE_KEYS } from "@/lib/emergency-enums";
@@ -801,6 +802,16 @@ function TimingsCard({ project, d, editable }: { project: Project; d: Drill; edi
 
 type FindingDraft = S["app__schemas__emergency__FindingInput"];
 
+/** Criterion code and label as two flex items: a real gap in both directions (the code is an LTR isolate). */
+function CriterionLabel({ code, label, className }: { code: string; label: string; className?: string }) {
+  return (
+    <span className={cn("flex min-w-0 items-baseline gap-2", className)}>
+      <Code className="shrink-0 text-xs font-semibold text-muted-foreground">{code}</Code>
+      <span className="min-w-0">{label}</span>
+    </span>
+  );
+}
+
 function EvaluationForm({ project, d }: { project: Project; d: Drill }) {
   const t = useTranslations("emergency.eval");
   const te = useTranslations("enums");
@@ -850,10 +861,7 @@ function EvaluationForm({ project, d }: { project: Project; d: Drill }) {
         <ol className="flex flex-col gap-3">
           {criteria.map((c) => (
             <li key={c.code} className="flex flex-col gap-2" data-testid="eval-criterion" data-code={c.code}>
-              <span className="text-sm">
-                <Code className="me-1">{c.code}</Code>{" "}
-                {label("criteria", c.code)}
-              </span>
+              <CriterionLabel code={c.code} label={label("criteria", c.code)} className="text-sm font-medium" />
               <AnswerButtons
                 value={answers[c.code]}
                 options={CHECK_ANSWERS.map((a) => ({ value: a, label: te(`checkAnswer.${a}`) }))}
@@ -964,18 +972,23 @@ function EvaluationView({ project, d }: { project: Project; d: Drill }) {
         {ev.evaluated_at ? <p className="text-xs text-muted-foreground">{t("evaluatedAt", { at: dateTime(ev.evaluated_at) })}</p> : null}
       </CardHeader>
       <CardContent className="flex flex-col gap-4 p-4 pt-0">
-        <ul className="grid gap-1 text-sm sm:grid-cols-2">
+        <ul className="grid gap-x-6 gap-y-2 text-sm lg:grid-cols-2">
           {(ev.criteria ?? []).map((c) => (
             <li key={c.criterion} className="flex items-start gap-2" data-testid="eval-answer" data-code={c.criterion} data-answer={c.answer}>
-              <Badge tone={c.answer === "fail" ? "danger" : c.answer === "pass" ? "success" : "neutral"}>{te(`checkAnswer.${c.answer}`)}</Badge>
-              <span>
-                <Code className="me-1">{c.criterion}</Code>{" "}
-                {label("criteria", c.criterion)}
-              </span>
+              <Badge tone={c.answer === "fail" ? "danger" : c.answer === "pass" ? "success" : "neutral"} className="min-w-16 shrink-0 justify-center">
+                {c.answer === "fail" ? <XCircle aria-hidden /> : c.answer === "pass" ? <CheckCircle2 aria-hidden /> : <MinusCircle aria-hidden />}
+                {te(`checkAnswer.${c.answer}`)}
+              </Badge>
+              <CriterionLabel code={c.criterion} label={label("criteria", c.criterion)} />
             </li>
           ))}
         </ul>
-        {fails.length ? <p className="text-sm text-danger">{t("failNote", { n: fails.length })}</p> : null}
+        {fails.length ? (
+          <p className="flex items-center gap-1.5 text-sm font-medium text-danger">
+            <XCircle aria-hidden className="size-4 shrink-0" />
+            {t("failNote", { n: fails.length })}
+          </p>
+        ) : null}
         <div>
           <p className="mb-2 text-sm font-medium">{t("findings")}</p>
           {ev.findings?.length ? (
@@ -988,7 +1001,7 @@ function EvaluationView({ project, d }: { project: Project; d: Drill }) {
                     {f.auto ? <Badge tone="neutral">{t("auto")}</Badge> : null}
                     {f.ref ? <Code className="text-xs">{f.ref}</Code> : null}
                   </span>
-                  <span dir="auto">{ar ? f.description_ar || f.description_en : f.description_en}</span>
+                  <span dir={ar && f.description_ar ? "rtl" : "auto"}>{ar ? f.description_ar || f.description_en : f.description_en}</span>
                   {f.ca_id ? (
                     <Link href={`/actions/${f.ca_id}`} className="w-fit text-sm text-primary hover:underline" data-testid="finding-ca">
                       <Code>{f.ca_ref ?? t("ca")}</Code>

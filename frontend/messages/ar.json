@@ -6577,7 +6577,21 @@
     "trTrainers": "Trainers|المدربون",
     "trSession": "Session|الجلسة",
     "trCertificateNo": "Certificate no.|رقم الشهادة",
-    "trScanToCheck": "Scan in the HSE app to check|امسح الرمز في تطبيق السلامة للتحقق"
+    "trScanToCheck": "Scan in the HSE app to check|امسح الرمز في تطبيق السلامة للتحقق",
+    "musterSheet": "Muster sheet|كشف التجمع",
+    "musterNo": "Muster|الحصر",
+    "musterSite": "Site|الموقع",
+    "musterGenerated": "Printed|تاريخ الطباعة",
+    "musterWorkerNo": "Worker no.|رقم العامل",
+    "musterName": "Name|الاسم",
+    "musterPresent": "Present|حاضر",
+    "musterNotes": "Notes|ملاحظات",
+    "musterOnList": "On this list|في هذه القائمة",
+    "musterCountedBy": "Counted by|تم الحصر بواسطة",
+    "musterSignature": "Signature|التوقيع",
+    "musterTime": "Time|الوقت",
+    "musterApWarden": "Assembly point / warden|نقطة التجمع / المراقب",
+    "musterConfidential": "Contains names: keep with the muster, destroy after the all clear. Each print is logged.|يحتوي على أسماء: يُحفظ مع الحصر ويُتلف بعد زوال الخطر. تُسجَّل كل طباعة."
   },
   "ptw": {
     "nav": {
@@ -11326,5 +11340,14 @@
       "cas": "الإجراءات التصحيحية",
       "openCa": "فتح الإجراء"
     }
+  },
+  "emDesign": {
+    "missingNone": "لا يوجد مفقودون",
+    "missingSome": "{n, plural, zero {لا مفقودين} one {شخص واحد مفقود} two {شخصان مفقودان} few {# أشخاص مفقودون} many {# شخصًا مفقودًا} other {# شخص مفقود}}",
+    "missingLineSome": "ابحث عنهم أو سوِّ وضع كل منهم مع ذكر السبب.",
+    "missingLineNone": "تم حصر جميع المتوقعين أو تسوية أوضاعهم.",
+    "progress": "تم حصر {done} من {expected}",
+    "progressNoExpected": "لا يوجد متوقعون في هذا الحصر",
+    "dangerZone": "إجراءات السجل"
   }
 }

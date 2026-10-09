@@ -1,5 +1,5 @@
 "use client";
-import { CheckCircle2, Lock, OctagonAlert, Siren, XCircle } from "lucide-react";
+import { CheckCircle2, Lock, OctagonAlert, Siren, TriangleAlert, XCircle } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useState, type ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -282,6 +282,7 @@ export function Minutes({ v, target, testId }: { v: string | null | undefined; t
   const over = target !== null && target !== undefined && Number(v) > Number(target);
   return (
     <span className={cn("inline-flex items-center gap-1 tabular-nums", over && "font-semibold text-danger")} data-testid={testId} data-over={over ? "yes" : "no"}>
+      {over ? <TriangleAlert aria-hidden className="size-4 shrink-0" /> : null}
       <bdi className="ltr">{t("min", { n: v })}</bdi>
       {target !== null && target !== undefined ? <span className="text-xs font-normal text-muted-foreground">{t("target", { n: String(target) })}</span> : null}
       {over ? <span className="sr-only">{t("overTarget")}</span> : null}

@@ -2,7 +2,7 @@ import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { type Page } from "@playwright/test";
 import { expect, test } from "./fixtures/test";
-import { apiAs, getJson, login, projectId, userId, USERS } from "./helpers";
+import { apiAs, getJson, login, projectId, sql, userId, USERS } from "./helpers";
 import { accessCard } from "./p2-helpers";
 import { pinProject } from "./p6a-helpers";
 
@@ -17,10 +17,27 @@ async function shot(page: Page, name: string, fullPage = false) {
   await page.screenshot({ path: join(OUT, name), fullPage });
 }
 
-/** An open roll muster at S-AIR with one scanned worker (planned by Noura, started by Omar). */
+/**
+ * Eight S-AIR workers on site now: copies of their latest seeded entry-gate rows, moved to 30 min ago, so the
+ * roll muster below has an expected list (the seed's S-AIR gate log ends on 30 Sept). Screenshot setup only.
+ */
+function workersOnSite(): string[] {
+  const at = new Date(Date.now() - 30 * 60_000).toISOString();
+  const out = sql(
+    "CREATE TEMP TABLE t AS SELECT DISTINCT ON (gc.deployment_id) gc.* FROM gate_checks gc JOIN gates g ON g.id = gc.gate_id " +
+      "JOIN sites s ON s.id = g.site_id JOIN worker_deployments d ON d.id = gc.deployment_id WHERE s.code = 'S-AIR' AND gc.final " +
+      "AND gc.direction = 'in' AND gc.result = 'GRANTED_WITH_WARNING' AND d.status = 'mobilised' ORDER BY gc.deployment_id, gc.occurred_at DESC LIMIT 8; " +
+      `UPDATE t SET id = gen_random_uuid(), occurred_at = '${at}', local_date = '${at.slice(0, 10)}', pairing_id = NULL; ` +
+      "INSERT INTO gate_checks SELECT * FROM t RETURNING deployment_id;",
+  );
+  return out.split("\n").filter((l) => /^[0-9a-f-]{36}$/.test(l.trim()));
+}
+
+/** An open roll muster at S-AIR: eight expected, five scanned, three missing (planned by Noura, started by Omar). */
 let openMuster = "";
 async function ensureOpenMuster(): Promise<string> {
   if (openMuster) return openMuster;
+  const onSite = workersOnSite();
   const noura = await apiAs(USERS.noura);
   const pid = await projectId(noura, "ANIA-EXP");
   const sites = await getJson<{ items: { id: string; code: string }[] }>(noura, `/api/v1/projects/${pid}/sites?page_size=50`);
@@ -42,9 +59,8 @@ async function ensureOpenMuster(): Promise<string> {
   const drill = (await res.json()) as { id: string };
   const omar = await apiAs(USERS.omar);
   const started = (await (await omar.post(`/api/v1/drills/${drill.id}/transitions`, { data: { action: "start" } })).json()) as { muster_id: string };
-  const deps = await getJson<{ items: { id: string }[] }>(noura, `/api/v1/projects/${pid}/deployments?status=mobilised&page_size=3`);
-  for (const d of deps.items) {
-    const card = await accessCard(noura, d.id);
+  for (const id of onSite.slice(0, 5)) {
+    const card = await accessCard(noura, id);
     await omar.post(`/api/v1/musters/${started.muster_id}/scan`, { data: { payload: card.qr_payload } });
   }
   openMuster = started.muster_id;
@@ -165,6 +181,15 @@ for (const locale of ["en", "ar"] as const) {
     await go(`/musters/${muster}`);
     await expect(page.getByTestId("muster-scan")).toBeVisible();
     await shot(page, `22-muster-roll-${locale}.png`, true);
+
+    // The printable muster sheet (MU-9), shown as it prints (A4 media); each fetch is an audited export.
+    await go(`/musters/${muster}/sheet`);
+    await expect(page.getByTestId("sheet-row").first()).toBeVisible();
+    await page.emulateMedia({ media: "print" });
+    await page.setViewportSize({ width: 794, height: 1123 });
+    await shot(page, `28-muster-sheet-${locale}.png`, true);
+    await page.emulateMedia({ media: "screen" });
+    await page.setViewportSize({ width: 1440, height: 900 });
 
     await go("/emergency-events");
     await expect(page.getByTestId("event-row").first()).toBeVisible();

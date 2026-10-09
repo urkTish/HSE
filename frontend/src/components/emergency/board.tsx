@@ -1,5 +1,5 @@
 "use client";
-import { ArrowRight, CalendarClock, ClipboardCheck, FileText, HeartPulse, Phone, ShieldAlert, Siren, Users } from "lucide-react";
+import { ArrowRight, CalendarClock, ClipboardCheck, FileText, HeartPulse, Phone, ShieldAlert, Siren, Users, UserX } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Fragment, useState } from "react";
 import { Alert } from "@/components/ui/alert";
@@ -37,6 +37,7 @@ export function EmergencyBoardPage() {
 
 function Board({ project }: { project: Project }) {
   const t = useTranslations("emergency.board");
+  const td = useTranslations("emDesign");
   const tc = useTranslations("common");
   const caps = useEmCaps(project.id);
   const { prefs, dateTime } = useFormatters(project.id);
@@ -101,17 +102,31 @@ function Board({ project }: { project: Project }) {
             <section className="flex flex-col gap-2" data-testid="board-musters">
               <h2 className="text-sm font-semibold text-muted-foreground">{t("openMusters")}</h2>
               {b.open_musters.map((m) => (
-                <Link key={m.id} href={`/musters/${m.id}`} className="flex flex-wrap items-center gap-3 rounded-md border border-warning/50 bg-warning-bg px-4 py-3" data-testid="board-muster">
-                  <Users aria-hidden className="size-6 text-warning" />
-                  <Code className="font-semibold">{m.muster_no}</Code>
-                  <span className="text-base font-semibold tabular-nums">
-                    <bdi className="ltr">
-                      {m.accounted + m.resolved} / {m.expected}
-                    </bdi>
+                <Link
+                  key={m.id}
+                  href={`/musters/${m.id}`}
+                  className={cn("flex items-center gap-3 rounded-md border-2 px-4 py-3", m.unaccounted ? "border-danger/70 bg-danger-bg" : "border-warning/50 bg-warning-bg")}
+                  data-testid="board-muster"
+                >
+                  <Users aria-hidden className={cn("size-6 shrink-0", m.unaccounted ? "text-danger" : "text-warning")} />
+                  <span className="flex min-w-0 flex-1 flex-col gap-1">
+                    <span className="flex flex-wrap items-center gap-2">
+                      <Code className="font-semibold">{m.muster_no}</Code>
+                      <MusterStatusBadge status={m.status} />
+                    </span>
+                    <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                      <span className="text-lg font-bold tabular-nums" data-testid="board-muster-progress">
+                        {td("progress", { done: String(m.accounted + m.resolved), expected: String(m.expected) })}
+                      </span>
+                      {m.unaccounted ? (
+                        <Badge tone="danger" className="text-sm">
+                          <UserX aria-hidden />
+                          {t("unaccounted", { n: m.unaccounted })}
+                        </Badge>
+                      ) : null}
+                    </span>
                   </span>
-                  {m.unaccounted ? <Badge tone="danger">{t("unaccounted", { n: m.unaccounted })}</Badge> : null}
-                  <MusterStatusBadge status={m.status} />
-                  <ArrowRight aria-hidden className="ms-auto size-5 rtl:-scale-x-100" />
+                  <ArrowRight aria-hidden className="size-5 shrink-0 rtl:-scale-x-100" />
                 </Link>
               ))}
             </section>
@@ -228,13 +243,15 @@ function SiteCard({ s, prefs }: { s: S["BoardSite"]; prefs: ReturnType<typeof us
           {s.next_drills_due.length ? (
             <ul className="flex flex-col divide-y rounded-md border" data-testid="board-next-drills">
               {s.next_drills_due.slice(0, 4).map((l) => (
-                <li key={l.line_no} className="flex flex-wrap items-center gap-2 px-3 py-2" data-testid="board-line" data-line={l.line_no}>
-                  <span className="font-medium">{label("drill_types", l.drill_type)}</span>
-                  <LineQualifiers l={l} />
-                  <span className="ms-auto whitespace-nowrap text-xs">
-                    <StackedDate v={l.due_by} />
+                <li key={l.line_no} className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 px-3 py-2" data-testid="board-line" data-line={l.line_no}>
+                  <span className="flex flex-wrap items-center gap-2">
+                    <span className="font-medium">{label("drill_types", l.drill_type)}</span>
+                    <LineQualifiers l={l} />
                   </span>
-                  <LineStatusBadge status={l.status} />
+                  <span className="flex flex-col items-end gap-1 text-xs whitespace-nowrap">
+                    <StackedDate v={l.due_by} />
+                    <LineStatusBadge status={l.status} />
+                  </span>
                 </li>
               ))}
             </ul>

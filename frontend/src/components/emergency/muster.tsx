@@ -1,8 +1,8 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
-import { Camera, Check, Plus, Printer, ScanLine, Trash2 } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { Camera, Check, CheckCircle2, ClipboardCheck, Lock, OctagonAlert, Plus, Printer, ScanLine, Trash2, UserCheck, Users, UserX } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +17,7 @@ import { PageHeader } from "@/components/common/page-header";
 import { ProjectById } from "@/components/common/project-gate";
 import { useProjectOptions } from "@/components/common/pickers";
 import { ErrorState, LoadingState, MutationError } from "@/components/common/states";
-import { Code, StepDialog, WorkerLabel } from "@/components/access/common";
+import { AccessPrintHeader, BiLabel, Code, StepDialog, useBi, WorkerLabel } from "@/components/access/common";
 import { CameraScanner } from "@/components/gate/gate-check";
 import { Link } from "@/i18n/navigation";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
@@ -48,6 +48,7 @@ export function MusterPage({ id }: { id: string }) {
 function MusterView({ project, m }: { project: Project; m: Muster }) {
   const t = useTranslations("emergency.muster");
   const te = useTranslations("enums");
+  const td = useTranslations("emDesign");
   const caps = useEmCaps(project.id);
   const opts = useProjectOptions(project.id);
   const { label } = useEmRef();
@@ -86,24 +87,21 @@ function MusterView({ project, m }: { project: Project; m: Muster }) {
                 </Link>
               </Button>
             ) : null}
-            {caps.void && m.status !== "voided" ? (
-              <Button variant="destructive-outline" onClick={() => setVoiding(true)} data-testid="muster-void">
-                {t("void")}
-              </Button>
-            ) : null}
           </div>
         }
       />
       <Counters m={m} outstanding={outstanding} />
-      {m.status === "reconciled" || m.status === "closed" ? (
-        <Alert tone={outstanding ? "warning" : "success"} className="mb-3" data-testid="muster-done">
-          {outstanding ? t("closedOutstanding", { n: outstanding }) : t("reconciled")}
+      {(m.status === "reconciled" || m.status === "closed") && outstanding ? (
+        // The all-accounted case is already said by the missing panel above.
+        <Alert tone="warning" className="mb-3" data-testid="muster-done">
+          {t("closedOutstanding", { n: outstanding })}
         </Alert>
       ) : null}
       {Object.keys(m.by_reason).length ? (
         <p className="mb-3 flex flex-wrap gap-2 text-sm" data-testid="muster-reasons">
           {Object.entries(m.by_reason).map(([k, n]) => (
             <Badge key={k} tone={k === "found_on_site" ? "danger" : "neutral"}>
+              {k === "found_on_site" ? <OctagonAlert aria-hidden /> : <ClipboardCheck aria-hidden />}
               {label("resolution_reasons", k)}: <bdi className="ltr tabular-nums">{n}</bdi>
             </Badge>
           ))}
@@ -117,6 +115,15 @@ function MusterView({ project, m }: { project: Project; m: Muster }) {
       ) : (
         <CountRows project={project} m={m} canRun={canRun} />
       )}
+      {caps.void && m.status !== "voided" ? (
+        // Kept away from the counts and the scan button: a stressed tap must not land on Void.
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-2 border-t pt-4">
+          <span className="text-xs text-muted-foreground">{td("dangerZone")}</span>
+          <Button variant="destructive-outline" onClick={() => setVoiding(true)} data-testid="muster-void">
+            {t("void")}
+          </Button>
+        </div>
+      ) : null}
       {voiding ? (
         <EmReasonDialog
           title={t("voidTitle", { no: m.muster_no })}
@@ -129,26 +136,64 @@ function MusterView({ project, m }: { project: Project; m: Muster }) {
   );
 }
 
+/**
+ * Counts for a stressed reader on a phone: the missing figure first, full width and large, with an icon that
+ * changes shape with the state (never colour alone); then expected / accounted / resolved and a progress bar.
+ */
 function Counters({ m, outstanding }: { m: Muster; outstanding: number }) {
   const t = useTranslations("emergency.muster");
-  const cell = (key: "expected" | "accounted" | "missing" | "resolved", n: number | string, tone?: "danger" | "success") => (
-    <div className={cn("rounded-lg border bg-surface p-3", tone === "danger" && "border-danger/60", tone === "success" && "border-success/60")} data-testid={`mc-${key}`} data-n={n}>
-      <p className="text-xs text-muted-foreground">{t(`c_${key}`)}</p>
-      <p className={cn("text-3xl font-semibold tabular-nums", tone === "danger" && "text-danger")}>
+  const td = useTranslations("emDesign");
+  const expected = m.mode === "roll" ? m.expected : m.count_rows.reduce((n, r) => n + r.expected, 0);
+  const accounted = m.mode === "roll" ? m.accounted : m.count_rows.reduce((n, r) => n + r.accounted, 0);
+  const resolved = m.mode === "roll" ? m.resolved : m.count_rows.reduce((n, r) => n + r.resolved.reduce((s, x) => s + Number(x.count ?? 0), 0), 0);
+  const done = accounted + resolved;
+  const pct = expected > 0 ? Math.min(100, Math.round((done / expected) * 100)) : 0;
+  const missing = outstanding > 0;
+  const cell = (key: "expected" | "accounted" | "resolved", n: number, icon: ReactNode, tone?: "success") => (
+    <div className={cn("flex flex-col gap-1 rounded-lg border bg-surface p-3", tone === "success" && "border-success/60")} data-testid={`mc-${key}`} data-n={n}>
+      <p className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
+        {icon}
+        {t(`c_${key}`)}
+      </p>
+      <p className={cn("text-4xl leading-none font-bold tabular-nums sm:text-5xl", tone === "success" && "text-success")}>
         <bdi className="ltr">{n}</bdi>
       </p>
     </div>
   );
-  const expected = m.mode === "roll" ? m.expected : m.count_rows.reduce((n, r) => n + r.expected, 0);
-  const accounted = m.mode === "roll" ? m.accounted : m.count_rows.reduce((n, r) => n + r.accounted, 0);
-  const resolved = m.mode === "roll" ? m.resolved : m.count_rows.reduce((n, r) => n + r.resolved.reduce((s, x) => s + Number(x.count ?? 0), 0), 0);
   return (
     <div className="mb-3 flex flex-col gap-2" data-testid="muster-counters">
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {cell("expected", expected)}
-        {cell("accounted", accounted, "success")}
-        {cell("missing", outstanding, outstanding ? "danger" : undefined)}
-        {cell("resolved", resolved)}
+      <div
+        role="status"
+        className={cn("flex items-center gap-4 rounded-lg border-2 p-4", missing ? "border-danger bg-danger-bg text-danger" : "border-success/60 bg-success-bg text-success")}
+        data-testid="mc-missing"
+        data-n={outstanding}
+      >
+        {missing ? <UserX aria-hidden className="size-10 shrink-0" /> : <CheckCircle2 aria-hidden className="size-10 shrink-0" />}
+        <span className="flex min-w-0 flex-col">
+          <span className="text-sm font-semibold">{t("c_missing")}</span>
+          <span className="text-5xl leading-none font-bold tabular-nums sm:text-6xl">
+            <bdi className="ltr">{outstanding}</bdi>
+          </span>
+        </span>
+        <span className="ms-auto max-w-[55%] text-end text-sm font-medium">
+          <span className="block text-base font-bold">{missing ? td("missingSome", { n: outstanding }) : td("missingNone")}</span>
+          <span className="mt-0.5 block text-xs sm:text-sm">{missing ? td("missingLineSome") : td("missingLineNone")}</span>
+        </span>
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        {cell("expected", expected, <Users aria-hidden className="size-4 shrink-0" />)}
+        {cell("accounted", accounted, <UserCheck aria-hidden className="size-4 shrink-0" />, "success")}
+        {cell("resolved", resolved, <ClipboardCheck aria-hidden className="size-4 shrink-0" />)}
+      </div>
+      <div data-testid="mc-progress">
+        <p className="mb-1 text-sm font-medium">
+          {expected > 0 ? td("progress", { done: String(done), expected: String(expected) }) : td("progressNoExpected")}
+        </p>
+        {expected > 0 ? (
+          <div aria-hidden className="h-3 overflow-hidden rounded-full bg-muted">
+            <div className={cn("h-full rounded-full", missing ? "bg-warning" : "bg-success")} style={{ width: `${pct}%` }} />
+          </div>
+        ) : null}
       </div>
       <p className="flex flex-wrap gap-x-4 text-sm text-muted-foreground">
         {m.mode === "roll" ? (
@@ -238,6 +283,13 @@ function ScanPanel({ project, m }: { project: Project; m: Muster }) {
 
 type RollFilter = "missing" | "accounted" | "resolved" | "all";
 
+const FILTER_ICON: Record<RollFilter, ReactNode> = {
+  missing: <UserX aria-hidden />,
+  accounted: <UserCheck aria-hidden />,
+  resolved: <ClipboardCheck aria-hidden />,
+  all: <Users aria-hidden />,
+};
+
 function RollList({ project, m, canRun }: { project: Project; m: Muster; canRun: boolean }) {
   const t = useTranslations("emergency.muster");
   const te = useTranslations("enums");
@@ -280,6 +332,7 @@ function RollList({ project, m, canRun }: { project: Project; m: Muster; canRun:
         <div role="tablist" className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {(["missing", "accounted", "resolved", "all"] as const).map((f) => (
             <Button key={f} role="tab" aria-selected={filter === f} variant={filter === f ? "default" : "outline"} className="min-h-11" onClick={() => setFilter(f)} data-testid={`roll-${f}`}>
+              {FILTER_ICON[f]}
               {t(`f_${f}`)} <bdi className="ltr tabular-nums">({counts[f]})</bdi>
             </Button>
           ))}
@@ -290,7 +343,7 @@ function RollList({ project, m, canRun }: { project: Project; m: Muster; canRun:
         {shown.length ? (
           <ul className="divide-y">
             {shown.map((e) => (
-              <li key={e.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-2" data-testid="roll-entry" data-state={e.state} data-worker={e.worker?.worker_no ?? ""}>
+              <li key={e.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3" data-testid="roll-entry" data-state={e.state} data-worker={e.worker?.worker_no ?? ""}>
                 <span className="flex min-w-0 flex-col gap-0.5">
                   <span className="flex flex-wrap items-center gap-2">
                     {e.worker ? <WorkerLabel w={e.worker} /> : "—"}
@@ -305,12 +358,12 @@ function RollList({ project, m, canRun }: { project: Project; m: Muster; canRun:
                   </span>
                 </span>
                 {canRun && (e.state === "expected" || e.state === "unaccounted") ? (
-                  <span className="flex gap-2">
-                    <Button className="min-h-11" onClick={() => void tick(e)} disabled={busy === e.id} data-testid="roll-tick">
+                  <span className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
+                    <Button className="min-h-12 text-base sm:min-h-11 sm:text-sm" onClick={() => void tick(e)} disabled={busy === e.id} data-testid="roll-tick">
                       <Check aria-hidden />
                       {t("tick")}
                     </Button>
-                    <Button className="min-h-11" variant="outline" onClick={() => setResolve(e)} data-testid="roll-resolve">
+                    <Button className="min-h-12 text-base sm:min-h-11 sm:text-sm" variant="outline" onClick={() => setResolve(e)} data-testid="roll-resolve">
                       {t("resolve")}
                     </Button>
                   </span>
@@ -319,7 +372,8 @@ function RollList({ project, m, canRun }: { project: Project; m: Muster; canRun:
             ))}
           </ul>
         ) : (
-          <p className="px-4 py-6 text-center text-sm text-muted-foreground" data-testid="roll-empty">
+          <p className={cn("flex items-center justify-center gap-2 px-4 py-6 text-center text-sm", filter === "missing" ? "font-medium text-success" : "text-muted-foreground")} data-testid="roll-empty">
+            {filter === "missing" ? <CheckCircle2 aria-hidden className="size-5" /> : null}
             {filter === "missing" ? t("noneMissing") : t("noEntries")}
           </p>
         )}
@@ -437,7 +491,17 @@ function CountRows({ project, m, canRun }: { project: Project; m: Muster; canRun
                   <Code className="font-medium">{e.code}</Code>
                   {r ? (
                     <span className="text-xs text-muted-foreground">
-                      {r.outstanding ? <span className="font-semibold text-danger">{t("outstanding", { n: r.outstanding })}</span> : t("allAccounted")}
+                      {r.outstanding ? (
+                        <span className="inline-flex items-center gap-1 font-semibold text-danger">
+                          <UserX aria-hidden className="size-3.5" />
+                          {t("outstanding", { n: r.outstanding })}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-success">
+                          <CheckCircle2 aria-hidden className="size-3.5" />
+                          {t("allAccounted")}
+                        </span>
+                      )}
                       {r.resolved.map((x, i) => (
                         <span key={i} className="block">
                           {label("resolution_reasons", String(x.reason ?? ""))}: <bdi className="ltr">{String(x.count ?? "")}</bdi>
@@ -513,7 +577,6 @@ function CountRows({ project, m, canRun }: { project: Project; m: Muster; canRun
 type SheetWorker = { worker_no: string; name_en?: string | null; name_ar?: string | null };
 
 export function MusterSheetPage({ id }: { id: string }) {
-  const ar = useLocale() === "ar";
   const m = useMuster(id);
   // Each fetch is an audited export: fetch once, never refetch in the background.
   const q = useQuery({
@@ -527,33 +590,68 @@ export function MusterSheetPage({ id }: { id: string }) {
   if (q.isError) return <ErrorState error={q.error} />;
   if (!q.data) return null;
   const s = q.data;
+  const site = m.data?.site_id;
   return (
     <ProjectById id={m.data?.project_id ?? ""}>
       {(p) => (
-        <SheetBody projectId={p.id} muster={s.muster_no} at={s.generated_at} groups={s.engagements as { engagement_code: string; workers: SheetWorker[] }[]} ar={ar} back={`/musters/${id}`} />
+        <SheetBody
+          projectId={p.id}
+          muster={s.muster_no}
+          siteId={site}
+          at={s.generated_at}
+          groups={s.engagements as { engagement_code: string; workers: SheetWorker[] }[]}
+          back={`/musters/${id}`}
+        />
       )}
     </ProjectById>
   );
 }
 
+/** Margin boxes on every printed page (globals.css @page): muster no. and the destroy-after note, EN and AR. */
+function SheetFooter({ muster }: { muster: string }) {
+  const bi = useBi();
+  const c = bi("musterConfidential");
+  useEffect(() => {
+    const root = document.documentElement.style;
+    root.setProperty("--print-footer-start", JSON.stringify(`${muster} · ${c.en.split(":")[0]}`));
+    root.setProperty("--print-footer-end", JSON.stringify(c.ar.split(":")[0] ?? ""));
+    return () => {
+      root.removeProperty("--print-footer-start");
+      root.removeProperty("--print-footer-end");
+    };
+  }, [muster, c.en, c.ar]);
+  return null;
+}
+
+/**
+ * The paper fallback a warden carries to the assembly point: A4, black on white, bilingual labels, one table
+ * per contractor with a large tick box and a notes column for pen, a "present __ of N" line per contractor and
+ * a signature block. Laid out LTR like the permit print, names in both scripts.
+ */
 function SheetBody({
   projectId,
   muster,
+  siteId,
   at,
   groups,
-  ar,
   back,
 }: {
   projectId: string;
   muster: string;
+  siteId?: string;
   at: string;
   groups: { engagement_code: string; workers: SheetWorker[] }[];
-  ar: boolean;
   back: string;
 }) {
   const t = useTranslations("emergency.muster");
   const tc = useTranslations("common");
+  const bi = useBi();
   const { dateTime } = useFormatters(projectId);
+  const opts = useProjectOptions(projectId);
+  const site = opts.sites.find((x) => x.value === siteId)?.code ?? "";
+  const total = groups.reduce((n, g) => n + g.workers.length, 0);
+  const conf = bi("musterConfidential");
+  const th = "border border-black px-2 py-1 text-start align-bottom font-semibold";
   return (
     <div className="mx-auto max-w-3xl" data-testid="muster-sheet-page">
       <div className="mb-4 flex gap-2 print:hidden">
@@ -565,40 +663,111 @@ function SheetBody({
           <Link href={back}>{tc("back")}</Link>
         </Button>
       </div>
-      <h1 className="text-xl font-semibold">{t("sheetTitle", { no: muster })}</h1>
-      <p className="mb-1 text-sm text-muted-foreground">{t("sheetGenerated", { at: dateTime(at) })}</p>
-      <p className="mb-4 text-xs text-muted-foreground">{t("sheetConfidential")}</p>
-      {groups.map((g) => (
-        <section key={g.engagement_code} className="mb-6 break-inside-avoid" data-testid="sheet-group" data-eng={g.engagement_code}>
-          <h2 className="mb-2 font-semibold">
-            <Code>{g.engagement_code}</Code> · <bdi className="ltr">{g.workers.length}</bdi>
-          </h2>
-          <table className="w-full border-collapse text-sm">
-            <thead>
-              <tr>
-                <th className="w-10 border px-2 py-1 text-start">#</th>
-                <th className="border px-2 py-1 text-start">{t("workerNo")}</th>
-                <th className="border px-2 py-1 text-start">{t("name")}</th>
-                <th className="w-20 border px-2 py-1 text-center">{t("present")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {g.workers.map((w, i) => (
-                <tr key={w.worker_no} data-testid="sheet-row">
-                  <td className="border px-2 py-1 tabular-nums">{i + 1}</td>
-                  <td className="border px-2 py-1">
-                    <Code>{w.worker_no}</Code>
-                  </td>
-                  <td className="border px-2 py-1" dir="auto">
-                    {(ar ? w.name_ar || w.name_en : w.name_en || w.name_ar) ?? ""}
-                  </td>
-                  <td className="border px-2 py-1 text-center">☐</td>
+      <SheetFooter muster={muster} />
+      <article dir="ltr" className="paper flex flex-col gap-4 overflow-x-auto rounded-xl border bg-white p-4 text-black sm:p-6 print:overflow-visible print:rounded-none print:border-0 print:p-0">
+        <AccessPrintHeader title="musterSheet" projectId={projectId} />
+        <h1 className="sr-only">{t("sheetTitle", { no: muster })}</h1>
+        <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-[auto_auto_minmax(0,1fr)_auto]">
+          <SheetFact k="musterNo">
+            <span className="text-base font-bold whitespace-nowrap">{muster}</span>
+          </SheetFact>
+          <SheetFact k="musterSite">
+            <span className="text-lg font-bold">{site || "—"}</span>
+          </SheetFact>
+          <SheetFact k="musterGenerated">
+            <span dir="auto" className="block font-semibold">
+              {dateTime(at)}
+            </span>
+          </SheetFact>
+          <SheetFact k="musterOnList">
+            <span className="text-lg font-bold tabular-nums">{total}</span>
+          </SheetFact>
+        </dl>
+        <p className="flex items-start gap-2 rounded border-2 border-black px-3 py-2 text-xs" data-testid="sheet-confidential">
+          <Lock aria-hidden className="mt-px size-4 shrink-0" />
+          <span className="flex flex-col gap-0.5">
+            <span lang="en">{conf.en}</span>
+            <span lang="ar" dir="rtl">
+              {conf.ar}
+            </span>
+          </span>
+        </p>
+        {groups.map((g) => (
+          <section key={g.engagement_code} className="flex flex-col gap-1" data-testid="sheet-group" data-eng={g.engagement_code}>
+            <h2 className="flex flex-wrap items-baseline justify-between gap-2 border-b-2 border-black pb-1 break-after-avoid">
+              <span className="text-base font-bold">
+                {g.engagement_code} · <span className="tabular-nums">{g.workers.length}</span>
+              </span>
+              <span className="flex items-baseline gap-2 text-sm">
+                <BiLabel k="musterPresent" />
+                <span className="tabular-nums">
+                  ______ / <span className="font-semibold">{g.workers.length}</span>
+                </span>
+              </span>
+            </h2>
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr>
+                  <th className={cn(th, "w-10")}>#</th>
+                  <th className={cn(th, "w-32")}>
+                    <BiLabel k="musterWorkerNo" stack className="text-xs" />
+                  </th>
+                  <th className={th}>
+                    <BiLabel k="musterName" stack className="text-xs" />
+                  </th>
+                  <th className={cn(th, "w-20 text-center")}>
+                    <BiLabel k="musterPresent" stack className="items-center text-xs" />
+                  </th>
+                  <th className={cn(th, "w-36")}>
+                    <BiLabel k="musterNotes" stack className="text-xs" />
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {g.workers.map((w, i) => (
+                  <tr key={w.worker_no} data-testid="sheet-row" className="even:bg-black/[0.04]">
+                    <td className="border border-black px-2 py-2 tabular-nums">{i + 1}</td>
+                    <td className="border border-black px-2 py-2 font-mono text-[9.5pt] whitespace-nowrap">{w.worker_no}</td>
+                    <td className="border border-black px-2 py-2">
+                      <span className="flex flex-col leading-tight">
+                        <span lang="en">{w.name_en ?? ""}</span>
+                        {w.name_ar ? (
+                          <span lang="ar" dir="rtl" className="text-xs">
+                            {w.name_ar}
+                          </span>
+                        ) : null}
+                      </span>
+                    </td>
+                    <td className="border border-black px-2 py-2 text-center">
+                      <span aria-hidden className="inline-block size-5 border-2 border-black align-middle" />
+                    </td>
+                    <td className="border border-black px-2 py-2" />
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        ))}
+        <section className="mt-2 grid grid-cols-1 gap-x-6 gap-y-5 border-t-2 border-black pt-4 text-sm break-inside-avoid sm:grid-cols-2" data-testid="sheet-sign">
+          {(["musterApWarden", "musterCountedBy", "musterSignature", "musterTime"] as const).map((k) => (
+            <div key={k} className="flex flex-col gap-1">
+              <BiLabel k={k} className="text-xs" />
+              <span className="block h-7 border-b border-black" />
+            </div>
+          ))}
         </section>
-      ))}
+      </article>
+    </div>
+  );
+}
+
+function SheetFact({ k, children }: { k: "musterNo" | "musterSite" | "musterGenerated" | "musterOnList"; children: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <dt>
+        <BiLabel k={k} className="text-xs" />
+      </dt>
+      <dd>{children}</dd>
     </div>
   );
 }
