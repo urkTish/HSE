@@ -690,7 +690,7 @@ Each has a default so the build can start.
 7. **Receipt proof:** HSE Officers close consignments from the weighbridge ticket. Should the contractor's environmental officer be allowed to close their own loads?
 8. **Scope:** carbon and energy reporting (fuel, electricity) is not included. Is it needed for the client's sustainability reporting (e.g. Mostadam or LEED)?
 
-## 11. Changes required in earlier specs (to be applied by the coordinator; this spec does not edit them)
+## 11. Changes required in earlier specs (applied 2026-10-09: 0-foundation v1.3, 1-dashboard v1.8, 2-access-permits v1.7, 6c-emergency-drills v1.2, 6d-field-assurance v1.1)
 
 ### 11.1 `0-foundation.md` v1.2 → v1.3
 1. Matrix rows 202–214 (§5.17).

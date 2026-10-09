@@ -8,7 +8,7 @@
 - Phase 6c step = Design done (findings `docs/design/phase-6c-findings.md`; contract v0.9.0); phase demo next
 - Phase 6d — Field assurance (checklists, audits, toolbox talks): spec `docs/specs/6d-field-assurance.md` v1.0 (61 ACs; §11 earlier-spec changes applied; contract v0.10.0)
 - Phase 6d step = Backend done (frontend next)
-- Phase 6e — Environmental management: spec `docs/specs/6e-environmental.md` v1.0 written (58 ACs; §11 earlier-spec changes not yet applied); contract next, after 6d
+- Phase 6e — Environmental management: spec `docs/specs/6e-environmental.md` v1.0 (58 ACs; §11 earlier-spec changes applied); contract next
 - Phase 6f — Incident follow-up (notification packs, lessons learned): spec `docs/specs/6f-incident-followup.md` v1.0 written (48 ACs; §11 earlier-spec changes not yet applied); contract next, after 6e
 
 ## Phase log
