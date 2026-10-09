@@ -9356,7 +9356,8 @@
       "looseningManagerOnly": "Removing, downgrading or extending a mandatory line needs the HSE Manager.",
       "reason20": "Required (at least 20 characters) when a mandatory line is removed, downgraded or given more days.",
       "noBackdating": "Lines cannot be back-dated.",
-      "empty": "No matrix lines match."
+      "empty": "No matrix lines match.",
+      "fromLabel": "from"
     },
     "gaps": {
       "title": "Competency gaps",
@@ -9643,7 +9644,8 @@
       "logSubtitle": "Every check of an external training certificate with its provider.",
       "failedOnly": "Failed only",
       "from": "From",
-      "to": "To"
+      "to": "To",
+      "laterActions": "Actions on an accepted record"
     },
     "passport": {
       "title": "Training",
@@ -9789,12 +9791,12 @@
       "evidenceFile": "Evidence: {name}",
       "sensitive": "Contains ID numbers: stored encrypted and deleted at commit, discard or expiry.",
       "fileIssues": "The file cannot be imported",
-      "partialCommit": "{ok} rows can be imported; {err} rows with errors will be skipped.",
+      "partialCommit": "{ok, plural, one {# row can be imported} other {# rows can be imported}}; {err, plural, one {# row with errors will be skipped} other {# rows with errors will be skipped}}.",
       "nothingValid": "No row can be imported.",
       "submittedNote": "Imported records are Submitted for review, never Accepted.",
       "attendanceNote": "Committed rows update the session's attendance. Close the session separately.",
       "expiresAt": "Commit before {time}.",
-      "commit": "Import {n} rows",
+      "commit": "{n, plural, one {Import # row} other {Import # rows}}",
       "discard": "Discard",
       "committed": "{n} imported",
       "discarded": "Import discarded",

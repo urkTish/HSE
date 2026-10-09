@@ -115,7 +115,7 @@ for (const locale of ["en", "ar"] as const) {
     }
 
     await go("/briefing-campaigns");
-    await expect(page.getByTestId("campaigns-table").or(page.getByTestId("campaign-new"))).toBeVisible();
+    await expect(page.getByTestId("campaign-new")).toBeVisible();
     await shot(page, `16-briefing-campaigns-${locale}.png`);
 
     if (campaigns.items[0]) {

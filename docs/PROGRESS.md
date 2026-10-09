@@ -7,7 +7,7 @@
 - Phase 6c — Emergency preparedness & drills (spec `docs/specs/6c-emergency-drills.md` v1.0, §11 earlier-spec changes applied; contract v0.9.0)
 - Phase 6c step = Design done (findings `docs/design/phase-6c-findings.md`; contract v0.9.0); phase demo next
 - Phase 6d — Field assurance (checklists, audits, toolbox talks): spec `docs/specs/6d-field-assurance.md` v1.0 (61 ACs; §11 earlier-spec changes applied; contract v0.10.0)
-- Phase 6d step = Backend done (frontend next)
+- Phase 6d step = Frontend done
 - Phase 6e — Environmental management: spec `docs/specs/6e-environmental.md` v1.0 (58 ACs; §11 earlier-spec changes applied); contract next
 - Phase 6f — Incident follow-up (notification packs, lessons learned): spec `docs/specs/6f-incident-followup.md` v1.0 written (48 ACs; §11 earlier-spec changes not yet applied); contract next, after 6e
 - Phase 6g — Contractor HSE scorecard + reports export pack: spec `docs/specs/6g-scorecard-reports.md` v1.0 written (56 ACs; §11 earlier-spec changes not yet applied); contract next, after 6f
@@ -29,6 +29,21 @@
 - Jobs: `field_daily` 00:09 (talk lock, audit close, photo retention), `field_alerts` 07:06, `field_minute` every 60 s.
 - Seed `app/seed_field.py` (Appendix A; called by `app.seed`). FD9 differences in D-185.
 - Tests: `test_field_library`, `test_field_execution`, `test_field_findings`, `test_field_audits`, `test_field_talks`, `test_field_kpis` (54 tests, plus the stage 1 contract test). Defaults are D-176…D-186.
+
+### Frontend — Phase 6d field assurance (contract v0.10.0, integrated with the stage 2 backend)
+- "Inspections, audits & talks" sidebar section (D-187): field overview (live band + action panel), KPIs K-34/35/36 and K-110…K-117 with breakdowns and translated notes (D-190), settings (HSE Manager edits, tighten-only errors shown; others read-only).
+- Libraries: checklist templates (versions, sections, items with type / weight / critical / stop rule / N/A / photo on fail / airside only / options / numeric rule, draft → publish → new version / retire / delete) and toolbox topics (EN/AR key points, worker-language translations, links, review due).
+- Phone checklist run: planned (from the inspection) or unplanned (template / site / zone / contractor, zone-type check, airside-only items hidden); radio-style answers, notes, photos (compressed), raise-only severity, CA / fixed on spot, equipment defect tag, STOP NOW panel and stop-work fields with zone permits; idempotent submit with client_uuid; offline outbox and pack (D-188, AC59).
+- Inspection page (Phase 1): Run checklist, response card (template, score, result, critical fails, stop order, findings, answers), void; plan form: template, rotation (zones / contractors), quarterly.
+- Findings register (repeat flag, CA), stop-work register and order (release with note + photos once the CA is in progress; void).
+- Audits: plan (independence errors in their own box), start, conduct (answers + manual findings), meetings / fieldwork dates, complete, issue by someone other than the lead, cancel, void, reports; audit programme lines.
+- Toolbox talks (phone): site / host / zones / shift / duration / presenter, suggestions and library topics, campaign, language + interpreters, attendance by card scan (camera or pasted payload), pick from list, signatures, unnamed count and sheet photos; register, detail (add / remove rows within the window, void, names hidden without 199). Briefing campaigns: draft, issue, cancel, pairs.
+- e2e: `p6d-run`, `p6d-library`, `p6d-audits`, `p6d-talks`, `p6d-overview` (15 tests) all pass alone; screenshots (EN / AR; checklist run and attendance at 390 px) in `docs/screenshots/phase-6d/` via `screenshots-p6d.spec.ts` (`SCREENSHOTS=1`).
+- `e2e/start-backend.sh` honours `E2E_BACKEND_DIR` (run a clean `git archive` backend while backend/ has uncommitted work). Shared `StepDialog` gained an optional `renderError`.
+
+#### Phase 6d — backend issues found by the frontend
+- `GET /inspections/{id}` and the project inspections list return 500 (`KeyError: 'id'` in `services/inspections.py` `reads`) when an inspection's `findings` JSON holds Phase 1 seed entries (`{"item", "ca_id", "severity"}`, no `id` / `description`); the 6d seed appends such entries to checklist inspections, so the seeded checklist inspections (and the inspections register page) cannot be opened. Inspections created through the 6d run open fine.
+- KPI breakdown rows for `group_by=inspection_type` carry the raw code as `label_en` / `label_ar` (e.g. `airside_fod_walk`); AR labels are needed. K-116 on the seed shows 93.4 % for September (Appendix A.6 says 92.4 %).
 
 ### Frontend — Phase 6c emergency preparedness & drills (contract v0.9.0, integrated with the stage 2 backend)
 - "Emergency" sidebar section (D-169): board (readiness per site: coverage counters, equipment gaps, next drills, open musters, active events; refreshed every minute), action panel, emergency info (AP + numbers for chosen zones), KPIs K-104…K-109 with breakdowns.
@@ -826,6 +841,7 @@
 - (Backend, ops) With 4 API workers the KPI cache can show figures up to 20 s old after a write made through another worker, and the gate rate limit (120/min) is counted per worker. Acceptable for v1.0?
 
 ## Contract requests
+- 6d (frontend): `AnswerInput.photo_ids` (keep already-stored photos) so re-saving audit answers does not re-send photos (D-191); Arabic KPI notes (or note codes) on `FieldKpiResponse.notes` instead of English strings (D-190).
 - (Frontend 6c) `GET /projects/{id}/muster-devices` (list the muster readers with AP, label, last seen, revoked) — the page can only list devices registered in the current session.
 - (Frontend 6c) `q` (tag / location search) on `GET /projects/{id}/emergency-assets`, and a lookup of an asset by its EA sticker payload (so a scanned check shows the asset and its items before saving).
 - (Frontend 6c) an attachment owner type for emergency asset checks (photos of a failed item).
