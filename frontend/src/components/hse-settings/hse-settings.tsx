@@ -225,7 +225,7 @@ export function HseSettingsPage({ project }: { project: Schemas["ProjectRead"] }
                   .map((k) => (
                     <TR key={k.metric}>
                       <TD label={t("metric")}>
-                        <span className="ltr me-2 text-xs text-muted-foreground">{k.metric}</span>
+                        <span className="ltr me-2 text-xs text-muted-foreground rtl:me-0 rtl:ms-2">{k.metric}</span>
                         {locale === "ar" ? k.label_ar : k.label_en}
                       </TD>
                       <TD label={t("better")}>{k.better === "none" ? "—" : t(k.better === "lower" ? "lower" : "higher")}</TD>

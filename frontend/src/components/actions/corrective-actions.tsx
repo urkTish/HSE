@@ -170,7 +170,7 @@ export function CaList({ project }: { project: Schemas["ProjectRead"] }) {
                   </TD>
                   <TD label={t("fields.due_date")} className="md:min-w-40">
                     {date(c.due_date)}
-                    {c.overdue && c.days_overdue ? <span className="block text-xs text-destructive">{t("daysOverdue", { days: show(c.days_overdue) })}</span> : null}
+                    {c.overdue && c.days_overdue ? <span className="block text-xs text-destructive">{t("daysOverdue", { days: show(c.days_overdue), n: c.days_overdue })}</span> : null}
                   </TD>
                   <TD label={t("fields.status")}>
                     <span className="inline-flex flex-wrap gap-1">
@@ -465,7 +465,7 @@ export function CaDetail({ id }: { id: string }) {
                 <CardTitle className="flex flex-wrap items-center gap-2">
                   <span data-testid="ca-title">{c.title}</span>
                   <StatusBadge status={c.status} label={te(`caStatus.${c.status}`)} />
-                  {c.overdue ? <StatusBadge status="overdue" label={c.days_overdue ? t("daysOverdue", { days: show(c.days_overdue) }) : t("overdue")} /> : null}
+                  {c.overdue ? <StatusBadge status="overdue" label={c.days_overdue ? t("daysOverdue", { days: show(c.days_overdue), n: c.days_overdue }) : t("overdue")} /> : null}
                   {c.verification_overdue ? <StatusBadge status="late" label={t("verificationOverdue")} /> : null}
                 </CardTitle>
               </div>

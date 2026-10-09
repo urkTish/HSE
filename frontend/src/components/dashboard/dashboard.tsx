@@ -274,8 +274,8 @@ function Headline({ h, show, projectId, periodLabel }: { h: Schemas["DashboardHe
         </div>
         <p className="text-xs text-muted-foreground">
           {l.basis === "since_start" ? t("sinceStart") : t("lastLti", { date: date(l.last_lti_date) })}
-          {l.last_lti_incident_ref ? <span className="ltr ms-1 whitespace-nowrap">({l.last_lti_incident_ref})</span> : null}
-          {l.longest_run_days > 0 ? <span className="ms-2 whitespace-nowrap">· {t("longestRun", { days: show(l.longest_run_days) })}</span> : null}
+          {l.last_lti_incident_ref ? <span className="ltr ms-1 whitespace-nowrap rtl:ms-0 rtl:me-1">({l.last_lti_incident_ref})</span> : null}
+          {l.longest_run_days > 0 ? <span className="ms-2 whitespace-nowrap">· {t("longestRun", { days: show(l.longest_run_days), n: l.longest_run_days })}</span> : null}
         </p>
       </div>
       <HeadlineValue v={h.man_hours_period} show={show} big caption={periodLabel} />
@@ -343,7 +343,7 @@ function AccessBandView({ b, show }: { b: Schemas["AccessBand"]; show: Show }) {
               </span>
               <span className="text-xs text-muted-foreground">
                 {b.ops_suspension_zones.map((z) => (
-                  <bdi key={z.id} className="ltr me-1" title={name(z.name_en, z.name_ar)}>
+                  <bdi key={z.id} className="ltr me-1 rtl:me-0 rtl:ms-1" title={name(z.name_en, z.name_ar)}>
                     {z.code}
                   </bdi>
                 ))}

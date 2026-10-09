@@ -170,7 +170,7 @@ function DrillDialog({ metric, label, query, projectId, onClose }: { metric: Met
               <LoadingState />
             ) : (
               <>
-                <p className="text-xs text-muted-foreground">{t("records", { count: show(sources.data.total) })}</p>
+                <p className="text-xs text-muted-foreground">{t("records", { count: show(sources.data.total), n: sources.data.total })}</p>
                 <ul className="flex max-h-80 flex-col divide-y overflow-y-auto rounded-md border" data-testid="drill-sources">
                   {sources.data.items.map((r) => {
                     const href = apiPathToRoute(r.detail_path);

@@ -12,7 +12,7 @@ import type { Schemas } from "@/lib/api/client";
 import { useActionPanel, useContractorLeague, useExpiringItems, useInsights, usePyramid, type KpiQuery } from "@/lib/api/kpi";
 import { useArabicDigits } from "@/lib/digits";
 import { apiPathToRoute, entityRoute, listLinkToRoute } from "@/lib/routes";
-import { useFormatters } from "@/lib/use-formatters";
+import { StackedDate } from "@/components/medical/common";
 import { cn } from "@/lib/utils";
 import { DrillNumber } from "./drill";
 
@@ -292,7 +292,6 @@ export function ExpiringItems({ projectId, asOf, show }: { projectId: string | n
   const t = useTranslations("dashboard");
   const te = useTranslations("enums");
   const ar = useLocale() === "ar";
-  const { date, dateTime } = useFormatters(projectId);
   const q = useExpiringItems(projectId, asOf);
   const [all, setAll] = useState(false);
   if (!projectId) return null;
@@ -322,7 +321,7 @@ export function ExpiringItems({ projectId, asOf, show }: { projectId: string | n
                 ? t("minutesOverdue", { n: show(-mins) })
                 : t("minutesLeft", { n: show(mins) })
               : overdue
-                ? t("daysOverdue", { days: show(-i.days_left) })
+                ? t("daysOverdue", { days: show(-i.days_left), n: -i.days_left })
                 : i.days_left === 0
                   ? t("dueToday")
                   : t("daysLeft", { days: show(i.days_left), n: i.days_left });
@@ -356,7 +355,7 @@ export function ExpiringItems({ projectId, asOf, show }: { projectId: string | n
                   {overdue ? <AlertTriangle aria-hidden className="size-3.5" /> : <CalendarClock aria-hidden className="size-3.5" />}
                   {when}
                 </span>
-                <span className="text-muted-foreground">{i.due_at ? <span className="ltr">{dateTime(i.due_at)}</span> : date(i.due_date)}</span>
+                <span className="text-muted-foreground">{i.due_at ? <StackedDate v={i.due_at} time projectId={projectId} className="items-end" /> : <StackedDate v={i.due_date} projectId={projectId} className="items-end" />}</span>
               </span>
             </>
           );
