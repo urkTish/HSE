@@ -10251,7 +10251,7 @@
       "exposure_group_trade_defaults": "Default exposure groups by trade",
       "alertSchedule": "Expiry alerts at {days} days.",
       "lastUpdated": "Last updated {at}",
-      "saved": "{n, plural, one {# setting saved.} other {# settings saved.}}"
+      "saved": "{n} settings saved."
     },
     "imports": {
       "title": "Medical imports",

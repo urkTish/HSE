@@ -93,12 +93,6 @@ P = {
                 "{n, plural, zero {لم يُنشأ أي سجل.} one {تم إنشاء سجل واحد.} two {تم إنشاء سجلين.} few {تم إنشاء # سجلات.} many {تم إنشاء # سجلًا.} other {تم إنشاء # سجل.}}",
             ],
         },
-        "settings": {
-            "saved": [
-                "{n, plural, one {# setting saved.} other {# settings saved.}}",
-                "{n, plural, one {تم حفظ إعداد واحد.} two {تم حفظ إعدادين.} few {تم حفظ # إعدادات.} many {تم حفظ # إعدادًا.} other {تم حفظ # إعداد.}}",
-            ],
-        },
         "gaps": {
             "total": [
                 "{n, plural, one {# gap as of {d}} other {# gaps as of {d}}}",
