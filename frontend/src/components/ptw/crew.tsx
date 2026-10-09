@@ -26,6 +26,7 @@ import { DOCUMENT_TYPES, EQUIPMENT_CATEGORIES, EQUIPMENT_USES, PTW_CREW_ROLES } 
 import { useFormatters } from "@/lib/use-formatters";
 import { cn } from "@/lib/utils";
 import { WorkerRefLabel, userLabel } from "./common";
+import { ChoiceMark } from "@/components/heat/common";
 
 type S = Schemas;
 type Permit = S["PermitRead"];
@@ -632,11 +633,13 @@ export function ChecklistPanel({ permit, checklist }: { permit: Permit; checklis
                         disabled={!editable}
                         onClick={() => setAnswers({ ...answers, [i.code]: { ...v, answer: a } })}
                         className={cn(
-                          "min-h-touch min-w-12 rounded-md border px-2 text-sm",
-                          v.answer === a ? (a === "yes" ? "border-success bg-success-bg font-semibold" : a === "no" ? "border-danger bg-danger-bg font-semibold" : "border-input bg-muted font-semibold") : "border-input",
+                          // Radio mark + 2 px border on the chosen answer (never colour alone); "No" keeps a faint red border.
+                          "inline-flex min-h-touch min-w-16 items-center justify-center gap-1.5 rounded-md border px-2 text-sm",
+                          v.answer === a ? (a === "yes" ? "border-2 border-success bg-success-bg font-semibold" : a === "no" ? "border-2 border-danger bg-danger-bg font-semibold" : "border-2 border-foreground/60 bg-muted font-semibold") : a === "no" ? "border-danger/40" : "border-input",
                         )}
                         data-testid={`ans-${a === "n.a." ? "na" : a}`}
                       >
+                        <ChoiceMark on={v.answer === a} />
                         {te(`checklistAnswer.${a === "n.a." ? "na" : a}`)}
                       </button>
                     ))}
