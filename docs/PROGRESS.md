@@ -4,6 +4,7 @@
 - Phase: 6b — Heat stress (Phase 5 Training is PARKED, see below; Phase 6a design done, demo pending)
 - Module: heat stress (spec `docs/specs/6b-heat-stress.md` v1.0, §11 earlier-spec changes applied)
 - Phase 6b step = Frontend done (contract v0.8.0; screens, e2e and screenshots); design pass next
+- Phase 6c spec written: `docs/specs/6c-emergency-drills.md` v1.0 (capabilities 178–190, K-104…K-109, E18–E19, T20, C28–C30; 66 ACs; §11 earlier-spec changes not yet applied)
 
 ## Phase log
 - Phase 0 — Foundation: built, e2e green, design pass done (2026-10-05). The user asked to continue phase after phase without per-phase approval; open questions are collected below for a single review.
