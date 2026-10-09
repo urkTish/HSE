@@ -526,7 +526,7 @@ P = {
       "signed": ["Signed", "موقّع"],
       "sign": ["Sign", "توقيع"],
       "removeRow": ["Remove", "إزالة"],
-      "mismatchNote": ["{n} attendee(s) may not have understood: consider an interpreter.", "قد لا يكون {n} من الحضور فهموا: فكّر في مترجم."],
+      "mismatchNote": ["{n, plural, one {# attendee may not have understood: consider an interpreter.} other {# attendees may not have understood: consider an interpreter.}}", "{n, plural, one {قد لا يكون حاضر واحد قد فهم: فكّر في الاستعانة بمترجم.} two {قد لا يكون حاضران قد فهما: فكّر في الاستعانة بمترجم.} few {قد لا يكون # حاضرين قد فهموا: فكّر في الاستعانة بمترجم.} many {قد لا يكون # حاضرًا قد فهموا: فكّر في الاستعانة بمترجم.} other {قد لا يكون # حاضر قد فهموا: فكّر في الاستعانة بمترجم.}}"],
       "queuedTitle": ["Saved on this device", "حُفظ على هذا الجهاز"],
       "queuedText": ["No signal. \"{label}\" is waiting to send and will go automatically.", "لا توجد إشارة. \"{label}\" بانتظار الإرسال وسيُرسل تلقائيًا."],
       "again": ["Record another", "تسجيل اجتماع آخر"],
