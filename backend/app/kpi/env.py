@@ -68,7 +68,7 @@ def _q(v: Decimal | None, places: str = "0.01") -> Decimal | None:
 
 def permit_stats(db: Session, pids: list[UUID], as_of: date) -> tuple[int, int, int]:
     """(requirements in force, requirements applicable, required records expiring)."""
-    from app.core.env_enums import PermitStatus  # noqa: PLC0415
+    from app.core.env_enums import EnvPermitStatus  # noqa: PLC0415
     from app.services.env import common as ec  # noqa: PLC0415
 
     num = den = exp = 0
@@ -78,7 +78,7 @@ def permit_stats(db: Session, pids: list[UUID], as_of: date) -> tuple[int, int, 
                 continue
             den += 1
             num += ec.requirement_in_force(db, pid, code, as_of)
-            exp += any(ec.permit_status(db, pm, as_of) == PermitStatus.expiring for pm in pms)
+            exp += any(ec.permit_status(db, pm, as_of) == EnvPermitStatus.expiring for pm in pms)
     return num, den, exp
 
 

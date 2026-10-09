@@ -8,14 +8,14 @@ from datetime import date, timedelta
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.env_enums import PermitStatus
+from app.core.env_enums import EnvPermitStatus
 from app.env_jobs import env_alerts
 from app.kpi import env as ke
 from app.models import EnvAspect
 from app.schemas.env import (
     AspectCreate,
     AspectTransition,
-    PermitCreate,
+    EnvPermitCreate,
     ProviderTransition,
 )
 from app.services.env import common as ec
@@ -123,8 +123,8 @@ def test_permit_alerts_expiry_and_producer_check(env_seed: None, db: Session) ->
     """AC 4-6: EV4 alert dates, expiring / expired, PRODUCER_REGISTRATION_INVALID, K-118."""
     pm = permit(db, "MWAN-PRD-TEST-0420")
     pid = project(db, "ANIA-EXP").id
-    assert ec.permit_status(db, pm, date(2026, 10, 6)) == PermitStatus.expiring
-    assert ec.permit_status(db, pm, date(2026, 11, 1)) == PermitStatus.expired
+    assert ec.permit_status(db, pm, date(2026, 10, 6)) == EnvPermitStatus.expiring
+    assert ec.permit_status(db, pm, date(2026, 11, 1)) == EnvPermitStatus.expired
     sent = []
 
     def count() -> int:
@@ -151,7 +151,7 @@ def test_renewal_supersedes(env_seed: None, db: Session) -> None:
     tick(2026, 10, 20, 9)
     p = P(db, "noura.qahtani")
     pid = project(db, "ANIA-EXP").id
-    register.create_permit(db, p, pid, None, PermitCreate(
+    register.create_permit(db, p, pid, None, EnvPermitCreate(
         permit_type="mwan_producer_registration", issuer="mwan", requirement_code="MWAN-REG",
         required=True, reference_no="MWAN-PRD-TEST-0421", valid_from=date(2026, 11, 1),
         valid_to=date(2027, 10, 31),
@@ -163,7 +163,7 @@ def test_renewal_supersedes(env_seed: None, db: Session) -> None:
         got = notified(db, "env_permit_expiry", since).get("faisal.harbi", [])
         assert not [t for t in got if "EPL-ANIA-EXP-002" in t]
     old = permit(db, "MWAN-PRD-TEST-0420")
-    assert ec.permit_status(db, old, date(2026, 11, 1)) == PermitStatus.superseded
+    assert ec.permit_status(db, old, date(2026, 11, 1)) == EnvPermitStatus.superseded
     waste.producer_check(db, pid, date(2026, 11, 1))
 
 

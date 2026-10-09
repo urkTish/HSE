@@ -18,24 +18,24 @@ from app.schemas.env import (
     BackgroundRead,
     EnvDeviceCreate,
     EnvDeviceRead,
+    EnvInstrumentCreate,
+    EnvInstrumentPage,
+    EnvInstrumentRead,
+    EnvInstrumentTransition,
+    EnvPointCreate,
+    EnvPointPage,
+    EnvPointRead,
+    EnvPointUpdate,
+    EnvReadingCreate,
+    EnvReadingPage,
+    EnvReadingRead,
     EnvStationSessionInput,
     EnvStationSessionRead,
     EnvVoid,
     ExceedancePage,
     ExceedanceRead,
     ExceedanceReview,
-    InstrumentCreate,
-    InstrumentPage,
-    InstrumentRead,
-    InstrumentTransition,
     InstrumentUpdate,
-    PointCreate,
-    PointPage,
-    PointRead,
-    PointUpdate,
-    ReadingCreate,
-    ReadingPage,
-    ReadingRead,
     StationPush,
     StationPushResult,
 )
@@ -46,50 +46,50 @@ router = APIRouter(tags=["env-monitoring"])
 
 @router.get(
     "/projects/{project_id}/env-instruments",
-    response_model=InstrumentPage,
+    response_model=EnvInstrumentPage,
     summary="Environmental instruments (202)",
     responses=error_responses(401, 403, 404),
 )
 def list_env_instruments(
     project_id: uuid.UUID, user: CurrentUser, pg: PageParams, db: DB
-) -> InstrumentPage:
+) -> EnvInstrumentPage:
     return monitoring.list_instruments(db, user, project_id, pg.page, pg.page_size)
 
 
 @router.post(
     "/projects/{project_id}/env-instruments",
-    response_model=InstrumentRead,
+    response_model=EnvInstrumentRead,
     status_code=status.HTTP_201_CREATED,
     summary="Register an instrument (208; MON-1)",
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def create_env_instrument(
-    project_id: uuid.UUID, body: InstrumentCreate, user: CurrentUser, db: DB
-) -> InstrumentRead:
+    project_id: uuid.UUID, body: EnvInstrumentCreate, user: CurrentUser, db: DB
+) -> EnvInstrumentRead:
     return monitoring.create_instrument(db, user, project_id, body)
 
 
 @router.patch(
     "/env-instruments/{instrument_id}",
-    response_model=InstrumentRead,
+    response_model=EnvInstrumentRead,
     summary="Edit an instrument (208; new calibration)",
     responses=error_responses(401, 403, 404, 422),
 )
 def update_env_instrument(
     instrument_id: uuid.UUID, body: InstrumentUpdate, user: CurrentUser, db: DB
-) -> InstrumentRead:
+) -> EnvInstrumentRead:
     return monitoring.update_instrument(db, user, instrument_id, body)
 
 
 @router.post(
     "/env-instruments/{instrument_id}/transitions",
-    response_model=InstrumentRead,
+    response_model=EnvInstrumentRead,
     summary="Activate, quarantine or retire an instrument (208; §4.4)",
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def transition_env_instrument(
-    instrument_id: uuid.UUID, body: InstrumentTransition, user: CurrentUser, db: DB
-) -> InstrumentRead:
+    instrument_id: uuid.UUID, body: EnvInstrumentTransition, user: CurrentUser, db: DB
+) -> EnvInstrumentRead:
     return monitoring.transition_instrument(db, user, instrument_id, body)
 
 
@@ -144,52 +144,54 @@ def ingest_env_station_readings(
 
 @router.get(
     "/projects/{project_id}/env-points",
-    response_model=PointPage,
+    response_model=EnvPointPage,
     summary="Monitoring points with requirements and effective limits (202)",
     responses=error_responses(401, 403, 404),
 )
-def list_env_points(project_id: uuid.UUID, user: CurrentUser, pg: PageParams, db: DB) -> PointPage:
+def list_env_points(
+    project_id: uuid.UUID, user: CurrentUser, pg: PageParams, db: DB
+) -> EnvPointPage:
     return monitoring.list_points(db, user, project_id, pg.page, pg.page_size)
 
 
 @router.post(
     "/projects/{project_id}/env-points",
-    response_model=PointRead,
+    response_model=EnvPointRead,
     status_code=status.HTTP_201_CREATED,
     summary="Create a monitoring point (208; LIM-1 prefill, LIM-2 tighten only)",
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def create_env_point(
-    project_id: uuid.UUID, body: PointCreate, user: CurrentUser, db: DB
-) -> PointRead:
+    project_id: uuid.UUID, body: EnvPointCreate, user: CurrentUser, db: DB
+) -> EnvPointRead:
     return monitoring.create_point(db, user, project_id, body)
 
 
 @router.get(
     "/env-points/{point_id}",
-    response_model=PointRead,
+    response_model=EnvPointRead,
     summary="One monitoring point",
     responses=error_responses(401, 403, 404),
 )
-def get_env_point(point_id: uuid.UUID, user: CurrentUser, db: DB) -> PointRead:
+def get_env_point(point_id: uuid.UUID, user: CurrentUser, db: DB) -> EnvPointRead:
     return monitoring.read_point(db, user, point_id)
 
 
 @router.patch(
     "/env-points/{point_id}",
-    response_model=PointRead,
+    response_model=EnvPointRead,
     summary="Edit a point or its limits (208; 422 LIMIT_LOOSENING; audited)",
     responses=error_responses(401, 403, 404, 422),
 )
 def update_env_point(
-    point_id: uuid.UUID, body: PointUpdate, user: CurrentUser, db: DB
-) -> PointRead:
+    point_id: uuid.UUID, body: EnvPointUpdate, user: CurrentUser, db: DB
+) -> EnvPointRead:
     return monitoring.update_point(db, user, point_id, body)
 
 
 @router.get(
     "/projects/{project_id}/env-readings",
-    response_model=ReadingPage,
+    response_model=EnvReadingPage,
     summary="Readings register (202)",
     responses=error_responses(401, 403, 404),
 )
@@ -202,7 +204,7 @@ def list_env_readings(
     parameter: Parameter | None = None,
     date_from: date | None = None,
     date_to: date | None = None,
-) -> ReadingPage:
+) -> EnvReadingPage:
     return monitoring.list_readings(
         db, user, project_id, point_id, parameter, date_from, date_to, pg.page, pg.page_size
     )
@@ -210,7 +212,7 @@ def list_env_readings(
 
 @router.post(
     "/projects/{project_id}/env-readings",
-    response_model=ReadingRead,
+    response_model=EnvReadingRead,
     status_code=status.HTTP_201_CREATED,
     summary="Record a manual, visual or lab reading (209; MON-3, EXD-1)",
     description="422 INSTRUMENT_CALIBRATION_EXPIRED, FIELD_CALIBRATION_REQUIRED, "
@@ -218,30 +220,30 @@ def list_env_readings(
     responses=error_responses(401, 403, 404, 422),
 )
 def create_env_reading(
-    project_id: uuid.UUID, body: ReadingCreate, user: CurrentUser, db: DB
-) -> ReadingRead:
+    project_id: uuid.UUID, body: EnvReadingCreate, user: CurrentUser, db: DB
+) -> EnvReadingRead:
     return monitoring.create_reading(db, user, project_id, body)
 
 
 @router.get(
     "/env-readings/{reading_id}",
-    response_model=ReadingRead,
+    response_model=EnvReadingRead,
     summary="One reading",
     responses=error_responses(401, 403, 404),
 )
-def get_env_reading(reading_id: uuid.UUID, user: CurrentUser, db: DB) -> ReadingRead:
+def get_env_reading(reading_id: uuid.UUID, user: CurrentUser, db: DB) -> EnvReadingRead:
     return monitoring.read_reading(db, user, reading_id)
 
 
 @router.post(
     "/env-readings/{reading_id}/void",
-    response_model=ReadingRead,
+    response_model=EnvReadingRead,
     summary="Void a reading (214, reason ≥ 20 chars)",
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def void_env_reading(
     reading_id: uuid.UUID, body: EnvVoid, user: CurrentUser, db: DB
-) -> ReadingRead:
+) -> EnvReadingRead:
     return monitoring.void_reading(db, user, reading_id, body)
 
 

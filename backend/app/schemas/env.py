@@ -25,21 +25,22 @@ from app.core.env_enums import (
     ConsignmentAction,
     ConsignmentStatus,
     EnvActionKind,
+    EnvInstrumentKind,
+    EnvInstrumentStatus,
     EnvKpiGroupBy,
+    EnvPermitAction,
+    EnvPermitStatus,
+    EnvPermitType,
+    EnvReadingSource,
     ExceedanceCause,
     ExceedanceStatus,
     InstrumentAction,
-    InstrumentKind,
-    InstrumentStatus,
     Issuer,
     LicenceActivity,
     LimitSource,
     NoiseArea,
     NoisePeriod,
     Parameter,
-    PermitAction,
-    PermitStatus,
-    PermitType,
     PointKind,
     PointSource,
     ProviderAction,
@@ -47,7 +48,6 @@ from app.core.env_enums import (
     ProviderStatus,
     QuantityUnit,
     ReadingResult,
-    ReadingSource,
     RecordState,
     Schedule,
     SpillAction,
@@ -170,7 +170,7 @@ class EnvVoid(StrictInput):
     reason: str = Field(min_length=1, max_length=500)
 
 
-class PhotoInput(StrictInput):
+class EnvPhotoInput(StrictInput):
     file_name: str = Field(max_length=120)
     content_base64: str = Field(description="jpg / png ≤ 5 MB; EXIF stripped on receipt.")
 
@@ -273,7 +273,7 @@ class Facility(ApiModel):
     kind: ProviderKind
 
 
-class ProviderCreate(StrictInput):
+class EnvProviderCreate(StrictInput):
     """Capability 204; created approved."""
 
     provider_code: str = Field(pattern=r"^[A-Z0-9-]{2,12}$")
@@ -286,7 +286,7 @@ class ProviderCreate(StrictInput):
     phone: str | None = Field(default=None, max_length=20)
 
 
-class ProviderUpdate(PatchInput):
+class EnvProviderUpdate(PatchInput):
     name_en: str | None = Field(default=None, max_length=150)
     name_ar: str | None = Field(default=None, max_length=150)
     kinds: list[ProviderKind] | None = None
@@ -302,7 +302,7 @@ class ProviderTransition(StrictInput):
     reason: str | None = Field(default=None, max_length=500)
 
 
-class ProviderRead(ApiModel):
+class EnvProviderRead(ApiModel):
     id: uuid.UUID
     provider_code: str
     name_en: str
@@ -314,10 +314,10 @@ class ProviderRead(ApiModel):
     phone: str | None
     status: ProviderStatus
     status_reason: str | None
-    licences: list["PermitRead"] = Field(default_factory=list)
+    licences: list["EnvPermitRead"] = Field(default_factory=list)
 
 
-class ProviderPage(Page[ProviderRead]):
+class EnvProviderPage(Page[EnvProviderRead]):
     pass
 
 
@@ -342,11 +342,11 @@ class PermitCondition(ApiModel):
     template_code: str | None = Field(default=None, max_length=8)
 
 
-class PermitCreate(StrictInput):
+class EnvPermitCreate(StrictInput):
     """Capability 204. Project holder: POST /projects/{id}/env-permits; provider licence: POST
     /env-providers/{id}/licences. `pending` true: applied, no reference yet."""
 
-    permit_type: PermitType
+    permit_type: EnvPermitType
     issuer: Issuer
     requirement_code: str | None = Field(default=None, max_length=20)
     required: bool = False
@@ -364,7 +364,7 @@ class PermitCreate(StrictInput):
     pending: bool = False
 
 
-class PermitUpdate(PatchInput):
+class EnvPermitUpdate(PatchInput):
     reference_no: str | None = Field(default=None, max_length=40)
     valid_from: date | None = None
     valid_to: date | None = None
@@ -379,16 +379,16 @@ class PermitUpdate(PatchInput):
 class PermitTransition(StrictInput):
     """suspend / cancel (204, reason ≥ 20 chars), reinstate."""
 
-    action: PermitAction
+    action: EnvPermitAction
     reason: str | None = Field(default=None, max_length=500)
 
 
-class PermitRead(ApiModel):
+class EnvPermitRead(ApiModel):
     id: uuid.UUID
     record_no: str
     project_id: uuid.UUID | None
     provider_id: uuid.UUID | None
-    permit_type: PermitType
+    permit_type: EnvPermitType
     issuer: Issuer
     requirement_code: str | None
     required: bool
@@ -401,12 +401,12 @@ class PermitRead(ApiModel):
     conditions: list[PermitCondition]
     document_id: uuid.UUID | None
     supersedes_id: uuid.UUID | None
-    status: PermitStatus = Field(description="§4.2 at today.")
+    status: EnvPermitStatus = Field(description="§4.2 at today.")
     days_to_expiry: int | None
     status_reason: str | None
 
 
-class PermitPage(Page[PermitRead]):
+class PermitPage(Page[EnvPermitRead]):
     pass
 
 
@@ -614,10 +614,10 @@ class ConsignmentPage(Page[ConsignmentRead]):
 # ---- monitoring (§3.7–§3.12, MON, LIM, EXD) ------------------------------------------------------
 
 
-class InstrumentCreate(StrictInput):
+class EnvInstrumentCreate(StrictInput):
     """Capability 208 (MON-1): calibration_valid_until > today; SLM class 1 or 2."""
 
-    kind: InstrumentKind
+    kind: EnvInstrumentKind
     make_model: str = Field(max_length=80)
     serial_no: str = Field(max_length=40)
     standard_class: str | None = Field(default=None, pattern=r"^[12]$")
@@ -631,26 +631,26 @@ class InstrumentUpdate(PatchInput):
     calibration_cert_ref: str | None = Field(default=None, max_length=40)
 
 
-class InstrumentTransition(StrictInput):
+class EnvInstrumentTransition(StrictInput):
     action: InstrumentAction
     reason: str | None = Field(default=None, max_length=500)
 
 
-class InstrumentRead(ApiModel):
+class EnvInstrumentRead(ApiModel):
     id: uuid.UUID
     project_id: uuid.UUID
     instrument_no: str
-    kind: InstrumentKind
+    kind: EnvInstrumentKind
     make_model: str
     serial_no: str
     standard_class: str | None
     calibration_valid_until: date
     calibration_cert_ref: str
-    status: InstrumentStatus
+    status: EnvInstrumentStatus
     status_reason: str | None
 
 
-class InstrumentPage(Page[InstrumentRead]):
+class EnvInstrumentPage(Page[EnvInstrumentRead]):
     pass
 
 
@@ -719,7 +719,7 @@ class RequirementRead(Requirement):
     condition_code: str | None = None
 
 
-class PointCreate(StrictInput):
+class EnvPointCreate(StrictInput):
     point_code: str = Field(max_length=16)
     site_id: uuid.UUID
     zone_id: uuid.UUID | None = None
@@ -732,7 +732,7 @@ class PointCreate(StrictInput):
     active: bool = True
 
 
-class PointUpdate(PatchInput):
+class EnvPointUpdate(PatchInput):
     zone_id: uuid.UUID | None = None
     instrument_id: uuid.UUID | None = None
     permit_id: uuid.UUID | None = None
@@ -740,7 +740,7 @@ class PointUpdate(PatchInput):
     active: bool | None = None
 
 
-class PointRead(ApiModel):
+class EnvPointRead(ApiModel):
     id: uuid.UUID
     project_id: uuid.UUID
     point_code: str
@@ -757,11 +757,11 @@ class PointRead(ApiModel):
     active: bool
 
 
-class PointPage(Page[PointRead]):
+class EnvPointPage(Page[EnvPointRead]):
     pass
 
 
-class ReadingCreate(StrictInput):
+class EnvReadingCreate(StrictInput):
     """Capability 209 (MON-3). Manual: an active calibrated instrument, ≤ 72 h back; laeq needs
     field_calibration_checked. Lab: lab_provider_id + lab_report_ref; the window is the sampling
     window (any past time). Visual: no instrument; value = score 0–3."""
@@ -776,10 +776,10 @@ class ReadingCreate(StrictInput):
     lab_provider_id: uuid.UUID | None = None
     lab_report_ref: str | None = Field(default=None, max_length=40)
     field_calibration_checked: bool | None = None
-    photos: list[PhotoInput] = Field(default_factory=list, max_length=3)
+    photos: list[EnvPhotoInput] = Field(default_factory=list, max_length=3)
 
 
-class ReadingRead(ApiModel):
+class EnvReadingRead(ApiModel):
     id: uuid.UUID
     reading_no: str
     project_id: uuid.UUID
@@ -790,7 +790,7 @@ class ReadingRead(ApiModel):
     period: NoisePeriod
     window_start: datetime
     window_end: datetime
-    source: ReadingSource
+    source: EnvReadingSource
     value: str
     display: str = Field(description="1 dp with unit.")
     instrument_id: uuid.UUID | None
@@ -809,7 +809,7 @@ class ReadingRead(ApiModel):
     warnings: list[ApiWarning] = Field(default_factory=list)
 
 
-class ReadingPage(Page[ReadingRead]):
+class EnvReadingPage(Page[EnvReadingRead]):
     pass
 
 
@@ -924,7 +924,7 @@ class SpillCreate(StrictInput):
         default=None, description="An existing environmental incident (±24 h, same site)."
     )
     incident_fields: SpillIncidentFields | None = None
-    photos: list[PhotoInput] = Field(default_factory=list, max_length=5)
+    photos: list[EnvPhotoInput] = Field(default_factory=list, max_length=5)
 
 
 class SpillTransition(StrictInput):
@@ -1102,7 +1102,7 @@ class ComplaintPage(Page[ComplaintRead]):
 class NearbyReadings(ApiModel):
     """CPL-2: readings of points on the complaint's site within ± 2 h."""
 
-    items: list[ReadingRead]
+    items: list[EnvReadingRead]
 
 
 # ---- board, action panel (§8.1, §8.2) ------------------------------------------------------------
@@ -1140,7 +1140,7 @@ class EnvBand(ApiModel):
 
     open_exceedances: list[ExceedanceRead]
     airside_dust_alerts_24h: int
-    expiring_permits: list[PermitRead]
+    expiring_permits: list[EnvPermitRead]
     consignments_overdue: int
     haz_storage_due: list[HazDeadline]
     post_storm_tasks: list[PostStormTask]
@@ -1176,4 +1176,4 @@ class EnvKpiResponse(ApiModel):
 
 
 EnvReference.model_rebuild()
-ProviderRead.model_rebuild()
+EnvProviderRead.model_rebuild()

@@ -56,7 +56,7 @@ class AspectAction(StrEnum):
     review = "review"
 
 
-class PermitType(StrEnum):
+class EnvPermitType(StrEnum):
     """List PT."""
 
     ncec_env_permit_construction = "ncec_env_permit_construction"
@@ -88,7 +88,7 @@ class Issuer(StrEnum):
     other = "other"
 
 
-class PermitStatus(StrEnum):
+class EnvPermitStatus(StrEnum):
     """§4.2 (derived daily, plus the manual states pending / suspended / cancelled)."""
 
     pending = "pending"
@@ -100,7 +100,7 @@ class PermitStatus(StrEnum):
     cancelled = "cancelled"
 
 
-class PermitAction(StrEnum):
+class EnvPermitAction(StrEnum):
     suspend = "suspend"
     reinstate = "reinstate"
     cancel = "cancel"
@@ -219,7 +219,7 @@ class ConsignmentAction(StrEnum):
     void = "void"
 
 
-class InstrumentKind(StrEnum):
+class EnvInstrumentKind(StrEnum):
     """List IK."""
 
     pm_station = "pm_station"
@@ -230,7 +230,7 @@ class InstrumentKind(StrEnum):
     water_quality_meter = "water_quality_meter"
 
 
-class InstrumentStatus(StrEnum):
+class EnvInstrumentStatus(StrEnum):
     active = "active"
     quarantined = "quarantined"
     retired = "retired"
@@ -313,7 +313,7 @@ class LimitSource(StrEnum):
     project_trigger = "project_trigger"
 
 
-class ReadingSource(StrEnum):
+class EnvReadingSource(StrEnum):
     manual = "manual"
     station = "station"
     derived = "derived"

@@ -15,7 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.enums import Capability, EntityType, Role, ZoneType
-from app.core.env_enums import NoisePeriod, PermitStatus, PermitType, ProviderStatus
+from app.core.env_enums import EnvPermitStatus, EnvPermitType, NoisePeriod, ProviderStatus
 from app.core.errors import ApiError, ErrorCode, not_found, validation_error
 from app.models import EnvPermit, EnvProvider, EnvSettings, Project, ProjectEngagement, Site, Zone
 from app.services.field.common import (
@@ -270,14 +270,16 @@ def code_err(code: ErrorCode, en: str, ar: str, field: str | None = None, **meta
 
 # ---- permits and licences (§4.2, PRM-2, CON-2) ---------------------------------------------------
 
-NO_EXPIRY = frozenset({PermitType.eia_approval, PermitType.cemp_approval, PermitType.other})
+NO_EXPIRY = frozenset(
+    {EnvPermitType.eia_approval, EnvPermitType.cemp_approval, EnvPermitType.other}
+)
 
 
-def _manual(pm: EnvPermit, d: date) -> PermitStatus | None:
+def _manual(pm: EnvPermit, d: date) -> EnvPermitStatus | None:
     if pm.manual_status is None:
         return None
-    if pm.manual_status == PermitStatus.pending:
-        return PermitStatus.pending
+    if pm.manual_status == EnvPermitStatus.pending:
+        return EnvPermitStatus.pending
     if pm.manual_from is None or pm.manual_from <= d:
         return pm.manual_status
     return None
@@ -305,12 +307,12 @@ def project_permits(db: Session, project_id: uuid.UUID) -> list[EnvPermit]:
     return cache[project_id]
 
 
-def permit_status(db: Session, pm: EnvPermit, d: date) -> PermitStatus:
+def permit_status(db: Session, pm: EnvPermit, d: date) -> EnvPermitStatus:
     m = _manual(pm, d)
     if m is not None:
         return m
     if pm.valid_from is not None and d < pm.valid_from:
-        return PermitStatus.pending
+        return EnvPermitStatus.pending
     if pm.valid_to is not None and d > pm.valid_to:
         if (
             pm.project_id is not None
@@ -320,11 +322,11 @@ def permit_status(db: Session, pm: EnvPermit, d: date) -> PermitStatus:
                 for o in project_permits(db, pm.project_id)
             )
         ):
-            return PermitStatus.superseded
-        return PermitStatus.expired
+            return EnvPermitStatus.superseded
+        return EnvPermitStatus.expired
     if pm.valid_to is not None and (pm.valid_to - d).days <= EXPIRING_DAYS:
-        return PermitStatus.expiring
-    return PermitStatus.valid
+        return EnvPermitStatus.expiring
+    return EnvPermitStatus.valid
 
 
 def requirements(db: Session, project_id: uuid.UUID) -> dict[str, list[EnvPermit]]:
@@ -389,7 +391,7 @@ def licence_for(
     activities: frozenset[str],
     wclass: str | None,
     field: str,
-    types: frozenset[PermitType] | None = None,
+    types: frozenset[EnvPermitType] | None = None,
     facility_code: str | None = None,
 ) -> EnvPermit:
     """CON-2: a licence in force on d covering one of the activities and the class."""

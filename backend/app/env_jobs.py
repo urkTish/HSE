@@ -27,7 +27,7 @@ from app.core.env_enums import (
     AspectStatus,
     ComplaintStatus,
     ConsignmentStatus,
-    InstrumentStatus,
+    EnvInstrumentStatus,
     PointSource,
 )
 from app.core.hse_enums import CaSourceType
@@ -85,11 +85,11 @@ def env_daily(db: Session) -> dict[str, Any]:
     quarantined = cas = purged = 0
     for x in db.scalars(
         select(EnvInstrument).where(
-            EnvInstrument.status == InstrumentStatus.active,
+            EnvInstrument.status == EnvInstrumentStatus.active,
             EnvInstrument.calibration_valid_until < today,
         )
     ):
-        x.status, x.status_reason = InstrumentStatus.quarantined, "Calibration expired (MON-1)."
+        x.status, x.status_reason = EnvInstrumentStatus.quarantined, "Calibration expired (MON-1)."
         quarantined += 1
     for pid in _projects(db):
         exceedances.daily(db, pid, today)
@@ -179,7 +179,7 @@ def env_alerts(db: Session) -> dict[str, Any]:
         n += _permit_alerts(db, pid, today)
         for x in db.scalars(
             select(EnvInstrument).where(
-                EnvInstrument.project_id == pid, EnvInstrument.status != InstrumentStatus.retired
+                EnvInstrument.project_id == pid, EnvInstrument.status != EnvInstrumentStatus.retired
             )
         ):
             left = (x.calibration_valid_until - today).days

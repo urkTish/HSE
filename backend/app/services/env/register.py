@@ -14,9 +14,9 @@ from app.core.enums import AuditAction, Capability, EntityType, NotificationKind
 from app.core.env_enums import (
     AspectAction,
     AspectStatus,
-    PermitAction,
-    PermitStatus,
-    PermitType,
+    EnvPermitAction,
+    EnvPermitStatus,
+    EnvPermitType,
     ProviderAction,
     ProviderKind,
     ProviderStatus,
@@ -31,20 +31,20 @@ from app.schemas.env import (
     AspectRead,
     AspectTransition,
     AspectUpdate,
+    EnvPermitCreate,
+    EnvPermitRead,
+    EnvPermitUpdate,
+    EnvProviderCreate,
+    EnvProviderPage,
+    EnvProviderRead,
+    EnvProviderUpdate,
     Facility,
     MonitoringLink,
     PermitCondition,
-    PermitCreate,
     PermitPage,
-    PermitRead,
     PermitScope,
     PermitTransition,
-    PermitUpdate,
-    ProviderCreate,
-    ProviderPage,
-    ProviderRead,
     ProviderTransition,
-    ProviderUpdate,
 )
 from app.services.env import common as ec
 from app.services.env import reference as rf
@@ -275,8 +275,8 @@ def flag_aspects(db: Session, project_id: uuid.UUID, site_id: uuid.UUID, codes: 
 # ---- providers -----------------------------------------------------------------------------------
 
 
-def provider_read(db: Session, pv: EnvProvider, with_licences: bool = True) -> ProviderRead:
-    return ProviderRead(
+def provider_read(db: Session, pv: EnvProvider, with_licences: bool = True) -> EnvProviderRead:
+    return EnvProviderRead(
         id=pv.id, provider_code=pv.provider_code, name_en=pv.name_en, name_ar=pv.name_ar,
         cr_number=pv.cr_number, kinds=[ProviderKind(k) for k in pv.kinds or []],
         facilities=[Facility.model_validate(x) for x in pv.facilities or []],
@@ -301,12 +301,12 @@ def _provider(db: Session, p: Principal, provider_id: uuid.UUID) -> EnvProvider:
 
 def list_providers(
     db: Session, p: Principal, kind: ProviderKind | None, page: int, size: int
-) -> ProviderPage:
+) -> EnvProviderPage:
     _any_view(p)
     rows = list(db.scalars(select(EnvProvider).order_by(EnvProvider.provider_code)))
     if kind is not None:
         rows = [x for x in rows if kind.value in (x.kinds or [])]
-    return ProviderPage(
+    return EnvProviderPage(
         items=[provider_read(db, x) for x in rows[(page - 1) * size : page * size]],
         total=len(rows), page=page, page_size=size,
     )  # fmt: skip
@@ -325,7 +325,7 @@ def _facilities(kinds: list[ProviderKind], fac: list[Facility]) -> None:
                                "need at least one facility.")  # fmt: skip
 
 
-def create_provider(db: Session, p: Principal, body: ProviderCreate) -> ProviderRead:
+def create_provider(db: Session, p: Principal, body: EnvProviderCreate) -> EnvProviderRead:
     _writer(p, C.env_permit_manage)
     if db.scalar(select(EnvProvider.id).where(EnvProvider.provider_code == body.provider_code)):
         raise ApiError(
@@ -341,13 +341,13 @@ def create_provider(db: Session, p: Principal, body: ProviderCreate) -> Provider
     return provider_read(db, pv)
 
 
-def read_provider(db: Session, p: Principal, provider_id: uuid.UUID) -> ProviderRead:
+def read_provider(db: Session, p: Principal, provider_id: uuid.UUID) -> EnvProviderRead:
     return provider_read(db, _provider(db, p, provider_id))
 
 
 def update_provider(
-    db: Session, p: Principal, provider_id: uuid.UUID, body: ProviderUpdate
-) -> ProviderRead:
+    db: Session, p: Principal, provider_id: uuid.UUID, body: EnvProviderUpdate
+) -> EnvProviderRead:
     pv = _provider(db, p, provider_id)
     _writer(p, C.env_permit_manage)
     data = body.model_dump(exclude_unset=True, mode="json")
@@ -362,7 +362,7 @@ def update_provider(
 
 def transition_provider(
     db: Session, p: Principal, provider_id: uuid.UUID, body: ProviderTransition
-) -> ProviderRead:
+) -> EnvProviderRead:
     """PRV-1: approve / suspend / blacklist by 213 (HSE Manager)."""
     pv = _provider(db, p, provider_id)
     _writer(p, C.env_settings)
@@ -384,9 +384,9 @@ def transition_provider(
 # ---- permits and licences ------------------------------------------------------------------------
 
 
-def permit_read(db: Session, pm: EnvPermit) -> PermitRead:
+def permit_read(db: Session, pm: EnvPermit) -> EnvPermitRead:
     today = ec.local_day()
-    return PermitRead(
+    return EnvPermitRead(
         id=pm.id, record_no=pm.record_no, project_id=pm.project_id, provider_id=pm.provider_id,
         permit_type=pm.permit_type, issuer=pm.issuer, requirement_code=pm.requirement_code,
         required=pm.required, applies_from=pm.applies_from, applies_to=pm.applies_to,
@@ -417,8 +417,8 @@ def list_permits(
     db: Session,
     p: Principal,
     project_id: uuid.UUID,
-    status: list[PermitStatus] | None,
-    permit_type: PermitType | None,
+    status: list[EnvPermitStatus] | None,
+    permit_type: EnvPermitType | None,
     within: int | None,
     page: int,
     size: int,
@@ -434,7 +434,7 @@ def list_permits(
         if permit_type and pm.permit_type != permit_type:
             continue
         if within is not None and (pm.valid_to is None or not 0 <= (pm.valid_to - today).days
-                                   <= within or st == PermitStatus.superseded):  # fmt: skip
+                                   <= within or st == EnvPermitStatus.superseded):  # fmt: skip
             continue
         out.append(pm)
     return PermitPage(
@@ -456,7 +456,7 @@ def _validate_permit(pm: EnvPermit, pending: bool) -> None:
         raise validation_error("valid_to", "valid_to is before valid_from.")
     if holder == "project" and pm.required and not pm.requirement_code:
         raise validation_error("requirement_code", "A required permit needs a requirement code.")
-    if holder == "provider" and pm.permit_type != PermitType.lab_accreditation:
+    if holder == "provider" and pm.permit_type != EnvPermitType.lab_accreditation:
         sc = pm.scope or {}
         if not sc.get("activities") or not sc.get("waste_classes"):
             raise validation_error("scope", "A provider licence needs activities and classes.")
@@ -467,8 +467,8 @@ def create_permit(
     p: Principal,
     project_id: uuid.UUID | None,
     provider_id: uuid.UUID | None,
-    body: PermitCreate,
-) -> PermitRead:
+    body: EnvPermitCreate,
+) -> EnvPermitRead:
     if project_id is not None:
         pr = ec.project(db, p, project_id)
         p.require(project_id, C.env_permit_manage)
@@ -488,7 +488,7 @@ def create_permit(
     pm = EnvPermit(
         id=uuid.uuid4(), record_no=f"EPL-{code}-{seq:03d}", project_id=project_id,
         provider_id=provider_id, seq=seq, created_by_user_id=p.user.id,
-        manual_status=PermitStatus.pending if body.pending else None, **data,
+        manual_status=EnvPermitStatus.pending if body.pending else None, **data,
     )  # fmt: skip
     _validate_permit(pm, body.pending)
     if pm.supersedes_id is not None:
@@ -508,7 +508,7 @@ def create_permit(
     return permit_read(db, pm)
 
 
-def read_permit(db: Session, p: Principal, permit_id: uuid.UUID) -> PermitRead:
+def read_permit(db: Session, p: Principal, permit_id: uuid.UUID) -> EnvPermitRead:
     return permit_read(db, _permit(db, p, permit_id))
 
 
@@ -520,17 +520,17 @@ def _permit_writer(p: Principal, pm: EnvPermit) -> None:
 
 
 def update_permit(
-    db: Session, p: Principal, permit_id: uuid.UUID, body: PermitUpdate
-) -> PermitRead:
+    db: Session, p: Principal, permit_id: uuid.UUID, body: EnvPermitUpdate
+) -> EnvPermitRead:
     pm = _permit(db, p, permit_id)
     _permit_writer(p, pm)
     data = body.model_dump(exclude_unset=True)
     js = body.model_dump(mode="json", exclude_unset=True)
     for k, v in data.items():
         setattr(pm, k, js[k] if k in ("conditions", "scope") else v)
-    if pm.manual_status == PermitStatus.pending and pm.reference_no and pm.valid_from:
+    if pm.manual_status == EnvPermitStatus.pending and pm.reference_no and pm.valid_from:
         pm.manual_status = None
-    _validate_permit(pm, pm.manual_status == PermitStatus.pending)
+    _validate_permit(pm, pm.manual_status == EnvPermitStatus.pending)
     db.flush()
     ec.clear_cache(db)
     ec.record(db, p, AuditAction.update, ET.env_permit, pm, pm.project_id)
@@ -539,19 +539,19 @@ def update_permit(
 
 def transition_permit(
     db: Session, p: Principal, permit_id: uuid.UUID, body: PermitTransition
-) -> PermitRead:
+) -> EnvPermitRead:
     pm = _permit(db, p, permit_id)
     _permit_writer(p, pm)
-    if body.action == PermitAction.reinstate:
-        if pm.manual_status != PermitStatus.suspended:
+    if body.action == EnvPermitAction.reinstate:
+        if pm.manual_status != EnvPermitStatus.suspended:
             raise _conflict("Only a suspended record can be reinstated.")
         pm.manual_status, pm.manual_from, pm.status_reason = None, None, None
     else:
-        if pm.manual_status in (PermitStatus.cancelled,):
+        if pm.manual_status in (EnvPermitStatus.cancelled,):
             raise _conflict("The record is cancelled.")
         pm.status_reason = ec.reason(body.reason, 20)
-        pm.manual_status = (PermitStatus.suspended if body.action == PermitAction.suspend
-                            else PermitStatus.cancelled)  # fmt: skip
+        pm.manual_status = (EnvPermitStatus.suspended if body.action == EnvPermitAction.suspend
+                            else EnvPermitStatus.cancelled)  # fmt: skip
         pm.manual_from = ec.local_day()
     db.flush()
     ec.clear_cache(db)

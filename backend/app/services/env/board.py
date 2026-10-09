@@ -17,9 +17,9 @@ from app.core.env_enums import (
     ComplaintStatus,
     ConsignmentStatus,
     EnvActionKind,
+    EnvPermitStatus,
     ExceedanceCause,
     ExceedanceStatus,
-    PermitStatus,
     SpillStatus,
 )
 from app.models import (
@@ -292,7 +292,7 @@ def band(db: Session, p: Principal, project_id: uuid.UUID) -> EnvBand:
     expiring = [
         register.permit_read(db, pm)
         for pm in pms
-        if ec.permit_status(db, pm, today) == PermitStatus.expiring
+        if ec.permit_status(db, pm, today) == EnvPermitStatus.expiring
     ]
     over = sum(
         1

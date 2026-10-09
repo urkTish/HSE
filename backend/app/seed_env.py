@@ -43,20 +43,20 @@ from app.core.env_enums import (
     ComplaintChannel,
     ComplaintStatus,
     ConsignmentStatus,
+    EnvInstrumentKind,
+    EnvInstrumentStatus,
+    EnvPermitType,
+    EnvReadingSource,
     ExceedanceCause,
     ExceedanceStatus,
-    InstrumentKind,
-    InstrumentStatus,
     Issuer,
     NoiseArea,
     NoisePeriod,
     Parameter,
-    PermitType,
     PointKind,
     PointSource,
     ProviderStatus,
     QuantityUnit,
-    ReadingSource,
     RecordState,
     Schedule,
     SpillSource,
@@ -165,37 +165,37 @@ class ECtx(Ctx):
 PROVIDERS: list[tuple[str, str, str, list[str], list[tuple[str, str]], tuple[Any, ...]]] = [
     # code, EN, AR, kinds, facilities, licence (type, issuer, ref, activities, classes, valid_to)
     ("GREENHAUL", "Green Haul Transport (TEST)", "النقل الأخضر (تجريبي)", ["transporter"], [],
-     (PermitType.mwan_licence, Issuer.mwan, "MWAN-TR-TEST-1101", ["collection_transport"], ["inert", "non_hazardous"], date(2027, 5, 31))),
+     (EnvPermitType.mwan_licence, Issuer.mwan, "MWAN-TR-TEST-1101", ["collection_transport"], ["inert", "non_hazardous"], date(2027, 5, 31))),
     ("HAZMOVE", "HazMove Logistics (TEST)", "هازموف للنقل (تجريبي)", ["transporter"], [],
-     (PermitType.mwan_licence, Issuer.mwan, "MWAN-TR-TEST-1102", ["collection_transport"], ["hazardous"], date(2026, 11, 15))),
+     (EnvPermitType.mwan_licence, Issuer.mwan, "MWAN-TR-TEST-1102", ["collection_transport"], ["hazardous"], date(2026, 11, 15))),
     ("SEWTANK", "Sewage Tankers Co. (TEST)", "شركة صهاريج الصرف (تجريبي)", ["sewage_tanker"], [],
-     (PermitType.mwan_licence, Issuer.mwan, "MWAN-TR-TEST-1103", ["collection_transport"], ["liquid_sewage"], date(2027, 1, 31))),
+     (EnvPermitType.mwan_licence, Issuer.mwan, "MWAN-TR-TEST-1103", ["collection_transport"], ["liquid_sewage"], date(2027, 1, 31))),
     ("RECYCON", "Recycon Riyadh (TEST)", "ريسايكون الرياض (تجريبي)", ["recycler"], [("RECYCON-1", "Recycon Riyadh plant")],
-     (PermitType.mwan_licence, Issuer.mwan, "MWAN-RC-TEST-2201", ["recycling"], ["inert"], date(2027, 2, 28))),
+     (EnvPermitType.mwan_licence, Issuer.mwan, "MWAN-RC-TEST-2201", ["recycling"], ["inert"], date(2027, 2, 28))),
     ("METALCO", "Metalco Recycling (TEST)", "ميتالكو للتدوير (تجريبي)", ["recycler"], [("METALCO-1", "Metalco yard")],
-     (PermitType.mwan_licence, Issuer.mwan, "MWAN-RC-TEST-2202", ["recycling"], ["non_hazardous"], date(2027, 8, 31))),
+     (EnvPermitType.mwan_licence, Issuer.mwan, "MWAN-RC-TEST-2202", ["recycling"], ["non_hazardous"], date(2027, 8, 31))),
     ("OILREF", "Oil Re-refinery (TEST)", "مصفاة إعادة تكرير الزيوت (تجريبي)", ["recycler"], [("OILREF-1", "Re-refinery")],
-     (PermitType.mwan_licence, Issuer.mwan, "MWAN-TF-TEST-3301", ["recycling", "treatment"], ["hazardous"], date(2027, 3, 31))),
+     (EnvPermitType.mwan_licence, Issuer.mwan, "MWAN-TF-TEST-3301", ["recycling", "treatment"], ["hazardous"], date(2027, 3, 31))),
     ("HAZTREAT", "HazTreat Facility (TEST)", "منشأة معالجة النفايات الخطرة (تجريبي)", ["treatment_facility"], [("HAZTREAT-1", "Hazardous treatment plant")],
-     (PermitType.mwan_licence, Issuer.mwan, "MWAN-TF-TEST-3302", ["treatment"], ["hazardous"], date(2026, 12, 31))),
+     (EnvPermitType.mwan_licence, Issuer.mwan, "MWAN-TF-TEST-3302", ["treatment"], ["hazardous"], date(2026, 12, 31))),
     ("RIYADH-LF", "Riyadh Municipal Landfill (TEST)", "مردم الرياض البلدي (تجريبي)", ["landfill"], [("RIYADH-LF", "Municipal landfill")],
-     (PermitType.facility_authorisation, Issuer.momrah_municipality, "MUN-LF-TEST-4401", ["disposal"], ["inert", "non_hazardous"], date(2027, 12, 31))),
+     (EnvPermitType.facility_authorisation, Issuer.momrah_municipality, "MUN-LF-TEST-4401", ["disposal"], ["inert", "non_hazardous"], date(2027, 12, 31))),
     ("STP-RUH", "Riyadh Sewage Treatment Plant (TEST)", "محطة معالجة الصرف بالرياض (تجريبي)", ["treatment_facility"], [("STP-RUH", "Sewage treatment plant")],
-     (PermitType.facility_authorisation, Issuer.nwc, "NWC-STP-TEST-5501", ["treatment"], ["liquid_sewage"], date(2027, 6, 30))),
+     (EnvPermitType.facility_authorisation, Issuer.nwc, "NWC-STP-TEST-5501", ["treatment"], ["liquid_sewage"], date(2027, 6, 30))),
     ("ENVLAB", "EnvLab Riyadh (TEST)", "مختبر البيئة بالرياض (تجريبي)", ["environmental_lab"], [],
-     (PermitType.lab_accreditation, Issuer.ncec, "NCEC-LAB-TEST-6601", [], [], date(2027, 4, 30))),
+     (EnvPermitType.lab_accreditation, Issuer.ncec, "NCEC-LAB-TEST-6601", [], [], date(2027, 4, 30))),
 ]  # fmt: skip
 
-PERMITS: list[tuple[str, int, PermitType, Issuer, str, str, date | None, date | None, date | None]] = [
+PERMITS: list[tuple[str, int, EnvPermitType, Issuer, str, str, date | None, date | None, date | None]] = [
     # project, seq, type, issuer, requirement, reference, valid_to, applies_from, applies_to
-    ("ANIA-EXP", 1, PermitType.ncec_env_permit_construction, Issuer.ncec, "NCEC-CONSTR", "ENVP-TEST-0001", date(2027, 3, 31), None, None),
-    ("ANIA-EXP", 2, PermitType.mwan_producer_registration, Issuer.mwan, "MWAN-REG", "MWAN-PRD-TEST-0420", date(2026, 10, 31), None, None),
-    ("ANIA-EXP", 3, PermitType.municipal_construction_permit, Issuer.momrah_municipality, "MUN-BLD", "BLD-TEST-7001", date(2027, 6, 30), None, None),
-    ("ANIA-EXP", 4, PermitType.cemp_approval, Issuer.airport_operator, "CEMP", "CEMP-TEST-AOP-3", None, None, None),
-    ("RBT-52", 1, PermitType.ncec_env_permit_construction, Issuer.ncec, "NCEC-CONSTR", "ENVP-TEST-0052", date(2027, 1, 31), None, None),
-    ("RBT-52", 2, PermitType.mwan_producer_registration, Issuer.mwan, "MWAN-REG", "MWAN-PRD-TEST-0521", date(2027, 2, 28), None, None),
-    ("RBT-52", 3, PermitType.municipal_construction_permit, Issuer.momrah_municipality, "MUN-BLD", "BLD-TEST-7052", date(2027, 9, 30), None, None),
-    ("RBT-52", 4, PermitType.dewatering_discharge_permit, Issuer.nwc, "DEWATER", "DWD-TEST-0310", date(2026, 9, 20), date(2026, 6, 1), date(2026, 12, 31)),
+    ("ANIA-EXP", 1, EnvPermitType.ncec_env_permit_construction, Issuer.ncec, "NCEC-CONSTR", "ENVP-TEST-0001", date(2027, 3, 31), None, None),
+    ("ANIA-EXP", 2, EnvPermitType.mwan_producer_registration, Issuer.mwan, "MWAN-REG", "MWAN-PRD-TEST-0420", date(2026, 10, 31), None, None),
+    ("ANIA-EXP", 3, EnvPermitType.municipal_construction_permit, Issuer.momrah_municipality, "MUN-BLD", "BLD-TEST-7001", date(2027, 6, 30), None, None),
+    ("ANIA-EXP", 4, EnvPermitType.cemp_approval, Issuer.airport_operator, "CEMP", "CEMP-TEST-AOP-3", None, None, None),
+    ("RBT-52", 1, EnvPermitType.ncec_env_permit_construction, Issuer.ncec, "NCEC-CONSTR", "ENVP-TEST-0052", date(2027, 1, 31), None, None),
+    ("RBT-52", 2, EnvPermitType.mwan_producer_registration, Issuer.mwan, "MWAN-REG", "MWAN-PRD-TEST-0521", date(2027, 2, 28), None, None),
+    ("RBT-52", 3, EnvPermitType.municipal_construction_permit, Issuer.momrah_municipality, "MUN-BLD", "BLD-TEST-7052", date(2027, 9, 30), None, None),
+    ("RBT-52", 4, EnvPermitType.dewatering_discharge_permit, Issuer.nwc, "DEWATER", "DWD-TEST-0310", date(2026, 9, 20), date(2026, 6, 1), date(2026, 12, 31)),
 ]  # fmt: skip
 
 
@@ -603,11 +603,11 @@ def _consignments(ctx: ECtx) -> None:
 # ---- A.5 instruments, points, readings -----------------------------------------------------------
 
 INSTRUMENTS = [
-    ("ANIA-EXP", "EMI-ANIA-EXP-01", InstrumentKind.pm_station, "DustTrak DRX 8533 (TEST)", None, date(2027, 4, 30)),
-    ("ANIA-EXP", "EMI-ANIA-EXP-02", InstrumentKind.pm_sampler_24h, "MiniVol TAS (TEST)", None, date(2027, 1, 31)),
-    ("ANIA-EXP", "EMI-ANIA-EXP-03", InstrumentKind.sound_level_meter, "Nor140 SLM (TEST)", "1", date(2026, 12, 15)),
-    ("RBT-52", "EMI-RBT-52-01", InstrumentKind.pm_sampler_24h, "MiniVol TAS (TEST)", None, date(2027, 2, 28)),
-    ("RBT-52", "EMI-RBT-52-02", InstrumentKind.noise_station, "Cirrus Noise Station (TEST)", "1", date(2027, 3, 31)),
+    ("ANIA-EXP", "EMI-ANIA-EXP-01", EnvInstrumentKind.pm_station, "DustTrak DRX 8533 (TEST)", None, date(2027, 4, 30)),
+    ("ANIA-EXP", "EMI-ANIA-EXP-02", EnvInstrumentKind.pm_sampler_24h, "MiniVol TAS (TEST)", None, date(2027, 1, 31)),
+    ("ANIA-EXP", "EMI-ANIA-EXP-03", EnvInstrumentKind.sound_level_meter, "Nor140 SLM (TEST)", "1", date(2026, 12, 15)),
+    ("RBT-52", "EMI-RBT-52-01", EnvInstrumentKind.pm_sampler_24h, "MiniVol TAS (TEST)", None, date(2027, 2, 28)),
+    ("RBT-52", "EMI-RBT-52-02", EnvInstrumentKind.noise_station, "Cirrus Noise Station (TEST)", "1", date(2027, 3, 31)),
 ]  # fmt: skip
 
 R = Requirement
@@ -653,7 +653,7 @@ def _monitoring_setup(ctx: ECtx) -> None:
             standard_class=cls,
             calibration_valid_until=cal,
             calibration_cert_ref=f"CAL-TEST-{no[-5:]}",
-            status=InstrumentStatus.active,
+            status=EnvInstrumentStatus.active,
             created_by_user_id=ctx.officer(pc),
             seed_fake=True,
         )
@@ -724,7 +724,7 @@ def _monitoring_setup(ctx: ECtx) -> None:
 
 def _reading(
     ctx: ECtx, code: str, param: Parameter, avg: Averaging, ws: datetime, we: datetime,
-    value: Decimal, source: ReadingSource, created: datetime | None = None, **kw: Any,
+    value: Decimal, source: EnvReadingSource, created: datetime | None = None, **kw: Any,
 ) -> EnvReading:  # fmt: skip
     """mon.make_reading without the exceedance rules and the per-row flush (named exceedances are
     inserted explicitly)."""
@@ -744,7 +744,7 @@ def _reading(
         if not ec.permit_valid_on(db, pm, day):
             warnings = ["PERMIT_NOT_VALID"]
     user = kw.pop("user", None)
-    if user is None and source not in (ReadingSource.station, ReadingSource.derived):
+    if user is None and source not in (EnvReadingSource.station, EnvReadingSource.derived):
         user = ctx.officer(pc)
     r = EnvReading(
         id=uuid.uuid4(),
@@ -761,10 +761,10 @@ def _reading(
         source=source,
         value=value,
         instrument_id=pt.instrument_id
-        if source != ReadingSource.lab and pt.source_kind != PointSource.visual
+        if source != EnvReadingSource.lab and pt.source_kind != PointSource.visual
         else None,
         device_pk=ctx.devs[next(k for k, v in ctx.ins.items() if v.id == pt.instrument_id)].id
-        if source == ReadingSource.station
+        if source == EnvReadingSource.station
         else None,
         background=bg is not None,
         background_ref=bg,
@@ -813,7 +813,7 @@ def _dust_station(ctx: ECtx) -> None:
             ws, we = _hour(d, h)
             for qi, q in enumerate(quarters.get((d, h), [])):
                 _reading(ctx, "D-SAIR-01", P.pm10, AV.min15, ws + timedelta(minutes=15 * qi),
-                         ws + timedelta(minutes=15 * (qi + 1)), D(q), ReadingSource.station,
+                         ws + timedelta(minutes=15 * (qi + 1)), D(q), EnvReadingSource.station,
                          ws + timedelta(minutes=15 * (qi + 1), seconds=20))  # fmt: skip
             _reading(
                 ctx,
@@ -823,13 +823,13 @@ def _dust_station(ctx: ECtx) -> None:
                 ws,
                 we,
                 v,
-                ReadingSource.derived,
+                EnvReadingSource.derived,
                 we + timedelta(seconds=40),
             )
             vals.append(v)
         if n * 100 / 24 >= 75:
             _reading(ctx, "D-SAIR-01", P.pm10, AV.h24, at(d, 0), at(d + timedelta(days=1), 0),
-                     mon.mean(P.pm10, vals), ReadingSource.derived, at(d + timedelta(days=1), 0, 1))  # fmt: skip
+                     mon.mean(P.pm10, vals), EnvReadingSource.derived, at(d + timedelta(days=1), 0, 1))  # fmt: skip
 
 
 def _noise_station(ctx: ECtx) -> None:
@@ -847,7 +847,7 @@ def _noise_station(ctx: ECtx) -> None:
             if d == date(2026, 9, 10) and h == 23:
                 for qi, q in enumerate(quarters):
                     _reading(ctx, "N-STWR-01", P.laeq, AV.min15, ws + timedelta(minutes=15 * qi),
-                             ws + timedelta(minutes=15 * (qi + 1)), D(q), ReadingSource.station)  # fmt: skip
+                             ws + timedelta(minutes=15 * (qi + 1)), D(q), EnvReadingSource.station)  # fmt: skip
                 v = mon.mean(P.laeq, [D(q) for q in quarters])
             if d == date(2026, 9, 10) and h == 21:
                 v = D("63.0")
@@ -859,12 +859,12 @@ def _noise_station(ctx: ECtx) -> None:
                 ws,
                 we,
                 v,
-                ReadingSource.derived,
+                EnvReadingSource.derived,
                 we + timedelta(seconds=40),
             )
             vals.append(v)
         _reading(ctx, "N-STWR-01", P.laeq, AV.h24, at(d, 0), at(d + timedelta(days=1), 0),
-                 mon.mean(P.laeq, vals), ReadingSource.derived, at(d + timedelta(days=1), 0, 1))  # fmt: skip
+                 mon.mean(P.laeq, vals), EnvReadingSource.derived, at(d + timedelta(days=1), 0, 1))  # fmt: skip
 
 
 def _manual(ctx: ECtx) -> None:
@@ -879,7 +879,7 @@ def _manual(ctx: ECtx) -> None:
         for d in ds:
             if code == "N-SLAND-01":
                 _reading(ctx, code, P.laeq, AV.measurement, at(d, 10), at(d, 10, 30), D("64.2"),
-                         ReadingSource.manual, at(d, 10, 40), field_calibration_checked=True)  # fmt: skip
+                         EnvReadingSource.manual, at(d, 10, 40), field_calibration_checked=True)  # fmt: skip
             else:
                 v = (
                     D("410.0")
@@ -887,7 +887,7 @@ def _manual(ctx: ECtx) -> None:
                     else D(140 + d.day % 7 * 6)
                 )
                 _reading(ctx, code, P.pm10, AV.h24, at(d, 0), at(d + timedelta(days=1), 0), v,
-                         ReadingSource.manual, at(d + timedelta(days=1), 9, 15))  # fmt: skip
+                         EnvReadingSource.manual, at(d + timedelta(days=1), 9, 15))  # fmt: skip
     # visual scores (V-SLAND misses 09-19, V-SPOD misses 09-11 and 09-25)
     miss = {"V-SLAND": {date(2026, 9, 19)}, "V-SPOD": {date(2026, 9, 11), date(2026, 9, 25)}}
     for code in ("V-SAIR", "V-SLAND", "V-STWR", "V-SPOD"):
@@ -896,7 +896,7 @@ def _manual(ctx: ECtx) -> None:
             if d in miss.get(code, set()):
                 continue
             _reading(ctx, code, P.visual_dust, AV.spot, at(d, 9), at(d, 9, 5), D(1 if d.day % 4 else 2),
-                     ReadingSource.manual, at(d, 9, 6), user=ctx.uid(who))  # fmt: skip
+                     EnvReadingSource.manual, at(d, 9, 6), user=ctx.uid(who))  # fmt: skip
     # W-SPOD-01 lab results (27 sampled days; TSS 85 sampled 09-24, recorded 09-27)
     lab = ctx.providers["ENVLAB"].id
     for d in days(SEPT[0], FILL_TO):
@@ -907,7 +907,7 @@ def _manual(ctx: ECtx) -> None:
             v, rec_, late = v0, rec, False
             if (param, d) == (P.tss, date(2026, 9, 24)):
                 v, rec_, late = D("85"), at(date(2026, 9, 27), 13), True
-            _reading(ctx, "W-SPOD-01", param, AV.spot, at(d, 8), at(d, 8, 15), v, ReadingSource.lab,
+            _reading(ctx, "W-SPOD-01", param, AV.spot, at(d, 8), at(d, 8, 15), v, EnvReadingSource.lab,
                      rec_, lab_provider_id=lab, lab_report_ref=f"ENVLAB-TEST-{d:%m%d}", late=late)  # fmt: skip
     db.flush()
 
@@ -952,7 +952,7 @@ def _exceedances(ctx: ECtx) -> None:
             started_at=r.window_start,
             ended_at=ended,
             episode_open=False,
-            late_result=r.source == ReadingSource.lab,
+            late_result=r.source == EnvReadingSource.lab,
             suggested_cause=ExceedanceCause.background_natural if r.background else None,
             background_ref=r.background_ref,
             cause=cause,

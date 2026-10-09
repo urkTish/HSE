@@ -21,19 +21,19 @@ from app.core.config import get_settings
 from app.core.enums import AuditAction, Capability, EntityType, NotificationKind
 from app.core.env_enums import (
     Averaging,
+    EnvInstrumentKind,
+    EnvInstrumentStatus,
+    EnvPermitType,
+    EnvReadingSource,
     InstrumentAction,
-    InstrumentKind,
-    InstrumentStatus,
     LimitSource,
     NoiseArea,
     NoisePeriod,
     Parameter,
-    PermitType,
     PointKind,
     PointSource,
     ProviderKind,
     ReadingResult,
-    ReadingSource,
     RecordState,
 )
 from app.core.errors import ApiError, ErrorCode, not_found, validation_error
@@ -56,21 +56,21 @@ from app.schemas.env import (
     BackgroundRead,
     EnvDeviceCreate,
     EnvDeviceRead,
+    EnvInstrumentCreate,
+    EnvInstrumentPage,
+    EnvInstrumentRead,
+    EnvInstrumentTransition,
+    EnvPointCreate,
+    EnvPointPage,
+    EnvPointRead,
+    EnvPointUpdate,
+    EnvReadingCreate,
+    EnvReadingPage,
+    EnvReadingRead,
     EnvStationSessionInput,
     EnvStationSessionRead,
     EnvVoid,
-    InstrumentCreate,
-    InstrumentPage,
-    InstrumentRead,
-    InstrumentTransition,
     InstrumentUpdate,
-    PointCreate,
-    PointPage,
-    PointRead,
-    PointUpdate,
-    ReadingCreate,
-    ReadingPage,
-    ReadingRead,
     Requirement,
     RequirementRead,
     StationPush,
@@ -85,9 +85,9 @@ ET = EntityType
 NK = NotificationKind
 D = Decimal
 AV = Averaging
-IS = InstrumentStatus
+IS = EnvInstrumentStatus
 Q15 = timedelta(minutes=15)
-SLM_KINDS = frozenset({InstrumentKind.sound_level_meter, InstrumentKind.noise_station})
+SLM_KINDS = frozenset({EnvInstrumentKind.sound_level_meter, EnvInstrumentKind.noise_station})
 
 
 def _conflict(en: str, ar: str = "لا يمكن تنفيذ هذا الإجراء في الحالة الحالية.") -> ApiError:
@@ -97,8 +97,8 @@ def _conflict(en: str, ar: str = "لا يمكن تنفيذ هذا الإجراء
 # ---- instruments (§3.7, MON-1) -------------------------------------------------------------------
 
 
-def instrument_read(x: EnvInstrument) -> InstrumentRead:
-    return InstrumentRead(
+def instrument_read(x: EnvInstrument) -> EnvInstrumentRead:
+    return EnvInstrumentRead(
         id=x.id, project_id=x.project_id, instrument_no=x.instrument_no, kind=x.kind,
         make_model=x.make_model, serial_no=x.serial_no, standard_class=x.standard_class,
         calibration_valid_until=x.calibration_valid_until,
@@ -117,7 +117,7 @@ def _instrument(db: Session, p: Principal, iid: uuid.UUID) -> EnvInstrument:
 
 def list_instruments(
     db: Session, p: Principal, project_id: uuid.UUID, page: int, size: int
-) -> InstrumentPage:
+) -> EnvInstrumentPage:
     ec.view_grant(db, p, project_id)
     rows = list(
         db.scalars(
@@ -126,7 +126,7 @@ def list_instruments(
             .order_by(EnvInstrument.instrument_no)
         )
     )
-    return ec.paged(InstrumentPage, rows, page, size, instrument_read)
+    return ec.paged(EnvInstrumentPage, rows, page, size, instrument_read)
 
 
 def _cal_future(d: date) -> None:
@@ -139,8 +139,8 @@ def _cal_future(d: date) -> None:
 
 
 def create_instrument(
-    db: Session, p: Principal, project_id: uuid.UUID, body: InstrumentCreate
-) -> InstrumentRead:
+    db: Session, p: Principal, project_id: uuid.UUID, body: EnvInstrumentCreate
+) -> EnvInstrumentRead:
     pr = ec.project(db, p, project_id)
     p.require(project_id, C.env_monitoring_manage)
     _cal_future(body.calibration_valid_until)
@@ -173,7 +173,7 @@ def create_instrument(
 
 def update_instrument(
     db: Session, p: Principal, iid: uuid.UUID, body: InstrumentUpdate
-) -> InstrumentRead:
+) -> EnvInstrumentRead:
     x = _instrument(db, p, iid)
     p.require(x.project_id, C.env_monitoring_manage)
     data = body.model_dump(exclude_unset=True)
@@ -187,8 +187,8 @@ def update_instrument(
 
 
 def transition_instrument(
-    db: Session, p: Principal, iid: uuid.UUID, body: InstrumentTransition
-) -> InstrumentRead:
+    db: Session, p: Principal, iid: uuid.UUID, body: EnvInstrumentTransition
+) -> EnvInstrumentRead:
     x = _instrument(db, p, iid)
     p.require(x.project_id, C.env_monitoring_manage)
     if x.status == IS.retired:
@@ -327,7 +327,7 @@ def ingest(db: Session, token: str | None, body: StationPush) -> StationPushResu
         _calibrated(ins, v.window_start + Q15, f"values[{i}].window_start")
         make_reading(
             db, pt, v.parameter, AV.min15, v.window_start, v.window_start + Q15, v.value,
-            ReadingSource.station, instrument_id=ins.id, device_pk=d.id,
+            EnvReadingSource.station, instrument_id=ins.id, device_pk=d.id,
         )  # fmt: skip
         acc += 1
     n = derive(db, pt, t)
@@ -480,7 +480,7 @@ def evaluate(
 # ---- points (§3.8) -------------------------------------------------------------------------------
 
 
-def point_read(db: Session, pt: EnvPoint) -> PointRead:
+def point_read(db: Session, pt: EnvPoint) -> EnvPointRead:
     z = db.get(Zone, pt.zone_id) if pt.zone_id else None
     reqs = []
     for r in pt.requirements or []:
@@ -492,7 +492,7 @@ def point_read(db: Session, pt: EnvPoint) -> PointRead:
                 effective_source=src, condition_code=code,
             )
         )  # fmt: skip
-    return PointRead(
+    return EnvPointRead(
         id=pt.id, project_id=pt.project_id, point_code=pt.point_code, site_id=pt.site_id,
         zone_id=pt.zone_id, zone_code=z.code if z else None, airside=airside(db, pt),
         kind=pt.kind, noise_area_category=pt.noise_area_category, source_kind=pt.source_kind,
@@ -526,7 +526,7 @@ def _point(db: Session, p: Principal, point_id: uuid.UUID) -> EnvPoint:
 
 def list_points(
     db: Session, p: Principal, project_id: uuid.UUID, page: int, size: int
-) -> PointPage:
+) -> EnvPointPage:
     g = ec.view_grant(db, p, project_id)
     rows = [
         x
@@ -535,7 +535,7 @@ def list_points(
         )
         if g.covers_site(x.site_id)
     ]
-    return ec.paged(PointPage, rows, page, size, lambda x: point_read(db, x))
+    return ec.paged(EnvPointPage, rows, page, size, lambda x: point_read(db, x))
 
 
 def _check_point(db: Session, pt: EnvPoint) -> None:
@@ -553,7 +553,9 @@ def _check_point(db: Session, pt: EnvPoint) -> None:
             raise validation_error("permit_id", "Unknown project permit.")
 
 
-def create_point(db: Session, p: Principal, project_id: uuid.UUID, body: PointCreate) -> PointRead:
+def create_point(
+    db: Session, p: Principal, project_id: uuid.UUID, body: EnvPointCreate
+) -> EnvPointRead:
     ec.project(db, p, project_id)
     p.require(project_id, C.env_monitoring_manage)
     ec.site_of(db, project_id, body.site_id)
@@ -576,11 +578,13 @@ def create_point(db: Session, p: Principal, project_id: uuid.UUID, body: PointCr
     return point_read(db, pt)
 
 
-def read_point(db: Session, p: Principal, point_id: uuid.UUID) -> PointRead:
+def read_point(db: Session, p: Principal, point_id: uuid.UUID) -> EnvPointRead:
     return point_read(db, _point(db, p, point_id))
 
 
-def update_point(db: Session, p: Principal, point_id: uuid.UUID, body: PointUpdate) -> PointRead:
+def update_point(
+    db: Session, p: Principal, point_id: uuid.UUID, body: EnvPointUpdate
+) -> EnvPointRead:
     pt = _point(db, p, point_id)
     p.require(pt.project_id, C.env_monitoring_manage)
     before = {"requirements": list(pt.requirements or [])}
@@ -683,7 +687,7 @@ def make_reading(
     ws: datetime,
     we: datetime,
     value: Decimal,
-    source: ReadingSource,
+    source: EnvReadingSource,
     instrument_id: uuid.UUID | None = None,
     device_pk: uuid.UUID | None = None,
     user_id: uuid.UUID | None = None,
@@ -704,8 +708,8 @@ def make_reading(
     result, limit = evaluate(db, pt, param, avg, period, value)
     bg = background_ref(db, pt, ws, we) if param in rf.DUST_PARAMS and avg != AV.min15 else None
     at = created_at or now()
-    late_after = timedelta(hours=2) if source == ReadingSource.station else timedelta(minutes=15)
-    late = source not in (ReadingSource.derived,) and at - we > late_after
+    late_after = timedelta(hours=2) if source == EnvReadingSource.station else timedelta(minutes=15)
+    late = source not in (EnvReadingSource.derived,) and at - we > late_after
     seq = _next_reading_seq(db, pt.project_id, day)
     code = ec.pcode(db, pt.project_id)
     r = EnvReading(
@@ -777,7 +781,7 @@ def derive(db: Session, pt: EnvPoint, upto: datetime, lookback_h: int = 50) -> i
             continue
         if D(len(vals)) / 4 * 100 >= cap:
             r = make_reading(db, pt, param, AV.h1, h, h + timedelta(hours=1), mean(param, vals),
-                             ReadingSource.derived)  # fmt: skip
+                             EnvReadingSource.derived)  # fmt: skip
             rows.append(r)
             have.add((param, AV.h1, h))
             n += 1
@@ -791,16 +795,16 @@ def derive(db: Session, pt: EnvPoint, upto: datetime, lookback_h: int = 50) -> i
         if (param, AV.h24, s0) in have or s1 > upto or s0 < since - timedelta(hours=24):
             continue
         if D(len(vals)) / 24 * 100 >= cap:
-            make_reading(db, pt, param, AV.h24, s0, s1, mean(param, vals), ReadingSource.derived)
+            make_reading(db, pt, param, AV.h24, s0, s1, mean(param, vals), EnvReadingSource.derived)
             n += 1
     return n
 
 
-def reading_read(db: Session, p: Principal | None, r: EnvReading) -> ReadingRead:
+def reading_read(db: Session, p: Principal | None, r: EnvReading) -> EnvReadingRead:
     pt = db.get(EnvPoint, r.point_id)
     hide = p is not None and ec.is_viewer(p, r.project_id)
     unit = rf.unit_of(r.parameter)
-    return ReadingRead(
+    return EnvReadingRead(
         id=r.id, reading_no=r.reading_no, project_id=r.project_id, point_id=r.point_id,
         point_code=pt.point_code if pt else "?", parameter=r.parameter, averaging=r.averaging,
         period=r.period, window_start=r.window_start, window_end=r.window_end, source=r.source,
@@ -832,7 +836,7 @@ def list_readings(
     date_to: date | None,
     page: int,
     size: int,
-) -> ReadingPage:
+) -> EnvReadingPage:
     g = ec.view_grant(db, p, project_id)
     pts = {
         x.id
@@ -858,14 +862,14 @@ def list_readings(
             .limit(size)
         )
     )
-    return ReadingPage(
+    return EnvReadingPage(
         items=[reading_read(db, p, r) for r in rows], total=total, page=page, page_size=size
     )
 
 
 def create_reading(
-    db: Session, p: Principal, project_id: uuid.UUID, body: ReadingCreate
-) -> ReadingRead:
+    db: Session, p: Principal, project_id: uuid.UUID, body: EnvReadingCreate
+) -> EnvReadingRead:
     ec.project(db, p, project_id)
     pt = db.get(EnvPoint, body.point_id)
     if pt is None or pt.project_id != project_id or not pt.active:
@@ -886,12 +890,12 @@ def create_reading(
     _range(body.parameter, body.value, "value")
     ins: EnvInstrument | None = None
     if body.lab_provider_id is not None:
-        source = ReadingSource.lab
+        source = EnvReadingSource.lab
         _lab(db, body.lab_provider_id, reading_day(body.window_end))
         if not body.lab_report_ref:
             raise validation_error("lab_report_ref", "Give the lab report reference.")
     else:
-        source = ReadingSource.manual
+        source = EnvReadingSource.manual
         if body.window_end < t - timedelta(hours=72):
             raise ec.code_err(
                 ErrorCode.BACKDATED_READING, "Manual readings may be back-dated up to 72 hours.",
@@ -935,7 +939,7 @@ def _lab(db: Session, provider_id: uuid.UUID, d: date) -> EnvProvider:
     if ProviderKind.environmental_lab.value not in (pv.kinds or []):
         raise validation_error("lab_provider_id", "Name an environmental laboratory.")
     if not any(
-        x.permit_type == PermitType.lab_accreditation and ec.in_force(x, d)
+        x.permit_type == EnvPermitType.lab_accreditation and ec.in_force(x, d)
         for x in ec.licences(db, pv.id)
     ):
         raise ec.code_err(
@@ -946,11 +950,11 @@ def _lab(db: Session, provider_id: uuid.UUID, d: date) -> EnvProvider:
     return pv
 
 
-def read_reading(db: Session, p: Principal, rid: uuid.UUID) -> ReadingRead:
+def read_reading(db: Session, p: Principal, rid: uuid.UUID) -> EnvReadingRead:
     return reading_read(db, p, _reading(db, p, rid)[0])
 
 
-def void_reading(db: Session, p: Principal, rid: uuid.UUID, body: EnvVoid) -> ReadingRead:
+def void_reading(db: Session, p: Principal, rid: uuid.UUID, body: EnvVoid) -> EnvReadingRead:
     r, _pt = _reading(db, p, rid)
     p.require(r.project_id, C.env_void)
     if r.status == RecordState.voided:

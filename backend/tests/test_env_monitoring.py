@@ -8,16 +8,16 @@ from datetime import date, datetime, timedelta
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.env_enums import Averaging, Parameter, ReadingSource
+from app.core.env_enums import Averaging, EnvReadingSource, Parameter
 from app.env_jobs import env_alerts, env_daily
 from app.models import CorrectiveAction, EnvExceedance, EnvInstrument, EnvReading, WorkforceReturn
 from app.schemas.env import (
     EnvDeviceCreate,
+    EnvInstrumentCreate,
+    EnvPermitUpdate,
+    EnvPointUpdate,
+    EnvReadingCreate,
     ExceedanceReview,
-    InstrumentCreate,
-    PermitUpdate,
-    PointUpdate,
-    ReadingCreate,
 )
 from app.services.env import exceedances, monitoring, register
 from tests.conftest import Api
@@ -43,8 +43,8 @@ from tests.env_helpers import fresh as _fresh
 
 
 def _reading(db: Session, code: str, param: str, avg: str, ws: datetime, we: datetime,
-             value: str, **kw: object) -> ReadingCreate:  # fmt: skip
-    return ReadingCreate.model_validate({
+             value: str, **kw: object) -> EnvReadingCreate:  # fmt: skip
+    return EnvReadingCreate.model_validate({
         "point_id": point(db, code).id, "parameter": param, "averaging": avg,
         "window_start": ws, "window_end": we, "value": D(value), **kw,
     })  # fmt: skip
@@ -55,7 +55,7 @@ def test_calibration_expiry(env_seed: None, db: Session) -> None:
     tick(2026, 9, 1, 9)
     p = P(db, "noura.qahtani")
     pid = project(db, "ANIA-EXP").id
-    ins = monitoring.create_instrument(db, p, pid, InstrumentCreate(
+    ins = monitoring.create_instrument(db, p, pid, EnvInstrumentCreate(
         kind="pm_sampler_24h", make_model="MiniVol (TEST)", serial_no="SN-TEST-CAL",
         calibration_valid_until=date(2026, 10, 5), calibration_cert_ref="CAL-TEST-9"))  # fmt: skip
     sent = []
@@ -102,8 +102,8 @@ def test_limits_tighten_only_and_permit_condition(env_seed: None, clock: None, d
     p = P(db, "noura.qahtani")
     pt = point(db, "D-SAIR-01")
 
-    def reqs(lim: str) -> PointUpdate:
-        return PointUpdate.model_validate({"requirements": [
+    def reqs(lim: str) -> EnvPointUpdate:
+        return EnvPointUpdate.model_validate({"requirements": [
             {"parameter": "pm10", "averaging": "1h", "schedule": "continuous"},
             {"parameter": "pm10", "averaging": "24h", "schedule": "continuous", "limit_value": lim},
         ]})  # fmt: skip
@@ -114,7 +114,7 @@ def test_limits_tighten_only_and_permit_condition(env_seed: None, clock: None, d
     assert D(row.limit_value or 0) == 300
     assert db.scalar(select(AuditLog.id).where(AuditLog.entity_id == pt.id)) is not None
     pm = permit(db, "ENVP-TEST-0001")
-    register.update_permit(db, p, pm.id, PermitUpdate.model_validate({"conditions": [{
+    register.update_permit(db, p, pm.id, EnvPermitUpdate.model_validate({"conditions": [{
         "code": "C-07", "text_en": "PM10 24-h at the taxiway ≤ 280", "point_id": str(pt.id),
         "parameter": "pm10", "averaging": "24h", "limit_value": "280"}]}))  # fmt: skip
     _fresh(db)
@@ -127,7 +127,7 @@ def _hour(db: Session, code: str, d: date, h: int, value: str) -> EnvReading:
     pt = point(db, code)
     ws = local(d.year, d.month, d.day, h)
     return monitoring.make_reading(db, pt, Parameter.pm10, Averaging.h1, ws, ws + timedelta(hours=1),
-                                   D(value), ReadingSource.derived)  # fmt: skip
+                                   D(value), EnvReadingSource.derived)  # fmt: skip
 
 
 def test_station_exceedance_and_airside_alert(env_seed: None, api: Api, db: Session) -> None:

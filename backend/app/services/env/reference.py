@@ -9,14 +9,14 @@ from decimal import Decimal
 from app.core.env_enums import (
     AspectCode,
     Averaging,
+    EnvInstrumentKind,
+    EnvPermitType,
     ExceedanceCause,
     ImpactCode,
-    InstrumentKind,
     Issuer,
     LicenceActivity,
     NoiseArea,
     Parameter,
-    PermitType,
     PointKind,
     ProviderKind,
     SpillSubstance,
@@ -56,24 +56,25 @@ IM_LABELS = {
 }
 # PT: (EN, AR, holder "project" / "provider" / "either", expires)
 PT_INFO = {
-    PermitType.ncec_env_permit_construction: ("NCEC environmental permit (construction)",
+    EnvPermitType.ncec_env_permit_construction: ("NCEC environmental permit (construction)",
                                               "تصريح بيئي للإنشاء", "project", True),
-    PermitType.ncec_env_permit_operation: ("NCEC environmental permit (operation)",
+    EnvPermitType.ncec_env_permit_operation: ("NCEC environmental permit (operation)",
                                            "تصريح بيئي للتشغيل", "project", True),
-    PermitType.eia_approval: ("EIA approval", "موافقة دراسة الأثر البيئي", "project", False),
-    PermitType.mwan_producer_registration: ("MWAN waste producer registration",
+    EnvPermitType.eia_approval: ("EIA approval", "موافقة دراسة الأثر البيئي", "project", False),
+    EnvPermitType.mwan_producer_registration: ("MWAN waste producer registration",
                                             "تسجيل منتج النفايات", "project", True),
-    PermitType.municipal_construction_permit: ("Municipal construction permit",
+    EnvPermitType.municipal_construction_permit: ("Municipal construction permit",
                                                "رخصة البناء البلدية", "project", True),
-    PermitType.dewatering_discharge_permit: ("Dewatering discharge permit",
+    EnvPermitType.dewatering_discharge_permit: ("Dewatering discharge permit",
                                              "تصريح تصريف مياه نزح", "project", True),
-    PermitType.sewer_discharge_permit: ("Sewer discharge permit", "تصريح تصريف للصرف الصحي",
+    EnvPermitType.sewer_discharge_permit: ("Sewer discharge permit", "تصريح تصريف للصرف الصحي",
                                         "project", True),
-    PermitType.cemp_approval: ("CEMP approval", "اعتماد خطة الإدارة البيئية", "project", False),
-    PermitType.mwan_licence: ("MWAN licence", "ترخيص موان", "provider", True),
-    PermitType.facility_authorisation: ("Facility authorisation", "تفويض منشأة", "provider", True),
-    PermitType.lab_accreditation: ("Laboratory accreditation", "اعتماد مختبر", "provider", True),
-    PermitType.other: ("Other", "أخرى", "either", False),
+    EnvPermitType.cemp_approval: ("CEMP approval", "اعتماد خطة الإدارة البيئية", "project", False),
+    EnvPermitType.mwan_licence: ("MWAN licence", "ترخيص موان", "provider", True),
+    EnvPermitType.facility_authorisation: ("Facility authorisation", "تفويض منشأة",
+                                          "provider", True),
+    EnvPermitType.lab_accreditation: ("Laboratory accreditation", "اعتماد مختبر", "provider", True),
+    EnvPermitType.other: ("Other", "أخرى", "either", False),
 }  # fmt: skip
 IS_LABELS = {
     Issuer.ncec: ("NCEC", "المركز الوطني للرقابة على الالتزام البيئي"),
@@ -176,14 +177,14 @@ AIRSIDE_OK = frozenset(
 ATTRACTANT_OK = frozenset({StorageAreaType.sealed_bin_station, StorageAreaType.compactor})
 
 IK_LABELS = {
-    InstrumentKind.pm_station: ("Particulate station", "محطة جسيمات"),
-    InstrumentKind.pm_portable: ("Portable particulate meter", "جهاز جسيمات محمول"),
-    InstrumentKind.pm_sampler_24h: ("24-hour sampler", "جهاز سحب عينات 24 ساعة"),
-    InstrumentKind.sound_level_meter: ("Sound level meter", "مقياس مستوى الصوت"),
-    InstrumentKind.noise_station: ("Noise station", "محطة ضوضاء"),
-    InstrumentKind.water_quality_meter: ("Water quality meter", "جهاز جودة المياه"),
+    EnvInstrumentKind.pm_station: ("Particulate station", "محطة جسيمات"),
+    EnvInstrumentKind.pm_portable: ("Portable particulate meter", "جهاز جسيمات محمول"),
+    EnvInstrumentKind.pm_sampler_24h: ("24-hour sampler", "جهاز سحب عينات 24 ساعة"),
+    EnvInstrumentKind.sound_level_meter: ("Sound level meter", "مقياس مستوى الصوت"),
+    EnvInstrumentKind.noise_station: ("Noise station", "محطة ضوضاء"),
+    EnvInstrumentKind.water_quality_meter: ("Water quality meter", "جهاز جودة المياه"),
 }
-STATION_KINDS = frozenset({InstrumentKind.pm_station, InstrumentKind.noise_station})
+STATION_KINDS = frozenset({EnvInstrumentKind.pm_station, EnvInstrumentKind.noise_station})
 MPK_LABELS = {
     PointKind.boundary: ("Site boundary", "حدود الموقع"),
     PointKind.sensitive_receptor: ("Sensitive receptor", "مستقبِل حساس"),

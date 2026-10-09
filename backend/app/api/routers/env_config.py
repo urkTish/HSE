@@ -7,7 +7,7 @@ from typing import Annotated
 from fastapi import APIRouter, Query, status
 
 from app.api.deps import DB, CurrentUser, PageParams
-from app.core.env_enums import AspectStatus, PermitStatus, PermitType, ProviderKind
+from app.core.env_enums import AspectStatus, EnvPermitStatus, EnvPermitType, ProviderKind
 from app.core.errors import error_responses
 from app.schemas.env import (
     AspectCreate,
@@ -15,19 +15,19 @@ from app.schemas.env import (
     AspectRead,
     AspectTransition,
     AspectUpdate,
+    EnvPermitCreate,
+    EnvPermitRead,
+    EnvPermitUpdate,
+    EnvProviderCreate,
+    EnvProviderPage,
+    EnvProviderRead,
+    EnvProviderUpdate,
     EnvReference,
     EnvSettingsRead,
     EnvSettingsUpdate,
-    PermitCreate,
     PermitPage,
-    PermitRead,
     PermitTransition,
-    PermitUpdate,
-    ProviderCreate,
-    ProviderPage,
-    ProviderRead,
     ProviderTransition,
-    ProviderUpdate,
 )
 from app.services.env import config, register
 
@@ -142,7 +142,7 @@ def transition_env_aspect(
 
 @router.get(
     "/env-providers",
-    response_model=ProviderPage,
+    response_model=EnvProviderPage,
     summary="Environmental service providers (org-wide; any 202 holder)",
     responses=error_responses(401, 403),
 )
@@ -151,65 +151,65 @@ def list_env_providers(
     pg: PageParams,
     db: DB,
     kind: ProviderKind | None = None,
-) -> ProviderPage:
+) -> EnvProviderPage:
     return register.list_providers(db, user, kind, pg.page, pg.page_size)
 
 
 @router.post(
     "/env-providers",
-    response_model=ProviderRead,
+    response_model=EnvProviderRead,
     status_code=status.HTTP_201_CREATED,
     summary="Register a provider (204)",
     responses=error_responses(401, 403, 409, 422),
 )
-def create_env_provider(body: ProviderCreate, user: CurrentUser, db: DB) -> ProviderRead:
+def create_env_provider(body: EnvProviderCreate, user: CurrentUser, db: DB) -> EnvProviderRead:
     return register.create_provider(db, user, body)
 
 
 @router.get(
     "/env-providers/{provider_id}",
-    response_model=ProviderRead,
+    response_model=EnvProviderRead,
     summary="One provider with its licences",
     responses=error_responses(401, 403, 404),
 )
-def get_env_provider(provider_id: uuid.UUID, user: CurrentUser, db: DB) -> ProviderRead:
+def get_env_provider(provider_id: uuid.UUID, user: CurrentUser, db: DB) -> EnvProviderRead:
     return register.read_provider(db, user, provider_id)
 
 
 @router.patch(
     "/env-providers/{provider_id}",
-    response_model=ProviderRead,
+    response_model=EnvProviderRead,
     summary="Edit a provider (204)",
     responses=error_responses(401, 403, 404, 422),
 )
 def update_env_provider(
-    provider_id: uuid.UUID, body: ProviderUpdate, user: CurrentUser, db: DB
-) -> ProviderRead:
+    provider_id: uuid.UUID, body: EnvProviderUpdate, user: CurrentUser, db: DB
+) -> EnvProviderRead:
     return register.update_provider(db, user, provider_id, body)
 
 
 @router.post(
     "/env-providers/{provider_id}/transitions",
-    response_model=ProviderRead,
+    response_model=EnvProviderRead,
     summary="Approve, suspend or blacklist a provider (213, HSE Manager; reason ≥ 20 chars)",
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def transition_env_provider(
     provider_id: uuid.UUID, body: ProviderTransition, user: CurrentUser, db: DB
-) -> ProviderRead:
+) -> EnvProviderRead:
     return register.transition_provider(db, user, provider_id, body)
 
 
 @router.post(
     "/env-providers/{provider_id}/licences",
-    response_model=PermitRead,
+    response_model=EnvPermitRead,
     status_code=status.HTTP_201_CREATED,
     summary="Record a provider licence (204; mwan_licence, facility_authorisation, …)",
     responses=error_responses(401, 403, 404, 422),
 )
 def create_provider_licence(
-    provider_id: uuid.UUID, body: PermitCreate, user: CurrentUser, db: DB
-) -> PermitRead:
+    provider_id: uuid.UUID, body: EnvPermitCreate, user: CurrentUser, db: DB
+) -> EnvPermitRead:
     return register.create_permit(db, user, None, provider_id, body)
 
 
@@ -227,8 +227,8 @@ def list_env_permits(
     user: CurrentUser,
     pg: PageParams,
     db: DB,
-    status_: Annotated[list[PermitStatus] | None, Query(alias="status")] = None,
-    permit_type: PermitType | None = None,
+    status_: Annotated[list[EnvPermitStatus] | None, Query(alias="status")] = None,
+    permit_type: EnvPermitType | None = None,
     expiring_within_days: int | None = Query(default=None, ge=0, le=365),
 ) -> PermitPage:
     return register.list_permits(
@@ -238,46 +238,46 @@ def list_env_permits(
 
 @router.post(
     "/projects/{project_id}/env-permits",
-    response_model=PermitRead,
+    response_model=EnvPermitRead,
     status_code=status.HTTP_201_CREATED,
     summary="Record a project permit or renewal (204; PRM-1)",
     responses=error_responses(401, 403, 404, 422),
 )
 def create_env_permit(
-    project_id: uuid.UUID, body: PermitCreate, user: CurrentUser, db: DB
-) -> PermitRead:
+    project_id: uuid.UUID, body: EnvPermitCreate, user: CurrentUser, db: DB
+) -> EnvPermitRead:
     return register.create_permit(db, user, project_id, None, body)
 
 
 @router.get(
     "/env-permits/{permit_id}",
-    response_model=PermitRead,
+    response_model=EnvPermitRead,
     summary="One permit or licence",
     responses=error_responses(401, 403, 404),
 )
-def get_env_permit(permit_id: uuid.UUID, user: CurrentUser, db: DB) -> PermitRead:
+def get_env_permit(permit_id: uuid.UUID, user: CurrentUser, db: DB) -> EnvPermitRead:
     return register.read_permit(db, user, permit_id)
 
 
 @router.patch(
     "/env-permits/{permit_id}",
-    response_model=PermitRead,
+    response_model=EnvPermitRead,
     summary="Edit a permit or licence (204)",
     responses=error_responses(401, 403, 404, 422),
 )
 def update_env_permit(
-    permit_id: uuid.UUID, body: PermitUpdate, user: CurrentUser, db: DB
-) -> PermitRead:
+    permit_id: uuid.UUID, body: EnvPermitUpdate, user: CurrentUser, db: DB
+) -> EnvPermitRead:
     return register.update_permit(db, user, permit_id, body)
 
 
 @router.post(
     "/env-permits/{permit_id}/transitions",
-    response_model=PermitRead,
+    response_model=EnvPermitRead,
     summary="Suspend, reinstate or cancel a permit or licence (204; reason ≥ 20 chars)",
     responses=error_responses(401, 403, 404, 409, 422),
 )
 def transition_env_permit(
     permit_id: uuid.UUID, body: PermitTransition, user: CurrentUser, db: DB
-) -> PermitRead:
+) -> EnvPermitRead:
     return register.transition_permit(db, user, permit_id, body)

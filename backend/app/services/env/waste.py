@@ -18,7 +18,7 @@ from app.core.env_enums import (
     AreaStatus,
     ConsignmentAction,
     ConsignmentStatus,
-    PermitType,
+    EnvPermitType,
     ProviderKind,
     QuantityUnit,
     WasteClass,
@@ -482,7 +482,7 @@ def avp_found(db: Session, project_id: uuid.UUID, plate: str, d: date) -> bool:
 def producer_check(db: Session, project_id: uuid.UUID, d: date) -> None:
     """PRM-4 / CON-3."""
     for code, pms in ec.requirements(db, project_id).items():
-        if not any(pm.permit_type == PermitType.mwan_producer_registration for pm in pms):
+        if not any(pm.permit_type == EnvPermitType.mwan_producer_registration for pm in pms):
             continue
         if ec.applicable(pms, d) and not ec.requirement_in_force(db, project_id, code, d):
             raise ec.code_err(
@@ -508,7 +508,9 @@ def licence_checks(
         )
     tl = ec.licence_for(db, tr, d, frozenset({"collection_transport"}), wc.value, "transporter_id")
     types = (
-        frozenset({PermitType.facility_authorisation}) if wc == WasteClass.liquid_sewage else None
+        frozenset({EnvPermitType.facility_authorisation})
+        if wc == WasteClass.liquid_sewage
+        else None
     )
     fl = ec.licence_for(
         db, fac, d, rf.ROUTE_ACTIVITY[route], wc.value, "facility_provider_id", types, fcode

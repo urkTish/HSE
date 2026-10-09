@@ -35,22 +35,22 @@ from app.core.env_enums import (
     ComplaintChannel,
     ComplaintStatus,
     ConsignmentStatus,
+    EnvInstrumentKind,
+    EnvInstrumentStatus,
+    EnvPermitStatus,
+    EnvPermitType,
+    EnvReadingSource,
     ExceedanceCause,
     ExceedanceStatus,
-    InstrumentKind,
-    InstrumentStatus,
     Issuer,
     NoiseArea,
     NoisePeriod,
     Parameter,
-    PermitStatus,
-    PermitType,
     PointKind,
     PointSource,
     ProviderStatus,
     QuantityUnit,
     ReadingResult,
-    ReadingSource,
     RecordState,
     SpillSource,
     SpillStatus,
@@ -137,7 +137,7 @@ class EnvPermit(Audited, Base):
         ForeignKey("env_providers.id"), index=True
     )
     seq: Mapped[int] = mapped_column(Integer)
-    permit_type: Mapped[PermitType] = enum_col(PermitType)
+    permit_type: Mapped[EnvPermitType] = enum_col(EnvPermitType)
     issuer: Mapped[Issuer] = enum_col(Issuer)
     requirement_code: Mapped[str | None] = mapped_column(String(20))
     required: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -150,7 +150,7 @@ class EnvPermit(Audited, Base):
     conditions: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list)
     document_id: Mapped[uuid.UUID | None] = mapped_column()
     supersedes_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("env_permits.id"))
-    manual_status: Mapped[PermitStatus | None] = enum_col(PermitStatus, nullable=True)
+    manual_status: Mapped[EnvPermitStatus | None] = enum_col(EnvPermitStatus, nullable=True)
     manual_from: Mapped[date | None] = mapped_column(Date)
     status_reason: Mapped[str | None] = mapped_column(String(500))
 
@@ -248,13 +248,15 @@ class EnvInstrument(Audited, Base):
 
     project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id"))
     instrument_no: Mapped[str] = mapped_column(String(30))
-    kind: Mapped[InstrumentKind] = enum_col(InstrumentKind)
+    kind: Mapped[EnvInstrumentKind] = enum_col(EnvInstrumentKind)
     make_model: Mapped[str] = mapped_column(String(80))
     serial_no: Mapped[str] = mapped_column(String(40))
     standard_class: Mapped[str | None] = mapped_column(String(2))
     calibration_valid_until: Mapped[date] = mapped_column(Date)
     calibration_cert_ref: Mapped[str] = mapped_column(String(40))
-    status: Mapped[InstrumentStatus] = enum_col(InstrumentStatus, default=InstrumentStatus.active)
+    status: Mapped[EnvInstrumentStatus] = enum_col(
+        EnvInstrumentStatus, default=EnvInstrumentStatus.active
+    )
     status_reason: Mapped[str | None] = mapped_column(String(500))
 
 
@@ -315,7 +317,7 @@ class EnvReading(Audited, Base):
     period: Mapped[NoisePeriod] = enum_col(NoisePeriod, default=NoisePeriod.any)
     window_start: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     window_end: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-    source: Mapped[ReadingSource] = enum_col(ReadingSource)
+    source: Mapped[EnvReadingSource] = enum_col(EnvReadingSource)
     value: Mapped[Decimal] = mapped_column(Numeric(10, 3))
     instrument_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("env_instruments.id"))
     device_pk: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("env_monitor_devices.id"))

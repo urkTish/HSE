@@ -15,9 +15,9 @@ from app.core.clock import now
 from app.core.enums import AuditAction, Capability, EntityType, NotificationKind
 from app.core.env_enums import (
     Averaging,
+    EnvInstrumentStatus,
     ExceedanceCause,
     ExceedanceStatus,
-    InstrumentStatus,
     Parameter,
     ReadingResult,
     RecordState,
@@ -284,7 +284,7 @@ def _fault_handled(db: Session, x: EnvExceedance) -> bool:
         return True
     for r in rs:
         ins = db.get(EnvInstrument, r.instrument_id) if r and r.instrument_id else None
-        if ins is not None and ins.status == InstrumentStatus.quarantined:
+        if ins is not None and ins.status == EnvInstrumentStatus.quarantined:
             return True
     return False
 
