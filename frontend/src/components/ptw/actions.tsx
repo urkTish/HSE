@@ -1,5 +1,5 @@
 "use client";
-import { AlarmClock, Ban, Copy, Flame, Hand, Handshake, Pause, PenLine, Play, Siren, Trash2 } from "lucide-react";
+import { AlarmClock, Ban, Copy, Flame, Hand, Handshake, OctagonAlert, Pause, PenLine, Play, Siren, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -178,7 +178,7 @@ function Readiness({ permit, action }: { permit: Permit; action: S["PermitAction
   const r = q.data;
   return (
     <div className="flex flex-col gap-2" data-testid="readiness" data-allowed={r.allowed ? "true" : "false"}>
-      {r.allowed ? null : <p className="text-sm font-medium text-danger">{t("notReady")}</p>}
+      {r.allowed ? null : <p className="flex items-center gap-1 text-sm font-medium text-danger"><OctagonAlert aria-hidden className="size-3.5 shrink-0" />{t("notReady")}</p>}
       {r.blockers.length ? <BlockerList items={r.blockers} /> : null}
       {r.errors.length ? (
         <ul className="list-inside list-disc text-sm text-danger" data-testid="readiness-errors">

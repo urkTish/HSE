@@ -1,6 +1,6 @@
 "use client";
 import { useQueryClient } from "@tanstack/react-query";
-import { Layers, Plus } from "lucide-react";
+import { Layers, OctagonAlert, Plus, TriangleAlert } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -34,11 +34,11 @@ import { useFieldErrorTranslator } from "@/lib/i18n-helpers";
 import { can, canWrite } from "@/lib/permissions";
 import { CLOTHING, WORKLOADS } from "@/lib/heat-enums";
 import { PERMIT_BLOCKERS, PERMIT_REGISTER_SORTS, PERMIT_STATUSES, PERMIT_TYPES, PTW_EXPOSURES } from "@/lib/ptw-enums";
-import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
 import { DateTimeInput, DecimalInput, GasStatusBadge, HighRiskBadge, PermitStatusBadge, PermitsSubNav, TypeChips, userLabel } from "./common";
 import { sectionOf } from "./sections";
 import { SimopsCheckView } from "./simops";
+import { StackedDate } from "@/components/medical/common";
 
 type S = Schemas;
 type Permit = S["PermitRead"];
@@ -60,7 +60,6 @@ function PermitList({ project }: { project: S["ProjectRead"] }) {
   const me = useMeData();
   const locale = useLocale();
   const opts = useProjectOptions(project.id);
-  const { dateTime } = useFormatters(project.id);
   const s = useSearchState();
   const page = s.getInt("page", 1) ?? 1;
   const status = s.getAll("status") as S["PermitStatus"][];
@@ -161,9 +160,12 @@ function PermitList({ project }: { project: S["ProjectRead"] }) {
                   </TD>
                   <TD label={tc("contractor")}>{p.engagement.short_code}</TD>
                   <TD label={t("validity")}>
-                    <span className="text-xs">
-                      {dateTime(p.valid_from_at)}
-                      <br />→ {dateTime(p.valid_to_at)}
+                    <span className="flex flex-col gap-1 text-xs">
+                      <StackedDate v={p.valid_from_at} time />
+                      <span className="flex items-start gap-1">
+                        <span aria-hidden className="inline-block rtl:-scale-x-100">→</span>
+                        <StackedDate v={p.valid_to_at} time />
+                      </span>
                     </span>
                   </TD>
                   <TD label={t("crew")}>
@@ -174,14 +176,14 @@ function PermitList({ project }: { project: S["ProjectRead"] }) {
                   </TD>
                   <TD label={tc("status")}>
                     <PermitStatusBadge status={p.status} reason={p.status_reason} />
-                    {p.blockers.length ? <span className="block text-xs text-danger">{t("blockersN", { n: p.blockers.length })}</span> : null}
+                    {p.blockers.length ? <span className="flex items-center gap-1 text-xs text-danger font-medium"><OctagonAlert aria-hidden className="size-3.5 shrink-0" />{t("blockersN", { n: p.blockers.length })}</span> : null}
                     {p.simops_open ? (
                       <span className="flex items-center gap-1 text-xs text-warning">
                         <Layers aria-hidden className="size-3" />
                         {t("simopsN", { n: p.simops_open })}
                       </span>
                     ) : null}
-                    {p.post_expiry_check_pending ? <span className="block text-xs text-warning">{t("postExpiryPending")}</span> : null}
+                    {p.post_expiry_check_pending ? <span className="flex items-center gap-1 text-xs text-warning font-medium"><TriangleAlert aria-hidden className="size-3.5 shrink-0" />{t("postExpiryPending")}</span> : null}
                   </TD>
                 </TR>
               ))}

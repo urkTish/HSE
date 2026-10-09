@@ -1,5 +1,5 @@
 "use client";
-import { KeyRound, Lock, LockOpen, Plus, Scissors, Trash2 } from "lucide-react";
+import { KeyRound, Lock, LockOpen, Plus, Scissors, Trash2, TriangleAlert } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -145,7 +145,7 @@ function IsolationList({ project }: { project: S["ProjectRead"] }) {
                   <TD label={tc("status")}>
                     <IsoStatus status={i.status} />
                     {i.long_term ? <span className="block text-xs text-muted-foreground">{t("longTerm")}</span> : null}
-                    {i.review_due_at ? <span className="ltr block text-xs text-warning">{t("reviewBy", { at: dateTime(i.review_due_at) })}</span> : null}
+                    {i.review_due_at ? <span className="flex items-center gap-1 text-xs text-warning font-medium"><TriangleAlert aria-hidden className="size-3.5 shrink-0" />{t("reviewBy", { at: dateTime(i.review_due_at) })}</span> : null}
                   </TD>
                 </TR>
               ))}
@@ -392,7 +392,7 @@ export function IsolationDetail({ id }: { id: string }) {
             </FieldItem>
             <FieldItem label={t("verifiedSince")}>
               <span className="ltr">{i.verified_since ? dateTime(i.verified_since) : "—"}</span>
-              {i.long_term ? <span className="ms-2 text-xs text-warning">{t("longTerm")}</span> : null}
+              {i.long_term ? <span className="inline-flex items-center gap-1 ms-2 text-xs text-warning font-medium"><TriangleAlert aria-hidden className="size-3.5 shrink-0" />{t("longTerm")}</span> : null}
             </FieldItem>
             {i.last_review ? (
               <FieldItem label={t("lastReview")}>

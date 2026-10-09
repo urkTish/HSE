@@ -1,5 +1,5 @@
 "use client";
-import { CircleCheck, OctagonX, Plus, Trash2, TriangleAlert } from "lucide-react";
+import { CircleCheck, OctagonAlert, OctagonX, Plus, Trash2, TriangleAlert } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -832,7 +832,7 @@ function DetectorList({ project }: { project: S["ProjectRead"] }) {
                   <TD label={t("bumpToday")}>{d.bump_tested_today ? tc("yes") : tc("no")}</TD>
                   <TD label={tc("status")}>
                     <StatusBadge status={d.status} label={te(`detectorStatus.${d.status}`)} />
-                    {d.quarantine_reason ? <span className="block text-xs text-danger">{te(`quarantineReason.${d.quarantine_reason}`)}</span> : null}
+                    {d.quarantine_reason ? <span className="flex items-center gap-1 text-xs text-danger font-medium"><OctagonAlert aria-hidden className="size-3.5 shrink-0" />{te(`quarantineReason.${d.quarantine_reason}`)}</span> : null}
                   </TD>
                 </TR>
               ))}

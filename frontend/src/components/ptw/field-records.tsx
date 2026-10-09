@@ -1,5 +1,5 @@
 "use client";
-import { LogIn, LogOut, Plus } from "lucide-react";
+import { LogIn, LogOut, Plus, TriangleAlert } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -80,7 +80,7 @@ export function FieldRecords({ permit, type }: { permit: Permit; type: S["Permit
                   <LogIn aria-hidden className="size-3.5" /> <span className="[unicode-bidi:isolate]">{dateTime(e.in_at)}</span>
                 </span>
                 <span className="flex items-center gap-1 text-xs">
-                  <LogOut aria-hidden className="size-3.5" /> {e.out_at ? <span className="[unicode-bidi:isolate]">{dateTime(e.out_at)}</span> : <span className="font-semibold text-warning">{t("inside")}</span>}
+                  <LogOut aria-hidden className="size-3.5" /> {e.out_at ? <span className="[unicode-bidi:isolate]">{dateTime(e.out_at)}</span> : <span className="inline-flex items-center gap-1 font-semibold text-warning"><TriangleAlert aria-hidden className="size-3.5 shrink-0" />{t("inside")}</span>}
                 </span>
               </li>
             ))}

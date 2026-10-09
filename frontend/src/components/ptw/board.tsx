@@ -263,7 +263,7 @@ function SuspensionLog({ project }: { project: S["ProjectRead"] }) {
                         {x.resumed_by ? <span className="block text-xs text-muted-foreground">{userLabel(x.resumed_by, locale)}</span> : null}
                       </>
                     ) : (
-                      <span className="text-warning">{t("stillSuspended")}</span>
+                      <span className="inline-flex items-center gap-1 text-warning font-medium"><TriangleAlert aria-hidden className="size-3.5 shrink-0" />{t("stillSuspended")}</span>
                     )}
                   </TD>
                 </TR>

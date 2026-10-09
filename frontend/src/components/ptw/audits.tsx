@@ -1,5 +1,5 @@
 "use client";
-import { Plus } from "lucide-react";
+import { OctagonAlert, Plus } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -131,7 +131,7 @@ function AuditList({ project }: { project: S["ProjectRead"] }) {
                   <TD label={t("auditor")}>{userLabel(a.auditor, locale)}</TD>
                   <TD label={t("score")}>
                     <bdi className="ltr tabular-nums">{a.score_pct !== null ? `${a.score_pct} %` : "—"}</bdi>
-                    {a.critical_count ? <span className="block text-xs text-danger">{t("criticalN", { n: a.critical_count })}</span> : null}
+                    {a.critical_count ? <span className="flex items-center gap-1 text-xs text-danger font-medium"><OctagonAlert aria-hidden className="size-3.5 shrink-0" />{t("criticalN", { n: a.critical_count })}</span> : null}
                   </TD>
                   <TD label={tc("status")}>
                     <StatusBadge status={a.status} label={te(`ptwAuditStatus.${a.status}`)} />
@@ -192,7 +192,7 @@ function ItemsEditor({ items, answers, onChange, disabled }: { items: S["AuditIt
                 <Input aria-label={t("finding")} placeholder={t("findingHint")} value={v.note} disabled={disabled} onChange={(e) => set({ note: e.target.value })} />
               </div>
             ) : null}
-            {nc && (v.severity ?? i.default_severity) === "critical" ? <p className="text-xs text-danger">{t("criticalHint")}</p> : null}
+            {nc && (v.severity ?? i.default_severity) === "critical" ? <p className="flex items-center gap-1 text-xs text-danger font-medium"><OctagonAlert aria-hidden className="size-3.5 shrink-0" />{t("criticalHint")}</p> : null}
           </li>
         );
       })}
