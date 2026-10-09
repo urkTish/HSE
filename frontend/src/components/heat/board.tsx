@@ -1,5 +1,5 @@
 "use client";
-import { Ban, ClipboardList, Plus, ShieldAlert, Sun, Thermometer, Users } from "lucide-react";
+import { Ban, ClipboardList, Clock, Plus, ShieldAlert, Sun, Thermometer, Users } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -21,7 +21,7 @@ import { WORKLOADS } from "@/lib/heat-enums";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
 import { cn } from "@/lib/utils";
-import { HeatFieldSubNav, HeatStateBadge, RegimeBadge, RestMinutes, WaterAdvice, Wbgt, useHeatCaps } from "./common";
+import { HeadlineRegime, HeatFieldSubNav, HeatStateBadge, RegimeBadge, WaterAdvice, Wbgt, useHeatCaps } from "./common";
 
 type S = Schemas;
 type Project = S["ProjectRead"];
@@ -127,8 +127,10 @@ const CARD_TONE: Record<S["Regime"], string> = {
 /** One zone: WBGT and its age, state, the headline regime large, ban and exemptions, then every cell (WR-4). */
 export function ZoneCard({ z, record }: { z: S["ZoneHeatState"]; record?: boolean }) {
   const t = useTranslations("heat.board");
+  const td = useTranslations("heatDesign");
   const te = useTranslations("enums");
   const { prefs } = useFormatters();
+  const needsReading = z.state !== "current";
   return (
     <Card className={cn("border-s-8", CARD_TONE[z.headline_regime])} data-testid="zone-card" data-zone={z.zone_code} data-regime={z.headline_regime} data-state={z.state}>
       <CardContent className="flex flex-col gap-3 p-4">
@@ -143,13 +145,13 @@ export function ZoneCard({ z, record }: { z: S["ZoneHeatState"]; record?: boolea
               ) : (
                 t("noPoint")
               )}
-              {z.required ? <> · {t("required")}</> : null}
+              {z.required ? <> · {td("required")}</> : null}
             </span>
           </div>
           <HeatStateBadge state={z.state} />
         </div>
         <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
-          <span className="flex items-center gap-1.5 text-3xl font-bold" data-testid="zone-wbgt">
+          <span className={cn("flex items-center gap-1.5 text-3xl font-bold", z.state === "stale" && "text-muted-foreground")} data-testid="zone-wbgt">
             <Thermometer aria-hidden className="size-6 text-muted-foreground" />
             <Wbgt v={z.wbgt_c} />
           </span>
@@ -159,13 +161,13 @@ export function ZoneCard({ z, record }: { z: S["ZoneHeatState"]; record?: boolea
             </span>
           ) : null}
         </div>
-        <div className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground">{t("headline", { workload: te(`workload.${z.headline_workload}`) })}</span>
-          <span className="flex flex-wrap items-center gap-2">
-            <RegimeBadge regime={z.headline_regime} className="px-3 py-1 text-sm [&_svg]:size-4" />
-            <RestMinutes regime={z.headline_regime} minutes={z.rest_minutes_per_hour} />
-          </span>
-        </div>
+        {needsReading ? (
+          <p className={cn("flex items-start gap-2 rounded-md border px-3 py-2 text-sm font-medium", z.state === "stale" ? "border-warning/40 bg-warning-bg text-warning" : "border-neutral/40 bg-neutral-bg text-neutral")} data-testid="zone-needs-reading">
+            <Clock aria-hidden className="mt-0.5 size-4 shrink-0" />
+            {z.state === "stale" ? td("staleLine", { n: z.age_minutes ?? 0 }) : td("unknownLine")}
+          </p>
+        ) : null}
+        <HeadlineRegime regime={z.headline_regime} minutes={z.rest_minutes_per_hour} caption={t("headline", { workload: te(`workload.${z.headline_workload}`) })} />
         {z.ban_in_force || z.active_exemptions.length ? (
           <div className="flex flex-wrap gap-1.5 text-xs">
             {z.ban_in_force ? (
@@ -183,7 +185,7 @@ export function ZoneCard({ z, record }: { z: S["ZoneHeatState"]; record?: boolea
         ) : null}
         <CellsTable cells={z.cells} />
         {record ? (
-          <Button asChild variant="outline" size="sm" className="min-h-11 sm:min-h-control">
+          <Button asChild variant={needsReading ? "default" : "outline"} className="min-h-12 text-base sm:min-h-control sm:text-sm">
             <Link href={`/wbgt-readings/new?zone=${z.zone_id}`} data-testid="zone-record">
               <Plus aria-hidden />
               {t("recordHere")}
@@ -200,7 +202,7 @@ export function CellsTable({ cells }: { cells: S["RegimeCell"][] }) {
   const t = useTranslations("heat.board");
   const te = useTranslations("enums");
   return (
-    <table className="w-full table-fixed text-xs" data-testid="regime-cells">
+    <table className="w-full table-fixed text-xs sm:text-sm" data-testid="regime-cells">
       <thead>
         <tr className="text-muted-foreground">
           <th className="w-20 py-1 text-start font-normal sm:w-24" />
@@ -221,7 +223,7 @@ export function CellsTable({ cells }: { cells: S["RegimeCell"][] }) {
               const c = cells.find((x) => x.basis === basis && x.workload === w);
               return (
                 <td key={w} className="py-1.5 text-center" data-testid="cell" data-basis={basis} data-workload={w} data-regime={c?.regime ?? ""}>
-                  {c ? <RegimeBadge regime={c.regime} code className="px-1.5" /> : "—"}
+                  {c ? <RegimeBadge regime={c.regime} code className="px-1.5 py-1 text-sm font-semibold" /> : "—"}
                 </td>
               );
             })}

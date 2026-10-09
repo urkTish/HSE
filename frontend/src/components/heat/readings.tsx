@@ -20,11 +20,11 @@ import { Code } from "@/components/access/common";
 import { UserName } from "@/components/cert/common";
 import { DecimalInput } from "@/components/ptw/common";
 import { DateFilter } from "@/components/training/common";
+import { StackedDate } from "@/components/medical/common";
 import { Link } from "@/i18n/navigation";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
 import { useHeatInstruments, useHeatRefresh, useMonitoringPoints, useWbgtReadings } from "@/lib/api/heat";
 import { riyadhDayBoundary, zonedInputToUtc } from "@/lib/datetime";
-import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
 import { CellsTable } from "./board";
 import { HeatFieldSubNav, HeatReasonDialog, RecordStatusBadge, RegimeBadge, Wbgt, nowLocalInput, useHeatCaps } from "./common";
@@ -52,7 +52,6 @@ function Readings({ project }: { project: Project }) {
   const te = useTranslations("enums");
   const tc = useTranslations("common");
   const caps = useHeatCaps(project.id);
-  const { dateTime } = useFormatters(project.id);
   const s = useSearchState();
   const page = s.getInt("page", 1) ?? 1;
   const point = s.get("point") ?? "";
@@ -122,9 +121,9 @@ function Readings({ project }: { project: Project }) {
                     </span>
                   </TD>
                   <TD label={t("measuredAt")}>
-                    <span className="ltr whitespace-nowrap">{dateTime(r.measured_at)}</span>
+                    <StackedDate v={r.measured_at} time projectId={project.id} />
                     {r.late_entry ? (
-                      <Badge tone="neutral" className="ms-1" data-testid="late-entry">
+                      <Badge tone="neutral" className="ms-1 align-top" data-testid="late-entry">
                         {t("late")}
                       </Badge>
                     ) : null}
@@ -183,6 +182,23 @@ function Readings({ project }: { project: Project }) {
   );
 }
 
+const LAST_KEY = "hse.heat.lastReading";
+function readLastReading(): { point: string; meter: string } | null {
+  try {
+    const v = JSON.parse(window.localStorage.getItem(LAST_KEY) ?? "null") as { point?: unknown; meter?: unknown } | null;
+    return v && typeof v.point === "string" && typeof v.meter === "string" ? { point: v.point, meter: v.meter } : null;
+  } catch {
+    return null;
+  }
+}
+function writeLastReading(v: { point: string; meter: string }) {
+  try {
+    window.localStorage.setItem(LAST_KEY, JSON.stringify(v));
+  } catch {
+    /* storage blocked: no default next time */
+  }
+}
+
 /* ═════════════ manual reading entry (phone-first; WB-1…WB-4, §6.1) ═════════════ */
 
 export function NewReadingPage() {
@@ -191,6 +207,7 @@ export function NewReadingPage() {
 
 function NewReading({ project }: { project: Project }) {
   const t = useTranslations("heat.entry");
+  const td = useTranslations("heatDesign");
   const tc = useTranslations("common");
   const caps = useHeatCaps(project.id);
   const refresh = useHeatRefresh();
@@ -201,11 +218,16 @@ function NewReading({ project }: { project: Project }) {
   const activePoints = (points.data?.items ?? []).filter((p) => p.active);
   const meters = (instruments.data?.items ?? []).filter((i) => i.status === "active" && i.kind === "handheld_meter");
   const fromZone = zoneParam ? activePoints.find((p) => p.zone_ids.includes(zoneParam)) : undefined;
+  // Field default: a supervisor usually reads the same point with the same meter; the last pair used on this device is
+  // pre-selected when no zone was given and it is still active (per-viewer convenience only).
+  const [last] = useState(readLastReading);
+  const lastPoint = !zoneParam && last ? activePoints.find((p) => p.id === last.point)?.id : undefined;
+  const lastMeter = last ? meters.find((i) => i.id === last.meter)?.id : undefined;
   const [pointSel, setPoint] = useState("");
-  const pointId = pointSel || fromZone?.id || "";
+  const pointId = pointSel || fromZone?.id || lastPoint || "";
   const point = activePoints.find((p) => p.id === pointId);
   const [instSel, setInstrument] = useState("");
-  const instrumentId = instSel || (point?.source_kind === "manual" ? point.instrument_id ?? "" : "") || (meters.length === 1 ? meters[0]!.id : "");
+  const instrumentId = instSel || (point?.source_kind === "manual" ? point.instrument_id ?? "" : "") || (meters.length === 1 ? meters[0]!.id : "") || lastMeter || "";
   const [at, setAt] = useState(nowLocalInput());
   const [wbgt, setWbgt] = useState("");
   const [tnwb, setTnwb] = useState("");
@@ -239,6 +261,7 @@ function NewReading({ project }: { project: Project }) {
         }),
       );
       setDone(r);
+      writeLastReading({ point: pointId, meter: instrumentId });
       await refresh();
     } catch (e) {
       setError(e);
@@ -325,7 +348,7 @@ function NewReading({ project }: { project: Project }) {
       <fieldset className="flex flex-col gap-3 rounded-md border p-3">
         <legend className="px-1 text-sm font-medium">{t("components")}</legend>
         <p className="text-xs text-muted-foreground">{point?.solar_load === false ? t("formulaIndoor") : t("formulaSolar")}</p>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 items-end gap-3">
           <FormField id="rd-tnwb" label={t("tnwb")}>
             <DecimalInput id="rd-tnwb" value={tnwb} onChange={setTnwb} className={big} data-testid="rd-tnwb" />
           </FormField>
@@ -342,6 +365,11 @@ function NewReading({ project }: { project: Project }) {
       </fieldset>
       <p className="text-xs text-muted-foreground">{t("dryBulbOnly")}</p>
       <MutationError error={error} />
+      {!ready ? (
+        <p className="text-sm text-muted-foreground" data-testid="rd-missing">
+          {td("readingMissing")}
+        </p>
+      ) : null}
       <Button className="min-h-12 text-base sm:min-h-control sm:text-sm" disabled={!ready || busy} onClick={() => void save()} data-testid="rd-save">
         {busy ? tc("saving") : t("save")}
       </Button>

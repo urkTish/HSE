@@ -416,8 +416,8 @@ export function ExemptionsPanel({ permit }: { permit: Permit }) {
                     </span>
                   ) : null}
                 </div>
-                <p className="mt-1">{x.reason_text}</p>
-                {x.heat_controls_text ? <p className="text-xs text-muted-foreground">{x.heat_controls_text}</p> : null}
+                <p className="mt-1" dir="auto">{x.reason_text}</p>
+                {x.heat_controls_text ? <p className="text-xs text-muted-foreground" dir="auto">{x.heat_controls_text}</p> : null}
                 <p className="mt-1 text-xs text-muted-foreground">
                   {t("requestedBy", { name: userLabel(x.requested_by, locale), at: dateTime(x.requested_at) })}
                   {x.decided_by ? ` · ${t("decidedBy", { name: userLabel(x.decided_by, locale), at: dateTime(x.decided_at) })}` : ""}

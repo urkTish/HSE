@@ -27,9 +27,10 @@ import { api, unwrap, type Schemas } from "@/lib/api/client";
 import { useBanExemptions, useBanPatrols, useHeatRefresh, useHeatSettings } from "@/lib/api/heat";
 import { zonedInputToUtc } from "@/lib/datetime";
 import { EXEMPTION_REASONS, EXEMPTION_STATUSES, PATROL_OUTCOMES } from "@/lib/heat-enums";
+import { StackedDate } from "@/components/medical/common";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
-import { Codes, FreeText, HeatBanSubNav, HeatReasonDialog, RecordStatusBadge, nowLocalInput, useHeatCaps } from "./common";
+import { ChoiceMark, Codes, FreeText, HeatBanSubNav, HeatReasonDialog, RecordStatusBadge, nowLocalInput, useHeatCaps } from "./common";
 
 type S = Schemas;
 type Project = S["ProjectRead"];
@@ -66,7 +67,6 @@ function Patrols({ project }: { project: Project }) {
   const tc = useTranslations("common");
   const caps = useHeatCaps(project.id);
   const opts = useProjectOptions(project.id);
-  const { dateTime } = useFormatters(project.id);
   const s = useSearchState();
   const page = s.getInt("page", 1) ?? 1;
   const zone = s.get("zone") ?? "";
@@ -127,7 +127,7 @@ function Patrols({ project }: { project: Project }) {
                     <Code>{x.zone_code}</Code>
                   </TD>
                   <TD label={t("checkedAt")}>
-                    <span className="whitespace-nowrap">{dateTime(x.checked_at)}</span>
+                    <StackedDate v={x.checked_at} time projectId={project.id} />
                     <span className="block text-xs text-muted-foreground">
                       <UserName u={x.checked_by} />
                     </span>
@@ -254,6 +254,7 @@ function PatrolDialog({ project, onClose }: { project: Project; onClose: () => v
         <legend className="mb-1 text-sm font-medium">{t("outcome")}</legend>
         {PATROL_OUTCOMES.map((o) => (
           <Button key={o} type="button" role="radio" aria-checked={outcome === o} variant={outcome === o ? (o === "violation" ? "destructive" : "default") : "outline"} className="h-auto min-h-12 whitespace-normal" onClick={() => setOutcome(o)} data-testid={`bp-${o}`}>
+            <ChoiceMark on={outcome === o} />
             {te(`patrolOutcome.${o}`)}
           </Button>
         ))}

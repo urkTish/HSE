@@ -10389,5 +10389,11 @@
       "previousSeason": "Previous season",
       "caLine": "{raised} raised, {closed} closed."
     }
+  },
+  "heatDesign": {
+    "required": "monitoring required",
+    "staleLine": "Reading {n} min old: the regime shown is kept until a new reading. Take a new reading.",
+    "unknownLine": "No reading today for this zone: take one before relying on a regime.",
+    "readingMissing": "To save: choose the point and the meter, then enter the WBGT or the temperatures."
   }
 }

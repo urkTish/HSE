@@ -25,10 +25,10 @@ import { api, unwrap, type Schemas } from "@/lib/api/client";
 import { useHeatRefresh, useHeatReference, useRestStations, useWelfareChecks } from "@/lib/api/heat";
 import { zonedInputToUtc } from "@/lib/datetime";
 import { WELFARE_ITEMS } from "@/lib/heat-enums";
-import { useFormatters } from "@/lib/use-formatters";
+import { StackedDate } from "@/components/medical/common";
 import { useSearchState } from "@/lib/url-state";
 import { cn } from "@/lib/utils";
-import { HeatFieldSubNav, HeatReasonDialog, RecordStatusBadge, Wbgt, nowLocalInput, useHeatCaps } from "./common";
+import { ChoiceMark, HeatFieldSubNav, HeatReasonDialog, RecordStatusBadge, Wbgt, nowLocalInput, useHeatCaps } from "./common";
 
 type S = Schemas;
 type Project = S["ProjectRead"];
@@ -44,7 +44,6 @@ function Checks({ project }: { project: Project }) {
   const t = useTranslations("heat.welfare");
   const tc = useTranslations("common");
   const caps = useHeatCaps(project.id);
-  const { dateTime } = useFormatters(project.id);
   const s = useSearchState();
   const page = s.getInt("page", 1) ?? 1;
   const station = s.get("station") ?? "";
@@ -106,7 +105,7 @@ function Checks({ project }: { project: Project }) {
                       <Code>{c.station_code}</Code>
                     </TD>
                     <TD label={t("checkedAt")}>
-                      <span className="whitespace-nowrap">{dateTime(c.checked_at)}</span>
+                      <StackedDate v={c.checked_at} time projectId={project.id} />
                       <span className="block text-xs text-muted-foreground">
                         <UserName u={c.checked_by} />
                       </span>
@@ -327,6 +326,7 @@ function NewCheck({ project }: { project: Project }) {
                     onClick={() => setAnswers({ ...answers, [i]: { answer: c, note: a?.note ?? "" } })}
                     data-testid={`wc-${i}-${c}`}
                   >
+                    <ChoiceMark on={a?.answer === c} />
                     {te(`checkAnswer.${c}`)}
                   </Button>
                 ))}

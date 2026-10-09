@@ -1,5 +1,5 @@
 "use client";
-import { AlertTriangle, CheckCircle2, CircleDashed, Clock, Droplets, Lock, OctagonAlert, PauseCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Circle, CircleDashed, CircleDot, Clock, Droplets, Lock, OctagonAlert, PauseCircle } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState, type ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -121,17 +121,64 @@ export function RegimeBadge({ regime, short, code, className }: { regime: S["Reg
   return (
     <Badge tone={REGIME_TONE[regime]} className={className} data-testid="regime" data-regime={regime} title={code ? full : undefined} aria-label={code ? full : undefined}>
       <Icon aria-hidden />
-      {code ? (regime === "unknown" ? te("regimeShort.unknown") : regime) : short ? te(`regimeShort.${regime}`) : full}
+      {code ? (regime === "unknown" ? te("regimeShort.unknown") : regime) : short ? te(`regimeShort.${regime}`) : <RegimeWords label={full} />}
     </Badge>
   );
 }
 
+/**
+ * "R2 · 30 work / 30 rest" with the code isolated: in Arabic the bidi algorithm otherwise glued "R2 · 30" into one
+ * left-to-right run and moved the work minutes next to the code ("30 · R2 عمل / 30 راحة").
+ */
+function RegimeWords({ label }: { label: string }) {
+  const i = label.indexOf(" · ");
+  if (i < 0) return <>{label}</>;
+  return (
+    <span>
+      <bdi>{label.slice(0, i)}</bdi>
+      {label.slice(i)}
+    </span>
+  );
+}
+
+const REGIME_PANEL: Record<S["Regime"], string> = {
+  R0: "border-success/40 bg-success-bg text-success",
+  R1: "border-info/40 bg-info-bg text-info",
+  R2: "border-warning/50 bg-warning-bg text-warning",
+  R3: "border-warning/70 bg-warning-bg text-warning",
+  R4: "border-danger/60 bg-danger-bg text-danger",
+  unknown: "border-neutral/40 bg-neutral-bg text-neutral",
+};
+
+/** The regime a supervisor acts on, sized for a phone in the sun: icon, code and work/rest split large, the rest minutes under it. */
+export function HeadlineRegime({ regime, minutes, caption }: { regime: S["Regime"]; minutes?: number | null; caption: string }) {
+  const te = useTranslations("enums");
+  const Icon = REGIME_ICON[regime];
+  return (
+    <div className={cn("flex items-center gap-3 rounded-md border-2 px-3 py-2", REGIME_PANEL[regime])} data-testid="headline-regime" data-regime={regime}>
+      <Icon aria-hidden className="size-8 shrink-0" strokeWidth={2.25} />
+      <div className="flex min-w-0 flex-col">
+        <span className="text-xs font-medium opacity-90">{caption}</span>
+        <span className="text-lg font-bold leading-snug">
+          <RegimeWords label={te(`regime.${regime}`)} />
+        </span>
+        <RestMinutes regime={regime} minutes={minutes} className="text-sm font-medium text-current" />
+      </div>
+    </div>
+  );
+}
+
+/** Radio mark for the large answer buttons: the choice reads from the shape (empty / dotted), not from the fill colour alone. */
+export function ChoiceMark({ on }: { on: boolean }) {
+  return on ? <CircleDot aria-hidden className="size-5" /> : <Circle aria-hidden className="size-5 opacity-50" />;
+}
+
 /** Rest minutes per hour for a regime (server value when given, §6.2 otherwise). */
-export function RestMinutes({ regime, minutes }: { regime: S["Regime"]; minutes?: number | null }) {
+export function RestMinutes({ regime, minutes, className }: { regime: S["Regime"]; minutes?: number | null; className?: string }) {
   const t = useTranslations("heat.common");
   const m = minutes ?? REST_MIN[regime];
   if (m === null || m === undefined) return null;
-  return <span className="text-xs text-muted-foreground">{regime === "R4" ? t("stopWork") : m === 0 ? t("normalBreaks") : t("restPerHour", { n: m })}</span>;
+  return <span className={cn("text-xs text-muted-foreground", className)}>{regime === "R4" ? t("stopWork") : m === 0 ? t("normalBreaks") : t("restPerHour", { n: m })}</span>;
 }
 
 const STATE_TONE: Record<S["HeatStateKind"], string> = { current: "valid", stale: "expiring", unknown: "unplanned" };

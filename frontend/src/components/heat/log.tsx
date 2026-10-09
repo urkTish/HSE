@@ -23,9 +23,10 @@ import { Link } from "@/i18n/navigation";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
 import { useHeatLog, useHeatLogEntry, useHeatRefresh, useHeatReference } from "@/lib/api/heat";
 import { HEAT_LOG_STATUSES, REVIEW_ANSWERS, REVIEW_QUESTIONS } from "@/lib/heat-enums";
+import { StackedDate } from "@/components/medical/common";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
-import { FreeText, HeatReasonDialog, RegimeBadge, SensitiveNote, Wbgt, useHeatCaps } from "./common";
+import { ChoiceMark, FreeText, HeatReasonDialog, RegimeBadge, SensitiveNote, Wbgt, useHeatCaps } from "./common";
 
 type S = Schemas;
 type Project = S["ProjectRead"];
@@ -68,7 +69,6 @@ function Log({ project }: { project: Project }) {
   const te = useTranslations("enums");
   const tc = useTranslations("common");
   const caps = useHeatCaps(project.id);
-  const { dateTime } = useFormatters(project.id);
   const s = useSearchState();
   const page = s.getInt("page", 1) ?? 1;
   const status = (s.get("status") ?? "") as S["HeatLogStatus"] | "";
@@ -110,7 +110,7 @@ function Log({ project }: { project: Project }) {
                   </TD>
                   <TD label={t("worker")}>{e.worker ? <WorkerLabel w={e.worker} /> : "—"}</TD>
                   <TD label={t("event")}>
-                    <span className="whitespace-nowrap">{dateTime(e.event_at)}</span>
+                    <StackedDate v={e.event_at} time projectId={project.id} />
                     {e.zone_code ? <Code className="block text-xs text-muted-foreground">{e.zone_code}</Code> : null}
                   </TD>
                   <TD label={t("source")}>
@@ -118,7 +118,7 @@ function Log({ project }: { project: Project }) {
                     {e.source_ref ? <Code className="block text-xs text-muted-foreground">{e.source_ref}</Code> : null}
                   </TD>
                   <TD label={t("controlGap")}>{e.status === "reviewed" ? <ControlGap gap={e.control_gap} /> : e.control_gap ? <ControlGap gap /> : "—"}</TD>
-                  <TD label={t("reviewDue")}>{e.status === "open" ? <span className="whitespace-nowrap">{dateTime(e.review_due_at)}</span> : "—"}</TD>
+                  <TD label={t("reviewDue")}>{e.status === "open" ? <StackedDate v={e.review_due_at} time projectId={project.id} /> : "—"}</TD>
                   <TD label={tc("status")}>
                     <HeatLogStatusBadge status={e.status} />
                   </TD>
@@ -365,9 +365,10 @@ function ReviewForm({ e, qLabel }: { e: Entry; qLabel: (q: string) => string }) 
               <Code className="me-2 font-semibold">{q}</Code>
               {qLabel(q)}
             </span>
-            <span className="grid grid-cols-4 gap-1" role="radiogroup" aria-label={q}>
+            <span className="grid grid-cols-2 gap-1 sm:grid-cols-4" role="radiogroup" aria-label={q}>
               {REVIEW_ANSWERS.filter((a) => a !== "na" || q === "HC4").map((a) => (
-                <Button key={a} type="button" size="sm" role="radio" aria-checked={answers[q] === a} variant={answers[q] === a ? (a === "no" ? "destructive" : "default") : "outline"} onClick={() => setAnswers({ ...answers, [q]: a })} data-testid={`rv-${q}-${a}`}>
+                <Button key={a} type="button" size="sm" className="min-h-11 sm:min-h-0" role="radio" aria-checked={answers[q] === a} variant={answers[q] === a ? (a === "no" ? "destructive" : "default") : "outline"} onClick={() => setAnswers({ ...answers, [q]: a })} data-testid={`rv-${q}-${a}`}>
+                  <ChoiceMark on={answers[q] === a} />
                   {te(`reviewAnswer.${a}`)}
                 </Button>
               ))}

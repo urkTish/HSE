@@ -25,7 +25,7 @@ import { useAcclimatisationPlan, useAcclimatisationPlans, useHeatRefresh } from 
 import { PLAN_STATUSES, PLAN_TYPES } from "@/lib/heat-enums";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
-import { FreeText, HeatFieldSubNav, HeatReasonDialog, PlanStatusBadge, useHeatCaps } from "./common";
+import { ChoiceMark, FreeText, HeatFieldSubNav, HeatReasonDialog, PlanStatusBadge, useHeatCaps } from "./common";
 
 type S = Schemas;
 type Project = S["ProjectRead"];
@@ -298,6 +298,7 @@ function ConfirmDayDialog({ plan, day, onClose }: { plan: Plan; day: S["PlanDay"
         <legend className="mb-1 text-sm font-medium">{t("followedQ")}</legend>
         {(["yes", "no"] as const).map((v) => (
           <Button key={v} type="button" variant={followed === v ? "default" : "outline"} className="min-h-12" onClick={() => setFollowed(v)} aria-pressed={followed === v} data-testid={`followed-${v}`}>
+            <ChoiceMark on={followed === v} />
             {v === "yes" ? t("followed") : t("notFollowed")}
           </Button>
         ))}
