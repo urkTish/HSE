@@ -5,7 +5,7 @@
 - Module: heat stress (spec `docs/specs/6b-heat-stress.md` v1.0, §11 earlier-spec changes applied)
 - Phase 6b step = Design done (findings `docs/design/phase-6b-findings.md`; contract v0.8.0); phase demo next
 - Phase 6c — Emergency preparedness & drills (spec `docs/specs/6c-emergency-drills.md` v1.0, §11 earlier-spec changes applied; contract v0.9.0)
-- Phase 6c step = Frontend done (design pass next)
+- Phase 6c step = Design done (findings `docs/design/phase-6c-findings.md`; contract v0.9.0); phase demo next
 - Phase 6d — Field assurance (checklists, audits, toolbox talks): spec `docs/specs/6d-field-assurance.md` v1.0 (61 ACs; §11 earlier-spec changes applied); contract next
 
 ## Phase log
@@ -646,6 +646,13 @@
 - E2E (Playwright, real backend): full suite 71 passed, 2 skipped (screenshot specs, on demand) on a fresh migrated + seeded DB — 35 Phase 0 + 36 Phase 1 tests in `e2e/p1-*.spec.ts` — dashboard (AC55, 59, 60, 61, 62, 63, 64, filters in URL, drill-down, charts, mobile), AI (AC65, 72, 73, 74, 75, insufficient data, errors, Arabic) via a recorded SSE stream in `e2e/fixtures/ai-stream.ts` (typed against the contract, replayed with `page.route`; test-only), workforce/import (AC2, 3, 4, 7, 10), incidents/PDPL (AC13, 19, 20, 21, 29, 30, 31, 33), CAs (AC40, 41, 42, 43), observations (AC35) and create flows for observations, inspections, meetings, settings, reports. Phase 0 specs unchanged except a wait in AC12 (options load asynchronously).
 - Screenshots: `docs/screenshots/phase-1/` (run `SCREENSHOTS=1 npx playwright test e2e/screenshots-p1.spec.ts`).
 
+### Design pass — Phase 6c (UI/UX Designer)
+- Design pass: done (Phase 6c).
+  - Findings, ranking and the Phase 6c design-system additions: `docs/design/phase-6c-findings.md`.
+  - Before/after screenshots: `docs/screenshots/phase-6c/design/`; 6c screenshots regenerated (new: `28-muster-sheet-{en,ar}`, printed A4; the screenshot muster now has eight expected, five scanned, three missing).
+  - Done: muster missing figure first and large with a state icon, expected / accounted / resolved tiles with icons and a progress line, Void moved to the page end, larger roll actions and filter icons; A4 bilingual muster sheet (header, facts, bordered confidentiality note, names in both scripts, tick boxes, notes column, per-contractor "present __ / N", signature block, @page footer); board open-muster card "n of m accounted for" (red only while someone is unaccounted) and tidier next-drill rows; criterion code / label gap fixed in Arabic; icons on pass / fail, outstanding counts, resolution reasons and over-target times; ICU plural for "criteria failed".
+  - p6c e2e specs green (21 passed); lint, typecheck, i18n check green. Backend run from a clean `git archive HEAD` export (uncommitted 6d backend work in the tree).
+
 ### Design pass — Phase 6b (UI/UX Designer)
 - Design pass: done (Phase 6b).
   - Findings, ranking and the Phase 6b design-system additions: `docs/design/phase-6b-findings.md`.
@@ -866,6 +873,12 @@ L items from the Phase 4 design pass (details in `docs/design/phase-4-findings.m
 - **P16. Certificate line on the deployment page.** The equipment-on-project page (the one an engineer opens for "the crane on my site") shows usable / not usable but not the certificate number, TPI, SWL and limitations. Needs `current_line` on `EquipmentDeploymentRead`.
 - **P17. Tag board field display.** A "problems only" toggle and a kiosk / TV mode for site offices (large tiles, problems first per zone, auto-refresh, no navigation chrome).
 - **P1 / P2 also apply to Phase 4.** Two-calendar dates make certificate rows 4–5 lines; equipment, scaffold and personnel-card actions come before the state on phones.
+
+L items from the Phase 6c design pass (details in `docs/design/phase-6c-findings.md`):
+- **P25. Muster controller view.** Read-only view of an open muster for the incident controller on a tablet / TV: the missing panel and the missing names grouped by contractor with the last gate entry, auto-refresh, no chrome (shares the P17 / P22 kiosk mode). Needs the last gate row per entry on `MusterEntryRead` (contract change).
+- **P26. Offline queue for muster scans.** Scans at assembly points without signal kept on the device with their time, sent on reconnect, "pending sync" in the roll (same idempotency question as P23).
+- **P27. Full-width zone checklist in the declare dialog on phones.** Shared `MultiSelect` change, affects filters in every phase.
+- **P1 / P2 also apply to Phase 6c.** A sticky "Scan access card" bar would keep the main muster action under the thumb while scrolling the roll.
 
 L items from the Phase 6b design pass (details in `docs/design/phase-6b-findings.md`):
 - **P21. A "severe" orange step for R3.** R2 and R3 share one amber (they differ by icon and words). A token between warning and danger, AA in light and dark, would set R3 apart; platform-wide safety semantics, so the user decides.
