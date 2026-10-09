@@ -75,7 +75,7 @@ export function TransitionActions<S extends string>({
             key={o.to}
             variant={o.destructive ? "destructive-outline" : "outline"}
             size="sm"
-            className={o.destructive && i > 0 && !all[i - 1].destructive ? "sm:ms-3" : undefined}
+            className={o.destructive && i > 0 && !all[i - 1]?.destructive ? "sm:ms-3" : undefined}
             onClick={() => start(o)}
             data-testid={`transition-${o.to}`}
           >
