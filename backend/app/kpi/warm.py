@@ -18,10 +18,17 @@ import threading
 import time
 import uuid
 from collections.abc import Iterable
+from datetime import date
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import select
 
 from app.core.config import get_settings
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import Session
+
+    from app.models import Project
 
 log = logging.getLogger(__name__)
 
@@ -135,5 +142,35 @@ def warm(key: tuple[uuid.UUID, ...]) -> None:
         if train is not None:
             for pid in key:
                 train._base(pid)
+                # K-82..K-84 evaluate each sparkline month of the default (current month) view
+                for d in _sparkline_days(projects, pid):
+                    train.peval(pid, d)
+        if len(projects) == 1:
+            _action_panel_inputs(db, projects[0], train)
         # closed, not rolled back: a rollback would expire the cached ORM rows (CertSettings,
         # ...) and later requests could not refresh them from another session
+
+
+def _action_panel_inputs(db: Session, project: Project, train: Any) -> None:
+    """The action panel's inputs beyond the facts: today's training evaluation with the
+    enforcement lines (cached with the facts) and the hook-readiness planning count (cert /
+    medical readiness reports, seconds per project; cached per project and day for 5 minutes,
+    independent of writes)."""
+    from app.core.clock import today  # noqa: PLC0415
+    from app.hse_jobs import system_principal  # noqa: PLC0415
+    from app.services.cert import dashboard_items  # noqa: PLC0415
+
+    tz = project.settings.timezone if project.settings else "Asia/Riyadh"
+    day = today(tz)
+    if train is not None:
+        train.peval_full(project.id, day)
+    dashboard_items.not_ready_count(db, system_principal(db), project.id, day)
+
+
+def _sparkline_days(projects: list[Project], pid: uuid.UUID) -> list[date]:
+    from app.core.clock import today  # noqa: PLC0415
+    from app.kpi.periods import month_end, months_ending  # noqa: PLC0415
+
+    p = next(x for x in projects if x.id == pid)
+    day = today(p.settings.timezone if p.settings else "Asia/Riyadh")
+    return [min(day, w.end) for w in months_ending(month_end(day), 12)]

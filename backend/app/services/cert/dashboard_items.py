@@ -478,6 +478,29 @@ def _not_ready(
     return n
 
 
+def not_ready_count(db: Session, p: Principal, pid: uuid.UUID, day: date) -> int:
+    """Hook codes blocking within 7 days whose readiness is < 100 % (§8.3), cached per
+    (project, kind, day); app.kpi.warm fills it off the request path."""
+    from app.services.cert import readiness  # noqa: PLC0415
+
+    n = 0
+    for st in db.scalars(
+        select(HookPolicyState).where(
+            HookPolicyState.project_id == pid,
+            HookPolicyState.stage != HookStage.block,
+            # training codes have their own item (5-training §8.3)
+            HookPolicyState.kind != HookKind.training_course,
+        )
+    ):
+        soon = [
+            w for w, done in ((st.critical_block_from, st.critical_switched_at), (st.general_block_from, st.general_switched_at))
+            if done is None and day <= w <= day + timedelta(days=7)
+        ]  # fmt: skip
+        if soon:
+            n += _not_ready(db, p, pid, HookKind(st.kind), day, tuple(soon), readiness)
+    return n
+
+
 def action_items(
     db: Session,
     p: Principal,
@@ -670,25 +693,7 @@ def action_items(
     add(A.trade_cert_missing, sum(trade.values()), Severity.warning,
         link("personnel_certificates", pc_link, eflt), trade)  # fmt: skip
     # hook block ≤ 7 days with readiness < 100 %
-    not_ready = 0
-    if c.full:
-        from app.services.cert import readiness  # noqa: PLC0415
-
-        for st in db.scalars(
-            select(HookPolicyState).where(
-                HookPolicyState.project_id == pid,
-                HookPolicyState.stage != HookStage.block,
-                # training codes have their own item (5-training §8.3)
-                HookPolicyState.kind != HookKind.training_course,
-            )
-        ):
-            soon = [
-                w for w, done in ((st.critical_block_from, st.critical_switched_at), (st.general_block_from, st.general_switched_at))
-                if done is None and day <= w <= day + timedelta(days=7)
-            ]  # fmt: skip
-            if not soon:
-                continue
-            not_ready += _not_ready(db, p, pid, HookKind(st.kind), day, tuple(soon), readiness)
+    not_ready = not_ready_count(db, p, pid, day) if c.full else 0
     add(A.hook_block_soon_not_ready, not_ready, Severity.warning,
         link("hook_readiness", f"{base}/hook-readiness", {}), None)  # fmt: skip
     # ban reviews due (HSE Manager / Officer: decision 8)
