@@ -10189,7 +10189,7 @@
       "patrolsTitle": "Midday-ban patrols",
       "patrolsSubtitle": "Checks that no work without a permit runs in direct sun during the ban hours.",
       "record": "Record patrol",
-      "recordHint": "Inside the ban hours of a ban date. Photograph the work, not faces.",
+      "recordHint": "Inside the ban hours of a ban date, within the last 4 hours.",
       "zone": "Zone",
       "outcome": "Outcome",
       "day": "Day",

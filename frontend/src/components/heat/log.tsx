@@ -279,7 +279,9 @@ function EntryView({ project, e }: { project: Project; e: Entry }) {
           <CardTitle className="text-base">{t("review")}</CardTitle>
         </CardHeader>
         <CardContent>
-          {e.review ? (
+          {caps.reviewer && e.status === "open" ? (
+            <ReviewForm e={e} qLabel={qLabel} />
+          ) : e.review ? (
             <div className="flex flex-col gap-3">
               <Table>
                 <TBody>
@@ -306,8 +308,6 @@ function EntryView({ project, e }: { project: Project; e: Entry }) {
                 </p>
               ) : null}
             </div>
-          ) : caps.reviewer && e.status === "open" ? (
-            <ReviewForm e={e} qLabel={qLabel} />
           ) : (
             <p className="text-sm text-muted-foreground">{t("notReviewed")}</p>
           )}
@@ -337,8 +337,9 @@ function ReviewForm({ e, qLabel }: { e: Entry; qLabel: (q: string) => string }) 
   const t = useTranslations("heat.log");
   const te = useTranslations("enums");
   const refresh = useHeatRefresh();
-  const [answers, setAnswers] = useState<Record<string, S["ReviewAnswer"]>>({});
-  const [factors, setFactors] = useState("");
+  // A reopened entry starts from the previous answers.
+  const [answers, setAnswers] = useState<Record<string, S["ReviewAnswer"]>>(() => ({ ...(e.review?.answers ?? {}) }) as Record<string, S["ReviewAnswer"]>);
+  const [factors, setFactors] = useState(e.review?.factors_text ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const all = REVIEW_QUESTIONS.every((q) => answers[q]);

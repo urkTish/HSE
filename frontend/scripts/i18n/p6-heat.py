@@ -266,7 +266,7 @@ P = {
       "patrolsTitle": ["Midday-ban patrols", "جولات حظر الظهيرة"],
       "patrolsSubtitle": ["Checks that no work without a permit runs in direct sun during the ban hours.", "التحقق من عدم وجود أعمال دون تصريح تحت الشمس المباشرة خلال ساعات الحظر."],
       "record": ["Record patrol", "تسجيل جولة"],
-      "recordHint": ["Inside the ban hours of a ban date. Photograph the work, not faces.", "خلال ساعات الحظر في أيام الحظر. صوّر العمل لا الوجوه."],
+      "recordHint": ["Inside the ban hours of a ban date, within the last 4 hours.", "خلال ساعات الحظر في أيام الحظر، وخلال آخر 4 ساعات."],
       "zone": ["Zone", "المنطقة"],
       "outcome": ["Outcome", "النتيجة"],
       "day": ["Day", "اليوم"],

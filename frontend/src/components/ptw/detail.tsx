@@ -368,7 +368,7 @@ function Overview({ p }: { p: Permit }) {
             <FieldItem label={tp("exposure")}>{te(`exposure.${p.exposure}`)}</FieldItem>
             {p.heat_workload ? (
               <FieldItem label={tp("heatWorkload")}>
-                <span data-testid="permit-heat-workload" data-workload={p.heat_workload}>
+                <span data-testid="permit-heat-workload" data-workload={p.heat_workload} data-clothing={p.heat_clothing ?? ""}>
                   {te(`workload.${p.heat_workload}`)}
                 </span>
                 <span className="block text-xs text-muted-foreground">
