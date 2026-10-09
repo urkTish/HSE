@@ -112,14 +112,16 @@ const REGIME_TONE: Record<S["Regime"], "success" | "info" | "warning" | "danger"
 const REGIME_ICON = { R0: CheckCircle2, R1: Clock, R2: PauseCircle, R3: AlertTriangle, R4: OctagonAlert, unknown: CircleDashed } as const;
 
 /** Regime (R0…R4) with colour, icon and words; never colour alone. `short` shows the code and the work/rest split only. */
-export function RegimeBadge({ regime, short, className }: { regime: S["Regime"] | null | undefined; short?: boolean; className?: string }) {
+export function RegimeBadge({ regime, short, code, className }: { regime: S["Regime"] | null | undefined; short?: boolean; code?: boolean; className?: string }) {
   const te = useTranslations("enums");
   if (!regime) return <span>—</span>;
   const Icon = REGIME_ICON[regime];
+  // `code`: the bare regime code (R0…R4) for dense grids; the full label is the tooltip and accessible name.
+  const full = te(`regime.${regime}`);
   return (
-    <Badge tone={REGIME_TONE[regime]} className={className} data-testid="regime" data-regime={regime}>
+    <Badge tone={REGIME_TONE[regime]} className={className} data-testid="regime" data-regime={regime} title={code ? full : undefined} aria-label={code ? full : undefined}>
       <Icon aria-hidden />
-      {short ? te(`regimeShort.${regime}`) : te(`regime.${regime}`)}
+      {code ? (regime === "unknown" ? te("regimeShort.unknown") : regime) : short ? te(`regimeShort.${regime}`) : full}
     </Badge>
   );
 }

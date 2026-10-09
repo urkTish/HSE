@@ -203,9 +203,9 @@ export function CellsTable({ cells }: { cells: S["RegimeCell"][] }) {
     <table className="w-full table-fixed text-xs" data-testid="regime-cells">
       <thead>
         <tr className="text-muted-foreground">
-          <th className="w-24 py-1 text-start font-normal" />
+          <th className="w-20 py-1 text-start font-normal sm:w-24" />
           {WORKLOADS.map((w) => (
-            <th key={w} className="py-1 text-center font-normal">
+            <th key={w} className="px-0.5 py-1 text-center font-normal leading-tight">
               {te(`workload.${w}`)}
             </th>
           ))}
@@ -221,7 +221,7 @@ export function CellsTable({ cells }: { cells: S["RegimeCell"][] }) {
               const c = cells.find((x) => x.basis === basis && x.workload === w);
               return (
                 <td key={w} className="py-1.5 text-center" data-testid="cell" data-basis={basis} data-workload={w} data-regime={c?.regime ?? ""}>
-                  {c ? <RegimeBadge regime={c.regime} short className="px-1.5" /> : "—"}
+                  {c ? <RegimeBadge regime={c.regime} code className="px-1.5" /> : "—"}
                 </td>
               );
             })}
