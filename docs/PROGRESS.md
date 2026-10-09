@@ -4,6 +4,7 @@
 - Phase: 6a — Occupational health & medical fitness (Phase 5 Training is PARKED, see below)
 - Module: occupational health (spec `docs/specs/6a-occupational-health.md` v1.0)
 - Step: Frontend done (screens against contract v0.7.0 and the stage 2 backend, p6a e2e green, EN/AR screenshots); design pass next
+- Next module spec: 6b spec v1.0 written (`docs/specs/6b-heat-stress.md`, 61 ACs; earlier-spec changes in its §11 not yet applied)
 
 ## Phase log
 - Phase 0 — Foundation: built, e2e green, design pass done (2026-10-05). The user asked to continue phase after phase without per-phase approval; open questions are collected below for a single review.
