@@ -1,6 +1,6 @@
 # Module Spec — Phase 6a: Occupational Health & Medical Fitness (fitness register, restrictions, holds, return to work, `medical_fitness` hook)
 
-**Version:** v1.0 · **Date:** 2026-10-08 · **Author:** HSE Consultant Agent · **Status:** Draft. The HSE Manager asked to proceed without waiting for approval and will review the choices later (§10).
+**Version:** v1.1 · **Date:** 2026-10-09 · **Author:** HSE Consultant Agent · **Status:** Draft. The HSE Manager asked to proceed without waiting for approval and will review the choices later (§10).
 **Builds on:**
 - `0-foundation.md` v1.0: roles, scoping legend, rules 14, 16, 28, 35, 45 and 48, PDPL P1–P13, matrix rows 1–19.
 - `1-dashboard.md` v1.4: injury cases §3.4 (worker_id, case_category, nature, rtw_date), list N natures heat_exhaustion / heat_stroke, the I-rules, capabilities 29–30, rounding K-R8, warnings E1–E13, the AI tools T1–T17, the action panel and the expiring-items endpoint.
@@ -318,7 +318,7 @@ These extend Phase 0 §3.9, Phase 1 §3.10, Phase 2 §3.22, Phase 3 §3.17, Phas
 | medical_line_max_due_days | أقصى مهلة لبند الخطة | int | 30 (R7 silica) | 0–30 |
 | rtw_hold_case_categories | تصنيفات الإصابة التي توجب إيقافاً حتى التقييم | case_category[] | [LTI, RWC, JTC] | add only (MTC, FAC may be added) |
 | heat_illness_natures | طبائع الإصابة الحرارية | nature[] | [heat_exhaustion, heat_stroke] | add only |
-| exposure_group_trade_defaults | مجموعات التعرض الافتراضية حسب المهنة | map EG → trade[] | noise_85: [plant_operator, welder]; silica_rcs: [mason]; ionising_radiation: []; heat_outdoor: [] | add only |
+| exposure_group_trade_defaults | مجموعات التعرض الافتراضية حسب المهنة | map EG → trade[] | noise_85: [plant_operator, welder]; silica_rcs: [mason]; ionising_radiation: []; heat_outdoor: [labourer, steel_fixer, steel_erector, scaffolder, rigger, mason, carpenter, flagman, welder] (v1.1, 6b) | add only |
 | medical_compliance_warning_pct | حد إنذار الامتثال الطبي | decimal | 98.0 ASSUMPTION | 80.0–100.0 |
 | health_cell_min | الحد الأدنى لحجم الخلية الإحصائية | int | 5 | 5–10 |
 | fitness_scan_retention_months | الاحتفاظ بصور الشهادات | int | 12 ASSUMPTION | 6–24 |
@@ -513,7 +513,7 @@ As Phase 1 §3.2: Uploaded → Validated (dry-run) → Committed / Discarded; Va
 - RW-1. For an injury-case hold, an OH Practitioner holding the Phase 1 capabilities 29–30 (§11.1) sees the case ref, category, dates and medical fields in Phase 1. 6a copies none of them.
 - RW-2. When a Phase 1 user saves an rtw_date earlier than the release date of the case's hold, or saves it while the hold is still Active, Phase 1 shows warning `RTW_BEFORE_CLEARANCE` and saves anyway (Phase 1 records facts). FH-8c records the breach.
 - RW-3. When the releasing assessment of an `rtw_after_injury` hold is fit_with_restrictions, the incident's HSE Officer receives the prompt "Check whether restricted-work days apply to case <case_no> (OSHA 1904.7(b)(4)) / تحقق من أيام العمل المقيد". This is a prompt only; 6a never changes the case.
-- RW-4. Heat-illness holds of 6a are the "heat-illness log" that 6b will analyse. 6a stores no temperatures and no clinical details.
+- RW-4. The heat-illness log is `6b-heat-stress.md` §3.11; it links 6a holds and stores no clinical data (v1.1). 6a stores no temperatures and no clinical details.
 
 ### 5.10 Hook provider and the warn → block transition (HK6)
 - HK6-1. **Provider registration:** the HSE Manager enables medical hooks on a project (capability 164). This requires `medical_register_from` set and ≤ today (`MEDICAL_REGISTER_NOT_LIVE`), at least one Approved site_clinic or external_clinic serving the project (`NO_MEDICAL_PROVIDER`), and the readiness report shown first (HK6-9). provider_registered_on = that local date. From then on, Phase 2 no longer returns `HOOK_NOT_AVAILABLE` for kind medical_fitness on the project, and the Phase 2 setting `hook_policy.medical_fitness` is superseded by the hook policy state (§11.3).
@@ -1238,3 +1238,4 @@ All 6a settings are at the §3.12 defaults; `medical_register_from` = 2026-08-01
 | Version | Date | Author | Change |
 |---|---|---|---|
 | v1.0 | 2026-10-08 | HSE Consultant Agent | First issue. §1–§11 and Appendix A. New role `oh_practitioner` with three access tiers; fitness code catalogue (11 codes) and restriction/exposure lists; providers and examiners; requirement plan and health profiles; site-clinic and external assessments with verification; holds, referrals and return to work; the `medical_fitness` hook provider with the Phase 4 warn → block mechanism; imports. Capabilities 146–165, KPIs K-89…K-96, warnings E14–E15, AI tool T18, charts C22–C24. Earlier-spec changes listed in §11, not yet applied: 0-foundation v1.1, 1-dashboard v1.5, 2-access-permits v1.4, 3-ptw v1.3, 4-third-party-cert v1.2, 5-training v1.1. |
+| v1.1 | 2026-10-09 | HSE Consultant Agent | Changes required by Phase 6b (`6b-heat-stress.md` v1.0 §11.5); no 6a behaviour change: (1) `exposure_group_trade_defaults.heat_outdoor` default labourer, steel_fixer, steel_erector, scaffolder, rigger, mason, carpenter, flagman, welder (add only; existing profiles get the group lazily, DECISIONS #127); (2) RW-4 wording; (3) when 6b `heat_fitness_required` = true, a hook-free manual plan line `exposure_group heat_outdoor → HEAT-EXPOSURE-FIT` (due 0) is created; (4) 6b consumes `medical.hold_changed` (release → AP-1c) and `medical.fitness_changed` (AP-6). |
