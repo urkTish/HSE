@@ -1,5 +1,5 @@
-"""Phase 5 reference data (spec 5-training §3.15): the seeded course catalogue (31 courses),
-list labels, hook codes (HK5-2) and the settings defaults (§3.16)."""
+"""Phase 5 reference data (spec 5-training §3.15): the seeded course catalogue (32 courses, v1.2
+adds WAH-RESCUE), list labels, hook codes (HK5-2) and the settings defaults (§3.16)."""
 
 from __future__ import annotations
 
@@ -113,6 +113,9 @@ CATALOGUE: tuple[Course, ...] = (
     Course("CSE-RESCUE", "Confined space rescue team", "فريق إنقاذ الأماكن المحصورة",
            CAT.high_risk_task, 12, "16.00", practical=True,
            prereq=("CSE-ENTRANT", "FIRST-AID"), satisfies=("CSE-ENTRANT", "CSE-ATTENDANT")),
+    # 5-training v1.2 §11.6 (6c): height rescue teams (RT-2)
+    Course("WAH-RESCUE", "Rescue from height", "الإنقاذ من المرتفعات", CAT.high_risk_task, 24,
+           "8.00", practical=True, prereq=("WAH",)),
     Course("GAS-TEST", "Gas testing (atmospheric monitoring)", "فحص الغازات", CAT.ptw_role, 24,
            "8.00", practical=True),
     Course("H2S-AWR", "H₂S awareness and escape", "التوعية بغاز كبريتيد الهيدروجين والهروب",
@@ -157,7 +160,7 @@ CATALOGUE: tuple[Course, ...] = (
          "30.00", ACB.osha_otc),
 )  # fmt: skip
 BY_CODE = {c.code: c for c in CATALOGUE}
-assert len(CATALOGUE) == 31  # noqa: S101
+assert len(CATALOGUE) == 32  # noqa: S101
 
 # HK5-2: codes called by Phases 2–3 today (the first list).
 HOOK_CODES_TODAY = (

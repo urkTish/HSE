@@ -629,6 +629,14 @@ def main() -> int:
 
         seed_med_data(db, password)
         db.commit()
+        from app.seed_heat import seed_heat_data  # noqa: PLC0415
+
+        seed_heat_data(db)
+        db.commit()
+        from app.seed_emergency import seed_emergency_data  # noqa: PLC0415
+
+        seed_emergency_data(db)
+        db.commit()
     print("Seed data loaded.")
     return 0
 
