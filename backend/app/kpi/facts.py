@@ -33,6 +33,9 @@ class WfFact:
     # 5-training TH-6: daily-return training_hours of register days (excluded from trn; kept for
     # the TH-7 reconciliation)
     trn_reg: Decimal = Decimal(0)
+    # 6d SRC-2: daily-return toolbox fields of register days (excluded from tbt; SRC-3)
+    tbt_dr: int = 0
+    tbt_att_dr: int = 0
     reported: bool = True
     project: UUID | None = None
     ids: tuple[UUID, ...] = ()  # return ids (drill-down only)
@@ -47,6 +50,18 @@ class IndFact:
     eng: UUID | None
     site: UUID | None
     project: UUID
+
+
+@dataclass(frozen=True, slots=True)
+class TbtFact:
+    """6d SRC-2 K-36: a Delivered / Locked register talk (dates ≥ toolbox_register_from),
+    attributed to the host engagement; att = named contractor_worker rows + unnamed_count."""
+
+    d: date
+    eng: UUID | None
+    site: UUID | None
+    project: UUID
+    att: int
 
 
 @dataclass(frozen=True, slots=True)
@@ -197,6 +212,9 @@ class ZoneFact:
 class Facts:
     wf: list[WfFact] = field(default_factory=list)
     inds: list[IndFact] = field(default_factory=list)
+    tbts: list[TbtFact] = field(default_factory=list)
+    # 6d SRC-3: project → toolbox_register_from
+    tbt_from: dict[UUID, date] = field(default_factory=dict)
     cases: list[CaseFact] = field(default_factory=list)
     events: list[EventFact] = field(default_factory=list)
     obs: list[ObsFact] = field(default_factory=list)

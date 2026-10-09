@@ -385,6 +385,36 @@ def emergency_seed(_fresh_data: None, _emergency_template: str) -> None:
     _clone(_emergency_template)
 
 
+# ---- Phase 6d: field assurance Appendix A on top of the Phase 6c world --------------------------
+
+FIELD_TEMPLATE = TEST_DB.rsplit("/", 1)[1] + "_field_tpl"
+
+
+@pytest.fixture(scope="session")
+def _field_template(_emergency_template: str) -> str:
+    """Phase 0-6c template + the 6d Appendix A seed (FD9)."""
+    from app.seed_field import seed_field_data
+
+    _clone(_emergency_template)
+    with get_sessionmaker()() as db:
+        seed_field_data(db)
+        db.commit()
+    get_engine().dispose()
+    name = _db_name()
+    _admin_exec(
+        _terminate(name),
+        f"DROP DATABASE IF EXISTS {FIELD_TEMPLATE}",
+        f"CREATE DATABASE {FIELD_TEMPLATE} TEMPLATE {name}",
+    )
+    return FIELD_TEMPLATE
+
+
+@pytest.fixture
+def field_seed(_fresh_data: None, _field_template: str) -> None:
+    """Replace the test database with a copy of the Phase 6d template."""
+    _clone(_field_template)
+
+
 @pytest.fixture
 def noon() -> Iterator[None]:
     """Pin the clock to Appendix A "today" (2026-10-06 12:00 Asia/Riyadh = 09:00Z)."""

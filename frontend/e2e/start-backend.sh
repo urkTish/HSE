@@ -23,7 +23,7 @@ export FRONTEND_BASE_URL="${FRONTEND_BASE_URL:-http://localhost:3000}"
 export PRIVACY_NOTICE_VERSION="${PRIVACY_NOTICE_VERSION:-PN-1.0}"
 
 uv run alembic upgrade head
-# Loads every phase's Appendix A seed (Phase 0-6c, including the 6b heat and 6c emergency seeds).
+# Loads every phase's Appendix A seed (Phase 0-6d, including the 6b heat, 6c emergency and 6d field seeds).
 uv run python -m app.seed
 # Shared e2e clock (e2e/clock.ts): the API runs at the same shifted instant as the tests and browsers,
 # by default the PTW seed instant 2026-10-06 10:00 Riyadh, with time moving on (HSE_CLOCK_MODE advancing).

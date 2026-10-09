@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from app.core.clock import now
 from app.core.enums import AuditAction, Capability, EntityType, NotificationKind
 from app.core.errors import ApiError, ErrorCode, validation_error
+from app.core.field_enums import Rotation, TemplateKind
 from app.core.hse_enums import (
     CaSourceType,
     InspectionFrequency,
@@ -21,7 +22,15 @@ from app.core.hse_enums import (
     InspectionType,
     Weekday,
 )
-from app.models import CorrectiveAction, Inspection, InspectionPlan, Project
+from app.models import (
+    ChecklistResponse,
+    CorrectiveAction,
+    Inspection,
+    InspectionPlan,
+    Project,
+    ProjectEngagement,
+    Zone,
+)
 from app.schemas.inspections import (
     FindingRead,
     InspectionCancel,
@@ -75,8 +84,10 @@ def due_dates(plan: InspectionPlan, start: date, end: date) -> Iterator[date]:
         if lo <= plan.start_date <= hi:
             yield plan.start_date
         return
-    if f == InspectionFrequency.monthly:
-        y, m = lo.year, lo.month
+    if f in (InspectionFrequency.monthly, InspectionFrequency.quarterly):
+        # 6d §3.3: quarterly = the start date's day of month every 3 months, clamped
+        step = 3 if f == InspectionFrequency.quarterly else 1
+        y, m = plan.start_date.year, plan.start_date.month
         while True:
             last = calendar.monthrange(y, m)[1]
             d = date(y, m, min(plan.start_date.day, last))
@@ -84,7 +95,8 @@ def due_dates(plan: InspectionPlan, start: date, end: date) -> Iterator[date]:
                 return
             if d >= lo:
                 yield d
-            y, m = (y + 1, 1) if m == 12 else (y, m + 1)
+            m += step
+            y, m = (y + (m - 1) // 12, (m - 1) % 12 + 1)
     d = lo
     if f == InspectionFrequency.daily:
         while d <= hi:
@@ -118,9 +130,16 @@ def generate(db: Session, plan: InspectionPlan, today: date) -> int:
         )
     )
     n = 0
+    rot = _rotation(plan, today, end)
     for d in due_dates(plan, today, end):
         if d in existing:
             continue
+        zone_id, eng_id = plan.zone_id, plan.engagement_id
+        if d in rot:  # 6d ISP-2
+            if plan.rotation == Rotation.zones:
+                zone_id = rot[d]
+            else:
+                eng_id = rot[d]
         seq = next_seq(db, Inspection, project.id, d.year)
         db.add(
             Inspection(
@@ -131,8 +150,8 @@ def generate(db: Session, plan: InspectionPlan, today: date) -> int:
                 plan_id=plan.id,
                 inspection_type=plan.inspection_type,
                 site_id=plan.site_id,
-                zone_id=plan.zone_id,
-                engagement_id=plan.engagement_id,
+                zone_id=zone_id,
+                engagement_id=eng_id,
                 assignee_role=plan.assignee_role,
                 assignee_user_id=plan.assignee_user_id,
                 planned_date=d,
@@ -144,6 +163,18 @@ def generate(db: Session, plan: InspectionPlan, today: date) -> int:
         n += 1
     plan.generated_until = end
     return n
+
+
+def _rotation(plan: InspectionPlan, today: date, end: date) -> dict[date, uuid.UUID]:
+    """6d ISP-2: instance k (planned-date order from the start) takes rotation_list[k mod n]."""
+    lst = list(plan.rotation_list or [])
+    if plan.rotation == Rotation.none or not lst:
+        return {}
+    out: dict[date, uuid.UUID] = {}
+    for k, d in enumerate(due_dates(plan, plan.start_date, end)):
+        if d >= today:
+            out[d] = lst[k % len(lst)]
+    return out
 
 
 def _drop_future(db: Session, plan: InspectionPlan, today: date) -> None:
@@ -252,9 +283,18 @@ def reads(db: Session, items: Sequence[Inspection]) -> list[InspectionRead]:
         users=[i.assignee_user_id for i in items] + [i.inspector_id for i in items],
     )
     grace = hse_settings.get(db, items[0].project_id).inspection_grace_days
+    resp = {
+        r.id: r
+        for r in db.scalars(
+            select(ChecklistResponse).where(
+                ChecklistResponse.id.in_({i.response_id for i in items if i.response_id})
+            )
+        )
+    }
     out = []
     for i in items:
         pl = plans.get(i.plan_id) if i.plan_id else None
+        r = resp.get(i.response_id) if i.response_id else None
         out.append(
             InspectionRead(
                 id=i.id,
@@ -275,7 +315,7 @@ def reads(db: Session, items: Sequence[Inspection]) -> list[InspectionRead]:
                 inspector=refs.user(i.inspector_id),
                 items_checked=i.items_checked,
                 items_compliant=i.items_compliant,
-                score_pct=score(i),
+                score_pct=_rscore(r) if r is not None else score(i),
                 findings=[
                     FindingRead(
                         id=uuid.UUID(f["id"]),
@@ -292,9 +332,21 @@ def reads(db: Session, items: Sequence[Inspection]) -> list[InspectionRead]:
                 cancel_reason=i.cancel_reason,
                 created_at=i.created_at,
                 updated_at=i.updated_at,
+                response_id=i.response_id,
+                result=r.result if r is not None else None,
+                offline_delay_min=i.offline_delay_min,
+                recorded_offline=i.offline_delay_min is not None,
+                void_reason=i.void_reason,
             )
         )
     return out
+
+
+def _rscore(r: ChecklistResponse) -> Decimal | None:
+    """6d EXE-3: the checklist score (§6.2) of a template-based inspection."""
+    if r.score_pct is None:
+        return None
+    return Decimal(r.score_pct).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP)
 
 
 def read(db: Session, p: Principal, ins_id: uuid.UUID) -> InspectionRead:
@@ -333,7 +385,66 @@ def plan_read(db: Session, pl: InspectionPlan) -> InspectionPlanRead:
         next_planned_date=nxt,
         created_at=pl.created_at,
         updated_at=pl.updated_at,
+        template_code=pl.template_code,
+        rotation=pl.rotation,
+        rotation_list=list(pl.rotation_list or []),
+        without_checklist=without_checklist(db, pl),
     )
+
+
+def without_checklist(db: Session, pl: InspectionPlan) -> bool:
+    """6d ISP-1: an active plan without a template after the switch date."""
+    from app.services.field import common as fc  # noqa: PLC0415
+
+    c = fc.cfg(db, pl.project_id)
+    return pl.active and not pl.template_code and c.templates_required(fc.local_day())
+
+
+def _template_required() -> ApiError:
+    return ApiError(
+        422,
+        ErrorCode.TEMPLATE_REQUIRED,
+        "A checklist template is required from the project's switch date (6d ISP-1 / EXE-3).",
+        "قائمة التحقق مطلوبة اعتباراً من تاريخ التحول.",
+    )
+
+
+def _check_plan_6d(db: Session, project: Project, pl: InspectionPlan) -> None:
+    """6d §3.3: template of the plan's type, required after the switch; rotation list 2–20."""
+    from app.services.field import common as fc  # noqa: PLC0415
+    from app.services.field import library  # noqa: PLC0415
+
+    if pl.template_code:
+        t = library.published(db, pl.template_code)
+        if (
+            t is None
+            or t.kind != TemplateKind.inspection
+            or t.inspection_type != pl.inspection_type
+            or not library.offered(t, project.id)
+        ):
+            raise ApiError(
+                422,
+                ErrorCode.TEMPLATE_NOT_APPLICABLE,
+                "Use a Published inspection template of the plan's inspection type.",
+                "استخدم نموذج تفتيش منشوراً من نوع الخطة.",
+            )
+    elif fc.cfg(db, project.id).templates_required(fc.local_day()):
+        raise _template_required()
+    if pl.rotation == Rotation.none:
+        pl.rotation_list = []
+        return
+    lst = list(pl.rotation_list or [])
+    if not 2 <= len(lst) <= 20 or len(set(lst)) != len(lst):
+        raise validation_error("rotation_list", "Give 2–20 distinct entries (ISP-2).")
+    for x in lst:
+        if pl.rotation == Rotation.zones:
+            z = db.get(Zone, x)
+            ok = z is not None and z.site_id == pl.site_id
+        else:
+            e = db.get(ProjectEngagement, x)
+            ok = e is not None and e.project_id == project.id
+        if not ok:
+            raise validation_error("rotation_list", "Zones of the plan site or engagements.")
 
 
 # ---- plans ---------------------------------------------------------------------------------------
@@ -364,6 +475,7 @@ def create_plan(
     if body.engagement_id:
         check_engagement(db, project, body.engagement_id)
     pl = InspectionPlan(project_id=project.id, **body.model_dump())
+    _check_plan_6d(db, project, pl)
     db.add(pl)
     db.flush()
     generate(db, pl, project_today(project))
@@ -401,6 +513,7 @@ def update_plan(
         pl.weekday is None
     ):
         raise validation_error("weekday", "weekday is required for weekly/fortnightly plans")
+    _check_plan_6d(db, project, pl)
     pl.updated_at = now()
     today = project_today(project)
     _drop_future(db, pl, today)  # N-1: only future planned instances change
@@ -491,6 +604,10 @@ def _record(
 ) -> None:
     if body.completed_at > now() + timedelta(minutes=5):
         raise validation_error("completed_at", "The completion time cannot be in the future.")
+    from app.services.field import common as fc  # noqa: PLC0415
+
+    if fc.cfg(db, project.id).templates_required(local_date(project, body.completed_at)):
+        raise _template_required()  # 6d EXE-3: completed through a checklist submission
     ins.completed_at = body.completed_at
     ins.completed_date = local_date(project, body.completed_at)
     ins.inspector_id = p.user.id

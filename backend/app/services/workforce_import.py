@@ -152,6 +152,10 @@ MESSAGES: dict[ImportCode, tuple[str, str]] = {
         "Training hours from the training register are used for this date",
         "تُستخدم ساعات التدريب من سجل التدريب لهذا التاريخ",
     ),
+    Code.W08: (
+        "Toolbox talks from the register are used for this date",
+        "تُستخدم اجتماعات التوعية من السجل لهذا التاريخ",
+    ),
 }
 
 
@@ -340,6 +344,9 @@ def validate(
     from app.services.train.common import register_from as _register_from  # noqa: PLC0415
 
     register_from = _register_from(db, project.id)
+    from app.services.field import common as field_common  # noqa: PLC0415
+
+    toolbox_from = field_common.cfg(db, project.id).toolbox_from
     sha_committed = db.scalar(
         select(func.count())
         .select_from(WorkforceImportBatch)
@@ -503,6 +510,14 @@ def validate(
         th = Decimal(r["training_hours"]) if r.get("training_hours") is not None else None
         if d and th and th > 0 and register_from is not None and d >= register_from:
             add(Code.W07, "training_hours")  # 5-training TH-6
+        tb = [r.get(k) for k in ("toolbox_talks", "toolbox_attendees")]
+        if (
+            d
+            and toolbox_from is not None
+            and d >= toolbox_from
+            and any(str(x).strip() not in ("", "0", "None") for x in tb if x is not None)
+        ):
+            add(Code.W08, "toolbox_talks")  # 6d SRC-2
         r["issues"] = issues
         r["codes"] = sorted(codes)
         errors = any(c.startswith("E") for c in codes)

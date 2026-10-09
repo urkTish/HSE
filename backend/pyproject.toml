@@ -66,10 +66,13 @@ known-third-party = ["alembic"]
 "app/seed_access.py" = ["S311", "C408"]  # deterministic demo data; dict() rows read as tables
 "app/seed_ptw*.py" = ["S311", "S101", "S107", "PLC0415"]  # deterministic demo data; plan invariants asserted
 "app/seed_cert.py" = ["S311", "E501", "N806"]  # deterministic demo data; table-like rows
+"app/seed_field.py" = ["S311", "S101", "PLC0415", "E501"]  # deterministic demo data; table-like rows
 "tests/test_ptw*.py" = ["E501"]  # one-line fixture bodies mirror the spec tables
 "tests/ptw_helpers.py" = ["E501"]
 "tests/test_cert*.py" = ["E501"]  # one-line fixture bodies mirror the spec tables
 "tests/cert_helpers.py" = ["E501"]
+"tests/test_field*.py" = ["E501"]  # one-line fixture bodies mirror the spec tables
+"tests/field_helpers.py" = ["E501"]
 
 [tool.ruff.lint.flake8-bugbear]
 extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Path", "fastapi.Body", "fastapi.Security"]

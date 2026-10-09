@@ -63,6 +63,7 @@ PERSONAL = frozenset(
         AttachmentOwner.personnel_cert_scan,  # P4-3
         AttachmentOwner.training_record_scan,  # P5-3
         AttachmentOwner.training_attendance_signature,  # P5-8
+        AttachmentOwner.toolbox_signature,  # 6d P6d-4
     }
 )
 PTW_OWNERS = frozenset(
@@ -172,6 +173,10 @@ def _owner(
 
     if owner_type in train_files.TRAIN_OWNERS:
         return train_files.owner(db, p, owner_type, owner_id, write)
+    from app.services.field import files as field_files  # noqa: PLC0415
+
+    if owner_type in field_files.FIELD_OWNERS:
+        return field_files.owner(db, p, owner_type, owner_id, write)
     if owner_type in PERSONAL:
         return _access_owner(db, p, owner_type, owner_id, write)
     m = db.get(HseMeeting, owner_id)

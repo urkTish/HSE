@@ -7,6 +7,8 @@ from dataclasses import dataclass, field
 from datetime import timedelta
 from decimal import Decimal
 
+from sqlalchemy import select
+
 from app.core.hse_enums import RECORDABLE, KpiMetric, LeadingWarningCode
 from app.kpi import fmt
 from app.kpi.engine import Engine
@@ -183,6 +185,7 @@ def evaluate_engine(
         out += training_warnings(engine, project_id, tree, m, label_en, label_ar, who_en, who_ar)
         out += heat_warnings(engine, project_id, tree, m, label_en, label_ar, who_en, who_ar)
         out += emergency_warnings(engine, project_id, tree, m, label_en, label_ar, who_en, who_ar)
+        out += field_warnings(engine, project_id, tree, m, label_en, label_ar, who_en, who_ar)
     return out
 
 
@@ -643,6 +646,116 @@ def emergency_warnings(
                        "تمارين / أحداث تجاوزت هدف الحصر", Decimal(len(rd.headcount_over)), 0),
                  Input("found_on_site", "Found on site", "وُجد في الموقع", Decimal(len(rd.found)),
                        0)],
+            )
+        )  # fmt: skip
+    return out
+
+
+def field_warnings(
+    engine: Engine,
+    project_id: uuid.UUID,
+    tree: EngFact | None,
+    m: Window,
+    label_en: str,
+    label_ar: str,
+    who_en: str,
+    who_ar: str,
+) -> list[Warn]:
+    """E20-E21 (6d-field-assurance §6.8); unrounded comparisons. T13 inputs: numerators,
+    denominators, thresholds and order / campaign numbers only."""
+    from app.core.field_enums import StopOrderStatus  # noqa: PLC0415
+    from app.kpi import field as kf  # noqa: PLC0415
+    from app.models import StopWorkOrder  # noqa: PLC0415
+    from app.services.field import common as fc  # noqa: PLC0415
+
+    ff = kf.ffacts(engine)
+    if ff is None or project_id not in ff.pids:
+        return []
+    db = ff.db
+    c = fc.cfg(db, project_id)
+    out: list[Warn] = []
+
+    def pct(num: Decimal | int, den: Decimal | int) -> Decimal | None:
+        return Decimal(num) / Decimal(den) * HUNDRED if den else None
+
+    us = [u for u in kf.coverage_units(engine, m) if u.pid == project_id]
+    cov_n = sum(1 for u in us if u.covered)
+    k113 = pct(cov_n, len(us))
+    its = [i for i in kf.programme_items(engine, m) if i.pid == project_id]
+    met = sum(1 for i in its if i.met)
+    k114 = pct(met, len(its))
+    rs = [r for r in kf.resp_in(engine, m) if r.pid == project_id]
+    crit = sum(r.crit for r in rs)
+    rate = pct(crit, len(rs))
+    t113 = c.dec("inspection_coverage_warning_pct")
+    t114 = c.dec("audit_programme_warning_pct")
+    t111 = c.dec("critical_fail_warning_per_100")
+    month_end = fc.day_start(m.end + timedelta(days=1))
+    long_orders = sorted(
+        o.order_no
+        for o in db.scalars(
+            select(StopWorkOrder).where(
+                StopWorkOrder.project_id == project_id,
+                StopWorkOrder.status != StopOrderStatus.voided,
+                StopWorkOrder.raised_at < month_end - timedelta(days=7),
+            )
+        )
+        if (o.released_at is None or o.released_at >= month_end)
+        and engine.flt.eng_ok(o.engagement_id)
+    )
+    if (
+        (k113 is not None and k113 < t113)
+        or (k114 is not None and k114 < t114)
+        or (len(rs) >= 20 and rate is not None and rate >= t111)
+        or long_orders
+    ):
+        out.append(
+            Warn(
+                E.E20, m, project_id, tree,
+                f"Field assurance below target in {label_en}{who_en}"
+                + (f": {', '.join(long_orders)}" if long_orders else ""),
+                f"ضمان العمل الميداني دون المستهدف في {label_ar}{who_ar}",
+                [Input("k113", "Contractor inspection coverage", "تغطية التفتيش", k113, 1, " %"),
+                 Input("k113_numerator", "Covered", "مغطاة", Decimal(cov_n), 0),
+                 Input("k113_denominator", "Required", "مطلوبة", Decimal(len(us)), 0),
+                 Input("k113_threshold_pct", "Coverage threshold", "حد التغطية", t113, 1, " %"),
+                 Input("k114", "Audit programme compliance", "برنامج التدقيق", k114, 1, " %"),
+                 Input("k114_numerator", "Met on time", "في الموعد", Decimal(met), 0),
+                 Input("k114_denominator", "Items due", "البنود المستحقة", Decimal(len(its)), 0),
+                 Input("k114_threshold_pct", "Programme threshold", "حد البرنامج", t114, 1, " %"),
+                 Input("k111_per_100", "Critical failures per 100 inspections",
+                       "الإخفاقات الحرجة لكل 100 تفتيش", rate, 2),
+                 Input("inspections", "Inspections", "عمليات التفتيش", Decimal(len(rs)), 0),
+                 Input("k111_threshold", "Critical failure threshold", "حد الإخفاقات", t111, 2),
+                 Input("stop_work_active_over_7d", "Stop-work orders active > 7 days",
+                       "أوامر إيقاف سارية أكثر من 7 أيام", Decimal(len(long_orders)), 0)],
+            )
+        )  # fmt: skip
+    if c.toolbox_from is None or c.toolbox_from > m.end:
+        return out
+    r = kf.reach(engine, m)
+    units = [u for u in r.units if u.pid == project_id]
+    num = sum((u.reach for u in units), Decimal(0))
+    den = sum((u.h for u in units), Decimal(0))
+    k116 = pct(num, den)
+    pairs = kf.campaign_pairs(engine, m)
+    ok = sum(1 for _, x in pairs if x)
+    k117 = pct(ok, len(pairs))
+    t116 = c.dec("tbt_reach_warning_pct")
+    if (k116 is not None and k116 < t116) or (k117 is not None and k117 < HUNDRED):
+        unmet = sorted({no for no, x in pairs if not x})
+        out.append(
+            Warn(
+                E.E21, m, project_id, tree,
+                f"Toolbox engagement below target in {label_en}{who_en}"
+                + (f": {', '.join(unmet)}" if unmet else ""),
+                f"المشاركة في اجتماعات التوعية دون المستهدف في {label_ar}{who_ar}",
+                [Input("k116", "Toolbox weekly reach", "الوصول الأسبوعي", k116, 1, " %"),
+                 Input("k116_threshold_pct", "Reach threshold", "حد الوصول", t116, 1, " %"),
+                 Input("k117", "Campaign completion", "إنجاز الحملات", k117, 1, " %"),
+                 Input("k117_numerator", "Pairs met on time", "أزواج في الموعد", Decimal(ok), 0),
+                 Input("k117_denominator", "Pairs due", "الأزواج المستحقة",
+                       Decimal(len(pairs)), 0)],
             )
         )  # fmt: skip
     return out

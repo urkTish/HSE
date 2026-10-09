@@ -43,6 +43,7 @@ from app.kpi.facts import (
     InspFact,
     MeetingFact,
     ObsFact,
+    TbtFact,
     WfFact,
     ZoneFact,
 )
@@ -389,6 +390,8 @@ def _load(
             if r[1] >= reg_from[r[0]]
         ]
 
+    _toolbox_register(db, facts, pids)
+
     # 5-training TH-6: from training_register_from the register replaces the daily-return
     # training_hours (kept in trn_reg for the TH-7 reconciliation)
     facts.train_from = {
@@ -558,7 +561,7 @@ def _load(
             I.zone_id,
             I.inspection_type,
             I.project_id,
-        ).where(I.project_id.in_(pids))
+        ).where(I.project_id.in_(pids), I.status != InspectionStatus.voided)  # 6d SRC-1
     ):
         facts.insp.append(
             InspFact(
@@ -655,3 +658,55 @@ def snapshot_hash(parts: Iterable[object]) -> str:
         h.update(repr(p).encode())
         h.update(b"\x1f")
     return h.hexdigest()
+
+
+def _toolbox_register(db: Session, facts: Facts, pids: list[uuid.UUID]) -> None:
+    """6d SRC-2: from toolbox_register_from the register replaces the daily-return toolbox_talks /
+    toolbox_attendees (kept on the WfFact as tbt_dr / tbt_att_dr for the SRC-3 reconciliation)."""
+    from app.core.field_enums import TalkStatus  # noqa: PLC0415
+    from app.models import FieldSettings, TalkAttendance, ToolboxTalk  # noqa: PLC0415
+
+    reg: dict[uuid.UUID, date] = {
+        r[0]: r[1]
+        for r in db.execute(
+            select(FieldSettings.project_id, FieldSettings.toolbox_register_from).where(
+                FieldSettings.project_id.in_(pids),
+                FieldSettings.toolbox_register_from.is_not(None),
+            )
+        )
+        if r[1] is not None
+    }
+    if not reg:
+        return
+    facts.tbt_from = dict(reg)
+    facts.wf = [
+        replace(r, tbt=0, tbt_att=0, tbt_dr=r.tbt, tbt_att_dr=r.tbt_att)
+        if r.project in reg and r.d >= reg[r.project] and (r.tbt or r.tbt_att)
+        else r
+        for r in facts.wf
+    ]
+    T = ToolboxTalk  # noqa: N806
+    named = dict(
+        db.execute(
+            select(TalkAttendance.talk_id, func.count())
+            .join(T, T.id == TalkAttendance.talk_id)
+            .where(
+                T.project_id.in_(list(reg)),
+                TalkAttendance.counted_person_type == "contractor_worker",
+            )
+            .group_by(TalkAttendance.talk_id)
+        ).all()
+    )
+    facts.tbts = [
+        TbtFact(d=r[1], eng=r[2], site=r[3], project=r[0], att=int(named.get(r[4], 0)) + r[5])
+        for r in db.execute(
+            select(
+                T.project_id, T.delivered_date, T.host_engagement_id, T.site_id, T.id,
+                T.unnamed_count,
+            ).where(
+                T.project_id.in_(list(reg)),
+                T.status.in_((TalkStatus.delivered, TalkStatus.locked)),
+            )
+        )
+        if r[1] >= reg[r[0]]
+    ]  # fmt: skip

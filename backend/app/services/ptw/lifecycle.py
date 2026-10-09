@@ -1403,6 +1403,10 @@ def resume(db: Session, p: Principal, permit_id: uuid.UUID, body: ResumeInput) -
         from app.services.emergency import ptw as emergency_ptw  # noqa: PLC0415
 
         emergency_ptw.emergency_resume_guard(db, permit)
+    if reason == StatusReason.stop_work:  # 3-ptw v1.5 SH-3 (6d FND-9)
+        from app.services.field import stopwork  # noqa: PLC0415
+
+        stopwork.resume_guard(db, permit)
     sp = evaluation.open_suspension(db, permit)
     if (
         reason == StatusReason.audit_critical

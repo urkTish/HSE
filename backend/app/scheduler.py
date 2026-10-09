@@ -69,6 +69,10 @@ def main() -> None:
     sched.add_job(_job, "cron", hour=0, minute=8, args=["emergency_daily"])
     sched.add_job(_job, "cron", hour=7, minute=5, args=["emergency_alerts"])
     sched.add_job(_job, "interval", minutes=1, args=["emergency_minute"])
+    # Phase 6d (spec 6d-field-assurance §4, §7, P6d-3)
+    sched.add_job(_job, "cron", hour=0, minute=9, args=["field_daily"])
+    sched.add_job(_job, "cron", hour=7, minute=6, args=["field_alerts"])
+    sched.add_job(_job, "interval", minutes=1, args=["field_minute"])
     sched.start()
 
 

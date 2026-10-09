@@ -53,7 +53,7 @@ PHASE6C_PENDING: frozenset[KpiMetric] = frozenset()
 PHASE6D_METRICS: frozenset[KpiMetric] = frozenset(
     {M.K110, M.K111, M.K112, M.K113, M.K114, M.K115, M.K116, M.K117}
 )
-PHASE6D_PENDING: frozenset[KpiMetric] = PHASE6D_METRICS
+PHASE6D_PENDING: frozenset[KpiMetric] = frozenset()
 """Field assurance KPIs not computed yet (stage 1)."""
 """Emergency KPIs not computed yet (none since Phase 6c stage 2)."""
 _PENDING = (

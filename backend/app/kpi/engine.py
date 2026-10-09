@@ -110,6 +110,11 @@ class Agg:
     hc_peak: int = 0
     tbt: int = 0
     tbt_att: int = 0
+    # 6d SRC-3: register vs daily returns on register days
+    tbt_reg: int = 0
+    tbt_att_reg: int = 0
+    tbt_dr: int = 0
+    tbt_att_dr: int = 0
     ind: int = 0
     trn: Decimal = ZERO
     trn_reg: Decimal = ZERO  # 5-training TH-7: daily-return hours of register days
@@ -289,6 +294,17 @@ class Engine:
             and not f.zone_filtered
         ]
         self._ind_keys = [i.d for i in self.inds]
+        self.tbts = sorted(
+            (
+                t
+                for t in facts.tbts
+                if f.eng_ok(t.eng)
+                and (f.site_ok(t.site) if t.site is not None else f.sites is None)
+                and not f.zone_filtered
+            ),
+            key=lambda t: t.d,
+        )
+        self._tbt_keys = [t.d for t in self.tbts]
         self._wf_keys = [r.d for r in self.wf]
         self._unz_keys = [r.d for r in self.unzoned]
         self._case_keys = [c.d for c in self.cases]
@@ -336,10 +352,17 @@ class Engine:
             per_day[r.d] += r.hc
             a.tbt += r.tbt
             a.tbt_att += r.tbt_att
+            a.tbt_dr += r.tbt_dr
+            a.tbt_att_dr += r.tbt_att_dr
             a.ind += r.ind
             a.trn += r.trn
             a.trn_reg += r.trn_reg
         a.ind += len(_slice(self.inds, self._ind_keys, w))
+        for t in _slice(self.tbts, self._tbt_keys, w):  # 6d SRC-2
+            a.tbt_reg += 1
+            a.tbt_att_reg += t.att
+        a.tbt += a.tbt_reg
+        a.tbt_att += a.tbt_att_reg
         a.hc_dates = sum(1 for v in per_day.values() if v > 0)
         a.hc_peak = max(per_day.values(), default=0)
         for r in _slice(self.unzoned, self._unz_keys, w):
@@ -912,11 +935,12 @@ _DISPATCH: dict[KpiMetric, Callable[[Engine, Agg], Result]] = {
     **{m: _not_yet(m) for m in PHASE6A_METRICS},  # Phase 6a stage 2: app.kpi.medical
     **{m: _not_yet(m) for m in PHASE6B_METRICS},  # Phase 6b stage 2: app.kpi.heat
     **{m: _not_yet(m) for m in PHASE6C_METRICS},  # Phase 6c stage 2: app.kpi.emergency
-    **{m: _not_yet(m) for m in PHASE6D_METRICS},  # Phase 6d stage 2: app.kpi.field
+    **{m: _not_yet(m) for m in PHASE6D_METRICS},  # replaced by app.kpi.field
 }
 import app.kpi.access  # noqa: E402  (registers K-48…K-60 into _DISPATCH)
 import app.kpi.cert  # noqa: E402  (registers K-72…K-81 into _DISPATCH)
 import app.kpi.emergency  # noqa: E402  (registers K-104…K-109 into _DISPATCH)
+import app.kpi.field  # noqa: E402  (registers K-110…K-117 into _DISPATCH)
 import app.kpi.heat  # noqa: E402  (registers K-97…K-103 into _DISPATCH)
 import app.kpi.medical  # noqa: E402  (registers K-89…K-96 into _DISPATCH)
 import app.kpi.ptw  # noqa: E402  (registers K-46, K-46b, K-61…K-71 into _DISPATCH)
