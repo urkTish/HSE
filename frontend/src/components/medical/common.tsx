@@ -16,6 +16,7 @@ import { useFitnessAssessments, useFitnessCodes, useMedicalExaminers, useMedical
 import { can, canWrite } from "@/lib/permissions";
 import { formatDate, formatDateTime } from "@/lib/datetime";
 import { useFormatters } from "@/lib/use-formatters";
+import { cn } from "@/lib/utils";
 
 type S = Schemas;
 
@@ -231,7 +232,7 @@ export function RestrictionList({ items }: { items: S["RestrictionRead"][] | nul
       {items.map((r, i) => (
         <li key={`${r.code}-${i}`} data-code={r.code}>
           {locale === "ar" ? r.label_ar : r.label_en}
-          {r.value != null ? <span className="ltr ms-1">({t("kg", { n: r.value })})</span> : null}
+          {r.value != null ? <span className="ltr ms-1 rtl:ms-0 rtl:me-1">({t("kg", { n: r.value })})</span> : null}
           {r.text ? <span className="ms-1 text-muted-foreground">— {r.text}</span> : null}
         </li>
       ))}
@@ -408,12 +409,12 @@ export function FreeText({ children, className, testId }: { children: string | n
 }
 
 /** Gregorian date (and time) on one line, the Hijri date muted underneath: stops dense tables wrapping to 5–6 lines. */
-export function StackedDate({ v, time, projectId }: { v: string | null | undefined; time?: boolean; projectId?: string | null }) {
+export function StackedDate({ v, time, projectId, className }: { v: string | null | undefined; time?: boolean; projectId?: string | null; className?: string }) {
   const { prefs, hijri } = useFormatters(projectId);
   if (!v) return <span>—</span>;
   const p = { ...prefs, showHijri: false };
   return (
-    <span className="inline-flex flex-col">
+    <span className={cn("inline-flex flex-col", className)}>
       <span className="whitespace-nowrap">{time ? formatDateTime(v, p) : formatDate(v, p)}</span>
       {prefs.showHijri ? <span className="text-xs whitespace-nowrap text-muted-foreground">{hijri(v)}</span> : null}
     </span>
