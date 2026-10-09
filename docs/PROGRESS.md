@@ -8,7 +8,8 @@
 - Phase 6c step = Design done (findings `docs/design/phase-6c-findings.md`; contract v0.9.0); phase demo next
 - Phase 6d — Field assurance (checklists, audits, toolbox talks): spec `docs/specs/6d-field-assurance.md` v1.0 (61 ACs; §11 earlier-spec changes applied; contract v0.10.0)
 - Phase 6d step = Frontend done
-- Phase 6e — Environmental management: spec `docs/specs/6e-environmental.md` v1.0 (58 ACs; §11 earlier-spec changes applied); contract next
+- Phase 6e — Environmental management: spec `docs/specs/6e-environmental.md` v1.0 (58 ACs; §11 earlier-spec changes applied; contract v0.11.0)
+- Phase 6e step = Backend done
 - Phase 6f — Incident follow-up (notification packs, lessons learned): spec `docs/specs/6f-incident-followup.md` v1.0 written (48 ACs; §11 earlier-spec changes not yet applied); contract next, after 6e
 - Phase 6g — Contractor HSE scorecard + reports export pack: spec `docs/specs/6g-scorecard-reports.md` v1.0 written (56 ACs; §11 earlier-spec changes not yet applied); contract next, after 6f
 
@@ -20,6 +21,14 @@
 - Phase 4 — Third-party certification: built, e2e green, design pass done (2026-10-08).
 
 ## Done
+
+### Backend — Phase 6e environmental (contract v0.11.0, stage 2)
+- Services under `app/services/env/`: settings (tighten-only), aspects (ASP-1…ASP-3), the org-wide provider register and licences, project permits (derived status, renewals, PRM-2 requirements), waste streams, storage areas (WST-2, AIR-2, WST-4 inspection answers, WST-5 deadlines) and consignments (CON-1…CON-8, AIR-3 AVP warning, receipt with ticket, discrepancy, reject → CA, void). Also instruments, `env_monitor` devices and station ingest (MON-2), points with tighten-only limits and permit conditions (LIM-1…LIM-3, PRM-5), readings (manual, lab, visual, derived 1 h / 24 h with data capture), background declarations, exceedances (episodes, background, late results, review → CA, AIR-1), spills (SPL-1…SPL-7, Phase 1 incident creation and linking), water and discharge days (WAT-1…WAT-3), complaints (CPL-1, CPL-2, P6e-2 contact visibility and retention), and the environment band and action panel. 72 endpoints, including `GET /kpi/environmental`.
+- Links to earlier phases: Phase 1 incidents (I-20 `ncec` / `airport_operator` from `env_notifications_from`), CAs with source `environmental`; Phase 2 ops events (background flags, AIR-4 post-storm tasks), AVPs (AIR-3), capability 67 holders (AIR-1); 6c spill kits (USED_REPLENISH, excluded from the 6c board and K-107); 6d WSA / ENV answers on storage areas and post-storm checks.
+- KPIs K-118…K-126 (`app/kpi/env.py`, `app/kpi/env_views.py` with month / contractor / stream / class / route / transporter / facility / parameter / cause / point / substance breakdowns), warnings E22 / E23.
+- Jobs: `env_minute` (every 60 s), `env_daily` 00:11, `env_alerts` 07:08.
+- Seed `app/seed_env.py` (Appendix A; called by `app.seed`). It reproduces EV9 and the expected E22 / E23 exactly; differences from Appendix A are in D-199.
+- Tests: `test_env_register`, `test_env_waste`, `test_env_monitoring`, `test_env_events`, `test_env_kpis` (41 tests covering ACs 1–52 and 54–58, with the stage 1 contract test). Defaults are D-192…D-201.
 
 ### Backend — Phase 6d field assurance (contract v0.10.0, stage 2)
 - Services under `app/services/field/`: settings (tighten-only, switch dates), template and topic libraries (versions, TPL-2 / TBT-1 completeness, immutability, retire guard), scoring (§6.1–§6.2), checklist submissions (planned / unplanned, offline window, CLOCK_SKEW, idempotent on client_uuid, TPL-4 pinning, EXIF stripping), findings (severity raise, fixed on spot, FND-5 repeats, Phase 1 CAs), stop-work orders (FND-7…FND-9, release, void), inspection void, offline pack, audits (AUD-1…AUD-8, SoD, HTML reports, auto-close), audit programme (§6.4), toolbox talks (TBT-3…TBT-9, lock, suggestions), campaigns (CMP-1…CMP-4), action panel and band.
@@ -39,6 +48,7 @@
 - Audits: plan (independence errors in their own box), start, conduct (answers + manual findings), meetings / fieldwork dates, complete, issue by someone other than the lead, cancel, void, reports; audit programme lines.
 - Toolbox talks (phone): site / host / zones / shift / duration / presenter, suggestions and library topics, campaign, language + interpreters, attendance by card scan (camera or pasted payload), pick from list, signatures, unnamed count and sheet photos; register, detail (add / remove rows within the window, void, names hidden without 199). Briefing campaigns: draft, issue, cancel, pairs.
 - e2e: `p6d-run`, `p6d-library`, `p6d-audits`, `p6d-talks`, `p6d-overview` (15 tests) all pass alone; screenshots (EN / AR; checklist run and attendance at 390 px) in `docs/screenshots/phase-6d/` via `screenshots-p6d.spec.ts` (`SCREENSHOTS=1`).
+- Full e2e run after the 6d frontend (clean `git archive HEAD` backend): 246 passed, 18 failed, 13 skipped (52.5 min). All p6d specs pass; the failures are outside 6d (p1 AI / dashboard, p4 dashboard / equipment, p5 check / gaps / hooks, p6b settings report, scoping AC31) as before, plus p1-modules "Inspection plan", which passes alone (order-dependent in the full run).
 - `e2e/start-backend.sh` honours `E2E_BACKEND_DIR` (run a clean `git archive` backend while backend/ has uncommitted work). Shared `StepDialog` gained an optional `renderError`.
 
 #### Phase 6d — backend issues found by the frontend
@@ -788,6 +798,7 @@
 - Phase 1 demo; then Phase 2 per the roadmap
 
 ## Parked
+- **Phase 6e backend (2026-10-09):** not built: AI tool T22 / AI-19 (AC53), charts C34–C36 data, register exports and prints (export half of AC54), the Phase 1 expiring-items feed for 6e kinds, the spill number on the Phase 1 incident read model. No performance tests.
 - **Phase 6d backend (2026-10-09):** not built: AI tool T21 (AC57), charts C31–C33 data, register exports (AC58 export audit row), PDF audit reports (HTML for now, D-177), expiring-item entries. AC59's phone cache deletion is frontend work, and AC61 is tested on the reference lists only. No performance tests.
 - **Phase 6c frontend (2026-10-09):** no UI yet for register exports (189), AI tool T20, charts C28–C30, check photos (no attachment owner) and the permit form's emergency-info prefill button (the backend pre-fills at Request, PE-6). The muster reader list is session-only (no list endpoint). Full e2e run failures outside 6c, left as TODO: p1-dashboard ×6, p1-modules:64, contractors AC17, p2-passes AP-4, p2-settings HK-4, p2-workers IN, p4-dashboard AC103, p5-check AC124, p5-dashboard, p5-hooks AC93, p6a-settings, p6b-settings-report:46 (the backend working tree had uncommitted 6d changes during the run).
 - **Phase 6c backend (2026-10-09):** not built yet: AI tool T20 (AC63), charts C28–C30 data, register exports (189), expiring-items / poster entries, the P1-8 scan of event free texts. K-106 and two other ED9 figures differ on the seed (D-166). AC66 is tested on the reference lists only; ACs 34 (exact alert dates), 45 (plan_deficiency via the evaluation API) and 64 (exports) are partly covered.
