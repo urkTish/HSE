@@ -3,7 +3,7 @@
 ## Current
 - Phase: 6b — Heat stress (Phase 5 Training is PARKED, see below; Phase 6a design done, demo pending)
 - Module: heat stress (spec `docs/specs/6b-heat-stress.md` v1.0, §11 earlier-spec changes applied)
-- Phase 6b step = Frontend done (contract v0.8.0; screens, e2e and screenshots); design pass next
+- Phase 6b step = Design done (findings `docs/design/phase-6b-findings.md`; contract v0.8.0); phase demo next
 - Phase 6c spec written: `docs/specs/6c-emergency-drills.md` v1.0 (capabilities 178–190, K-104…K-109, E18–E19, T20, C28–C30; 66 ACs; §11 earlier-spec changes not yet applied)
 
 ## Phase log
@@ -624,6 +624,13 @@
 - E2E (Playwright, real backend): full suite 71 passed, 2 skipped (screenshot specs, on demand) on a fresh migrated + seeded DB — 35 Phase 0 + 36 Phase 1 tests in `e2e/p1-*.spec.ts` — dashboard (AC55, 59, 60, 61, 62, 63, 64, filters in URL, drill-down, charts, mobile), AI (AC65, 72, 73, 74, 75, insufficient data, errors, Arabic) via a recorded SSE stream in `e2e/fixtures/ai-stream.ts` (typed against the contract, replayed with `page.route`; test-only), workforce/import (AC2, 3, 4, 7, 10), incidents/PDPL (AC13, 19, 20, 21, 29, 30, 31, 33), CAs (AC40, 41, 42, 43), observations (AC35) and create flows for observations, inspections, meetings, settings, reports. Phase 0 specs unchanged except a wait in AC12 (options load asynchronously).
 - Screenshots: `docs/screenshots/phase-1/` (run `SCREENSHOTS=1 npx playwright test e2e/screenshots-p1.spec.ts`).
 
+### Design pass — Phase 6b (UI/UX Designer)
+- Design pass: done (Phase 6b).
+  - Findings, ranking and the Phase 6b design-system additions: `docs/design/phase-6b-findings.md`.
+  - Before/after screenshots: `docs/screenshots/phase-6b/design/`; 6b screenshots regenerated.
+  - Done: large headline regime panel on the zone card, Arabic regime text order fixed (code isolated), stale / unknown zones say so and make "Record a reading here" primary, larger regime grid, two-line dates in the 6b tables, radio marks on answer buttons, last point + meter pre-selected on reading entry with a "to save" hint, "monitoring required" wording, `dir="auto"` on permit midday-ban exemption texts.
+  - p6b e2e specs green (15 passed); lint, typecheck, i18n check green.
+
 ### Design pass — Phase 4 (UI/UX Designer)
 - Design pass: done (Phase 4).
   - Findings, ranking and the Phase 4 design-system additions: `docs/design/phase-4-findings.md`.
@@ -830,6 +837,12 @@ L items from the Phase 4 design pass (details in `docs/design/phase-4-findings.m
 - **P16. Certificate line on the deployment page.** The equipment-on-project page (the one an engineer opens for "the crane on my site") shows usable / not usable but not the certificate number, TPI, SWL and limitations. Needs `current_line` on `EquipmentDeploymentRead`.
 - **P17. Tag board field display.** A "problems only" toggle and a kiosk / TV mode for site offices (large tiles, problems first per zone, auto-refresh, no navigation chrome).
 - **P1 / P2 also apply to Phase 4.** Two-calendar dates make certificate rows 4–5 lines; equipment, scaffold and personnel-card actions come before the state on phones.
+
+L items from the Phase 6b design pass (details in `docs/design/phase-6b-findings.md`):
+- **P21. A "severe" orange step for R3.** R2 and R3 share one amber (they differ by icon and words). A token between warning and danger, AA in light and dark, would set R3 apart; platform-wide safety semantics, so the user decides.
+- **P22. Heat board for the field and site offices.** "Changed since you looked" marker per zone, worst-first sort, the P17 kiosk / TV mode for heat, optional "sun mode" (forced light, heavier weights and borders).
+- **P23. Offline queue for manual WBGT readings.** Readings typed without signal kept on the device and sent on reconnect (needs idempotency keys with the backend).
+- **P24. Zone headline on the saved reading.** `zones: [{zone_code, headline_regime, rest_minutes_per_hour}]` on the reading response (contract change), shown with the large regime panel.
 
 L items from the Phase 6a design pass (details in `docs/design/phase-6a-findings.md`):
 - **P18. Server verdict for "may this worker work today".** The worker page panel combines `on_hold` and each item's `band` / `hard_stop`; a `work_state` (removed / stop / check / cleared / none) with its codes on `WorkerFitnessRead`, in P6-7 words, would make it a server decision reusable by the field check (contract change).
