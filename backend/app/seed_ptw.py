@@ -467,6 +467,7 @@ def _wap33_worker(db: Session) -> uuid.UUID | None:
         select(WapCrew, Worker)
         .join(Worker, Worker.id == WapCrew.worker_id)
         .where(WapCrew.wap_id == w.id)
+        .order_by(Worker.seq)  # without it, which bulk worker becomes WKR-000019 varied by build
     ):
         if wk.seq >= 1000:
             return wk.id
