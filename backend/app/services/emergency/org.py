@@ -420,8 +420,8 @@ def _check_team(
                 field="member_deployment_ids",
                 team_code=t.team_code,
             )
-    for i in items:
-        x = db.get(EquipmentItem, i)
+    for item_id in items:
+        x = db.get(EquipmentItem, item_id)
         if x is None or x.category != EquipmentCertCategory.tripod_winch:
             raise validation_error("equipment_item_ids", "Choose Phase 4 tripod / winch items.")
     for k in kits:

@@ -458,7 +458,7 @@ def result_of(
     if outcome == CheckOutcome.missing:
         return CheckResult.fail
     for x in items:
-        if x["answer"] == CheckAnswer.fail.value and ref.CheckItem(x["item"]) in ref.CRITICAL_ITEMS:
+        if x["answer"] == CheckAnswer.fail.value and ref.EC(x["item"]) in ref.CRITICAL_ITEMS:
             return CheckResult.fail
     return CheckResult.pass_
 
@@ -511,9 +511,10 @@ def create_check(db: Session, p: Principal, project_id: uuid.UUID, body: CheckCr
         a = _by_sticker(db, project_id, body.sticker_payload)
         method = CheckMethod.qr_scan
     elif body.asset_id is not None:
-        a = db.get(EmergencyAsset, body.asset_id)
-        if a is None or a.project_id != project_id:
+        got = db.get(EmergencyAsset, body.asset_id)
+        if got is None or got.project_id != project_id:
             raise validation_error("asset_id", "Choose an asset of the project.")
+        a = got
         method = CheckMethod.manual
     else:
         raise validation_error("asset_id", "Scan the sticker or choose the asset.")
@@ -536,14 +537,15 @@ def create_check(db: Session, p: Principal, project_id: uuid.UUID, body: CheckCr
     items = [{"item": x.item.value, "answer": x.answer.value} for x in body.items]
     if body.outcome == CheckOutcome.checked:
         want = {i.value for i in ref.ASSET_TYPES[a.asset_type][4]}
-        got = {x["item"] for x in items}
-        if not want <= got:
+        answered = {x["item"] for x in items}
+        if not want <= answered:
             raise validation_error(
-                "items", "Answer every check item of the type: " + ", ".join(sorted(want - got))
+                "items",
+                "Answer every check item of the type: " + ", ".join(sorted(want - answered)),
             )
         items = [x for x in items if x["item"] in want]
     fixed = body.fixed_on_spot and not any(
-        x["answer"] == "fail" and ref.CheckItem(x["item"]) in ref.CRITICAL_ITEMS for x in items
+        x["answer"] == "fail" and ref.EC(x["item"]) in ref.CRITICAL_ITEMS for x in items
     )
     warnings: list[ApiWarning] = []
     if method == CheckMethod.manual and not ec.is_hse(p, project_id):

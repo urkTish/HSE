@@ -1771,6 +1771,10 @@ def create_ops(
     apply_ops(db, e, at)
     if e.started_at <= at:
         _ops_notify(db, e, True)
+    if e.type == OpsEventType.aircraft_emergency:  # 6c EV-6
+        from app.services.emergency import events as em_events  # noqa: PLC0415
+
+        em_events.from_ops(db, e)
     return ops_read(db, e)
 
 
@@ -1827,6 +1831,10 @@ def end_ops(db: Session, p: Principal, event_id: uuid.UUID, body: OpsEventEnd) -
         after={"active": False, "ended_at": at.isoformat()},
     )  # fmt: skip
     _ops_notify(db, e, False)
+    if e.type == OpsEventType.aircraft_emergency:  # 6c EV-6
+        from app.services.emergency import events as em_events  # noqa: PLC0415
+
+        em_events.end_ops(db, e, at)
     return ops_read(db, e)
 
 

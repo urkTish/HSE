@@ -510,7 +510,7 @@ def tick(db: Session, p: Principal, muster_id: uuid.UUID, entry_id: uuid.UUID) -
     return entry_read(db, e)
 
 
-def on_found(db: Session, m: Muster, ref_: str) -> None:
+def on_found(db: Session, m: Muster, ref_: str, engagement_id: uuid.UUID | None = None) -> None:
     """MU-6: `found_on_site` → a critical drill finding, or an immediate alert in an event."""
     if m.source_type == MusterSource.drill:
         d = db.get(Drill, m.source_id)
@@ -518,7 +518,7 @@ def on_found(db: Session, m: Muster, ref_: str) -> None:
             add_auto_finding(
                 d, FindingCategory.behaviour, FindingSeverity.critical,
                 "Person remained in the evacuated area (found on site)",
-                "بقي شخص في المنطقة التي تم إخلاؤها", ref_,
+                "بقي شخص في المنطقة التي تم إخلاؤها", ref_, engagement_id,
             )  # fmt: skip
         return
     ev = db.get(EmergencyEvent, m.source_id)
@@ -531,7 +531,13 @@ def on_found(db: Session, m: Muster, ref_: str) -> None:
 
 
 def add_auto_finding(
-    d: Drill, cat: FindingCategory, sev: FindingSeverity, en: str, ar: str, ref_: str | None
+    d: Drill,
+    cat: FindingCategory,
+    sev: FindingSeverity,
+    en: str,
+    ar: str,
+    ref_: str | None,
+    engagement_id: uuid.UUID | None = None,
 ) -> None:
     ev = dict(d.evaluation or {})
     auto = list(ev.get("auto_findings") or [])
@@ -540,7 +546,8 @@ def add_auto_finding(
         return
     auto.append(
         {"key": key, "category": cat.value, "severity": sev.value, "description_en": en,
-         "description_ar": ar, "ref": ref_, "auto": True}
+         "description_ar": ar, "ref": ref_, "auto": True,
+         "engagement_id": str(engagement_id) if engagement_id else None}
     )  # fmt: skip
     ev["auto_findings"] = auto
     d.evaluation = ev
@@ -561,7 +568,7 @@ def resolve(
     db.flush()
     if body.reason == ResolutionReason.found_on_site:
         w = ec.worker_of(db, e.deployment_id)
-        on_found(db, m, w.worker_no if w else m.muster_no)
+        on_found(db, m, w.worker_no if w else m.muster_no, e.engagement_id)
     reconcile(db, m)
     return entry_read(db, e)
 
@@ -584,28 +591,30 @@ def put_counts(db: Session, p: Principal, muster_id: uuid.UUID, body: CountsInpu
         if x.accounted > x.expected:
             raise validation_error("rows", "Accounted cannot exceed expected.")
         r.update(expected=x.expected, accounted=x.accounted, by=str(p.user.id), at=at)
-    found = False
+    found_eng: uuid.UUID | None = None
     for res in body.resolutions:
         if not g.covers_engagement(res.engagement_id):
             raise forbidden_error()
-        r = rows.get(str(res.engagement_id))
-        if r is None or res.count > _row_outstanding(r):
+        hit = rows.get(str(res.engagement_id))
+        if hit is None or res.count > _row_outstanding(hit):
             raise validation_error("resolutions", "Resolve at most the outstanding count.")
+        r = hit
         if res.reason == ResolutionReason.record_error and len((res.note or "").strip()) < 10:
             raise validation_error("resolutions", "Explain the record error (≥ 10 characters).")
         r["resolved"] = [
             *(r.get("resolved") or []),
             {"reason": res.reason.value, "count": res.count, "note": res.note, "at": at},
         ]
-        found = found or res.reason == ResolutionReason.found_on_site
+        if res.reason == ResolutionReason.found_on_site:
+            found_eng = res.engagement_id
     if body.visitors_expected is not None:
         m.visitors_expected = body.visitors_expected
     if body.visitors_accounted is not None:
         m.visitors_accounted = body.visitors_accounted
     m.counts = list(rows.values())
     db.flush()
-    if found:
-        on_found(db, m, m.muster_no)
+    if found_eng is not None:
+        on_found(db, m, m.muster_no, found_eng)
     reconcile(db, m)
     return muster_read(db, m, p)
 
@@ -824,7 +833,7 @@ def device_scan(db: Session, token: str | None, body: ScanInput) -> MusterEntryR
         .where(
             Muster.project_id == d.project_id,
             Muster.status.in_(LIVE),
-            Muster.ap_ids.any(d.ap_id),  # type: ignore[arg-type]
+            Muster.ap_ids.contains([d.ap_id]),
         )
         .order_by(Muster.opened_at.desc())
     )

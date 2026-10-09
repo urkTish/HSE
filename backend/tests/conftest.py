@@ -355,6 +355,36 @@ def heat_seed(_fresh_data: None, _heat_template: str) -> None:
     _clone(_heat_template)
 
 
+# ---- Phase 6c: emergency preparedness Appendix A on top of the Phase 6b world --------------------
+
+EMERGENCY_TEMPLATE = TEST_DB.rsplit("/", 1)[1] + "_emergency_tpl"
+
+
+@pytest.fixture(scope="session")
+def _emergency_template(_heat_template: str) -> str:
+    """Phase 0-6b template + the 6c Appendix A seed (ED9)."""
+    from app.seed_emergency import seed_emergency_data
+
+    _clone(_heat_template)
+    with get_sessionmaker()() as db:
+        seed_emergency_data(db)
+        db.commit()
+    get_engine().dispose()
+    name = _db_name()
+    _admin_exec(
+        _terminate(name),
+        f"DROP DATABASE IF EXISTS {EMERGENCY_TEMPLATE}",
+        f"CREATE DATABASE {EMERGENCY_TEMPLATE} TEMPLATE {name}",
+    )
+    return EMERGENCY_TEMPLATE
+
+
+@pytest.fixture
+def emergency_seed(_fresh_data: None, _emergency_template: str) -> None:
+    """Replace the test database with a copy of the Phase 6c template."""
+    _clone(_emergency_template)
+
+
 @pytest.fixture
 def noon() -> Iterator[None]:
     """Pin the clock to Appendix A "today" (2026-10-06 12:00 Asia/Riyadh = 09:00Z)."""

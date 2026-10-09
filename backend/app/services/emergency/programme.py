@@ -259,7 +259,7 @@ def _schedule(ln: Line, drills: list[Drill], as_of: date, grace: timedelta) -> N
     before = [(d, x) for d, x in sat if d is not None and d <= ln.start]
     if before:
         ln.last = before[-1][1]
-        due = add_months(before[-1][0], ln.freq) - timedelta(days=1)  # type: ignore[arg-type]
+        due = add_months(before[-1][0], ln.freq) - timedelta(days=1)
     else:
         due = ln.start + grace
     for d, x in sat:
@@ -349,7 +349,7 @@ def due_alerts(db: Session, project_id: uuid.UUID, d: date) -> int:
             continue
         what = f"{ref.DRILL_TYPES[ln.drill_type][0]}"
         where = ec.site_code(db, ln.site_id) or (
-            tm.team_code if (tm := db.get(RescueTeam, ln.team_id)) else code
+            tm.team_code if ln.team_id and (tm := db.get(RescueTeam, ln.team_id)) else code
         )
         if d <= ln.due_by:
             step = long_step(db, f"em:line:{ln.key}", ln.due_by, d, (30, 14, 7, 0))

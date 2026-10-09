@@ -1399,6 +1399,10 @@ def resume(db: Session, p: Principal, permit_id: uuid.UUID, body: ResumeInput) -
             "سجّل كيف تمت إزالة سبب الإيقاف (20 حرفاً على الأقل).",
             field="cause_cleared_text",
         )
+    if reason == StatusReason.emergency:
+        from app.services.emergency import ptw as emergency_ptw  # noqa: PLC0415
+
+        emergency_ptw.emergency_resume_guard(db, permit)
     sp = evaluation.open_suspension(db, permit)
     if (
         reason == StatusReason.audit_critical

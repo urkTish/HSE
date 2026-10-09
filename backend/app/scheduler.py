@@ -65,6 +65,10 @@ def main() -> None:
     sched.add_job(_job, "cron", hour=0, minute=7, args=["heat_daily"])
     sched.add_job(_job, "cron", hour=7, minute=4, args=["heat_alerts"])
     sched.add_job(_job, "interval", minutes=1, args=["heat_minute"])
+    # Phase 6c (spec 6c-emergency-drills §4, §7, P6c-4)
+    sched.add_job(_job, "cron", hour=0, minute=8, args=["emergency_daily"])
+    sched.add_job(_job, "cron", hour=7, minute=5, args=["emergency_alerts"])
+    sched.add_job(_job, "interval", minutes=1, args=["emergency_minute"])
     sched.start()
 
 

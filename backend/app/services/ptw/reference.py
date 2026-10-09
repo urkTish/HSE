@@ -375,6 +375,8 @@ BLOCKER_TEXT: dict[PermitBlocker, tuple[str, str]] = {
     B.FALL_CLEARANCE_INSUFFICIENT: ("Fall clearance insufficient", "الخلوص أسفل نقطة العمل غير كافٍ"),
     B.HEAT_STOP: ("WBGT heat stop: outdoor work must stop", "إيقاف بسبب الإجهاد الحراري: يجب إيقاف العمل الخارجي"),
     B.WBGT_READING_REQUIRED: ("A current WBGT reading is required", "مطلوب قراءة حديثة لمؤشر WBGT"),
+    B.RESCUE_TEAM_NOT_REGISTERED: ("The rescue lead is in no active confined-space rescue team", "قائد الإنقاذ ليس في فريق إنقاذ نشط للأماكن المحصورة"),
+    B.RESCUE_DRILL_OVERDUE: ("The confined-space rescue team is not current", "فريق الإنقاذ للأماكن المحصورة غير جاهز"),
 }  # fmt: skip
 BLOCKER_ORDER = {b: i for i, b in enumerate(PermitBlocker)}
 APPROVE_TIME: frozenset[PermitBlocker] = frozenset(
@@ -425,6 +427,8 @@ WARNING_TEXT: dict[PermitWarningCode, tuple[str, str]] = {
     W.WORKER_ACCLIMATISING: ("Crew member acclimatising (limited minutes)", "عضو طاقم في فترة التأقلم (دقائق محدودة)"),
     W.HEAT_STOP_FOR_WORKER: ("Not for heat work now — acclimatising", "غير مسموح بالعمل في الحرارة الآن — في فترة التأقلم"),
     W.HEAT_REGIME: ("Work/rest regime in force", "نظام العمل والراحة الساري"),
+    W.HEIGHT_RESCUE_NOT_READY: ("No current height rescue team covers the site", "لا يوجد فريق إنقاذ من المرتفعات جاهز يغطي الموقع"),
+    W.NO_READY_EXTINGUISHER: ("No ready fire extinguisher in the zone", "لا توجد طفاية حريق جاهزة في المنطقة"),
 }  # fmt: skip
 
 REASON_TEXT: dict[StatusReason, tuple[str, str]] = {
@@ -454,6 +458,7 @@ REASON_TEXT: dict[StatusReason, tuple[str, str]] = {
     StatusReason.duplicate: ("Duplicate", "مكرر"),
     StatusReason.other: ("Other", "أخرى"),
     StatusReason.heat_stress_stop: ("Heat stress stop", "إيقاف بسبب الإجهاد الحراري"),
+    StatusReason.emergency_drill: ("Emergency drill", "إيقاف لتمرين طوارئ"),
 }
 
 TYPE_LABEL_AR = {t: i.label_ar for t, i in TYPES.items()}

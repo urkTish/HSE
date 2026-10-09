@@ -182,6 +182,7 @@ def evaluate_engine(
         out += cert_warnings(engine, project_id, tree, m, label_en, label_ar, who_en, who_ar)
         out += training_warnings(engine, project_id, tree, m, label_en, label_ar, who_en, who_ar)
         out += heat_warnings(engine, project_id, tree, m, label_en, label_ar, who_en, who_ar)
+        out += emergency_warnings(engine, project_id, tree, m, label_en, label_ar, who_en, who_ar)
     return out
 
 
@@ -554,4 +555,94 @@ def evaluate(scope: Scope, months: list[Window]) -> list[Warn]:
             if not flt.engs or flt.engs == base.engs:
                 continue
             out += evaluate_engine(scope, scope.sub_engine(flt), proj.id, root, months)
+    return out
+
+
+def emergency_warnings(
+    engine: Engine,
+    project_id: uuid.UUID,
+    tree: EngFact | None,
+    m: Window,
+    label_en: str,
+    label_ar: str,
+    who_en: str,
+    who_ar: str,
+) -> list[Warn]:
+    """E18-E19 (6c-emergency-drills §6.9); unrounded comparisons; months from
+    emergency_register_from. T13 inputs: counts, numerators, denominators, thresholds and drill /
+    event numbers only."""
+    from app.kpi import emergency as ke  # noqa: PLC0415
+    from app.services.emergency import common as ec  # noqa: PLC0415
+
+    ef = ke.efacts(engine)
+    if ef is None or project_id not in ef.active():
+        return []
+    c = ec.cfg(ef.db, project_id)
+    if c.register_from is None or c.register_from > m.end:
+        return []
+    sub = engine
+    out: list[Warn] = []
+
+    def pct(num: int, den: int) -> Decimal | None:
+        return Decimal(num) / Decimal(den) * HUNDRED if den else None
+
+    items = [x for x in ke.programme_items(sub, m) if x.pid == project_id]
+    k104 = pct(sum(1 for x in items if x.met), len(items))
+    cov = ke.coverage_stats(sub, m)
+    k106 = pct(cov.covered, cov.required)
+    rd = ke.readiness_facts(sub, project_id, m)
+    t104 = c.dec("drill_compliance_warning_pct")
+    t106 = c.dec("coverage_warning_pct")
+    if (
+        (k104 is not None and k104 < t104)
+        or rd.overdue_30
+        or (k106 is not None and k106 < t106)
+        or rd.erp_overdue
+    ):
+        out.append(
+            Warn(
+                E.E18, m, project_id, tree,
+                f"Emergency preparedness below target in {label_en}{who_en}",
+                f"الجاهزية للطوارئ دون المستهدف في {label_ar}{who_ar}",
+                [Input("k104", "Drill programme compliance", "الالتزام ببرنامج التمارين", k104,
+                       1, " %"),
+                 Input("k104_numerator", "Items met on time", "بنود منفذة في الوقت",
+                       Decimal(sum(1 for x in items if x.met)), 0),
+                 Input("k104_denominator", "Items due", "البنود المستحقة", Decimal(len(items)), 0),
+                 Input("k104_threshold_pct", "Programme threshold", "حد البرنامج", t104, 1, " %"),
+                 Input("lines_overdue_30d", "Lines overdue > 30 days",
+                       "بنود متأخرة أكثر من 30 يوماً", Decimal(len(rd.overdue_30)), 0),
+                 Input("k106", "Emergency team coverage", "تغطية فريق الطوارئ", k106, 1, " %"),
+                 Input("k106_threshold_pct", "Coverage threshold", "حد التغطية", t106, 1, " %"),
+                 Input("erp_overdue", "ERP overdue", "خطة الطوارئ متأخرة",
+                       Decimal(len(rd.erp_overdue)), 0)],
+            )
+        )  # fmt: skip
+    a = ke.asset_stats(sub, m)
+    k107 = pct(a.ready, a.total)
+    cur, n, _bad = ke.team_stats(sub, m)
+    k108 = pct(cur, n)
+    t107 = c.dec("equipment_readiness_warning_pct")
+    if (
+        (k107 is not None and k107 < t107)
+        or (k108 is not None and k108 < HUNDRED)
+        or rd.headcount_over
+        or rd.found
+    ):
+        refs = sorted(set(rd.headcount_over) | set(rd.found))
+        out.append(
+            Warn(
+                E.E19, m, project_id, tree,
+                f"Emergency response readiness below target in {label_en}{who_en}"
+                + (f": {', '.join(refs)}" if refs else ""),
+                f"جاهزية الاستجابة للطوارئ دون المستهدف في {label_ar}{who_ar}",
+                [Input("k107", "Equipment readiness", "جاهزية المعدات", k107, 1, " %"),
+                 Input("k107_threshold_pct", "Equipment threshold", "حد المعدات", t107, 1, " %"),
+                 Input("k108", "Rescue team readiness", "جاهزية فرق الإنقاذ", k108, 1, " %"),
+                 Input("headcount_over_target", "Drills / events over the headcount target",
+                       "تمارين / أحداث تجاوزت هدف الحصر", Decimal(len(rd.headcount_over)), 0),
+                 Input("found_on_site", "Found on site", "وُجد في الموقع", Decimal(len(rd.found)),
+                       0)],
+            )
+        )  # fmt: skip
     return out

@@ -151,7 +151,7 @@ def _site_codes(scope: Scope, sites: list[uuid.UUID]) -> dict[uuid.UUID, str]:
     hf = kh.hfacts(scope.engine)
     if hf is None or not sites:
         return {}
-    return dict(hf.db.execute(select(Site.id, Site.code).where(Site.id.in_(sites))))
+    return dict(hf.db.execute(select(Site.id, Site.code).where(Site.id.in_(sites))).all())
 
 
 def heat_kpis(

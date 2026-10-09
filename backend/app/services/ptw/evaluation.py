@@ -1324,6 +1324,10 @@ def evaluate(db: Session, permit: Permit, ctx: Ctx | None = None) -> Result:
     from app.services.heat import ptw as heat_ptw  # noqa: PLC0415
 
     heat_ptw.check(db, permit, ctx, res, lines)
+    # emergency preparedness (6c PE-3, PE-4, PE-5; 3-ptw v1.4 §11.4)
+    from app.services.emergency import ptw as emergency_ptw  # noqa: PLC0415
+
+    emergency_ptw.check(db, permit, ctx, res, lines)
     # window (PT-12)
     if ctx.start and common.current_instance(permit, at) is None:
         res.add(B.OUTSIDE_WINDOW)

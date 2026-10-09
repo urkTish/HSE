@@ -500,7 +500,7 @@ def present_map(
         )
     )
     for d, dep, res, adm in rows:
-        if res in LIVE_GATE or adm:
+        if dep is not None and (res in LIVE_GATE or adm):
             out[d].add(dep)
     cache[key] = out
     return out
@@ -547,7 +547,7 @@ def dep_worker(db: Session, dep_ids: Iterable[uuid.UUID]) -> dict[uuid.UUID, uui
     if not ids:
         return {}
     return dict(
-        db.execute(select(Deployment.id, Deployment.worker_id).where(Deployment.id.in_(ids)))
+        db.execute(select(Deployment.id, Deployment.worker_id).where(Deployment.id.in_(ids))).all()
     )
 
 

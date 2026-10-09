@@ -116,6 +116,7 @@ def test_P4AC2_tpi_kinds_have_no_training_provider(api: Api, db: Session) -> Non
         "calibration_lab",
         "ndt_body",
         "client_scheme",
+        "fire_protection_service",  # 4-third-party-cert v1.2 (6c §11.5)
     }
     body = {
         "tpi_code": "TRNX",

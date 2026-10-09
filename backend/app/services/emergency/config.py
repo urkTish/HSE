@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from collections.abc import Mapping
 from decimal import Decimal
 from typing import Any
 
@@ -27,7 +28,7 @@ BOOL_TRUE_ONLY = ("erp_client_acceptance_required", "coordinator_required_per_sh
 
 
 def reference() -> EmergencyReference:
-    def items(m: dict[Any, tuple[str, ...]]) -> list[Item]:
+    def items(m: Mapping[Any, tuple[str, ...]]) -> list[Item]:
         return [Item(code=k.value, label_en=v[0], label_ar=v[1]) for k, v in m.items()]
 
     mand = set(ref.MANDATORY) | set(ref.AIRPORT_MANDATORY)

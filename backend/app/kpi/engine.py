@@ -914,6 +914,7 @@ _DISPATCH: dict[KpiMetric, Callable[[Engine, Agg], Result]] = {
 }
 import app.kpi.access  # noqa: E402  (registers K-48…K-60 into _DISPATCH)
 import app.kpi.cert  # noqa: E402  (registers K-72…K-81 into _DISPATCH)
+import app.kpi.emergency  # noqa: E402  (registers K-104…K-109 into _DISPATCH)
 import app.kpi.heat  # noqa: E402  (registers K-97…K-103 into _DISPATCH)
 import app.kpi.medical  # noqa: E402  (registers K-89…K-96 into _DISPATCH)
 import app.kpi.ptw  # noqa: E402  (registers K-46, K-46b, K-61…K-71 into _DISPATCH)

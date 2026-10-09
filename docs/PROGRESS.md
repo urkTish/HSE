@@ -4,7 +4,8 @@
 - Phase: 6b — Heat stress (Phase 5 Training is PARKED, see below; Phase 6a design done, demo pending)
 - Module: heat stress (spec `docs/specs/6b-heat-stress.md` v1.0, §11 earlier-spec changes applied)
 - Phase 6b step = Design done (findings `docs/design/phase-6b-findings.md`; contract v0.8.0); phase demo next
-- Phase 6c spec written: `docs/specs/6c-emergency-drills.md` v1.0 (capabilities 178–190, K-104…K-109, E18–E19, T20, C28–C30; 66 ACs; §11 earlier-spec changes not yet applied)
+- Phase 6c — Emergency preparedness & drills (spec `docs/specs/6c-emergency-drills.md` v1.0, §11 earlier-spec changes applied; contract v0.9.0)
+- Phase 6c step = Backend done (stage 2); frontend next
 
 ## Phase log
 - Phase 0 — Foundation: built, e2e green, design pass done (2026-10-05). The user asked to continue phase after phase without per-phase approval; open questions are collected below for a single review.
@@ -27,6 +28,14 @@
   - Permits: heat workload / clothing / hood on create and edit (hidden for indoor), the effective workload and current-shift regime on the detail, regime per shift, the receiver's "Resume after heat stop".
 - e2e: `p6b-board`, `p6b-setup`, `p6b-plans-welfare`, `p6b-ban`, `p6b-log`, `p6b-settings-report`, `p6b-ptw` (16 tests, green). Screenshots: `docs/screenshots/phase-6b/` (19 screens plus the board and reading entry at 390 px, EN/AR; `SCREENSHOTS=1 npx playwright test e2e/screenshots-p6b`).
 - Defaults: DECISIONS #150–#156.
+
+### Backend — Phase 6c emergency preparedness (contract v0.9.0, stage 2)
+- Services under `app/services/emergency/`: settings (ER-9 tighten-only, enforcement needs an Approved ERP), ERP revisions (ER-3 completeness, ER-4/5, SoD, ER-8 review triggers), assembly points (ER-6, last-AP guard), contacts, zone profiles, roster (EO-1/EO-2 matrix role), coverage (§6.2, EO-4 presence), rescue teams (RT-1/RT-2), assets and checks (EA-1…EA-6, CA on fail, provision gaps), programme computed on read (DP-1…DP-6), drills (DR-1…DR-9, unannounced visibility, evaluation, findings, CAs), musters (roll / count, scans, muster_reader devices, MU-1…MU-9), events (EV-1…EV-7, Phase 2 aircraft_emergency link), board, action panel (15 items), emergency_info (PE-6).
+- Phase 3 wiring: PE-1 / PE-2 suspensions, receiver drill-resume, issuer resume after All Clear, blockers RESCUE_TEAM_NOT_REGISTERED / RESCUE_DRILL_OVERDUE, warnings HEIGHT_RESCUE_NOT_READY / NO_READY_EXTINGUISHER.
+- KPIs K-104…K-109 (`app/kpi/emergency.py`, `GET /kpi/emergency` with site / month / drill / asset / event breakdowns); warnings E18 / E19.
+- Jobs: `emergency_daily` 00:08 (muster retention), `emergency_alerts` 07:05, `emergency_minute` every 60 s (exits sync, MU-8, EO-7 live coverage).
+- Seed `app/seed_emergency.py` (Appendix A; called by `app.seed`; `frontend/e2e/start-backend.sh` updated). ED9 differences in D-166.
+- Tests: `test_emer_config`, `test_emer_org`, `test_emer_assets`, `test_emer_programme`, `test_emer_drills`, `test_emer_events`, `test_emer_ptw`, `test_emer_kpis` (61 tests); defaults D-157…D-168.
 
 ### Backend — Phase 6b heat stress (contract v0.8.0, stage 2)
 - Services under `app/services/heat/`: settings and regime table (§3.14), instruments, monitoring points, weather stations (device sessions), WBGT readings (HS1, entry / station / void), zone state computed on read (WR-8/WR-9, HS3), heat board, alerts (HA-1…HA-6), acclimatisation plans (HS4a–c, prior experience, period start, season end), welfare checks and rest stations, midday-ban patrols and exemptions, heat-illness log (HI-1…HI-4, HS6 context, review, P6b-2), action panel (11 items), season report (draft / issue / re-issue).
@@ -725,6 +734,7 @@
 - Phase 1 demo; then Phase 2 per the roadmap
 
 ## Parked
+- **Phase 6c backend (2026-10-09):** not built yet: AI tool T20 (AC63), charts C28–C30 data, register exports (189), expiring-items / poster entries, the P1-8 scan of event free texts. K-106 and two other ED9 figures differ on the seed (D-166). AC66 is tested on the reference lists only; ACs 34 (exact alert dates), 45 (plan_deficiency via the evaluation API) and 64 (exports) are partly covered.
 - **Phase 6b frontend (2026-10-09):** no UI yet for WBGT bulk import (`/wbgt-imports`), heat exports (176, not built in the backend), patrol photos (no attachment owner). The heat-stop resume and day-confirmation flows have no e2e test (no seed state at the clock). Full e2e run after the 6b frontend: 217 passed, 9 failed, 9 skipped, 3 did not run (37.6 min). Failures outside 6b, left as before: p1-dashboard ×5, p4-dashboard AC103, p2-settings HK-4 (as parked after 6a); p6a-settings "1 settings saved." toast (passes alone). The one 6b failure (K-97 is diluted by zones earlier specs create) was fixed by not asserting K-97 in that spec; the spec passes alone.
 - **Phase 6b backend (2026-10-09):** not built or not tested yet: AI tool T19 and T9 heat dimensions, charts C25–C27 data, heat exports (capability 176), expiring-items / dashboard band integration, WR-7 permit-only readings, GP-6 (heat training gap in `train/gaps.py`), retention purge (AC60, untested), season report `heat_awr_compliance` (null), AC61 i18n check. ACs 18, 19, 21, 25, 26, 28, 46, 50 and the AC20 resume steps have no dedicated backend test.
 - **Full e2e run after Phase 6a frontend (2026-10-09):** 203 passed, 8 failed, 7 skipped, 3 did not run (43.9 min). All p6a specs green. Failures outside 6a, left as TODO: p1-dashboard ×4 and p4-dashboard AC103 (dashboard load timeouts, as parked for Phase 5); p2-smoke (networkidle timeout); p5-smoke `/training-imports` shows the raw key `training.imports.scansHint` (the message contains `<certificate_no>`, which ICU reads as a tag); p2-settings HK-4 expects "block without a registered provider" to be refused for `medical_fitness`, but the 6a seed now registers a medical provider, so the test needs another kind or project.
@@ -740,6 +750,8 @@
 - Per-entity retention/anonymisation (P7) — no personal-data entities with retention defaults in Phase 0 beyond the audit log.
 
 ## Open questions for the HSE Manager
+- (Backend, Phase 6c, ED9 / A.8) With the Phase 1 headcounts and the Phase 5 holders, emergency team coverage K-106 is about 20 % ANIA-EXP and 52 % RBT-52 (ED9: 95.6 % / 100 %), so E18 is raised for RBT-52 too (D-166). Re-base ED9 on the seed, or add roster holders?
+- (Backend, Phase 6c, AC16) The QIMMA worker of AC16 is on RBT-52 only, a project Ahmed cannot see: the API answers 404, not 403 (D-168). Accept?
 - (Backend, Phase 6b, AC34 / AC53) The 6a matrix gives HSE Reps capabilities 156 and 29, so Ahmed sees the plan trigger and worker names that AC34 / AC53 say are hidden from him (D-149). Change the ACs or the matrix?
 - (Backend, Phase 6b, Appendix A) Seed CA refs for MBP 188 / 214 are new 5-digit refs, not the spec's 0598 / 0611; Phase 1 June–August cases were re-natured to heat_exhaustion to match HS8 (D-148). Accept?
 - (Backend, Phase 6a, AC59) A held worker who is a non-key crew member (Kamal, entrant on PTW-0413) is excluded from the crew by the 3-ptw rule; the permit is not suspended (D-126). Should a medical hard stop on any crew member suspend the permit?

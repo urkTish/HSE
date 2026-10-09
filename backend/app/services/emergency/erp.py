@@ -151,7 +151,7 @@ def _rescue_work(db: Session, project_id: uuid.UUID, work_type: str) -> bool:
         select(Permit.id)
         .where(
             Permit.project_id == project_id,
-            Permit.work_types.any(work_type),  # type: ignore[arg-type]
+            Permit.work_types.contains([work_type]),
             or_(
                 Permit.status.in_((PermitStatus.issued, PermitStatus.active)),
                 Permit.issued_at >= since,
@@ -214,7 +214,7 @@ def update_erp(db: Session, p: Principal, erp_id: uuid.UUID, body: ErpUpdate) ->
             ec.site_or_422(db, e.project_id, uuid.UUID(sid))
     sites = ch.get("site_ids") if ch.get("site_ids") is not None else [str(x) for x in e.site_ids]
     if ch.get("scenarios") is not None:
-        check_scenarios(db, e.project_id, sites, ch["scenarios"])
+        check_scenarios(db, e.project_id, list(sites or []), ch["scenarios"])
     for k, v in ch.items():
         if k == "site_ids":
             e.site_ids = [uuid.UUID(x) for x in v or []]

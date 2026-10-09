@@ -49,8 +49,8 @@ PHASE6B_METRICS: frozenset[KpiMetric] = frozenset(
 PHASE6B_PENDING: frozenset[KpiMetric] = frozenset()
 """Heat-stress KPIs not computed yet (none since Phase 6b stage 2)."""
 PHASE6C_METRICS: frozenset[KpiMetric] = frozenset({M.K104, M.K105, M.K106, M.K107, M.K108, M.K109})
-PHASE6C_PENDING: frozenset[KpiMetric] = PHASE6C_METRICS
-"""Emergency KPIs not computed yet (stage 1)."""
+PHASE6C_PENDING: frozenset[KpiMetric] = frozenset()
+"""Emergency KPIs not computed yet (none since Phase 6c stage 2)."""
 _PENDING = (
     PHASE2_PENDING | PHASE3_PENDING | PHASE4_PENDING | PHASE5_PENDING | PHASE6A_PENDING
     | PHASE6B_PENDING | PHASE6C_PENDING
