@@ -17,6 +17,7 @@ from app.core.clock import local_date, now, today
 from app.core.config import get_settings
 from app.core.enums import AuditAction, AuditResult, EntityType, NotificationKind, Role, UserStatus
 from app.db.session import get_sessionmaker
+from app.heat_jobs import PHASE6B_JOBS
 from app.hse_jobs import PHASE1_JOBS
 from app.med_jobs import PHASE6A_JOBS
 from app.models import (
@@ -302,6 +303,7 @@ JOBS: dict[str, Callable[[Session], dict[str, Any]]] = {
     **PHASE4_JOBS,
     **PHASE5_JOBS,
     **PHASE6A_JOBS,
+    **PHASE6B_JOBS,
 }
 
 

@@ -61,6 +61,10 @@ def main() -> None:
     sched.add_job(_job, "cron", hour=0, minute=6, second=30, args=["medical_daily"])
     sched.add_job(_job, "cron", hour=7, minute=3, args=["medical_alerts"])
     sched.add_job(_job, "interval", minutes=1, args=["medical_minute"])
+    # Phase 6b (spec 6b-heat-stress §4 jobs, §7 alerts)
+    sched.add_job(_job, "cron", hour=0, minute=7, args=["heat_daily"])
+    sched.add_job(_job, "cron", hour=7, minute=4, args=["heat_alerts"])
+    sched.add_job(_job, "interval", minutes=1, args=["heat_minute"])
     sched.start()
 
 

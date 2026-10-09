@@ -287,6 +287,21 @@ class Facts:
     def med(self, value: Any) -> None:
         self._med = value
 
+    # app.kpi.heat.HeatFacts (6b-heat-stress §6.6), built per request on first use.
+    heat_loader: Any = None
+    _heat: Any = None
+
+    @property
+    def heat(self) -> Any:
+        if self._heat is None and self.heat_loader is not None:
+            self._heat = self.heat_loader()
+            self.heat_loader = None
+        return self._heat
+
+    @heat.setter
+    def heat(self, value: Any) -> None:
+        self._heat = value
+
     def sort(self) -> "Facts":
         self.wf.sort(key=lambda r: r.d)
         self.inds.sort(key=lambda r: r.d)

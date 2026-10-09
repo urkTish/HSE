@@ -181,6 +181,81 @@ def evaluate_engine(
         out += ptw_warnings(engine, project_id, tree, m, label_en, label_ar, who_en, who_ar)
         out += cert_warnings(engine, project_id, tree, m, label_en, label_ar, who_en, who_ar)
         out += training_warnings(engine, project_id, tree, m, label_en, label_ar, who_en, who_ar)
+        out += heat_warnings(engine, project_id, tree, m, label_en, label_ar, who_en, who_ar)
+    return out
+
+
+def heat_warnings(
+    engine: Engine,
+    project_id: uuid.UUID,
+    tree: EngFact | None,
+    m: Window,
+    label_en: str,
+    label_ar: str,
+    who_en: str,
+    who_ar: str,
+) -> list[Warn]:
+    """E16-E17 (6b-heat-stress §6.8); unrounded comparisons; months with ban dates (E16), months
+    overlapping the controls period or with a heat-illness entry (E17)."""
+    from app.kpi import heat as kh  # noqa: PLC0415
+
+    hf = kh.hfacts(engine)
+    p = hf.proj(project_id) if hf is not None else None
+    if p is None:
+        return []
+    c = p.cfg
+    days = [m.start + timedelta(days=i) for i in range(m.days)]
+    if not any(c.active_on(d) for d in days):
+        return []
+    out: list[Warn] = []
+    if any(c.ban_date(d) and c.active_on(d) for d in days):
+        b = kh.ban_stats(engine, m)
+        k99 = Decimal(b.patrolled) / Decimal(b.required) * HUNDRED if b.required else None
+        t99 = c.dec("ban_patrol_coverage_warning_pct")
+        if b.violations >= 1 or (k99 is not None and k99 < t99):
+            out.append(
+                Warn(
+                    E.E16, m, project_id, tree,
+                    f"Midday-ban violations or low patrol coverage in {label_en}{who_en}",
+                    f"مخالفات لحظر الظهيرة أو تغطية جولات منخفضة في {label_ar}{who_ar}",
+                    [Input("k100_violations", "Ban violations", "مخالفات الحظر",
+                           Decimal(b.violations), 0),
+                     Input("k99", "Ban patrol coverage", "تغطية جولات الحظر", k99, 1, " %"),
+                     Input("k99_numerator", "Patrolled zone-days", "أيام المناطق المفحوصة",
+                           Decimal(b.patrolled), 0),
+                     Input("k99_denominator", "Required zone-days", "أيام المناطق المطلوبة",
+                           Decimal(b.required), 0),
+                     Input("threshold_pct", "Threshold", "الحد", t99, 1, " %")],
+                )
+            )  # fmt: skip
+    in_controls = any(c.in_controls(d) and c.active_on(d) for d in days)
+    if in_controls or kh.has_entries(engine, m):
+        gaps = kh.e17_gaps(engine, m)
+        cov = kh.k97_counts(engine, m)
+        k97 = Decimal(cov.covered) / Decimal(cov.required) * HUNDRED if cov.required else None
+        wf = kh.welfare_stats(engine, m)
+        k101 = Decimal(wf.compliant) / Decimal(wf.applicable) * HUNDRED if wf.applicable else None
+        t97 = c.dec("wbgt_coverage_warning_pct")
+        t101 = c.dec("welfare_compliance_warning_pct")
+        if gaps >= 1 or (k97 is not None and k97 < t97) or (k101 is not None and k101 < t101):
+            out.append(
+                Warn(
+                    E.E17, m, project_id, tree,
+                    f"Heat-stress control gap or low monitoring/welfare in {label_en}{who_en}",
+                    f"ثغرة في ضوابط الإجهاد الحراري أو انخفاض القياس/الراحة في "
+                    f"{label_ar}{who_ar}",
+                    [Input("control_gap_entries", "Heat-illness entries with a control gap",
+                           "حالات إجهاد حراري مع ثغرة في الضوابط", Decimal(gaps), 0),
+                     Input("k97", "WBGT monitoring coverage", "تغطية قياس المؤشر الحراري", k97,
+                           1, " %"),
+                     Input("k97_threshold_pct", "Coverage threshold", "حد التغطية", t97, 1,
+                           " %"),
+                     Input("k101", "Heat welfare compliance", "الامتثال لتدابير الراحة", k101,
+                           1, " %"),
+                     Input("k101_threshold_pct", "Welfare threshold", "حد الراحة", t101, 1,
+                           " %")],
+                )
+            )  # fmt: skip
     return out
 
 

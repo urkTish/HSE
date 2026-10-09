@@ -196,6 +196,8 @@ def _cached(db: Session, key: tuple[uuid.UUID, ...], ttl: float) -> Facts | None
         facts.med_loader = _med_loader(db, key, shared)
     else:
         facts._med = shared._med.with_db(db)
+    facts._heat = None  # per request (own session)
+    facts.heat_loader = _heat_loader(db, key)
     return facts
 
 
@@ -250,6 +252,15 @@ def _med_loader(db: Session, pids: tuple[uuid.UUID, ...], shared: Facts) -> Any:
                 cur = load_med(db, list(pids))
                 shared._med = cur
             return cur.with_db(db)
+
+    return run
+
+
+def _heat_loader(db: Session, pids: tuple[uuid.UUID, ...]) -> Any:
+    def run() -> Any:
+        from app.kpi.heat import load_heat  # noqa: PLC0415
+
+        return load_heat(db, list(pids))
 
     return run
 
@@ -622,6 +633,7 @@ def _load(
     facts.cert_loader = _cert_loader(db, tuple(sorted(pids)), facts)
     facts.train_loader = _train_loader(db, tuple(sorted(pids)), facts)
     facts.med_loader = _med_loader(db, tuple(sorted(pids)), facts)
+    facts.heat_loader = _heat_loader(db, tuple(sorted(pids)))
     return facts.sort()
 
 
