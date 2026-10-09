@@ -660,6 +660,33 @@ PHASE6E_MATRIX: dict[Role, dict[Capability, CapabilityScope]] = {
 for _role, _caps in PHASE6E_MATRIX.items():
     MATRIX[_role].update(_caps)
 
+# 6f-incident-followup §5.10 (capabilities 215-223). 218 and 220 are HSE Manager only. Viewer /
+# Client: 215 without packs or evidence files, and the library (222), enforced in the services.
+PHASE6F_MATRIX: dict[Role, dict[Capability, CapabilityScope]] = {
+    Role.hse_officer: dict.fromkeys(
+        [C.followup_view, C.followup_record, C.followup_approve, C.lesson_draft,
+         C.lesson_acknowledge, C.lesson_library_view, C.lesson_effectiveness],
+        S.project,
+    ),
+    Role.site_engineer: {
+        C.followup_view: S.sites, C.lesson_draft: S.sites, C.lesson_library_view: S.project,
+    },
+    Role.permit_issuer: {C.followup_view: S.sites, C.lesson_library_view: S.project},
+    Role.permit_receiver: {C.followup_view: S.own_engagement, C.lesson_library_view: S.project},
+    Role.contractor_hse_rep: {
+        **dict.fromkeys(
+            [C.followup_view, C.followup_record, C.followup_approve, C.lesson_draft,
+             C.lesson_acknowledge],
+            S.contractor_tree,
+        ),
+        C.lesson_library_view: S.project,
+    },
+    Role.viewer_client: dict.fromkeys([C.followup_view, C.lesson_library_view], S.project),
+    Role.oh_practitioner: {C.lesson_library_view: S.project},
+}  # fmt: skip
+for _role, _caps in PHASE6F_MATRIX.items():
+    MATRIX[_role].update(_caps)
+
 SCOPE_RANK = {S.own_engagement: 1, S.contractor_tree: 2, S.sites: 3, S.project: 4, S.all: 5}
 ROLE_RANK = {r: i for i, r in enumerate(Role)}  # lower index = more senior
 OFFICER_ASSIGNABLE = frozenset(

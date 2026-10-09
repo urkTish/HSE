@@ -46,6 +46,8 @@ from app.api.routers import (
     field_toolbox,
     fitness_assessments,
     fitness_holds,
+    followup_lessons,
+    followup_notifications,
     gas,
     gates,
     health,
@@ -306,6 +308,9 @@ def create_app() -> FastAPI:
         env_waste,
         env_monitoring,
         env_events,
+        # Phase 6f
+        followup_notifications,
+        followup_lessons,
     ):
         app.include_router(module.router, prefix=API_PREFIX)
     app.include_router(auth.public_router, prefix=API_PREFIX)

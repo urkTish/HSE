@@ -270,6 +270,16 @@ class Capability(StrEnum):
     env_complaint = "env_complaint.manage"  # 212 complaints; complainant data
     env_settings = "env.settings"  # 213 6e settings; provider decisions (HSE Manager)
     env_void = "env.void"  # 214 void 6e records
+    # ---- Phase 6f (6f-incident-followup §5.10) ----
+    followup_view = "followup.view"  # 215 requirements, submissions, follow-up KPIs, action panel
+    followup_record = "followup.record"  # 216 generate packs; record submissions and acks
+    followup_approve = "followup.approve"  # 217 approve packs; void submissions
+    followup_settings = "followup.settings"  # 218 rule profile, recipients, settings; waivers
+    lesson_draft = "lesson.draft"  # 219 draft lessons, submit; 6d links and change requests
+    lesson_publish = "lesson.publish"  # 220 publish, return, archive lessons; distribution
+    lesson_acknowledge = "lesson.acknowledge"  # 221 acknowledge lessons for an engagement
+    lesson_library_view = "lesson_library.view"  # 222 view and search the lesson library
+    lesson_effectiveness = "lesson.effectiveness"  # 223 complete effectiveness checks
 
 
 class CapabilityScope(StrEnum):
@@ -652,6 +662,16 @@ class EntityType(StrEnum):
     discharge_day = "discharge_day"
     env_complaint = "env_complaint"
     env_monitor_device = "env_monitor_device"
+    # Phase 6f
+    followup_settings = "followup_settings"
+    followup_rule = "followup_rule"
+    followup_requirement = "followup_requirement"
+    followup_pack = "followup_pack"
+    followup_submission = "followup_submission"
+    lesson = "lesson"
+    lesson_distribution = "lesson_distribution"
+    lesson_link = "lesson_link"
+    lesson_effectiveness = "lesson_effectiveness"
 
 
 class ExportDataset(StrEnum):
@@ -964,3 +984,10 @@ class NotificationKind(StrEnum):
     discharge_permit_invalid = "discharge_permit_invalid"  # WAT-3
     env_complaint = "env_complaint"  # CPL-1
     aspect_review = "aspect_review"  # ASP-3
+    # ---- Phase 6f (6f-incident-followup §7) ----
+    followup_requirement = "followup_requirement"  # created / pre-due / overdue (§6.1)
+    followup_pack_approval = "followup_pack_approval"  # pack awaiting approval > 4 h
+    lesson_publish_due = "lesson_publish_due"  # LL-1
+    lesson_published = "lesson_published"  # DS-2
+    lesson_ack_due = "lesson_ack_due"  # DS-4
+    lesson_effectiveness_due = "lesson_effectiveness_due"  # EF-1

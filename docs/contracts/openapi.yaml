@@ -46,7 +46,7 @@ info:
     \ 157.\n  No diagnosis, test result or clinical note is ever stored (P6-1). Medical hooks use the\
     \ shared\n  hook policy (kind `medical_fitness`; enable with `POST /projects/{id}/medical-hooks/enable`);\n\
     \  gate texts never say \"medical\". Site-clinic sign-off needs step-up re-auth.\n"
-  version: 0.11.0
+  version: 0.12.0
 paths:
   /api/v1/health:
     get:
@@ -15503,6 +15503,327 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EnvKpiResponse'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/kpi/incident-followup:
+    get:
+      tags:
+      - kpi
+      summary: Incident follow-up KPIs K-127…K-131 with breakdowns (6f §6.2)
+      description: 'Common filters (all /kpi endpoints): `project_id` (repeatable) or `all_projects`,
+        `site_id`, `zone_id`, `zone_type`, `engagement_id` (+ `include_subcontractors`, default true),
+        `tier`, `period` (+ `anchor` or `start`/`end` for custom), `as_of`, `compare`. Role scope is applied
+        first (D-3): a narrower scope is reported in `context.filters.scope_narrowed`. Capability 38.
+        Capability 215; aggregates only (FK-2): bodies, stages, months and engagement codes; never names,
+        packs or evidence. Attribution FK-1: requirements by the local date of due_at and the responsible
+        engagement (GOSI: the filer engagement); lessons by publish_due_on; distribution items by ack_due_on
+        and their engagement; checks by completion.'
+      operationId: get_followup_kpis
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: metric
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/KpiMetric'
+          - type: 'null'
+          description: 'Default: K-127…K-131.'
+          title: Metric
+        description: 'Default: K-127…K-131.'
+      - name: group_by
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/FuKpiGroupBy'
+          - type: 'null'
+          title: Group By
+      - name: project_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+              format: uuid
+          - type: 'null'
+          description: Project(s). Repeat for several. Required unless all_projects=true. Out-of-scope
+            ids → 404.
+          title: Project Id
+        description: Project(s). Repeat for several. Required unless all_projects=true. Out-of-scope ids
+          → 404.
+      - name: all_projects
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: 'HSE Manager only: every project (K-R12 bases banner).'
+          default: false
+          title: All Projects
+        description: 'HSE Manager only: every project (K-R12 bases banner).'
+      - name: site_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+              format: uuid
+          - type: 'null'
+          description: Sites (multi).
+          title: Site Id
+        description: Sites (multi).
+      - name: zone_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+              format: uuid
+          - type: 'null'
+          description: Zones (multi).
+          title: Zone Id
+        description: Zones (multi).
+      - name: zone_type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/ZoneType'
+          - type: 'null'
+          description: airside / landside / other.
+          title: Zone Type
+        description: airside / landside / other.
+      - name: engagement_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+              format: uuid
+          - type: 'null'
+          description: Contractor engagement(s); roll-up per include_subcontractors.
+          title: Engagement Id
+        description: Contractor engagement(s); roll-up per include_subcontractors.
+      - name: include_subcontractors
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: 'K-R5: engagement + descendants (default) or this only.'
+          default: true
+          title: Include Subcontractors
+        description: 'K-R5: engagement + descendants (default) or this only.'
+      - name: tier
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: integer
+            ge: 1
+            le: 3
+          - type: 'null'
+          description: Tier 1/2/3.
+          title: Tier
+        description: Tier 1/2/3.
+      - name: period
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/PeriodPreset'
+          description: K-R10 preset.
+          default: month
+        description: K-R10 preset.
+      - name: anchor
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          description: A date inside the wanted day/week/month/quarter/year (default as_of). mtd/qtd/ytd/r12/itd
+            end at as_of.
+          title: Anchor
+        description: A date inside the wanted day/week/month/quarter/year (default as_of). mtd/qtd/ytd/r12/itd
+          end at as_of.
+      - name: start
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          description: 'period=custom: first day.'
+          title: Start
+        description: 'period=custom: first day.'
+      - name: end
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          description: 'period=custom: last day (inclusive).'
+          title: End
+        description: 'period=custom: last day (inclusive).'
+      - name: as_of
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          description: Evaluation date; default today (project timezone).
+          title: As Of
+        description: Evaluation date; default today (project timezone).
+      - name: compare
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/ComparisonKind'
+          - type: 'null'
+          description: 'Comparisons to compute (K-R11). Default: previous.'
+          title: Compare
+        description: 'Comparisons to compute (K-R11). Default: previous.'
+      - name: gate_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+              format: uuid
+          - type: 'null'
+          description: 'Gate(s): filters gate KPIs (K-52, K-53, K-53b) only.'
+          title: Gate Id
+        description: 'Gate(s): filters gate KPIs (K-52, K-53, K-53b) only.'
+      - name: permit_type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/PermitType'
+          - type: 'null'
+          description: 'Phase 3: filters PTW KPIs (K-46, K-46b, K-61…K-71) only.'
+          title: Permit Type
+        description: 'Phase 3: filters PTW KPIs (K-46, K-46b, K-61…K-71) only.'
+      - name: equipment_category
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/EquipmentCertCategory'
+          - type: 'null'
+          description: 'Phase 4: filters equipment / scaffold KPIs (K-72…K-75, K-78, K-80).'
+          title: Equipment Category
+        description: 'Phase 4: filters equipment / scaffold KPIs (K-72…K-75, K-78, K-80).'
+      - name: cert_type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          description: 'Phase 4: personnel certificate type code(s) (PCT); filters K-76, K-77, K-78 persons,
+            K-79.'
+          title: Cert Type
+        description: 'Phase 4: personnel certificate type code(s) (PCT); filters K-76, K-77, K-78 persons,
+          K-79.'
+      - name: trade
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/Trade'
+          - type: 'null'
+          description: 'Phase 5: deployment trade(s); filters training KPIs (K-82…K-88) only.'
+          title: Trade
+        description: 'Phase 5: deployment trade(s); filters training KPIs (K-82…K-88) only.'
+      - name: course_code
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          description: 'Phase 5: course code(s); filters training KPIs (K-82…K-88) only.'
+          title: Course Code
+        description: 'Phase 5: course code(s); filters training KPIs (K-82…K-88) only.'
+      - name: course_category
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/CourseCategory'
+          - type: 'null'
+          description: 'Phase 5: course category (CAT-C); filters training KPIs only.'
+          title: Course Category
+        description: 'Phase 5: course category (CAT-C); filters training KPIs only.'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuKpiResponse'
         '401':
           description: Not authenticated, session expired, or login rejected.
           content:
@@ -61870,6 +62191,2351 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/followup-reference:
+    get:
+      tags:
+      - incident-followup
+      summary: 6f reference lists with EN/AR labels (§3.11)
+      operationId: get_followup_reference
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuReference'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+  /api/v1/projects/{project_id}/followup-settings:
+    get:
+      tags:
+      - incident-followup
+      summary: 6f project settings, client recipients and body directory (§3.2, §3.10; 215)
+      operationId: get_followup_settings
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuSettingsRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags:
+      - incident-followup
+      summary: Edit 6f settings (218, HSE Manager; tighten only → 422 SETTING_LOOSENING)
+      operationId: update_followup_settings
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FuSettingsUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuSettingsRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/notification-rules:
+    get:
+      tags:
+      - incident-followup
+      summary: The project's notification rule profile (§3.1; 215)
+      operationId: list_notification_rules
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuRuleList'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+      - incident-followup
+      summary: Add a client / PMC rule row (218; 422 CLIENT_RECIPIENT_REQUIRED, NR-9)
+      operationId: create_notification_rule
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FuRuleCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuRuleRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/notification-rules/{rule_id}:
+    patch:
+      tags:
+      - incident-followup
+      summary: Edit a rule row (218; statutory rows only tighten → 422 RULE_LOOSENING, NR-3)
+      operationId: update_notification_rule
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: rule_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Rule Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FuRuleUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuRuleRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/notification-requirements:
+    get:
+      tags:
+      - incident-followup
+      summary: Notification register (§8.3; 215). Ordered by due time.
+      operationId: list_notification_requirements
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      - name: body
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/ExternalBody'
+          - type: 'null'
+          title: Body
+      - name: stage
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/FuStage'
+          - type: 'null'
+          title: Stage
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/FuRequirementStatus'
+          - type: 'null'
+          title: Status
+      - name: engagement_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Engagement Id
+      - name: incident_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Incident Id
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          description: 1-based page number.
+          default: 1
+          title: Page
+        description: 1-based page number.
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          description: Items per page.
+          default: 50
+          title: Page Size
+        description: Items per page.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Page_FuRequirementRead_'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/notification-requirements/{requirement_id}:
+    get:
+      tags:
+      - incident-followup
+      summary: One requirement (215)
+      operationId: get_notification_requirement
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: requirement_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Requirement Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuRequirementRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/notification-requirements/{requirement_id}/waive:
+    post:
+      tags:
+      - incident-followup
+      summary: Waive a requirement (218; NR-8, 422 WAIVER_EVIDENCE_REQUIRED)
+      operationId: waive_notification_requirement
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: requirement_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Requirement Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FuWaiverRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuRequirementRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/notification-requirements/{requirement_id}/packs:
+    post:
+      tags:
+      - incident-followup
+      summary: Generate (or regenerate) the pack of a requirement (216; PK-1…PK-5)
+      description: Identity field sets need 29 (+30 for medical) → else 403; CLIENT-FINAL needs the investigation
+        approved (422 INVESTIGATION_NOT_APPROVED); names in the narrative → 422 IDENTITY_IN_TEXT. Writes
+        `sensitive_field_read` and an `export` audit row (purpose = body).
+      operationId: generate_notification_pack
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: requirement_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Requirement Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FuPackCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuPackRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/notification-packs:
+    get:
+      tags:
+      - incident-followup
+      summary: Pack register (215 without Viewer / Client; identity content only with 29)
+      operationId: list_notification_packs
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/FuPackStatus'
+          - type: 'null'
+          title: Status
+      - name: requirement_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Requirement Id
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          description: 1-based page number.
+          default: 1
+          title: Page
+        description: 1-based page number.
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          description: Items per page.
+          default: 50
+          title: Page Size
+        description: Items per page.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Page_FuPackRead_'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/notification-packs/{pack_id}:
+    get:
+      tags:
+      - incident-followup
+      summary: One pack (PK-2 'incident changed since generation')
+      operationId: get_notification_pack
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: pack_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Pack Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuPackRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags:
+      - incident-followup
+      summary: Edit a Draft pack (216; Submitted → 409 PACK_IMMUTABLE)
+      operationId: update_notification_pack
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: pack_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Pack Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FuPackUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuPackRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/notification-packs/{pack_id}/transitions:
+    post:
+      tags:
+      - incident-followup
+      summary: Approve (file rendered) or return to Draft (217; PK-6)
+      operationId: transition_notification_pack
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: pack_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Pack Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FuPackTransition'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuPackRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/notification-packs/{pack_id}/file-url:
+    get:
+      tags:
+      - incident-followup
+      summary: Signed URL of the rendered pack (identity packs ≤ 5 min; audited, P6f-4)
+      operationId: get_notification_pack_file_url
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: pack_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Pack Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignedUrlRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/notification-requirements/{requirement_id}/submissions:
+    post:
+      tags:
+      - incident-followup
+      summary: Record a submission (216; SB-1…SB-4)
+      description: 422 PACK_NOT_APPROVED, CHANNEL_NOT_ALLOWED, EVIDENCE_REQUIRED, SUBMITTED_AT_INVALID.
+      operationId: record_notification_submission
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: requirement_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Requirement Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FuSubmissionCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuSubmissionRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/notification-submissions:
+    get:
+      tags:
+      - incident-followup
+      summary: Submissions (215; Viewer / Client without evidence files)
+      operationId: list_notification_submissions
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      - name: requirement_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Requirement Id
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          description: 1-based page number.
+          default: 1
+          title: Page
+        description: 1-based page number.
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          description: Items per page.
+          default: 50
+          title: Page Size
+        description: Items per page.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Page_FuSubmissionRead_'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/notification-submissions/{submission_id}:
+    patch:
+      tags:
+      - incident-followup
+      summary: Edit a submission (recorder, 24 h; then 409 SUBMISSION_LOCKED, SB-5)
+      operationId: update_notification_submission
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: submission_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Submission Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FuSubmissionUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuSubmissionRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/notification-submissions/{submission_id}/acknowledge:
+    post:
+      tags:
+      - incident-followup
+      summary: Record the body's acknowledgement (216)
+      operationId: acknowledge_notification_submission
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: submission_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Submission Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FuSubmissionAck'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuSubmissionRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/notification-submissions/{submission_id}/void:
+    post:
+      tags:
+      - incident-followup
+      summary: Void a submission (217, reason ≥ 20 chars; the requirement returns to due / overdue)
+      operationId: void_notification_submission
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: submission_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Submission Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FuSubmissionVoid'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuSubmissionRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/followup-band:
+    get:
+      tags:
+      - incident-followup
+      summary: Follow-up band (§8.1 item 2; 215)
+      operationId: get_followup_band
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuBand'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/followup-action-panel:
+    get:
+      tags:
+      - incident-followup
+      summary: Follow-up action-panel items (§8.2; 215)
+      operationId: get_followup_action_panel
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuActionPanel'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/lessons:
+    get:
+      tags:
+      - lessons-learned
+      summary: Lesson library and drafts (222; LL-5 Arabic-normalised search)
+      description: Published and Archived lessons for every 222 holder; drafts and lessons in review only
+        for 219 / 220 holders (`status`). `q` searches EN and AR text (diacritics removed; أ إ آ → ا;
+        ة → ه; ى → ي; leading ال ignored).
+      operationId: list_lessons
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: q
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            maxLength: 200
+          - type: 'null'
+          title: Q
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/FuLessonStatus'
+          - type: 'null'
+          title: Status
+      - name: activity
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/Activity'
+          - type: 'null'
+          title: Activity
+      - name: mechanism
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/Mechanism'
+          - type: 'null'
+          title: Mechanism
+      - name: do_category
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/DangerousOccurrenceCategory'
+          - type: 'null'
+          title: Do Category
+      - name: root_cause_code
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Root Cause Code
+      - name: zone_type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Zone Type
+      - name: trade
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/Trade'
+          - type: 'null'
+          title: Trade
+      - name: project_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Project Id
+      - name: year
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Year
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          description: 1-based page number.
+          default: 1
+          title: Page
+        description: 1-based page number.
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          description: Items per page.
+          default: 50
+          title: Page Size
+        description: Items per page.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Page_FuLessonListItem_'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+      - lessons-learned
+      summary: Start a manual lesson Draft (219)
+      operationId: create_lesson
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FuLessonCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuLessonRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/lessons/{lesson_id}:
+    get:
+      tags:
+      - lessons-learned
+      summary: One lesson
+      operationId: get_lesson
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: lesson_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Lesson Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuLessonRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags:
+      - lessons-learned
+      summary: Edit a Draft lesson (219; 422 IDENTITY_IN_TEXT, P6f-3)
+      operationId: update_lesson
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: lesson_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Lesson Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FuLessonUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuLessonRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags:
+      - lessons-learned
+      summary: Delete a manual Draft (author only; system drafts are archived by 220)
+      operationId: delete_lesson
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: lesson_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Lesson Id
+      responses:
+        '204':
+          description: Successful Response
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/lessons/{lesson_id}/transitions:
+    post:
+      tags:
+      - lessons-learned
+      summary: Submit (219), return / publish / archive (220) a lesson (§4.4)
+      description: 422 LESSON_INCOMPLETE (with `meta.missing`), REDACTION_NOT_CONFIRMED, SELF_APPROVAL,
+        NOT_DISTRIBUTED, IDENTITY_IN_TEXT.
+      operationId: transition_lesson
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: lesson_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Lesson Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FuLessonTransition'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuLessonRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/lessons/{lesson_id}/distribution:
+    get:
+      tags:
+      - lessons-learned
+      summary: Distribution status of a lesson (DS-1)
+      operationId: get_lesson_distribution
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: lesson_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Lesson Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuDistributionList'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/lesson-distribution:
+    get:
+      tags:
+      - lessons-learned
+      summary: Distribution items of a project (reps see their scope; 215 / 221)
+      operationId: list_project_lesson_distribution
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/FuDistributionStatus'
+          - type: 'null'
+          title: Status
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuDistributionList'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/lesson-distribution/{item_id}/acknowledge:
+    post:
+      tags:
+      - lessons-learned
+      summary: Acknowledge a lesson for an engagement (221; DS-3, 422 ON_BEHALF_NOTE_REQUIRED)
+      operationId: acknowledge_lesson
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: item_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Item Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FuAckRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuDistributionRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/lessons/{lesson_id}/links:
+    get:
+      tags:
+      - lessons-learned
+      summary: 6d links and template change requests of a lesson
+      operationId: list_lesson_links
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: lesson_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Lesson Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuLinkPage'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+      - lessons-learned
+      summary: Link a 6d topic, open a topic / campaign Draft, or raise a change request (219)
+      operationId: add_lesson_link
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: lesson_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Lesson Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FuLinkCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuLinkRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/template-change-requests:
+    get:
+      tags:
+      - lessons-learned
+      summary: Open template change requests for the 6d library (192 / 193; LK-3)
+      operationId: list_template_change_requests
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: template_code
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Template Code
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuLinkPage'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/lesson-links/{link_id}/reject:
+    post:
+      tags:
+      - lessons-learned
+      summary: Reject a template change request (193, reason ≥ 20 chars; LK-3)
+      operationId: reject_lesson_link
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: link_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Link Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FuLinkDecision'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuLinkRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/incidents/{incident_id}/similar-lessons:
+    get:
+      tags:
+      - lessons-learned
+      summary: Up to 3 similar Published lessons (LL-6)
+      operationId: get_similar_lessons
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: incident_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Incident Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuSimilarLessons'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/effectiveness-checks:
+    get:
+      tags:
+      - lessons-learned
+      summary: Effectiveness register (215)
+      operationId: list_effectiveness_checks
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/FuCheckStatus'
+          - type: 'null'
+          title: Status
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          description: 1-based page number.
+          default: 1
+          title: Page
+        description: 1-based page number.
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          description: Items per page.
+          default: 50
+          title: Page Size
+        description: Items per page.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Page_FuCheckRead_'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/effectiveness-checks/{check_id}:
+    get:
+      tags:
+      - lessons-learned
+      summary: One effectiveness check with the current facts and suggestion (EF-2, EF-3)
+      operationId: get_effectiveness_check
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: check_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Check Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuCheckRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/effectiveness-checks/{check_id}/complete:
+    post:
+      tags:
+      - lessons-learned
+      summary: Complete a check (223; 422 RATIONALE_REQUIRED, FOLLOW_UP_REQUIRED)
+      operationId: complete_effectiveness_check
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: check_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Check Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FuCheckComplete'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuCheckRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/v1/privacy-notice:
     get:
       tags:
@@ -66794,6 +69460,10 @@ components:
       - env_permit_document
       - consignment_ticket
       - env_photo
+      - fu_pack_file
+      - fu_pack_identity_file
+      - fu_evidence
+      - fu_lesson_photo
       title: AttachmentOwner
     AttachmentRead:
       properties:
@@ -69880,6 +72550,7 @@ components:
       - emergency
       - field_audit
       - environmental
+      - lesson
       - ai_recommendation
       - other
       title: CaSourceType
@@ -70544,6 +73215,15 @@ components:
       - env_complaint.manage
       - env.settings
       - env.void
+      - followup.view
+      - followup.record
+      - followup.approve
+      - followup.settings
+      - lesson.draft
+      - lesson.publish
+      - lesson.acknowledge
+      - lesson_library.view
+      - lesson.effectiveness
       title: Capability
       description: 'Rows of the permission matrix: 1-19 Phase 0 (0-foundation §5.10), 20-45 Phase 1
 
@@ -80395,6 +83075,15 @@ components:
       - discharge_day
       - env_complaint
       - env_monitor_device
+      - followup_settings
+      - followup_rule
+      - followup_requirement
+      - followup_pack
+      - followup_submission
+      - lesson
+      - lesson_distribution
+      - lesson_link
+      - lesson_effectiveness
       title: EntityType
       description: Entity types referenced by audit entries and change history.
     EntryDirection:
@@ -85135,6 +87824,24 @@ components:
       - CONSIGNMENT_CLOSED
       - PERMIT_NOT_VALID
       - AVP_NOT_FOUND
+      - RULE_LOOSENING
+      - CLIENT_RECIPIENT_REQUIRED
+      - WAIVER_EVIDENCE_REQUIRED
+      - INVESTIGATION_NOT_APPROVED
+      - PACK_NOT_APPROVED
+      - CHANNEL_NOT_ALLOWED
+      - SUBMITTED_AT_INVALID
+      - IDENTITY_IN_TEXT
+      - LESSON_INCOMPLETE
+      - REDACTION_NOT_CONFIRMED
+      - SELF_APPROVAL
+      - NOT_DISTRIBUTED
+      - ON_BEHALF_NOTE_REQUIRED
+      - LESSON_NOT_PUBLISHED
+      - RATIONALE_REQUIRED
+      - FOLLOW_UP_REQUIRED
+      - PACK_IMMUTABLE
+      - SUBMISSION_LOCKED
       - NOT_IMPLEMENTED
       - INTERNAL_ERROR
       title: ErrorCode
@@ -86859,6 +89566,27 @@ components:
           anyOf:
           - $ref: '#/components/schemas/UserRef'
           - type: 'null'
+        stage:
+          $ref: '#/components/schemas/FuStage'
+          description: 'v1.9: the 6f stage; incidents before `followup_rules_from` show `written`.'
+          default: written
+        rule_code:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Rule Code
+          description: 'v1.9: 6f rule (profile only).'
+        requirement_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Requirement Id
+        followup_status:
+          anyOf:
+          - $ref: '#/components/schemas/FuRequirementStatus'
+          - type: 'null'
+          description: 'v1.9: 6f §4.1 status (profile only).'
       type: object
       required:
       - body
@@ -86882,12 +89610,19 @@ components:
             maxLength: 60
           - type: 'null'
           title: Reference No
+        evidence_file:
+          anyOf:
+          - $ref: '#/components/schemas/FuFileInput'
+          - type: 'null'
       additionalProperties: false
       type: object
       required:
       - notified_at
       title: ExternalNotificationRecord
-      description: 'Record that a body was notified (tracking only; I-21: the platform does not submit).'
+      description: 'Record that a body was notified (tracking only; I-21: the platform does not submit).
+        From
+
+        the project''s `followup_rules_from` an evidence file is required (6f SB-4).'
     ExternalParticipation:
       properties:
         agency:
@@ -89338,6 +92073,2394 @@ components:
       - clear
       - not_clear
       title: FodCheckResult
+    FuAckRequest:
+      properties:
+        response:
+          $ref: '#/components/schemas/FuAckResponse'
+        reason:
+          anyOf:
+          - type: string
+            maxLength: 500
+          - type: 'null'
+          title: Reason
+        on_behalf_note:
+          anyOf:
+          - type: string
+            maxLength: 500
+          - type: 'null'
+          title: On Behalf Note
+      additionalProperties: false
+      type: object
+      required:
+      - response
+      title: FuAckRequest
+      description: DS-3 (capability 221).
+    FuAckResponse:
+      type: string
+      enum:
+      - will_brief
+      - not_applicable
+      title: FuAckResponse
+    FuActionItem:
+      properties:
+        kind:
+          $ref: '#/components/schemas/FuActionKind'
+        count:
+          type: integer
+          title: Count
+        refs:
+          items:
+            type: string
+          type: array
+          title: Refs
+      type: object
+      required:
+      - kind
+      - count
+      - refs
+      title: FuActionItem
+    FuActionKind:
+      type: string
+      enum:
+      - requirements_overdue
+      - packs_awaiting_approval
+      - lessons_past_publish_due
+      - acknowledgements_overdue
+      - effectiveness_checks_overdue
+      - template_changes_open
+      title: FuActionKind
+      description: §8.2 action-panel items.
+    FuActionPanel:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/FuActionItem'
+          type: array
+          title: Items
+      type: object
+      required:
+      - items
+      title: FuActionPanel
+    FuActionTaken:
+      properties:
+        ca_ref:
+          type: string
+          title: Ca Ref
+        control_level:
+          anyOf:
+          - $ref: '#/components/schemas/ControlLevel'
+          - type: 'null'
+      type: object
+      required:
+      - ca_ref
+      title: FuActionTaken
+    FuApplicability:
+      properties:
+        activities:
+          items:
+            $ref: '#/components/schemas/Activity'
+          type: array
+          title: Activities
+        zone_types:
+          items:
+            type: string
+          type: array
+          title: Zone Types
+        trades:
+          items:
+            $ref: '#/components/schemas/Trade'
+          type: array
+          title: Trades
+        mechanisms:
+          items:
+            $ref: '#/components/schemas/Mechanism'
+          type: array
+          title: Mechanisms
+        do_categories:
+          items:
+            $ref: '#/components/schemas/DangerousOccurrenceCategory'
+          type: array
+          title: Do Categories
+      type: object
+      title: FuApplicability
+    FuBand:
+      properties:
+        verbal_due_next_hour:
+          items:
+            $ref: '#/components/schemas/FuRequirementRead'
+          type: array
+          title: Verbal Due Next Hour
+        overdue:
+          items:
+            $ref: '#/components/schemas/FuRequirementRead'
+          type: array
+          title: Overdue
+        packs_awaiting_approval:
+          type: integer
+          title: Packs Awaiting Approval
+        lessons_publish_due_soon:
+          items:
+            type: string
+          type: array
+          title: Lessons Publish Due Soon
+      type: object
+      required:
+      - verbal_due_next_hour
+      - overdue
+      - packs_awaiting_approval
+      - lessons_publish_due_soon
+      title: FuBand
+      description: §8.1 item 2 (live).
+    FuBreakdown:
+      properties:
+        metric:
+          type: string
+          title: Metric
+        group_by:
+          $ref: '#/components/schemas/FuKpiGroupBy'
+        rows:
+          items:
+            $ref: '#/components/schemas/FuBreakdownRow'
+          type: array
+          title: Rows
+      type: object
+      required:
+      - metric
+      - group_by
+      - rows
+      title: FuBreakdown
+    FuBreakdownRow:
+      properties:
+        key:
+          type: string
+          title: Key
+        label_en:
+          type: string
+          title: Label En
+        label_ar:
+          type: string
+          title: Label Ar
+        value:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Value
+        display:
+          type: string
+          title: Display
+        numerator:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Numerator
+        denominator:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Denominator
+      type: object
+      required:
+      - key
+      - label_en
+      - label_ar
+      - value
+      - display
+      title: FuBreakdownRow
+    FuChangeStatus:
+      type: string
+      enum:
+      - open
+      - adopted
+      - rejected
+      title: FuChangeStatus
+    FuChannel:
+      type: string
+      enum:
+      - portal
+      - email
+      - hand_delivered
+      - courier
+      - phone_radio
+      - meeting
+      title: FuChannel
+    FuCheckComplete:
+      properties:
+        result:
+          $ref: '#/components/schemas/FuEffectResult'
+        rationale:
+          anyOf:
+          - type: string
+            maxLength: 1000
+          - type: 'null'
+          title: Rationale
+        follow_up_ca:
+          anyOf:
+          - $ref: '#/components/schemas/FuFollowUpCa'
+          - type: 'null'
+        follow_up_lesson_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Follow Up Lesson Id
+      additionalProperties: false
+      type: object
+      required:
+      - result
+      title: FuCheckComplete
+      description: EF-4 / EF-5 (capability 223).
+    FuCheckRead:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        lesson_id:
+          type: string
+          format: uuid
+          title: Lesson Id
+        lesson_no:
+          type: string
+          title: Lesson No
+        project_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Project Id
+        due_on:
+          type: string
+          format: date
+          title: Due On
+        facts:
+          additionalProperties: true
+          type: object
+          title: Facts
+        suggested_result:
+          anyOf:
+          - $ref: '#/components/schemas/FuEffectResult'
+          - type: 'null'
+        result:
+          anyOf:
+          - $ref: '#/components/schemas/FuEffectResult'
+          - type: 'null'
+        rationale:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Rationale
+        follow_up_ca_ref:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Follow Up Ca Ref
+        follow_up_lesson_no:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Follow Up Lesson No
+        completed_by:
+          anyOf:
+          - $ref: '#/components/schemas/UserRef'
+          - type: 'null'
+        completed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Completed At
+        status:
+          $ref: '#/components/schemas/FuCheckStatus'
+        overdue:
+          type: boolean
+          title: Overdue
+      type: object
+      required:
+      - id
+      - lesson_id
+      - lesson_no
+      - project_id
+      - due_on
+      - facts
+      - suggested_result
+      - result
+      - rationale
+      - follow_up_ca_ref
+      - follow_up_lesson_no
+      - completed_by
+      - completed_at
+      - status
+      - overdue
+      title: FuCheckRead
+    FuCheckStatus:
+      type: string
+      enum:
+      - scheduled
+      - completed
+      title: FuCheckStatus
+    FuClientIdentity:
+      type: string
+      enum:
+      - none
+      - name_and_trade
+      title: FuClientIdentity
+    FuDeadlineBasis:
+      type: string
+      enum:
+      - trigger
+      - investigation_due
+      title: FuDeadlineBasis
+    FuDirectoryEntry:
+      properties:
+        body:
+          $ref: '#/components/schemas/ExternalBody'
+        office_name_en:
+          type: string
+          maxLength: 150
+          title: Office Name En
+        office_name_ar:
+          type: string
+          maxLength: 150
+          title: Office Name Ar
+        address_or_portal:
+          anyOf:
+          - type: string
+            maxLength: 300
+          - type: 'null'
+          title: Address Or Portal
+        email:
+          anyOf:
+          - type: string
+            maxLength: 200
+          - type: 'null'
+          title: Email
+      type: object
+      required:
+      - body
+      - office_name_en
+      - office_name_ar
+      title: FuDirectoryEntry
+    FuDistributionList:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/FuDistributionRead'
+          type: array
+          title: Items
+      type: object
+      required:
+      - items
+      title: FuDistributionList
+    FuDistributionRead:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        lesson_id:
+          type: string
+          format: uuid
+          title: Lesson Id
+        lesson_no:
+          type: string
+          title: Lesson No
+        project_id:
+          type: string
+          format: uuid
+          title: Project Id
+        project_code:
+          type: string
+          title: Project Code
+        engagement_id:
+          type: string
+          format: uuid
+          title: Engagement Id
+        engagement_code:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Engagement Code
+        ack_due_on:
+          type: string
+          format: date
+          title: Ack Due On
+        acknowledged_by:
+          anyOf:
+          - $ref: '#/components/schemas/UserRef'
+          - type: 'null'
+        acknowledged_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Acknowledged At
+        response:
+          anyOf:
+          - $ref: '#/components/schemas/FuAckResponse'
+          - type: 'null'
+        reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Reason
+        on_behalf_note:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: On Behalf Note
+        status:
+          $ref: '#/components/schemas/FuDistributionStatus'
+        overdue:
+          type: boolean
+          title: Overdue
+      type: object
+      required:
+      - id
+      - lesson_id
+      - lesson_no
+      - project_id
+      - project_code
+      - engagement_id
+      - engagement_code
+      - ack_due_on
+      - acknowledged_by
+      - acknowledged_at
+      - response
+      - reason
+      - on_behalf_note
+      - status
+      - overdue
+      title: FuDistributionRead
+    FuDistributionStatus:
+      type: string
+      enum:
+      - pending
+      - acknowledged
+      - not_applicable
+      - withdrawn
+      title: FuDistributionStatus
+    FuEffectResult:
+      type: string
+      enum:
+      - effective
+      - partly_effective
+      - not_effective
+      title: FuEffectResult
+    FuFieldSet:
+      type: string
+      enum:
+      - none
+      - identity
+      - identity_medical
+      title: FuFieldSet
+      description: List FS.
+    FuFileInput:
+      properties:
+        file_name:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: File Name
+        content_base64:
+          type: string
+          minLength: 4
+          title: Content Base64
+        content_type:
+          anyOf:
+          - type: string
+            maxLength: 100
+          - type: 'null'
+          title: Content Type
+      additionalProperties: false
+      type: object
+      required:
+      - file_name
+      - content_base64
+      title: FuFileInput
+      description: A file sent inline (base64). PDF, PNG, JPEG, EML or TXT; ≤ 5 MB decoded.
+    FuFiler:
+      type: string
+      enum:
+      - main_contractor
+      - employer_engagement
+      - airport_operator
+      title: FuFiler
+    FuFollowUpCa:
+      properties:
+        owner_id:
+          type: string
+          format: uuid
+          title: Owner Id
+        title:
+          anyOf:
+          - type: string
+            maxLength: 150
+          - type: 'null'
+          title: Title
+        due_date:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Due Date
+      additionalProperties: false
+      type: object
+      required:
+      - owner_id
+      title: FuFollowUpCa
+    FuForm:
+      type: string
+      enum:
+      - GOSI-WIR
+      - MHRSD-LTR
+      - CD-LTR
+      - GACA-OCR
+      - AO-OCR
+      - NCEC-EIR
+      - CLIENT-FLASH
+      - CLIENT-INTERIM
+      - CLIENT-FINAL
+      title: FuForm
+      description: List PF.
+    FuKeyLesson:
+      properties:
+        text_en:
+          type: string
+          maxLength: 500
+          title: Text En
+          default: ''
+        text_ar:
+          type: string
+          maxLength: 500
+          title: Text Ar
+          default: ''
+      type: object
+      title: FuKeyLesson
+    FuKpiGroupBy:
+      type: string
+      enum:
+      - body
+      - stage
+      - month
+      - contractor
+      title: FuKpiGroupBy
+    FuKpiResponse:
+      properties:
+        context:
+          $ref: '#/components/schemas/KpiContext'
+        metrics:
+          items:
+            $ref: '#/components/schemas/KpiValue'
+          type: array
+          title: Metrics
+        breakdowns:
+          items:
+            $ref: '#/components/schemas/FuBreakdown'
+          type: array
+          title: Breakdowns
+        notes:
+          items:
+            type: string
+          type: array
+          title: Notes
+      type: object
+      required:
+      - context
+      - metrics
+      - breakdowns
+      - notes
+      title: FuKpiResponse
+      description: 'GET /kpi/incident-followup: K-127…K-131 (aggregates only, FK-2).'
+    FuLessonAction:
+      type: string
+      enum:
+      - submit
+      - return_to_draft
+      - publish
+      - archive
+      title: FuLessonAction
+    FuLessonCreate:
+      properties:
+        source:
+          $ref: '#/components/schemas/FuLessonSource'
+        incident_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Incident Id
+        external_ref:
+          anyOf:
+          - type: string
+            maxLength: 200
+          - type: 'null'
+          title: External Ref
+        title_en:
+          anyOf:
+          - type: string
+            maxLength: 150
+          - type: 'null'
+          title: Title En
+        title_ar:
+          anyOf:
+          - type: string
+            maxLength: 150
+          - type: 'null'
+          title: Title Ar
+      additionalProperties: false
+      type: object
+      required:
+      - source
+      title: FuLessonCreate
+      description: 'A manual lesson (capability 219): from an incident with an investigation, or external.'
+    FuLessonListItem:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        lesson_no:
+          type: string
+          title: Lesson No
+        title_en:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Title En
+        title_ar:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Title Ar
+        status:
+          $ref: '#/components/schemas/FuLessonStatus'
+        archived:
+          type: boolean
+          title: Archived
+        source_project_code:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Source Project Code
+        published_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Published At
+        publish_due_on:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Publish Due On
+        month:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Month
+          description: 'Publication month yyyy-mm (LL-2: month and year).'
+        root_cause_codes:
+          items:
+            type: string
+          type: array
+          title: Root Cause Codes
+        applicability:
+          $ref: '#/components/schemas/FuApplicability'
+        key_lessons:
+          items:
+            $ref: '#/components/schemas/FuKeyLesson'
+          type: array
+          title: Key Lessons
+      type: object
+      required:
+      - id
+      - lesson_no
+      - title_en
+      - title_ar
+      - status
+      - archived
+      - source_project_code
+      - published_at
+      - publish_due_on
+      - month
+      - root_cause_codes
+      - applicability
+      - key_lessons
+      title: FuLessonListItem
+    FuLessonPhoto:
+      properties:
+        attachment_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Attachment Id
+        file:
+          anyOf:
+          - $ref: '#/components/schemas/FuFileInput'
+          - type: 'null'
+        redaction_confirmed:
+          type: boolean
+          title: Redaction Confirmed
+          default: false
+      additionalProperties: false
+      type: object
+      title: FuLessonPhoto
+      description: Keep an existing photo (attachment_id) or add one (file); redaction must be confirmed.
+    FuLessonRead:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        lesson_no:
+          type: string
+          title: Lesson No
+        source:
+          $ref: '#/components/schemas/FuLessonSource'
+        incident_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Incident Id
+        incident_ref:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Incident Ref
+          description: Hidden in the library for non-staff.
+        source_project_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Source Project Id
+        source_project_code:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Source Project Code
+        external_ref:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: External Ref
+        system_created:
+          type: boolean
+          title: System Created
+        required:
+          type: boolean
+          title: Required
+        title_en:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Title En
+        title_ar:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Title Ar
+        what_happened_en:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: What Happened En
+        what_happened_ar:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: What Happened Ar
+        why_en:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Why En
+        why_ar:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Why Ar
+        root_cause_codes:
+          items:
+            type: string
+          type: array
+          title: Root Cause Codes
+        key_lessons:
+          items:
+            $ref: '#/components/schemas/FuKeyLesson'
+          type: array
+          title: Key Lessons
+        actions_taken:
+          items:
+            $ref: '#/components/schemas/FuActionTaken'
+          type: array
+          title: Actions Taken
+        applicability:
+          $ref: '#/components/schemas/FuApplicability'
+        severity_potential:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Severity Potential
+        photos:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Photos
+        distribution_project_ids:
+          items:
+            type: string
+            format: uuid
+          type: array
+          title: Distribution Project Ids
+        distribution_project_codes:
+          items:
+            type: string
+          type: array
+          title: Distribution Project Codes
+        removed_engagements:
+          items:
+            $ref: '#/components/schemas/FuRemovedEngagement'
+          type: array
+          title: Removed Engagements
+        publish_due_on:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Publish Due On
+        author:
+          anyOf:
+          - $ref: '#/components/schemas/UserRef'
+          - type: 'null'
+        approved_by:
+          anyOf:
+          - $ref: '#/components/schemas/UserRef'
+          - type: 'null'
+        published_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Published At
+        archived_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Archived At
+        superseded_by_lesson_no:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Superseded By Lesson No
+        return_comment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Return Comment
+        status_reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Status Reason
+        status:
+          $ref: '#/components/schemas/FuLessonStatus'
+        links:
+          items:
+            $ref: '#/components/schemas/FuLinkRead'
+          type: array
+          title: Links
+        acknowledged:
+          type: integer
+          title: Acknowledged
+        distribution_items:
+          type: integer
+          title: Distribution Items
+        check:
+          anyOf:
+          - $ref: '#/components/schemas/FuCheckRead'
+          - type: 'null'
+        warnings:
+          items:
+            $ref: '#/components/schemas/ApiWarning'
+          type: array
+          title: Warnings
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - lesson_no
+      - source
+      - incident_id
+      - incident_ref
+      - source_project_id
+      - source_project_code
+      - external_ref
+      - system_created
+      - required
+      - title_en
+      - title_ar
+      - what_happened_en
+      - what_happened_ar
+      - why_en
+      - why_ar
+      - root_cause_codes
+      - key_lessons
+      - actions_taken
+      - applicability
+      - severity_potential
+      - photos
+      - distribution_project_ids
+      - distribution_project_codes
+      - removed_engagements
+      - publish_due_on
+      - author
+      - approved_by
+      - published_at
+      - archived_at
+      - superseded_by_lesson_no
+      - return_comment
+      - status_reason
+      - status
+      - links
+      - acknowledged
+      - distribution_items
+      - check
+      - created_at
+      title: FuLessonRead
+    FuLessonSource:
+      type: string
+      enum:
+      - incident
+      - external
+      title: FuLessonSource
+    FuLessonStatus:
+      type: string
+      enum:
+      - draft
+      - in_review
+      - published
+      - archived
+      title: FuLessonStatus
+      description: §4.4.
+    FuLessonTransition:
+      properties:
+        action:
+          $ref: '#/components/schemas/FuLessonAction'
+        comment:
+          anyOf:
+          - type: string
+            maxLength: 500
+          - type: 'null'
+          title: Comment
+        superseded_by_lesson_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Superseded By Lesson Id
+      additionalProperties: false
+      type: object
+      required:
+      - action
+      title: FuLessonTransition
+    FuLessonUpdate:
+      properties:
+        title_en:
+          anyOf:
+          - type: string
+            maxLength: 150
+          - type: 'null'
+          title: Title En
+        title_ar:
+          anyOf:
+          - type: string
+            maxLength: 150
+          - type: 'null'
+          title: Title Ar
+        what_happened_en:
+          anyOf:
+          - type: string
+            maxLength: 1500
+          - type: 'null'
+          title: What Happened En
+        what_happened_ar:
+          anyOf:
+          - type: string
+            maxLength: 1500
+          - type: 'null'
+          title: What Happened Ar
+        why_en:
+          anyOf:
+          - type: string
+            maxLength: 1500
+          - type: 'null'
+          title: Why En
+        why_ar:
+          anyOf:
+          - type: string
+            maxLength: 1500
+          - type: 'null'
+          title: Why Ar
+        root_cause_codes:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Root Cause Codes
+        key_lessons:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/FuKeyLesson'
+            type: array
+            maxItems: 5
+          - type: 'null'
+          title: Key Lessons
+        applicability:
+          anyOf:
+          - $ref: '#/components/schemas/FuApplicability'
+          - type: 'null'
+        photos:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/FuLessonPhoto'
+            type: array
+            maxItems: 4
+          - type: 'null'
+          title: Photos
+        distribution_project_ids:
+          anyOf:
+          - items:
+              type: string
+              format: uuid
+            type: array
+          - type: 'null'
+          title: Distribution Project Ids
+        removed_engagements:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/FuRemovedEngagement'
+            type: array
+          - type: 'null'
+          title: Removed Engagements
+      additionalProperties: false
+      type: object
+      title: FuLessonUpdate
+      description: Draft edits by the author or 219 / 220 holders.
+    FuLinkCreate:
+      properties:
+        kind:
+          $ref: '#/components/schemas/FuLinkKind'
+        ref:
+          anyOf:
+          - type: string
+            maxLength: 40
+          - type: 'null'
+          title: Ref
+        project_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Project Id
+        topic_category:
+          anyOf:
+          - $ref: '#/components/schemas/TopicCategory'
+          - type: 'null'
+        item_code:
+          anyOf:
+          - type: string
+            maxLength: 20
+          - type: 'null'
+          title: Item Code
+        proposed_text_en:
+          anyOf:
+          - type: string
+            maxLength: 1000
+          - type: 'null'
+          title: Proposed Text En
+        proposed_text_ar:
+          anyOf:
+          - type: string
+            maxLength: 1000
+          - type: 'null'
+          title: Proposed Text Ar
+      additionalProperties: false
+      type: object
+      required:
+      - kind
+      title: FuLinkCreate
+      description: 'LK-1: (a) topic — link `ref` (an existing topic code) or open a Draft (ref omitted);
+
+        (b) campaign — open a 6d campaign Draft on `project_id` for topic `ref`;
+
+        (c) template_change — `ref` = template code, `item_code` or null for a new item.'
+    FuLinkDecision:
+      properties:
+        reason:
+          type: string
+          maxLength: 500
+          minLength: 20
+          title: Reason
+      additionalProperties: false
+      type: object
+      required:
+      - reason
+      title: FuLinkDecision
+      description: 'LK-3: 193 holders reject an open change request (reason ≥ 20 chars).'
+    FuLinkKind:
+      type: string
+      enum:
+      - topic
+      - campaign
+      - template_change
+      title: FuLinkKind
+    FuLinkPage:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/FuLinkRead'
+          type: array
+          title: Items
+      type: object
+      required:
+      - items
+      title: FuLinkPage
+    FuLinkRead:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        kind:
+          $ref: '#/components/schemas/FuLinkKind'
+        ref:
+          type: string
+          title: Ref
+        project_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Project Id
+        item_code:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Item Code
+        proposed_text_en:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Proposed Text En
+        proposed_text_ar:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Proposed Text Ar
+        status:
+          anyOf:
+          - $ref: '#/components/schemas/FuChangeStatus'
+          - type: 'null'
+        adopted_version:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Adopted Version
+        reject_reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Reject Reason
+        lesson_no:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Lesson No
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - kind
+      - ref
+      - project_id
+      - item_code
+      - proposed_text_en
+      - proposed_text_ar
+      - status
+      - adopted_version
+      - reject_reason
+      - created_at
+      title: FuLinkRead
+    FuPackAction:
+      type: string
+      enum:
+      - approve
+      - return_to_draft
+      title: FuPackAction
+    FuPackCreate:
+      properties:
+        narrative_en:
+          anyOf:
+          - type: string
+            maxLength: 3000
+          - type: 'null'
+          title: Narrative En
+        narrative_ar:
+          anyOf:
+          - type: string
+            maxLength: 3000
+          - type: 'null'
+          title: Narrative Ar
+        extra_fields:
+          additionalProperties: true
+          type: object
+          title: Extra Fields
+        languages:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Languages
+          description: 'Client forms: [''en'', ''ar''].'
+      additionalProperties: false
+      type: object
+      title: FuPackCreate
+      description: 'Generate (or regenerate: version + 1, the old one Superseded) the pack of a requirement.'
+    FuPackRead:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        pack_no:
+          type: string
+          title: Pack No
+        project_id:
+          type: string
+          format: uuid
+          title: Project Id
+        requirement_id:
+          type: string
+          format: uuid
+          title: Requirement Id
+        incident_ref:
+          type: string
+          title: Incident Ref
+        body:
+          $ref: '#/components/schemas/ExternalBody'
+        stage:
+          $ref: '#/components/schemas/FuStage'
+        version:
+          type: integer
+          title: Version
+        form_code:
+          $ref: '#/components/schemas/FuForm'
+        field_set:
+          $ref: '#/components/schemas/FuFieldSet'
+        languages:
+          items:
+            type: string
+          type: array
+          title: Languages
+        snapshot:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Snapshot
+          description: Frozen field values (PK-2); null when the caller may not see the field set.
+        narrative_en:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Narrative En
+        narrative_ar:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Narrative Ar
+        extra_fields:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Extra Fields
+        has_file:
+          type: boolean
+          title: Has File
+        prepared_by:
+          anyOf:
+          - $ref: '#/components/schemas/UserRef'
+          - type: 'null'
+        approved_by:
+          anyOf:
+          - $ref: '#/components/schemas/UserRef'
+          - type: 'null'
+        approved_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Approved At
+        status:
+          $ref: '#/components/schemas/FuPackStatus'
+        incident_changed:
+          type: boolean
+          title: Incident Changed
+          description: 'PK-2: a snapshot field differs from the incident.'
+        identity_deleted:
+          type: boolean
+          title: Identity Deleted
+          description: 'P6f-4: identity removed at anonymisation.'
+        warnings:
+          items:
+            $ref: '#/components/schemas/ApiWarning'
+          type: array
+          title: Warnings
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - pack_no
+      - project_id
+      - requirement_id
+      - incident_ref
+      - body
+      - stage
+      - version
+      - form_code
+      - field_set
+      - languages
+      - snapshot
+      - narrative_en
+      - narrative_ar
+      - extra_fields
+      - has_file
+      - prepared_by
+      - approved_by
+      - approved_at
+      - status
+      - incident_changed
+      - identity_deleted
+      - created_at
+      title: FuPackRead
+    FuPackStatus:
+      type: string
+      enum:
+      - draft
+      - approved
+      - submitted
+      - superseded
+      title: FuPackStatus
+      description: §4.2.
+    FuPackTransition:
+      properties:
+        action:
+          $ref: '#/components/schemas/FuPackAction'
+        reason:
+          anyOf:
+          - type: string
+            maxLength: 500
+          - type: 'null'
+          title: Reason
+      additionalProperties: false
+      type: object
+      required:
+      - action
+      title: FuPackTransition
+    FuPackUpdate:
+      properties:
+        narrative_en:
+          anyOf:
+          - type: string
+            maxLength: 3000
+          - type: 'null'
+          title: Narrative En
+        narrative_ar:
+          anyOf:
+          - type: string
+            maxLength: 3000
+          - type: 'null'
+          title: Narrative Ar
+        extra_fields:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Extra Fields
+      additionalProperties: false
+      type: object
+      title: FuPackUpdate
+    FuRecipient:
+      properties:
+        organisation_en:
+          type: string
+          maxLength: 150
+          title: Organisation En
+        organisation_ar:
+          type: string
+          maxLength: 150
+          title: Organisation Ar
+        role:
+          $ref: '#/components/schemas/FuRecipientRole'
+        email:
+          anyOf:
+          - type: string
+            maxLength: 200
+          - type: 'null'
+          title: Email
+      type: object
+      required:
+      - organisation_en
+      - organisation_ar
+      - role
+      title: FuRecipient
+    FuRecipientRole:
+      type: string
+      enum:
+      - client
+      - pmc
+      title: FuRecipientRole
+    FuRefItem:
+      properties:
+        code:
+          type: string
+          title: Code
+        label_en:
+          type: string
+          title: Label En
+        label_ar:
+          type: string
+          title: Label Ar
+        detail:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Detail
+      type: object
+      required:
+      - code
+      - label_en
+      - label_ar
+      title: FuRefItem
+    FuReference:
+      properties:
+        lists:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/FuRefItem'
+            type: array
+          type: object
+          title: Lists
+      type: object
+      required:
+      - lists
+      title: FuReference
+      description: List NT, PF, FS, WV, bodies, stages, channels, statuses and responses with EN/AR labels.
+    FuRemovedEngagement:
+      properties:
+        project_id:
+          type: string
+          format: uuid
+          title: Project Id
+        engagement_id:
+          type: string
+          format: uuid
+          title: Engagement Id
+        reason:
+          type: string
+          maxLength: 500
+          minLength: 20
+          title: Reason
+      type: object
+      required:
+      - project_id
+      - engagement_id
+      - reason
+      title: FuRemovedEngagement
+    FuRequirementRead:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        project_id:
+          type: string
+          format: uuid
+          title: Project Id
+        incident_id:
+          type: string
+          format: uuid
+          title: Incident Id
+        incident_ref:
+          type: string
+          title: Incident Ref
+        rule_code:
+          type: string
+          title: Rule Code
+        body:
+          $ref: '#/components/schemas/ExternalBody'
+        stage:
+          $ref: '#/components/schemas/FuStage'
+        source:
+          $ref: '#/components/schemas/FuRuleSource'
+        form_code:
+          anyOf:
+          - $ref: '#/components/schemas/FuForm'
+          - type: 'null'
+        filer:
+          $ref: '#/components/schemas/FuFiler'
+        case_labels:
+          items:
+            type: string
+          type: array
+          title: Case Labels
+          description: Case person numbers, e.g. ['P1'] (no names).
+        trigger_met_at:
+          type: string
+          format: date-time
+          title: Trigger Met At
+        due_at:
+          type: string
+          format: date-time
+          title: Due At
+        filer_engagement_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Filer Engagement Id
+        filer_code:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Filer Code
+        responsible_code:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Responsible Code
+        status:
+          $ref: '#/components/schemas/FuRequirementStatus'
+        trigger_note:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Trigger Note
+        waiver_reason_code:
+          anyOf:
+          - $ref: '#/components/schemas/FuWaiverReason'
+          - type: 'null'
+        waiver_text:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Waiver Text
+        waiver_reference:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Waiver Reference
+        waived_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Waived At
+        submission_no:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Submission No
+          description: First valid submission.
+        submitted_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Submitted At
+        on_time:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: On Time
+        reference_no:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Reference No
+        acknowledged_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Acknowledged At
+        pack_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Pack Id
+          description: Current (non-superseded) pack.
+        pack_no:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Pack No
+        pack_status:
+          anyOf:
+          - $ref: '#/components/schemas/FuPackStatus'
+          - type: 'null'
+      type: object
+      required:
+      - id
+      - project_id
+      - incident_id
+      - incident_ref
+      - rule_code
+      - body
+      - stage
+      - source
+      - form_code
+      - filer
+      - case_labels
+      - trigger_met_at
+      - due_at
+      - filer_engagement_id
+      - filer_code
+      - responsible_code
+      - status
+      - trigger_note
+      - waiver_reason_code
+      - waiver_text
+      - waiver_reference
+      - waived_at
+      - submission_no
+      - submitted_at
+      - on_time
+      - reference_no
+      - acknowledged_at
+      - pack_id
+      - pack_no
+      - pack_status
+      title: FuRequirementRead
+    FuRequirementStatus:
+      type: string
+      enum:
+      - due
+      - overdue
+      - submitted
+      - acknowledged
+      - waived
+      - not_required
+      title: FuRequirementStatus
+      description: §4.1 (derived).
+    FuRuleCreate:
+      properties:
+        rule_code:
+          type: string
+          maxLength: 16
+          minLength: 2
+          pattern: ^[A-Z0-9-]+$
+          title: Rule Code
+        stage:
+          $ref: '#/components/schemas/FuStage'
+        triggers:
+          items:
+            $ref: '#/components/schemas/FuTrigger'
+          type: array
+          minItems: 1
+          title: Triggers
+        trigger_params:
+          additionalProperties: true
+          type: object
+          title: Trigger Params
+        deadline_hours:
+          anyOf:
+          - type: integer
+            maximum: 720.0
+            minimum: 1.0
+          - type: 'null'
+          title: Deadline Hours
+        deadline_basis:
+          $ref: '#/components/schemas/FuDeadlineBasis'
+          default: trigger
+        form_code:
+          anyOf:
+          - $ref: '#/components/schemas/FuForm'
+          - type: 'null'
+        active:
+          type: boolean
+          title: Active
+          default: true
+      additionalProperties: false
+      type: object
+      required:
+      - rule_code
+      - stage
+      - triggers
+      title: FuRuleCreate
+      description: A client / PMC row (capability 218; NR-3 client rows are edited freely).
+    FuRuleList:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/FuRuleRead'
+          type: array
+          title: Items
+      type: object
+      required:
+      - items
+      title: FuRuleList
+    FuRuleRead:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        project_id:
+          type: string
+          format: uuid
+          title: Project Id
+        rule_code:
+          type: string
+          title: Rule Code
+        body:
+          $ref: '#/components/schemas/ExternalBody'
+        stage:
+          $ref: '#/components/schemas/FuStage'
+        source:
+          $ref: '#/components/schemas/FuRuleSource'
+        triggers:
+          items:
+            $ref: '#/components/schemas/FuTrigger'
+          type: array
+          title: Triggers
+        trigger_params:
+          additionalProperties: true
+          type: object
+          title: Trigger Params
+        deadline_hours:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Deadline Hours
+        deadline_basis:
+          $ref: '#/components/schemas/FuDeadlineBasis'
+        form_code:
+          anyOf:
+          - $ref: '#/components/schemas/FuForm'
+          - type: 'null'
+        filer:
+          $ref: '#/components/schemas/FuFiler'
+        active:
+          type: boolean
+          title: Active
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - id
+      - project_id
+      - rule_code
+      - body
+      - stage
+      - source
+      - triggers
+      - trigger_params
+      - deadline_hours
+      - deadline_basis
+      - form_code
+      - filer
+      - active
+      - updated_at
+      title: FuRuleRead
+    FuRuleSource:
+      type: string
+      enum:
+      - statutory
+      - client
+      title: FuRuleSource
+    FuRuleUpdate:
+      properties:
+        triggers:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/FuTrigger'
+            type: array
+          - type: 'null'
+          title: Triggers
+        trigger_params:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Trigger Params
+        deadline_hours:
+          anyOf:
+          - type: integer
+            maximum: 720.0
+            minimum: 1.0
+          - type: 'null'
+          title: Deadline Hours
+        form_code:
+          anyOf:
+          - $ref: '#/components/schemas/FuForm'
+          - type: 'null'
+        filer:
+          anyOf:
+          - $ref: '#/components/schemas/FuFiler'
+          - type: 'null'
+        active:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Active
+      additionalProperties: false
+      type: object
+      title: FuRuleUpdate
+      description: 'Statutory rows only tighten (NR-3: lower hours, add triggers) → else 422 RULE_LOOSENING.'
+    FuSettingsRead:
+      properties:
+        project_id:
+          type: string
+          format: uuid
+          title: Project Id
+        followup_rules_from:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Followup Rules From
+        notification_alert_lead_hours:
+          type: integer
+          title: Notification Alert Lead Hours
+        client_pack_identity:
+          $ref: '#/components/schemas/FuClientIdentity'
+        client_identity_clause:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Client Identity Clause
+        lesson_required_levels:
+          items:
+            $ref: '#/components/schemas/InvestigationLevel'
+          type: array
+          title: Lesson Required Levels
+        lesson_publish_days:
+          type: integer
+          title: Lesson Publish Days
+        lesson_ack_days:
+          type: integer
+          title: Lesson Ack Days
+        lesson_effectiveness_days:
+          type: integer
+          title: Lesson Effectiveness Days
+        followup_warning_pct:
+          type: string
+          title: Followup Warning Pct
+        lesson_ack_warning_pct:
+          type: string
+          title: Lesson Ack Warning Pct
+        client_recipients:
+          items:
+            $ref: '#/components/schemas/FuRecipient'
+          type: array
+          title: Client Recipients
+        body_directory:
+          items:
+            $ref: '#/components/schemas/FuDirectoryEntry'
+          type: array
+          title: Body Directory
+        signatory_role_en:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Signatory Role En
+        signatory_role_ar:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Signatory Role Ar
+      type: object
+      required:
+      - project_id
+      - followup_rules_from
+      - notification_alert_lead_hours
+      - client_pack_identity
+      - client_identity_clause
+      - lesson_required_levels
+      - lesson_publish_days
+      - lesson_ack_days
+      - lesson_effectiveness_days
+      - followup_warning_pct
+      - lesson_ack_warning_pct
+      - client_recipients
+      - body_directory
+      - signatory_role_en
+      - signatory_role_ar
+      title: FuSettingsRead
+    FuSettingsUpdate:
+      properties:
+        followup_rules_from:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Followup Rules From
+        notification_alert_lead_hours:
+          anyOf:
+          - type: integer
+            maximum: 48.0
+            minimum: 2.0
+          - type: 'null'
+          title: Notification Alert Lead Hours
+        client_pack_identity:
+          anyOf:
+          - $ref: '#/components/schemas/FuClientIdentity'
+          - type: 'null'
+        client_identity_clause:
+          anyOf:
+          - type: string
+            maxLength: 1000
+          - type: 'null'
+          title: Client Identity Clause
+        lesson_required_levels:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/InvestigationLevel'
+            type: array
+          - type: 'null'
+          title: Lesson Required Levels
+        lesson_publish_days:
+          anyOf:
+          - type: integer
+            maximum: 30.0
+            minimum: 3.0
+          - type: 'null'
+          title: Lesson Publish Days
+        lesson_ack_days:
+          anyOf:
+          - type: integer
+            maximum: 14.0
+            minimum: 1.0
+          - type: 'null'
+          title: Lesson Ack Days
+        lesson_effectiveness_days:
+          anyOf:
+          - type: integer
+            maximum: 180.0
+            minimum: 30.0
+          - type: 'null'
+          title: Lesson Effectiveness Days
+        followup_warning_pct:
+          anyOf:
+          - type: number
+            maximum: 100.0
+            minimum: 50.0
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          - type: 'null'
+          title: Followup Warning Pct
+        lesson_ack_warning_pct:
+          anyOf:
+          - type: number
+            maximum: 100.0
+            minimum: 50.0
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          - type: 'null'
+          title: Lesson Ack Warning Pct
+        client_recipients:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/FuRecipient'
+            type: array
+          - type: 'null'
+          title: Client Recipients
+        body_directory:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/FuDirectoryEntry'
+            type: array
+          - type: 'null'
+          title: Body Directory
+        signatory_role_en:
+          anyOf:
+          - type: string
+            maxLength: 120
+          - type: 'null'
+          title: Signatory Role En
+        signatory_role_ar:
+          anyOf:
+          - type: string
+            maxLength: 120
+          - type: 'null'
+          title: Signatory Role Ar
+      additionalProperties: false
+      type: object
+      title: FuSettingsUpdate
+      description: Capability 218 (HSE Manager). Loosening → 422 SETTING_LOOSENING (§3.10).
+    FuSimilarLessons:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/FuLessonListItem'
+          type: array
+          title: Items
+      type: object
+      required:
+      - items
+      title: FuSimilarLessons
+      description: 'LL-6: up to 3 Published lessons.'
+    FuStage:
+      type: string
+      enum:
+      - verbal
+      - written
+      - interim
+      - final
+      title: FuStage
+    FuSubmissionAck:
+      properties:
+        acknowledged_at:
+          type: string
+          format: date-time
+          title: Acknowledged At
+        ack_reference:
+          anyOf:
+          - type: string
+            maxLength: 60
+          - type: 'null'
+          title: Ack Reference
+        ack_file:
+          anyOf:
+          - $ref: '#/components/schemas/FuFileInput'
+          - type: 'null'
+      additionalProperties: false
+      type: object
+      required:
+      - acknowledged_at
+      title: FuSubmissionAck
+    FuSubmissionCreate:
+      properties:
+        pack_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Pack Id
+        channel:
+          $ref: '#/components/schemas/FuChannel'
+        submitted_at:
+          type: string
+          format: date-time
+          title: Submitted At
+        contacted_desk_en:
+          anyOf:
+          - type: string
+            maxLength: 120
+          - type: 'null'
+          title: Contacted Desk En
+        contacted_desk_ar:
+          anyOf:
+          - type: string
+            maxLength: 120
+          - type: 'null'
+          title: Contacted Desk Ar
+        reference_no:
+          anyOf:
+          - type: string
+            maxLength: 60
+          - type: 'null'
+          title: Reference No
+        call_note:
+          anyOf:
+          - type: string
+            maxLength: 200
+          - type: 'null'
+          title: Call Note
+        evidence_files:
+          items:
+            $ref: '#/components/schemas/FuFileInput'
+          type: array
+          maxItems: 5
+          title: Evidence Files
+        stamped_copy:
+          anyOf:
+          - $ref: '#/components/schemas/FuFileInput'
+          - type: 'null'
+        external_document:
+          anyOf:
+          - $ref: '#/components/schemas/FuFileInput'
+          - type: 'null'
+      additionalProperties: false
+      type: object
+      required:
+      - channel
+      - submitted_at
+      title: FuSubmissionCreate
+      description: SB-1…SB-3 (capability 216).
+    FuSubmissionRead:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        submission_no:
+          type: string
+          title: Submission No
+        project_id:
+          type: string
+          format: uuid
+          title: Project Id
+        requirement_id:
+          type: string
+          format: uuid
+          title: Requirement Id
+        incident_ref:
+          type: string
+          title: Incident Ref
+        body:
+          $ref: '#/components/schemas/ExternalBody'
+        stage:
+          $ref: '#/components/schemas/FuStage'
+        pack_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Pack Id
+        pack_no:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Pack No
+        channel:
+          $ref: '#/components/schemas/FuChannel'
+        submitted_at:
+          type: string
+          format: date-time
+          title: Submitted At
+        contacted_desk_en:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Contacted Desk En
+        contacted_desk_ar:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Contacted Desk Ar
+        reference_no:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Reference No
+        call_note:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Call Note
+        evidence_file_ids:
+          anyOf:
+          - items:
+              type: string
+              format: uuid
+            type: array
+          - type: 'null'
+          title: Evidence File Ids
+          description: Null for Viewer / Client.
+        has_external_document:
+          type: boolean
+          title: Has External Document
+        acknowledged_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Acknowledged At
+        ack_reference:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ack Reference
+        on_time:
+          type: boolean
+          title: On Time
+        status:
+          $ref: '#/components/schemas/FuSubmissionStatus'
+        void_reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Void Reason
+        recorded_by:
+          anyOf:
+          - $ref: '#/components/schemas/UserRef'
+          - type: 'null'
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - submission_no
+      - project_id
+      - requirement_id
+      - incident_ref
+      - body
+      - stage
+      - pack_id
+      - pack_no
+      - channel
+      - submitted_at
+      - contacted_desk_en
+      - contacted_desk_ar
+      - reference_no
+      - call_note
+      - evidence_file_ids
+      - has_external_document
+      - acknowledged_at
+      - ack_reference
+      - on_time
+      - status
+      - void_reason
+      - recorded_by
+      - created_at
+      title: FuSubmissionRead
+    FuSubmissionStatus:
+      type: string
+      enum:
+      - recorded
+      - acknowledged
+      - voided
+      title: FuSubmissionStatus
+    FuSubmissionUpdate:
+      properties:
+        submitted_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Submitted At
+        contacted_desk_en:
+          anyOf:
+          - type: string
+            maxLength: 120
+          - type: 'null'
+          title: Contacted Desk En
+        contacted_desk_ar:
+          anyOf:
+          - type: string
+            maxLength: 120
+          - type: 'null'
+          title: Contacted Desk Ar
+        reference_no:
+          anyOf:
+          - type: string
+            maxLength: 60
+          - type: 'null'
+          title: Reference No
+        call_note:
+          anyOf:
+          - type: string
+            maxLength: 200
+          - type: 'null'
+          title: Call Note
+      additionalProperties: false
+      type: object
+      title: FuSubmissionUpdate
+      description: Editable by the recorder for 24 h (SB-5), then 409 SUBMISSION_LOCKED.
+    FuSubmissionVoid:
+      properties:
+        reason:
+          type: string
+          maxLength: 500
+          minLength: 20
+          title: Reason
+      additionalProperties: false
+      type: object
+      required:
+      - reason
+      title: FuSubmissionVoid
+    FuTrigger:
+      type: string
+      enum:
+      - recordable_contractor_case
+      - commuting_case
+      - fatality
+      - permanent_disability
+      - lti
+      - fire_explosion_do
+      - any_do
+      - hipo
+      - gaca_airside_flag
+      - any_airside_flag
+      - env_ncec
+      - env_airside
+      - any_recordable_case
+      - property_damage_ge_sar
+      title: FuTrigger
+      description: List NT.
+    FuWaiverReason:
+      type: string
+      enum:
+      - not_covered_by_gosi
+      - body_confirmed_not_required
+      - reported_by_other_party
+      - incident_reclassified
+      title: FuWaiverReason
+      description: List WV.
+    FuWaiverRequest:
+      properties:
+        reason_code:
+          $ref: '#/components/schemas/FuWaiverReason'
+        text:
+          type: string
+          maxLength: 500
+          minLength: 20
+          title: Text
+        reference:
+          anyOf:
+          - type: string
+            maxLength: 60
+          - type: 'null'
+          title: Reference
+        evidence_file:
+          anyOf:
+          - $ref: '#/components/schemas/FuFileInput'
+          - type: 'null'
+      additionalProperties: false
+      type: object
+      required:
+      - reason_code
+      - text
+      title: FuWaiverRequest
+      description: 'NR-8 (capability 218). `body_confirmed_not_required` and `reported_by_other_party`
+        need an
+
+        evidence file; the latter also the other party''s reference (WAIVER_EVIDENCE_REQUIRED).'
     GapPage:
       properties:
         items:
@@ -97622,6 +102745,16 @@ components:
           type: array
           title: Missing For Submit
           description: Fields/rules still blocking Under Investigation → Pending Review.
+        lesson_no:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Lesson No
+          description: 'v1.9: the 6f lesson (LL-1).'
+        lesson_status:
+          anyOf:
+          - $ref: '#/components/schemas/FuLessonStatus'
+          - type: 'null'
       type: object
       required:
       - incident_id
@@ -99497,6 +104630,11 @@ components:
       - K-124
       - K-125
       - K-126
+      - K-127
+      - K-128
+      - K-129
+      - K-130
+      - K-131
       title: KpiMetric
       description: KPI catalogue §6.1. K-26 is split into one id per event type (DO / PD / ENV).
     KpiPlaceholder:
@@ -100024,6 +105162,7 @@ components:
       - E21
       - E22
       - E23
+      - E24
       title: LeadingWarningCode
       description: §6.9.
     LelReferenceGas:
@@ -104609,6 +109748,12 @@ components:
       - discharge_permit_invalid
       - env_complaint
       - aspect_review
+      - followup_requirement
+      - followup_pack_approval
+      - lesson_publish_due
+      - lesson_published
+      - lesson_ack_due
+      - lesson_effectiveness_due
       title: NotificationKind
       description: In-app notification kinds (§7).
     NotificationPage:
@@ -106618,6 +111763,136 @@ components:
       - page
       - page_size
       title: Page[DetectorRead]
+    Page_FuCheckRead_:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/FuCheckRead'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+          description: Total number of matching items across all pages.
+        page:
+          type: integer
+          title: Page
+          description: 1-based page number.
+        page_size:
+          type: integer
+          title: Page Size
+          description: Items per page (max 200).
+      type: object
+      required:
+      - items
+      - total
+      - page
+      - page_size
+      title: Page[FuCheckRead]
+    Page_FuLessonListItem_:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/FuLessonListItem'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+          description: Total number of matching items across all pages.
+        page:
+          type: integer
+          title: Page
+          description: 1-based page number.
+        page_size:
+          type: integer
+          title: Page Size
+          description: Items per page (max 200).
+      type: object
+      required:
+      - items
+      - total
+      - page
+      - page_size
+      title: Page[FuLessonListItem]
+    Page_FuPackRead_:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/FuPackRead'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+          description: Total number of matching items across all pages.
+        page:
+          type: integer
+          title: Page
+          description: 1-based page number.
+        page_size:
+          type: integer
+          title: Page Size
+          description: Items per page (max 200).
+      type: object
+      required:
+      - items
+      - total
+      - page
+      - page_size
+      title: Page[FuPackRead]
+    Page_FuRequirementRead_:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/FuRequirementRead'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+          description: Total number of matching items across all pages.
+        page:
+          type: integer
+          title: Page
+          description: 1-based page number.
+        page_size:
+          type: integer
+          title: Page Size
+          description: Items per page (max 200).
+      type: object
+      required:
+      - items
+      - total
+      - page
+      - page_size
+      title: Page[FuRequirementRead]
+    Page_FuSubmissionRead_:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/FuSubmissionRead'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+          description: Total number of matching items across all pages.
+        page:
+          type: integer
+          title: Page
+          description: 1-based page number.
+        page_size:
+          type: integer
+          title: Page Size
+          description: Items per page (max 200).
+      type: object
+      required:
+      - items
+      - total
+      - page
+      - page_size
+      title: Page[FuSubmissionRead]
     Page_GasTestRead_:
       properties:
         items:

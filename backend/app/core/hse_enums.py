@@ -698,6 +698,7 @@ class CaSourceType(StrEnum):
     emergency = "emergency"  # 1-dashboard v1.6: 6c asset check, drill or event
     field_audit = "field_audit"  # 1-dashboard v1.7: 6d audit (AUD-4)
     environmental = "environmental"  # 1-dashboard v1.8: 6e exceedance, consignment, area, spill
+    lesson = "lesson"  # 1-dashboard v1.9: 6f effectiveness check (EF-5)
     ai_recommendation = "ai_recommendation"
     other = "other"
 
@@ -812,6 +813,12 @@ class AttachmentOwner(StrEnum):
     env_permit_document = "env_permit_document"
     consignment_ticket = "consignment_ticket"
     env_photo = "env_photo"
+    # Phase 6f (6f-incident-followup §3.4-§3.6, P6f-4): pack files (identity field sets in the
+    # encrypted bucket), submission evidence (personal bucket), lesson photos (redacted)
+    fu_pack_file = "fu_pack_file"
+    fu_pack_identity_file = "fu_pack_identity_file"
+    fu_evidence = "fu_evidence"
+    fu_lesson_photo = "fu_lesson_photo"
 
 
 class ScanStatus(StrEnum):
@@ -984,6 +991,12 @@ class KpiMetric(StrEnum):
     K124 = "K-124"
     K125 = "K-125"
     K126 = "K-126"
+    # Phase 6f incident follow-up KPIs (6f-incident-followup §6.2)
+    K127 = "K-127"
+    K128 = "K-128"
+    K129 = "K-129"
+    K130 = "K-130"
+    K131 = "K-131"
 
 
 class KpiKind(StrEnum):
@@ -1192,6 +1205,7 @@ class LeadingWarningCode(StrEnum):
     E21 = "E21"  # 6d §6.8: toolbox engagement (K-116, K-117)
     E22 = "E22"  # 6e §6.8: environmental compliance (K-118, K-121, K-122, storage, custody)
     E23 = "E23"  # 6e §6.8: environmental performance (K-123, spills, K-120, authority complaint)
+    E24 = "E24"  # 6f §6.3: incident follow-up (overdue / late statutory, K-127, K-130, lessons)
 
 
 class ChartId(StrEnum):

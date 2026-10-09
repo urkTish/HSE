@@ -61,9 +61,12 @@ PHASE6E_METRICS: frozenset[KpiMetric] = frozenset(
 )
 PHASE6E_PENDING: frozenset[KpiMetric] = frozenset()
 """Environmental KPIs not computed yet (none since Phase 6e stage 2)."""
+PHASE6F_METRICS: frozenset[KpiMetric] = frozenset({M.K127, M.K128, M.K129, M.K130, M.K131})
+PHASE6F_PENDING: frozenset[KpiMetric] = frozenset()
+"""Incident follow-up KPIs not computed yet (none since Phase 6f stage 2)."""
 _PENDING = (
     PHASE2_PENDING | PHASE3_PENDING | PHASE4_PENDING | PHASE5_PENDING | PHASE6A_PENDING
-    | PHASE6B_PENDING | PHASE6C_PENDING | PHASE6D_PENDING | PHASE6E_PENDING
+    | PHASE6B_PENDING | PHASE6C_PENDING | PHASE6D_PENDING | PHASE6E_PENDING | PHASE6F_PENDING
 )  # fmt: skip
 
 
@@ -102,6 +105,8 @@ class KpiDef:
             return f"6b-heat-stress §6.6 {self.metric.value}"
         if self.metric in PHASE6E_METRICS:
             return f"6e-environmental §6.7 {self.metric.value}"
+        if self.metric in PHASE6F_METRICS:
+            return f"6f-incident-followup §6.2 {self.metric.value}"
         if self.metric in PHASE6D_METRICS:
             return f"6d-field-assurance §6.7 {self.metric.value}"
         if self.metric in PHASE6C_METRICS:
@@ -636,6 +641,29 @@ CATALOGUE: dict[KpiMetric, KpiDef] = {
                G.exposure, LOW, "m³", "م³",
                "Σ volume_m3 of the months in the period; L per man-hour; chip treated "
                "effluent %", 0),
+        # ---- Phase 6f incident follow-up (6f-incident-followup §6.2) ----
+        _pct(M.K127, "Notifications on time", "الإخطارات في الموعد", "Notifications on time",
+             "الإخطارات في الموعد",
+             "requirements (not waived / not required) due in the period and ≤ as_of whose first "
+             "valid submission was on time ÷ those requirements × 100; chips statutory %, client %",
+             numerator="On time", denominator="Due"),
+        _count(M.K128, "Overdue notifications", "الإخطارات المتأخرة", "Overdue notifications",
+               "الإخطارات المتأخرة", G.leading, LOW,
+               "requirements overdue at as_of; chip statutory"),
+        _pct(M.K129, "Lessons published on time", "نشر الدروس في الموعد", "Lessons on time",
+             "نشر الدروس في الموعد",
+             "required lessons published on or before publish_due_on ÷ required lessons with "
+             "publish_due_on in the period and (≤ as_of or published) × 100",
+             numerator="On time", denominator="Due"),
+        _pct(M.K130, "Lesson acknowledgement on time", "الإقرار بالدروس في الموعد",
+             "Lesson acknowledgement", "الإقرار بالدروس",
+             "items acknowledged or not applicable on or before ack_due_on ÷ items not withdrawn "
+             "with ack_due_on in the period and ≤ as_of × 100",
+             numerator="On time", denominator="Due"),
+        _pct(M.K131, "Lesson effectiveness", "فعالية الدروس", "Lesson effectiveness",
+             "فعالية الدروس",
+             "checks completed in the period with result effective ÷ checks completed in the "
+             "period × 100; chip recurrences", numerator="Effective", denominator="Completed"),
     ]
 }  # fmt: skip
 

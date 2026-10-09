@@ -16,6 +16,7 @@ from app.core.enums import Capability, ExportFormat
 from app.core.env_enums import EnvKpiGroupBy
 from app.core.errors import error_responses
 from app.core.field_enums import FieldKpiGroupBy
+from app.core.followup_enums import FuKpiGroupBy
 from app.core.heat_enums import HeatKpiGroupBy
 from app.core.hse_enums import (
     BreakdownDimension,
@@ -35,6 +36,7 @@ from app.kpi import (
     emergency_views,
     env_views,
     field_views,
+    followup_views,
     heat_views,
     med_views,
     ptw_views,
@@ -48,6 +50,7 @@ from app.schemas.cert_kpi import CertKpiResponse
 from app.schemas.emergency import EmergencyKpiResponse
 from app.schemas.env import EnvKpiResponse
 from app.schemas.field import FieldKpiResponse
+from app.schemas.followup import FuKpiResponse
 from app.schemas.heat import HeatKpiResponse
 from app.schemas.kpi import (
     BreakdownResponse,
@@ -550,3 +553,24 @@ def get_environmental_kpis(
 ) -> EnvKpiResponse:
     sc = scope.build(db, user, q, Capability.env_view)
     return env_views.env_kpis(db, sc, metric, group_by)
+
+
+@router.get(
+    "/incident-followup",
+    response_model=FuKpiResponse,
+    summary="Incident follow-up KPIs K-127…K-131 with breakdowns (6f §6.2)",
+    description=FILTERS + " Capability 215; aggregates only (FK-2): bodies, stages, months and "
+    "engagement codes; never names, packs or evidence. Attribution FK-1: requirements by the local "
+    "date of due_at and the responsible engagement (GOSI: the filer engagement); lessons by "
+    "publish_due_on; distribution items by ack_due_on and their engagement; checks by completion.",
+    responses=KPI_ERRORS,
+)
+def get_followup_kpis(
+    user: CurrentUser,
+    db: DB,
+    q: KpiParams,
+    metric: Annotated[list[KpiMetric] | None, Query(description="Default: K-127…K-131.")] = None,
+    group_by: Annotated[list[FuKpiGroupBy] | None, Query()] = None,
+) -> FuKpiResponse:
+    sc = scope.build(db, user, q, Capability.followup_view)
+    return followup_views.fu_kpis(db, sc, metric, group_by)

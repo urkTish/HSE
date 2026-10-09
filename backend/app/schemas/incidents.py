@@ -6,6 +6,7 @@ from datetime import date, datetime
 
 from pydantic import Field
 
+from app.core.followup_enums import FuLessonStatus, FuRequirementStatus, FuStage
 from app.core.hse_enums import (
     Activity,
     AgeBand,
@@ -43,6 +44,7 @@ from app.core.hse_enums import (
     Treatment,
 )
 from app.schemas.common import ApiModel, Page, PatchInput, StrictInput, Timestamps
+from app.schemas.followup import FuFileInput
 from app.schemas.hse_common import (
     ApiWarning,
     DecimalStr,
@@ -191,13 +193,24 @@ class ExternalNotificationRead(ApiModel):
     notified_at: datetime | None
     reference_no: str | None
     notified_by: UserRef | None
+    stage: FuStage = Field(
+        default=FuStage.written,
+        description="v1.9: the 6f stage; incidents before `followup_rules_from` show `written`.",
+    )
+    rule_code: str | None = Field(default=None, description="v1.9: 6f rule (profile only).")
+    requirement_id: uuid.UUID | None = None
+    followup_status: FuRequirementStatus | None = Field(
+        default=None, description="v1.9: 6f §4.1 status (profile only)."
+    )
 
 
 class ExternalNotificationRecord(StrictInput):
-    """Record that a body was notified (tracking only; I-21: the platform does not submit)."""
+    """Record that a body was notified (tracking only; I-21: the platform does not submit). From
+    the project's `followup_rules_from` an evidence file is required (6f SB-4)."""
 
     notified_at: datetime
     reference_no: str | None = Field(default=None, max_length=60)
+    evidence_file: FuFileInput | None = None
 
 
 class InjuryCaseSummary(ApiModel):
@@ -669,6 +682,8 @@ class InvestigationRead(ApiModel):
     missing_for_submit: list[str] = Field(
         description="Fields/rules still blocking Under Investigation → Pending Review."
     )
+    lesson_no: str | None = Field(default=None, description="v1.9: the 6f lesson (LL-1).")
+    lesson_status: FuLessonStatus | None = None
 
 
 # ---- excluded-from-rates listing (AC21) ----------------------------------------------------------
