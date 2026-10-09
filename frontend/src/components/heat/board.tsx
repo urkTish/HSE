@@ -202,7 +202,7 @@ export function CellsTable({ cells }: { cells: S["RegimeCell"][] }) {
   const t = useTranslations("heat.board");
   const te = useTranslations("enums");
   return (
-    <table className="w-full table-fixed text-xs sm:text-sm" data-testid="regime-cells">
+    <table className="w-full table-fixed text-xs" data-testid="regime-cells">
       <thead>
         <tr className="text-muted-foreground">
           <th className="w-20 py-1 text-start font-normal sm:w-24" />
