@@ -6,7 +6,8 @@
 - Phase 6b step = Design done (findings `docs/design/phase-6b-findings.md`; contract v0.8.0); phase demo next
 - Phase 6c — Emergency preparedness & drills (spec `docs/specs/6c-emergency-drills.md` v1.0, §11 earlier-spec changes applied; contract v0.9.0)
 - Phase 6c step = Design done (findings `docs/design/phase-6c-findings.md`; contract v0.9.0); phase demo next
-- Phase 6d — Field assurance (checklists, audits, toolbox talks): spec `docs/specs/6d-field-assurance.md` v1.0 (61 ACs; §11 earlier-spec changes applied); contract next
+- Phase 6d — Field assurance (checklists, audits, toolbox talks): spec `docs/specs/6d-field-assurance.md` v1.0 (61 ACs; §11 earlier-spec changes applied; contract v0.10.0)
+- Phase 6d step = Backend done (frontend next)
 
 ## Phase log
 - Phase 0 — Foundation: built, e2e green, design pass done (2026-10-05). The user asked to continue phase after phase without per-phase approval; open questions are collected below for a single review.
@@ -16,6 +17,15 @@
 - Phase 4 — Third-party certification: built, e2e green, design pass done (2026-10-08).
 
 ## Done
+
+### Backend — Phase 6d field assurance (contract v0.10.0, stage 2)
+- Services under `app/services/field/`: settings (tighten-only, switch dates), template and topic libraries (versions, TPL-2 / TBT-1 completeness, immutability, retire guard), scoring (§6.1–§6.2), checklist submissions (planned / unplanned, offline window, CLOCK_SKEW, idempotent on client_uuid, TPL-4 pinning, EXIF stripping), findings (severity raise, fixed on spot, FND-5 repeats, Phase 1 CAs), stop-work orders (FND-7…FND-9, release, void), inspection void, offline pack, audits (AUD-1…AUD-8, SoD, HTML reports, auto-close), audit programme (§6.4), toolbox talks (TBT-3…TBT-9, lock, suggestions), campaigns (CMP-1…CMP-4), action panel and band.
+- Phase 1 wiring: plan template / rotation / quarterly, TEMPLATE_REQUIRED switch, the Phase 1 read model shows response scores and mapped findings. Phase 3 wiring: `stop_work` suspension with the order number, STOP_WORK_ACTIVE resume guard.
+- Register switch: K-36 from the toolbox register from `toolbox_register_from` (daily-return toolbox fields kept for SRC-3 and W08 on import); K-34 / K-35 unchanged.
+- KPIs K-110…K-117 (`app/kpi/field.py`, `GET /kpi/field-assurance` with month / contractor / type / template / zone / item / language breakdowns and notes); warnings E20 / E21.
+- Jobs: `field_daily` 00:09 (talk lock, audit close, photo retention), `field_alerts` 07:06, `field_minute` every 60 s.
+- Seed `app/seed_field.py` (Appendix A; called by `app.seed`). FD9 differences in D-185.
+- Tests: `test_field_library`, `test_field_execution`, `test_field_findings`, `test_field_audits`, `test_field_talks`, `test_field_kpis` (54 tests, plus the stage 1 contract test). Defaults are D-176…D-186.
 
 ### Frontend — Phase 6c emergency preparedness & drills (contract v0.9.0, integrated with the stage 2 backend)
 - "Emergency" sidebar section (D-169): board (readiness per site: coverage counters, equipment gaps, next drills, open musters, active events; refreshed every minute), action panel, emergency info (AP + numbers for chosen zones), KPIs K-104…K-109 with breakdowns.
@@ -754,6 +764,7 @@
 - Phase 1 demo; then Phase 2 per the roadmap
 
 ## Parked
+- **Phase 6d backend (2026-10-09):** not built: AI tool T21 (AC57), charts C31–C33 data, register exports (AC58 export audit row), PDF audit reports (HTML for now, D-177), expiring-item entries. AC59's phone cache deletion is frontend work, and AC61 is tested on the reference lists only. No performance tests.
 - **Phase 6c frontend (2026-10-09):** no UI yet for register exports (189), AI tool T20, charts C28–C30, check photos (no attachment owner) and the permit form's emergency-info prefill button (the backend pre-fills at Request, PE-6). The muster reader list is session-only (no list endpoint). Full e2e run failures outside 6c, left as TODO: p1-dashboard ×6, p1-modules:64, contractors AC17, p2-passes AP-4, p2-settings HK-4, p2-workers IN, p4-dashboard AC103, p5-check AC124, p5-dashboard, p5-hooks AC93, p6a-settings, p6b-settings-report:46 (the backend working tree had uncommitted 6d changes during the run).
 - **Phase 6c backend (2026-10-09):** not built yet: AI tool T20 (AC63), charts C28–C30 data, register exports (189), expiring-items / poster entries, the P1-8 scan of event free texts. K-106 and two other ED9 figures differ on the seed (D-166). AC66 is tested on the reference lists only; ACs 34 (exact alert dates), 45 (plan_deficiency via the evaluation API) and 64 (exports) are partly covered.
 - **Phase 6b frontend (2026-10-09):** no UI yet for WBGT bulk import (`/wbgt-imports`), heat exports (176, not built in the backend), patrol photos (no attachment owner). The heat-stop resume and day-confirmation flows have no e2e test (no seed state at the clock). Full e2e run after the 6b frontend: 217 passed, 9 failed, 9 skipped, 3 did not run (37.6 min). Failures outside 6b, left as before: p1-dashboard ×5, p4-dashboard AC103, p2-settings HK-4 (as parked after 6a); p6a-settings "1 settings saved." toast (passes alone). The one 6b failure (K-97 is diluted by zones earlier specs create) was fixed by not asserting K-97 in that spec; the spec passes alone.
@@ -771,6 +782,8 @@
 - Per-entity retention/anonymisation (P7) — no personal-data entities with retention defaults in Phase 0 beyond the audit log.
 
 ## Open questions for the HSE Manager
+- (Backend, Phase 6d, FD9 / Appendix A) The seed maps the named A.4 records onto generated Phase 1 inspections. K-110, the K-111 rate and K-112 therefore differ from FD9 (40 ANIA-EXP inspections, not 42), and K-116 is 93.4 % rather than 92.4 % (D-185). Re-base FD9 on the seed?
+- (Backend, Phase 6d, AC17) A rep recording for an engagement on a project they cannot see gets 404, not 403 (D-186). Accept?
 - (Backend, Phase 6c, ED9 / A.8) With the Phase 1 headcounts and the Phase 5 holders, emergency team coverage K-106 is about 20 % ANIA-EXP and 52 % RBT-52 (ED9: 95.6 % / 100 %), so E18 is raised for RBT-52 too (D-166). Re-base ED9 on the seed, or add roster holders?
 - (Backend, Phase 6c, AC16) The QIMMA worker of AC16 is on RBT-52 only, a project Ahmed cannot see: the API answers 404, not 403 (D-168). Accept?
 - (Backend, Phase 6b, AC34 / AC53) The 6a matrix gives HSE Reps capabilities 156 and 29, so Ahmed sees the plan trigger and worker names that AC34 / AC53 say are hidden from him (D-149). Change the ACs or the matrix?

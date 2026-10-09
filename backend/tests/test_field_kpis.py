@@ -78,7 +78,12 @@ def test_AC54_AC52_fd9(api: Api, db: Session, code: str) -> None:
             "project_id": str(project(db, code).id), "as_of": "2026-09-30", "period": "month",
             "anchor": "2026-09-30"})  # fmt: skip
         assert res.status_code == 200, res.text
-        assert res.json()["display"].startswith("42")
+        from app.models import Inspection as Ins
+
+        done = db.scalar(select(func.count()).select_from(Ins).where(
+            Ins.project_id == pid, Ins.status == "completed", Ins.completed_date >= date(2026, 9, 1),
+            Ins.completed_date <= date(2026, 9, 30)))  # fmt: skip
+        assert res.json()["kpi"]["display"] == str(done)  # inspections only (D-185)
     item = next(b for b in body["breakdowns"] if b["group_by"] == "item_code")
     assert item["rows"] and all("-" in r["key"] for r in item["rows"])
     assert "WKR-" not in str(body) and "@example.com" not in str(body)
