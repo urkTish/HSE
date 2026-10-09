@@ -183,31 +183,20 @@ function PlanAuditDialog({ project, onClose }: { project: Project; onClose: () =
   const [team, setTeam] = useState<string[]>([]);
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<unknown>(null);
   const needsAuditee = type === "contractor_hse";
   const valid = tpl && sites.length && lead && start && end && end >= start && (!needsAuditee || eng);
   async function save() {
-    setBusy(true);
-    setError(null);
-    try {
-      const a = await unwrap(
-        api.POST("/api/v1/projects/{project_id}/field-audits", {
-          params: { path: { project_id: project.id } },
-          body: { audit_type: type, template_code: tpl, auditee_engagement_id: type === "system_iso45001" ? null : eng || null, site_ids: sites, lead_auditor_id: lead, team_ids: team, planned_start: start, planned_end: end },
-        }),
-      );
-      await refresh();
-      onClose();
-      router.push(`/field-audits/${a.id}`);
-    } catch (e) {
-      setError(e);
-    } finally {
-      setBusy(false);
-    }
+    const a = await unwrap(
+      api.POST("/api/v1/projects/{project_id}/field-audits", {
+        params: { path: { project_id: project.id } },
+        body: { audit_type: type, template_code: tpl, auditee_engagement_id: type === "system_iso45001" ? null : eng || null, site_ids: sites, lead_auditor_id: lead, team_ids: team, planned_start: start, planned_end: end },
+      }),
+    );
+    await refresh();
+    router.push(`/field-audits/${a.id}`);
   }
   return (
-    <StepDialog wide title={t("plan")} description={t("planHint")} confirmLabel={t("planConfirm")} disabled={!valid || busy} testId="audit-plan-confirm" onConfirm={save} onClose={onClose}>
+    <StepDialog wide title={t("plan")} description={t("planHint")} confirmLabel={t("planConfirm")} disabled={!valid} testId="audit-plan-confirm" onConfirm={save} onClose={onClose} renderError={(e) => <IndependenceError error={e} />}>
       <div className="grid gap-3 sm:grid-cols-2">
         <FormField id="ap-type" label={t("type")} required>
           <Select value={type} onChange={(e) => (setType(e.target.value as S["AuditType"]), setTpl(""))} data-testid="ap-type">
@@ -253,7 +242,6 @@ function PlanAuditDialog({ project, onClose }: { project: Project; onClose: () =
         </FormField>
       </div>
       <p className="text-xs text-muted-foreground">{t("independenceHint")}</p>
-      <IndependenceError error={error} />
     </StepDialog>
   );
 }
@@ -622,25 +610,14 @@ function IssueDialog({ a, onClose }: { a: Audit; onClose: () => void }) {
   const [en, setEn] = useState(a.summary_en ?? "");
   const [ar, setAr] = useState(a.summary_ar ?? "");
   const [obs, setObs] = useState(false);
-  const [error, setError] = useState<unknown>(null);
-  const [busy, setBusy] = useState(false);
   async function go() {
-    setBusy(true);
-    setError(null);
-    try {
-      await unwrap(api.PATCH("/api/v1/field-audits/{audit_id}", { params: { path: { audit_id: a.id } }, body: { summary_en: en.trim() || null, summary_ar: ar.trim() || null } }));
-      await unwrap(api.POST("/api/v1/field-audits/{audit_id}/transitions", { params: { path: { audit_id: a.id } }, body: { action: "issue", ca_for_observations: obs } }));
-      await refresh();
-      onClose();
-    } catch (e) {
-      setError(e);
-    } finally {
-      setBusy(false);
-    }
+    await unwrap(api.PATCH("/api/v1/field-audits/{audit_id}", { params: { path: { audit_id: a.id } }, body: { summary_en: en.trim() || null, summary_ar: ar.trim() || null } }));
+    await unwrap(api.POST("/api/v1/field-audits/{audit_id}/transitions", { params: { path: { audit_id: a.id } }, body: { action: "issue", ca_for_observations: obs } }));
+    await refresh();
   }
   const nc = (a.response?.findings ?? []).filter((f) => f.severity === "major_nc" || f.severity === "minor_nc").length;
   return (
-    <StepDialog wide title={t("issueTitle")} description={t("issueHint", { n: nc })} confirmLabel={t("issue")} disabled={busy || !(en.trim() || ar.trim())} testId="issue-confirm" onConfirm={go} onClose={onClose}>
+    <StepDialog wide title={t("issueTitle")} description={t("issueHint", { n: nc })} confirmLabel={t("issue")} disabled={!(en.trim() || ar.trim())} testId="issue-confirm" onConfirm={go} onClose={onClose} renderError={(e) => <IndependenceError error={e} />}>
       <FormField id="ai-en" label={t("summaryEn")} required hint={<NoNamesHint />}>
         <Textarea rows={5} maxLength={3000} value={en} onChange={(e) => setEn(e.target.value)} data-testid="ai-summary" />
       </FormField>
@@ -650,7 +627,7 @@ function IssueDialog({ a, onClose }: { a: Audit; onClose: () => void }) {
       <CheckboxField id="ai-obs" label={t("caForObservations")}>
         <Checkbox checked={obs} onChange={(e) => setObs(e.target.checked)} />
       </CheckboxField>
-      <IndependenceError error={error} />
+
     </StepDialog>
   );
 }

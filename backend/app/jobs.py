@@ -18,6 +18,7 @@ from app.core.config import get_settings
 from app.core.enums import AuditAction, AuditResult, EntityType, NotificationKind, Role, UserStatus
 from app.db.session import get_sessionmaker
 from app.emergency_jobs import PHASE6C_JOBS
+from app.env_jobs import PHASE6E_JOBS
 from app.field_jobs import PHASE6D_JOBS
 from app.heat_jobs import PHASE6B_JOBS
 from app.hse_jobs import PHASE1_JOBS
@@ -308,6 +309,7 @@ JOBS: dict[str, Callable[[Session], dict[str, Any]]] = {
     **PHASE6B_JOBS,
     **PHASE6C_JOBS,
     **PHASE6D_JOBS,
+    **PHASE6E_JOBS,
 }
 
 

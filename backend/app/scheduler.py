@@ -73,6 +73,10 @@ def main() -> None:
     sched.add_job(_job, "cron", hour=0, minute=9, args=["field_daily"])
     sched.add_job(_job, "cron", hour=7, minute=6, args=["field_alerts"])
     sched.add_job(_job, "interval", minutes=1, args=["field_minute"])
+    # Phase 6e (spec 6e-environmental §4, §7, P6e-2)
+    sched.add_job(_job, "cron", hour=0, minute=11, args=["env_daily"])
+    sched.add_job(_job, "cron", hour=7, minute=8, args=["env_alerts"])
+    sched.add_job(_job, "interval", minutes=1, args=["env_minute"])
     sched.start()
 
 

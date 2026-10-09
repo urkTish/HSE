@@ -12,7 +12,7 @@ from decimal import Decimal
 from typing import Any
 
 import jwt
-from sqlalchemy import func, select
+from sqlalchemy import any_, func, select
 from sqlalchemy.orm import Session
 
 from app.core.access_enums import OpsEventType
@@ -658,7 +658,7 @@ def background_ref(db: Session, pt: EnvPoint, ws: datetime, we: datetime) -> str
         select(BackgroundDeclaration)
         .where(
             BackgroundDeclaration.project_id == pt.project_id,
-            BackgroundDeclaration.site_ids.any(pt.site_id),  # type: ignore[arg-type]
+            pt.site_id == any_(BackgroundDeclaration.site_ids),
             BackgroundDeclaration.from_at < we,
             BackgroundDeclaration.to_at > ws,
         )

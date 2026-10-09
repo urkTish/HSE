@@ -20,6 +20,8 @@ def decimals(defn: KpiDef) -> int:
         return 1
     if k in (KpiKind.average, KpiKind.hours):
         return defn.decimals  # hours: K-86 2 dp (5-training), K-71 1 dp (3-ptw), others 0
+    if k == KpiKind.count_:
+        return defn.decimals  # 6e: K-119 tonnes 1 dp; other counts 0
     return 0
 
 

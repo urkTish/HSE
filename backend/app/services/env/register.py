@@ -197,17 +197,17 @@ def _asp2(a: EnvAspect) -> None:
     """ASP-2: a significant entry needs ≥ 1 control and ≥ 1 monitoring link; PPE alone refused."""
     if not significant(a):
         return
+    if a.controls and all(x.get("control_level") == ControlLevel.ppe.value for x in a.controls):
+        raise ec.code_err(
+            ErrorCode.CONTROL_LEVEL_TOO_LOW,
+            "PPE alone cannot be the only control of a significant aspect.",
+            "لا يمكن أن تكون معدات الوقاية الشخصية الضابط الوحيد لجانب جوهري.",
+        )
     if not a.controls or not a.monitoring_links:
         raise ec.code_err(
             ErrorCode.ASPECT_CONTROL_REQUIRED,
             "A significant aspect needs at least one control and one monitoring link.",
             "يتطلب الجانب الجوهري ضابطاً واحداً ورابط رصد واحداً على الأقل.",
-        )
-    if all(x.get("control_level") == ControlLevel.ppe.value for x in a.controls):
-        raise ec.code_err(
-            ErrorCode.CONTROL_LEVEL_TOO_LOW,
-            "PPE alone cannot be the only control of a significant aspect.",
-            "لا يمكن أن تكون معدات الوقاية الشخصية الضابط الوحيد لجانب جوهري.",
         )
 
 

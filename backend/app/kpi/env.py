@@ -226,7 +226,7 @@ def _k121(e: Engine, a: Agg) -> Result:
 
 def slots(e: Engine, w: Window) -> list[tuple[str, str, bool]]:
     """(point code, slot key, met) per (point, schedule) unit (DECISIONS: one slot per point and
-    schedule, whatever the number of parameters)."""
+    schedule, whatever the number of parameters), from the local day the point was created."""
     from app.core.env_enums import Averaging, RecordState  # noqa: PLC0415
     from app.models import EnvPoint, EnvReading  # noqa: PLC0415
     from app.services.field import common as fc  # noqa: PLC0415
@@ -272,7 +272,8 @@ def slots(e: Engine, w: Window) -> list[tuple[str, str, bool]]:
             for r in p.requirements or []:
                 if r["schedule"] != "campaign":
                     sched[r["schedule"]].add(r["parameter"])
-            days = work.get(p.site_id, set())
+            first = hc.local_day(p.created_at) if p.created_at else w.start
+            days = {d for d in work.get(p.site_id, set()) if d >= first}
             h = have.get(p.id, set())
             for s, params in sched.items():
                 if s in ("continuous", "daily"):

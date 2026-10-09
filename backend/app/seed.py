@@ -641,6 +641,10 @@ def main() -> int:
 
         seed_field_data(db)
         db.commit()
+        from app.seed_env import seed_env_data  # noqa: PLC0415
+
+        seed_env_data(db)
+        db.commit()
     print("Seed data loaded.")
     return 0
 

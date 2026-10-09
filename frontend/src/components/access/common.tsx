@@ -666,6 +666,7 @@ export function StepDialog({
   testId = "step-confirm",
   wide,
   dismissLabel,
+  renderError,
 }: {
   title: string;
   description?: ReactNode;
@@ -680,6 +681,8 @@ export function StepDialog({
   wide?: boolean;
   /** Label of the dismiss button when "Cancel" would read like the action itself (e.g. "Cancel permit"). */
   dismissLabel?: string;
+  /** Replaces the generic error box when a refusal needs its own explanation (e.g. 6d audit independence). */
+  renderError?: (error: unknown) => ReactNode;
 }) {
   const tc = useTranslations("common");
   const [busy, setBusy] = useState(false);
@@ -705,7 +708,7 @@ export function StepDialog({
         </DialogHeader>
         {warning ? <Alert tone="warning">{warning}</Alert> : null}
         {children ? <div className="flex flex-col gap-3">{children}</div> : null}
-        <MutationError error={error} />
+        {renderError && error ? renderError(error) : <MutationError error={error} />}
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
             {dismissLabel ?? tc("cancel")}
