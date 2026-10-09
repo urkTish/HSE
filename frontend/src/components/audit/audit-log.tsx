@@ -32,7 +32,7 @@ export function AuditLog() {
   const { projects } = useCurrentProject();
   const projectCode = new Map(projects.map((p) => [p.id, p.code]));
   const [projectId, setProjectId] = useState("");
-  const [action, setAction] = useState<Schemas["AuditAction"] | "">("");
+  const [action, setAction] = useState<Schemas["AuditAction-Output"] | "">("");
   const [entity, setEntity] = useState<Schemas["EntityType"] | "">("");
   const [result, setResult] = useState<Schemas["AuditResult"] | "">("");
   const [from, setFrom] = useState("");

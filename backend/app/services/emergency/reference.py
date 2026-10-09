@@ -153,6 +153,7 @@ ASSET_TYPES: dict[AssetType, tuple[str, str, int, int | None, tuple[CheckItem, .
                            (*ALL_ITEMS, EC.EC05, EC.EC09)),
     AT.escape_breathing_set: ("Escape breathing set", "جهاز تنفس للهروب", 30, 12,
                               (*ALL_ITEMS, EC.EC09)),
+    AT.spill_kit: ("Spill kit", "حقيبة احتواء الانسكابات", 30, None, (*ALL_ITEMS, EC.EC05)),
 }  # fmt: skip
 SERVICE_REQUIRED = frozenset(
     {AT.fire_extinguisher, AT.hose_reel, AT.alarm_panel_temporary, AT.emergency_lighting}

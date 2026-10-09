@@ -256,6 +256,20 @@ class Capability(StrEnum):
     toolbox_names_view = "toolbox_names.view"  # 199 attendance names and signatures
     field_view = "field.view"  # 200 6d registers, responses, KPIs, action panel, exports
     field_void = "field.void"  # 201 void inspections (6d), audits, talks, stop-work orders
+    # ---- Phase 6e (6e-environmental §5.17) ----
+    env_view = "env.view"  # 202 6e registers, KPIs, action panel; exports (personal per P6e)
+    env_aspect_manage = "env_aspect.manage"  # 203 aspects register
+    env_permit_manage = "env_permit.manage"  # 204 permits, licences and providers
+    waste_area_manage = "waste_area.manage"  # 205 waste streams and storage areas
+    consignment_record = "consignment.record"  # 206 consignments and receipts
+    consignment_close = "consignment.close"  # 207 close; discrepancies and rejections
+    env_monitoring_manage = "env_monitoring.manage"  # 208 instruments, points, limits, devices
+    env_reading_record = "env_reading.record"  # 209 readings (manual, visual, lab) and water
+    env_review = "env.review"  # 210 review exceedances; close spills
+    spill_record = "spill.record"  # 211 spills and spill-kit use
+    env_complaint = "env_complaint.manage"  # 212 complaints; complainant data
+    env_settings = "env.settings"  # 213 6e settings; provider decisions (HSE Manager)
+    env_void = "env.void"  # 214 void 6e records
 
 
 class CapabilityScope(StrEnum):
@@ -620,6 +634,24 @@ class EntityType(StrEnum):
     toolbox_talk = "toolbox_talk"
     briefing_campaign = "briefing_campaign"
     field_settings = "field_settings"
+    # Phase 6e
+    env_settings = "env_settings"
+    env_aspect = "env_aspect"
+    env_provider = "env_provider"
+    env_permit = "env_permit"
+    waste_stream = "waste_stream"
+    waste_storage_area = "waste_storage_area"
+    waste_consignment = "waste_consignment"
+    env_instrument = "env_instrument"
+    env_point = "env_point"
+    env_reading = "env_reading"
+    background_declaration = "background_declaration"
+    env_exceedance = "env_exceedance"
+    spill = "spill"
+    water_entry = "water_entry"
+    discharge_day = "discharge_day"
+    env_complaint = "env_complaint"
+    env_monitor_device = "env_monitor_device"
 
 
 class ExportDataset(StrEnum):
@@ -919,3 +951,16 @@ class NotificationKind(StrEnum):
     briefing_campaign = "briefing_campaign"  # CMP-4
     offline_submission_rejected = "offline_submission_rejected"  # EXE-6
     field_library_review = "field_library_review"  # TPL-6
+    # ---- Phase 6e (6e-environmental §7) ----
+    env_exceedance = "env_exceedance"  # EXD-1 / EXD-6 / EXD-5 review due
+    airside_dust_alert = "airside_dust_alert"  # AIR-1
+    env_spill_reportable = "env_spill_reportable"  # SPL-3
+    env_permit_expiry = "env_permit_expiry"  # PRM-3 (permits and provider licences)
+    env_instrument_calibration = "env_instrument_calibration"  # MON-1
+    consignment_overdue = "consignment_overdue"  # CON-6
+    consignment_rejected = "consignment_rejected"  # CON-8
+    haz_storage_deadline = "haz_storage_deadline"  # WST-5
+    post_storm_check = "post_storm_check"  # AIR-4
+    discharge_permit_invalid = "discharge_permit_invalid"  # WAT-3
+    env_complaint = "env_complaint"  # CPL-1
+    aspect_review = "aspect_review"  # ASP-3

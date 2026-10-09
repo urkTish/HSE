@@ -633,6 +633,33 @@ PHASE6D_MATRIX: dict[Role, dict[Capability, CapabilityScope]] = {
 for _role, _caps in PHASE6D_MATRIX.items():
     MATRIX[_role].update(_caps)
 
+# 6e-environmental §5.17 (capabilities 202-214). 213 is HSE Manager only. Viewer/Client: 202
+# aggregates and registers without personal fields or photos (enforced in the services).
+PHASE6E_MATRIX: dict[Role, dict[Capability, CapabilityScope]] = {
+    Role.hse_officer: dict.fromkeys(
+        [
+            C.env_view, C.env_aspect_manage, C.env_permit_manage, C.waste_area_manage,
+            C.consignment_record, C.consignment_close, C.env_monitoring_manage,
+            C.env_reading_record, C.env_review, C.spill_record, C.env_complaint, C.env_void,
+        ],
+        S.project,
+    ),
+    Role.site_engineer: dict.fromkeys(
+        [C.env_view, C.waste_area_manage, C.consignment_record, C.env_reading_record,
+         C.spill_record],
+        S.sites,
+    ),
+    Role.permit_issuer: dict.fromkeys([C.env_view, C.spill_record], S.sites),
+    Role.permit_receiver: dict.fromkeys([C.env_view, C.spill_record], S.own_engagement),
+    Role.contractor_hse_rep: dict.fromkeys(
+        [C.env_view, C.consignment_record, C.env_reading_record, C.spill_record],
+        S.contractor_tree,
+    ),
+    Role.viewer_client: {C.env_view: S.project},
+}  # fmt: skip
+for _role, _caps in PHASE6E_MATRIX.items():
+    MATRIX[_role].update(_caps)
+
 SCOPE_RANK = {S.own_engagement: 1, S.contractor_tree: 2, S.sites: 3, S.project: 4, S.all: 5}
 ROLE_RANK = {r: i for i, r in enumerate(Role)}  # lower index = more senior
 OFFICER_ASSIGNABLE = frozenset(

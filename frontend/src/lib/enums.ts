@@ -87,7 +87,7 @@ export const AUDIT_ACTIONS = [
   "audit_chain_verified",
   "retention_purge",
   "privacy_notice_acknowledged",
-] as const satisfies readonly Schemas["AuditAction"][];
+] as const satisfies readonly Schemas["AuditAction-Output"][];
 export const ENTITY_TYPES = [
   "project",
   "site",

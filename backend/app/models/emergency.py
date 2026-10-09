@@ -228,6 +228,8 @@ class EmergencyAsset(Audited, Base):
     status_reason: Mapped[str | None] = mapped_column(String(500))
     status_changed_on: Mapped[date | None] = mapped_column(Date)
     flagged_without_scan: Mapped[bool] = mapped_column(Boolean, default=False)
+    # 6c v1.2 (6e SPL-5): used in a 6e spill; not ready (USED_REPLENISH) until a later pass check
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class AssetCheck(Audited, Numbered, Base):

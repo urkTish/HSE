@@ -2,7 +2,8 @@
 # Starts the real backend for Playwright on a freshly created, migrated and seeded database,
 # so every e2e run begins from the spec Appendix A seed (the audit log is append-only by design).
 set -euo pipefail
-cd "$(dirname "$0")/../../backend"
+# E2E_BACKEND_DIR: run another checkout of the backend (e.g. a clean `git archive HEAD` export while backend/ has uncommitted work).
+cd "${E2E_BACKEND_DIR:-$(dirname "$0")/../../backend}"
 
 PGHOST="${PGHOST:-localhost}"
 PGPORT="${PGPORT:-5432}"

@@ -186,6 +186,7 @@ class ExternalBody(StrEnum):
     airport_operator = "airport_operator"
     client = "client"
     police = "police"
+    ncec = "ncec"  # 1-dashboard v1.8 (6e §11.2): National Center for Environmental Compliance
 
 
 class NotificationState(StrEnum):
@@ -696,6 +697,7 @@ class CaSourceType(StrEnum):
     heat_check = "heat_check"  # 1-dashboard v1.5: 6b welfare check or midday-ban patrol
     emergency = "emergency"  # 1-dashboard v1.6: 6c asset check, drill or event
     field_audit = "field_audit"  # 1-dashboard v1.7: 6d audit (AUD-4)
+    environmental = "environmental"  # 1-dashboard v1.8: 6e exceedance, consignment, area, spill
     ai_recommendation = "ai_recommendation"
     other = "other"
 
@@ -805,6 +807,11 @@ class AttachmentOwner(StrEnum):
     toolbox_signature = "toolbox_signature"
     toolbox_sheet = "toolbox_sheet"
     field_audit_report = "field_audit_report"
+    # Phase 6e (6e-environmental §3.3, CON-6, P6e-5): permit / licence documents (204), weighbridge
+    # tickets (206 / 207) and reading / spill photos (inline, EXIF stripped, never Viewer/Client)
+    env_permit_document = "env_permit_document"
+    consignment_ticket = "consignment_ticket"
+    env_photo = "env_photo"
 
 
 class ScanStatus(StrEnum):
@@ -967,6 +974,16 @@ class KpiMetric(StrEnum):
     K115 = "K-115"
     K116 = "K-116"
     K117 = "K-117"
+    # Phase 6e environmental KPIs (6e-environmental §6.7)
+    K118 = "K-118"
+    K119 = "K-119"
+    K120 = "K-120"
+    K121 = "K-121"
+    K122 = "K-122"
+    K123 = "K-123"
+    K124 = "K-124"
+    K125 = "K-125"
+    K126 = "K-126"
 
 
 class KpiKind(StrEnum):
@@ -1173,6 +1190,8 @@ class LeadingWarningCode(StrEnum):
     E19 = "E19"  # 6c §6.9: response readiness (K-107, K-108, headcount, found_on_site)
     E20 = "E20"  # 6d §6.8: field assurance (K-113, K-114, K-111 rate, stop-work > 7 days)
     E21 = "E21"  # 6d §6.8: toolbox engagement (K-116, K-117)
+    E22 = "E22"  # 6e §6.8: environmental compliance (K-118, K-121, K-122, storage, custody)
+    E23 = "E23"  # 6e §6.8: environmental performance (K-123, spills, K-120, authority complaint)
 
 
 class ChartId(StrEnum):

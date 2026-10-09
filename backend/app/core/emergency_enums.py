@@ -120,6 +120,7 @@ class AssetType(StrEnum):
     stretcher = "stretcher"
     rescue_kit_height = "rescue_kit_height"
     escape_breathing_set = "escape_breathing_set"
+    spill_kit = "spill_kit"  # 6c v1.2 (6e §11.4): reported as 6e K-125, excluded from K-107 / E19
 
 
 class ExtinguisherSubtype(StrEnum):
@@ -163,6 +164,7 @@ class NotReadyReason(StrEnum):
     SERVICE_OVERDUE = "SERVICE_OVERDUE"
     HYDROTEST_OVERDUE = "HYDROTEST_OVERDUE"
     CONSUMABLE_EXPIRED = "CONSUMABLE_EXPIRED"
+    USED_REPLENISH = "USED_REPLENISH"  # 6c v1.2 (6e SPL-5): used in a 6e spill, until a pass check
 
 
 class CheckItem(StrEnum):
