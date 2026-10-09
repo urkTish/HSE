@@ -223,7 +223,7 @@ def action_panel(db: Session, p: Principal, project_id: uuid.UUID) -> HeatAction
                 BanPatrol.status == RecordStatus.valid,
                 BanPatrol.outcome == PatrolOutcome.violation,
             )
-        ).tuples()
+        )
         if st == CaStatus.open
     ]
     items.append(_item(K.ban_violation_ca_open, ca_open))
@@ -348,7 +348,7 @@ def _wbgt(db: Session, project_id: uuid.UUID, w: Window) -> list[dict[str, Any]]
             WbgtReading.measured_at < hc.day_start(w.end + timedelta(days=1)),
         )
         .group_by(MonitoringPoint.point_code, func.date(loc))
-    ).tuples()
+    )
     per: dict[tuple[str, str], list[Decimal]] = defaultdict(list)
     for code, d, mx in rows:
         per[(code, d.strftime("%Y-%m"))].append(Decimal(mx))

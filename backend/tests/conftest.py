@@ -325,6 +325,36 @@ def med_seed(_fresh_data: None, _med_template: str) -> None:
     _clone(_med_template)
 
 
+# ---- Phase 6b: heat stress Appendix A on top of the Phase 6a world -------------------------------
+
+HEAT_TEMPLATE = TEST_DB.rsplit("/", 1)[1] + "_heat_tpl"
+
+
+@pytest.fixture(scope="session")
+def _heat_template(_med_template: str) -> str:
+    """Phase 0-6a template + the 6b Appendix A seed (HS7 / HS8)."""
+    from app.seed_heat import seed_heat_data
+
+    _clone(_med_template)
+    with get_sessionmaker()() as db:
+        seed_heat_data(db)
+        db.commit()
+    get_engine().dispose()
+    name = _db_name()
+    _admin_exec(
+        _terminate(name),
+        f"DROP DATABASE IF EXISTS {HEAT_TEMPLATE}",
+        f"CREATE DATABASE {HEAT_TEMPLATE} TEMPLATE {name}",
+    )
+    return HEAT_TEMPLATE
+
+
+@pytest.fixture
+def heat_seed(_fresh_data: None, _heat_template: str) -> None:
+    """Replace the test database with a copy of the Phase 6b template."""
+    _clone(_heat_template)
+
+
 @pytest.fixture
 def noon() -> Iterator[None]:
     """Pin the clock to Appendix A "today" (2026-10-06 12:00 Asia/Riyadh = 09:00Z)."""

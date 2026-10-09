@@ -419,10 +419,10 @@ def status_of(db: Session, dep: Deployment, d: date) -> Status:
         )
     )
     for pl in plans:
-        if pl.status == PS.waiting_restriction:
-            return Status(AcclimatisationStatus.not_acclimatised, pl)
         if pl.trigger_date > d or pl.status == PS.cancelled:
             continue
+        if pl.status == PS.waiting_restriction:
+            return Status(AcclimatisationStatus.not_acclimatised, pl)
         live = pl.status in (PS.planned, PS.active)
         done = pl.status == PS.completed and pl.completed_on is not None and pl.completed_on >= d
         if live or done:
