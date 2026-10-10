@@ -131,9 +131,13 @@ def _table_of(obj: Any) -> str | None:
     return t if isinstance(t, str) else None
 
 
-def _is_fact_write(obj: Any, dirty: bool) -> bool:
+def _is_fact_write(obj: Any, dirty: bool, new: bool = False) -> bool:
     table = _table_of(obj)
     if table in _NO_KPI_TABLES:
+        return False
+    if new and table is not None and table.endswith("_settings"):
+        # A project's settings row is created with its defaults on first read (every module's
+        # get-or-create), which the KPIs already assume; edits to it still count.
         return False
     cols = _NO_KPI_COLUMNS.get(table or "")
     if not dirty or cols is None:
@@ -143,9 +147,10 @@ def _is_fact_write(obj: Any, dirty: bool) -> bool:
 
 
 def _mark_write(session: Session, *_: Any) -> None:
-    rows = [(o, False) for o in (*session.new, *session.deleted)]
-    rows += [(o, True) for o in session.dirty]
-    if not rows or any(_is_fact_write(o, dirty) for o, dirty in rows):
+    rows = [(o, False, True) for o in session.new]
+    rows += [(o, False, False) for o in session.deleted]
+    rows += [(o, True, False) for o in session.dirty]
+    if not rows or any(_is_fact_write(o, dirty, new) for o, dirty, new in rows):
         session.info["kpi_wrote"] = True
 
 

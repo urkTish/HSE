@@ -12372,7 +12372,8 @@
       "pairsAtIssue": "Pairs are fixed when the campaign is issued.",
       "noPairs": "No pairs.",
       "contractor": "Contractor",
-      "talk": "Talk"
+      "talk": "Talk",
+      "lessonRefHint": "Published lesson number, e.g. LL-2026-…"
     },
     "overview": {
       "title": "Field overview",

@@ -41,6 +41,10 @@ class EmFacts:
     db: Session
     pids: list[UUID]
     memo: dict[Any, Any] = field(default_factory=dict)
+    # Plain-data results (no ORM rows) live in the Facts build's memo, shared by every request
+    # that reads the same cached Facts until a fact write clears it: asset readiness alone took
+    # about 0.7 s per call and the dashboard's warnings ask for it four times per request.
+    shared: dict[Any, Any] = field(default_factory=dict)
 
     def active(self) -> list[UUID]:
         from app.services.emergency import common as ec  # noqa: PLC0415
@@ -54,7 +58,7 @@ def efacts(e: Engine) -> EmFacts | None:
         hf = getattr(e.facts, "heat", None)
         if hf is None:
             return None
-        m = EmFacts(hf.db, list(hf.pids))
+        m = EmFacts(hf.db, list(hf.pids), shared=e.facts.memo.setdefault("emergency", {}))
         e._em_facts = m  # type: ignore[attr-defined]
     return m
 
@@ -63,10 +67,14 @@ def _end(e: Engine, w: Window) -> date:
     return min(e.as_of, w.end)
 
 
+_SHARED_KEYS = frozenset({"ready", "sites", "cov"})  # values hold no ORM rows (Drill etc.)
+
+
 def _memo(ef: EmFacts, key: Any, fn: Any) -> Any:
-    if key not in ef.memo:
-        ef.memo[key] = fn()
-    return ef.memo[key]
+    memo = ef.shared if key[0] in _SHARED_KEYS else ef.memo
+    if key not in memo:
+        memo[key] = fn()
+    return memo[key]
 
 
 # ---- K-104 ---------------------------------------------------------------------------------------

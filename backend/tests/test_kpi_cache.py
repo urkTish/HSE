@@ -120,3 +120,75 @@ def test_ai_insight_cache_writes_keep_the_cache(db: Session) -> None:
     db.add(AiInsightCache(cache_key=uuid.uuid4().hex, project_id=p.id, payload={}))
     db.commit()
     assert _load(db).meetings is first.meetings
+
+
+@pytest.mark.usefixtures("hse_seed", "cache_on")
+def test_a_default_settings_row_keeps_the_cache(db: Session) -> None:
+    """Every module creates a project's settings row with its defaults on first read (the
+    All-projects dashboard did so for a project made by an earlier test), which cleared every
+    cached scope; editing settings still does."""
+    from app.models import FieldSettings
+    from app.services.field import common as fcommon
+
+    p = db.scalars(select(Project).where(Project.code == "ANIA-EXP")).one()
+    row = db.get(FieldSettings, p.id)
+    if row is not None:
+        db.delete(row)
+        db.commit()
+    first = _load(db)
+    created = fcommon.settings_row(db, p.id)
+    db.commit()
+    assert _load(db).meetings is first.meetings
+    created.values = {**created.values, "tbt_min_minutes": 20}
+    db.commit()
+    assert _load(db).meetings is not first.meetings
+
+
+@pytest.mark.usefixtures("emergency_seed", "cache_on")
+def test_emergency_readiness_is_shared_by_requests(
+    db: Session, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The dashboard's warnings ask for K-107 asset readiness four times per request (about
+    0.7 s each); requests over the same cached facts now compute it once."""
+    from datetime import date
+
+    from app.kpi import emergency
+    from app.kpi.periods import Window
+    from app.services.emergency import assets
+
+    calls: list[object] = []
+    real = assets.ready_map
+    monkeypatch.setattr(assets, "ready_map", lambda *a, **k: calls.append(a) or real(*a, **k))
+    p = db.scalars(select(Project).where(Project.code == "ANIA-EXP")).one()
+    w = Window(date(2026, 9, 1), date(2026, 9, 30))
+
+    def stats() -> object:
+        from app.hse_jobs import project_scope
+
+        return emergency.asset_stats(project_scope(db, p, date(2026, 10, 2)).engine, w)
+
+    first = stats()
+    n = len(calls)
+    assert n > 0
+    assert stats() == first
+    assert len(calls) == n  # a second request over the same cached facts: no recomputation
+
+
+@pytest.mark.usefixtures("hse_seed")
+def test_snapshot_ignores_row_order(db: Session) -> None:
+    """CI run 85 (AC65): the AI answer cache keys on the KPI snapshot; the fact loads have no
+    ORDER BY, so a plan change between two asks reordered rows and missed the cache."""
+    from datetime import date
+
+    from app.hse_jobs import project_scope
+    from app.kpi import service
+
+    p = db.scalars(select(Project).where(Project.code == "ANIA-EXP")).one()
+    sc = project_scope(db, p, date(2026, 10, 2))
+    first = service.snapshot(sc)
+    e = sc.engine
+    for rows in (e.wf, e.all_cases, e.events, e.obs, e.insp, e.cas, e.meetings):
+        assert len(rows) > 1
+        rows.reverse()
+    sc.facts.memo.clear()
+    assert service.snapshot(sc) == first

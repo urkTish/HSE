@@ -1110,7 +1110,7 @@ function CampaignDialog({ project, c, onClose }: { project: Project; c?: S["Camp
             ))}
           </Select>
         </FormField>
-        <FormField id="cd-ref" label={t("reasonRef")} required={reason === "incident"} hint={reason === "incident" ? t("incidentRefHint") : undefined}>
+        <FormField id="cd-ref" label={t("reasonRef")} required={reason === "incident" || reason === "lesson"} hint={reason === "incident" ? t("incidentRefHint") : reason === "lesson" ? t("lessonRefHint") : undefined}>
           <Input className="ltr" maxLength={60} value={ref} onChange={(e) => setRef(e.target.value)} data-testid="cd-ref" />
         </FormField>
       </div>

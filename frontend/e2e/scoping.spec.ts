@@ -100,6 +100,12 @@ test.describe("Role scoping visible in the UI", () => {
     const api = await apiAs(USERS.faisal);
     const ania = await projectId(api, "ANIA-EXP");
     await api.get(`/api/v1/exports/sites?format=csv&project_id=${ania}`);
+    const noura = await userId(api, USERS.noura);
+    const viewed = async () => {
+      const res = await api.get(`/api/v1/audit-log?action=audit_log_viewed&actor_user_id=${noura}&page_size=1`);
+      return ((await res.json()) as { total: number }).total;
+    };
+    const before = await viewed();
     await login(page, USERS.noura);
     await page.goto("/en/audit-log");
     await expect(page.getByTestId("audit-row").first()).toBeVisible();
@@ -108,8 +114,8 @@ test.describe("Role scoping visible in the UI", () => {
     expect(projects).toContain("ANIA-EXP");
     await expect(page.getByTestId("ip-column")).toHaveCount(0);
     await expect(page.getByTestId("verify-chain")).toHaveCount(0);
-    // Viewing is itself logged.
-    await page.locator("#audit-action").selectOption("audit_log_viewed");
-    await expect(page.getByTestId("audit-row").first()).toBeVisible();
+    // Viewing is itself logged (rule 39). The entry has no project, so Noura's own scoped log
+    // (rule 38: entries for her projects) does not list it; the HSE Manager's full log does.
+    await expect.poll(viewed).toBeGreaterThan(before);
   });
 });

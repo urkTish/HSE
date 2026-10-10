@@ -177,16 +177,15 @@ def snapshot(scope: Scope, w: Window | None = None) -> str:
     key = ("snapshot", repr(head), repr(scope.restated))
     digest = scope.facts.memo.get(key)
     if digest is None:
-        # The fact lists are large; their digest is computed once per cached Facts build.
+        # The fact lists are large; their digest is computed once per cached Facts build. The
+        # loads have no ORDER BY, and a plan change (fresh statistics) reorders rows, so each
+        # list is hashed as a sorted multiset: the same facts give the same snapshot.
         digest = data.snapshot_hash(
             [
-                e.wf,
-                e.all_cases,
-                e.events,
-                e.obs,
-                e.insp,
-                e.cas,
-                e.meetings,
+                *(
+                    sorted(map(repr, rows))
+                    for rows in (e.wf, e.all_cases, e.events, e.obs, e.insp, e.cas, e.meetings)
+                ),
                 sorted(scope.facts.engagements.items(), key=lambda kv: str(kv[0])),
             ]
         )

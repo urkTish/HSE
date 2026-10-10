@@ -562,6 +562,7 @@ P = {
       "reason": ["Reason", "السبب"],
       "reasonRef": ["Reference", "المرجع"],
       "incidentRefHint": ["Incident number, e.g. INC-…", "رقم الحادث، مثل INC-…"],
+      "lessonRefHint": ["Published lesson number, e.g. LL-2026-…", "رقم درس منشور، مثل LL-2026-…"],
       "message": ["Message", "الرسالة"],
       "messageEn": ["Message (English)", "الرسالة (بالإنجليزية)"],
       "messageAr": ["Message (Arabic)", "الرسالة (بالعربية)"],
