@@ -9,6 +9,7 @@ export function entityRoute(type: Schemas["EntityType"] | string | null | undefi
     if (type === "training_settings") return "/training-settings";
     if (type === "medical_settings") return "/medical-settings";
     if (type === "heat_settings" || type === "heat_regime_table") return "/heat-settings";
+    if (type === "followup_settings") return "/followup-settings";
     if (type === "project_settings" && projectId) return `/projects/${projectId}/settings`;
     if (type === "hse_settings" && projectId) return `/hse-settings?project=${projectId}`;
     return null;
@@ -226,6 +227,13 @@ export function entityRoute(type: Schemas["EntityType"] | string | null | undefi
     case "training_nomination":
     case "training_retraining_note":
       return null;
+    case "lesson":
+      return `/lessons/${id}`;
+    case "followup_pack":
+      return `/notification-packs/${id}`;
+    case "followup_settings":
+    case "followup_rule":
+      return "/followup-settings";
     default:
       return null;
   }

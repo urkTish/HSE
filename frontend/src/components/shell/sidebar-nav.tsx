@@ -77,6 +77,10 @@ import {
   Truck,
   AudioWaveform,
   MessageSquareWarning,
+  BellRing,
+  Lightbulb,
+  MailCheck,
+  Repeat2,
 } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
 import { useTranslations } from "next-intl";
@@ -306,6 +310,19 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
       ]
     : [];
 
+  /* Phase 6f incident follow-up (215–223). */
+  const followupItems: Item[] = pid
+    ? [
+        ...(ac("followup.view") ? [{ href: "/followup-overview", label: t("fuOverview"), Icon: LayoutGrid, testId: "nav-fu-overview" }] : []),
+        ...(ac("followup.view") ? [{ href: "/notification-register", label: t("fuRegister"), Icon: BellRing, testId: "nav-fu-register" }] : []),
+        ...(ac("lesson_library.view") ? [{ href: "/lessons", label: t("fuLessons"), Icon: Lightbulb, testId: "nav-fu-lessons" }] : []),
+        ...(ac("followup.view", "lesson.acknowledge") ? [{ href: "/lesson-acknowledgements", label: t("fuAcks"), Icon: MailCheck, testId: "nav-fu-acks" }] : []),
+        ...(ac("followup.view") ? [{ href: "/effectiveness-checks", label: t("fuChecks"), Icon: Repeat2, testId: "nav-fu-checks" }] : []),
+        ...(ac("followup.view") ? [{ href: "/followup-kpis", label: t("fuKpis"), Icon: FileBarChart, testId: "nav-fu-kpis" }] : []),
+        ...(ac("followup.view") ? [{ href: "/followup-settings", label: t("fuSettings"), Icon: SlidersHorizontal, testId: "nav-fu-settings" }] : []),
+      ]
+    : [];
+
   const emergencyItems: Item[] = pid
     ? [
         ...(ac("emergency.view") ? [{ href: "/emergency-board", label: t("emergencyBoard"), Icon: ShieldAlert, testId: "nav-emergency-board" }] : []),
@@ -435,6 +452,18 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
               <p className="px-3 pt-1 pb-1 text-xs font-medium text-sidebar-muted">{t("env")}</p>
               <ul className="mb-3 flex flex-col gap-1" data-testid="nav-env">
                 {envItems.map((i) => (
+                  <li key={i.href}>
+                    <NavLink item={i} onNavigate={onNavigate} />
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : null}
+          {followupItems.length > 0 ? (
+            <>
+              <p className="px-3 pt-1 pb-1 text-xs font-medium text-sidebar-muted">{t("followup")}</p>
+              <ul className="mb-3 flex flex-col gap-1" data-testid="nav-followup">
+                {followupItems.map((i) => (
                   <li key={i.href}>
                     <NavLink item={i} onNavigate={onNavigate} />
                   </li>

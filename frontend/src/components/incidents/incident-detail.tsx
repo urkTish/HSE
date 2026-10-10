@@ -18,6 +18,7 @@ import { Breadcrumbs } from "@/components/common/breadcrumbs";
 import { FieldItem, FieldList, YesNo } from "@/components/common/field-list";
 import { FormField } from "@/components/common/form-field";
 import { IncidentDefectPrompt } from "@/components/cert/defects";
+import { IncidentFollowupPanel, SimilarLessonsCard } from "@/components/followup/requirements";
 import { HistoryPanel } from "@/components/common/history-panel";
 import { MultiSelect } from "@/components/common/multi-select";
 import { UserSelect, useUserOptions } from "@/components/common/pickers";
@@ -288,7 +289,8 @@ export function IncidentDetail({ id }: { id: string }) {
                       <TD label={t("notifiedAt")}>{dateTime(n.notified_at)}</TD>
                       <TD label={t("referenceNo")}>{n.reference_no ? <span className="ltr">{n.reference_no}</span> : "—"}</TD>
                       <TD label={tc("actions")}>
-                        {canClassify && r.status !== "voided" ? (
+                        {/* Under the 6f rule profile the submission (with evidence) is recorded in the follow-up panel below (SB-4). */}
+                        {canClassify && r.status !== "voided" && !n.requirement_id ? (
                           <Button size="sm" variant="outline" onClick={() => setNotifyBody(n.body)} data-testid={`record-${n.body}`}>
                             {t("record")}
                           </Button>
@@ -300,6 +302,8 @@ export function IncidentDetail({ id }: { id: string }) {
               </Table>
             </CardContent>
           </Card>
+
+          <IncidentFollowupPanel incident={r} />
 
           <Card>
             <CardHeader className="flex-row flex-wrap items-center justify-between gap-2">
@@ -389,6 +393,7 @@ export function IncidentDetail({ id }: { id: string }) {
               )}
             </CardContent>
           </Card>
+          <SimilarLessonsCard incident={r} />
           {can(me, "cert_register.view", r.project_id) ? <IncidentDefectPrompt incidentId={r.id} projectId={r.project_id} /> : null}
           {can(me, "history.view", r.project_id) ? <HistoryPanel entityType="incident" entityId={r.id} projectId={r.project_id} /> : null}
         </div>
