@@ -12966,5 +12966,67 @@
       "void": "Void",
       "voidTitle": "Void {no}"
     }
+  },
+  "envDesign": {
+    "toSave": "Still needed to save:",
+    "need": {
+      "point": "Pick the point",
+      "what": "Pick what you measured",
+      "score": "Pick the dust score",
+      "value": "Enter the value",
+      "window": "Set the start and end",
+      "instrument": "Pick the instrument",
+      "lab": "Pick the lab and its report number",
+      "fieldCal": "Confirm the field calibration check",
+      "site": "Pick the site",
+      "contractor": "Pick the responsible contractor",
+      "quantity": "Enter the quantity",
+      "incident": "Fill in the incident details"
+    },
+    "limitInForce": "Limit in force",
+    "alertAt": "Alert at",
+    "visual": {
+      "0": "None",
+      "1": "Slight, within site",
+      "2": "Visible at the boundary",
+      "3": "Crossing the boundary or reducing airside visibility"
+    },
+    "notCounted": "Not counted as project-caused",
+    "overBy": "over by {v}",
+    "peakVsLimit": "Peak against the limit",
+    "peak": "Peak",
+    "limit": "Limit",
+    "result": "Result",
+    "value": "Value",
+    "when": "Window end",
+    "hazTitle": "Hazardous waste: filling since",
+    "emptiedClear": "Emptied: clear the date",
+    "notStarted": "Not filling",
+    "unsaved": "Changed, not saved yet.",
+    "licenceCovers": "Licence covers this waste class ({cls})",
+    "licenceNotCovers": "Licence does not cover this waste class ({cls}): dispatch will be refused",
+    "licenceActivityMissing": "Licence does not cover this route: dispatch will be refused",
+    "refusedTitle": "Dispatch refused. There is no override.",
+    "refusedFix": "Pick a transporter and a facility whose licence covers this waste, or ask the HSE Officer to update the licence.",
+    "precheckTitle": "This dispatch will be refused",
+    "whyReportable": "Reportable because:",
+    "why": {
+      "quantity": "{q} L is at or over the {l} L threshold",
+      "reached": "it reached a drain or water",
+      "notContained": "it is not contained",
+      "airside": "it is on the airside"
+    },
+    "reportableNext": "A Phase 1 environmental incident is created with it, unless you link one.",
+    "backgroundChip": "Background dust, not counted",
+    "target": "Target",
+    "refEn": {
+      "limit_source": {
+        "ncec": "NCEC"
+      },
+      "background_source": {
+        "ncm_warning": "NCM warning",
+        "aocc": "AOCC (airport operations)"
+      }
+    }
   }
 }

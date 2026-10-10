@@ -1,5 +1,5 @@
 "use client";
-import { CheckCircle2, ClipboardCheck, Hourglass, Lock, Plus, Scale, Truck, TriangleAlert } from "lucide-react";
+import { Ban, CheckCircle2, ClipboardCheck, Eraser, Hourglass, Lock, Plus, Scale, Truck, TriangleAlert, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -28,7 +28,7 @@ import { StackedDate } from "@/components/medical/common";
 import { DecimalInput } from "@/components/ptw/common";
 import { DateFilter } from "@/components/training/common";
 import { Link, useRouter } from "@/i18n/navigation";
-import { api, postForm, unwrap, type Schemas } from "@/lib/api/client";
+import { ApiError, api, postForm, unwrap, type Schemas } from "@/lib/api/client";
 import { useConsignment, useConsignments, useEnvProviders, useEnvRefresh, useEnvSettings, useWasteArea, useWasteAreas, useWasteStreams } from "@/lib/api/env";
 import { todayInZone } from "@/lib/datetime";
 import { CONSIGNMENT_STATUSES, HAZARDOUS_STORES, QUANTITY_UNITS, WASTE_ROUTES } from "@/lib/env-enums";
@@ -240,13 +240,13 @@ function Areas({ project }: { project: Project }) {
 }
 
 /** Hazardous storage deadline (WST-5, §6.6): overdue red, ≤ 14 days amber, with words and icon. */
-function HazDeadlineChip({ d, streamLabel }: { d: S["HazDeadline"]; streamLabel: (c: string) => string }) {
+function HazDeadlineChip({ d, streamLabel, testId = "haz-deadline" }: { d: S["HazDeadline"]; streamLabel: (c: string) => string; testId?: string }) {
   const t = useTranslations("env.areas");
   const soon = !d.overdue && d.days_left <= 14;
   return (
     <span
       className={cn("inline-flex w-fit flex-wrap items-center gap-1 rounded px-2 py-1 text-xs font-medium", d.overdue ? "bg-danger-bg text-danger" : soon ? "bg-warning-bg text-warning" : "bg-muted text-muted-foreground")}
-      data-testid="haz-deadline"
+      data-testid={testId}
       data-overdue={d.overdue}
     >
       {d.overdue ? <TriangleAlert aria-hidden className="size-3.5" /> : <Hourglass aria-hidden className="size-3.5" />}
@@ -500,10 +500,15 @@ function AreaDetail({ project, id }: { project: Project; id: string }) {
 /** The phone walk-round: large yes / no answers and the hazardous accumulation start dates (WST-5). */
 function AreaCheck({ a, hazStreams, streamLabel }: { a: S["AreaRead"]; hazStreams: string[]; streamLabel: (c: string) => string }) {
   const t = useTranslations("env.areas");
+  const td = useTranslations("envDesign");
   const tc = useTranslations("common");
   const refresh = useEnvRefresh();
-  const [v, setV] = useState({ covered: a.covered, lidded_secured: a.lidded_secured, signage_bilingual: a.signage_bilingual });
-  const [acc, setAcc] = useState<Record<string, string>>(Object.fromEntries(hazStreams.map((c) => [c, a.accumulation.find((x) => x.stream_code === c)?.started_on ?? ""])));
+  const [v0] = useState({ covered: a.covered, lidded_secured: a.lidded_secured, signage_bilingual: a.signage_bilingual });
+  const [acc0] = useState<Record<string, string>>(() => Object.fromEntries(hazStreams.map((c) => [c, a.accumulation.find((x) => x.stream_code === c)?.started_on ?? ""])));
+  const [v, setV] = useState(v0);
+  const [acc, setAcc] = useState<Record<string, string>>(acc0);
+  const [saved, setSaved] = useState(false);
+  const dirty = !saved && (JSON.stringify(v) !== JSON.stringify(v0) || hazStreams.some((c) => (acc[c] ?? "") !== (acc0[c] ?? "")));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const yn = [
@@ -521,6 +526,7 @@ function AreaCheck({ a, hazStreams, streamLabel }: { a: S["AreaRead"]; hazStream
         }),
       );
       await refresh();
+      setSaved(true);
       toast.success(t("checkSaved"));
     } catch (e) {
       setError(e);
@@ -544,26 +550,63 @@ function AreaCheck({ a, hazStreams, streamLabel }: { a: S["AreaRead"]; hazStream
           <div key={r.k} className={cn("flex flex-col gap-2 rounded-md border p-3", !v[r.k] && "border-s-4 border-s-warning")}>
             <span className="text-base font-medium">{r.label}</span>
             <div className="[&>div]:grid-cols-2 [&_button]:min-h-12 [&_button]:text-base">
-              <AnswerButtons value={v[r.k] ? "yes" : "no"} options={yn} danger={["no"]} onChange={(x) => setV({ ...v, [r.k]: x === "yes" })} testId={`check-${r.k}`} />
+              <AnswerButtons
+                value={v[r.k] ? "yes" : "no"}
+                options={yn}
+                danger={["no"]}
+                onChange={(x) => {
+                  setSaved(false);
+                  setV({ ...v, [r.k]: x === "yes" });
+                }}
+                testId={`check-${r.k}`}
+              />
             </div>
           </div>
         ))}
-        {hazStreams.map((c) => (
-          <FormField key={c} id={`acc-${c}`} label={t("accumulation", { stream: streamLabel(c) })} hint={t("accumulationHint")}>
-            <div className="flex flex-wrap gap-2">
-              <Input id={`acc-${c}`} type="date" className="h-12 w-auto text-base sm:h-control sm:text-sm" value={acc[c] ?? ""} onChange={(e) => setAcc({ ...acc, [c]: e.target.value })} data-testid={`acc-${c}`} />
-              <Button type="button" variant="outline" className="min-h-12 sm:min-h-control" onClick={() => setAcc({ ...acc, [c]: todayInZone() })}>
-                {t("today")}
-              </Button>
-              {acc[c] ? (
-                <Button type="button" variant="ghost" className="min-h-12 sm:min-h-control" onClick={() => setAcc({ ...acc, [c]: "" })}>
-                  {t("emptied")}
-                </Button>
-              ) : null}
-            </div>
-          </FormField>
-        ))}
+        {hazStreams.length ? (
+          <fieldset className="flex flex-col gap-3 rounded-md border p-3" data-testid="acc-fields">
+            <legend className="px-1 text-base font-medium">{td("hazTitle")}</legend>
+            <p className="-mt-1 text-xs text-muted-foreground">{t("accumulationHint")}</p>
+            {hazStreams.map((c) => {
+              const setAt = (x: string) => {
+                setSaved(false);
+                setAcc({ ...acc, [c]: x });
+              };
+              const d = a.haz_deadlines.find((x) => x.stream_code === c);
+              return (
+                <div key={c} className="flex flex-col gap-2 border-t pt-3 first-of-type:border-t-0 first-of-type:pt-0">
+                  <label htmlFor={`acc-${c}`} className="text-sm font-medium" aria-label={t("accumulation", { stream: streamLabel(c) })}>
+                    {streamLabel(c)}
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    <Input id={`acc-${c}`} type="date" className="h-12 w-auto text-base sm:h-control sm:text-sm" value={acc[c] ?? ""} onChange={(e) => setAt(e.target.value)} data-testid={`acc-${c}`} />
+                    <Button type="button" variant="outline" className="min-h-12 sm:min-h-control" onClick={() => setAt(todayInZone())}>
+                      {t("today")}
+                    </Button>
+                    {acc[c] ? (
+                      <Button type="button" variant="outline" className="min-h-12 sm:min-h-control" onClick={() => setAt("")} data-testid={`acc-clear-${c}`}>
+                        <Eraser aria-hidden />
+                        {td("emptiedClear")}
+                      </Button>
+                    ) : null}
+                  </div>
+                  {!acc[c] ? (
+                    <span className="text-xs text-muted-foreground">{td("notStarted")}</span>
+                  ) : d && acc[c] === acc0[c] ? (
+                    <HazDeadlineChip d={d} streamLabel={streamLabel} testId="acc-deadline" />
+                  ) : null}
+                </div>
+              );
+            })}
+          </fieldset>
+        ) : null}
         <MutationError error={error} />
+        {dirty ? (
+          <p className="flex items-center gap-1 text-sm font-medium text-warning" data-testid="check-unsaved">
+            <Hourglass aria-hidden className="size-4" />
+            {td("unsaved")}
+          </p>
+        ) : null}
         <Button className="min-h-12 text-base sm:min-h-control sm:text-sm" disabled={busy} onClick={() => void save()} data-testid="check-save">
           {busy ? tc("saving") : t("saveCheck")}
         </Button>
@@ -724,18 +767,66 @@ function Tonnes({ c }: { c: S["ConsignmentRead"] }) {
   );
 }
 
+/** Facility licence activity needed per route (6e list TR). */
+const ROUTE_ACTIVITY: Record<S["WasteRoute"], S["LicenceActivity"][]> = {
+  reuse: ["recycling"],
+  recycle: ["recycling"],
+  recovery: ["recycling", "treatment"],
+  treatment: ["treatment"],
+  disposal_landfill: ["disposal"],
+};
+
+type LicenceFit = "ok" | "none" | "class" | "activity" | "unknown";
+
+/**
+ * CON-2 preview from the licence scopes the page already has: a licence in force covering the waste class and
+ * one of the activities. Only a hint ("will be refused"); the server decides and there is no override.
+ */
+function licenceFit(p: S["EnvProviderRead"] | undefined, cls: S["WasteClass"] | undefined, activities: S["LicenceActivity"][]): LicenceFit {
+  if (!p || !cls) return "unknown";
+  const inForce = (p.licences ?? []).filter((l) => ["valid", "expiring"].includes(l.status));
+  if (!inForce.length) return "none";
+  const coversClass = (l: S["EnvPermitRead"]) => !l.scope.waste_classes?.length || l.scope.waste_classes.includes(cls);
+  const coversActivity = (l: S["EnvPermitRead"]) => !activities.length || !l.scope.activities?.length || l.scope.activities.some((a) => activities.includes(a));
+  if (inForce.some((l) => coversClass(l) && coversActivity(l))) return "ok";
+  return inForce.some(coversClass) ? "activity" : "class";
+}
+
 /** Licence state of a provider for the dispatch form (CON-2, PRV-1): shown before submitting; the server decides. */
-function ProviderLicenceLine({ p }: { p: S["EnvProviderRead"] | undefined }) {
+function ProviderLicenceLine({ p, fit, clsLabel }: { p: S["EnvProviderRead"] | undefined; fit: LicenceFit; clsLabel: string }) {
   const t = useTranslations("env.consignments");
+  const td = useTranslations("envDesign");
   if (!p) return null;
   const lic = (p.licences ?? []).filter((l) => ["valid", "expiring"].includes(l.status));
   return (
-    <span className="flex flex-wrap items-center gap-2 text-xs" data-testid="provider-licence" data-ok={p.status === "approved" && lic.length > 0}>
-      {p.status !== "approved" ? <EnvStatusBadge group="envProviderStatus" status={p.status} /> : null}
-      {lic.length ? lic.map((l) => <PermitStatusBadge key={l.id} p={l} />) : <Badge tone="danger">{t("noValidLicence")}</Badge>}
+    <span className="flex flex-col gap-1 text-xs" data-testid="provider-licence" data-ok={p.status === "approved" && lic.length > 0} data-fit={fit}>
+      <span className="flex flex-wrap items-center gap-2">
+        {p.status !== "approved" ? <EnvStatusBadge group="envProviderStatus" status={p.status} /> : null}
+        {lic.length ? (
+          lic.map((l) => <PermitStatusBadge key={l.id} p={l} />)
+        ) : (
+          <Badge tone="danger">
+            <XCircle aria-hidden />
+            {t("noValidLicence")}
+          </Badge>
+        )}
+      </span>
+      {fit === "ok" ? (
+        <span className="inline-flex items-center gap-1 text-success" data-testid="licence-fit">
+          <CheckCircle2 aria-hidden className="size-3.5 shrink-0" />
+          {td("licenceCovers", { cls: clsLabel })}
+        </span>
+      ) : fit === "class" || fit === "activity" ? (
+        <span className="inline-flex items-start gap-1 font-medium text-danger" data-testid="licence-fit">
+          <XCircle aria-hidden className="mt-px size-3.5 shrink-0" />
+          {fit === "class" ? td("licenceNotCovers", { cls: clsLabel }) : td("licenceActivityMissing")}
+        </span>
+      ) : null}
     </span>
   );
 }
+
+const REFUSAL_CODES = ["PROVIDER_LICENCE_INVALID", "LICENCE_SCOPE_MISMATCH", "PROVIDER_NOT_APPROVED", "PRODUCER_REGISTRATION_INVALID"];
 
 export function NewConsignmentPage() {
   return <ProjectGate>{(p) => <NewConsignment project={p} />}</ProjectGate>;
@@ -743,6 +834,7 @@ export function NewConsignmentPage() {
 
 function NewConsignment({ project }: { project: Project }) {
   const t = useTranslations("env.consignments");
+  const td = useTranslations("envDesign");
   const tc = useTranslations("common");
   const caps = useEnvCaps(project.id);
   const ref = useEnvRef();
@@ -789,6 +881,14 @@ function NewConsignment({ project }: { project: Project }) {
   const transporters = all.filter((p) => p.kinds.includes(sewage ? "sewage_tanker" : "transporter"));
   const facilities = all.filter((p) => p.kinds.some((k) => k === "recycler" || k === "treatment_facility" || k === "landfill"));
   const facility = all.find((p) => p.id === v.facility_provider_id);
+  const transporter = all.find((p) => p.id === v.transporter_id);
+  const route = (v.route || stream?.default_route || "") as S["WasteRoute"] | "";
+  const cls = stream?.waste_class;
+  const clsLabel = cls ? ref.label("waste_classes", cls) : "";
+  const trFit = licenceFit(transporter, cls, ["collection_transport"]);
+  const facFit = licenceFit(facility, cls, route && !sewage ? ROUTE_ACTIVITY[route] : []);
+  const blocked = [trFit, facFit].some((f) => f === "none" || f === "class" || f === "activity") || [transporter, facility].some((p) => p && p.status !== "approved");
+  const refused = error instanceof ApiError && REFUSAL_CODES.includes(error.code);
   const manifestNeeded = Boolean(stream && settings.data?.mwan_manifest_required_for.includes(stream.waste_class));
   const ready = Boolean(v.stream_code && (v.storage_area_id || v.site_id) && v.generator_engagement_id && v.quantity && v.transporter_id && v.facility_provider_id && v.vehicle_plate.trim().length >= 3 && v.dispatched_at);
   const big = "h-12 text-base sm:h-control sm:text-sm";
@@ -927,7 +1027,7 @@ function NewConsignment({ project }: { project: Project }) {
               ))}
             </Select>
           </FormField>
-          <ProviderLicenceLine p={all.find((p) => p.id === v.transporter_id)} />
+          <ProviderLicenceLine p={transporter} fit={trFit} clsLabel={clsLabel} />
         </div>
         <div className="flex flex-col gap-1">
           <FormField id="cn-fac" label={t("facility")} required>
@@ -940,7 +1040,7 @@ function NewConsignment({ project }: { project: Project }) {
               ))}
             </Select>
           </FormField>
-          <ProviderLicenceLine p={facility} />
+          <ProviderLicenceLine p={facility} fit={facFit} clsLabel={clsLabel} />
         </div>
         {facility && facility.facilities.length > 1 ? (
           <FormField id="cn-fcode" label={t("facilitySite")}>
@@ -990,6 +1090,26 @@ function NewConsignment({ project }: { project: Project }) {
         </FormField>
       ) : null}
       <p className="text-xs text-muted-foreground">{t("noOverride")}</p>
+      {blocked && !refused ? (
+        <Alert tone="danger" data-testid="cn-precheck">
+          <span className="flex items-start gap-2">
+            <Ban aria-hidden className="mt-0.5 size-4 shrink-0" />
+            <span className="flex flex-col gap-1">
+              <span className="font-semibold">{td("precheckTitle")}</span>
+              <span>{td("refusedFix")}</span>
+            </span>
+          </span>
+        </Alert>
+      ) : null}
+      {refused ? (
+        <div className="flex items-start gap-2 text-sm font-semibold text-danger" data-testid="cn-refused">
+          <Ban aria-hidden className="mt-0.5 size-4 shrink-0" />
+          <span className="flex flex-col gap-1">
+            {td("refusedTitle")}
+            <span className="font-normal text-foreground">{td("refusedFix")}</span>
+          </span>
+        </div>
+      ) : null}
       <MutationError error={error} />
       <Button className="min-h-12 text-base sm:min-h-control sm:text-sm" disabled={!ready || busy} onClick={() => void save()} data-testid="cn-save">
         <Truck aria-hidden />

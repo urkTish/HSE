@@ -48,7 +48,7 @@ import {
 import { EXCEEDANCE_STATUSES } from "@/lib/env-enums";
 import { useSearchState } from "@/lib/url-state";
 import { cn } from "@/lib/utils";
-import { BackgroundBadge, Check, EnvMonitorSubNav, EnvReasonDialog, EnvStatusBadge, Measure, NoNamesHint, ResultBadge, useBi, useEnvCaps, useEnvRef } from "./common";
+import { BackgroundBadge, Check, EnvMonitorSubNav, EnvReasonDialog, EnvStatusBadge, LimitBar, Measure, NoNamesHint, ResultBadge, StillNeeded, useBi, useEnvCaps, useEnvRef } from "./common";
 
 type S = Schemas;
 type Project = S["ProjectRead"];
@@ -218,6 +218,7 @@ export function NewEnvReadingPage() {
 
 function NewReading({ project }: { project: Project }) {
   const t = useTranslations("env.entry");
+  const td = useTranslations("envDesign");
   const tc = useTranslations("common");
   const caps = useEnvCaps(project.id);
   const ref = useEnvRef();
@@ -255,6 +256,18 @@ function NewReading({ project }: { project: Project }) {
   const laeq = req?.parameter === "laeq";
   const unit = ref.unit(req?.parameter);
   const ready = Boolean(point && req && start && end && value !== "" && (visual || lab ? true : instrumentId) && (!lab || (labId && labRef)) && (!laeq || lab || fieldCal));
+  // The same conditions as `ready`, in words, so the field user sees why Save is greyed out.
+  const missing = !point
+    ? [td("need.point")]
+    : !req
+      ? [td("need.what")]
+      : [
+          value === "" ? td(visual ? "need.score" : "need.value") : "",
+          !start || !end ? td("need.window") : "",
+          !visual && !lab && !instrumentId ? td("need.instrument") : "",
+          lab && !(labId && labRef) ? td("need.lab") : "",
+          laeq && !lab && !fieldCal ? td("need.fieldCal") : "",
+        ].filter(Boolean);
 
   async function save() {
     if (!point || !req) return;
@@ -422,15 +435,23 @@ function NewReading({ project }: { project: Project }) {
       ) : null}
       {req ? (
         <>
-          <p className="text-sm text-muted-foreground" data-testid="rd-limit">
-            {ref.label("parameters", req.parameter)} · {ref.label("averaging", req.averaging)}
+          <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1 rounded-md border bg-muted/30 px-3 py-2" data-testid="rd-limit">
+            <span className="text-sm text-muted-foreground">
+              {ref.label("parameters", req.parameter)} · {ref.label("averaging", req.averaging)}
+            </span>
             {req.effective_limit ? (
-              <>
-                {" "}
-                · {t("limit")} <Measure v={req.effective_limit} unit={unit} />
-              </>
+              <span className="flex flex-wrap items-baseline gap-x-3 text-sm">
+                {req.alert_value ? (
+                  <span className="text-muted-foreground">
+                    {td("alertAt")} <Measure v={req.alert_value} unit={unit} />
+                  </span>
+                ) : null}
+                <span>
+                  {td("limitInForce")} <Measure v={req.effective_limit} unit={unit} className="text-lg font-semibold" />
+                </span>
+              </span>
             ) : null}
-          </p>
+          </div>
           {!visual ? <Check id="rd-lab" label={t("labResult")} checked={lab} onChange={setLab} testId="rd-lab" /> : null}
           {visual ? (
             <fieldset className="flex flex-col gap-2">
@@ -453,7 +474,7 @@ function NewReading({ project }: { project: Project }) {
                     >
                       <ChoiceMark on={on} />
                       <span className="text-lg font-semibold tabular-nums">{sc}</span>
-                      <span className="text-sm font-normal">{t(`visual.${sc}`)}</span>
+                      <span className="text-sm font-normal">{td(`visual.${sc}`)}</span>
                     </Button>
                   );
                 })}
@@ -512,6 +533,7 @@ function NewReading({ project }: { project: Project }) {
           ) : null}
         </>
       ) : null}
+      <StillNeeded items={missing} testId="rd-missing" />
       <MutationError error={error} />
       <Button className="min-h-12 text-base sm:min-h-control sm:text-sm" disabled={!ready || busy} onClick={() => void save()} data-testid="rd-save">
         {busy ? tc("saving") : t("save")}
@@ -528,6 +550,7 @@ export function ExceedancesPage() {
 
 function Exceedances({ project }: { project: Project }) {
   const t = useTranslations("env.exceedances");
+  const td = useTranslations("envDesign");
   const te = useTranslations("enums");
   const tc = useTranslations("common");
   const caps = useEnvCaps(project.id);
@@ -592,12 +615,12 @@ function Exceedances({ project }: { project: Project }) {
                     <StackedDate v={x.day} projectId={project.id} />
                   </TD>
                   <TD label={t("peakLimit")} className="text-end">
-                    <bdi className="ltr tabular-nums font-semibold">
-                      {x.peak_value} / {x.limit_value}
-                    </bdi>
-                    <span className="block text-xs text-muted-foreground">
-                      <bdi className="ltr">+{x.margin_pct} %</bdi>
+                    <span className="inline-flex flex-wrap items-baseline justify-end gap-x-1">
+                      <Measure v={x.peak_value} className="font-semibold" />
+                      <span className="text-muted-foreground">/</span>
+                      <Measure v={x.limit_value} unit={ref.unit(x.parameter)} />
                     </span>
+                    <span className="block text-xs text-danger">{td("overBy", { v: `${x.margin_pct} %` })}</span>
                   </TD>
                   <TD label={t("cause")}>
                     <CauseCell x={x} />
@@ -625,7 +648,7 @@ function CauseCell({ x }: { x: S["ExceedanceRead"] }) {
   const cause = x.cause ?? x.suggested_cause;
   return (
     <span className="flex flex-col items-start gap-1">
-      {cause === "background_natural" ? <BackgroundBadge refText={x.background_ref} /> : cause ? <span>{ref.label("exceedance_causes", cause)}</span> : <span className="text-muted-foreground">{t("toReview")}</span>}
+      {cause === "background_natural" ? <BackgroundBadge refText={x.background_ref} explain /> : cause ? <span>{ref.label("exceedance_causes", cause)}</span> : <span className="text-muted-foreground">{t("toReview")}</span>}
       {!x.cause && x.suggested_cause ? <span className="text-xs text-muted-foreground">{t("suggested")}</span> : null}
       {x.project_caused ? <span className="text-xs font-medium">{t("projectCaused")}</span> : null}
     </span>
@@ -683,7 +706,8 @@ function ExceedanceDetail({ project, id }: { project: Project; id: string }) {
         </Alert>
       ) : null}
       <Card className="mb-4">
-        <CardContent className="pt-4 sm:pt-5 sm:pt-5">
+        <CardContent className="flex flex-col gap-4 pt-4 sm:pt-5">
+          <LimitBar value={x.peak_value} limit={x.limit_value} unit={unit} testId="exceedance-bar" />
           <FieldList>
             <FieldItem label={t("peak")}>
               <span data-testid="exceedance-peak">
@@ -1336,6 +1360,7 @@ export function EnvPointPage({ id }: { id: string }) {
 /** Point page: requirements with the strictest limit in force (LIM-2, PRM-5), limit tightening, recent readings. */
 function PointDetail({ project, id }: { project: Project; id: string }) {
   const t = useTranslations("env.points");
+  const td = useTranslations("envDesign");
   const tc = useTranslations("common");
   const caps = useEnvCaps(project.id);
   const ref = useEnvRef();
@@ -1421,15 +1446,24 @@ function PointDetail({ project, id }: { project: Project; id: string }) {
         </CardHeader>
         <CardContent>
           {(readings.data?.items ?? []).length ? (
-            <ul className="flex flex-col divide-y text-sm">
+            <ul className="flex flex-col divide-y text-sm" data-testid="point-readings">
               {(readings.data?.items ?? []).map((r) => (
-                <li key={r.id} className="flex flex-wrap items-center gap-2 py-2">
+                <li key={r.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 py-2 sm:grid-cols-[11rem_8rem_10rem_minmax(0,1fr)]">
                   <StackedDate v={r.window_end} time projectId={project.id} />
-                  <span className="text-muted-foreground">
+                  <span className="text-muted-foreground max-sm:text-end">
                     {ref.label("parameters", r.parameter)} · {ref.label("averaging", r.averaging)}
                   </span>
-                  <bdi className="ltr font-semibold tabular-nums">{r.display}</bdi>
-                  <ResultBadge result={r.result} background={r.background} />
+                  <span className="sm:text-end">
+                    <bdi className="ltr font-semibold tabular-nums">{r.display}</bdi>
+                    {r.limit_value ? (
+                      <span className="block text-xs text-muted-foreground">
+                        {td("limit")} <bdi className="ltr">{r.limit_value}</bdi>
+                      </span>
+                    ) : null}
+                  </span>
+                  <span className="max-sm:justify-self-end">
+                    <ResultBadge result={r.result} background={r.background} />
+                  </span>
                 </li>
               ))}
             </ul>

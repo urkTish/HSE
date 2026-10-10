@@ -1,5 +1,5 @@
 "use client";
-import { CheckCircle2, CloudFog, Info, TriangleAlert, XCircle } from "lucide-react";
+import { CheckCircle2, CircleDashed, CloudFog, Info, TriangleAlert, XCircle } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useState, type ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -147,15 +147,20 @@ export type EnvList =
 export function useEnvRef() {
   const q = useEnvReference();
   const ar = useLocale() === "ar";
+  const td = useTranslations("envDesign");
   const lists = q.data?.lists as Record<string, S["EnvRefItem"][]> | undefined;
   const items = useCallback((l: EnvList): S["EnvRefItem"][] => lists?.[l] ?? [], [lists]);
   const label = useCallback(
     (l: EnvList, code: string | null | undefined): string => {
       if (!code) return "—";
+      // The server capitalises some acronyms in English ("Ncec"): use the proper name when there is one.
+      const fix = `refEn.${l}.${code}`;
+      const tdx = td as unknown as { (k: string): string; has: (k: string) => boolean };
+      if (!ar && tdx.has(fix)) return tdx(fix);
       const it = lists?.[l]?.find((x) => x.code === code);
       return it ? (ar ? it.label_ar : it.label_en) : code;
     },
-    [lists, ar],
+    [lists, ar, td],
   );
   /** Unit of a parameter from the PA detail ("µg/m³ · 0–20000"). */
   const unit = useCallback(
@@ -221,20 +226,84 @@ export function ResultBadge({ result, background }: { result: S["ReadingResult"]
         <Icon aria-hidden />
         {te(`envReadingResult.${result}`)}
       </Badge>
-      {background ? <BackgroundBadge /> : null}
+      {background ? <BackgroundBadge explain={result === "exceedance"} /> : null}
     </span>
   );
 }
 
-/** "Background dust" label (EXD-3, EXD-4): an exception, never a deletion. */
-export function BackgroundBadge({ refText }: { refText?: string | null }) {
+/** "Background dust" label (EXD-3, EXD-4): an exception, never a deletion. With `explain`, says in words that it does not count (K-123). */
+export function BackgroundBadge({ refText, explain }: { refText?: string | null; explain?: boolean }) {
   const t = useTranslations("env.common");
-  return (
+  const td = useTranslations("envDesign");
+  const badge = (
     <Badge tone="info" data-testid="background-badge">
       <CloudFog aria-hidden />
       {t("background")}
       {refText ? <bdi className="ltr font-mono text-[11px]">{refText}</bdi> : null}
     </Badge>
+  );
+  if (!explain) return badge;
+  return (
+    <span className="inline-flex flex-col items-start gap-0.5">
+      {badge}
+      <span className="text-xs text-muted-foreground" data-testid="background-not-counted">
+        {td("notCounted")}
+      </span>
+    </span>
+  );
+}
+
+/** What still blocks a phone form's save button, in words (6d run-bar convention). Nothing when complete. */
+export function StillNeeded({ items, testId = "still-needed" }: { items: string[]; testId?: string }) {
+  const td = useTranslations("envDesign");
+  if (!items.length) return null;
+  return (
+    <div className="flex flex-col gap-1 rounded-md border border-dashed px-3 py-2 text-sm" data-testid={testId} role="status">
+      <span className="font-medium">{td("toSave")}</span>
+      <ul className="flex flex-col gap-1">
+        {items.map((x) => (
+          <li key={x} className="flex items-center gap-2 text-muted-foreground">
+            <CircleDashed aria-hidden className="size-4 shrink-0" />
+            {x}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/**
+ * Peak (or a value) against its limit: one bar, the limit as a marked line, the part over the limit in red.
+ * Presentation of the server's numbers only; nothing is decided here. Mirrors in Arabic (logical start).
+ */
+export function LimitBar({ value, limit, alert, unit, testId = "limit-bar" }: { value: string; limit: string; alert?: string | null; unit?: string; testId?: string }) {
+  const td = useTranslations("envDesign");
+  const v = Number(value);
+  const l = Number(limit);
+  if (!Number.isFinite(v) || !Number.isFinite(l) || l <= 0) return null;
+  const max = Math.max(v, l) * 1.1;
+  const pct = (x: number) => `${Math.min(100, (x / max) * 100)}%`;
+  const over = v > l;
+  const a = alert ? Number(alert) : NaN;
+  return (
+    <div className="flex flex-col gap-1" data-testid={testId} data-over={over}>
+      <div className="relative h-4 w-full overflow-hidden rounded bg-muted" aria-hidden>
+        <div className={cn("absolute inset-y-0 start-0", over ? "bg-danger" : "bg-success")} style={{ width: pct(v) }} />
+        {over ? <div className="absolute inset-y-0 start-0 bg-muted-foreground/40" style={{ width: pct(l) }} /> : null}
+        {Number.isFinite(a) && a > 0 && a < max ? <div className="absolute inset-y-0 w-0.5 bg-warning" style={{ insetInlineStart: pct(a) }} /> : null}
+        <div className="absolute inset-y-0 w-1 bg-foreground" style={{ insetInlineStart: pct(l) }} />
+      </div>
+      <div className="flex flex-wrap justify-between gap-2 text-xs text-muted-foreground">
+        <span className="inline-flex items-center gap-1">
+          {over ? <XCircle aria-hidden className="size-3.5 text-danger" /> : <CheckCircle2 aria-hidden className="size-3.5 text-success" />}
+          {td("peak")} <Measure v={value} unit={unit} className="font-medium text-foreground" />
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <span aria-hidden className="inline-block h-3 w-1 bg-foreground" />
+          {td("limit")} <Measure v={limit} unit={unit} className="font-medium text-foreground" />
+        </span>
+      </div>
+    </div>
   );
 }
 

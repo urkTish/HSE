@@ -230,6 +230,7 @@ const PERIODS = ["month", "quarter", "year", "ytd"] as const satisfies readonly 
 /** Every number is the server's `display`; nothing is computed here. */
 function Kpis({ project }: { project: Project }) {
   const t = useTranslations("env.kpi");
+  const td = useTranslations("envDesign");
   const te = useTranslations("enums");
   const tc = useTranslations("common");
   const ar = useLocale() === "ar";
@@ -245,6 +246,14 @@ function Kpis({ project }: { project: Project }) {
   if (!caps.view) return <Alert tone="info">{tc("notAllowed")}</Alert>;
   const d = q.data;
   const label = (x: { label_en: string; label_ar: string }) => (ar ? x.label_ar : x.label_en);
+  // The server sends a KPI's target as a note ("K-120 target: 70.0 %") when the tile has no target_display: show it on the tile too.
+  const noteTarget = (metric: string) => {
+    for (const n of d?.notes ?? []) {
+      const m = new RegExp(`^${metric} target: (.+)$`).exec(n);
+      if (m) return m[1];
+    }
+    return undefined;
+  };
   return (
     <div>
       <PageHeader title={t("title")} description={t("subtitle")} />
@@ -287,8 +296,14 @@ function Kpis({ project }: { project: Project }) {
                     <span>{ar ? m.short_label_ar : m.short_label_en}</span>
                     <span className="font-mono ltr">{m.metric}</span>
                   </span>
-                  <span className={cn("text-3xl font-semibold tabular-nums", m.rag === "red" && "text-danger", m.rag === "amber" && "text-warning")} data-testid="ek-value">
-                    {show(m.display)}
+                  <span className="flex items-baseline gap-1">
+                    <span className={cn("text-3xl font-semibold tabular-nums", m.rag === "red" && "text-danger", m.rag === "amber" && "text-warning")} data-testid="ek-value">
+                      {show(m.display)}
+                    </span>
+                    {/* The unit after the value unless the server's display already ends with it (dashboard KpiTile rule). */}
+                    {m.unit_en?.trim() && m.kind !== "count" && !m.display.trim().endsWith(m.unit_en.trim()) ? (
+                      <span className="text-sm text-muted-foreground">{ar ? m.unit_ar : m.unit_en}</span>
+                    ) : null}
                   </span>
                   {m.rag && m.rag !== "green" ? (
                     <span className={cn("inline-flex items-center gap-1 text-xs font-medium", m.rag === "red" ? "text-danger" : "text-warning")} data-testid="ek-rag" data-rag={m.rag}>
@@ -300,15 +315,26 @@ function Kpis({ project }: { project: Project }) {
                     <span className="text-xs text-muted-foreground">
                       {t("target")}: <span className="tabular-nums">{show(m.target_display)}</span>
                     </span>
+                  ) : noteTarget(m.metric) ? (
+                    <span className="text-xs text-muted-foreground" data-testid="ek-tile-target">
+                      {td("target")}: <span className="font-medium tabular-nums text-foreground">{show(noteTarget(m.metric) ?? "")}</span>
+                    </span>
                   ) : null}
                   {m.null_reason ? <span className="text-xs text-muted-foreground">{te(`nullReason.${m.null_reason}`)}</span> : null}
                   {m.components.length ? (
                     <span className="flex flex-wrap gap-x-3 text-xs text-muted-foreground" data-testid="ek-chips">
-                      {m.components.map((c) => (
+                      {m.components.map((c) =>
+                        c.key === "background" && m.metric === "K-123" ? (
+                          <span key={c.key} className="inline-flex items-center gap-1" data-testid="ek-background">
+                            <CloudFog aria-hidden className="size-3.5" />
+                            {td("backgroundChip")}: <span className="font-medium tabular-nums text-foreground">{show(c.display)}</span>
+                          </span>
+                        ) : (
                         <span key={c.key}>
                           {/^[A-Z_]+$/.test(c.key) && te.has(`emNotReady.${c.key}` as "emNotReady.MISSING") ? te(`emNotReady.${c.key}` as "emNotReady.MISSING") : ref.items("parameters").some((x) => x.code === c.key) ? ref.label("parameters", c.key) : label(c)}: <span className="font-medium tabular-nums text-foreground">{show(c.display)}</span>
                         </span>
-                      ))}
+                        ),
+                      )}
                     </span>
                   ) : null}
                   {m.numerator && m.denominator ? (

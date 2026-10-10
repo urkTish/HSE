@@ -1,5 +1,5 @@
 "use client";
-import { CheckCircle2, Droplet, FileWarning, Plane, Plus, ShieldAlert, TriangleAlert } from "lucide-react";
+import { CheckCircle2, Droplet, FileWarning, Plane, Plus, ShieldAlert, TriangleAlert, Waves } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -37,7 +37,7 @@ import { COMPLAINT_STATUSES, ENV_REACHED, SPILL_STATUSES } from "@/lib/env-enums
 import { useRefLists } from "@/lib/reference";
 import { useSearchState } from "@/lib/url-state";
 import { cn } from "@/lib/utils";
-import { Check, EnvEventSubNav, EnvReasonDialog, EnvStatusBadge, Measure, NoNamesHint, ResultBadge, useBi, useEnvCaps, useEnvRef } from "./common";
+import { Check, EnvEventSubNav, EnvReasonDialog, EnvStatusBadge, Measure, NoNamesHint, ResultBadge, StillNeeded, useBi, useEnvCaps, useEnvRef } from "./common";
 
 type S = Schemas;
 type Project = S["ProjectRead"];
@@ -223,6 +223,7 @@ export function NewSpillPage() {
 /** Phone spill report (SPL-1…SPL-5): facts first, then the Phase 1 incident details when it is reportable. */
 function NewSpill({ project }: { project: Project }) {
   const t = useTranslations("env.spills");
+  const td = useTranslations("envDesign");
   const tc = useTranslations("common");
   const caps = useEnvCaps(project.id);
   const ref = useEnvRef();
@@ -258,9 +259,23 @@ function NewSpill({ project }: { project: Project }) {
   const airside = zone?.zone_type === "airside";
   // Preview of SPL-2 so the incident details are asked for up front; the server decides and returns `reportable`.
   const threshold = Number(settings.data?.spill_reportable_l ?? "20");
-  const likelyReportable = (v.quantity_l !== "" && Number(v.quantity_l) >= threshold) || v.reached === "drain" || v.reached === "water_body" || v.contained === "no" || (airside && (settings.data?.airside_spill_always_reportable ?? true));
+  // The same SPL-2 conditions, kept apart so the preview can say which ones apply.
+  const why = [
+    v.quantity_l !== "" && Number(v.quantity_l) >= threshold ? { k: "quantity", Icon: Droplet } : null,
+    v.reached === "drain" || v.reached === "water_body" ? { k: "reached", Icon: Waves } : null,
+    v.contained === "no" ? { k: "notContained", Icon: TriangleAlert } : null,
+    airside && (settings.data?.airside_spill_always_reportable ?? true) ? { k: "airside", Icon: Plane } : null,
+  ].filter((x): x is { k: "quantity" | "reached" | "notContained" | "airside"; Icon: typeof Droplet } => Boolean(x));
+  const likelyReportable = why.length > 0;
   const needIncident = likelyReportable && !v.incident_id;
-  const ready = Boolean(v.site_id && v.responsible_engagement_id && v.quantity_l && (!needIncident || (inc.activity && inc.description.trim() && inc.immediate_actions.trim())));
+  const incidentReady = Boolean(inc.activity && inc.description.trim() && inc.immediate_actions.trim());
+  const ready = Boolean(v.site_id && v.responsible_engagement_id && v.quantity_l && (!needIncident || incidentReady));
+  const missing = [
+    !v.site_id ? td("need.site") : "",
+    !v.responsible_engagement_id ? td("need.contractor") : "",
+    !v.quantity_l ? td("need.quantity") : "",
+    needIncident && !incidentReady ? td("need.incident") : "",
+  ].filter(Boolean);
   const yn = [
     { value: "yes" as const, label: tc("yes") },
     { value: "no" as const, label: tc("no") },
@@ -391,21 +406,36 @@ function NewSpill({ project }: { project: Project }) {
         </div>
       </fieldset>
       {v.site_id ? (
-        <MultiSelect
-          id="sp-kits"
-          label={t("kitsUsed")}
-          options={(assets.data?.items ?? []).filter((a) => a.asset_type === "spill_kit").map((a) => ({ value: a.id, label: `${a.asset_tag}${a.zone_code ? ` · ${a.zone_code}` : ""}` }))}
-          value={kits}
-          onChange={setKits}
-          allLabel={t("noKitUsed")}
-          testId="sp-kits"
-        />
+        <div className="flex flex-col gap-1">
+          <MultiSelect
+            id="sp-kits"
+            label={t("kitsUsed")}
+            options={(assets.data?.items ?? []).filter((a) => a.asset_type === "spill_kit").map((a) => ({ value: a.id, label: `${a.asset_tag}${a.zone_code ? ` · ${a.zone_code}` : ""}` }))}
+            value={kits}
+            onChange={setKits}
+            allLabel={t("noKitUsed")}
+            testId="sp-kits"
+          />
+          <p className="text-xs text-muted-foreground">{t("kitUsedHint")}</p>
+        </div>
       ) : null}
-      <p className="text-xs text-muted-foreground">{t("kitUsedHint")}</p>
       {likelyReportable ? (
         <Alert tone="warning" data-testid="sp-reportable-preview">
-          {airside ? <Plane aria-hidden className="me-1 inline size-4" /> : <TriangleAlert aria-hidden className="me-1 inline size-4" />}
-          {t("reportablePreview", { l: String(threshold) })}
+          <span className="flex items-start gap-2">
+            <ShieldAlert aria-hidden className="mt-0.5 size-4 shrink-0" />
+            <span className="flex flex-col gap-1">
+              <span className="font-semibold">{td("whyReportable")}</span>
+              <ul className="flex flex-col gap-1" data-testid="sp-reportable-why">
+                {why.map(({ k, Icon }) => (
+                  <li key={k} className="flex items-center gap-2" data-why={k}>
+                    <Icon aria-hidden className="size-4 shrink-0" />
+                    {td(`why.${k}`, { q: v.quantity_l, l: String(threshold) })}
+                  </li>
+                ))}
+              </ul>
+              <span className="text-xs">{td("reportableNext")}</span>
+            </span>
+          </span>
         </Alert>
       ) : null}
       {likelyReportable ? (
@@ -470,6 +500,7 @@ function NewSpill({ project }: { project: Project }) {
       <FormField id="sp-photos" label={t("photos")} hint={t("photoHint")}>
         <PhotoPicker value={photos} onChange={setPhotos} max={5} testId="sp-photos" />
       </FormField>
+      <StillNeeded items={missing} testId="sp-missing" />
       <MutationError error={error} />
       <Button className="min-h-12 text-base sm:min-h-control sm:text-sm" disabled={!ready || busy} onClick={() => void save()} data-testid="sp-save">
         {busy ? tc("saving") : t("save")}
