@@ -42,6 +42,7 @@ from app.kpi.catalogue import (
     PHASE6D_METRICS,
     PHASE6E_METRICS,
     PHASE6F_METRICS,
+    PHASE6G_METRICS,
 )
 from app.kpi.facts import (
     CaseFact,
@@ -940,6 +941,7 @@ _DISPATCH: dict[KpiMetric, Callable[[Engine, Agg], Result]] = {
     **{m: _not_yet(m) for m in PHASE6D_METRICS},  # replaced by app.kpi.field
     **{m: _not_yet(m) for m in PHASE6E_METRICS},  # replaced by app.kpi.env
     **{m: _not_yet(m) for m in PHASE6F_METRICS},  # replaced by app.kpi.followup
+    **{m: _not_yet(m) for m in PHASE6G_METRICS},  # replaced by app.kpi.scorecard
 }
 import app.kpi.access  # noqa: E402  (registers K-48…K-60 into _DISPATCH)
 import app.kpi.cert  # noqa: E402  (registers K-72…K-81 into _DISPATCH)

@@ -280,6 +280,16 @@ class Capability(StrEnum):
     lesson_acknowledge = "lesson.acknowledge"  # 221 acknowledge lessons for an engagement
     lesson_library_view = "lesson_library.view"  # 222 view and search the lesson library
     lesson_effectiveness = "lesson.effectiveness"  # 223 complete effectiveness checks
+    # ---- Phase 6g (6g-scorecard-reports §5.15) ----
+    scorecard_view = "scorecard.view"  # 224 cards, lines, ranking, watch list
+    scorecard_settings = "scorecard.settings"  # 225 profiles, source_live_from, 6g settings
+    scorecard_manage = "scorecard.manage"  # 226 finalise, re-issue, exclude, watch list, CPS
+    scorecard_comment = "scorecard.comment"  # 227 comment on and dispute a scorecard
+    scorecard_resolve = "scorecard.resolve"  # 228 resolve disputes (except metric exclusion)
+    report_pack_prepare = "report_pack.prepare"  # 229 generate, regenerate and review packs
+    report_pack_issue = "report_pack.issue"  # 230 issue, re-issue, distribution, schedules
+    report_pack_view = "report_pack.view"  # 231 Issued packs and delivery log
+    export_log = "export_log.view"  # 232 export log; own subscriptions
 
 
 class CapabilityScope(StrEnum):
@@ -672,6 +682,16 @@ class EntityType(StrEnum):
     lesson_distribution = "lesson_distribution"
     lesson_link = "lesson_link"
     lesson_effectiveness = "lesson_effectiveness"
+    # Phase 6g
+    scorecard_profile = "scorecard_profile"
+    scorecard_settings = "scorecard_settings"
+    scorecard = "scorecard"
+    scorecard_remark = "scorecard_remark"
+    watch_list_entry = "watch_list_entry"
+    report_pack = "report_pack"
+    distribution_list = "distribution_list"
+    export_job = "export_job"
+    export_subscription = "export_subscription"
 
 
 class ExportDataset(StrEnum):
@@ -755,6 +775,22 @@ class ExportDataset(StrEnum):
     fitness_referrals = "fitness_referrals"
     fitness_verifications = "fitness_verifications"
     medical_imports = "medical_imports"
+    # Phases 6b-6f registers, exported through the 6g dataset registry (6g EX-1, §11.3)
+    heat_patrols = "heat_patrols"
+    heat_welfare_checks = "heat_welfare_checks"
+    heat_illness_log = "heat_illness_log"
+    emergency_drills = "emergency_drills"
+    emergency_assets = "emergency_assets"
+    emergency_events = "emergency_events"
+    field_inspections = "field_inspections"
+    field_audits = "field_audits"
+    toolbox_talks = "toolbox_talks"
+    waste_consignments = "waste_consignments"
+    env_readings = "env_readings"
+    env_spills = "env_spills"
+    env_complaints = "env_complaints"
+    notification_requirements = "notification_requirements"
+    lessons = "lessons"
 
 
 class ExportFormat(StrEnum):
@@ -991,3 +1027,17 @@ class NotificationKind(StrEnum):
     lesson_published = "lesson_published"  # DS-2
     lesson_ack_due = "lesson_ack_due"  # DS-4
     lesson_effectiveness_due = "lesson_effectiveness_due"  # EF-1
+    # ---- Phase 6g (6g-scorecard-reports §7) ----
+    scorecard_issued = "scorecard_issued"  # cards Issued for comment
+    scorecard_comment_window = "scorecard_comment_window"  # closes in 24 h
+    scorecard_dispute = "scorecard_dispute"  # raised / due / overdue / resolved
+    scorecard_finalise_due = "scorecard_finalise_due"  # FN-2
+    scorecard_month_not_locked = "scorecard_month_not_locked"  # SC-1
+    scorecard_sources = "scorecard_sources"  # SN-5 sources not confirmed
+    scorecard_revised = "scorecard_revised"  # FN-4 / RP-7
+    watch_list = "watch_list"  # open / escalation / decision task
+    pip_due = "pip_due"  # WL-3
+    report_pack_due = "report_pack_due"  # SC-2
+    report_pack_issued = "report_pack_issued"  # DL-4
+    delivery_bounced = "delivery_bounced"  # DL-4
+    export_ready = "export_ready"  # EX-7, SC-4

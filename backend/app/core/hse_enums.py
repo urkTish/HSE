@@ -699,6 +699,7 @@ class CaSourceType(StrEnum):
     field_audit = "field_audit"  # 1-dashboard v1.7: 6d audit (AUD-4)
     environmental = "environmental"  # 1-dashboard v1.8: 6e exceedance, consignment, area, spill
     lesson = "lesson"  # 1-dashboard v1.9: 6f effectiveness check (EF-5)
+    scorecard = "scorecard"  # 1-dashboard v1.10: 6g watch-list entry (WL-2, WL-3)
     ai_recommendation = "ai_recommendation"
     other = "other"
 
@@ -819,6 +820,10 @@ class AttachmentOwner(StrEnum):
     fu_pack_identity_file = "fu_pack_identity_file"
     fu_evidence = "fu_evidence"
     fu_lesson_photo = "fu_lesson_photo"
+    # Phase 6g (6g-scorecard-reports RP-5, EX-8): rendered pack files (general bucket) and
+    # export files (encrypted personal bucket; expire after 7 days or 24 h)
+    rp_pack_file = "rp_pack_file"
+    xp_export_file = "xp_export_file"
 
 
 class ScanStatus(StrEnum):
@@ -997,6 +1002,11 @@ class KpiMetric(StrEnum):
     K129 = "K-129"
     K130 = "K-130"
     K131 = "K-131"
+    # Phase 6g scorecard and report KPIs (6g-scorecard-reports §6.7)
+    K132 = "K-132"
+    K133 = "K-133"
+    K134 = "K-134"
+    K135 = "K-135"
 
 
 class KpiKind(StrEnum):
@@ -1206,6 +1216,7 @@ class LeadingWarningCode(StrEnum):
     E22 = "E22"  # 6e §6.8: environmental compliance (K-118, K-121, K-122, storage, custody)
     E23 = "E23"  # 6e §6.8: environmental performance (K-123, spills, K-120, authority complaint)
     E24 = "E24"  # 6f §6.3: incident follow-up (overdue / late statutory, K-127, K-130, lessons)
+    E25 = "E25"  # 6g §6.8: contractor performance decline (grade D, drop, escalation)
 
 
 class ChartId(StrEnum):
@@ -1392,6 +1403,12 @@ class ExpiringItemKind(StrEnum):
     fitness_verification_due = "fitness_verification_due"
     examiner_licence_expiry = "examiner_licence_expiry"
     medical_provider_licence_expiry = "medical_provider_licence_expiry"
+    # Phase 6g (6g-scorecard-reports §8.2)
+    scorecard_comment_window = "scorecard_comment_window"
+    scorecard_dispute_due = "scorecard_dispute_due"
+    scorecard_finalise_due = "scorecard_finalise_due"
+    report_pack_due = "report_pack_due"
+    pip_due = "pip_due"
 
 
 class Severity(StrEnum):

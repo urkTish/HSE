@@ -64,9 +64,13 @@ PHASE6E_PENDING: frozenset[KpiMetric] = frozenset()
 PHASE6F_METRICS: frozenset[KpiMetric] = frozenset({M.K127, M.K128, M.K129, M.K130, M.K131})
 PHASE6F_PENDING: frozenset[KpiMetric] = frozenset()
 """Incident follow-up KPIs not computed yet (none since Phase 6f stage 2)."""
+PHASE6G_METRICS: frozenset[KpiMetric] = frozenset({M.K132, M.K133, M.K134, M.K135})
+PHASE6G_PENDING: frozenset[KpiMetric] = frozenset()
+"""Scorecard and report KPIs not computed yet (none since Phase 6g stage 2)."""
 _PENDING = (
     PHASE2_PENDING | PHASE3_PENDING | PHASE4_PENDING | PHASE5_PENDING | PHASE6A_PENDING
     | PHASE6B_PENDING | PHASE6C_PENDING | PHASE6D_PENDING | PHASE6E_PENDING | PHASE6F_PENDING
+    | PHASE6G_PENDING
 )  # fmt: skip
 
 
@@ -105,6 +109,8 @@ class KpiDef:
             return f"6b-heat-stress §6.6 {self.metric.value}"
         if self.metric in PHASE6E_METRICS:
             return f"6e-environmental §6.7 {self.metric.value}"
+        if self.metric in PHASE6G_METRICS:
+            return f"6g-scorecard-reports §6.7 {self.metric.value}"
         if self.metric in PHASE6F_METRICS:
             return f"6f-incident-followup §6.2 {self.metric.value}"
         if self.metric in PHASE6D_METRICS:
@@ -664,6 +670,22 @@ CATALOGUE: dict[KpiMetric, KpiDef] = {
              "فعالية الدروس",
              "checks completed in the period with result effective ÷ checks completed in the "
              "period × 100; chip recurrences", numerator="Effective", denominator="Completed"),
+        # ---- Phase 6g scorecard and reports (6g-scorecard-reports §6.7) ----
+        KpiDef(M.K132, "Contractor HSE score", "مؤشر أداء المقاول في السلامة", "HSE score",
+               "مؤشر الأداء", K.average, G.leading, HIGH, "pts", "نقطة",
+               "one engagement: its card score (Final revision; else provisional); several: "
+               "Σ (score × month MH) ÷ Σ month MH over own cards with a grade; chips grade mix, "
+               "coverage", 1, None, "Σ score × man-hours", "Σ man-hours"),
+        _count(M.K133, "Contractors on watch list", "المقاولون تحت المراقبة", "On watch list",
+               "تحت المراقبة", G.leading, LOW, "open watch-list entries at as_of; chips by level"),
+        _pct(M.K134, "Dispute resolution on time", "البت في الاعتراضات في الموعد",
+             "Disputes on time", "الاعتراضات في الموعد",
+             "disputes resolved on or before due_at ÷ disputes (not withdrawn) with due_at in the "
+             "period and ≤ as_of × 100", numerator="On time", denominator="Due"),
+        _pct(M.K135, "Client report issued on time", "إصدار تقرير العميل في الموعد",
+             "Client report on time", "تقرير العميل في الموعد",
+             "MCR Rev 0 Issued on or before due_on ÷ MCR with due_on in the period and ≤ as_of "
+             "× 100", numerator="On time", denominator="Due"),
     ]
 }  # fmt: skip
 

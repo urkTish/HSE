@@ -115,6 +115,19 @@ from app.models.followup import (
     FuSettings,
     FuSubmission,
 )
+from app.models.scorecard import (
+    RpDelivery,
+    RpPack,
+    RpRecipient,
+    ScCard,
+    ScLine,
+    ScProfile,
+    ScRemark,
+    ScSettings,
+    ScWatchEntry,
+    XpJob,
+    XpSubscription,
+)
 from app.models.heat import (
     AcclimatisationPlan,
     BanExemption,
@@ -420,4 +433,15 @@ __all__ = [
     "ZoneAdjacency",
     "ZoneEmergencyProfile",
     "ZonePtwProfile",
+    "RpDelivery",
+    "RpPack",
+    "RpRecipient",
+    "ScCard",
+    "ScLine",
+    "ScProfile",
+    "ScRemark",
+    "ScSettings",
+    "ScWatchEntry",
+    "XpJob",
+    "XpSubscription",
 ]

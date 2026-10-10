@@ -687,6 +687,35 @@ PHASE6F_MATRIX: dict[Role, dict[Capability, CapabilityScope]] = {
 for _role, _caps in PHASE6F_MATRIX.items():
     MATRIX[_role].update(_caps)
 
+# 6g-scorecard-reports §5.15 (capabilities 224-232). 225, 226 and 230 are HSE Manager only.
+# Site engineers read Issued / Final cards; Viewer / Client reads Final cards without disputes and
+# MCR / OSHA300 / HEAT packs; reps see their C scope (RK-2) and their own SCP, enforced in the
+# services. Every role keeps its own export log (232).
+PHASE6G_MATRIX: dict[Role, dict[Capability, CapabilityScope]] = {
+    Role.hse_officer: dict.fromkeys(
+        [C.scorecard_view, C.scorecard_comment, C.scorecard_resolve, C.report_pack_prepare,
+         C.report_pack_view, C.export_log],
+        S.project,
+    ),
+    Role.site_engineer: dict.fromkeys(
+        [C.scorecard_view, C.report_pack_view, C.export_log], S.project
+    ),
+    Role.permit_issuer: {C.export_log: S.project},
+    Role.permit_receiver: {C.export_log: S.project},
+    Role.contractor_hse_rep: {
+        **dict.fromkeys(
+            [C.scorecard_view, C.scorecard_comment, C.report_pack_view], S.contractor_tree
+        ),
+        C.export_log: S.project,
+    },
+    Role.viewer_client: dict.fromkeys(
+        [C.scorecard_view, C.report_pack_view, C.export_log], S.project
+    ),
+    Role.oh_practitioner: {C.export_log: S.project},
+}  # fmt: skip
+for _role, _caps in PHASE6G_MATRIX.items():
+    MATRIX[_role].update(_caps)
+
 SCOPE_RANK = {S.own_engagement: 1, S.contractor_tree: 2, S.sites: 3, S.project: 4, S.all: 5}
 ROLE_RANK = {r: i for i, r in enumerate(Role)}  # lower index = more senior
 OFFICER_ASSIGNABLE = frozenset(
