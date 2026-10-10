@@ -8,10 +8,10 @@ import { pinProject, USERS6 } from "./p6a-helpers";
 // Phase 6e demo screenshots for docs/screenshots/phase-6e (run with SCREENSHOTS=1 on a fresh seed).
 const OUT = join(__dirname, "..", "..", "docs", "screenshots", "phase-6e");
 test.skip(!process.env.SCREENSHOTS, "screenshots only on demand");
-test.setTimeout(900_000);
+test.setTimeout(1_800_000);
 
 async function shot(page: Page, name: string, fullPage = false) {
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("networkidle", { timeout: 30_000 }).catch(() => undefined);
   await page.waitForTimeout(800);
   await page.screenshot({ path: join(OUT, name), fullPage });
 }
