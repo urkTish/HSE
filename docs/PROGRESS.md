@@ -11,7 +11,7 @@
 - Phase 6e — Environmental management: spec `docs/specs/6e-environmental.md` v1.0 (58 ACs; §11 earlier-spec changes applied; contract v0.11.0)
 - Phase 6e step = Design done (contract v0.11.0; 16 p6e specs green; screenshots `docs/screenshots/phase-6e`; design pass `docs/design/phase-6e-findings.md`)
 - Phase 6f — Incident follow-up (notification packs, lessons learned): spec `docs/specs/6f-incident-followup.md` v1.0 (48 ACs; §11 earlier-spec changes applied; contract v0.12.0)
-- Phase 6f step = Frontend done
+- Phase 6f step = Design done (contract v0.12.0; 11 p6f specs green on a fresh seed; screenshots `docs/screenshots/phase-6f`; design pass `docs/design/phase-6f-findings.md`)
 - Phase 6g — Contractor HSE scorecard + reports export pack: spec `docs/specs/6g-scorecard-reports.md` v1.0 written (56 ACs; §11 earlier-spec changes applied); contract next
 
 ## Phase log
@@ -22,6 +22,13 @@
 - Phase 4 — Third-party certification: built, e2e green, design pass done (2026-10-08).
 
 ## Done
+
+### Design pass — Phase 6f incident follow-up (2026-10-10)
+- Findings `docs/design/phase-6f-findings.md`; before / after EN/AR, desktop and 390 px in `docs/screenshots/phase-6f/design/` (`screenshots-p6f.spec.ts`, `SHOT_SUFFIX`).
+- Countdowns are chips (red overdue, amber under 6 h, days only from 7 days); every date-only deadline says "by 23:59 Riyadh time, end of that day" (D-220) and 23:59 requirement dues say "end of day"; an overdue acknowledgement gets a red "Overdue" badge beside "Pending".
+- "Generate pack" hidden with the reason where the server would refuse it (CL-FIN before the investigation is approved, identity packs without capability 29/30); a Contractor HSE Rep no longer sees Approve on a non-GOSI pack (PK-6), with who approves it; Approve moved to the page-end band.
+- Submitted uses a paper-plane (not the clock of Due); ISO dates in pack data now `StackedDate`; client packs never render ID, nationality or medical detail (P6f-2 guard; no leak found).
+- Strings `scripts/i18n/p6-followupdesign.py` (`fuDesign.*`, new keys only). p6f specs (11) green on a fresh seed.
 
 ### Frontend — Phase 6f incident follow-up (contract v0.12.0)
 - API types regenerated from contract v0.12.0 with EN/AR labels for every new enum value (including the 6d suggestion source `lesson`) and the 18 new error codes.
@@ -966,6 +973,13 @@ L items from the Phase 4 design pass (details in `docs/design/phase-4-findings.m
 - **P16. Certificate line on the deployment page.** The equipment-on-project page (the one an engineer opens for "the crane on my site") shows usable / not usable but not the certificate number, TPI, SWL and limitations. Needs `current_line` on `EquipmentDeploymentRead`.
 - **P17. Tag board field display.** A "problems only" toggle and a kiosk / TV mode for site offices (large tiles, problems first per zone, auto-refresh, no navigation chrome).
 - **P1 / P2 also apply to Phase 4.** Two-calendar dates make certificate rows 4–5 lines; equipment, scaffold and personnel-card actions come before the state on phones.
+
+L items from the Phase 6f design pass (details in `docs/design/phase-6f-findings.md`):
+- **P44. Fold finished requirements on phones** ("Done (n)" one-line rows under the open ones) on the register and the incident panel.
+- **P45. Server reason for pack generation** (`pack_blocker` on the requirement: investigation not approved, identity access, filer scope) instead of the browser's guess.
+- **P46. `overdue` on lesson distribution items**, so acknowledgements can show and sort overdue items from the server.
+- **P47. `can_approve` on the pack** for PK-6 instead of the role test.
+- Contract requests: the three fields above, and `deadline_basis` on the requirement.
 
 L items from the Phase 6e design pass (details in `docs/design/phase-6e-findings.md`):
 - **P39. "Contained?" starts unanswered** on the spill report (today Yes; a wrong Yes makes a reportable spill minor, SPL-2).
