@@ -10,7 +10,8 @@
 - Phase 6d step = Design done (findings `docs/design/phase-6d-findings.md`; contract v0.10.0); phase demo next
 - Phase 6e — Environmental management: spec `docs/specs/6e-environmental.md` v1.0 (58 ACs; §11 earlier-spec changes applied; contract v0.11.0)
 - Phase 6e step = Frontend done (contract v0.11.0; 16 p6e specs green; screenshots `docs/screenshots/phase-6e`); design pass next
-- Phase 6f — Incident follow-up (notification packs, lessons learned): spec `docs/specs/6f-incident-followup.md` v1.0 written (48 ACs; §11 earlier-spec changes applied); contract next
+- Phase 6f — Incident follow-up (notification packs, lessons learned): spec `docs/specs/6f-incident-followup.md` v1.0 (48 ACs; §11 earlier-spec changes applied; contract v0.12.0)
+- Phase 6f step = Backend done
 - Phase 6g — Contractor HSE scorecard + reports export pack: spec `docs/specs/6g-scorecard-reports.md` v1.0 written (56 ACs; §11 earlier-spec changes not yet applied); contract next, after 6f
 
 ## Phase log
@@ -21,6 +22,14 @@
 - Phase 4 — Third-party certification: built, e2e green, design pass done (2026-10-08).
 
 ## Done
+
+### Backend — Phase 6f incident follow-up (contract v0.12.0, stage 2)
+- Services under `app/services/followup/`: settings (tighten-only, `followup_rules_from` switch, P6f identity clause), rule profiles and requirement derivation (NR-1…NR-6, waivers, Phase 1 views and SB-4 sync), packs (bilingual HTML, GOSI / client identity rules, versions, approval scope, PDPL purge), submissions with evidence, lessons (LL-1 auto-draft on investigation approval, completeness, publish, DS-1…DS-4 distribution and acknowledgement, LL-5 Arabic-normalised search, similar lessons), 6d links (LK-1…LK-4: topics, campaigns, template change requests, TBT suggestions), 90-day effectiveness checks (EF-1…EF-3, follow-up CA), the band and action panel. 39 endpoints plus `GET /kpi/incident-followup`.
+- KPIs K-127…K-131 (`app/kpi/followup.py`, `app/kpi/followup_views.py`), warning E24.
+- Jobs: `followup_minute` (every 60 s), `followup_daily` 00:13, `followup_alerts` 07:10.
+- Seed `app/seed_followup.py` (Appendix A; called by `app.seed`); differences in D-216.
+- Tests: `test_fu_rules`, `test_fu_packs`, `test_fu_lessons`, `test_fu_kpis` (34 tests, ACs 1–42 and 44–48). Defaults are D-210…D-216. The 6d campaign test helper now uses reason `seasonal` (reason `lesson` needs a published lesson, LK-2).
+- Parked: AI tools T23 / T24 (AC 43), charts C37–C38, PDF rendering of packs and bulletins (6g generic export), an ExpiringItemKind feed for follow-up dues, a contractor GOSI establishment no. column, bulk-export exclusion beyond the personal bucket.
 
 ### Frontend — Phase 6e environmental (contract v0.11.0, integrated with the stage 2 backend)
 - New "Environmental" sidebar section (`nav-env`, capability 202): overview (band + action panel), aspects, permits and providers, waste (consignments, dispatch, storage areas, streams), dust / noise / water (readings, phone entry, exceedances, points with instruments and background declarations, water), spills and complaints, KPIs K-118…K-126, settings.
