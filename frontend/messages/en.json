@@ -13638,5 +13638,19 @@
       "status": "Status",
       "empty": "No effectiveness checks."
     }
+  },
+  "fuDesign": {
+    "spanD": "{d} d",
+    "endOfDay": "by 23:59 Riyadh time, end of that day",
+    "endOfDayShort": "end of day",
+    "deadlineRule": "Times are Riyadh time. A date-only deadline runs to 23:59 of that day.",
+    "overdue": "Overdue",
+    "pack": {
+      "needsInvestigation": "The final report can be generated once the investigation is approved.",
+      "needsInvestigationMaybe": "Needs the approved investigation: the pack is refused until then.",
+      "needsIdentity": "This pack holds the injured person's identity. Only users with access to injured-person identity generate it: ask the HSE Officer.",
+      "repApprovesGosi": "An HSE Officer approves this pack. Contractor HSE Reps approve GOSI work-injury packs only.",
+      "endLabel": "Approve or replace this version"
+    }
   }
 }

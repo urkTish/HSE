@@ -1,5 +1,5 @@
 "use client";
-import { BookOpen, ChevronDown, FileText, Lightbulb, Send, ShieldOff, Stamp, Users } from "lucide-react";
+import { BookOpen, ChevronDown, FileText, Info, Lightbulb, Lock, Send, ShieldOff, Stamp, Users } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -12,10 +12,11 @@ import { Link } from "@/i18n/navigation";
 import type { Schemas } from "@/lib/api/client";
 import { useFuRequirements, useFuSubmissions, useSimilarLessons } from "@/lib/api/followup";
 import { useLocalizedName } from "@/lib/i18n-helpers";
+import { can } from "@/lib/permissions";
 import { useFormatters } from "@/lib/use-formatters";
 import { cn } from "@/lib/utils";
 import { AckDialog, GeneratePackDialog, SubmissionDialog, VoidSubmissionDialog, WaiveDialog } from "./actions";
-import { Countdown, FuBadge, OnTimeBadge, RequirementBadge, useBi, useFuCaps } from "./common";
+import { Countdown, DeadlineRule, FuBadge, OnTimeBadge, RequirementBadge, useBi, useFuCaps } from "./common";
 
 type S = Schemas;
 type Req = S["FuRequirementRead"];
@@ -29,8 +30,45 @@ export function sortRequirements(items: Req[]): Req[] {
   return [...items].sort((a, b) => RANK[a.status] - RANK[b.status] || Date.parse(a.due_at) - Date.parse(b.due_at));
 }
 
+type PackGate = { block: boolean; reason: "needsInvestigation" | "needsInvestigationMaybe" | "needsIdentity" } | null;
+
+/**
+ * Why the server would refuse "Generate pack", worked out from data the page already holds (no extra request):
+ * CLIENT-FINAL needs the approved investigation (PK-5; known on the incident page, a hint elsewhere); identity packs
+ * need injured-person identity access, and GOSI-WIR also the medical part unless the user is a Contractor HSE Rep (PK-1).
+ * The server still decides; this only hides a button that would fail and says why.
+ */
+function usePackGate(r: Req, incident?: S["IncidentRead"]): PackGate {
+  const caps = useFuCaps(r.project_id);
+  const me = caps.me;
+  if (r.form_code === "CLIENT-FINAL") {
+    if (!incident) return { block: false, reason: "needsInvestigationMaybe" };
+    return incident.investigation?.approved_at ? null : { block: true, reason: "needsInvestigation" };
+  }
+  if (r.form_code === "GOSI-WIR" || r.form_code === "MHRSD-LTR") {
+    const rep = Boolean(me?.projects.find((p) => p.project_id === r.project_id)?.roles.includes("contractor_hse_rep"));
+    const identity = can(me, "injury.identity_view", r.project_id);
+    const medical = can(me, "injury.medical_view", r.project_id) || rep;
+    if (!identity || (r.form_code === "GOSI-WIR" && !medical)) return { block: true, reason: "needsIdentity" };
+  }
+  return null;
+}
+
+/** Due time of a requirement; "end of day" when it falls at 23:59 Riyadh time (investigation-due finals, D-220). */
+function DueAt({ due, open, projectId }: { due: string; open: boolean; projectId: string }) {
+  const td = useTranslations("fuDesign");
+  const eod = new Date(due).toLocaleTimeString("en-GB", { timeZone: "Asia/Riyadh", hour: "2-digit", minute: "2-digit", hour12: false }) === "23:59";
+  return (
+    <dd className="flex flex-col gap-1">
+      <StackedDate v={due} time projectId={projectId} />
+      {eod ? <span className="text-xs text-muted-foreground" data-testid="fu-end-of-day">{td("endOfDayShort")}</span> : null}
+      <Countdown due={due} open={open} projectId={projectId} />
+    </dd>
+  );
+}
+
 /** Requirement cards (body · stage, due time and countdown, submission, pack, actions). Phone-first: one card per requirement. */
-export function RequirementList({ items, projectId, showIncident }: { items: Req[]; projectId: string; showIncident?: boolean }) {
+export function RequirementList({ items, projectId, showIncident, incident }: { items: Req[]; projectId: string; showIncident?: boolean; incident?: S["IncidentRead"] }) {
   const [dialog, setDialog] = useState<Dialog>(null);
   // Dialogs read the latest copy of the requirement (a pack approved meanwhile, a refetch after navigation).
   const fresh = (r: Req) => items.find((x) => x.id === r.id) ?? r;
@@ -38,7 +76,7 @@ export function RequirementList({ items, projectId, showIncident }: { items: Req
     <>
       <ul className="flex flex-col gap-3" data-testid="fu-requirements">
         {sortRequirements(items).map((r) => (
-          <RequirementCard key={r.id} r={r} projectId={projectId} showIncident={showIncident} onDialog={setDialog} />
+          <RequirementCard key={r.id} r={r} projectId={projectId} showIncident={showIncident} incident={incident} onDialog={setDialog} />
         ))}
       </ul>
       {dialog?.kind === "pack" ? <GeneratePackDialog req={fresh(dialog.req)} onClose={() => setDialog(null)} /> : null}
@@ -50,14 +88,17 @@ export function RequirementList({ items, projectId, showIncident }: { items: Req
   );
 }
 
-function RequirementCard({ r, projectId, showIncident, onDialog }: { r: Req; projectId: string; showIncident?: boolean; onDialog: (d: Dialog) => void }) {
+function RequirementCard({ r, projectId, showIncident, incident, onDialog }: { r: Req; projectId: string; showIncident?: boolean; incident?: S["IncidentRead"]; onDialog: (d: Dialog) => void }) {
   const t = useTranslations("fu.req");
+  const td = useTranslations("fuDesign");
+  const gate = usePackGate(r, incident);
   const te = useTranslations("enums");
   const caps = useFuCaps(projectId);
   const { dateTime } = useFormatters(projectId);
   const [open, setOpen] = useState(false);
   const isOpen = OPEN.includes(r.status);
-  const canPack = caps.record && Boolean(r.form_code) && isOpen && r.pack_status !== "submitted";
+  const packable = caps.record && Boolean(r.form_code) && isOpen && r.pack_status !== "submitted";
+  const canPack = packable && !gate?.block;
   const done = r.status === "submitted" || r.status === "acknowledged";
   return (
     <li
@@ -88,10 +129,7 @@ function RequirementCard({ r, projectId, showIncident, onDialog }: { r: Req; pro
       <dl className="grid gap-x-4 gap-y-2 text-sm sm:grid-cols-3">
         <div className="flex flex-col gap-0.5">
           <dt className="text-xs text-muted-foreground">{t("due")}</dt>
-          <dd className="flex flex-col gap-0.5">
-            <StackedDate v={r.due_at} time projectId={projectId} />
-            <Countdown due={r.due_at} open={isOpen} projectId={projectId} />
-          </dd>
+          <DueAt due={r.due_at} open={isOpen} projectId={projectId} />
         </div>
         <div className="flex flex-col gap-0.5">
           <dt className="text-xs text-muted-foreground">{t("filer")}</dt>
@@ -170,6 +208,12 @@ function RequirementCard({ r, projectId, showIncident, onDialog }: { r: Req; pro
             {t("record")}
           </Button>
         </div>
+      ) : null}
+      {packable && gate ? (
+        <p className="flex items-start gap-2 text-sm text-muted-foreground" data-testid="fu-pack-gate" data-reason={gate.reason}>
+          {gate.reason === "needsIdentity" ? <Lock aria-hidden className="mt-0.5 size-4 shrink-0" /> : <Info aria-hidden className="mt-0.5 size-4 shrink-0" />}
+          {td(`pack.${gate.reason}`)}
+        </p>
       ) : null}
       {done || (caps.settings && isOpen) ? (
         <div>
@@ -279,9 +323,10 @@ export function IncidentFollowupPanel({ incident }: { incident: S["IncidentRead"
           {overdue ? <RequirementBadge status="overdue" /> : null}
         </CardTitle>
         <p className="text-xs text-muted-foreground">{t("hint")}</p>
+        <DeadlineRule />
       </CardHeader>
       <CardContent>
-        {q.isLoading ? <LoadingState rows={2} /> : q.isError ? <ErrorState error={q.error} onRetry={() => q.refetch()} /> : <RequirementList items={items} projectId={incident.project_id} />}
+        {q.isLoading ? <LoadingState rows={2} /> : q.isError ? <ErrorState error={q.error} onRetry={() => q.refetch()} /> : <RequirementList items={items} projectId={incident.project_id} incident={incident} />}
       </CardContent>
     </Card>
   );

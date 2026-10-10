@@ -18,7 +18,7 @@ import { useDisplay } from "@/lib/digits";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
 import { cn } from "@/lib/utils";
-import { Countdown, FuSubNav, useFuCaps } from "./common";
+import { Countdown, DeadlineRule, FuSubNav, useFuCaps } from "./common";
 import { RequirementList } from "./requirements";
 
 type S = Schemas;
@@ -146,7 +146,15 @@ function Overview({ project }: { project: Project }) {
               {items.map((it) => (
                 <li key={it.kind} className="flex flex-col gap-2 px-4 py-3" data-testid="fu-action" data-kind={it.kind}>
                   <span className="flex flex-wrap items-center gap-3">
-                    <span className="min-w-10 rounded-md bg-warning-bg px-2 py-1 text-center text-lg font-bold text-warning tabular-nums">{show(String(it.count))}</span>
+                    <span
+                      className={cn(
+                        "inline-flex min-w-10 items-center justify-center gap-1 rounded-md px-2 py-1 text-lg font-bold tabular-nums",
+                        it.kind === "requirements_overdue" ? "bg-danger-bg text-danger" : "bg-warning-bg text-warning",
+                      )}
+                    >
+                      {it.kind === "requirements_overdue" || it.kind.endsWith("_overdue") ? <TriangleAlert aria-hidden className="size-4" /> : null}
+                      {show(String(it.count))}
+                    </span>
                     <span className="flex-1 font-medium">{te(`fuActionKind.${it.kind}`)}</span>
                     <Link href={actionHref(it.kind)} className="inline-flex min-h-touch items-center gap-1 text-primary hover:underline">
                       {t("open")}
@@ -208,9 +216,12 @@ function Register({ project }: { project: Project }) {
         <ErrorState error={q.error} onRetry={() => q.refetch()} />
       ) : items.length ? (
         <>
-          <p className="mb-2 text-xs text-muted-foreground" data-testid="fr-total">
-            {t("total", { n: q.data?.total ?? items.length })}
-          </p>
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs text-muted-foreground" data-testid="fr-total">
+              {t("total", { n: q.data?.total ?? items.length })}
+            </p>
+            <DeadlineRule />
+          </div>
           <RequirementList items={items} projectId={project.id} showIncident />
         </>
       ) : (

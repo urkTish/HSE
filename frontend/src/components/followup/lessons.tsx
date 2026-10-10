@@ -35,7 +35,7 @@ import { useLocalizedName } from "@/lib/i18n-helpers";
 import { useRefLists } from "@/lib/reference";
 import { useDebounced } from "@/lib/use-debounced";
 import { useSearchState } from "@/lib/url-state";
-import { Choices, Countdown, FuBadge, LessonSubNav, ResultBadge, useBi, useFuCaps } from "./common";
+import { Choices, DayDue, DeadlineRule, FuBadge, LessonSubNav, ResultBadge, dayPassed, useBi, useFuCaps } from "./common";
 
 type S = Schemas;
 type Lesson = S["FuLessonRead"];
@@ -239,9 +239,8 @@ export function LessonPage({ id }: { id: string }) {
           {l.publish_due_on && (l.status === "draft" || l.status === "in_review") ? (
             <div className="flex flex-col">
               <dt className="text-xs text-muted-foreground">{t("publishDue")}</dt>
-              <dd className="flex flex-col">
-                <StackedDate v={l.publish_due_on} projectId={l.source_project_id} />
-                <Countdown due={`${l.publish_due_on}T23:59:59+03:00`} projectId={l.source_project_id} />
+              <dd>
+                <DayDue date={l.publish_due_on} projectId={l.source_project_id} />
               </dd>
             </div>
           ) : null}
@@ -626,6 +625,7 @@ function Distribution({ l }: { l: Lesson }) {
 /** Distribution items as cards; a pending item the user may acknowledge has its form inline (phone-first). */
 function AckList({ items, titles }: { items: S["FuDistributionRead"][]; titles?: Map<string, string> }) {
   const t = useTranslations("fu.dist");
+  const td = useTranslations("fuDesign");
   const te = useTranslations("enums");
   const name = useLocalizedName();
   if (!items.length) return <EmptyState message={t("empty")} />;
@@ -645,14 +645,16 @@ function AckList({ items, titles }: { items: S["FuDistributionRead"][]; titles?:
                 <Code>{d.project_code}</Code> · <Code>{d.engagement_code ?? "—"}</Code>
               </span>
             </span>
-            <FuBadge group="fuDistributionStatus" status={d.status} testId="dist-status" />
+            <span className="flex flex-wrap items-center gap-1.5">
+              {d.status === "pending" && dayPassed(d.ack_due_on) ? <StatusBadge status="overdue" label={td("overdue")} /> : null}
+              <FuBadge group="fuDistributionStatus" status={d.status} testId="dist-status" />
+            </span>
           </div>
           <div className="flex flex-wrap items-end gap-x-6 gap-y-1 text-sm">
             <span className="flex flex-col">
               <span className="text-xs text-muted-foreground">{t("due")}</span>
-              <StackedDate v={d.ack_due_on} projectId={d.project_id} />
+              <DayDue date={d.ack_due_on} open={d.status === "pending"} projectId={d.project_id} />
             </span>
-            <Countdown due={`${d.ack_due_on}T23:59:59+03:00`} open={d.status === "pending"} projectId={d.project_id} />
             {d.acknowledged_at ? (
               <span className="inline-flex items-center gap-1 text-success">
                 <CheckCircle2 aria-hidden className="size-4" />
@@ -943,8 +945,7 @@ function CheckCard({ check }: { check: S["FuCheckRead"] }) {
         <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
           <span className="flex flex-col">
             <span className="text-xs text-muted-foreground">{t("due")}</span>
-            <StackedDate v={check.due_on} projectId={check.project_id} />
-            <Countdown due={`${check.due_on}T23:59:59+03:00`} open={check.status === "scheduled"} projectId={check.project_id} />
+            <DayDue date={check.due_on} open={check.status === "scheduled"} projectId={check.project_id} />
           </span>
           <span className="flex flex-col">
             <span className="text-xs text-muted-foreground">{t("suggested")}</span>
@@ -1066,6 +1067,7 @@ function Acks({ project }: { project: S["ProjectRead"] }) {
     <div>
       <PageHeader title={t("pageTitle")} description={t("pageSubtitle")} />
       <LessonSubNav />
+      <DeadlineRule className="mb-3" />
       <ListToolbar>
         <Select aria-label={t("status")} className="lg:w-56" value={status} onChange={(e) => s.set({ status: e.target.value })} data-testid="acks-status">
           {(["pending", "acknowledged", "not_applicable", "withdrawn"] as const).map((x) => (
@@ -1098,6 +1100,7 @@ function Checks({ project }: { project: S["ProjectRead"] }) {
     <div>
       <PageHeader title={t("pageTitle")} description={t("pageSubtitle")} />
       <LessonSubNav />
+      <DeadlineRule className="mb-3" />
       {q.isLoading ? (
         <LoadingState />
       ) : q.isError ? (
@@ -1123,10 +1126,7 @@ function Checks({ project }: { project: S["ProjectRead"] }) {
                   </Link>
                 </TD>
                 <TD label={t("due")}>
-                  <span className="flex flex-col">
-                    <StackedDate v={c.due_on} projectId={project.id} />
-                    <Countdown due={`${c.due_on}T23:59:59+03:00`} open={c.status === "scheduled"} projectId={project.id} />
-                  </span>
+                  <DayDue date={c.due_on} open={c.status === "scheduled"} projectId={project.id} />
                 </TD>
                 <TD label={t("status")}>
                   <FuBadge group="fuCheckStatus" status={c.status} testId="check-status" />

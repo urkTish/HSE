@@ -1,4 +1,4 @@
-import { AlertTriangle, Archive, Ban, OctagonAlert, CheckCircle2, CircleDashed, Clock, FileCheck2, Hourglass, Info, Loader, Lock, PackageCheck, PauseCircle, PlayCircle, Search, ShieldCheck, Undo2, UserX, XCircle } from "lucide-react";
+import { AlertTriangle, Archive, Ban, OctagonAlert, CheckCircle2, CircleDashed, Clock, FileCheck2, Hourglass, Info, Loader, Lock, PackageCheck, PauseCircle, PlayCircle, Search, Send, ShieldCheck, Undo2, UserX, XCircle } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
 
@@ -25,6 +25,8 @@ const MAP: Record<string, { tone: Tone; Icon: ComponentType<SVGProps<SVGSVGEleme
   failed: { tone: "danger", Icon: XCircle },
   // Phase 1
   submitted: { tone: "info", Icon: Clock },
+  // Phase 6f: a notification or pack sent to the body (paper-plane, unlike the clock of "due").
+  fu_sent: { tone: "info", Icon: Send },
   verified: { tone: "success", Icon: ShieldCheck },
   reported: { tone: "info", Icon: Clock },
   under_investigation: { tone: "info", Icon: Search },

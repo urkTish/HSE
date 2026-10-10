@@ -276,6 +276,7 @@ function OfficeName({ d }: { d: S["FuDirectoryEntry"] }) {
 function Rules({ project, editable }: { project: Project; editable: boolean }) {
   const t = useTranslations("fu.rules");
   const te = useTranslations("enums");
+  const td = useTranslations("fuDesign");
   const show = useDisplay(project.id);
   const q = useFuRules(project.id);
   const [edit, setEdit] = useState<S["FuRuleRead"] | "new" | null>(null);
@@ -330,6 +331,7 @@ function Rules({ project, editable }: { project: Project; editable: boolean }) {
                   </TD>
                   <TD label={t("deadline")}>
                     <span data-testid="rule-hours">{r.deadline_basis === "investigation_due" ? te("fuDeadlineBasis.investigation_due") : t("hours", { n: r.deadline_hours ?? 0, h: show(String(r.deadline_hours ?? "")) })}</span>
+                    {r.deadline_basis === "investigation_due" ? <span className="block text-xs text-muted-foreground">{td("endOfDay")}</span> : null}
                   </TD>
                   <TD label={t("filer")}>{te(`fuFiler.${r.filer}`)}</TD>
                   <TD label={t("active")}>{r.active ? t("yes") : t("no")}</TD>

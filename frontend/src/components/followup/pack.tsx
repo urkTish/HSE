@@ -1,5 +1,5 @@
 "use client";
-import { Download, FileWarning, Lock, ShieldAlert } from "lucide-react";
+import { Download, FileWarning, Info, Lock, ShieldAlert } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
@@ -47,12 +47,15 @@ const SNAP_ORDER = [
   "root_cause_codes",
   "lesson_no",
 ] as const;
+/** Never shown on a client / PMC copy whatever the snapshot holds (P6f-2: no ID, nationality or medical detail beyond category, body part and days off). */
+const CLIENT_HIDDEN = new Set(["id_type", "id_number", "nationality", "nature", "treated_at", "first_day_off"]);
 const CASE_KEYS = ["person_name", "id_type", "id_number", "nationality", "occupation", "category", "body_part", "nature", "treated_at", "first_day_off", "days_off"] as const;
 
 export function PackPage({ id }: { id: string }) {
   const t = useTranslations("fu.pack");
   const tn = useTranslations("fu.nav");
   const te = useTranslations("enums");
+  const td = useTranslations("fuDesign");
   const name = useLocalizedName();
   const refresh = useFuRefresh();
   const q = useFuPack(id);
@@ -68,6 +71,11 @@ export function PackPage({ id }: { id: string }) {
   const req = reqs.data?.items.find((r) => r.id === pk.requirement_id);
   const identity = pk.field_set !== "none";
   const editable = caps.record && pk.status === "draft";
+  // PK-6: a Contractor HSE Rep approves GOSI packs only; for any other pack the server refuses, so say who approves it.
+  const rep = Boolean(caps.me?.projects.find((p) => p.project_id === pk.project_id)?.roles.includes("contractor_hse_rep")) && !caps.me?.is_hse_manager;
+  const approver = caps.approve && !(rep && pk.form_code !== "GOSI-WIR");
+  const canApprove = approver && pk.status === "draft";
+  const canRegen = caps.record && pk.status !== "submitted" && pk.status !== "superseded" && Boolean(req);
 
   async function back() {
     setBusy(true);
@@ -167,12 +175,7 @@ export function PackPage({ id }: { id: string }) {
             {t("download")}
           </Button>
         ) : null}
-        {caps.approve && pk.status === "draft" ? (
-          <Button className="min-h-12 sm:min-h-control" onClick={() => setApprove(true)} data-testid="pack-approve">
-            {t("approve")}
-          </Button>
-        ) : null}
-        {caps.approve && pk.status === "approved" ? (
+        {approver && pk.status === "approved" ? (
           <Button variant="outline" className="min-h-12 sm:min-h-control" disabled={busy} onClick={() => void back()} data-testid="pack-return">
             {t("returnToDraft")}
           </Button>
@@ -187,11 +190,24 @@ export function PackPage({ id }: { id: string }) {
       </div>
       <MutationError error={error} />
 
-      {caps.record && pk.status !== "submitted" && pk.status !== "superseded" && req ? (
-        <RecordActions label={t("endLabel")} testId="pack-end">
-          <Button variant="destructive-outline" onClick={() => setRegen(true)} data-testid="pack-regenerate">
-            {t("regenerate")}
-          </Button>
+      {caps.approve && !approver && pk.status === "draft" ? (
+        <p className="flex items-start gap-2 text-sm text-muted-foreground" data-testid="pack-approver-note">
+          <Info aria-hidden className="mt-0.5 size-4 shrink-0" />
+          {td("pack.repApprovesGosi")}
+        </p>
+      ) : null}
+      {canApprove || canRegen ? (
+        <RecordActions label={canApprove ? td("pack.endLabel") : t("endLabel")} testId="pack-end">
+          {canRegen ? (
+            <Button variant="destructive-outline" onClick={() => setRegen(true)} data-testid="pack-regenerate">
+              {t("regenerate")}
+            </Button>
+          ) : null}
+          {canApprove ? (
+            <Button className="min-h-12 sm:min-h-control" onClick={() => setApprove(true)} data-testid="pack-approve">
+              {t("approve")}
+            </Button>
+          ) : null}
         </RecordActions>
       ) : null}
       {regen && req ? <GeneratePackDialog req={req} onClose={() => setRegen(false)} /> : null}
@@ -213,7 +229,7 @@ export function PackPage({ id }: { id: string }) {
   );
 }
 
-function useSnapValue() {
+function useSnapValue(projectId?: string | null) {
   const te = useTranslations("enums");
   const ref = useRefLists();
   return function snapValue(k: string, v: unknown): ReactNode {
@@ -232,6 +248,7 @@ function useSnapValue() {
     if (k === "nature") return ref.label("nature", s);
     if (k === "occupation" || k === "trade") return ref.label("trade", s);
     if (k === "category") return te(`caseCategory.${s}` as "caseCategory.LTI");
+    if ((k === "occurred_date" || k === "first_day_off") && /^\d{4}-\d{2}-\d{2}$/.test(s)) return <StackedDate v={s} projectId={projectId} />;
     if (["incident_ref", "site", "location", "responsible", "lesson_no", "id_number", "occurred_date", "occurred_time", "first_day_off"].includes(k)) return <Code>{s}</Code>;
     return <span className="whitespace-pre-wrap">{s}</span>;
   };
@@ -242,7 +259,7 @@ function Snapshot({ pk }: { pk: S["FuPackRead"] }) {
   const t = useTranslations("fu.pack");
   const ts = useTranslations("fu.snap");
   const ar = useLocale() === "ar";
-  const val = useSnapValue();
+  const val = useSnapValue(pk.project_id);
   const snap = pk.snapshot as Record<string, unknown> | null;
   const has = (k: string) => (ts as unknown as { has: (k: string) => boolean }).has(k);
   const lbl = (k: string) => (has(k) ? ts(k as "title") : k);
@@ -298,7 +315,7 @@ function Snapshot({ pk }: { pk: S["FuPackRead"] }) {
                     <bdi>{String((ar ? c.label_ar : c.label) ?? c.label ?? "")}</bdi>
                   </p>
                   <dl className="mt-1 grid gap-x-4 gap-y-1 sm:grid-cols-2">
-                    {CASE_KEYS.filter((k) => k in c).map((k) => (
+                    {CASE_KEYS.filter((k) => k in c && !(pk.body === "client" && CLIENT_HIDDEN.has(k))).map((k) => (
                       <div key={k} className="flex gap-2">
                         <dt className="text-muted-foreground">{lbl(k)}</dt>
                         <dd>{val(k, c[k])}</dd>

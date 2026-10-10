@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { SubNav } from "@/components/access/common";
 import { StatusBadge } from "@/components/common/status-badge";
 import { ChoiceMark } from "@/components/heat/common";
+import { StackedDate } from "@/components/medical/common";
 import { useMeData } from "@/components/shell/me-context";
 import type { Schemas } from "@/lib/api/client";
 import { useFuReference } from "@/lib/api/followup";
@@ -101,7 +102,8 @@ export function useBi() {
 const REQ_TONE: Record<S["FuRequirementStatus"], string> = {
   due: "due",
   overdue: "overdue",
-  submitted: "submitted",
+  // A paper-plane, not the clock of "Due": the two must differ by icon as well as colour.
+  submitted: "fu_sent",
   acknowledged: "completed",
   waived: "closed",
   not_required: "voided",
@@ -117,7 +119,7 @@ export function RequirementBadge({ status }: { status: S["FuRequirementStatus"] 
 }
 
 type FuGroup = "fuPackStatus" | "fuSubmissionStatus" | "fuLessonStatus" | "fuDistributionStatus" | "fuCheckStatus" | "fuChangeStatus";
-const TONE: Record<string, string> = { recorded: "submitted", in_review: "pending_review", acknowledged: "completed", not_applicable: "closed", withdrawn: "voided", scheduled: "planned", adopted: "completed" };
+const TONE: Record<string, string> = { recorded: "fu_sent", submitted: "fu_sent", in_review: "pending_review", acknowledged: "completed", not_applicable: "closed", withdrawn: "voided", scheduled: "planned", adopted: "completed" };
 
 export function FuBadge({ group, status, testId = "fu-badge" }: { group: FuGroup; status: string; testId?: string }) {
   const te = useTranslations("enums");
@@ -159,9 +161,14 @@ function useNow(intervalMs = 30_000) {
   return now;
 }
 
-/** "in 3 h 20 min" / "2 d 4 h overdue" with an icon; only while the item is still open. Presentation of the server's due time only. */
+/**
+ * "Due in 3 h 20 min" / "Overdue by 2 d 4 h" as a chip with an icon; only while the item is still open. Presentation of the
+ * server's due time only. Overdue: red chip with a warning triangle; under 6 h: amber chip with an alarm clock; otherwise muted.
+ * Spans of a week or more show whole days only.
+ */
 export function Countdown({ due, open = true, projectId, className }: { due: string | null | undefined; open?: boolean; projectId?: string | null; className?: string }) {
   const t = useTranslations("fu.common");
+  const td = useTranslations("fuDesign");
   const show = useDisplay(projectId);
   const now = useNow();
   if (!due || !open) return null;
@@ -171,17 +178,62 @@ export function Countdown({ due, open = true, projectId, className }: { due: str
   const h = Math.floor((abs % 86_400_000) / 3_600_000);
   const m = Math.floor((abs % 3_600_000) / 60_000);
   let span: string;
-  if (d > 0) span = t("spanDH", { d: show(String(d)), h: show(String(h)) });
+  if (d >= 7) span = td("spanD", { d: show(String(d)) });
+  else if (d > 0) span = t("spanDH", { d: show(String(d)), h: show(String(h)) });
   else if (h > 0) span = t("spanHM", { h: show(String(h)), m: show(String(m)) });
   else span = t("spanM", { m: show(String(Math.max(m, 0))) });
   const over = ms < 0;
   const soon = !over && ms < 6 * 3_600_000;
   const Icon = over ? TriangleAlert : soon ? AlarmClock : Clock;
   return (
-    <span className={cn("inline-flex items-center gap-1 text-xs font-medium", over ? "text-danger" : soon ? "text-warning" : "text-muted-foreground", className)} data-testid="fu-countdown" data-overdue={over}>
-      <Icon aria-hidden className="size-3.5 shrink-0" />
+    <span
+      className={cn(
+        "inline-flex w-fit items-center gap-1.5 rounded-md text-sm font-semibold",
+        over ? "bg-danger-bg px-2 py-0.5 text-danger" : soon ? "bg-warning-bg px-2 py-0.5 text-warning" : "font-medium text-muted-foreground",
+        className,
+      )}
+      data-testid="fu-countdown"
+      data-overdue={over}
+    >
+      <Icon aria-hidden className="size-4 shrink-0" />
       {over ? t("overdueBy", { span }) : t("dueIn", { span })}
     </span>
+  );
+}
+
+/** Instant at which a date-only deadline ends: 23:59:59 Riyadh time of that day (D-220). */
+export function endOfDay(date: string): string {
+  return `${date}T23:59:59+03:00`;
+}
+
+/** True while a date-only deadline has passed (presentation only; the server keeps the status). */
+export function dayPassed(date: string | null | undefined, now = Date.now()): boolean {
+  return Boolean(date) && Date.parse(endOfDay(date as string)) < now;
+}
+
+/** A date-only deadline: the date, "by 23:59 Riyadh time, end of that day" and the countdown while open (D-220). */
+export function DayDue({ date, open = true, projectId }: { date: string | null | undefined; open?: boolean; projectId?: string | null }) {
+  const td = useTranslations("fuDesign");
+  if (!date) return <span>—</span>;
+  return (
+    <span className="flex flex-col gap-1">
+      <StackedDate v={date} projectId={projectId} />
+      <span className="text-xs text-muted-foreground" data-testid="fu-end-of-day">
+        {td("endOfDay")}
+      </span>
+      <Countdown due={endOfDay(date)} open={open} projectId={projectId} />
+    </span>
+  );
+}
+
+/** One line under a list header: deadlines are Riyadh time; date-only ones run to the end of the day. */
+export function DeadlineRule({ className }: { className?: string }) {
+  const td = useTranslations("fuDesign");
+  return (
+    <p className={cn("flex items-center gap-1.5 text-xs text-muted-foreground", className)} data-testid="fu-deadline-rule">
+      <Clock aria-hidden className="size-3.5 shrink-0" />
+      {td("deadlineRule")}
+    </p>
   );
 }
 
