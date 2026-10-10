@@ -13,7 +13,7 @@
 - Phase 6f — Incident follow-up (notification packs, lessons learned): spec `docs/specs/6f-incident-followup.md` v1.0 (48 ACs; §11 earlier-spec changes applied; contract v0.12.0)
 - Phase 6f step = Design done (contract v0.12.0; 11 p6f specs green on a fresh seed; screenshots `docs/screenshots/phase-6f`; design pass `docs/design/phase-6f-findings.md`)
 - Phase 6g — Contractor HSE scorecard + reports export pack: spec `docs/specs/6g-scorecard-reports.md` v1.0 (56 ACs; §11 earlier-spec changes applied; contract v0.13.0)
-- Phase 6g step = Frontend done (contract v0.13.0; 21 p6g specs green on a fresh seed; screenshots `docs/screenshots/phase-6g`)
+- Phase 6g step = Design done (contract v0.13.0; 21 p6g specs green on a fresh seed; screenshots `docs/screenshots/phase-6g`; design pass `docs/design/phase-6g-findings.md`)
 
 ## Phase log
 - Phase 0 — Foundation: built, e2e green, design pass done (2026-10-05). The user asked to continue phase after phase without per-phase approval; open questions are collected below for a single review.
@@ -23,6 +23,14 @@
 - Phase 4 — Third-party certification: built, e2e green, design pass done (2026-10-08).
 
 ## Done
+
+### Design pass — Phase 6g contractor scorecard + reports (2026-10-10)
+- Findings `docs/design/phase-6g-findings.md`; before / after EN/AR, desktop and 390 px in `docs/screenshots/phase-6g/design/` (`screenshots-p6g.spec.ts`, `SHOT_SUFFIX`).
+- Caps explained: "Lowered from band B to C by" with each cap's meaning and records on the card; caps with their meaning in the register and performance summary. Comment window as a state band (open with countdown, closed awaiting Final, Final, not issued).
+- Reps: a note that only their own contractors are listed and ranks are out of N (others never named); above / below the project median in words on the card.
+- Packs: Draft / In review "not issued" band, Issued band with date and issuer, a "PROVISIONAL SCORECARDS" banner and stamped section watermarks; Issue / Re-issue and the watch-list decide / suspension / close moved to page-end bands; watch-list level ladder.
+- Month names instead of `yyyy-mm` (fixes "09-2026" in Arabic); compact pillar and metric tables on phones (card 13,400 → 5,000 px at 390 px); delivery log attachments wrap; export log with dataset names and icons; performance summary linked from the contractor page (HSE Manager).
+- Strings `scripts/i18n/p6-scorecarddesign.py` (`scDesign.*`, new keys only). p6g specs (21) green on a fresh seed.
 
 ### Frontend — Phase 6g contractor scorecard + reports export pack (contract v0.13.0)
 - API types regenerated from contract v0.13.0, with EN/AR labels for every new enum value, the 27 new error codes, the 9 audit entities, the CA source `scorecard` and the new attachment / expiring kinds.
@@ -994,6 +1002,13 @@ L items from the Phase 4 design pass (details in `docs/design/phase-4-findings.m
 - **P16. Certificate line on the deployment page.** The equipment-on-project page (the one an engineer opens for "the crane on my site") shows usable / not usable but not the certificate number, TPI, SWL and limitations. Needs `current_line` on `EquipmentDeploymentRead`.
 - **P17. Tag board field display.** A "problems only" toggle and a kiosk / TV mode for site offices (large tiles, problems first per zone, auto-refresh, no navigation chrome).
 - **P1 / P2 also apply to Phase 4.** Two-calendar dates make certificate rows 4–5 lines; equipment, scaffold and personnel-card actions come before the state on phones.
+
+L items from the Phase 6g design pass (details in `docs/design/phase-6g-findings.md`):
+- **P48. Compact ranking rows on phones** (rank · contractor · score · grade, expand for caps, trend, coverage).
+- **P49. Comment-window and rank-scope fields from the server** (`comment_window`, `can_remark` on the card; `scoped` on the ranking) instead of the clock comparison and role test.
+- **P50. Confirm before activating a scoring profile** (immediate today; name the effective month and the version replaced).
+- **P51. Confirm before withdrawing a dispute.**
+- Backend asks: Arabic labels for the wrapped Phase 0–5 export datasets (today the code); "Contractor scorecards" appears twice in the MCR sections (6 and 21).
 
 L items from the Phase 6f design pass (details in `docs/design/phase-6f-findings.md`):
 - **P44. Fold finished requirements on phones** ("Done (n)" one-line rows under the open ones) on the register and the incident panel.
