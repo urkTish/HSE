@@ -9,7 +9,7 @@ const badgeVariants = cva("inline-flex items-center gap-1 whitespace-nowrap roun
       warning: "border-warning/25 bg-warning-bg text-warning",
       danger: "border-danger/25 bg-danger-bg text-danger",
       info: "border-info/25 bg-info-bg text-info",
-      neutral: "border-neutral/25 bg-neutral-bg text-neutral",
+      neutral: "border-border-strong bg-neutral-bg text-neutral",
     },
   },
   defaultVariants: { tone: "neutral" },

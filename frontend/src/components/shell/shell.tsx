@@ -21,10 +21,10 @@ function Brand({ onNavigate }: { onNavigate?: () => void }) {
       onClick={onNavigate}
       className="flex min-h-touch items-center gap-2.5 rounded-md px-2 font-semibold leading-tight text-sidebar-foreground"
     >
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-active">
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-active shadow-[inset_0_1px_0_rgb(255_255_255/0.08)] ring-1 ring-sidebar-indicator/30">
         <ShieldCheck aria-hidden className="size-5 text-sidebar-indicator" />
       </span>
-      <span>{t("appName")}</span>
+      <span className="tracking-[0.01em]">{t("appName")}</span>
     </Link>
   );
 }
@@ -42,7 +42,7 @@ export function Shell({ children }: { children: ReactNode }) {
       </a>
       <FieldOfflineSync />
       <aside
-        className="sticky top-0 hidden h-dvh w-(--sidebar-width) shrink-0 print:!hidden flex-col overflow-y-auto border-e border-white/5 bg-sidebar lg:flex"
+        className="sticky top-0 hidden h-dvh w-(--sidebar-width) shrink-0 print:!hidden flex-col overflow-y-auto border-e border-sidebar-border bg-sidebar bg-[linear-gradient(180deg,rgb(255_255_255/0.025),transparent_40%)] lg:flex"
         data-testid="sidebar"
       >
         <div className="px-3 pt-3 pb-1">
@@ -74,7 +74,7 @@ export function Shell({ children }: { children: ReactNode }) {
       </D.Root>
       <div className="flex min-w-0 flex-1 flex-col">
         <header
-          className="sticky top-0 z-30 flex flex-wrap print:!hidden items-center gap-x-1 gap-y-0 border-b bg-surface/95 px-2 shadow-xs backdrop-blur supports-[backdrop-filter]:bg-surface/85 sm:flex-nowrap sm:gap-2 sm:px-4"
+          className="sticky top-0 z-30 flex flex-wrap print:!hidden items-center gap-x-1 gap-y-0 border-b border-border bg-surface/95 px-2 shadow-xs backdrop-blur supports-[backdrop-filter]:bg-surface/85 sm:flex-nowrap sm:gap-2 sm:px-4"
           data-testid="topbar"
         >
           <div className="flex h-(--topbar-h) items-center lg:hidden">

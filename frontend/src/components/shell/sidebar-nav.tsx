@@ -115,7 +115,7 @@ function NavLink({ item, onNavigate }: { item: Item; onNavigate?: () => void }) 
         "relative flex min-h-touch items-center gap-3 rounded-md px-3 text-sm text-sidebar-foreground/85 transition-colors hover:bg-sidebar-active hover:text-sidebar-foreground",
         "focus-visible:outline-sidebar-indicator",
         active &&
-          "bg-sidebar-active font-semibold text-sidebar-foreground before:absolute before:inset-y-2 before:start-0 before:w-1 before:rounded-full before:bg-sidebar-indicator",
+          "bg-sidebar-active font-semibold text-sidebar-foreground shadow-[inset_0_1px_0_rgb(255_255_255/0.05)] before:absolute before:inset-y-2 before:start-0 before:w-1 before:rounded-full before:bg-sidebar-indicator",
       )}
     >
       {/* Icons are not directional, so they are not mirrored in RTL. */}
@@ -365,7 +365,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
       </ul>
       {project ? (
         <div>
-          <p className="flex items-center gap-1.5 border-t border-white/10 px-3 pt-4 pb-2 text-xs font-medium text-sidebar-muted">
+          <p className="flex items-center gap-1.5 border-t border-sidebar-border px-3 pt-4 pb-2 text-xs font-medium text-sidebar-muted">
             <span>{t("currentProject")}</span>
             <span aria-hidden>·</span>
             <span className="ltr rounded bg-sidebar-active px-1.5 py-0.5 font-semibold text-sidebar-foreground">{project.code}</span>
@@ -535,7 +535,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           </ul>
         </div>
       ) : null}
-      <ul className="mt-auto flex flex-col gap-1 border-t border-white/10 pt-3">
+      <ul className="mt-auto flex flex-col gap-1 border-t border-sidebar-border pt-3">
         <li>
           <NavLink item={{ href: "/profile", label: t("profile"), Icon: UserRound, testId: "nav-profile" }} onNavigate={onNavigate} />
         </li>

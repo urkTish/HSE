@@ -9,6 +9,11 @@
  *   body text ≥ 15:1, secondary text ≥ 6.5:1, status text on its tint ≥ 5.5:1 (sunlight-readable, above AA),
  *   form-control borders and focus ring ≥ 3:1 against the surface (WCAG 1.4.11).
  *
+ * Restyle (D-238, HSE Manager request "make it green… platinum… 5 star"): the brand is a deep emerald
+ * (#0c574e, teal-leaning, hue ≈171°) and neutrals are a cool platinum family. The safety "go" green is a
+ * different, yellower signal green (#1b7a2b solid, #216a1a text) so a GRANTED / Green-tag / Active state is
+ * never confused with a brand button or the navigation (ΔE2000 ≥ 19 between them); it always keeps its icon.
+ *
  * Safety semantics (use sparingly; always with an icon + text, never colour alone):
  *   danger  = genuinely critical only (expired, blacklisted, LTI, stop-work)
  *   warning = expiring / at risk / suspended
@@ -42,7 +47,7 @@
   --space-card: 1.25rem;
 
   /* Radius */
-  --radius: 0.5rem;
+  --radius: 0.625rem; /* 10px: inputs/buttons use radius-md (8px), cards radius-xl (14px), pills full */
 
   /* Touch: every interactive control is at least 44px on touch screens (gloves, sunlight, one hand). */
   --touch-target: 2.75rem;
@@ -50,15 +55,21 @@
   --control-h-sm: 2.75rem; /* compact buttons */
 
   /* Elevation */
-  --shadow-1: 0 1px 2px rgb(15 27 45 / 0.06), 0 1px 1px rgb(15 27 45 / 0.04);
-  --shadow-2: 0 4px 12px rgb(15 27 45 / 0.08), 0 1px 3px rgb(15 27 45 / 0.06);
-  --shadow-3: 0 12px 32px rgb(15 27 45 / 0.16), 0 2px 6px rgb(15 27 45 / 0.08);
+  /* Elevation: soft, layered, graphite-tinted (never pure black), so cards lift off the platinum plane. */
+  --shadow-1: 0 1px 2px rgb(16 32 29 / 0.05), 0 1px 3px rgb(16 32 29 / 0.06);
+  --shadow-2: 0 2px 4px rgb(16 32 29 / 0.04), 0 6px 16px rgb(16 32 29 / 0.08);
+  --shadow-3: 0 18px 40px rgb(16 32 29 / 0.16), 0 4px 10px rgb(16 32 29 / 0.08);
+  /* Buttons: a hairline highlight on top and a crisp contact shadow below; pressed = inset. */
+  --shadow-btn: 0 1px 2px rgb(6 40 34 / 0.22), inset 0 1px 0 rgb(255 255 255 / 0.14);
+  --shadow-btn-pressed: inset 0 2px 4px rgb(0 0 0 / 0.22);
+  --shadow-control: 0 1px 2px rgb(16 32 29 / 0.05);
+  --ease: cubic-bezier(0.2, 0, 0, 1);
 
   /* Gate verdict panels (Phase 2): solid fills, identical in light and dark so a verdict looks the same on
-     every gate device, and readable in direct sun. Text contrast on each fill (checked): granted 7.1:1,
-     granted-with-note 10.0:1 (near-black on amber), denied 6.6:1, pending 8.1:1, neutral 7.6:1.
+     every gate device, and readable in direct sun. Text contrast on each fill (checked): granted 5.4:1 (AA; the
+     verdict word is ≥ 24px bold, AAA for large text), granted-with-note 10.0:1 (near-black on amber), denied 6.6:1, pending 8.1:1, neutral 7.0:1.
      Colour is never alone: every verdict also has its own icon and word. */
-  --verdict-granted: #166534;
+  --verdict-granted: #1b7a2b; /* signal green, not the brand emerald */
   --verdict-granted-fg: #ffffff;
   --verdict-note: #f5b000;
   --verdict-note-fg: #111111;
@@ -66,20 +77,20 @@
   --verdict-denied-fg: #ffffff;
   --verdict-pending: #1d4f91;
   --verdict-pending-fg: #ffffff;
-  --verdict-neutral: #475569;
+  --verdict-neutral: #4f5b5d;
   --verdict-neutral-fg: #ffffff;
 
   /* Scaffold tag colours (Phase 4): the physical tag hung on the scaffold, so solid fills that are identical in
-     light and dark (like the verdicts) and readable in direct sun. Text on each fill (checked): green 7.1:1,
-     yellow 10.0:1 (near-black), red 6.6:1, none 7.6:1. Never colour alone: every tag chip carries an icon and a
+     light and dark (like the verdicts) and readable in direct sun. Text on each fill (checked): green 5.4:1,
+     yellow 10.0:1 (near-black), red 6.6:1, none 7.0:1. Never colour alone: every tag chip carries an icon and a
      word ("Green — safe to use"). Use them only for scaffold tags. */
-  --tag-green: #166534;
+  --tag-green: #1b7a2b;
   --tag-green-fg: #ffffff;
   --tag-yellow: #f5b000;
   --tag-yellow-fg: #111111;
   --tag-red: #b42318;
   --tag-red-fg: #ffffff;
-  --tag-none: #475569;
+  --tag-none: #4f5b5d;
   --tag-none-fg: #ffffff;
 
   /* Layout */
@@ -99,39 +110,44 @@
 :root {
   color-scheme: light;
 
-  --background: #f4f6f9; /* page plane */
-  --foreground: #0f1b2d;
+  --background: #f3f5f6; /* platinum page plane */
+  --foreground: #101a18; /* graphite: 16.2:1 on page */
   --surface: #ffffff; /* cards, tables, inputs */
   --surface-foreground: var(--foreground);
-  --muted: #eceff4; /* table header, skeleton, subtle fills */
-  --muted-foreground: #475569; /* secondary text: 7.0:1 on page */
-  --border: #d6dce5; /* decorative dividers */
-  --input: #7d8899; /* form-control borders: 3.6:1 */
-  --ring: #2563c9;
+  --surface-sheen: linear-gradient(180deg, #ffffff 0%, #f7f9f9 100%); /* outline/secondary buttons, raised chips */
+  --muted: #ecf0f1; /* table header, skeleton, subtle fills */
+  --muted-foreground: #4b5856; /* secondary text: 6.8:1 on page, 6.5:1 on muted */
+  --border: #d9dfe1; /* decorative dividers (platinum) */
+  --border-strong: #c3cbce; /* outline buttons, raised edges */
+  --input: #7d898b; /* form-control borders: 3.6:1 */
+  --ring: #0f7566; /* focus ring: 5.6:1 on surface */
 
-  --primary: #1d4f91;
+  --primary: #0c574e; /* brand emerald: white text 8.4:1 */
   --primary-foreground: #ffffff;
-  --primary-hover: #173f75;
-  --secondary: #e5ecf6;
-  --secondary-foreground: #0f1b2d;
-  --accent: #e5ecf6; /* hover wash */
-  --accent-foreground: #0f1b2d;
+  --primary-hover: #094740;
+  --primary-active: #073a34;
+  --primary-sheen: linear-gradient(180deg, #11655a 0%, #0c574e 100%);
+  --primary-soft: #e4efec; /* selected rows / brand wash, used sparingly */
+  --secondary: #eef2f3; /* platinum */
+  --secondary-foreground: #101a18;
+  --accent: #edf1f2; /* hover wash (platinum, not green, so it never reads as a status) */
+  --accent-foreground: #101a18;
   --destructive: #b42318;
   --destructive-foreground: #ffffff;
   --destructive-hover: #921c13;
-  --overlay: rgb(8 13 23 / 0.5);
+  --overlay: rgb(6 14 12 / 0.5);
 
   /* Status text + tint pairs */
-  --status-success: #166534;
-  --status-success-bg: #e3f4e8;
+  --status-success: #216a1a; /* signal green text: 5.8:1 on its tint; ΔE 20 from the brand */
+  --status-success-bg: #e6f3dd;
   --status-warning: #8a4600;
   --status-warning-bg: #fdf1d6;
   --status-danger: #b42318;
   --status-danger-bg: #fde7e5;
   --status-info: #1d4f91;
   --status-info-bg: #e5eef9;
-  --status-neutral: #475569;
-  --status-neutral-bg: #eceff4;
+  --status-neutral: #4b5856;
+  --status-neutral-bg: #edf0f1;
 
   /* Safety solids for icons, dots and chart status marks (Phase 1+); pair with icon + label. */
   --safety-ok: #0ca30c;
@@ -150,46 +166,53 @@
   --series-7: #4a3aa7; /* violet */
   --series-8: #e34948; /* red */
   /* Neutral series for a catch-all category only (C13 "General / cold work"); deliberately grey, never a 9th hue. */
-  --series-neutral: #8f99a8;
+  --series-neutral: #8f9a9c;
   /* C17 defect categories (Phase 4): ordinal, one orange hue, darkest = most severe (A = stop use).
      Validated as an ordinal ramp (C→A) on the light surface: monotone lightness, light end 2.28:1. */
   --series-defect-a: #8a2f0c;
   --series-defect-b: #d95926;
   --series-defect-c: #f0956c;
-  --chart-grid: #e1e4ea;
-  --chart-axis: #b8c0cc;
+  --chart-grid: #e3e7e9;
+  --chart-axis: #b9c2c4;
 
-  --sidebar: #0e1d33;
-  --sidebar-foreground: #e8eef7;
-  --sidebar-muted: #a3b3c9;
-  --sidebar-active: #1f3a61;
-  --sidebar-indicator: #7ab0ff;
+  /* Sidebar: deep emerald-black with platinum type and a soft jade indicator. */
+  --sidebar: #0b231e;
+  --sidebar-foreground: #e6ecea; /* 13.8:1 */
+  --sidebar-muted: #a7b9b4; /* 8.0:1 */
+  --sidebar-active: #15392f;
+  --sidebar-indicator: #9fd9cc;
+  --sidebar-border: rgb(255 255 255 / 0.08);
 }
 
 /* ---------- Dark theme ---------- */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --background: #0b111c;
-    --foreground: #e8edf5;
-    --surface: #131b2a;
-    --muted: #1b2537;
-    --muted-foreground: #a9b4c6;
-    --border: #2a364b;
-    --input: #6b7a92;
-    --ring: #7ab0ff;
-    --primary: #7ab0ff;
-    --primary-foreground: #0b111c;
-    --primary-hover: #a3c8ff;
-    --secondary: #1f2b40;
-    --secondary-foreground: #e8edf5;
-    --accent: #1f2b40;
-    --accent-foreground: #e8edf5;
+    --background: #0a1110;
+    --foreground: #e6edeb;
+    --surface: #111a19;
+    --surface-sheen: linear-gradient(180deg, #172221 0%, #111a19 100%);
+    --muted: #182321;
+    --muted-foreground: #a6b5b1;
+    --border: #283532;
+    --border-strong: #3a4946;
+    --input: #6c7c78;
+    --ring: #5cc9b5;
+    --primary: #5cc3b3;
+    --primary-foreground: #04201b;
+    --primary-hover: #7fd2c4;
+    --primary-active: #49ab9c;
+    --primary-sheen: linear-gradient(180deg, #6acabb 0%, #5cc3b3 100%);
+    --primary-soft: #14302b;
+    --secondary: #1c2826;
+    --secondary-foreground: #e6edeb;
+    --accent: #1d2a28;
+    --accent-foreground: #e6edeb;
     --destructive: #e5534b;
-    --destructive-foreground: #0b111c;
+    --destructive-foreground: #0a1110;
     --destructive-hover: #f07a73;
     --overlay: rgb(0 0 0 / 0.6);
-    --status-success: #6fd28d;
+    --status-success: #7fd77a;
     --status-success-bg: #11291b;
     --status-warning: #f3c260;
     --status-warning-bg: #2d220b;
@@ -197,8 +220,8 @@
     --status-danger-bg: #3a1513;
     --status-info: #8fbcff;
     --status-info-bg: #132540;
-    --status-neutral: #b5c0d1;
-    --status-neutral-bg: #1e293b;
+    --status-neutral: #b3c0bd;
+    --status-neutral-bg: #1d2927;
     --series-1: #3987e5;
     --series-2: #d95926;
     --series-3: #199e70;
@@ -207,44 +230,51 @@
     --series-6: #008300;
     --series-7: #9085e9;
     --series-8: #e66767;
-    --series-neutral: #6b7686;
+    --series-neutral: #6c7876;
     /* Dark: the ramp runs outward from the dark surface, so A (most severe) is the brightest; C at 2.79:1. */
     --series-defect-a: #f6a47f;
     --series-defect-b: #dc6232;
     --series-defect-c: #a34418;
-    --chart-grid: #263247;
-    --chart-axis: #3a4860;
-    --sidebar: #080d17;
-    --sidebar-foreground: #e8edf5;
-    --sidebar-muted: #93a3ba;
-    --sidebar-active: #1a2a45;
+    --chart-grid: #243230;
+    --chart-axis: #3a4a47;
+    --sidebar: #060f0d;
+    --sidebar-foreground: #e6edeb;
+    --sidebar-muted: #93a9a3;
+    --sidebar-active: #12302a;
     --shadow-1: 0 1px 2px rgb(0 0 0 / 0.4);
     --shadow-2: 0 4px 12px rgb(0 0 0 / 0.45);
     --shadow-3: 0 12px 32px rgb(0 0 0 / 0.55);
+    --shadow-btn: 0 1px 2px rgb(0 0 0 / 0.4), inset 0 1px 0 rgb(255 255 255 / 0.18);
+    --shadow-control: 0 1px 2px rgb(0 0 0 / 0.3);
   }
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --background: #0b111c;
-  --foreground: #e8edf5;
-  --surface: #131b2a;
-  --muted: #1b2537;
-  --muted-foreground: #a9b4c6;
-  --border: #2a364b;
-  --input: #6b7a92;
-  --ring: #7ab0ff;
-  --primary: #7ab0ff;
-  --primary-foreground: #0b111c;
-  --primary-hover: #a3c8ff;
-  --secondary: #1f2b40;
-  --secondary-foreground: #e8edf5;
-  --accent: #1f2b40;
-  --accent-foreground: #e8edf5;
+  --background: #0a1110;
+  --foreground: #e6edeb;
+  --surface: #111a19;
+    --surface-sheen: linear-gradient(180deg, #172221 0%, #111a19 100%);
+  --muted: #182321;
+  --muted-foreground: #a6b5b1;
+  --border: #283532;
+    --border-strong: #3a4946;
+  --input: #6c7c78;
+  --ring: #5cc9b5;
+  --primary: #5cc3b3;
+  --primary-foreground: #04201b;
+  --primary-hover: #7fd2c4;
+    --primary-active: #49ab9c;
+    --primary-sheen: linear-gradient(180deg, #6acabb 0%, #5cc3b3 100%);
+    --primary-soft: #14302b;
+  --secondary: #1c2826;
+  --secondary-foreground: #e6edeb;
+  --accent: #1d2a28;
+  --accent-foreground: #e6edeb;
   --destructive: #e5534b;
-  --destructive-foreground: #0b111c;
+  --destructive-foreground: #0a1110;
   --destructive-hover: #f07a73;
   --overlay: rgb(0 0 0 / 0.6);
-  --status-success: #6fd28d;
+  --status-success: #7fd77a;
   --status-success-bg: #11291b;
   --status-warning: #f3c260;
   --status-warning-bg: #2d220b;
@@ -252,8 +282,8 @@
   --status-danger-bg: #3a1513;
   --status-info: #8fbcff;
   --status-info-bg: #132540;
-  --status-neutral: #b5c0d1;
-  --status-neutral-bg: #1e293b;
+  --status-neutral: #b3c0bd;
+  --status-neutral-bg: #1d2927;
   --series-1: #3987e5;
   --series-2: #d95926;
   --series-3: #199e70;
@@ -262,17 +292,19 @@
   --series-6: #008300;
   --series-7: #9085e9;
   --series-8: #e66767;
-  --series-neutral: #6b7686;
+  --series-neutral: #6c7876;
   --series-defect-a: #f6a47f;
   --series-defect-b: #dc6232;
   --series-defect-c: #a34418;
-  --chart-grid: #263247;
-  --chart-axis: #3a4860;
-  --sidebar: #080d17;
-  --sidebar-foreground: #e8edf5;
-  --sidebar-muted: #93a3ba;
-  --sidebar-active: #1a2a45;
+  --chart-grid: #243230;
+  --chart-axis: #3a4a47;
+  --sidebar: #060f0d;
+  --sidebar-foreground: #e6edeb;
+  --sidebar-muted: #93a9a3;
+  --sidebar-active: #12302a;
   --shadow-1: 0 1px 2px rgb(0 0 0 / 0.4);
   --shadow-2: 0 4px 12px rgb(0 0 0 / 0.45);
   --shadow-3: 0 12px 32px rgb(0 0 0 / 0.55);
+    --shadow-btn: 0 1px 2px rgb(0 0 0 / 0.4), inset 0 1px 0 rgb(255 255 255 / 0.18);
+    --shadow-control: 0 1px 2px rgb(0 0 0 / 0.3);
 }

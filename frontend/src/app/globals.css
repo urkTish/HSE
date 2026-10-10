@@ -11,12 +11,15 @@
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-overlay: var(--overlay);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
+  --color-primary-soft: var(--primary-soft);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-accent: var(--accent);
@@ -70,6 +73,7 @@
   --color-sidebar-muted: var(--sidebar-muted);
   --color-sidebar-active: var(--sidebar-active);
   --color-sidebar-indicator: var(--sidebar-indicator);
+  --color-sidebar-border: var(--sidebar-border);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -78,6 +82,9 @@
   --shadow-sm: var(--shadow-1);
   --shadow-md: var(--shadow-2);
   --shadow-lg: var(--shadow-3);
+  --shadow-btn: var(--shadow-btn);
+  --shadow-btn-pressed: var(--shadow-btn-pressed);
+  --shadow-control: var(--shadow-control);
   --spacing-touch: var(--touch-target);
   --spacing-control: var(--control-h);
   --spacing-control-sm: var(--control-h-sm);
@@ -127,12 +134,12 @@
 /* Paper surfaces (printed card, sticker, permit) keep light tokens on a dark screen, so what you see is what prints. */
 .paper {
   color-scheme: light;
-  --foreground: #0f1b2d;
+  --foreground: #101a18;
   --surface: #ffffff;
-  --muted: #eceff4;
-  --muted-foreground: #475569;
-  --border: #d6dce5;
-  --input: #7d8899;
+  --muted: #ecf0f1;
+  --muted-foreground: #4b5856;
+  --border: #d9dfe1;
+  --input: #7d898b;
 }
 
 /* Codes, emails, phone and CR numbers stay LTR inside RTL text (rule 42). */
@@ -218,17 +225,17 @@
       content: counter(page) " / " counter(pages);
       direction: ltr; /* "1 / 2", not "2 / 1", on Arabic pages */
       font-size: 8pt;
-      color: #475569;
+      color: #4b5856;
     }
     @bottom-left {
       content: var(--print-footer-start, "");
       font-size: 7.5pt;
-      color: #475569;
+      color: #4b5856;
     }
     @bottom-right {
       content: var(--print-footer-end, "");
       font-size: 7.5pt;
-      color: #475569;
+      color: #4b5856;
       direction: rtl;
     }
   }
@@ -236,13 +243,13 @@
   :root[data-theme] {
     color-scheme: light;
     --background: #ffffff;
-    --foreground: #0f1b2d;
+    --foreground: #101a18;
     --surface: #ffffff;
-    --muted: #eef1f5;
-    --muted-foreground: #475569;
-    --border: #d6dce5;
-    --input: #7d8899;
-    --primary: #1d4f91;
+    --muted: #eef1f2;
+    --muted-foreground: #4b5856;
+    --border: #d9dfe1;
+    --input: #7d898b;
+    --primary: #0c574e;
     --primary-foreground: #ffffff;
     --series-1: #2a78d6;
     --series-2: #eb6834;
@@ -252,10 +259,10 @@
     --series-6: #008300;
     --series-7: #4a3aa7;
     --series-8: #e34948;
-    --series-neutral: #8f99a8;
-    --chart-grid: #e1e4ea;
-    --chart-axis: #b8c0cc;
-    --status-success: #166534;
+    --series-neutral: #8f9a9c;
+    --chart-grid: #e3e7e9;
+    --chart-axis: #b9c2c4;
+    --status-success: #216a1a;
     --status-warning: #8a4600;
     --status-danger: #b42318;
     --status-info: #1d4f91;
