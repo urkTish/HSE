@@ -140,6 +140,6 @@ export function useEffectivenessChecks(pid: string, q: QueryOf<"list_effectivene
   });
 }
 
-export function useFuKpis(q: QueryOf<"get_incident_followup_kpis">, o: Opt = {}) {
+export function useFuKpis(q: QueryOf<"get_followup_kpis">, o: Opt = {}) {
   return useQuery({ queryKey: fuk.kpis(q), queryFn: () => unwrap(api.GET("/api/v1/kpi/incident-followup", { params: { query: q } })), enabled: o.enabled ?? true, ...list });
 }
