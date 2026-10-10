@@ -632,7 +632,7 @@ function AckList({ items, titles }: { items: S["FuDistributionRead"][]; titles?:
   return (
     <ul className="flex flex-col gap-3" data-testid="dist-items">
       {items.map((d) => (
-        <li key={d.id} className="flex flex-col gap-2 rounded-md border p-3" data-testid="dist-item" data-engagement={d.engagement_code ?? ""} data-status={d.status}>
+        <li key={d.id} className="flex flex-col gap-2 rounded-md border p-3" data-testid="dist-item" data-lesson={d.lesson_no} data-engagement={d.engagement_code ?? ""} data-status={d.status}>
           <div className="flex flex-wrap items-start justify-between gap-2">
             <span className="flex flex-col gap-0.5">
               {titles ? (

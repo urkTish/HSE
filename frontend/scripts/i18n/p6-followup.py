@@ -366,6 +366,7 @@ P["fu"] = {
     "aggregatesHint": ["Totals only. Open the registers for individual records.", "إجماليات فقط. افتح السجلات لرؤية السجلات الفردية."],
     "noBreakdown": ["No data to break down for this period.", "لا توجد بيانات للتفصيل في هذه الفترة."],
     "key": ["Item", "البند"],
+    "noteK127": ["K-127 leaves out waived and not-required items, and items not yet due.", "يستبعد K-127 البنود المعفاة وغير المطلوبة والبنود التي لم يحن موعدها بعد."],
   },
   "settings": {
     "title": ["Notification rules and settings", "قواعد الإخطار والإعدادات"],

@@ -32,6 +32,8 @@ export function sortRequirements(items: Req[]): Req[] {
 /** Requirement cards (body · stage, due time and countdown, submission, pack, actions). Phone-first: one card per requirement. */
 export function RequirementList({ items, projectId, showIncident }: { items: Req[]; projectId: string; showIncident?: boolean }) {
   const [dialog, setDialog] = useState<Dialog>(null);
+  // Dialogs read the latest copy of the requirement (a pack approved meanwhile, a refetch after navigation).
+  const fresh = (r: Req) => items.find((x) => x.id === r.id) ?? r;
   return (
     <>
       <ul className="flex flex-col gap-3" data-testid="fu-requirements">
@@ -39,9 +41,9 @@ export function RequirementList({ items, projectId, showIncident }: { items: Req
           <RequirementCard key={r.id} r={r} projectId={projectId} showIncident={showIncident} onDialog={setDialog} />
         ))}
       </ul>
-      {dialog?.kind === "pack" ? <GeneratePackDialog req={dialog.req} onClose={() => setDialog(null)} /> : null}
-      {dialog?.kind === "submit" ? <SubmissionDialog req={dialog.req} onClose={() => setDialog(null)} /> : null}
-      {dialog?.kind === "waive" ? <WaiveDialog req={dialog.req} onClose={() => setDialog(null)} /> : null}
+      {dialog?.kind === "pack" ? <GeneratePackDialog req={fresh(dialog.req)} onClose={() => setDialog(null)} /> : null}
+      {dialog?.kind === "submit" ? <SubmissionDialog key={fresh(dialog.req).pack_status ?? "none"} req={fresh(dialog.req)} onClose={() => setDialog(null)} /> : null}
+      {dialog?.kind === "waive" ? <WaiveDialog req={fresh(dialog.req)} onClose={() => setDialog(null)} /> : null}
       {dialog?.kind === "ack" ? <AckDialog sub={dialog.sub} projectId={projectId} onClose={() => setDialog(null)} /> : null}
       {dialog?.kind === "void" ? <VoidSubmissionDialog sub={dialog.sub} onClose={() => setDialog(null)} /> : null}
     </>

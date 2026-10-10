@@ -266,8 +266,8 @@ function Kpis({ project }: { project: Project }) {
           {d.notes.length ? (
             <ul className="flex flex-col gap-1 rounded-md border bg-muted/30 px-4 py-2 text-sm" data-testid="fk-notes">
               {d.notes.map((n) => (
-                <li key={n}>
-                  <bdi>{n}</bdi>
+                <li key={n} data-testid="fk-note">
+                  {n.startsWith("K-127 excludes waived") ? t("noteK127") : <bdi>{n}</bdi>}
                 </li>
               ))}
             </ul>

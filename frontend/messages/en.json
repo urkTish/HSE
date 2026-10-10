@@ -13429,7 +13429,8 @@
       "breakdown": "Breakdown by {by}",
       "aggregatesHint": "Totals only. Open the registers for individual records.",
       "noBreakdown": "No data to break down for this period.",
-      "key": "Item"
+      "key": "Item",
+      "noteK127": "K-127 leaves out waived and not-required items, and items not yet due."
     },
     "settings": {
       "title": "Notification rules and settings",
