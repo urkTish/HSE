@@ -1,5 +1,5 @@
 "use client";
-import { AlertTriangle, Lock } from "lucide-react";
+import { AlertTriangle, EyeOff, Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -16,7 +16,6 @@ import { ListToolbar, SelectFilter } from "@/components/common/list-toolbar";
 import { PageHeader } from "@/components/common/page-header";
 import { ProjectGate } from "@/components/common/project-gate";
 import { EmptyState, ErrorState, LoadingState } from "@/components/common/states";
-import { Countdown } from "@/components/followup/common";
 import { Link } from "@/i18n/navigation";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
 import { useScCard, useScCards, useScRanking, useScRefresh } from "@/lib/api/scorecard";
@@ -24,7 +23,7 @@ import { useDisplay } from "@/lib/digits";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
 import { cn } from "@/lib/utils";
-import { Commended, GradeBadge, LineStatusBadge, Num, RankText, ScBadge, ScSubNav, TrendMark, WatchLevelBadge, previousMonth, recentMonths, useScCaps, useScRef } from "./common";
+import { CapExplain, CapList, CommentWindow, Commended, GradeBadge, LineStatusBadge, MedianPosition, Num, RankText, ScBadge, ScSubNav, TrendMark, WatchLevelBadge, previousMonth, recentMonths, useMonthName, useScCaps, useScRef } from "./common";
 import { RemarkList, NewRemarkButton } from "./remarks";
 
 type S = Schemas;
@@ -41,10 +40,12 @@ export function ScorecardsPage() {
 
 function Register({ project }: { project: Project }) {
   const t = useTranslations("sc.register");
+  const td = useTranslations("scDesign");
   const tc = useTranslations("common");
   const te = useTranslations("enums");
   const caps = useScCaps(project.id);
   const show = useDisplay(project.id);
+  const monthName = useMonthName(project.id);
   const s = useSearchState();
   const month = s.get("month") || previousMonth();
   const grade = (s.get("grade") as S["ScGrade"] | null) ?? "";
@@ -72,7 +73,7 @@ function Register({ project }: { project: Project }) {
       />
       <ScSubNav />
       <ListToolbar>
-        <SelectFilter id="sc-month" label={t("month")} value={month} onChange={(v) => s.set({ month: v || null })} options={recentMonths(15).map((m) => ({ value: m, label: m }))} allLabel={previousMonth()} />
+        <SelectFilter id="sc-month" label={t("month")} value={month} onChange={(v) => s.set({ month: v || null })} options={recentMonths(15).map((m) => ({ value: m, label: monthName(m) }))} allLabel={monthName(previousMonth())} />
         <SelectFilter id="sc-status" label={t("status")} value={status} onChange={(v) => s.set({ status: v || null })} options={STATUSES.map((x) => ({ value: x, label: te(`scCardStatus.${x}`) }))} />
         <SelectFilter id="sc-grade" label={t("grade")} value={grade} onChange={(v) => s.set({ grade: v || null })} options={GRADES.map((g) => ({ value: g, label: `${g} · ${te(`scGrade.${g}`)}` }))} />
         <SelectFilter id="sc-scope" label={t("scope")} value={scope} onChange={(v) => s.set({ scope: v || null })} options={(["own", "tree"] as const).map((x) => ({ value: x, label: te(`scScope.${x}`) }))} />
@@ -81,7 +82,7 @@ function Register({ project }: { project: Project }) {
       <section aria-labelledby="sc-rank-h" className="mb-6">
         <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
           <h2 id="sc-rank-h" className="text-base font-semibold">
-            {t("ranking", { month })}
+            {t("ranking", { month: monthName(month) })}
           </h2>
           {r ? (
             <p className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
@@ -103,6 +104,12 @@ function Register({ project }: { project: Project }) {
         ) : (
           <EmptyState message={t("noCards")} />
         )}
+        {caps.rep && r && r.rows.length ? (
+          <p className="mt-2 flex items-start gap-1.5 text-sm" data-testid="sc-rep-scope">
+            <EyeOff aria-hidden className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+            {td("repScope", { n: show(String(r.ranked_count)) })}
+          </p>
+        ) : null}
         {r?.status === "provisional" || r?.status === "issued" ? <p className="mt-2 text-xs text-muted-foreground">{t(r.status === "issued" ? "issuedHint" : "provisionalHint")}</p> : null}
       </section>
 
@@ -133,7 +140,7 @@ function Register({ project }: { project: Project }) {
                   <TD label={t("no")}>
                     {c.id ? (
                       <Link href={`/scorecards/${c.id}`} className="text-primary hover:underline">
-                        <Code>{c.scorecard_no}</Code>
+                        <Code className="whitespace-normal [overflow-wrap:anywhere]">{c.scorecard_no}</Code>
                       </Link>
                     ) : (
                       <Code>{c.scorecard_no}</Code>
@@ -162,7 +169,16 @@ function Register({ project }: { project: Project }) {
                   <TD label={t("grade")}>
                     <GradeBadge grade={c.grade} band={c.band_grade} />
                   </TD>
-                  <TD label={t("disputes")}>{c.open_disputes ? <span className="font-medium text-warning">{show(String(c.open_disputes))}</span> : "—"}</TD>
+                  <TD label={t("disputes")}>
+                    {c.open_disputes ? (
+                      <span className="inline-flex items-center gap-1 font-medium text-warning">
+                        <AlertTriangle aria-hidden className="size-4" />
+                        {show(String(c.open_disputes))}
+                      </span>
+                    ) : (
+                      "—"
+                    )}
+                  </TD>
                 </TR>
               ))}
             </TBody>
@@ -218,7 +234,9 @@ function RankingTable({ rows, show }: { rows: S["ScRankingRow"][]; show: (v: str
             <TD label={t("grade")}>
               <GradeBadge grade={r.grade} band={r.band_grade} />
             </TD>
-            <TD label={t("caps")}>{r.caps.length ? <span className="font-mono text-xs">{r.caps.join(" · ")}</span> : "—"}</TD>
+            <TD label={t("caps")}>
+              <CapList caps={r.caps} />
+            </TD>
             <TD label={t("trend")}>
               <TrendMark label={r.trend_label} show={show} />
             </TD>
@@ -262,6 +280,7 @@ export function ScorecardPage({ id }: { id: string }) {
   const c = q.data;
   const caps = useScCaps(c?.project_id);
   const show = useDisplay(c?.project_id);
+  const monthName = useMonthName(c?.project_id);
   const { dateTime } = useFormatters(c?.project_id);
   const ref = useScRef();
   const [reissue, setReissue] = useState(false);
@@ -278,12 +297,13 @@ export function ScorecardPage({ id }: { id: string }) {
         </p>
         <h1 className="flex flex-wrap items-center gap-2 text-xl font-semibold">
           <Code>{c.engagement_code}</Code>
-          <span>· {c.month}</span>
+          <span>· {monthName(c.month)}</span>
           <ScBadge group="scCardStatus" status={c.status} testId="sc-card-status" />
           <Commended on={c.commended} />
           <WatchLevelBadge level={c.watch_level} />
         </h1>
       </div>
+      <CommentWindow card={c} />
       {c.status === "provisional" ? (
         <Alert tone="warning" data-testid="sc-banner">
           {t("provisionalBanner")}
@@ -302,7 +322,7 @@ export function ScorecardPage({ id }: { id: string }) {
         </Alert>
       ) : null}
 
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label={t("summary")}>
+      <section className="grid grid-flow-row-dense grid-cols-2 gap-3 xl:grid-cols-4" aria-label={t("summary")}>
         <Card>
           <CardContent className="flex flex-col gap-1 p-4">
             <span className="text-xs font-medium text-muted-foreground">{t("score")}</span>
@@ -312,22 +332,11 @@ export function ScorecardPage({ id }: { id: string }) {
             {c.indicative ? <span className="text-xs text-warning">{t("indicative")}</span> : null}
           </CardContent>
         </Card>
-        <Card>
+        <Card className="col-span-2 xl:col-span-1">
           <CardContent className="flex flex-col gap-2 p-4">
             <span className="text-xs font-medium text-muted-foreground">{t("grade")}</span>
             <GradeBadge grade={c.grade} band={c.band_grade} testId="sc-card-grade" />
-            {c.caps_applied.map((cp) => (
-              <span key={cp.cap_code} className="text-xs" data-testid="sc-cap" data-cap={cp.cap_code}>
-                <span className="font-mono font-semibold">{cp.cap_code}</span> {ref.label("caps", cp.cap_code)}
-                {cp.refs.length ? (
-                  <span className="mt-0.5 flex flex-wrap gap-1">
-                    {cp.refs.map((r) => (
-                      <Code key={r}>{r}</Code>
-                    ))}
-                  </span>
-                ) : null}
-              </span>
-            ))}
+            <CapExplain card={c} />
           </CardContent>
         </Card>
         <Card>
@@ -336,9 +345,10 @@ export function ScorecardPage({ id }: { id: string }) {
             <span className="text-2xl font-semibold">
               <RankText r={c.ranking} show={show} />
             </span>
-            <span className="text-xs text-muted-foreground" data-testid="sc-card-median">
+            <span className="text-sm text-muted-foreground" data-testid="sc-card-median">
               {t("median", { v: show(c.ranking.median_display) })}
             </span>
+            <MedianPosition score={c.score} median={c.ranking.median} rep={caps.rep} />
           </CardContent>
         </Card>
         <Card>
@@ -368,16 +378,7 @@ export function ScorecardPage({ id }: { id: string }) {
             <FieldItem label={t("z")}>
               <Num>{show(c.credibility_z_display)}</Num>
             </FieldItem>
-            <FieldItem label={t("commentUntil")}>
-              {c.comment_until ? (
-                <span className="flex flex-col gap-1">
-                  {dateTime(c.comment_until)}
-                  <Countdown due={c.comment_until} open={c.status === "issued"} projectId={c.project_id} />
-                </span>
-              ) : (
-                "—"
-              )}
-            </FieldItem>
+            <FieldItem label={t("commentUntil")}>{c.comment_until ? dateTime(c.comment_until) : "—"}</FieldItem>
             <FieldItem label={t("issuedAt")}>{c.issued_at ? dateTime(c.issued_at) : "—"}</FieldItem>
             <FieldItem label={t("finalisedAt")}>{c.finalised_at ? dateTime(c.finalised_at) : "—"}</FieldItem>
             {c.reissue_reason ? (
@@ -395,30 +396,30 @@ export function ScorecardPage({ id }: { id: string }) {
           <CardTitle className="text-base">{t("pillars")}</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table data-testid="sc-pillars">
+          <Table stack={false} data-testid="sc-pillars">
             <THead>
               <TR>
                 <TH>{t("pillar")}</TH>
+                <TH className="text-end">{t("pillarScore")}</TH>
                 <TH className="text-end">{t("weight")}</TH>
                 <TH className="text-end">{t("effWeight")}</TH>
-                <TH className="text-end">{t("pillarScore")}</TH>
               </TR>
             </THead>
             <TBody>
               {(c.pillars ?? []).map((p) => (
                 <TR key={p.pillar_code} data-testid="sc-pillar" data-pillar={p.pillar_code}>
-                  <TD label={t("pillar")}>
+                  <TD label={t("pillar")} className="min-w-36">
                     <span className="font-mono text-xs">{p.pillar_code}</span> {ref.label("pillars", p.pillar_code)}
                     {p.redistributed ? <span className="block text-xs text-muted-foreground">{t("redistributed")}</span> : null}
+                  </TD>
+                  <TD label={t("pillarScore")} className="text-end font-semibold tabular-nums">
+                    {show(p.score_display)}
                   </TD>
                   <TD label={t("weight")} className="text-end tabular-nums">
                     {show(Number(p.weight).toFixed(1))}
                   </TD>
                   <TD label={t("effWeight")} className="text-end tabular-nums" data-testid="sc-pillar-eff">
                     {show(p.effective_weight_display)}
-                  </TD>
-                  <TD label={t("pillarScore")} className="text-end font-semibold tabular-nums">
-                    {show(p.score_display)}
                   </TD>
                 </TR>
               ))}
@@ -433,31 +434,24 @@ export function ScorecardPage({ id }: { id: string }) {
           <p className="text-xs text-muted-foreground">{t("linesHint")}</p>
         </CardHeader>
         <CardContent>
-          <Table data-testid="sc-lines">
+          <Table stack={false} data-testid="sc-lines">
             <THead>
               <TR>
                 <TH>{t("metric")}</TH>
-                <TH>{t("window")}</TH>
-                <TH className="text-end">{t("value")}</TH>
                 <TH className="text-end">{t("points")}</TH>
                 <TH>{t("lineStatus")}</TH>
+                <TH className="text-end">{t("value")}</TH>
+                <TH>{t("window")}</TH>
                 <TH className="text-end">{t("effWeight")}</TH>
               </TR>
             </THead>
             <TBody>
               {(c.lines ?? []).map((l) => (
                 <TR key={l.metric_code} data-testid="sc-line" data-metric={l.metric_code} className={cn(l.line_status !== "scored" && "text-muted-foreground")}>
-                  <TD label={t("metric")}>
+                  <TD label={t("metric")} className="min-w-44">
                     <span className="font-mono text-xs">{l.metric_code}</span> · <span className="font-mono text-xs">{l.kpi_ref}</span>
                     <span className="block">{ref.label("metrics", l.metric_code)}</span>
                     {l.note ? <span className="block text-xs">{l.note}</span> : null}
-                  </TD>
-                  <TD label={t("window")}>{te(`scWindow.${l.window}`)}</TD>
-                  <TD label={t("value")} className="text-end tabular-nums">
-                    {show(l.value_display)}
-                    {l.window === "r12_rate" && l.own_value !== null && l.project_value !== null ? (
-                      <span className="block text-xs text-muted-foreground">{t("blend", { own: show(Number(l.own_value).toFixed(2)), project: show(Number(l.project_value).toFixed(2)) })}</span>
-                    ) : null}
                   </TD>
                   <TD label={t("points")} className="text-end font-medium tabular-nums">
                     {show(l.points_display)}
@@ -465,6 +459,13 @@ export function ScorecardPage({ id }: { id: string }) {
                   <TD label={t("lineStatus")}>
                     <LineStatusBadge status={l.line_status} />
                   </TD>
+                  <TD label={t("value")} className="text-end whitespace-nowrap tabular-nums">
+                    {show(l.value_display)}
+                    {l.window === "r12_rate" && l.own_value !== null && l.project_value !== null ? (
+                      <span className="block text-xs text-muted-foreground">{t("blend", { own: show(Number(l.own_value).toFixed(2)), project: show(Number(l.project_value).toFixed(2)) })}</span>
+                    ) : null}
+                  </TD>
+                  <TD label={t("window")} className="whitespace-nowrap">{te(`scWindow.${l.window}`)}</TD>
                   <TD label={t("effWeight")} className="text-end tabular-nums">
                     {show(l.effective_weight_display)}
                   </TD>
@@ -480,6 +481,7 @@ export function ScorecardPage({ id }: { id: string }) {
           <CardHeader className="flex-row flex-wrap items-center justify-between gap-2">
             <CardTitle className="text-base">{t("remarks")}</CardTitle>
             {caps.comment && c.status === "issued" && (windowOpen || !caps.rep) ? <NewRemarkButton card={c} /> : null}
+            <CommentWindow card={c} testId="sc-remarks-window" />
           </CardHeader>
           <CardContent>
             {c.status === "issued" && !windowOpen && caps.rep ? <p className="mb-2 text-sm text-muted-foreground">{t("windowClosed")}</p> : null}

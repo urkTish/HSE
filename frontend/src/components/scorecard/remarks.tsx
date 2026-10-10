@@ -1,5 +1,5 @@
 "use client";
-import { MessageSquarePlus } from "lucide-react";
+import { Lock, MessageSquarePlus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -97,7 +97,12 @@ export function RemarkList({ projectId, cardId, kind, status, showCard }: { proj
             <li key={r.id} className="flex flex-col gap-2 px-4 py-3" data-testid="sc-remark" data-kind={r.kind} data-status={r.status}>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-medium">{te(`scRemarkKind.${r.kind}`)}</span>
-                {r.internal ? <span className="rounded bg-muted px-1.5 text-xs text-muted-foreground">{t("internal")}</span> : null}
+                {r.internal ? (
+                  <span className="inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-xs text-muted-foreground" data-testid="sc-remark-internal">
+                    <Lock aria-hidden className="size-3.5" />
+                    {t("internal")}
+                  </span>
+                ) : null}
                 <ScBadge group="scRemarkStatus" status={r.status} testId="sc-remark-status" />
                 {showCard ? (
                   <Link href={`/scorecards/${r.card_id}`} className="text-primary hover:underline">

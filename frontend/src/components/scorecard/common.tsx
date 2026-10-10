@@ -1,8 +1,11 @@
 "use client";
-import { Award, Eye, TrendingDown, TrendingUp, MoveRight } from "lucide-react";
+import { ArrowDownRight, Award, Eye, Lock, MessageSquareText, MoveRight, TrendingDown, TrendingUp } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useCallback, type ReactNode } from "react";
+import { useCallback, useState, type ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Countdown } from "@/components/followup/common";
+import { useDisplay } from "@/lib/digits";
+import { useFormatters } from "@/lib/use-formatters";
 import { SubNav } from "@/components/access/common";
 import { StatusBadge } from "@/components/common/status-badge";
 import { useMeData } from "@/components/shell/me-context";
@@ -92,14 +95,18 @@ const GRADE_TONE: Record<S["ScGrade"], "success" | "warning" | "danger"> = { A: 
 /** Grade A–D with its band label; "—" (insufficient data) in grey. Caps show "B → C". */
 export function GradeBadge({ grade, band, testId = "sc-grade" }: { grade: S["ScGrade"] | null | undefined; band?: S["ScGrade"] | null; testId?: string }) {
   const te = useTranslations("enums");
+  const td = useTranslations("scDesign");
   const capped = Boolean(band && grade && band !== grade);
   return (
     <span data-testid={testId} data-grade={grade ?? "none"} className="inline-flex items-center gap-1">
       {capped ? (
-        <>
-          <span className="font-mono text-xs text-muted-foreground line-through">{band}</span>
-          <MoveRight aria-hidden className="size-3.5 text-muted-foreground rtl:-scale-x-100" />
-        </>
+        <span className="inline-flex items-center gap-0.5 text-sm text-muted-foreground" title={td("cappedFrom", { band: band as string })} data-testid="sc-grade-band">
+          <span className="sr-only">{td("cappedFrom", { band: band as string })}</span>
+          <span aria-hidden className="font-mono font-semibold line-through">
+            {band}
+          </span>
+          <ArrowDownRight aria-hidden className="size-4 text-warning rtl:-scale-x-100" />
+        </span>
       ) : null}
       <Badge tone={grade ? GRADE_TONE[grade] : "neutral"}>
         <span className="font-mono font-bold">{grade ?? "—"}</span>
@@ -220,4 +227,145 @@ export function recentMonths(n = 12, now = new Date()): string[] {
     }
   }
   return out;
+}
+
+/* ───────────── design pass (6g): month names, caps, rank vs median, comment window ───────────── */
+
+/** "September 2026" for a yyyy-mm month (Gregorian, the project's digits). */
+export function useMonthName(projectId?: string | null) {
+  const locale = useLocale();
+  const show = useDisplay(projectId);
+  return useCallback(
+    (month: string | null | undefined): string => {
+      const [y, m] = (month ?? "").split("-").map(Number);
+      if (!y || !m) return month ?? "—";
+      return show(new Intl.DateTimeFormat(locale === "ar" ? "ar-SA-u-ca-gregory-nu-latn" : "en-GB", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(Date.UTC(y, m - 1, 15))));
+    },
+    [locale, show],
+  );
+}
+
+/** A pack period: "September 2026" for a whole month, "2026" for a whole year, else the ISO dates. */
+export function usePeriodLabel(projectId?: string | null) {
+  const monthName = useMonthName(projectId);
+  const show = useDisplay(projectId);
+  return useCallback(
+    (start: string, end: string): string => {
+      const [y, m] = start.split("-").map(Number);
+      if (start.endsWith("-01-01") && end === `${y}-12-31`) return show(String(y));
+      if (start.endsWith("-01") && y && m) {
+        const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
+        if (end === `${start.slice(0, 8)}${String(last).padStart(2, "0")}`) return monthName(start.slice(0, 7));
+      }
+      return show(`${start} → ${end}`);
+    },
+    [monthName, show],
+  );
+}
+
+/** Why a card is capped: the band from the score, the cap that lowered it and the records behind it (CP-1…CP-3). */
+export function CapExplain({ card }: { card: S["ScCardRead"] }) {
+  const td = useTranslations("scDesign");
+  const ref = useScRef();
+  if (!card.caps_applied.length) return null;
+  const capped = Boolean(card.band_grade && card.grade && card.band_grade !== card.grade);
+  return (
+    <div className="flex flex-col gap-2" data-testid="sc-cap-explain">
+      {capped ? (
+        <p className="flex items-start gap-1.5 text-sm font-medium">
+          <ArrowDownRight aria-hidden className="mt-0.5 size-4 shrink-0 text-warning rtl:-scale-x-100" />
+          {td("cappedLine", { band: card.band_grade as string, grade: card.grade as string })}
+        </p>
+      ) : (
+        <p className="text-xs text-muted-foreground">{td("capNoEffect")}</p>
+      )}
+      {card.caps_applied.map((cp) => (
+        <div key={cp.cap_code} className="rounded-md border border-warning/40 bg-warning-bg px-2.5 py-2 text-sm" data-testid="sc-cap" data-cap={cp.cap_code}>
+          <span className="flex flex-wrap items-baseline gap-x-1.5">
+            <span className="font-mono font-semibold">{cp.cap_code}</span>
+            <span>{ref.label("caps", cp.cap_code)}</span>
+          </span>
+          {cp.refs.length ? (
+            <span className="mt-1 flex flex-wrap items-center gap-1 text-xs">
+              <span className="text-muted-foreground">{td("capBecause")}</span>
+              {cp.refs.map((r) => (
+                <bdi key={r} className="ltr rounded bg-surface px-1 font-mono">
+                  {r}
+                </bdi>
+              ))}
+            </span>
+          ) : null}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Caps in a register row: the code and what it means, with a down-arrow; never the code alone. */
+export function CapList({ caps }: { caps: string[] }) {
+  const ref = useScRef();
+  if (!caps.length) return <>—</>;
+  return (
+    <span className="flex flex-col gap-0.5" data-testid="sc-caps">
+      {caps.map((c) => (
+        <span key={c} className="inline-flex items-start gap-1 text-xs">
+          <ArrowDownRight aria-hidden className="mt-px size-3.5 shrink-0 text-warning rtl:-scale-x-100" />
+          <span>
+            <span className="font-mono font-semibold">{c}</span> {ref.label("caps", c)}
+          </span>
+        </span>
+      ))}
+    </span>
+  );
+}
+
+/** Where the score sits against the project median (RK-2), in words and an arrow; other contractors are never named. */
+export function MedianPosition({ score, median, rep }: { score: string | null | undefined; median: string | null | undefined; rep: boolean }) {
+  const td = useTranslations("scDesign");
+  const s = score === null || score === undefined ? NaN : Number(score);
+  const m = median === null || median === undefined ? NaN : Number(median);
+  return (
+    <span className="flex flex-col gap-1">
+      {Number.isFinite(s) && Number.isFinite(m) ? (
+        <span className={cn("inline-flex items-center gap-1 text-sm font-medium", s < m ? "text-warning" : "text-foreground")} data-testid="sc-median-position" data-position={s > m ? "above" : s < m ? "below" : "at"}>
+          {s > m ? <TrendingUp aria-hidden className="size-4" /> : s < m ? <TrendingDown aria-hidden className="size-4" /> : <MoveRight aria-hidden className="size-4 rtl:-scale-x-100" />}
+          {td(s > m ? "aboveMedian" : s < m ? "belowMedian" : "atMedian")}
+        </span>
+      ) : null}
+      {rep ? <span className="text-xs text-muted-foreground">{td("othersAnonymous")}</span> : null}
+    </span>
+  );
+}
+
+/** The comment window as a state: open (closes in…), closed (awaiting Final), Final, or not yet issued. */
+export function CommentWindow({ card, testId = "sc-comment-window" }: { card: S["ScCardRead"]; testId?: string }) {
+  const td = useTranslations("scDesign");
+  const { dateTime } = useFormatters(card.project_id);
+  const [now] = useState(() => Date.now());
+  if (card.status === "superseded") return null;
+  const until = card.comment_until ? Date.parse(card.comment_until) : NaN;
+  const state = card.status === "final" ? "final" : card.status === "provisional" ? "not_issued" : Number.isFinite(until) && until >= now ? "open" : "closed";
+  const Icon = state === "open" ? MessageSquareText : Lock;
+  return (
+    <div
+      className={cn(
+        "flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border px-3 py-2 text-sm",
+        state === "open" ? "border-info/40 bg-info-bg" : "border-border bg-muted/40",
+      )}
+      data-testid={testId}
+      data-state={state}
+    >
+      <span className="inline-flex items-center gap-1.5 font-semibold">
+        <Icon aria-hidden className={cn("size-4", state === "open" ? "text-info" : "text-muted-foreground")} />
+        {td(`window.${state}`)}
+      </span>
+      {state === "open" && card.comment_until ? (
+        <>
+          <span className="text-muted-foreground">{td("window.until", { at: dateTime(card.comment_until) })}</span>
+          <Countdown due={card.comment_until} projectId={card.project_id} />
+        </>
+      ) : null}
+      {state === "closed" && card.comment_until ? <span className="text-muted-foreground">{td("window.closedAt", { at: dateTime(card.comment_until) })}</span> : null}
+    </div>
+  );
 }

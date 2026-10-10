@@ -14318,5 +14318,49 @@
     "printPdf": "Print PDF",
     "printed": "Dashboard PDF downloaded.",
     "printFailed": "Print failed"
+  },
+  "scDesign": {
+    "cappedFrom": "The score's band was {band}; a cap lowered the grade",
+    "cappedLine": "Lowered from band {band} to {grade} by",
+    "capNoEffect": "A cap applies, but the score's band is already at or below it.",
+    "capBecause": "Because of",
+    "aboveMedian": "Above the project median",
+    "belowMedian": "Below the project median",
+    "atMedian": "At the project median",
+    "othersAnonymous": "Other contractors' names and scores are not shown to contractor reps.",
+    "repScope": "Only your own contractors are listed. Ranks are out of {n} ranked contractors on the project; the others are not named.",
+    "window": {
+      "open": "Comment window open",
+      "closed": "Comment window closed: awaiting the HSE Manager's Final",
+      "final": "Final: comments and disputes are closed",
+      "not_issued": "Not issued yet: comments open when the card is issued",
+      "until": "until {at}",
+      "closedAt": "closed {at}"
+    },
+    "printing": "Preparing the PDF…",
+    "performance": "Performance summary",
+    "pack": {
+      "notIssuedShort": "Not issued",
+      "draftTitle": "Draft: not issued",
+      "draftBody": "Nobody on the distribution list has received it. Rebuilding refreshes the figures from current data.",
+      "reviewTitle": "In review: not issued",
+      "reviewBody": "Nobody on the distribution list has received it. Issue needs a review by someone other than the issuer.",
+      "issuedTitle": "Issued {at} by {by}",
+      "issuedTitleShort": "Issued",
+      "provisionalTitle": "Provisional scorecards",
+      "provisionalBody": "The month's scorecards were not Final at issue. The scorecard section carries the PROVISIONAL watermark and can still change through contractor comment.",
+      "endIssue": "Issue: freezes the files and notifies the list",
+      "endReissue": "Replace this issued pack with a new revision"
+    },
+    "watch": {
+      "endLabel": "Decide or close this entry",
+      "ladder": "Watch-list level",
+      "here": "Current level",
+      "wasHere": "Level when closed"
+    },
+    "profile": {
+      "sumOff": "should total 100",
+      "saveFirst": "Save the changes before activating."
+    }
   }
 }

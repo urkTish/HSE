@@ -1,5 +1,5 @@
 "use client";
-import { Bell, Download, FileDown, Printer, Trash2 } from "lucide-react";
+import { Bell, Download, FileDown, Loader2, Printer, Settings2, ShieldAlert, Trash2, UserRound } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -25,6 +25,7 @@ import { useExportDatasets, useExportJobs, useExportSubscriptions, useScRefresh 
 import { useCurrentProject } from "@/lib/current-project";
 import { useErrorMessage, useLocalizedName } from "@/lib/i18n-helpers";
 import { can, type Capability } from "@/lib/permissions";
+import { useDisplay } from "@/lib/digits";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState, toQueryString } from "@/lib/url-state";
 import { ReportsSubNav, ScBadge, useScCaps } from "./common";
@@ -63,14 +64,16 @@ export function ExportsPage() {
               <ErrorState error={q.error} onRetry={() => q.refetch()} />
             ) : (
               <FormField id="xp-dataset" label={t("dataset")}>
-                <Select id="xp-dataset" value={code} onChange={(e) => s.set({ dataset: e.target.value || null })} data-testid="xp-dataset" className="sm:w-96">
-                  <option value="">—</option>
-                  {datasets.map((d) => (
-                    <option key={d.dataset_code} value={d.dataset_code}>
-                      {ar ? d.label_ar : d.label_en}
-                    </option>
-                  ))}
-                </Select>
+                <div className="sm:w-96">
+                  <Select id="xp-dataset" value={code} onChange={(e) => s.set({ dataset: e.target.value || null })} data-testid="xp-dataset">
+                    <option value="">—</option>
+                    {datasets.map((d) => (
+                      <option key={d.dataset_code} value={d.dataset_code}>
+                        {ar ? d.label_ar : d.label_en}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
               </FormField>
             )}
             {ds ? <ExportForm key={ds.dataset_code} ds={ds} projectId={pid} /> : <p className="text-sm text-muted-foreground">{t("pick")}</p>}
@@ -159,7 +162,12 @@ function ExportForm({ ds, projectId }: { ds: Dataset; projectId: string | null }
                       onChange={(e) => setCols(e.target.checked ? [...cols, c.column_code] : cols.filter((x) => x !== c.column_code))}
                     />
                     <span className="min-w-0 flex-1">{ar ? c.label_ar : c.label_en}</span>
-                    {c.pdpl_class !== "none" ? <span className={`rounded px-1.5 text-xs ${c.pdpl_class === "sensitive" || never ? "bg-danger-bg text-danger" : "bg-warning-bg text-warning"}`}>{te(`xpPdpl.${c.pdpl_class}`)}</span> : null}
+                    {c.pdpl_class !== "none" ? (
+                      <span className={`inline-flex items-center gap-1 rounded px-1.5 text-xs ${c.pdpl_class === "sensitive" || never ? "bg-danger-bg text-danger" : "bg-warning-bg text-warning"}`}>
+                        {c.pdpl_class === "sensitive" || never ? <ShieldAlert aria-hidden className="size-3.5" /> : <UserRound aria-hidden className="size-3.5" />}
+                        {te(`xpPdpl.${c.pdpl_class}`)}
+                      </span>
+                    ) : null}
                   </label>
                   {c.mask_mode && !cols.includes(c.column_code) && !never ? <p className="ps-9 text-xs text-muted-foreground">{t("maskedAs", { m: te(`xpMaskMode.${c.mask_mode}`) })}</p> : null}
                   {never ? <p className="ps-9 text-xs text-muted-foreground">{t("never")}</p> : !c.allowed ? <p className="ps-9 text-xs text-muted-foreground">{t("noRight")}</p> : null}
@@ -260,8 +268,15 @@ function JobDownload({ job }: { job: S["XpJobRead"] }) {
 function Jobs() {
   const t = useTranslations("xp");
   const te = useTranslations("enums");
+  const ar = useLocale() === "ar";
+  const datasets = useExportDatasets();
+  const dsLabel = (code: string) => {
+    const d = datasets.data?.items.find((x) => x.dataset_code === code);
+    return d ? (ar ? d.label_ar : d.label_en) : null;
+  };
   const name = useLocalizedName();
   const caps = useScCaps();
+  const show = useDisplay();
   const { dateTime } = useFormatters();
   const s = useSearchState();
   const status = (s.get("status") as S["XpJobStatus"] | null) ?? "";
@@ -307,12 +322,23 @@ function Jobs() {
                     </span>
                   </TD>
                   <TD label={t("dataset")}>
-                    <bdi className="ltr font-mono text-xs">{j.dataset}</bdi>
-                    {j.contains_sensitive ? <span className="block text-xs text-danger">{te("xpPdpl.sensitive")}</span> : j.contains_personal ? <span className="block text-xs text-warning">{te("xpPdpl.personal")}</span> : null}
+                    {dsLabel(j.dataset) && dsLabel(j.dataset) !== j.dataset ? <span className="block">{dsLabel(j.dataset)}</span> : null}
+                    <bdi className="ltr font-mono text-xs text-muted-foreground">{j.dataset}</bdi>
+                    {j.contains_sensitive ? (
+                      <span className="flex items-center gap-1 text-xs font-medium text-danger">
+                        <ShieldAlert aria-hidden className="size-3.5" />
+                        {te("xpPdpl.sensitive")}
+                      </span>
+                    ) : j.contains_personal ? (
+                      <span className="flex items-center gap-1 text-xs font-medium text-warning">
+                        <UserRound aria-hidden className="size-3.5" />
+                        {te("xpPdpl.personal")}
+                      </span>
+                    ) : null}
                     {j.notes.length ? <span className="block text-xs text-muted-foreground">{j.notes.join(" · ")}</span> : null}
                   </TD>
                   <TD label={t("rows")} className="tabular-nums">
-                    {j.row_count ?? "—"}
+                    {j.row_count === null || j.row_count === undefined ? "—" : show(String(j.row_count))}
                   </TD>
                   <TD label={t("purpose")}>{j.purpose ? te(`xpPurpose.${j.purpose}`) : "—"}</TD>
                   <TD label={t("status")}>
@@ -320,7 +346,7 @@ function Jobs() {
                   </TD>
                   <TD label={t("expires")}>{j.expires_at ? dateTime(j.expires_at) : "—"}</TD>
                   <TD label={t("by")}>{j.requested_by ? name(j.requested_by.full_name_en, j.requested_by.full_name_ar) : "—"}</TD>
-                  <TD label="">{j.requested_by?.id === caps.me?.id ? <JobDownload job={j} /> : null}</TD>
+                  <TD label="">{j.requested_by?.id === caps.me?.id && j.status === "ready" ? <JobDownload job={j} /> : null}</TD>
                 </TR>
               ))}
             </TBody>
@@ -397,7 +423,8 @@ export function RegistryExport({ dataset, projectId }: { dataset: S["ExportDatas
   return (
     <div className="flex flex-wrap items-center gap-2" data-testid="registry-export">
       <ExportButtons dataset={dataset} params={{ project_id: ds.project_required ? projectId : null }} />
-      <Link href={`/exports?dataset=${dataset}`} className="text-sm text-primary hover:underline" data-testid="registry-export-more">
+      <Link href={`/exports?dataset=${dataset}`} className="inline-flex min-h-touch items-center gap-1.5 rounded-md px-2 text-sm font-medium text-primary hover:bg-accent hover:underline" data-testid="registry-export-more">
+        <Settings2 aria-hidden className="size-4" />
         {t("moreOptions")}
       </Link>
     </div>
@@ -407,6 +434,7 @@ export function RegistryExport({ dataset, projectId }: { dataset: S["ExportDatas
 /** Dashboard PDF print (D-10, EX-11): the server renders the KPI tiles with the current filters. */
 export function DashboardPrintButton({ query }: { query: KpiQuery }) {
   const t = useTranslations("xp");
+  const td = useTranslations("scDesign");
   const msg = useErrorMessage();
   const [busy, setBusy] = useState(false);
   async function run() {
@@ -437,9 +465,9 @@ export function DashboardPrintButton({ query }: { query: KpiQuery }) {
     }
   }
   return (
-    <Button variant="outline" onClick={() => void run()} disabled={busy} data-testid="dashboard-print">
-      <Printer aria-hidden />
-      {t("printPdf")}
+    <Button variant="outline" onClick={() => void run()} disabled={busy} aria-busy={busy} data-testid="dashboard-print">
+      {busy ? <Loader2 aria-hidden className="animate-spin" /> : <Printer aria-hidden />}
+      {busy ? td("printing") : t("printPdf")}
     </Button>
   );
 }

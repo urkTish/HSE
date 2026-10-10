@@ -1,5 +1,5 @@
 "use client";
-import { Pencil } from "lucide-react";
+import { ChartNoAxesColumn, Pencil } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ import { Link } from "@/i18n/navigation";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
 import { keys, useContractor } from "@/lib/api/queries";
 import { useLocalizedName } from "@/lib/i18n-helpers";
-import { can } from "@/lib/permissions";
+import { can, canWrite } from "@/lib/permissions";
 import { CONTRACTOR_FLOW } from "@/lib/workflows";
 import { useFormatters } from "@/lib/use-formatters";
 
@@ -27,6 +27,7 @@ export function ContractorDetail({ contractorId }: { contractorId: string }) {
   const t = useTranslations("contractor");
   const tn = useTranslations("nav");
   const tc = useTranslations("common");
+  const td = useTranslations("scDesign");
   const me = useMeData();
   const qc = useQueryClient();
   const name = useLocalizedName();
@@ -72,14 +73,24 @@ export function ContractorDetail({ contractorId }: { contractorId: string }) {
           </>
         }
         actions={
-          canCreate && c.status !== "blacklisted" ? (
-            <Button variant="outline" asChild>
-              <Link href={`/contractors/${c.id}/edit`}>
-                <Pencil aria-hidden />
-                {tc("edit")}
-              </Link>
-            </Button>
-          ) : null
+          <>
+            {canWrite(me, "scorecard.manage") ? (
+              <Button variant="outline" asChild>
+                <Link href={`/contractors/${c.id}/performance`} data-testid="contractor-performance">
+                  <ChartNoAxesColumn aria-hidden />
+                  {td("performance")}
+                </Link>
+              </Button>
+            ) : null}
+            {canCreate && c.status !== "blacklisted" ? (
+              <Button variant="outline" asChild>
+                <Link href={`/contractors/${c.id}/edit`}>
+                  <Pencil aria-hidden />
+                  {tc("edit")}
+                </Link>
+              </Button>
+            ) : null}
+          </>
         }
       />
       <div className="grid gap-6 lg:grid-cols-3">

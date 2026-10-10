@@ -1,5 +1,5 @@
 "use client";
-import { Eye, ShieldAlert } from "lucide-react";
+import { Check, Eye, ShieldAlert, TriangleAlert } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -11,6 +11,7 @@ import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { Code, StepDialog } from "@/components/access/common";
 import { Breadcrumbs } from "@/components/common/breadcrumbs";
+import { RecordActions } from "@/components/common/record-actions";
 import { FieldItem, FieldList } from "@/components/common/field-list";
 import { FormField } from "@/components/common/form-field";
 import { ListToolbar, SelectFilter } from "@/components/common/list-toolbar";
@@ -26,7 +27,8 @@ import { usePerformanceSummary, useScRefresh, useSuspensionForm, useWatchEntry, 
 import { useDisplay } from "@/lib/digits";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
-import { GradeBadge, ScBadge, ScSubNav, WatchLevelBadge, useScCaps } from "./common";
+import { CapList, GradeBadge, ScBadge, ScSubNav, WatchLevelBadge, useMonthName, useScCaps } from "./common";
+import { cn } from "@/lib/utils";
 
 type S = Schemas;
 type Entry = S["ScWatchRead"];
@@ -106,7 +108,16 @@ function Register({ project }: { project: S["ProjectRead"] }) {
                   {w.baseline_score ? show(Number(w.baseline_score).toFixed(1)) : "—"}
                 </TD>
                 <TD label={t("opened")}>{date(w.opened_at)}</TD>
-                <TD label={t("proposal")}>{w.proposal ? <span className="font-medium text-warning">{te(`scWatchProposal.${w.proposal}`)}</span> : "—"}</TD>
+                <TD label={t("proposal")}>
+                  {w.proposal ? (
+                    <span className="inline-flex items-center gap-1 font-medium text-warning">
+                      <TriangleAlert aria-hidden className="size-4 shrink-0" />
+                      {te(`scWatchProposal.${w.proposal}`)}
+                    </span>
+                  ) : (
+                    "—"
+                  )}
+                </TD>
               </TR>
             ))}
           </TBody>
@@ -166,12 +177,14 @@ type Act = "confirm_escalation" | "submit_pip" | "accept_pip" | "decide" | "clos
 
 export function WatchEntryPage({ id }: { id: string }) {
   const t = useTranslations("sc.watch");
+  const td = useTranslations("scDesign.watch");
   const tn = useTranslations("sc.nav");
   const te = useTranslations("enums");
   const q = useWatchEntry(id);
   const w = q.data;
   const caps = useScCaps(w?.project_id);
   const show = useDisplay(w?.project_id);
+  const monthName = useMonthName(w?.project_id);
   const { dateTime } = useFormatters(w?.project_id);
   const [act, setAct] = useState<Act | null>(null);
   const [suspend, setSuspend] = useState(false);
@@ -192,6 +205,7 @@ export function WatchEntryPage({ id }: { id: string }) {
           <ScBadge group="scWatchStatus" status={w.status} testId="wl-status" />
         </h1>
       </div>
+      <LevelLadder level={w.level} closed={!open} />
       {w.proposal && open ? (
         <Alert tone="warning" data-testid="wl-proposal">
           <span className="flex flex-col gap-2">
@@ -222,7 +236,7 @@ export function WatchEntryPage({ id }: { id: string }) {
               <ul className="flex flex-col gap-1" data-testid="wl-triggers">
                 {w.trigger_refs.map((r, i) => (
                   <li key={`${r.month}-${i}`} className="text-sm">
-                    <span className="font-mono">{r.month}</span> · {TRIGGERS.has(r.trigger) ? te(`scWatchTrigger.${r.trigger.replace("-", "_")}` as "scWatchTrigger.WL_1a") : r.trigger}
+                    <span>{monthName(r.month)}</span> · {TRIGGERS.has(r.trigger) ? te(`scWatchTrigger.${r.trigger.replace("-", "_")}` as "scWatchTrigger.WL_1a") : r.trigger}
                     {r.scorecard_no ? (
                       <>
                         {" "}
@@ -271,8 +285,8 @@ export function WatchEntryPage({ id }: { id: string }) {
           </FieldList>
         </CardContent>
       </Card>
-      {open ? (
-        <div className="flex flex-wrap gap-2 border-t pt-4" data-testid="wl-actions">
+      {open && ((pipStage && caps.rep && caps.comment && !w.pip_submitted_at) || (caps.manage && w.pip_submitted_at && !w.pip_accepted_at)) ? (
+        <div className="flex flex-wrap gap-2 border-t pt-4" data-testid="wl-steps">
           {pipStage && caps.rep && caps.comment && !w.pip_submitted_at ? (
             <Button onClick={() => setAct("submit_pip")} data-testid="wl-submit-pip">
               {t("submitPip")}
@@ -283,23 +297,25 @@ export function WatchEntryPage({ id }: { id: string }) {
               {t("acceptPip")}
             </Button>
           ) : null}
-          {caps.manage && w.level === "suspension_review" && !w.decision ? (
+        </div>
+      ) : null}
+      {open && caps.manage ? (
+        <RecordActions label={td("endLabel")} testId="wl-actions">
+          {w.level === "suspension_review" && !w.decision ? (
             <Button onClick={() => setAct("decide")} data-testid="wl-decide">
               {t("decide")}
             </Button>
           ) : null}
-          {caps.manage && w.decision === "suspend" && !w.contractor_status_ref ? (
+          {w.decision === "suspend" && !w.contractor_status_ref ? (
             <Button variant="destructive" onClick={() => setSuspend(true)} data-testid="wl-suspension-form">
               <ShieldAlert aria-hidden />
               {t("openSuspension")}
             </Button>
           ) : null}
-          {caps.manage ? (
-            <Button variant="outline" onClick={() => setAct("close")} data-testid="wl-close">
-              {t("closeEntry")}
-            </Button>
-          ) : null}
-        </div>
+          <Button variant="outline" onClick={() => setAct("close")} data-testid="wl-close">
+            {t("closeEntry")}
+          </Button>
+        </RecordActions>
       ) : null}
       {act ? <TransitionDialog entry={w} action={act} onClose={() => setAct(null)} /> : null}
       {suspend ? <SuspensionDialog entry={w} onClose={() => setSuspend(false)} /> : null}
@@ -450,6 +466,39 @@ function SuspensionWarning({ form }: { form: S["ScSuspensionForm"] }) {
   return <span data-testid="wl-suspend-warning">{ar ? form.warning_ar : form.warning_en}</span>;
 }
 
+const LADDER: S["ScWatchLevel"][] = ["watch", "improvement_plan", "suspension_review"];
+
+/** Watch → improvement plan → suspension review, with the current step marked in words, not colour alone (WL-1…WL-4). */
+function LevelLadder({ level, closed }: { level: S["ScWatchLevel"]; closed: boolean }) {
+  const te = useTranslations("enums");
+  const td = useTranslations("scDesign.watch");
+  const at = LADDER.indexOf(level);
+  return (
+    <ol className="grid gap-2 sm:grid-cols-3" aria-label={td("ladder")} data-testid="wl-ladder" data-level={level}>
+      {LADDER.map((l, i) => {
+        const current = i === at;
+        const done = i < at;
+        return (
+          <li
+            key={l}
+            aria-current={current ? "step" : undefined}
+            className={cn(
+              "flex min-h-touch items-center gap-2 rounded-md border px-3 py-2 text-sm",
+              current ? (closed ? "border-2 border-border font-semibold" : i === 0 ? "border-2 border-warning bg-warning-bg font-semibold" : "border-2 border-danger bg-danger-bg font-semibold") : "text-muted-foreground",
+            )}
+          >
+            <span className={cn("flex size-6 shrink-0 items-center justify-center rounded-full border text-xs font-semibold tabular-nums", current && "border-current")}>{done ? <Check aria-hidden className="size-3.5" /> : i + 1}</span>
+            <span className="flex flex-col">
+              <span>{te(`scWatchLevel.${l}`)}</span>
+              {current ? <span className="text-xs font-normal">{closed ? td("wasHere") : td("here")}</span> : null}
+            </span>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
 /* ═════════════ contractor performance summary, 12 Final months (WL-8, CPS) ═════════════ */
 
 export function PerformanceSummaryPage({ contractorId }: { contractorId: string }) {
@@ -458,6 +507,7 @@ export function PerformanceSummaryPage({ contractorId }: { contractorId: string 
   const te = useTranslations("enums");
   const caps = useScCaps();
   const show = useDisplay();
+  const monthName = useMonthName();
   const q = usePerformanceSummary(contractorId, { enabled: caps.manage });
   if (!caps.manage) return <Alert tone="info">{tc("notAllowed")}</Alert>;
   if (q.isError) return <ErrorState error={q.error} onRetry={() => q.refetch()} />;
@@ -481,8 +531,9 @@ export function PerformanceSummaryPage({ contractorId }: { contractorId: string 
             <span className="text-xs font-medium text-muted-foreground">{t("gradeMix")}</span>
             <span className="flex flex-wrap gap-2 text-sm">
               {Object.entries(d.grade_mix).map(([g, n]) => (
-                <span key={g}>
-                  <span className="font-mono font-bold">{g}</span> × {show(String(n))}
+                <span key={g} className="inline-flex items-center gap-1">
+                  <GradeBadge grade={g as S["ScGrade"]} testId="cps-grade" />
+                  <span className="font-semibold tabular-nums">× {show(String(n))}</span>
                 </span>
               ))}
             </span>
@@ -513,16 +564,16 @@ export function PerformanceSummaryPage({ contractorId }: { contractorId: string 
                 <TD label={t("project")}>
                   <Code>{m.project_code}</Code>
                 </TD>
-                <TD label={t("month")}>
-                  <span className="font-mono">{m.month}</span>
-                </TD>
+                <TD label={t("month")}>{monthName(m.month)}</TD>
                 <TD label={t("score")} className="text-end tabular-nums">
                   {show(m.score_display)}
                 </TD>
                 <TD label={t("grade")}>
                   <GradeBadge grade={m.grade} />
                 </TD>
-                <TD label={t("caps")}>{m.caps.length ? m.caps.join(" · ") : "—"}</TD>
+                <TD label={t("caps")}>
+                  <CapList caps={m.caps} />
+                </TD>
                 <TD label={t("profile")}>
                   <bdi className="ltr font-mono text-xs">{m.profile}</bdi>
                 </TD>
@@ -542,7 +593,9 @@ export function PerformanceSummaryPage({ contractorId }: { contractorId: string 
             <ul className="flex flex-col gap-2 text-sm">
               {d.watch_entries.map((w) => (
                 <li key={w.id} className="flex flex-wrap items-center gap-2">
-                  <Code>{w.entry_no}</Code>
+                  <Link href={`/watch-list/${w.id}`} className="text-primary hover:underline">
+                    <Code>{w.entry_no}</Code>
+                  </Link>
                   <WatchLevelBadge level={w.level} />
                   <ScBadge group="scWatchStatus" status={w.status} />
                   {w.decision ? <span>{te(`scWatchDecision.${w.decision}`)}</span> : null}

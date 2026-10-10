@@ -1,5 +1,5 @@
 "use client";
-import { CheckCircle2, Plus } from "lucide-react";
+import { CheckCircle2, CircleCheck, Plus, TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -273,6 +273,7 @@ function Profiles({ project }: { project: Project }) {
 
 function ProfileEditor({ id }: { id: string }) {
   const t = useTranslations("sc.profile");
+  const td = useTranslations("scDesign.profile");
   const te = useTranslations("enums");
   const ref = useScRef();
   const refresh = useScRefresh();
@@ -330,7 +331,12 @@ function ProfileEditor({ id }: { id: string }) {
       </FormField>
       <div>
         <h3 className="mb-2 text-sm font-semibold">
-          {t("pillars")} <span className={`ms-2 text-xs font-normal ${Math.abs(sum - 100) > 1e-9 ? "text-danger" : "text-muted-foreground"}`} data-testid="sp-sum">{t("sum", { v: sum.toFixed(1) })}</span>
+          {t("pillars")}{" "}
+          <span className={`ms-2 inline-flex items-center gap-1 text-xs font-normal ${Math.abs(sum - 100) > 1e-9 ? "font-semibold text-danger" : "text-success"}`} data-testid="sp-sum" data-ok={Math.abs(sum - 100) <= 1e-9}>
+            {Math.abs(sum - 100) > 1e-9 ? <TriangleAlert aria-hidden className="size-3.5" /> : <CircleCheck aria-hidden className="size-3.5" />}
+            {t("sum", { v: sum.toFixed(1) })}
+            {Math.abs(sum - 100) > 1e-9 ? <span>· {td("sumOff")}</span> : null}
+          </span>
         </h3>
         <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-5">
           {d.pillars.map((x) => (
@@ -424,6 +430,7 @@ function ProfileEditor({ id }: { id: string }) {
           <Button disabled={busy || Boolean(draft)} onClick={() => void activate()} data-testid="sp-activate">
             {t("activate")}
           </Button>
+          {draft ? <p className="w-full text-end text-xs text-muted-foreground">{td("saveFirst")}</p> : null}
         </div>
       ) : null}
     </div>

@@ -1,5 +1,5 @@
 "use client";
-import { Download, FilePlus2, Lock, Trash2, Plus } from "lucide-react";
+import { Download, FilePen, FilePlus2, Lock, Paperclip, Plus, Stamp, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -13,6 +13,7 @@ import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { Code, StepDialog } from "@/components/access/common";
 import { Breadcrumbs } from "@/components/common/breadcrumbs";
+import { RecordActions } from "@/components/common/record-actions";
 import { FieldItem, FieldList } from "@/components/common/field-list";
 import { FormField } from "@/components/common/form-field";
 import { ListToolbar, SelectFilter } from "@/components/common/list-toolbar";
@@ -28,7 +29,7 @@ import { useDisplay } from "@/lib/digits";
 import { useLocalizedName } from "@/lib/i18n-helpers";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
-import { ReportsSubNav, ScBadge, previousMonth, recentMonths, useScCaps, useScRef } from "./common";
+import { ReportsSubNav, ScBadge, previousMonth, recentMonths, usePeriodLabel, useScCaps, useScRef } from "./common";
 
 type S = Schemas;
 type Project = S["ProjectRead"];
@@ -47,9 +48,11 @@ export function ReportPacksPage() {
 
 function Register({ project }: { project: Project }) {
   const t = useTranslations("rp.register");
+  const td = useTranslations("scDesign.pack");
   const tc = useTranslations("common");
   const te = useTranslations("enums");
   const ref = useScRef();
+  const period = usePeriodLabel(project.id);
   const caps = useScCaps(project.id);
   const show = useDisplay(project.id);
   const { dateTime } = useFormatters(project.id);
@@ -107,12 +110,11 @@ function Register({ project }: { project: Project }) {
                 </TD>
                 <TD label={t("type")}>{ref.label("report_types", p.report_type)}</TD>
                 <TD label={t("period")}>
-                  <bdi className="ltr font-mono text-xs">
-                    {p.period_start} → {p.period_end}
-                  </bdi>
+                  <bdi>{period(p.period_start, p.period_end)}</bdi>
                 </TD>
                 <TD label={t("status")}>
                   <ScBadge group="rpStatus" status={p.status} />
+                  {p.status === "draft" || p.status === "in_review" ? <span className="block text-xs text-muted-foreground">{td("notIssuedShort")}</span> : null}
                 </TD>
                 <TD label={t("due")}>{p.due_on ? <DayDue date={p.due_on} open={p.status === "draft" || p.status === "in_review"} projectId={project.id} /> : "—"}</TD>
                 <TD label={t("issued")}>{p.issued_at ? dateTime(p.issued_at) : "—"}</TD>
@@ -245,6 +247,7 @@ function CreatePackDialog({ project, onClose }: { project: Project; onClose: () 
 
 export function ReportPackPage({ id }: { id: string }) {
   const t = useTranslations("rp.pack");
+  const td = useTranslations("scDesign.pack");
   const tn = useTranslations("sc.nav");
   const ref = useScRef();
   const name = useLocalizedName();
@@ -252,6 +255,7 @@ export function ReportPackPage({ id }: { id: string }) {
   const pk = q.data;
   const caps = useScCaps(pk?.project_id);
   const show = useDisplay(pk?.project_id);
+  const period = usePeriodLabel(pk?.project_id);
   const { dateTime } = useFormatters(pk?.project_id);
   const refresh = useScRefresh();
   const [dialog, setDialog] = useState<"issue" | "return" | "reissue" | null>(null);
@@ -318,11 +322,34 @@ export function ReportPackPage({ id }: { id: string }) {
         </Alert>
       ) : null}
       {pk.with_names ? <Alert tone="warning">{t("withNames")}</Alert> : null}
+      {pk.status === "draft" || pk.status === "in_review" ? (
+        <div className="flex items-start gap-2.5 rounded-lg border-2 border-dashed border-border bg-muted/40 p-3 text-sm" data-testid="rp-state" data-state="not_issued">
+          <FilePen aria-hidden className="mt-0.5 size-5 shrink-0 text-muted-foreground" />
+          <span className="flex flex-col gap-0.5">
+            <span className="font-semibold">{td(pk.status === "draft" ? "draftTitle" : "reviewTitle")}</span>
+            <span className="text-muted-foreground">{td(pk.status === "draft" ? "draftBody" : "reviewBody")}</span>
+          </span>
+        </div>
+      ) : null}
       {pk.status === "issued" ? (
-        <p className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Lock aria-hidden className="size-4" />
-          {t("immutable")}
-        </p>
+        <div className="flex items-start gap-2.5 rounded-lg border border-success/40 bg-success-bg p-3 text-sm" data-testid="rp-state" data-state="issued">
+          <Lock aria-hidden className="mt-0.5 size-5 shrink-0 text-success" />
+          <span className="flex flex-col gap-0.5">
+            <span className="font-semibold">
+              {pk.issued_at ? td("issuedTitle", { at: dateTime(pk.issued_at), by: pk.issued_by ? name(pk.issued_by.full_name_en, pk.issued_by.full_name_ar) : "—" }) : td("issuedTitleShort")}
+            </span>
+            <span className="text-muted-foreground">{t("immutable")}</span>
+          </span>
+        </div>
+      ) : null}
+      {pk.scorecards_provisional ? (
+        <div className="flex items-start gap-2.5 rounded-lg border-2 border-warning bg-warning-bg p-3 text-sm" data-testid="rp-provisional-banner">
+          <Stamp aria-hidden className="mt-0.5 size-5 shrink-0 text-warning" />
+          <span className="flex flex-col gap-0.5">
+            <span className="font-semibold uppercase tracking-wide">{td("provisionalTitle")}</span>
+            <span>{td("provisionalBody")}</span>
+          </span>
+        </div>
       ) : null}
 
       <Card>
@@ -331,8 +358,11 @@ export function ReportPackPage({ id }: { id: string }) {
         </CardHeader>
         <CardContent>
           <FieldList>
-            <FieldItem label={t("period")} ltr>
-              {pk.period_start} → {pk.period_end}
+            <FieldItem label={t("period")}>
+              <bdi>{period(pk.period_start, pk.period_end)}</bdi>
+              <bdi className="ltr block font-mono text-xs text-muted-foreground">
+                {pk.period_start} → {pk.period_end}
+              </bdi>
             </FieldItem>
             <FieldItem label={t("due")}>{pk.due_on ? <DayDue date={pk.due_on} open={pk.status === "draft" || pk.status === "in_review"} projectId={pk.project_id} /> : "—"}</FieldItem>
             <FieldItem label={t("prepared")}>
@@ -391,9 +421,9 @@ export function ReportPackPage({ id }: { id: string }) {
       {pk.status === "issued" || pk.status === "superseded" ? <Deliveries packId={pk.id} projectId={pk.project_id} /> : null}
 
       <MutationError error={error} />
-      {pk.status === "draft" || pk.status === "in_review" || (pk.status === "issued" && issue) ? (
+      {(prepare && (pk.status === "draft" || pk.status === "in_review")) ? (
         <div className="flex flex-wrap gap-2 border-t pt-4" data-testid="rp-actions">
-          {prepare && pk.status === "draft" ? (
+          {pk.status === "draft" ? (
             <>
               <Button variant="outline" disabled={busy} onClick={() => void act("regenerate", t("regenerated"))} data-testid="rp-regenerate">
                 {t("regenerate")}
@@ -403,7 +433,7 @@ export function ReportPackPage({ id }: { id: string }) {
               </Button>
             </>
           ) : null}
-          {prepare && pk.status === "in_review" ? (
+          {pk.status === "in_review" ? (
             <>
               <Button variant="outline" disabled={busy} onClick={() => setDialog("return")} data-testid="rp-return">
                 {t("returnToDraft")}
@@ -415,18 +445,24 @@ export function ReportPackPage({ id }: { id: string }) {
               ) : null}
             </>
           ) : null}
-          {issue && pk.status === "in_review" ? (
-            <Button disabled={busy} onClick={() => setDialog("issue")} data-testid="rp-issue">
-              {t("issue")}
-            </Button>
-          ) : null}
-          {issue && pk.status === "issued" ? (
+        </div>
+      ) : null}
+      {issue && (pk.status === "in_review" || pk.status === "issued") ? (
+        <RecordActions label={pk.status === "issued" ? td("endReissue") : td("endIssue")} testId="rp-end">
+          {pk.status === "in_review" ? (
+            <>
+              {!reviewed || selfReview ? <p className="w-full text-xs text-muted-foreground">{t("reviewerRule")}</p> : null}
+              <Button disabled={busy} onClick={() => setDialog("issue")} data-testid="rp-issue">
+                <Lock aria-hidden />
+                {t("issue")}
+              </Button>
+            </>
+          ) : (
             <Button variant="outline" onClick={() => setDialog("reissue")} data-testid="rp-reissue">
               {t("reissue")}
             </Button>
-          ) : null}
-          {issue && pk.status === "in_review" && (!reviewed || selfReview) ? <p className="w-full text-xs text-muted-foreground">{t("reviewerRule")}</p> : null}
-        </div>
+          )}
+        </RecordActions>
       ) : null}
       {dialog === "issue" ? <IssueDialog pack={pk} onClose={() => setDialog(null)} /> : null}
       {dialog === "return" ? <ReturnDialog pack={pk} onClose={() => setDialog(null)} /> : null}
@@ -555,10 +591,15 @@ function Snapshot({ pack }: { pack: Pack }) {
       <CardContent className="flex flex-col gap-2">
         {sections.map((s, i) => (
           <details key={`${s.key}-${i}`} className="rounded-md border" data-testid="rp-section" data-key={s.key}>
-            <summary className="flex min-h-touch cursor-pointer items-center gap-2 px-3 text-sm font-medium">
+            <summary className="flex min-h-touch cursor-pointer flex-wrap items-center gap-2 px-3 py-1 text-sm font-medium">
               <span className="text-muted-foreground tabular-nums">{i + 1}.</span>
               {(ar ? s.title_ar : s.title_en) || s.key}
-              {s.watermark ? <span className="rounded bg-warning-bg px-1.5 text-xs text-warning" data-testid="rp-watermark">{s.watermark}</span> : null}
+              {s.watermark ? (
+                <span className="inline-flex items-center gap-1 rounded border border-warning/50 bg-warning-bg px-1.5 py-0.5 text-xs font-semibold text-warning" data-testid="rp-watermark">
+                  <Stamp aria-hidden className="size-3.5" />
+                  {s.watermark}
+                </span>
+              ) : null}
             </summary>
             <div className="flex flex-col gap-3 overflow-x-auto px-3 pb-3">
               {(ar ? s.paragraphs_ar : s.paragraphs_en)?.map((p, j) => (
@@ -608,6 +649,7 @@ function Deliveries({ packId, projectId }: { packId: string; projectId: string |
   const t = useTranslations("rp.pack");
   const te = useTranslations("enums");
   const { dateTime } = useFormatters(projectId);
+  const show = useDisplay(projectId);
   const q = usePackDeliveries(packId);
   const items = q.data?.items ?? [];
   return (
@@ -634,7 +676,7 @@ function Deliveries({ packId, projectId }: { packId: string; projectId: string |
                 <TR key={d.id} data-testid="rp-delivery" data-channel={d.channel}>
                   <TD label={t("member")}>
                     <bdi>{d.member}</bdi>
-                    <span className="block text-xs text-muted-foreground">{t("rev", { n: d.revision })}</span>
+                    <span className="block text-xs text-muted-foreground">{t("rev", { n: show(String(d.revision)) })}</span>
                   </TD>
                   <TD label={t("channel")}>{te(`rpChannel.${d.channel}`)}</TD>
                   <TD label={t("status")}>
@@ -643,7 +685,14 @@ function Deliveries({ packId, projectId }: { packId: string; projectId: string |
                   </TD>
                   <TD label={t("attachments")}>
                     {d.attachments.length ? (
-                      <bdi className="ltr text-xs">{d.attachments.join(", ")}</bdi>
+                      <ul className="flex flex-col gap-0.5 text-xs">
+                        {d.attachments.map((a) => (
+                          <li key={a} className="flex items-start gap-1">
+                            <Paperclip aria-hidden className="mt-px size-3.5 shrink-0 text-muted-foreground" />
+                            <bdi className="ltr break-all">{a}</bdi>
+                          </li>
+                        ))}
+                      </ul>
                     ) : (
                       "—"
                     )}
