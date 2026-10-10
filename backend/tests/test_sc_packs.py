@@ -130,6 +130,12 @@ def test_mcr_september_ac32_33(db: Session) -> None:
     keys = [s["key"] for s in pk.snapshot["sections"]]
     assert keys[0] == "p1:executive_summary" and keys[-1] == "appendix" and "module:heat" in keys
     assert "module:followup" not in keys and "Incident follow-up" in pk.snapshot["not_live"]
+    # design pass: "Contractor scorecards" once (RP-1 (3)); section 7 is the ranking summary
+    titles = [s["title_en"] for s in pk.snapshot["sections"]]
+    assert titles.count("Contractor scorecards") == 1, titles
+    s7 = next((s for s in pk.snapshot["sections"] if s["key"] == "p1:contractor_performance"), None)
+    if s7 is not None:
+        assert [c[0] for c in s7["tables"][0]["columns"]] == list(packs.SUMMARY_COLS)
     issue = _go(db, pk, "noura.qahtani", "noura.qahtani", "faisal.harbi")
     expect("SCORECARDS_NOT_FINAL", issue)
     packs.transition(
@@ -145,6 +151,7 @@ def test_mcr_september_ac32_33(db: Session) -> None:
     assert pk.status == RpStatus.issued and pk.scorecards_provisional
     sc = next(s for s in pk.snapshot["sections"] if s["key"] == "scorecards")
     assert (sc.get("watermark") or "").lower().startswith("provisional")
+    assert [s["title_en"] for s in pk.snapshot["sections"]].count("Contractor scorecards") == 1
     assert set(pk.files) >= {"pdf_en", "pdf_ar", "xlsx"}
 
 

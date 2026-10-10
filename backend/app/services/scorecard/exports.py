@@ -155,13 +155,6 @@ def legacy_csv(
     db: Session, p: Principal, code: str, project_id: uuid.UUID | None, status: str | None,
     identity: bool, purpose: XpPurpose | None, purpose_text: str | None,
 ) -> tuple[list[str], list[list[str]]]:  # fmt: skip
-    from app.services import exports as svc  # noqa: PLC0415
-    from app.services import hse_exports  # noqa: PLC0415
-    from app.services.access import exports as acc  # noqa: PLC0415
-    from app.services.cert import exports as cer  # noqa: PLC0415
-    from app.services.ptw import exports as ptw  # noqa: PLC0415
-    from app.services.train import exports as trn  # noqa: PLC0415
-
     ds = ExportDataset(code)
     fmt = ExportFormat.csv
     ep: ExportPurpose | None = None
@@ -171,6 +164,24 @@ def legacy_csv(
             ep = ExportPurpose(purpose.value)
         except ValueError:
             ep, ptext = ExportPurpose.other, f"{purpose.value}: {purpose_text or ''}".strip()
+    with audit.muted(db, AuditAction.export):  # the job writes the one export entry
+        content = _run_legacy(db, p, ds, fmt, project_id, status, identity, ep, ptext)
+    text = content.decode("utf-8").lstrip("\ufeff")
+    rows = list(csv.reader(io.StringIO(text)))
+    return (rows[0] if rows else []), rows[1:]
+
+
+def _run_legacy(
+    db: Session, p: Principal, ds: ExportDataset, fmt: ExportFormat, project_id: uuid.UUID | None,
+    status: str | None, identity: bool, ep: ExportPurpose | None, ptext: str | None,
+) -> bytes:  # fmt: skip
+    from app.services import exports as svc  # noqa: PLC0415
+    from app.services import hse_exports  # noqa: PLC0415
+    from app.services.access import exports as acc  # noqa: PLC0415
+    from app.services.cert import exports as cer  # noqa: PLC0415
+    from app.services.ptw import exports as ptw  # noqa: PLC0415
+    from app.services.train import exports as trn  # noqa: PLC0415
+
     if ds in trn.DATASETS:
         content, _m, _f = trn.export(db, p, ds, fmt, project_id, status, None)
     elif ds in cer.DATASETS:
@@ -185,9 +196,7 @@ def legacy_csv(
         content, _m, _f = ptw.export(db, p, ds, fmt, project_id, status, None)
     else:
         content, _m, _f = svc.export(db, p, ds, fmt, project_id, status, None)
-    text = content.decode("utf-8").lstrip("﻿")
-    rows = list(csv.reader(io.StringIO(text)))
-    return (rows[0] if rows else []), rows[1:]
+    return content
 
 
 def _privacy_cases(db: Session, project_id: uuid.UUID | None) -> set[str]:

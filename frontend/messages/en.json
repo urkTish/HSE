@@ -13430,16 +13430,7 @@
     },
     "reportableNext": "A Phase 1 environmental incident is created with it, unless you link one.",
     "backgroundChip": "Background dust, not counted",
-    "target": "Target",
-    "refEn": {
-      "limit_source": {
-        "ncec": "NCEC"
-      },
-      "background_source": {
-        "ncm_warning": "NCM warning",
-        "aocc": "AOCC (airport operations)"
-      }
-    }
+    "target": "Target"
   },
   "fu": {
     "nav": {

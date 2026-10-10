@@ -147,20 +147,15 @@ export type EnvList =
 export function useEnvRef() {
   const q = useEnvReference();
   const ar = useLocale() === "ar";
-  const td = useTranslations("envDesign");
   const lists = q.data?.lists as Record<string, S["EnvRefItem"][]> | undefined;
   const items = useCallback((l: EnvList): S["EnvRefItem"][] => lists?.[l] ?? [], [lists]);
   const label = useCallback(
     (l: EnvList, code: string | null | undefined): string => {
       if (!code) return "—";
-      // The server capitalises some acronyms in English ("Ncec"): use the proper name when there is one.
-      const fix = `refEn.${l}.${code}`;
-      const tdx = td as unknown as { (k: string): string; has: (k: string) => boolean };
-      if (!ar && tdx.has(fix)) return tdx(fix);
       const it = lists?.[l]?.find((x) => x.code === code);
       return it ? (ar ? it.label_ar : it.label_en) : code;
     },
-    [lists, ar, td],
+    [lists, ar],
   );
   /** Unit of a parameter from the PA detail ("µg/m³ · 0–20000"). */
   const unit = useCallback(

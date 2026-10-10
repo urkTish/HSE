@@ -246,14 +246,6 @@ function Kpis({ project }: { project: Project }) {
   if (!caps.view) return <Alert tone="info">{tc("notAllowed")}</Alert>;
   const d = q.data;
   const label = (x: { label_en: string; label_ar: string }) => (ar ? x.label_ar : x.label_en);
-  // The server sends a KPI's target as a note ("K-120 target: 70.0 %") when the tile has no target_display: show it on the tile too.
-  const noteTarget = (metric: string) => {
-    for (const n of d?.notes ?? []) {
-      const m = new RegExp(`^${metric} target: (.+)$`).exec(n);
-      if (m) return m[1];
-    }
-    return undefined;
-  };
   return (
     <div>
       <PageHeader title={t("title")} description={t("subtitle")} />
@@ -314,10 +306,6 @@ function Kpis({ project }: { project: Project }) {
                   {m.target_display ? (
                     <span className="text-xs text-muted-foreground">
                       {t("target")}: <span className="tabular-nums">{show(m.target_display)}</span>
-                    </span>
-                  ) : noteTarget(m.metric) ? (
-                    <span className="text-xs text-muted-foreground" data-testid="ek-tile-target">
-                      {td("target")}: <span className="font-medium tabular-nums text-foreground">{show(noteTarget(m.metric) ?? "")}</span>
                     </span>
                   ) : null}
                   {m.null_reason ? <span className="text-xs text-muted-foreground">{te(`nullReason.${m.null_reason}`)}</span> : null}

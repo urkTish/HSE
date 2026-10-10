@@ -8,7 +8,7 @@ from datetime import timedelta
 from pathlib import Path
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core import crypto
@@ -18,7 +18,7 @@ from app.core.scorecard_enums import XpFormat, XpFrequency, XpJobStatus, XpPurpo
 from app.models import Attachment, AuditEntry, XpJob
 from app.schemas.scorecard import XpExportRequest, XpSubscriptionCreate
 from app.services.attachments import ENCRYPTED
-from app.services.scorecard import exports
+from app.services.scorecard import datasets, exports
 from tests.conftest import Api
 from tests.sc_helpers import API, P, expect, notified, project, tick
 
@@ -54,7 +54,15 @@ def _col(rows: list[list[str]], name: str) -> list[str]:
 
 
 def test_incident_register_ac43_46(db: Session) -> None:
+    last = db.scalar(select(func.max(AuditEntry.seq))) or 0
     job = _req(db, "omar.siddiqui", "incidents")
+    # D-225: the wrapped Phase 1 exporter's own entry is muted; the job writes the one entry
+    rows_ = db.scalars(
+        select(AuditEntry).where(AuditEntry.action == AuditAction.export, AuditEntry.seq > last)
+    ).all()
+    assert [r.entity_id for r in rows_] == [job.id]
+    ds = datasets.get("incidents")
+    assert ds is not None and (ds.en, ds.ar) == ("Incidents", "الحوادث")
     assert job.status == XpJobStatus.ready
     raw, rows = _csv(db, job)
     assert raw.startswith(b"\xef\xbb\xbf")  # UTF-8 BOM (AC46)

@@ -160,3 +160,20 @@ def test_arabic_labels(api: Api) -> None:
     assert len(lists) >= 15
     missing = [(k, i["code"]) for k, v in lists.items() for i in v if not i["label_ar"].strip()]
     assert missing == []
+
+
+def test_k120_target_and_acronym_labels(api: Api, db: Session) -> None:
+    """Design-pass asks: K-120 carries its target as target_display (the env setting), and the
+    reference lists name NCEC / NCM / AOCC instead of capitalising the codes."""
+    f = api.as_("faisal.harbi")
+    body = kpis(f, project(db, "ANIA-EXP").id)
+    note = next(n for n in body["notes"] if n.startswith("K-120 target: "))
+    assert kpi(body, "K120")["target_display"] == note.removeprefix("K-120 target: ")
+    r = f.get(f"{API}/env-reference")
+    assert r.status_code == 200, r.text
+    lists = r.json()["lists"]
+    en = {(lst, i["code"]): i["label_en"] for lst in ("limit_source", "background_source")
+          for i in lists[lst]}  # fmt: skip
+    assert en[("limit_source", "ncec")] == "NCEC"
+    assert en[("background_source", "ncm_warning")] == "NCM warning"
+    assert en[("background_source", "aocc")] == "AOCC (airport operations)"

@@ -55,12 +55,5 @@ P = {
         "backgroundChip": ["Background dust, not counted", "غبار طبيعي، غير محتسب"],
         "target": ["Target", "المستهدف"],
         # English names for reference codes the server capitalises ("Ncec"); Arabic comes from the server.
-        "refEn": {
-            "limit_source": {"ncec": ["NCEC", "المركز الوطني للرقابة على الالتزام البيئي"]},
-            "background_source": {
-                "ncm_warning": ["NCM warning", "إنذار المركز الوطني للأرصاد"],
-                "aocc": ["AOCC (airport operations)", "مركز عمليات المطار"],
-            },
-        },
     },
 }

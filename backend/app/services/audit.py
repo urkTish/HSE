@@ -10,6 +10,8 @@
 import hashlib
 import json
 import uuid
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from enum import Enum
@@ -129,6 +131,19 @@ def compute_hash(prev_hash: str | None, entry: AuditEntry) -> str:
     return hashlib.sha256(((prev_hash or "") + canonical(entry)).encode()).hexdigest()
 
 
+@contextmanager
+def muted(db: Session, *actions: AuditAction) -> Iterator[None]:
+    """Within the block, `record` skips these actions on this session: a caller that wraps
+    another service and writes the one entry for the whole operation (6g D-225: the export
+    registry runs an earlier register exporter and records the export itself)."""
+    prev: frozenset[AuditAction] = db.info.get("audit_muted", frozenset())
+    db.info["audit_muted"] = prev | set(actions)
+    try:
+        yield
+    finally:
+        db.info["audit_muted"] = prev
+
+
 def record(
     db: Session,
     action: AuditAction,
@@ -145,6 +160,8 @@ def record(
     occurred_at: datetime | None = None,
     defer: bool = False,
 ) -> AuditEntry | None:
+    if action in db.info.get("audit_muted", ()):
+        return None
     ctx = get_request_context()
     fields: dict[str, Any] = {
         "action": action,

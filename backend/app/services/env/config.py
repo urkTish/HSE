@@ -74,6 +74,11 @@ PLAIN_AR: dict[str, dict[str, str]] = {
                           "aocc": "مركز عمليات المطار",
                           "visual_regional": "غبار إقليمي مرئي", "other": "أخرى"},
 }  # fmt: skip
+# English names where capitalising the code would mangle an acronym ("Ncec", "Aocc").
+PLAIN_EN: dict[str, dict[str, str]] = {
+    "limit_source": {"ncec": "NCEC"},
+    "background_source": {"ncm_warning": "NCM warning", "aocc": "AOCC (airport operations)"},
+}
 PLAIN: dict[str, type[Enum]] = {
     "condition": AspectCondition,
     "schedule": Schedule,
@@ -91,9 +96,10 @@ PLAIN: dict[str, type[Enum]] = {
 
 
 def _plain(name: str) -> list[EnvRefItem]:
-    ar = PLAIN_AR[name]
+    ar, en = PLAIN_AR[name], PLAIN_EN.get(name, {})
     return [
-        EnvRefItem(code=str(m.value), label_en=str(m.value).replace("_", " ").capitalize(),
+        EnvRefItem(code=str(m.value),
+                   label_en=en.get(str(m.value)) or str(m.value).replace("_", " ").capitalize(),
                    label_ar=ar[str(m.value)])
         for m in PLAIN[name]
     ]  # fmt: skip

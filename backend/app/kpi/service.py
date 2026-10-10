@@ -323,6 +323,14 @@ def target_of(scope: Scope, metric: KpiMetric) -> Decimal | None:
     if proj is None:
         return None
     raw = (scope.hse[proj.id].kpi_targets or {}).get(metric.value)
+    if raw in (None, "") and metric == KpiMetric.K120:
+        # 6e: the waste diversion target is an environmental setting (diversion_target_pct)
+        from sqlalchemy.orm import object_session  # noqa: PLC0415
+
+        from app.services.env import common as ec  # noqa: PLC0415
+
+        db = object_session(proj)
+        return ec.q1(ec.cfg(db, proj.id).dec("diversion_target_pct")) if db is not None else None
     return Decimal(str(raw)) if raw not in (None, "") else None
 
 

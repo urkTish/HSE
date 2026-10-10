@@ -196,7 +196,8 @@ def _p1_sections(r: MonthlyReport, sc_section: dict[str, Any] | None) -> list[di
         if order < 2 or order > 12:
             continue
         if order == 7 and sc_section is not None:
-            out.append({**sc_section, "key": f"p1:{s.get('section')}"})
+            out.append(_section7(sc_section, f"p1:{s.get('section')}", s.get("title_en", ""),
+                                 s.get("title_ar", "")))  # fmt: skip
             continue
         tables = []
         for t in s.get("tables") or []:
@@ -207,6 +208,20 @@ def _p1_sections(r: MonthlyReport, sc_section: dict[str, Any] | None) -> list[di
                         tables, [s["narrative_en"]] if s.get("narrative_en") else [],
                         [s["narrative_ar"]] if s.get("narrative_ar") else []))  # fmt: skip
     return out
+
+
+SUMMARY_COLS = ("rank", "engagement", "score", "grade")
+
+
+def _section7(sc: dict[str, Any], key: str, en: str, ar: str) -> dict[str, Any]:
+    """RP-1 (1): Phase 1 section 7 keeps its title and shows the scorecard summary (ranking);
+    the full contractor scorecards section (3) follows the modules, so it is not listed twice."""
+    rank = sc["tables"][0]
+    cols = [c for c in rank["columns"] if c[0] in SUMMARY_COLS]
+    rows = [{k: r.get(k) for k in SUMMARY_COLS} for r in rank["rows"]]
+    return _sec(key, en or sc["title_en"], ar or sc["title_ar"],
+                [_tbl([tuple(c) for c in cols], rows, rank["title_en"], rank["title_ar"])],
+                watermark=sc.get("watermark"))  # fmt: skip
 
 
 def scorecard_section(db: Session, project_id: uuid.UUID, month: date,
@@ -974,7 +989,9 @@ def issue(db: Session, pk: RpPack, by: uuid.UUID, t: datetime, no_xlsx_ext: bool
             p1 = next((i for i, s in enumerate(pk.snapshot.get("sections", []))
                        if s["key"] == "p1:contractor_performance"), None)  # fmt: skip
             if p1 is not None:
-                secs.insert(p1, {**sc, "key": "p1:contractor_performance"})
+                old7 = pk.snapshot["sections"][p1]
+                secs.insert(p1, _section7(sc, "p1:contractor_performance", old7["title_en"],
+                                          old7["title_ar"]))  # fmt: skip
         pk.snapshot = {**pk.snapshot, "sections": secs}
         pk.snapshot_hash = digest(pk.snapshot)
     pk.issued_by_user_id, pk.issued_at = by, t
