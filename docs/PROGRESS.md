@@ -13,7 +13,7 @@
 - Phase 6f — Incident follow-up (notification packs, lessons learned): spec `docs/specs/6f-incident-followup.md` v1.0 (48 ACs; §11 earlier-spec changes applied; contract v0.12.0)
 - Phase 6f step = Design done (contract v0.12.0; 11 p6f specs green on a fresh seed; screenshots `docs/screenshots/phase-6f`; design pass `docs/design/phase-6f-findings.md`)
 - Phase 6g — Contractor HSE scorecard + reports export pack: spec `docs/specs/6g-scorecard-reports.md` v1.0 (56 ACs; §11 earlier-spec changes applied; contract v0.13.0)
-- Phase 6g step = Backend done
+- Phase 6g step = Frontend done (contract v0.13.0; 21 p6g specs green on a fresh seed; screenshots `docs/screenshots/phase-6g`)
 
 ## Phase log
 - Phase 0 — Foundation: built, e2e green, design pass done (2026-10-05). The user asked to continue phase after phase without per-phase approval; open questions are collected below for a single review.
@@ -23,6 +23,16 @@
 - Phase 4 — Third-party certification: built, e2e green, design pass done (2026-10-08).
 
 ## Done
+
+### Frontend — Phase 6g contractor scorecard + reports export pack (contract v0.13.0)
+- API types regenerated from contract v0.13.0, with EN/AR labels for every new enum value, the 27 new error codes, the 9 audit entities, the CA source `scorecard` and the new attachment / expiring kinds.
+- New "Scorecards" sidebar section (`nav-scorecard`): register with the monthly ranking (rank, score, grade with cap, trend, watch level, median, month status, Finalise for the HSE Manager), card page (score, grade band → capped grade with the cap's record, rank "n of N", median, pillars with effective weights, every metric line with its status; no score inputs), comments & disputes (raise with reason codes and up to 3 files, resolve: corrected / excluded / rejected, withdraw), re-issue as a revision; watch list (open manually, triggers, review CA, escalation proposal, PIP with ≥ 3 scorecard CAs, decision, prefilled suspension form, close); KPIs K-132…K-135 with breakdowns; scorecard settings and profile versions (draft, weights, metrics, caps, bands, activate).
+- New "Reports & exports" section (`nav-reports-exports`): report packs (create MCR / SCP / CPS / OSHA300 / HEAT, regenerate, submit, return, review, issue with the provisional watermark, re-issue, files, contents, delivery log), distribution lists (users, externals with the disclosure acknowledgement), generic exports (dataset, PDPL-classed columns, format, purpose, jobs log with download, subscriptions). Contractor performance summary at `/contractors/{id}/performance` (HSE Manager).
+- Entry points: quick CSV / XLSX + "More options" on the heat, emergency, field, environment and follow-up registers; "Print PDF" on the dashboard (`/dashboard-print`). Buttons follow capabilities 224–232; contractor reps see their own engagements only (server scope).
+- Code: `src/components/scorecard/` (common, cards, remarks, watch, settings, packs, exports, kpis), `src/lib/api/scorecard.ts`, 12 routes. EN/AR strings in `scripts/i18n/p6-scorecard.py` (562 keys added; the merge changes no other key). Decisions D-232…D-236.
+- e2e: `p6g-scorecards`, `p6g-watch`, `p6g-settings`, `p6g-packs`, `p6g-exports`, `p6g-kpis` (21 tests, green on a fresh seed). `screenshots-p6g.spec.ts` (SCREENSHOTS=1) wrote 24 EN/AR screens (desktop + 390 px rep views) to `docs/screenshots/phase-6g`.
+- Full e2e run (once, fresh seed): 312 passed, 25 skipped, 0 failed (39.4 min).
+- Parked: dashboard tiles / charts C39–C40 for scorecards, an export entry point on a field-inspections register (no such list; reachable from /exports), AI tool T25 (backend parked).
 
 ### Backend — Phase 6g contractor scorecard + reports export pack (contract v0.13.0, stage 2)
 - Scorecard (`app/services/scorecard/`: calc, inputs, cards, remarks, watch, config): reads existing KPIs only; pillars and metrics with weights and good / bad anchors per 200,000 h, 12-month small-number blending (Z) and minimum volumes, weight redistribution for missing / not-live modules (no grade below 60 % scored weight), caps CP-1…CP-3, grades. Monthly cycle: issue after the month lock (`scorecard_monthly`), comment window, disputes (P6g-4 identity check, P1-8 warning), resolution (data corrected / metric excluded / rejected), HSE Manager finalises, re-issue as a revision, restatement flag. No typed scores (PATCH on a line → 405). Contractor reps see their own scope, rank "n of N" and the median; other cards 404. Watch list WL-1…WL-7 (watch → improvement plan → suspension review, PIP, prefilled Phase 0 suspension form; the platform never suspends), commendation, E25.
@@ -919,6 +929,7 @@
 - (Backend, ops) With 4 API workers the KPI cache can show figures up to 20 s old after a write made through another worker, and the gate rate limit (120/min) is counted per worker. Acceptable for v1.0?
 
 ## Contract requests
+- (Frontend 6g, low) `comment_open` (or `can_comment`) on `ScCardRead`, so the comment / dispute button follows the server instead of the browser clock (D-233).
 - 6d (frontend): `AnswerInput.photo_ids` (keep already-stored photos) so re-saving audit answers does not re-send photos (D-191); Arabic KPI notes (or note codes) on `FieldKpiResponse.notes` instead of English strings (D-190).
 - (Frontend 6c) `GET /projects/{id}/muster-devices` (list the muster readers with AP, label, last seen, revoked) — the page can only list devices registered in the current session.
 - (Frontend 6c) `q` (tag / location search) on `GET /projects/{id}/emergency-assets`, and a lookup of an asset by its EA sticker payload (so a scanned check shows the asset and its items before saving).
