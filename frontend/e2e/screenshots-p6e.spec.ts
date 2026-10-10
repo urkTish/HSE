@@ -2,11 +2,14 @@ import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { type Page } from "@playwright/test";
 import { expect, test } from "./fixtures/test";
-import { apiAs, getJson, login, projectId, USERS } from "./helpers";
+import { apiAs, getJson, login, projectId, selectByPrefix, USERS } from "./helpers";
 import { pinProject, USERS6 } from "./p6a-helpers";
 
 // Phase 6e demo screenshots for docs/screenshots/phase-6e (run with SCREENSHOTS=1 on a fresh seed).
 const OUT = join(__dirname, "..", "..", "docs", "screenshots", "phase-6e");
+// Design pass: SHOT_SUFFIX=before|after runs only the design set and writes docs/screenshots/phase-6e/design/<name>-<locale>-<suffix>.png.
+const SFX = process.env.SHOT_SUFFIX ?? "";
+const DESIGN = join(OUT, "design");
 test.skip(!process.env.SCREENSHOTS, "screenshots only on demand");
 test.setTimeout(1_800_000);
 
@@ -20,6 +23,7 @@ type Items<T> = { items: T[] };
 
 for (const locale of ["en", "ar"] as const) {
   test(`phase 6e screens (${locale})`, async ({ page }) => {
+    test.skip(Boolean(SFX), "design set only");
     mkdirSync(OUT, { recursive: true });
     const noura = await apiAs(USERS.noura);
     const pid = await projectId(noura, "ANIA-EXP");
@@ -171,5 +175,81 @@ for (const locale of ["en", "ar"] as const) {
     await go(`/waste-areas/${area?.id ?? ""}`);
     await expect(page.getByTestId("area-check")).toBeVisible();
     await shot(page, `28-phone-area-check-${locale}.png`, true);
+  });
+}
+
+async function dshot(page: Page, name: string, locale: string, fullPage = true) {
+  await page.waitForLoadState("networkidle", { timeout: 15_000 }).catch(() => undefined);
+  await page.waitForTimeout(800);
+  await page.screenshot({ path: join(DESIGN, `${name}-${locale}-${SFX}.png`), fullPage });
+}
+
+for (const locale of ["en", "ar"] as const) {
+  test(`phase 6e design set (${locale})`, async ({ page }) => {
+    test.skip(!SFX, "design set only with SHOT_SUFFIX");
+    mkdirSync(DESIGN, { recursive: true });
+    const noura = await apiAs(USERS.noura);
+    const pid = await projectId(noura, "ANIA-EXP");
+    const find = async <T extends { id: string }>(path: string, pick: (x: T) => boolean) => (await getJson<Items<T>>(noura, path)).items.find(pick);
+    const area = await find<{ id: string; area_code: string }>(`/api/v1/projects/${pid}/waste-storage-areas?page_size=50`, (a) => a.area_code === "HWS-SLAND-01");
+    const point = await find<{ id: string; point_code: string }>(`/api/v1/projects/${pid}/env-points?page_size=50`, (p) => p.point_code === "D-SAIR-01");
+    const bg = await find<{ id: string; exceedance_no: string }>(`/api/v1/projects/${pid}/env-exceedances?page_size=50`, (x) => x.exceedance_no === "ENX-ANIA-EXP-2026-0018");
+    const go = (path: string) => page.goto(`/${locale}${path}`);
+
+    await login(page, USERS.noura, locale);
+    await pinProject(page, "ANIA-EXP");
+    await go("/env-kpis?period=month&anchor=2026-09-15");
+    await expect(page.getByTestId("ek-tiles")).toBeVisible({ timeout: 45_000 });
+    await dshot(page, "02-env-kpis", locale);
+    await go("/env-exceedances");
+    await expect(page.getByTestId("exceedance-row").first()).toBeVisible();
+    await dshot(page, "18-exceedances", locale);
+    await go(`/env-exceedances/${bg?.id ?? ""}`);
+    await expect(page.getByTestId("exceedance-peak")).toBeVisible();
+    await dshot(page, "19-exceedance-background", locale);
+    await go(`/env-points/${point?.id ?? ""}`);
+    await expect(page.getByTestId("requirement-row").first()).toBeVisible();
+    await dshot(page, "16-point-detail", locale);
+
+    // Dispatch refused: GREENHAUL is not licensed for hazardous waste.
+    await go(`/waste-consignments/new?area=${area?.id ?? ""}`);
+    await page.getByTestId("cn-stream").selectOption("used_oil");
+    await page.getByTestId("cn-area").selectOption(area?.id ?? "");
+    await selectByPrefix(page.getByTestId("cn-generator"), "RAWABI");
+    await page.getByTestId("cn-quantity").fill("0.4");
+    await selectByPrefix(page.getByTestId("cn-transporter"), "GREENHAUL");
+    await selectByPrefix(page.getByTestId("cn-facility"), "OILREF");
+    await page.getByTestId("cn-plate").fill("4821 RSA");
+    await page.getByTestId("cn-manifest").fill("MWAN-2026-55120");
+    await page.getByTestId("cn-save").click();
+    await expect(page.getByTestId("form-error")).toBeVisible();
+    await dshot(page, "14-dispatch-refused", locale);
+
+    // Phone: a reportable spill, the reading entry, the area check.
+    await page.setViewportSize({ width: 390, height: 844 });
+    await go("/spills/new");
+    await selectByPrefix(page.getByTestId("sp-site"), "S-LAND");
+    await selectByPrefix(page.getByTestId("sp-engagement"), "RAWABI");
+    await page.getByTestId("sp-quantity").fill("25");
+    await page.getByTestId("sp-reached").selectOption("drain");
+    await expect(page.getByTestId("sp-reportable-preview")).toBeVisible();
+    await dshot(page, "23-spill-reportable-phone", locale);
+
+    await page.context().clearCookies();
+    await login(page, USERS.omar, locale);
+    await pinProject(page, "ANIA-EXP");
+    await go("/env-readings/new");
+    await page.getByTestId("rd-point-V-SAIR").click();
+    await dshot(page, "27-phone-reading-empty", locale);
+    await page.getByTestId("rd-visual-2").click();
+    await dshot(page, "27-phone-reading", locale);
+
+    await page.context().clearCookies();
+    await login(page, USERS6.fahad, locale);
+    await pinProject(page, "ANIA-EXP");
+    await go(`/waste-areas/${area?.id ?? ""}`);
+    await expect(page.getByTestId("area-check")).toBeVisible();
+    await page.getByTestId("check-covered-no").click();
+    await dshot(page, "28-phone-area-check", locale);
   });
 }
