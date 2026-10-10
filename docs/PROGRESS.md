@@ -9,7 +9,7 @@
 - Phase 6d — Field assurance (checklists, audits, toolbox talks): spec `docs/specs/6d-field-assurance.md` v1.0 (61 ACs; §11 earlier-spec changes applied; contract v0.10.0)
 - Phase 6d step = Design done (findings `docs/design/phase-6d-findings.md`; contract v0.10.0); phase demo next
 - Phase 6e — Environmental management: spec `docs/specs/6e-environmental.md` v1.0 (58 ACs; §11 earlier-spec changes applied; contract v0.11.0)
-- Phase 6e step = Frontend done (contract v0.11.0; 16 p6e specs green; screenshots `docs/screenshots/phase-6e`); design pass next
+- Phase 6e step = Design done (contract v0.11.0; 16 p6e specs green; screenshots `docs/screenshots/phase-6e`; design pass `docs/design/phase-6e-findings.md`)
 - Phase 6f — Incident follow-up (notification packs, lessons learned): spec `docs/specs/6f-incident-followup.md` v1.0 (48 ACs; §11 earlier-spec changes applied; contract v0.12.0)
 - Phase 6f step = Backend done
 - Phase 6g — Contractor HSE scorecard + reports export pack: spec `docs/specs/6g-scorecard-reports.md` v1.0 written (56 ACs; §11 earlier-spec changes applied); contract next
@@ -702,6 +702,11 @@
 - E2E (Playwright, real backend): full suite 71 passed, 2 skipped (screenshot specs, on demand) on a fresh migrated + seeded DB — 35 Phase 0 + 36 Phase 1 tests in `e2e/p1-*.spec.ts` — dashboard (AC55, 59, 60, 61, 62, 63, 64, filters in URL, drill-down, charts, mobile), AI (AC65, 72, 73, 74, 75, insufficient data, errors, Arabic) via a recorded SSE stream in `e2e/fixtures/ai-stream.ts` (typed against the contract, replayed with `page.route`; test-only), workforce/import (AC2, 3, 4, 7, 10), incidents/PDPL (AC13, 19, 20, 21, 29, 30, 31, 33), CAs (AC40, 41, 42, 43), observations (AC35) and create flows for observations, inspections, meetings, settings, reports. Phase 0 specs unchanged except a wait in AC12 (options load asynchronously).
 - Screenshots: `docs/screenshots/phase-1/` (run `SCREENSHOTS=1 npx playwright test e2e/screenshots-p1.spec.ts`).
 
+### Design pass — Phase 6e (UI/UX Designer)
+- Design pass: done (Phase 6e). Findings, ranking, proposals and the 6e design-system additions: `docs/design/phase-6e-findings.md`; before/after screenshots (EN/AR, desktop and 390 px): `docs/screenshots/phase-6e/design/` (`screenshots-p6e.spec.ts` with `SHOT_SUFFIX=before|after`).
+- Done: dispatch licence pre-check per provider (covers the waste class / route or "dispatch will be refused", from the licence scopes already loaded; the server still decides) and a "Dispatch refused. There is no override." line with the next step; background dust says "Not counted as project-caused" (register, exceedance page, reading result, K-123 chip); a peak-against-limit bar on the exceedance page and units / "over by" in the register; "Still needed to save" lists on the phone reading and the spill report; reading entry limit box (alert and limit in force) and score buttons without the doubled number; area check groups the hazardous "filling since" dates with each stream's deadline, an outlined "Emptied: clear the date" and an unsaved-changes note; spill "Reportable because" lists only the rules that apply; KPI units and the K-120 target on its tile; aligned recent readings with limits on the point page; "NCEC" instead of "Ncec".
+- No logic, API, permission or data change; test ids unchanged (new ones listed in the findings). Strings `envDesign.*` in `scripts/i18n/p6-envdesign.py` (full `merge.py` only adds them). Lint, typecheck, i18n check green; p6e specs 16 passed on a fresh seed and a production build of this pass.
+
 ### Design pass — Consistency pass (UI/UX Designer)
 - Consistency pass done (Phases 0–4 and 6a brought up to the 6b–6d conventions). Findings per module, proposals and checks: `docs/design/consistency-pass-findings.md`; screenshots: `docs/screenshots/consistency/` (after set; the before run did not complete, see findings).
 - Done: dangerous record actions at the page end in a shared `RecordActions` band (worker Ban, deployment Demobilise at the card end, permit Cancel / Delete, equipment Retire / Blacklist, scaffold Dismantle and site-wide re-inspection, TPI Blacklist, defect Destroy, equipment-deployment Cancel, appointment Revoke, detector Retire, ADP / AVP Withdraw, fitness Hold; credential Revoke / Report loss set apart in their card; Phase 0 destructive status moves last and outlined). Safety stops (permit Suspend / Gas alarm, Tag out, red-tag Close) stay at the top. `StackedDate` in the dashboard due list, gate log, permit validity / windows, permit, CA, incident, observation, inspection, meeting, pass and WAP registers, worker and equipment pages. Icons on colour-only states (gate WAP window and blockers, escort, late exit, in force, overdue, blockers, warnings). `ChoiceMark` on PTW checklists, scaffold / arrival inspections and defect category. EN / AR ICU plurals for day counts, records, scaffolds, points / locks, imports. Arabic dates no longer forced LTR (37 PTW places, gate permit card); LTR code isolates spaced correctly in Arabic.
@@ -951,6 +956,14 @@ L items from the Phase 4 design pass (details in `docs/design/phase-4-findings.m
 - **P16. Certificate line on the deployment page.** The equipment-on-project page (the one an engineer opens for "the crane on my site") shows usable / not usable but not the certificate number, TPI, SWL and limitations. Needs `current_line` on `EquipmentDeploymentRead`.
 - **P17. Tag board field display.** A "problems only" toggle and a kiosk / TV mode for site offices (large tiles, problems first per zone, auto-refresh, no navigation chrome).
 - **P1 / P2 also apply to Phase 4.** Two-calendar dates make certificate rows 4–5 lines; equipment, scaffold and personnel-card actions come before the state on phones.
+
+L items from the Phase 6e design pass (details in `docs/design/phase-6e-findings.md`):
+- **P39. "Contained?" starts unanswered** on the spill report (today Yes; a wrong Yes makes a reportable spill minor, SPL-2).
+- **P40. Readings chart on the point page (C35)**, readings against the alert and limit lines with background events shaded (needs the C35 data).
+- **P41. Sticky Save bar on the phone forms** (spill report, reading entry), with the "still needed" list; shared with P2.
+- **P42. Reading page with Void at the page end**, instead of a Void button in every manual reading row of the register.
+- **P43. Server dispatch pre-check** (`dry_run`) returning the CON-2…CON-5 verdict per provider, including the producer registration.
+- Contract requests: English labels for the plain reference lists ("Ncec", "Ncm warning", "Aocc" today); `target_display` on K-120 instead of a note.
 
 L items from the Phase 6d design pass (details in `docs/design/phase-6d-findings.md`):
 - **P32. One item per screen.** Optional focus mode for the checklist run and audit Conduct on phones (one item, Next / swipe, the sticky bar as now).
