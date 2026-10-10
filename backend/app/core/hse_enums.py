@@ -824,6 +824,7 @@ class AttachmentOwner(StrEnum):
     # export files (encrypted personal bucket; expire after 7 days or 24 h)
     rp_pack_file = "rp_pack_file"
     xp_export_file = "xp_export_file"
+    sc_remark_file = "sc_remark_file"  # dispute files (personal, P6g-1)
 
 
 class ScanStatus(StrEnum):

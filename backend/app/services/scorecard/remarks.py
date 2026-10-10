@@ -1,0 +1,21 @@
+"""6g remarks (stage 1 stubs)."""
+
+from typing import Any, NoReturn
+
+from app.core.errors import not_implemented
+
+
+def create(*args: Any, **kw: Any) -> NoReturn:
+    raise not_implemented()
+
+
+def list_remarks(*args: Any, **kw: Any) -> NoReturn:
+    raise not_implemented()
+
+
+def resolve(*args: Any, **kw: Any) -> NoReturn:
+    raise not_implemented()
+
+
+def withdraw(*args: Any, **kw: Any) -> NoReturn:
+    raise not_implemented()

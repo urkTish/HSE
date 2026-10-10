@@ -67,6 +67,7 @@ PERSONAL = frozenset(
         AttachmentOwner.fu_pack_identity_file,  # 6f P6f-4
         AttachmentOwner.fu_evidence,  # 6f P6f-1
         AttachmentOwner.xp_export_file,  # 6g EX-8 (encrypted bucket)
+        AttachmentOwner.sc_remark_file,  # 6g P6g-1
     }
 )
 PTW_OWNERS = frozenset(

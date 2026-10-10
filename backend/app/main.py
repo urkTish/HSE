@@ -39,6 +39,7 @@ from app.api.routers import (
     env_waste,
     equipment,
     equipment_certificates,
+    export_jobs,
     exports,
     field_audits,
     field_inspections,
@@ -73,7 +74,9 @@ from app.api.routers import (
     ptw_appointments,
     ptw_audits,
     ptw_config,
+    report_packs,
     scaffolds,
+    scorecards,
     simops,
     sites,
     tpis,
@@ -311,6 +314,10 @@ def create_app() -> FastAPI:
         # Phase 6f
         followup_notifications,
         followup_lessons,
+        # Phase 6g
+        scorecards,
+        report_packs,
+        export_jobs,
     ):
         app.include_router(module.router, prefix=API_PREFIX)
     app.include_router(auth.public_router, prefix=API_PREFIX)

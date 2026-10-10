@@ -28,6 +28,7 @@ from app.core.hse_enums import (
 )
 from app.core.med_enums import FitnessCategory, MedicalKpiGroupBy
 from app.core.ptw_enums import PtwKpiGroupBy
+from app.core.scorecard_enums import ScKpiGroupBy
 from app.core.train_enums import TrainingKpiGroupBy
 from app.kpi import (
     access_views,
@@ -41,6 +42,7 @@ from app.kpi import (
     med_views,
     ptw_views,
     scope,
+    scorecard_views,
     service,
     train_views,
     views,
@@ -70,6 +72,7 @@ from app.schemas.kpi import (
 )
 from app.schemas.medical import MedicalKpiResponse
 from app.schemas.ptw_kpi import PtwKpiResponse
+from app.schemas.scorecard import ScKpiResponse
 from app.schemas.training_kpi import TrainingKpiResponse
 
 router = APIRouter(prefix="/kpi", tags=["kpi"])
@@ -574,3 +577,23 @@ def get_followup_kpis(
 ) -> FuKpiResponse:
     sc = scope.build(db, user, q, Capability.followup_view)
     return followup_views.fu_kpis(db, sc, metric, group_by)
+
+
+@router.get(
+    "/scorecards",
+    response_model=ScKpiResponse,
+    summary="Scorecard and report KPIs K-132…K-135 with breakdowns (6g §6.7)",
+    description=FILTERS + " Capability 224. GK-1: cards → their month; disputes → due_at date; "
+    "packs → due_on. The contractor filter with descendants applies to K-132 and K-133; reps "
+    "see their C scope only.",
+    responses=KPI_ERRORS,
+)
+def get_scorecard_kpis(
+    user: CurrentUser,
+    db: DB,
+    q: KpiParams,
+    metric: Annotated[list[KpiMetric] | None, Query(description="Default: K-132…K-135.")] = None,
+    group_by: Annotated[list[ScKpiGroupBy] | None, Query()] = None,
+) -> ScKpiResponse:
+    sc = scope.build(db, user, q, Capability.scorecard_view)
+    return scorecard_views.sc_kpis(db, sc, metric, group_by)

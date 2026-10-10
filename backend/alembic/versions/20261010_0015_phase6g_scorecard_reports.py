@@ -2,7 +2,7 @@
 
 Revision ID: 0015
 Revises: 0014
-Create Date: 2026-10-10 01:42:27.950671
+Create Date: 2026-10-10 01:57:26.472211
 
 """
 from typing import Sequence, Union
@@ -118,6 +118,7 @@ def upgrade() -> None:
     sa.Column('band_grade', sa.Enum('A', 'B', 'C', 'D', name='scgrade', native_enum=False, length=40), nullable=True),
     sa.Column('grade', sa.Enum('A', 'B', 'C', 'D', name='scgrade', native_enum=False, length=40), nullable=True),
     sa.Column('caps_applied', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
+    sa.Column('excluded_metrics', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
     sa.Column('pillars', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
     sa.Column('trend_delta', sa.Numeric(precision=24, scale=12), nullable=True),
     sa.Column('trend_label', sa.Enum('improving', 'stable', 'declining', name='sctrend', native_enum=False, length=40), nullable=True),

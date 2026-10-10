@@ -46,7 +46,7 @@ info:
     \ 157.\n  No diagnosis, test result or clinical note is ever stored (P6-1). Medical hooks use the\
     \ shared\n  hook policy (kind `medical_fitness`; enable with `POST /projects/{id}/medical-hooks/enable`);\n\
     \  gate texts never say \"medical\". Site-clinic sign-off needs step-up re-auth.\n"
-  version: 0.12.0
+  version: 0.13.0
 paths:
   /api/v1/health:
     get:
@@ -15824,6 +15824,325 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FuKpiResponse'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/kpi/scorecards:
+    get:
+      tags:
+      - kpi
+      summary: Scorecard and report KPIs K-132…K-135 with breakdowns (6g §6.7)
+      description: 'Common filters (all /kpi endpoints): `project_id` (repeatable) or `all_projects`,
+        `site_id`, `zone_id`, `zone_type`, `engagement_id` (+ `include_subcontractors`, default true),
+        `tier`, `period` (+ `anchor` or `start`/`end` for custom), `as_of`, `compare`. Role scope is applied
+        first (D-3): a narrower scope is reported in `context.filters.scope_narrowed`. Capability 38.
+        Capability 224. GK-1: cards → their month; disputes → due_at date; packs → due_on. The contractor
+        filter with descendants applies to K-132 and K-133; reps see their C scope only.'
+      operationId: get_scorecard_kpis
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: metric
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/KpiMetric'
+          - type: 'null'
+          description: 'Default: K-132…K-135.'
+          title: Metric
+        description: 'Default: K-132…K-135.'
+      - name: group_by
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/ScKpiGroupBy'
+          - type: 'null'
+          title: Group By
+      - name: project_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+              format: uuid
+          - type: 'null'
+          description: Project(s). Repeat for several. Required unless all_projects=true. Out-of-scope
+            ids → 404.
+          title: Project Id
+        description: Project(s). Repeat for several. Required unless all_projects=true. Out-of-scope ids
+          → 404.
+      - name: all_projects
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: 'HSE Manager only: every project (K-R12 bases banner).'
+          default: false
+          title: All Projects
+        description: 'HSE Manager only: every project (K-R12 bases banner).'
+      - name: site_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+              format: uuid
+          - type: 'null'
+          description: Sites (multi).
+          title: Site Id
+        description: Sites (multi).
+      - name: zone_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+              format: uuid
+          - type: 'null'
+          description: Zones (multi).
+          title: Zone Id
+        description: Zones (multi).
+      - name: zone_type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/ZoneType'
+          - type: 'null'
+          description: airside / landside / other.
+          title: Zone Type
+        description: airside / landside / other.
+      - name: engagement_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+              format: uuid
+          - type: 'null'
+          description: Contractor engagement(s); roll-up per include_subcontractors.
+          title: Engagement Id
+        description: Contractor engagement(s); roll-up per include_subcontractors.
+      - name: include_subcontractors
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: 'K-R5: engagement + descendants (default) or this only.'
+          default: true
+          title: Include Subcontractors
+        description: 'K-R5: engagement + descendants (default) or this only.'
+      - name: tier
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: integer
+            ge: 1
+            le: 3
+          - type: 'null'
+          description: Tier 1/2/3.
+          title: Tier
+        description: Tier 1/2/3.
+      - name: period
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/PeriodPreset'
+          description: K-R10 preset.
+          default: month
+        description: K-R10 preset.
+      - name: anchor
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          description: A date inside the wanted day/week/month/quarter/year (default as_of). mtd/qtd/ytd/r12/itd
+            end at as_of.
+          title: Anchor
+        description: A date inside the wanted day/week/month/quarter/year (default as_of). mtd/qtd/ytd/r12/itd
+          end at as_of.
+      - name: start
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          description: 'period=custom: first day.'
+          title: Start
+        description: 'period=custom: first day.'
+      - name: end
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          description: 'period=custom: last day (inclusive).'
+          title: End
+        description: 'period=custom: last day (inclusive).'
+      - name: as_of
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          description: Evaluation date; default today (project timezone).
+          title: As Of
+        description: Evaluation date; default today (project timezone).
+      - name: compare
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/ComparisonKind'
+          - type: 'null'
+          description: 'Comparisons to compute (K-R11). Default: previous.'
+          title: Compare
+        description: 'Comparisons to compute (K-R11). Default: previous.'
+      - name: gate_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+              format: uuid
+          - type: 'null'
+          description: 'Gate(s): filters gate KPIs (K-52, K-53, K-53b) only.'
+          title: Gate Id
+        description: 'Gate(s): filters gate KPIs (K-52, K-53, K-53b) only.'
+      - name: permit_type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/PermitType'
+          - type: 'null'
+          description: 'Phase 3: filters PTW KPIs (K-46, K-46b, K-61…K-71) only.'
+          title: Permit Type
+        description: 'Phase 3: filters PTW KPIs (K-46, K-46b, K-61…K-71) only.'
+      - name: equipment_category
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/EquipmentCertCategory'
+          - type: 'null'
+          description: 'Phase 4: filters equipment / scaffold KPIs (K-72…K-75, K-78, K-80).'
+          title: Equipment Category
+        description: 'Phase 4: filters equipment / scaffold KPIs (K-72…K-75, K-78, K-80).'
+      - name: cert_type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          description: 'Phase 4: personnel certificate type code(s) (PCT); filters K-76, K-77, K-78 persons,
+            K-79.'
+          title: Cert Type
+        description: 'Phase 4: personnel certificate type code(s) (PCT); filters K-76, K-77, K-78 persons,
+          K-79.'
+      - name: trade
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/Trade'
+          - type: 'null'
+          description: 'Phase 5: deployment trade(s); filters training KPIs (K-82…K-88) only.'
+          title: Trade
+        description: 'Phase 5: deployment trade(s); filters training KPIs (K-82…K-88) only.'
+      - name: course_code
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          description: 'Phase 5: course code(s); filters training KPIs (K-82…K-88) only.'
+          title: Course Code
+        description: 'Phase 5: course code(s); filters training KPIs (K-82…K-88) only.'
+      - name: course_category
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/CourseCategory'
+          - type: 'null'
+          description: 'Phase 5: course category (CAT-C); filters training KPIs only.'
+          title: Course Category
+        description: 'Phase 5: course category (CAT-C); filters training KPIs only.'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScKpiResponse'
         '401':
           description: Not authenticated, session expired, or login rejected.
           content:
@@ -64536,6 +64855,2806 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/scorecard-reference:
+    get:
+      tags:
+      - contractor-scorecards
+      summary: 6g reference lists with EN/AR labels (PL, SM, CP, GB, DR, WLL, RT, EP, MM)
+      operationId: get_scorecard_reference
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScReference'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+  /api/v1/projects/{project_id}/scorecard-settings:
+    get:
+      tags:
+      - contractor-scorecards
+      summary: 6g project settings (§3.9; 224 or 225)
+      operationId: get_scorecard_settings
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScSettingsRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags:
+      - contractor-scorecards
+      summary: Edit 6g settings (225, HSE Manager; 422 SETTING_OUT_OF_RANGE)
+      description: Editing `source_live_from` clears the confirmation (SN-5). Audited.
+      operationId: update_scorecard_settings
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScSettingsUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScSettingsRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/scorecard-settings/confirm-sources:
+    post:
+      tags:
+      - contractor-scorecards
+      summary: Confirm the prefilled source live-from map (225, SN-5)
+      operationId: confirm_scorecard_sources
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScSettingsRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/scorecard-profiles:
+    get:
+      tags:
+      - contractor-scorecards
+      summary: Scorecard profile versions (ORG and project copies)
+      operationId: list_scorecard_profiles
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Project Id
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          description: 1-based page number.
+          default: 1
+          title: Page
+        description: 1-based page number.
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          description: Items per page.
+          default: 50
+          title: Page Size
+        description: Items per page.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScProfilePage'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+      - contractor-scorecards
+      summary: Start a Draft profile version (225; SP-1, SP-5)
+      operationId: create_scorecard_profile
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScProfileCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScProfileRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/scorecard-profiles/{profile_id}:
+    get:
+      tags:
+      - contractor-scorecards
+      summary: One profile version
+      operationId: get_scorecard_profile
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: profile_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Profile Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScProfileRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags:
+      - contractor-scorecards
+      summary: Edit a Draft profile (225; versions are immutable once active)
+      operationId: update_scorecard_profile
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: profile_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Profile Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScProfileUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScProfileRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/scorecard-profiles/{profile_id}/activate:
+    post:
+      tags:
+      - contractor-scorecards
+      summary: Activate a Draft profile (225; SP-1 checks)
+      description: 422 WEIGHTS_NOT_100, LAGGING_WEIGHT_OUT_OF_RANGE, CAP_REQUIRED, PROFILE_BACKDATED.
+        Final cards keep the version they were computed with.
+      operationId: activate_scorecard_profile
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: profile_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Profile Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScProfileRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/scorecards:
+    get:
+      tags:
+      - contractor-scorecards
+      summary: Scorecard register (224)
+      description: Stored cards (Issued, Final, Superseded) filtered by month, engagement, grade, status,
+        scope and cap. With `month` and `provisional=true`, cards of a month not yet issued are computed
+        on read and flagged Provisional (SG-5). Reps see their C scope only (RK-2); site engineers Issued
+        / Final; Viewer / Client Final.
+      operationId: list_scorecards
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      - name: month
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            pattern: ^\d{4}-\d{2}$
+          - type: 'null'
+          description: yyyy-mm
+          title: Month
+        description: yyyy-mm
+      - name: engagement_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Engagement Id
+      - name: grade
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/ScGrade'
+          - type: 'null'
+          title: Grade
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/ScCardStatus'
+          - type: 'null'
+          title: Status
+      - name: scope
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/ScScope'
+          - type: 'null'
+          title: Scope
+      - name: cap
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            maxLength: 8
+          - type: 'null'
+          title: Cap
+      - name: provisional
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+          title: Provisional
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          description: 1-based page number.
+          default: 1
+          title: Page
+        description: 1-based page number.
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          description: Items per page.
+          default: 50
+          title: Page Size
+        description: Items per page.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScCardPage'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/scorecards/{card_id}:
+    get:
+      tags:
+      - contractor-scorecards
+      summary: One scorecard with pillars and lines (224; 404 outside the caller's scope)
+      operationId: get_scorecard
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: card_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Card Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScCardRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/scorecards/{card_id}/lines/{metric_code}:
+    get:
+      tags:
+      - contractor-scorecards
+      summary: One scorecard line (read only; there is no write, SG-2)
+      operationId: get_scorecard_line
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: card_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Card Id
+      - name: metric_code
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Metric Code
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScLineRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/scorecard-ranking:
+    get:
+      tags:
+      - contractor-scorecards
+      summary: 'Ranking of own cards for a month (RK-1, RK-3; reps: own scope + median, RK-2)'
+      operationId: get_scorecard_ranking
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      - name: month
+        in: query
+        required: true
+        schema:
+          type: string
+          pattern: ^\d{4}-\d{2}$
+          description: yyyy-mm
+          title: Month
+        description: yyyy-mm
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScRanking'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/scorecards/finalise:
+    post:
+      tags:
+      - contractor-scorecards
+      summary: Finalise a project-month (226; FN-1)
+      description: 422 COMMENT_WINDOW_OPEN, DISPUTES_OPEN. Freezes every Issued card of the month, issues
+        and distributes the SCPs (RP-8) and evaluates WL-1 and E25.
+      operationId: finalise_scorecards
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScFinaliseRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScFinaliseResult'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/scorecards/{card_id}/reissue:
+    post:
+      tags:
+      - contractor-scorecards
+      summary: Re-issue a Final card as a new revision (226; FN-4, reason ≥ 20 chars)
+      operationId: reissue_scorecard
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: card_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Card Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScReissueRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScCardRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/scorecards/{card_id}/remarks:
+    post:
+      tags:
+      - contractor-scorecards
+      summary: Comment on or dispute a card (227; DP-1, DP-2)
+      description: 422 COMMENT_WINDOW_CLOSED, IDENTITY_IN_TEXT; P1-8 warning for ID-like numbers. HSE
+        Officers add internal comments only (not visible to reps).
+      operationId: create_scorecard_remark
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: card_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Card Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScRemarkCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScRemarkRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/scorecard-remarks:
+    get:
+      tags:
+      - contractor-scorecards
+      summary: Dispute and comment register (224; never for Viewer / Client, RK-4)
+      operationId: list_scorecard_remarks
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      - name: month
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            pattern: ^\d{4}-\d{2}$
+          - type: 'null'
+          description: yyyy-mm
+          title: Month
+        description: yyyy-mm
+      - name: kind
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/ScRemarkKind'
+          - type: 'null'
+          title: Kind
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/ScRemarkStatus'
+          - type: 'null'
+          title: Status
+      - name: card_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Card Id
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          description: 1-based page number.
+          default: 1
+          title: Page
+        description: 1-based page number.
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          description: Items per page.
+          default: 50
+          title: Page Size
+        description: Items per page.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScRemarkPage'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/scorecard-remarks/{remark_id}/resolve:
+    post:
+      tags:
+      - contractor-scorecards
+      summary: Resolve a dispute (228; upheld_metric_excluded 226 only; DP-3…DP-5)
+      description: 422 CORRECTION_NOT_FOUND, CAP_NOT_EXCLUDABLE; 403 for exclusion without 226.
+      operationId: resolve_scorecard_remark
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: remark_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Remark Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScRemarkResolve'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScRemarkRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/scorecard-remarks/{remark_id}/withdraw:
+    post:
+      tags:
+      - contractor-scorecards
+      summary: Withdraw an open dispute (raiser only)
+      operationId: withdraw_scorecard_remark
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: remark_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Remark Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScRemarkRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/watch-list:
+    get:
+      tags:
+      - contractor-scorecards
+      summary: Watch-list register (224; Viewer / Client sees levels only, RK-4)
+      operationId: list_watch_list
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/ScWatchStatus'
+          - type: 'null'
+          title: Status
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          description: 1-based page number.
+          default: 1
+          title: Page
+        description: 1-based page number.
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          description: Items per page.
+          default: 50
+          title: Page Size
+        description: Items per page.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScWatchPage'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+      - contractor-scorecards
+      summary: Open a watch-list entry manually (226; reason ≥ 20 chars; 422 WATCH_ENTRY_OPEN)
+      operationId: open_watch_entry
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScWatchCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScWatchRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/watch-list/{entry_id}:
+    get:
+      tags:
+      - contractor-scorecards
+      summary: One watch-list entry
+      operationId: get_watch_entry
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: entry_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Entry Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScWatchRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/watch-list/{entry_id}/transitions:
+    post:
+      tags:
+      - contractor-scorecards
+      summary: Confirm an escalation, submit / accept a PIP, record a decision, close (§4.3)
+      description: 'confirm_escalation, accept_pip, decide, close: 226. submit_pip: the engagement''s
+        rep or 226 (422 PIP_INCOMPLETE: ≥ 3 CAs with source `scorecard`, due ≤ 30 days, one at engineering
+        control or higher).'
+      operationId: transition_watch_entry
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: entry_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Entry Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScWatchTransition'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScWatchRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/watch-list/{entry_id}/suspension-form:
+    get:
+      tags:
+      - contractor-scorecards
+      summary: Prefilled Phase 0 suspension form for a `suspend` decision (226; WL-5)
+      description: 'The platform never changes a contractor status: the HSE Manager submits the Phase
+        0 contractor transition at `submit_path`.'
+      operationId: get_suspension_form
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: entry_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Entry Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScSuspensionForm'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/contractors/{contractor_id}/performance-summary:
+    get:
+      tags:
+      - contractor-scorecards
+      summary: Contractor performance summary (CPS; 226, WL-8)
+      operationId: get_performance_summary
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: contractor_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Contractor Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScPerformanceSummary'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/report-packs:
+    get:
+      tags:
+      - report-packs
+      summary: Report-pack register with revisions (229 or 231)
+      description: Reps see their own SCPs only; Viewer / Client sees MCR, de-identified OSHA300 and HEAT
+        packs once Issued.
+      operationId: list_report_packs
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      - name: report_type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/RpType'
+          - type: 'null'
+          title: Report Type
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/RpStatus'
+          - type: 'null'
+          title: Status
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          description: 1-based page number.
+          default: 1
+          title: Page
+        description: 1-based page number.
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          description: Items per page.
+          default: 50
+          title: Page Size
+        description: Items per page.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RpPackPage'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/report-packs:
+    post:
+      tags:
+      - report-packs
+      summary: Generate a Draft pack (229; CPS 226)
+      description: Doc numbers `<type>-<project>[-<engagement>]-<yyyy>[-<mm>]`. 409 when a Draft or In
+        Review revision exists. OSHA300 `with_names` needs capability 43 and a purpose.
+      operationId: create_report_pack
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RpPackCreate'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RpPackDetail'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+  /api/v1/report-packs/{pack_id}:
+    get:
+      tags:
+      - report-packs
+      summary: One pack revision with its frozen snapshot
+      operationId: get_report_pack
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: pack_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Pack Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RpPackDetail'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags:
+      - report-packs
+      summary: Edit a Draft / In Review pack (229; 409 PACK_ISSUED_IMMUTABLE once Issued)
+      operationId: update_report_pack
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: pack_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Pack Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RpPackUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RpPackDetail'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/report-packs/{pack_id}/transitions:
+    post:
+      tags:
+      - report-packs
+      summary: Regenerate, submit for review, return, review (229) or issue (230) a pack (§4.4)
+      description: 'Issue: 422 SOURCE_REPORT_NOT_PUBLISHED, SELF_REVIEW, SCORECARDS_NOT_FINAL (unless
+        `scorecards_provisional` with a reason ≥ 20 chars), PACK_TOO_LARGE_FOR_EMAIL. Renders the EN /
+        AR PDFs and the XLSX, freezes the snapshot and distributes (DL-4).'
+      operationId: transition_report_pack
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: pack_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Pack Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RpPackTransition'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RpPackDetail'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/report-packs/{pack_id}/reissue:
+    post:
+      tags:
+      - report-packs
+      summary: Start revision n + 1 of an Issued pack as a Draft (230; RP-6, reason ≥ 20 chars)
+      operationId: reissue_report_pack
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: pack_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Pack Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RpReissueRequest'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RpPackDetail'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/report-packs/{pack_id}/files/{kind}/url:
+    get:
+      tags:
+      - report-packs
+      summary: Signed URL (≤ 5 min) of a rendered pack file (231)
+      operationId: get_report_pack_file_url
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: pack_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Pack Id
+      - name: kind
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/RpFileKind'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RpFileUrl'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/report-packs/{pack_id}/deliveries:
+    get:
+      tags:
+      - report-packs
+      summary: Delivery log of a pack (231)
+      operationId: list_report_pack_deliveries
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: pack_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Pack Id
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          description: 1-based page number.
+          default: 1
+          title: Page
+        description: 1-based page number.
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          description: Items per page.
+          default: 50
+          title: Page Size
+        description: Items per page.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RpDeliveryPage'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/distribution-lists/{report_type}:
+    get:
+      tags:
+      - report-packs
+      summary: Distribution list of a project and report type (229 / 230)
+      operationId: get_distribution_list
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      - name: report_type
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/RpType'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RpDistributionList'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags:
+      - report-packs
+      summary: Replace a distribution list (230; DL-1…DL-3)
+      description: 422 RECIPIENT_SCOPE (user without the view right, reps and receivers on MCR / OSHA300
+        / CPS), EXTERNAL_NOT_ALLOWED (type, setting or domain).
+      operationId: put_distribution_list
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      - name: report_type
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/RpType'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RpDistributionUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RpDistributionList'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/export-datasets:
+    get:
+      tags:
+      - exports
+      summary: The dataset registry with column PDPL classes and the caller's rights (EX-1)
+      operationId: list_export_datasets
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/XpDatasetList'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+  /api/v1/exports:
+    post:
+      tags:
+      - exports
+      summary: Request an export (EX-2…EX-9)
+      description: Rows = what the caller can list on screen. ≤ 5,000 rows run at once (status `ready`);
+        5,001-100,000 run as a job with an in-app notice; more → 422 EXPORT_TOO_LARGE. 422 COLUMN_NOT_EXPORTABLE,
+        PURPOSE_REQUIRED; 403 COLUMN_NOT_PERMITTED; 429 EXPORT_RATE_LIMIT (50 per user per day). Files
+        expire after 7 days (24 h with a sensitive column) and are never e-mailed.
+      operationId: request_export
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/XpExportRequest'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/XpJobRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit reached (AI_RATE_LIMITED); see Retry-After.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+  /api/v1/export-jobs:
+    get:
+      tags:
+      - exports
+      summary: 'Export log (232): own jobs; HSE Officers their projects; the HSE Manager all'
+      operationId: list_export_jobs
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Project Id
+      - name: dataset
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            maxLength: 40
+          - type: 'null'
+          title: Dataset
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/XpJobStatus'
+          - type: 'null'
+          title: Status
+      - name: mine
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+          title: Mine
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          description: 1-based page number.
+          default: 1
+          title: Page
+        description: 1-based page number.
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          description: Items per page.
+          default: 50
+          title: Page Size
+        description: Items per page.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/XpJobPage'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/export-jobs/{job_id}:
+    get:
+      tags:
+      - exports
+      summary: One export job (never the file contents)
+      operationId: get_export_job
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: job_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Job Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/XpJobRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/export-jobs/{job_id}/file-url:
+    get:
+      tags:
+      - exports
+      summary: Signed URL (≤ 5 min) of a ready export file (requester only)
+      operationId: get_export_file_url
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: job_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Job Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/XpFileUrl'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/export-subscriptions:
+    get:
+      tags:
+      - exports
+      summary: The caller's export subscriptions (232)
+      operationId: list_export_subscriptions
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/XpSubscriptionList'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+    post:
+      tags:
+      - exports
+      summary: Subscribe to a weekly (Sunday 05:30) or monthly (day 1, 05:30) export (SC-4)
+      description: 422 SUBSCRIPTION_PERSONAL_DATA when any personal or sensitive column is chosen.
+      operationId: create_export_subscription
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/XpSubscriptionCreate'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/XpSubscriptionRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+  /api/v1/export-subscriptions/{subscription_id}:
+    delete:
+      tags:
+      - exports
+      summary: Cancel an own subscription
+      operationId: delete_export_subscription
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: subscription_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Subscription Id
+      responses:
+        '204':
+          description: Successful Response
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/dashboard-print:
+    get:
+      tags:
+      - exports
+      summary: PDF print of the dashboard KPI tiles (D-10, EX-11; capability 42)
+      description: Rendered by the 6g renderer from the KPI endpoint values with the EX-6 footer; writes
+        an `export` audit row.
+      operationId: print_dashboard
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+              format: uuid
+          - type: 'null'
+          description: Project(s). Repeat for several. Required unless all_projects=true. Out-of-scope
+            ids → 404.
+          title: Project Id
+        description: Project(s). Repeat for several. Required unless all_projects=true. Out-of-scope ids
+          → 404.
+      - name: all_projects
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: 'HSE Manager only: every project (K-R12 bases banner).'
+          default: false
+          title: All Projects
+        description: 'HSE Manager only: every project (K-R12 bases banner).'
+      - name: site_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+              format: uuid
+          - type: 'null'
+          description: Sites (multi).
+          title: Site Id
+        description: Sites (multi).
+      - name: zone_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+              format: uuid
+          - type: 'null'
+          description: Zones (multi).
+          title: Zone Id
+        description: Zones (multi).
+      - name: zone_type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/ZoneType'
+          - type: 'null'
+          description: airside / landside / other.
+          title: Zone Type
+        description: airside / landside / other.
+      - name: engagement_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+              format: uuid
+          - type: 'null'
+          description: Contractor engagement(s); roll-up per include_subcontractors.
+          title: Engagement Id
+        description: Contractor engagement(s); roll-up per include_subcontractors.
+      - name: include_subcontractors
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: 'K-R5: engagement + descendants (default) or this only.'
+          default: true
+          title: Include Subcontractors
+        description: 'K-R5: engagement + descendants (default) or this only.'
+      - name: tier
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: integer
+            ge: 1
+            le: 3
+          - type: 'null'
+          description: Tier 1/2/3.
+          title: Tier
+        description: Tier 1/2/3.
+      - name: period
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/PeriodPreset'
+          description: K-R10 preset.
+          default: month
+        description: K-R10 preset.
+      - name: anchor
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          description: A date inside the wanted day/week/month/quarter/year (default as_of). mtd/qtd/ytd/r12/itd
+            end at as_of.
+          title: Anchor
+        description: A date inside the wanted day/week/month/quarter/year (default as_of). mtd/qtd/ytd/r12/itd
+          end at as_of.
+      - name: start
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          description: 'period=custom: first day.'
+          title: Start
+        description: 'period=custom: first day.'
+      - name: end
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          description: 'period=custom: last day (inclusive).'
+          title: End
+        description: 'period=custom: last day (inclusive).'
+      - name: as_of
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          description: Evaluation date; default today (project timezone).
+          title: As Of
+        description: Evaluation date; default today (project timezone).
+      - name: compare
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/ComparisonKind'
+          - type: 'null'
+          description: 'Comparisons to compute (K-R11). Default: previous.'
+          title: Compare
+        description: 'Comparisons to compute (K-R11). Default: previous.'
+      - name: gate_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+              format: uuid
+          - type: 'null'
+          description: 'Gate(s): filters gate KPIs (K-52, K-53, K-53b) only.'
+          title: Gate Id
+        description: 'Gate(s): filters gate KPIs (K-52, K-53, K-53b) only.'
+      - name: permit_type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/PermitType'
+          - type: 'null'
+          description: 'Phase 3: filters PTW KPIs (K-46, K-46b, K-61…K-71) only.'
+          title: Permit Type
+        description: 'Phase 3: filters PTW KPIs (K-46, K-46b, K-61…K-71) only.'
+      - name: equipment_category
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/EquipmentCertCategory'
+          - type: 'null'
+          description: 'Phase 4: filters equipment / scaffold KPIs (K-72…K-75, K-78, K-80).'
+          title: Equipment Category
+        description: 'Phase 4: filters equipment / scaffold KPIs (K-72…K-75, K-78, K-80).'
+      - name: cert_type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          description: 'Phase 4: personnel certificate type code(s) (PCT); filters K-76, K-77, K-78 persons,
+            K-79.'
+          title: Cert Type
+        description: 'Phase 4: personnel certificate type code(s) (PCT); filters K-76, K-77, K-78 persons,
+          K-79.'
+      - name: trade
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/Trade'
+          - type: 'null'
+          description: 'Phase 5: deployment trade(s); filters training KPIs (K-82…K-88) only.'
+          title: Trade
+        description: 'Phase 5: deployment trade(s); filters training KPIs (K-82…K-88) only.'
+      - name: course_code
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          description: 'Phase 5: course code(s); filters training KPIs (K-82…K-88) only.'
+          title: Course Code
+        description: 'Phase 5: course code(s); filters training KPIs (K-82…K-88) only.'
+      - name: course_category
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/CourseCategory'
+          - type: 'null'
+          description: 'Phase 5: course category (CAT-C); filters training KPIs only.'
+          title: Course Category
+        description: 'Phase 5: course category (CAT-C); filters training KPIs only.'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/v1/privacy-notice:
     get:
       tags:
@@ -69464,6 +72583,9 @@ components:
       - fu_pack_identity_file
       - fu_evidence
       - fu_lesson_photo
+      - rp_pack_file
+      - xp_export_file
+      - sc_remark_file
       title: AttachmentOwner
     AttachmentRead:
       properties:
@@ -72551,6 +75673,7 @@ components:
       - field_audit
       - environmental
       - lesson
+      - scorecard
       - ai_recommendation
       - other
       title: CaSourceType
@@ -73224,6 +76347,15 @@ components:
       - lesson.acknowledge
       - lesson_library.view
       - lesson.effectiveness
+      - scorecard.view
+      - scorecard.settings
+      - scorecard.manage
+      - scorecard.comment
+      - scorecard.resolve
+      - report_pack.prepare
+      - report_pack.issue
+      - report_pack.view
+      - export_log.view
       title: Capability
       description: 'Rows of the permission matrix: 1-19 Phase 0 (0-foundation §5.10), 20-45 Phase 1
 
@@ -83084,6 +86216,15 @@ components:
       - lesson_distribution
       - lesson_link
       - lesson_effectiveness
+      - scorecard_profile
+      - scorecard_settings
+      - scorecard
+      - scorecard_remark
+      - watch_list_entry
+      - report_pack
+      - distribution_list
+      - export_job
+      - export_subscription
       title: EntityType
       description: Entity types referenced by audit entries and change history.
     EntryDirection:
@@ -87842,6 +90983,33 @@ components:
       - FOLLOW_UP_REQUIRED
       - PACK_IMMUTABLE
       - SUBMISSION_LOCKED
+      - WEIGHTS_NOT_100
+      - LAGGING_WEIGHT_OUT_OF_RANGE
+      - CAP_REQUIRED
+      - PROFILE_BACKDATED
+      - SOURCES_NOT_CONFIRMED
+      - COMMENT_WINDOW_CLOSED
+      - COMMENT_WINDOW_OPEN
+      - DISPUTES_OPEN
+      - CORRECTION_NOT_FOUND
+      - CAP_NOT_EXCLUDABLE
+      - WATCH_ENTRY_OPEN
+      - PIP_INCOMPLETE
+      - SOURCE_REPORT_NOT_PUBLISHED
+      - SELF_REVIEW
+      - RECIPIENT_SCOPE
+      - EXTERNAL_NOT_ALLOWED
+      - PACK_TOO_LARGE_FOR_EMAIL
+      - COLUMN_NOT_EXPORTABLE
+      - PURPOSE_REQUIRED
+      - EXPORT_TOO_LARGE
+      - SUBSCRIPTION_PERSONAL_DATA
+      - SETTING_OUT_OF_RANGE
+      - COLUMN_NOT_PERMITTED
+      - PACK_ISSUED_IMMUTABLE
+      - SCORECARD_FINAL
+      - EXPORT_RATE_LIMIT
+      - SCORECARDS_NOT_FINAL
       - NOT_IMPLEMENTED
       - INTERNAL_ERROR
       title: ErrorCode
@@ -89346,6 +92514,11 @@ components:
       - fitness_verification_due
       - examiner_licence_expiry
       - medical_provider_licence_expiry
+      - scorecard_comment_window
+      - scorecard_dispute_due
+      - scorecard_finalise_due
+      - report_pack_due
+      - pip_due
       title: ExpiringItemKind
     ExpiringItemsResponse:
       properties:
@@ -89467,6 +92640,21 @@ components:
       - fitness_referrals
       - fitness_verifications
       - medical_imports
+      - heat_patrols
+      - heat_welfare_checks
+      - heat_illness_log
+      - emergency_drills
+      - emergency_assets
+      - emergency_events
+      - field_inspections
+      - field_audits
+      - toolbox_talks
+      - waste_consignments
+      - env_readings
+      - env_spills
+      - env_complaints
+      - notification_requirements
+      - lessons
       title: ExportDataset
       description: Lists that can be exported (§5.8 rule 49, capability 18).
     ExportFormat:
@@ -104635,6 +107823,10 @@ components:
       - K-129
       - K-130
       - K-131
+      - K-132
+      - K-133
+      - K-134
+      - K-135
       title: KpiMetric
       description: KPI catalogue §6.1. K-26 is split into one id per event type (DO / PD / ENV).
     KpiPlaceholder:
@@ -105163,6 +108355,7 @@ components:
       - E22
       - E23
       - E24
+      - E25
       title: LeadingWarningCode
       description: §6.9.
     LelReferenceGas:
@@ -109754,6 +112947,19 @@ components:
       - lesson_published
       - lesson_ack_due
       - lesson_effectiveness_due
+      - scorecard_issued
+      - scorecard_comment_window
+      - scorecard_dispute
+      - scorecard_finalise_due
+      - scorecard_month_not_locked
+      - scorecard_sources
+      - scorecard_revised
+      - watch_list
+      - pip_due
+      - report_pack_due
+      - report_pack_issued
+      - delivery_bounced
+      - export_ready
       title: NotificationKind
       description: In-app notification kinds (§7).
     NotificationPage:
@@ -123401,6 +126607,778 @@ components:
       - engagements
       title: Rotation
       description: ISP-2.
+    RpAction:
+      type: string
+      enum:
+      - submit_for_review
+      - return_to_draft
+      - review
+      - issue
+      - regenerate
+      title: RpAction
+    RpChannel:
+      type: string
+      enum:
+      - in_app
+      - email
+      title: RpChannel
+    RpDeliveryPage:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/RpDeliveryRead'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+          description: Total number of matching items across all pages.
+        page:
+          type: integer
+          title: Page
+          description: 1-based page number.
+        page_size:
+          type: integer
+          title: Page Size
+          description: Items per page (max 200).
+      type: object
+      required:
+      - items
+      - total
+      - page
+      - page_size
+      title: RpDeliveryPage
+    RpDeliveryRead:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        pack_doc_no:
+          type: string
+          title: Pack Doc No
+        revision:
+          type: integer
+          title: Revision
+        member:
+          type: string
+          title: Member
+        channel:
+          $ref: '#/components/schemas/RpChannel'
+        attachments:
+          items:
+            type: string
+          type: array
+          title: Attachments
+        subject:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Subject
+        status:
+          $ref: '#/components/schemas/RpDeliveryStatus'
+        error:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Error
+        sent_at:
+          type: string
+          format: date-time
+          title: Sent At
+      type: object
+      required:
+      - id
+      - pack_doc_no
+      - revision
+      - member
+      - channel
+      - attachments
+      - subject
+      - status
+      - error
+      - sent_at
+      title: RpDeliveryRead
+    RpDeliveryStatus:
+      type: string
+      enum:
+      - queued
+      - sent
+      - bounced
+      - failed
+      title: RpDeliveryStatus
+    RpDistributionList:
+      properties:
+        project_id:
+          type: string
+          format: uuid
+          title: Project Id
+        report_type:
+          $ref: '#/components/schemas/RpType'
+        members:
+          items:
+            $ref: '#/components/schemas/RpMemberRead'
+          type: array
+          title: Members
+      type: object
+      required:
+      - project_id
+      - report_type
+      - members
+      title: RpDistributionList
+    RpDistributionUpdate:
+      properties:
+        members:
+          items:
+            $ref: '#/components/schemas/RpMemberInput'
+          type: array
+          title: Members
+      additionalProperties: false
+      type: object
+      required:
+      - members
+      title: RpDistributionUpdate
+    RpFileKind:
+      type: string
+      enum:
+      - pdf_en
+      - pdf_ar
+      - pdf_bilingual
+      - xlsx
+      title: RpFileKind
+    RpFileRead:
+      properties:
+        kind:
+          $ref: '#/components/schemas/RpFileKind'
+        file_name:
+          type: string
+          title: File Name
+        sha256:
+          type: string
+          title: Sha256
+        size_bytes:
+          type: integer
+          title: Size Bytes
+      type: object
+      required:
+      - kind
+      - file_name
+      - sha256
+      - size_bytes
+      title: RpFileRead
+    RpFileUrl:
+      properties:
+        url:
+          type: string
+          title: Url
+        expires_at:
+          type: string
+          format: date-time
+          title: Expires At
+      type: object
+      required:
+      - url
+      - expires_at
+      title: RpFileUrl
+    RpLanguage:
+      type: string
+      enum:
+      - en
+      - ar
+      - both
+      title: RpLanguage
+    RpLanguages:
+      type: string
+      enum:
+      - en_ar_separate
+      - bilingual_single
+      title: RpLanguages
+      description: Setting `report_languages`.
+    RpMemberInput:
+      properties:
+        kind:
+          $ref: '#/components/schemas/RpMemberKind'
+        user_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: User Id
+        display_name_en:
+          anyOf:
+          - type: string
+            maxLength: 120
+          - type: 'null'
+          title: Display Name En
+        display_name_ar:
+          anyOf:
+          - type: string
+            maxLength: 120
+          - type: 'null'
+          title: Display Name Ar
+        organisation:
+          anyOf:
+          - type: string
+            maxLength: 120
+          - type: 'null'
+          title: Organisation
+        email:
+          anyOf:
+          - type: string
+            format: email
+          - type: 'null'
+          title: Email
+        language:
+          $ref: '#/components/schemas/RpLanguage'
+          default: both
+        acknowledge_disclosure:
+          type: boolean
+          title: Acknowledge Disclosure
+          description: 'P6g-6: the HSE Manager confirms the client contract allows disclosure of aggregate
+            HSE statistics to this external recipient.'
+          default: false
+      additionalProperties: false
+      type: object
+      required:
+      - kind
+      title: RpMemberInput
+    RpMemberKind:
+      type: string
+      enum:
+      - user
+      - external
+      title: RpMemberKind
+    RpMemberRead:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        kind:
+          $ref: '#/components/schemas/RpMemberKind'
+        user:
+          anyOf:
+          - $ref: '#/components/schemas/UserRef'
+          - type: 'null'
+        display_name_en:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Display Name En
+        display_name_ar:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Display Name Ar
+        organisation:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Organisation
+        email:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Email
+        language:
+          $ref: '#/components/schemas/RpLanguage'
+      type: object
+      required:
+      - id
+      - kind
+      - user
+      - display_name_en
+      - display_name_ar
+      - organisation
+      - email
+      - language
+      title: RpMemberRead
+    RpPackCreate:
+      properties:
+        report_type:
+          $ref: '#/components/schemas/RpType'
+        project_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Project Id
+        engagement_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Engagement Id
+        contractor_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Contractor Id
+        month:
+          anyOf:
+          - type: string
+            pattern: ^\d{4}-\d{2}$
+          - type: 'null'
+          title: Month
+        year:
+          anyOf:
+          - type: integer
+            maximum: 2100.0
+            minimum: 2000.0
+          - type: 'null'
+          title: Year
+        period_end:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Period End
+        with_names:
+          type: boolean
+          title: With Names
+          default: false
+        purpose:
+          anyOf:
+          - $ref: '#/components/schemas/XpPurpose'
+          - type: 'null'
+        purpose_text:
+          anyOf:
+          - type: string
+            maxLength: 500
+          - type: 'null'
+          title: Purpose Text
+      additionalProperties: false
+      type: object
+      required:
+      - report_type
+      title: RpPackCreate
+      description: 'A Draft (229). MCR: one month; SCP: engagement + month; OSHA300: a calendar year (YTD
+        up
+
+        to `period_end`); HEAT: a season year; CPS: contractor (226). `with_names` (OSHA300 only)
+
+        needs capability 43 and a purpose; such a pack is download-only (P6g-3).'
+    RpPackDetail:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        doc_no:
+          type: string
+          title: Doc No
+        revision:
+          type: integer
+          title: Revision
+        report_type:
+          $ref: '#/components/schemas/RpType'
+        project_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Project Id
+        engagement_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Engagement Id
+        contractor_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Contractor Id
+        period_start:
+          type: string
+          format: date
+          title: Period Start
+        period_end:
+          type: string
+          format: date
+          title: Period End
+        status:
+          $ref: '#/components/schemas/RpStatus'
+        due_on:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Due On
+        sources:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Sources
+        snapshot_hash:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Snapshot Hash
+        files:
+          items:
+            $ref: '#/components/schemas/RpFileRead'
+          type: array
+          title: Files
+        with_names:
+          type: boolean
+          title: With Names
+        scorecards_provisional:
+          type: boolean
+          title: Scorecards Provisional
+        provisional_reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Provisional Reason
+        prepared_by:
+          anyOf:
+          - $ref: '#/components/schemas/UserRef'
+          - type: 'null'
+        prepared_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Prepared At
+        reviewed_by:
+          anyOf:
+          - $ref: '#/components/schemas/UserRef'
+          - type: 'null'
+        reviewed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Reviewed At
+        issued_by:
+          anyOf:
+          - $ref: '#/components/schemas/UserRef'
+          - type: 'null'
+        issued_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Issued At
+        review_comment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Review Comment
+        reissue_reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Reissue Reason
+        revised_since_issue:
+          type: boolean
+          title: Revised Since Issue
+        superseded_by_revision:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Superseded By Revision
+        sections:
+          items:
+            type: string
+          type: array
+          title: Sections
+          description: RP-1 section keys, in order
+        snapshot:
+          additionalProperties: true
+          type: object
+          title: Snapshot
+      type: object
+      required:
+      - id
+      - doc_no
+      - revision
+      - report_type
+      - project_id
+      - engagement_id
+      - contractor_id
+      - period_start
+      - period_end
+      - status
+      - due_on
+      - sources
+      - snapshot_hash
+      - files
+      - with_names
+      - scorecards_provisional
+      - provisional_reason
+      - prepared_by
+      - prepared_at
+      - reviewed_by
+      - reviewed_at
+      - issued_by
+      - issued_at
+      - review_comment
+      - reissue_reason
+      - revised_since_issue
+      - superseded_by_revision
+      - snapshot
+      title: RpPackDetail
+    RpPackPage:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/RpPackRead'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+          description: Total number of matching items across all pages.
+        page:
+          type: integer
+          title: Page
+          description: 1-based page number.
+        page_size:
+          type: integer
+          title: Page Size
+          description: Items per page (max 200).
+      type: object
+      required:
+      - items
+      - total
+      - page
+      - page_size
+      title: RpPackPage
+    RpPackRead:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        doc_no:
+          type: string
+          title: Doc No
+        revision:
+          type: integer
+          title: Revision
+        report_type:
+          $ref: '#/components/schemas/RpType'
+        project_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Project Id
+        engagement_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Engagement Id
+        contractor_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Contractor Id
+        period_start:
+          type: string
+          format: date
+          title: Period Start
+        period_end:
+          type: string
+          format: date
+          title: Period End
+        status:
+          $ref: '#/components/schemas/RpStatus'
+        due_on:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Due On
+        sources:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Sources
+        snapshot_hash:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Snapshot Hash
+        files:
+          items:
+            $ref: '#/components/schemas/RpFileRead'
+          type: array
+          title: Files
+        with_names:
+          type: boolean
+          title: With Names
+        scorecards_provisional:
+          type: boolean
+          title: Scorecards Provisional
+        provisional_reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Provisional Reason
+        prepared_by:
+          anyOf:
+          - $ref: '#/components/schemas/UserRef'
+          - type: 'null'
+        prepared_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Prepared At
+        reviewed_by:
+          anyOf:
+          - $ref: '#/components/schemas/UserRef'
+          - type: 'null'
+        reviewed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Reviewed At
+        issued_by:
+          anyOf:
+          - $ref: '#/components/schemas/UserRef'
+          - type: 'null'
+        issued_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Issued At
+        review_comment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Review Comment
+        reissue_reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Reissue Reason
+        revised_since_issue:
+          type: boolean
+          title: Revised Since Issue
+        superseded_by_revision:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Superseded By Revision
+        sections:
+          items:
+            type: string
+          type: array
+          title: Sections
+          description: RP-1 section keys, in order
+      type: object
+      required:
+      - id
+      - doc_no
+      - revision
+      - report_type
+      - project_id
+      - engagement_id
+      - contractor_id
+      - period_start
+      - period_end
+      - status
+      - due_on
+      - sources
+      - snapshot_hash
+      - files
+      - with_names
+      - scorecards_provisional
+      - provisional_reason
+      - prepared_by
+      - prepared_at
+      - reviewed_by
+      - reviewed_at
+      - issued_by
+      - issued_at
+      - review_comment
+      - reissue_reason
+      - revised_since_issue
+      - superseded_by_revision
+      title: RpPackRead
+    RpPackTransition:
+      properties:
+        action:
+          $ref: '#/components/schemas/RpAction'
+        comment:
+          anyOf:
+          - type: string
+            maxLength: 500
+          - type: 'null'
+          title: Comment
+        scorecards_provisional:
+          type: boolean
+          title: Scorecards Provisional
+          default: false
+        provisional_reason:
+          anyOf:
+          - type: string
+            maxLength: 500
+          - type: 'null'
+          title: Provisional Reason
+        remove_xlsx_for_externals:
+          type: boolean
+          title: Remove Xlsx For Externals
+          default: false
+      additionalProperties: false
+      type: object
+      required:
+      - action
+      title: RpPackTransition
+    RpPackUpdate:
+      properties:
+        review_comment:
+          anyOf:
+          - type: string
+            maxLength: 500
+          - type: 'null'
+          title: Review Comment
+      additionalProperties: false
+      type: object
+      title: RpPackUpdate
+      description: Draft / In Review only (an Issued pack → 409 PACK_ISSUED_IMMUTABLE).
+    RpReissueRequest:
+      properties:
+        reason:
+          type: string
+          maxLength: 500
+          title: Reason
+      additionalProperties: false
+      type: object
+      required:
+      - reason
+      title: RpReissueRequest
+    RpStatus:
+      type: string
+      enum:
+      - draft
+      - in_review
+      - issued
+      - superseded
+      title: RpStatus
+      description: §4.4.
+    RpType:
+      type: string
+      enum:
+      - MCR
+      - SCP
+      - CPS
+      - OSHA300
+      - HEAT
+      title: RpType
+      description: List RT.
     SafetyDevice:
       type: string
       enum:
@@ -123412,6 +127390,1912 @@ components:
       - emergency_lowering
       - overload_cutout
       title: SafetyDevice
+    ScBand:
+      properties:
+        grade:
+          $ref: '#/components/schemas/ScGrade'
+        min_score:
+          type: string
+          title: Min Score
+      type: object
+      required:
+      - grade
+      - min_score
+      title: ScBand
+    ScBreakdown:
+      properties:
+        metric:
+          type: string
+          title: Metric
+        group_by:
+          $ref: '#/components/schemas/ScKpiGroupBy'
+        rows:
+          items:
+            $ref: '#/components/schemas/ScBreakdownRow'
+          type: array
+          title: Rows
+      type: object
+      required:
+      - metric
+      - group_by
+      - rows
+      title: ScBreakdown
+    ScBreakdownRow:
+      properties:
+        key:
+          type: string
+          title: Key
+        label_en:
+          type: string
+          title: Label En
+        label_ar:
+          type: string
+          title: Label Ar
+        value:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Value
+        display:
+          type: string
+          title: Display
+        numerator:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Numerator
+        denominator:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Denominator
+      type: object
+      required:
+      - key
+      - label_en
+      - label_ar
+      - value
+      - display
+      title: ScBreakdownRow
+    ScCap:
+      type: string
+      enum:
+      - CP-1
+      - CP-2
+      - CP-3
+      title: ScCap
+      description: List CP.
+    ScCapApplied:
+      properties:
+        cap_code:
+          $ref: '#/components/schemas/ScCap'
+        max_grade:
+          $ref: '#/components/schemas/ScGrade'
+        refs:
+          items:
+            type: string
+          type: array
+          title: Refs
+      type: object
+      required:
+      - cap_code
+      - max_grade
+      - refs
+      title: ScCapApplied
+    ScCapConfig:
+      properties:
+        cap_code:
+          $ref: '#/components/schemas/ScCap'
+        max_grade:
+          $ref: '#/components/schemas/ScGrade'
+        enabled:
+          type: boolean
+          title: Enabled
+      type: object
+      required:
+      - cap_code
+      - max_grade
+      - enabled
+      title: ScCapConfig
+    ScCardPage:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/ScCardRead'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+          description: Total number of matching items across all pages.
+        page:
+          type: integer
+          title: Page
+          description: 1-based page number.
+        page_size:
+          type: integer
+          title: Page Size
+          description: Items per page (max 200).
+      type: object
+      required:
+      - items
+      - total
+      - page
+      - page_size
+      title: ScCardPage
+    ScCardRead:
+      properties:
+        id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Id
+          description: null for a Provisional card (computed on read)
+        scorecard_no:
+          type: string
+          title: Scorecard No
+        revision:
+          type: integer
+          title: Revision
+        project_id:
+          type: string
+          format: uuid
+          title: Project Id
+        engagement_id:
+          type: string
+          format: uuid
+          title: Engagement Id
+        engagement_code:
+          type: string
+          title: Engagement Code
+        month:
+          type: string
+          title: Month
+        scope:
+          $ref: '#/components/schemas/ScScope'
+        profile_code:
+          type: string
+          title: Profile Code
+        profile_version:
+          type: integer
+          title: Profile Version
+        month_man_hours:
+          type: string
+          title: Month Man Hours
+        r12_man_hours:
+          type: string
+          title: R12 Man Hours
+        credibility_z:
+          type: string
+          title: Credibility Z
+        credibility_z_display:
+          type: string
+          title: Credibility Z Display
+        score:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Score
+        score_display:
+          type: string
+          title: Score Display
+        indicative:
+          type: boolean
+          title: Indicative
+        coverage_pct:
+          type: string
+          title: Coverage Pct
+        coverage_display:
+          type: string
+          title: Coverage Display
+        band_grade:
+          anyOf:
+          - $ref: '#/components/schemas/ScGrade'
+          - type: 'null'
+        grade:
+          anyOf:
+          - $ref: '#/components/schemas/ScGrade'
+          - type: 'null'
+        grade_display:
+          type: string
+          title: Grade Display
+        caps_applied:
+          items:
+            $ref: '#/components/schemas/ScCapApplied'
+          type: array
+          title: Caps Applied
+        trend_delta:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Trend Delta
+        trend_label:
+          anyOf:
+          - $ref: '#/components/schemas/ScTrend'
+          - type: 'null'
+        ranking:
+          $ref: '#/components/schemas/ScRankInfo'
+        commended:
+          type: boolean
+          title: Commended
+        inputs_hash:
+          type: string
+          title: Inputs Hash
+        comment_until:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Comment Until
+        status:
+          $ref: '#/components/schemas/ScCardStatus'
+        revised_since_final:
+          type: boolean
+          title: Revised Since Final
+        recomputed_score:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Recomputed Score
+        issued_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Issued At
+        finalised_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Finalised At
+        reissue_reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Reissue Reason
+        watch_level:
+          anyOf:
+          - $ref: '#/components/schemas/ScWatchLevel'
+          - type: 'null'
+        open_disputes:
+          type: integer
+          title: Open Disputes
+        banner:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Banner
+          description: SG-5 provisional banner
+        pillars:
+          items:
+            $ref: '#/components/schemas/ScPillarRead'
+          type: array
+          title: Pillars
+        lines:
+          items:
+            $ref: '#/components/schemas/ScLineRead'
+          type: array
+          title: Lines
+      type: object
+      required:
+      - id
+      - scorecard_no
+      - revision
+      - project_id
+      - engagement_id
+      - engagement_code
+      - month
+      - scope
+      - profile_code
+      - profile_version
+      - month_man_hours
+      - r12_man_hours
+      - credibility_z
+      - credibility_z_display
+      - score
+      - score_display
+      - indicative
+      - coverage_pct
+      - coverage_display
+      - band_grade
+      - grade
+      - grade_display
+      - caps_applied
+      - trend_delta
+      - trend_label
+      - ranking
+      - commended
+      - inputs_hash
+      - comment_until
+      - status
+      - revised_since_final
+      - recomputed_score
+      - issued_at
+      - finalised_at
+      - reissue_reason
+      - watch_level
+      - open_disputes
+      title: ScCardRead
+    ScCardStatus:
+      type: string
+      enum:
+      - provisional
+      - issued
+      - final
+      - superseded
+      title: ScCardStatus
+      description: §4.1 (provisional cards are computed on read, never stored).
+    ScCpsMonth:
+      properties:
+        project_code:
+          type: string
+          title: Project Code
+        month:
+          type: string
+          title: Month
+        score_display:
+          type: string
+          title: Score Display
+        grade:
+          anyOf:
+          - $ref: '#/components/schemas/ScGrade'
+          - type: 'null'
+        caps:
+          items:
+            $ref: '#/components/schemas/ScCap'
+          type: array
+          title: Caps
+        profile:
+          type: string
+          title: Profile
+      type: object
+      required:
+      - project_code
+      - month
+      - score_display
+      - grade
+      - caps
+      - profile
+      title: ScCpsMonth
+    ScDisputeReason:
+      type: string
+      enum:
+      - data_error
+      - wrong_attribution
+      - not_applicable
+      - other
+      title: ScDisputeReason
+      description: List DR.
+    ScEngagementRef:
+      properties:
+        project_code:
+          type: string
+          title: Project Code
+        engagement_code:
+          type: string
+          title: Engagement Code
+        tier:
+          type: integer
+          title: Tier
+        demobilisation_date:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Demobilisation Date
+      type: object
+      required:
+      - project_code
+      - engagement_code
+      - tier
+      - demobilisation_date
+      title: ScEngagementRef
+    ScFileInput:
+      properties:
+        file_name:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: File Name
+        content_base64:
+          type: string
+          minLength: 4
+          title: Content Base64
+        content_type:
+          anyOf:
+          - type: string
+            maxLength: 100
+          - type: 'null'
+          title: Content Type
+      additionalProperties: false
+      type: object
+      required:
+      - file_name
+      - content_base64
+      title: ScFileInput
+      description: A file sent inline (base64). PDF, PNG or JPEG; ≤ 10 MB decoded.
+    ScFinaliseRequest:
+      properties:
+        month:
+          type: string
+          pattern: ^\d{4}-\d{2}$
+          title: Month
+      additionalProperties: false
+      type: object
+      required:
+      - month
+      title: ScFinaliseRequest
+    ScFinaliseResult:
+      properties:
+        month:
+          type: string
+          title: Month
+        finalised:
+          type: integer
+          title: Finalised
+        scp_issued:
+          type: integer
+          title: Scp Issued
+        watch_entries:
+          items:
+            type: string
+          type: array
+          title: Watch Entries
+        warnings:
+          items:
+            type: string
+          type: array
+          title: Warnings
+      type: object
+      required:
+      - month
+      - finalised
+      - scp_issued
+      - watch_entries
+      - warnings
+      title: ScFinaliseResult
+    ScGrade:
+      type: string
+      enum:
+      - A
+      - B
+      - C
+      - D
+      title: ScGrade
+      description: 'List GB (`—` = null grade: insufficient coverage).'
+    ScKpiGroupBy:
+      type: string
+      enum:
+      - month
+      - contractor
+      title: ScKpiGroupBy
+    ScKpiResponse:
+      properties:
+        context:
+          $ref: '#/components/schemas/KpiContext'
+        metrics:
+          items:
+            $ref: '#/components/schemas/KpiValue'
+          type: array
+          title: Metrics
+        breakdowns:
+          items:
+            $ref: '#/components/schemas/ScBreakdown'
+          type: array
+          title: Breakdowns
+        grade_mix:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Grade Mix
+        watch_by_level:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Watch By Level
+        notes:
+          items:
+            type: string
+          type: array
+          title: Notes
+      type: object
+      required:
+      - context
+      - metrics
+      - breakdowns
+      - grade_mix
+      - watch_by_level
+      - notes
+      title: ScKpiResponse
+      description: 'GET /kpi/scorecards: K-132…K-135 (GK-1).'
+    ScLineRead:
+      properties:
+        metric_code:
+          type: string
+          title: Metric Code
+        pillar_code:
+          $ref: '#/components/schemas/ScPillar'
+        kpi_ref:
+          type: string
+          title: Kpi Ref
+        window:
+          $ref: '#/components/schemas/ScWindow'
+        value:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Value
+        value_display:
+          type: string
+          title: Value Display
+        numerator:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Numerator
+        denominator:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Denominator
+        base:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Base
+        own_value:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Own Value
+        project_value:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Project Value
+        points:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Points
+        points_display:
+          type: string
+          title: Points Display
+        line_status:
+          $ref: '#/components/schemas/ScLineStatus'
+        original_weight:
+          type: string
+          title: Original Weight
+        effective_weight:
+          type: string
+          title: Effective Weight
+        effective_weight_display:
+          type: string
+          title: Effective Weight Display
+        contribution:
+          type: string
+          title: Contribution
+        note:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Note
+      type: object
+      required:
+      - metric_code
+      - pillar_code
+      - kpi_ref
+      - window
+      - value
+      - value_display
+      - numerator
+      - denominator
+      - base
+      - own_value
+      - project_value
+      - points
+      - points_display
+      - line_status
+      - original_weight
+      - effective_weight
+      - effective_weight_display
+      - contribution
+      title: ScLineRead
+    ScLineStatus:
+      type: string
+      enum:
+      - scored
+      - not_applicable
+      - insufficient_volume
+      - source_not_live
+      - excluded_by_manager
+      title: ScLineStatus
+    ScMetricConfig:
+      properties:
+        metric_code:
+          type: string
+          title: Metric Code
+        pillar_code:
+          $ref: '#/components/schemas/ScPillar'
+        kpi_ref:
+          type: string
+          title: Kpi Ref
+        window:
+          $ref: '#/components/schemas/ScWindow'
+        weight:
+          type: string
+          title: Weight
+        good:
+          type: string
+          title: Good
+        bad:
+          type: string
+          title: Bad
+        min_volume:
+          type: integer
+          title: Min Volume
+        enabled:
+          type: boolean
+          title: Enabled
+      type: object
+      required:
+      - metric_code
+      - pillar_code
+      - kpi_ref
+      - window
+      - weight
+      - good
+      - bad
+      - min_volume
+      - enabled
+      title: ScMetricConfig
+    ScMetricPatch:
+      properties:
+        metric_code:
+          type: string
+          title: Metric Code
+        weight:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Weight
+        good:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Good
+        bad:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Bad
+        min_volume:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: Min Volume
+        enabled:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Enabled
+      additionalProperties: false
+      type: object
+      required:
+      - metric_code
+      title: ScMetricPatch
+    ScModule:
+      type: string
+      enum:
+      - phase1
+      - access
+      - ptw
+      - cert
+      - training
+      - medical
+      - heat
+      - emergency
+      - field
+      - toolbox
+      - env
+      - followup
+      title: ScModule
+      description: 'Keys of `source_live_from` (SN-5): the module that feeds each pillar''s metrics.'
+    ScPerformanceSummary:
+      properties:
+        contractor_id:
+          type: string
+          format: uuid
+          title: Contractor Id
+        contractor_code:
+          type: string
+          title: Contractor Code
+        weighted_mean_score:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Weighted Mean Score
+        weighted_mean_display:
+          type: string
+          title: Weighted Mean Display
+        grade_mix:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Grade Mix
+        caps_applied:
+          type: integer
+          title: Caps Applied
+        months:
+          items:
+            $ref: '#/components/schemas/ScCpsMonth'
+          type: array
+          title: Months
+        watch_entries:
+          items:
+            $ref: '#/components/schemas/ScWatchRead'
+          type: array
+          title: Watch Entries
+      type: object
+      required:
+      - contractor_id
+      - contractor_code
+      - weighted_mean_score
+      - weighted_mean_display
+      - grade_mix
+      - caps_applied
+      - months
+      - watch_entries
+      title: ScPerformanceSummary
+      description: 'WL-8 / CPS: last 12 Final months on all projects (226).'
+    ScPillar:
+      type: string
+      enum:
+      - LAG
+      - OBS
+      - CA
+      - PTW
+      - CERT
+      - TRN
+      - FIT
+      - HEAT
+      - EMG
+      - INS
+      - TBT
+      - ENV
+      - NOT
+      title: ScPillar
+      description: List PL.
+    ScPillarRead:
+      properties:
+        pillar_code:
+          $ref: '#/components/schemas/ScPillar'
+        weight:
+          type: string
+          title: Weight
+        effective_weight:
+          type: string
+          title: Effective Weight
+        effective_weight_display:
+          type: string
+          title: Effective Weight Display
+        score:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Score
+        score_display:
+          type: string
+          title: Score Display
+        redistributed:
+          type: boolean
+          title: Redistributed
+      type: object
+      required:
+      - pillar_code
+      - weight
+      - effective_weight
+      - effective_weight_display
+      - score
+      - score_display
+      - redistributed
+      title: ScPillarRead
+    ScPillarWeight:
+      properties:
+        pillar_code:
+          $ref: '#/components/schemas/ScPillar'
+        weight:
+          type: string
+          title: Weight
+      type: object
+      required:
+      - pillar_code
+      - weight
+      title: ScPillarWeight
+    ScProfileCreate:
+      properties:
+        project_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Project Id
+      additionalProperties: false
+      type: object
+      title: ScProfileCreate
+      description: 'A new Draft version: of `ORG` (project_id null) or of a project''s own profile (a
+        copy of
+
+        the active ORG version when the project has none, SP-5).'
+    ScProfilePage:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/ScProfileRead'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+          description: Total number of matching items across all pages.
+        page:
+          type: integer
+          title: Page
+          description: 1-based page number.
+        page_size:
+          type: integer
+          title: Page Size
+          description: Items per page (max 200).
+      type: object
+      required:
+      - items
+      - total
+      - page
+      - page_size
+      title: ScProfilePage
+    ScProfileRead:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        project_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Project Id
+        profile_code:
+          type: string
+          title: Profile Code
+        version:
+          type: integer
+          title: Version
+        effective_from_month:
+          type: string
+          title: Effective From Month
+        pillars:
+          items:
+            $ref: '#/components/schemas/ScPillarWeight'
+          type: array
+          title: Pillars
+        metrics:
+          items:
+            $ref: '#/components/schemas/ScMetricConfig'
+          type: array
+          title: Metrics
+        caps:
+          items:
+            $ref: '#/components/schemas/ScCapConfig'
+          type: array
+          title: Caps
+        bands:
+          items:
+            $ref: '#/components/schemas/ScBand'
+          type: array
+          title: Bands
+        status:
+          $ref: '#/components/schemas/ScProfileStatus'
+        activated_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Activated At
+      type: object
+      required:
+      - id
+      - project_id
+      - profile_code
+      - version
+      - effective_from_month
+      - pillars
+      - metrics
+      - caps
+      - bands
+      - status
+      - activated_at
+      title: ScProfileRead
+    ScProfileStatus:
+      type: string
+      enum:
+      - draft
+      - active
+      - retired
+      title: ScProfileStatus
+    ScProfileUpdate:
+      properties:
+        effective_from_month:
+          anyOf:
+          - type: string
+            pattern: ^\d{4}-\d{2}$
+          - type: 'null'
+          title: Effective From Month
+        pillars:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/ScPillarWeight'
+            type: array
+          - type: 'null'
+          title: Pillars
+        metrics:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/ScMetricPatch'
+            type: array
+          - type: 'null'
+          title: Metrics
+        caps:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/ScCapConfig'
+            type: array
+          - type: 'null'
+          title: Caps
+        bands:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/ScBand'
+            type: array
+          - type: 'null'
+          title: Bands
+      additionalProperties: false
+      type: object
+      title: ScProfileUpdate
+      description: Draft only. Validation of the sums happens at activation (SP-1).
+    ScRankInfo:
+      properties:
+        rank:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Rank
+        rank_of:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Rank Of
+        rank_status:
+          anyOf:
+          - $ref: '#/components/schemas/ScRankStatus'
+          - type: 'null'
+        median:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Median
+        median_display:
+          type: string
+          title: Median Display
+      type: object
+      required:
+      - rank
+      - rank_of
+      - rank_status
+      - median
+      - median_display
+      title: ScRankInfo
+    ScRankStatus:
+      type: string
+      enum:
+      - ranked
+      - low_exposure
+      - low_coverage
+      title: ScRankStatus
+    ScRanking:
+      properties:
+        project_id:
+          type: string
+          format: uuid
+          title: Project Id
+        month:
+          type: string
+          title: Month
+        status:
+          anyOf:
+          - $ref: '#/components/schemas/ScCardStatus'
+          - type: 'null'
+        rows:
+          items:
+            $ref: '#/components/schemas/ScRankingRow'
+          type: array
+          title: Rows
+        ranked_count:
+          type: integer
+          title: Ranked Count
+        median:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Median
+        median_display:
+          type: string
+          title: Median Display
+        profile:
+          type: string
+          title: Profile
+      type: object
+      required:
+      - project_id
+      - month
+      - status
+      - rows
+      - ranked_count
+      - median
+      - median_display
+      - profile
+      title: ScRanking
+      description: RK-1 / RK-3. A Contractor HSE Rep receives only rows of their scope (RK-2).
+    ScRankingRow:
+      properties:
+        engagement_id:
+          type: string
+          format: uuid
+          title: Engagement Id
+        engagement_code:
+          type: string
+          title: Engagement Code
+        card_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Card Id
+        score:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Score
+        score_display:
+          type: string
+          title: Score Display
+        grade:
+          anyOf:
+          - $ref: '#/components/schemas/ScGrade'
+          - type: 'null'
+        band_grade:
+          anyOf:
+          - $ref: '#/components/schemas/ScGrade'
+          - type: 'null'
+        caps:
+          items:
+            $ref: '#/components/schemas/ScCap'
+          type: array
+          title: Caps
+        trend_label:
+          anyOf:
+          - $ref: '#/components/schemas/ScTrend'
+          - type: 'null'
+        coverage_display:
+          type: string
+          title: Coverage Display
+        rank:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Rank
+        rank_status:
+          anyOf:
+          - $ref: '#/components/schemas/ScRankStatus'
+          - type: 'null'
+        watch_level:
+          anyOf:
+          - $ref: '#/components/schemas/ScWatchLevel'
+          - type: 'null'
+        commended:
+          type: boolean
+          title: Commended
+        tree_score_display:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Tree Score Display
+      type: object
+      required:
+      - engagement_id
+      - engagement_code
+      - card_id
+      - score
+      - score_display
+      - grade
+      - band_grade
+      - caps
+      - trend_label
+      - coverage_display
+      - rank
+      - rank_status
+      - watch_level
+      - commended
+      title: ScRankingRow
+    ScRefItem:
+      properties:
+        code:
+          type: string
+          title: Code
+        label_en:
+          type: string
+          title: Label En
+        label_ar:
+          type: string
+          title: Label Ar
+        detail:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Detail
+      type: object
+      required:
+      - code
+      - label_en
+      - label_ar
+      title: ScRefItem
+    ScReference:
+      properties:
+        lists:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/ScRefItem'
+            type: array
+          type: object
+          title: Lists
+      type: object
+      required:
+      - lists
+      title: ScReference
+      description: Lists PL, SM, CP, GB, DR, WLL, RT, EP, MM, statuses and settings keys with EN/AR labels.
+    ScReissueRequest:
+      properties:
+        reason:
+          type: string
+          maxLength: 500
+          title: Reason
+      additionalProperties: false
+      type: object
+      required:
+      - reason
+      title: ScReissueRequest
+    ScRemarkCreate:
+      properties:
+        kind:
+          $ref: '#/components/schemas/ScRemarkKind'
+        target_code:
+          anyOf:
+          - type: string
+            maxLength: 20
+          - type: 'null'
+          title: Target Code
+          description: SM or CP code
+        reason_code:
+          anyOf:
+          - $ref: '#/components/schemas/ScDisputeReason'
+          - type: 'null'
+        text:
+          type: string
+          maxLength: 1000
+          title: Text
+        files:
+          items:
+            $ref: '#/components/schemas/ScFileInput'
+          type: array
+          maxItems: 3
+          title: Files
+      additionalProperties: false
+      type: object
+      required:
+      - kind
+      - text
+      title: ScRemarkCreate
+    ScRemarkKind:
+      type: string
+      enum:
+      - comment
+      - dispute
+      title: ScRemarkKind
+    ScRemarkPage:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/ScRemarkRead'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+          description: Total number of matching items across all pages.
+        page:
+          type: integer
+          title: Page
+          description: 1-based page number.
+        page_size:
+          type: integer
+          title: Page Size
+          description: Items per page (max 200).
+      type: object
+      required:
+      - items
+      - total
+      - page
+      - page_size
+      title: ScRemarkPage
+    ScRemarkRead:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        card_id:
+          type: string
+          format: uuid
+          title: Card Id
+        scorecard_no:
+          type: string
+          title: Scorecard No
+        engagement_code:
+          type: string
+          title: Engagement Code
+        kind:
+          $ref: '#/components/schemas/ScRemarkKind'
+        internal:
+          type: boolean
+          title: Internal
+        target_code:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Target Code
+        reason_code:
+          anyOf:
+          - $ref: '#/components/schemas/ScDisputeReason'
+          - type: 'null'
+        text:
+          type: string
+          title: Text
+        file_ids:
+          items:
+            type: string
+            format: uuid
+          type: array
+          title: File Ids
+        raised_by:
+          anyOf:
+          - $ref: '#/components/schemas/UserRef'
+          - type: 'null'
+        raised_at:
+          type: string
+          format: date-time
+          title: Raised At
+        due_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Due At
+        resolution:
+          anyOf:
+          - $ref: '#/components/schemas/ScResolution'
+          - type: 'null'
+        resolution_text:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Resolution Text
+        corrected_record_ref:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Corrected Record Ref
+        old_points:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Old Points
+        new_points:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: New Points
+        old_score:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Old Score
+        new_score:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: New Score
+        resolved_by:
+          anyOf:
+          - $ref: '#/components/schemas/UserRef'
+          - type: 'null'
+        resolved_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Resolved At
+        status:
+          $ref: '#/components/schemas/ScRemarkStatus'
+        warnings:
+          items:
+            $ref: '#/components/schemas/ApiWarning'
+          type: array
+          title: Warnings
+      type: object
+      required:
+      - id
+      - card_id
+      - scorecard_no
+      - engagement_code
+      - kind
+      - internal
+      - target_code
+      - reason_code
+      - text
+      - file_ids
+      - raised_by
+      - raised_at
+      - due_at
+      - resolution
+      - resolution_text
+      - corrected_record_ref
+      - old_points
+      - new_points
+      - old_score
+      - new_score
+      - resolved_by
+      - resolved_at
+      - status
+      title: ScRemarkRead
+    ScRemarkResolve:
+      properties:
+        resolution:
+          $ref: '#/components/schemas/ScResolution'
+        resolution_text:
+          type: string
+          maxLength: 1000
+          title: Resolution Text
+        corrected_record_ref:
+          anyOf:
+          - type: string
+            maxLength: 80
+          - type: 'null'
+          title: Corrected Record Ref
+      additionalProperties: false
+      type: object
+      required:
+      - resolution
+      - resolution_text
+      title: ScRemarkResolve
+    ScRemarkStatus:
+      type: string
+      enum:
+      - open
+      - resolved
+      - withdrawn
+      title: ScRemarkStatus
+    ScResolution:
+      type: string
+      enum:
+      - upheld_data_corrected
+      - upheld_metric_excluded
+      - rejected
+      title: ScResolution
+    ScScope:
+      type: string
+      enum:
+      - own
+      - tree
+      title: ScScope
+    ScSettingsRead:
+      properties:
+        project_id:
+          type: string
+          format: uuid
+          title: Project Id
+        scorecard_from_month:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Scorecard From Month
+          description: yyyy-mm or null
+        source_live_from:
+          additionalProperties:
+            anyOf:
+            - type: string
+              format: date
+            - type: 'null'
+          propertyNames:
+            $ref: '#/components/schemas/ScModule'
+          type: object
+          title: Source Live From
+        sources_confirmed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Sources Confirmed At
+        scorecard_min_exposure_hours:
+          type: integer
+          title: Scorecard Min Exposure Hours
+        scorecard_min_coverage_pct:
+          type: string
+          title: Scorecard Min Coverage Pct
+        scorecard_comment_days:
+          type: integer
+          title: Scorecard Comment Days
+        dispute_resolution_days:
+          type: integer
+          title: Dispute Resolution Days
+        scorecard_trend_points:
+          type: string
+          title: Scorecard Trend Points
+        scorecard_drop_points:
+          type: string
+          title: Scorecard Drop Points
+        pip_submit_days:
+          type: integer
+          title: Pip Submit Days
+        client_report_due_day:
+          type: integer
+          title: Client Report Due Day
+        external_distribution_enabled:
+          type: boolean
+          title: External Distribution Enabled
+        external_domains:
+          items:
+            type: string
+          type: array
+          title: External Domains
+        report_languages:
+          $ref: '#/components/schemas/RpLanguages'
+        updated_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Updated At
+      type: object
+      required:
+      - project_id
+      - scorecard_from_month
+      - source_live_from
+      - sources_confirmed_at
+      - scorecard_min_exposure_hours
+      - scorecard_min_coverage_pct
+      - scorecard_comment_days
+      - dispute_resolution_days
+      - scorecard_trend_points
+      - scorecard_drop_points
+      - pip_submit_days
+      - client_report_due_day
+      - external_distribution_enabled
+      - external_domains
+      - report_languages
+      title: ScSettingsRead
+      description: §3.9 project settings (capability 225 edits).
+    ScSettingsUpdate:
+      properties:
+        scorecard_from_month:
+          anyOf:
+          - type: string
+            pattern: ^\d{4}-\d{2}$
+          - type: 'null'
+          title: Scorecard From Month
+        source_live_from:
+          anyOf:
+          - additionalProperties:
+              anyOf:
+              - type: string
+                format: date
+              - type: 'null'
+            propertyNames:
+              $ref: '#/components/schemas/ScModule'
+            type: object
+          - type: 'null'
+          title: Source Live From
+        scorecard_min_exposure_hours:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Scorecard Min Exposure Hours
+        scorecard_min_coverage_pct:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Scorecard Min Coverage Pct
+        scorecard_comment_days:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Scorecard Comment Days
+        dispute_resolution_days:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Dispute Resolution Days
+        scorecard_trend_points:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Scorecard Trend Points
+        scorecard_drop_points:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Scorecard Drop Points
+        pip_submit_days:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Pip Submit Days
+        client_report_due_day:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Client Report Due Day
+        external_distribution_enabled:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: External Distribution Enabled
+        external_domains:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: External Domains
+        report_languages:
+          anyOf:
+          - $ref: '#/components/schemas/RpLanguages'
+          - type: 'null'
+      additionalProperties: false
+      type: object
+      title: ScSettingsUpdate
+      description: Any subset; values outside "Allowed" → 422 SETTING_OUT_OF_RANGE.
+    ScSuspensionForm:
+      properties:
+        contractor_id:
+          type: string
+          format: uuid
+          title: Contractor Id
+        contractor_code:
+          type: string
+          title: Contractor Code
+        current_status:
+          type: string
+          title: Current Status
+        target_status:
+          type: string
+          title: Target Status
+        status_reason:
+          type: string
+          title: Status Reason
+        warning_en:
+          type: string
+          title: Warning En
+        warning_ar:
+          type: string
+          title: Warning Ar
+        engagements:
+          items:
+            $ref: '#/components/schemas/ScEngagementRef'
+          type: array
+          title: Engagements
+        submit_path:
+          type: string
+          title: Submit Path
+      type: object
+      required:
+      - contractor_id
+      - contractor_code
+      - current_status
+      - target_status
+      - status_reason
+      - warning_en
+      - warning_ar
+      - engagements
+      - submit_path
+      title: ScSuspensionForm
+      description: 'WL-5: the Phase 0 Approved → Suspended form, prefilled. The platform never submits
+        it.'
+    ScTrend:
+      type: string
+      enum:
+      - improving
+      - stable
+      - declining
+      title: ScTrend
+    ScTriggerRef:
+      properties:
+        month:
+          type: string
+          title: Month
+        trigger:
+          type: string
+          title: Trigger
+        scorecard_no:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Scorecard No
+      type: object
+      required:
+      - month
+      - trigger
+      - scorecard_no
+      title: ScTriggerRef
+    ScWatchAction:
+      type: string
+      enum:
+      - confirm_escalation
+      - submit_pip
+      - accept_pip
+      - decide
+      - close
+      title: ScWatchAction
+    ScWatchCreate:
+      properties:
+        engagement_id:
+          type: string
+          format: uuid
+          title: Engagement Id
+        reason:
+          type: string
+          maxLength: 500
+          title: Reason
+      additionalProperties: false
+      type: object
+      required:
+      - engagement_id
+      - reason
+      title: ScWatchCreate
+      description: Manual opening (226), e.g. on client instruction (WL-6).
+    ScWatchDecision:
+      type: string
+      enum:
+      - suspend
+      - continue_with_conditions
+      - remove_from_project
+      title: ScWatchDecision
+    ScWatchLevel:
+      type: string
+      enum:
+      - watch
+      - improvement_plan
+      - suspension_review
+      title: ScWatchLevel
+      description: List WLL.
+    ScWatchPage:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/ScWatchRead'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+          description: Total number of matching items across all pages.
+        page:
+          type: integer
+          title: Page
+          description: 1-based page number.
+        page_size:
+          type: integer
+          title: Page Size
+          description: Items per page (max 200).
+      type: object
+      required:
+      - items
+      - total
+      - page
+      - page_size
+      title: ScWatchPage
+    ScWatchProposal:
+      type: string
+      enum:
+      - improvement_plan
+      - suspension_review
+      - close
+      title: ScWatchProposal
+      description: What the system proposes on an open entry (WL-3, WL-4, WL-6).
+    ScWatchRead:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        entry_no:
+          type: string
+          title: Entry No
+        project_id:
+          type: string
+          format: uuid
+          title: Project Id
+        engagement_id:
+          type: string
+          format: uuid
+          title: Engagement Id
+        engagement_code:
+          type: string
+          title: Engagement Code
+        level:
+          $ref: '#/components/schemas/ScWatchLevel'
+        trigger_refs:
+          items:
+            $ref: '#/components/schemas/ScTriggerRef'
+          type: array
+          title: Trigger Refs
+        baseline_score:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Baseline Score
+        opened_at:
+          type: string
+          format: date-time
+          title: Opened At
+        opened_reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Opened Reason
+        proposal:
+          anyOf:
+          - $ref: '#/components/schemas/ScWatchProposal'
+          - type: 'null'
+        proposal_reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Proposal Reason
+        review_ca_ref:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Review Ca Ref
+        pip_ca_refs:
+          items:
+            type: string
+          type: array
+          title: Pip Ca Refs
+        pip_due_on:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Pip Due On
+        pip_submitted_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Pip Submitted At
+        pip_accepted_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Pip Accepted At
+        decision:
+          anyOf:
+          - $ref: '#/components/schemas/ScWatchDecision'
+          - type: 'null'
+        decision_text:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Decision Text
+        contractor_status_ref:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Contractor Status Ref
+        closed_reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Closed Reason
+        closed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Closed At
+        status:
+          $ref: '#/components/schemas/ScWatchStatus'
+      type: object
+      required:
+      - id
+      - entry_no
+      - project_id
+      - engagement_id
+      - engagement_code
+      - level
+      - trigger_refs
+      - baseline_score
+      - opened_at
+      - opened_reason
+      - proposal
+      - proposal_reason
+      - review_ca_ref
+      - pip_ca_refs
+      - pip_due_on
+      - pip_submitted_at
+      - pip_accepted_at
+      - decision
+      - decision_text
+      - contractor_status_ref
+      - closed_reason
+      - closed_at
+      - status
+      title: ScWatchRead
+    ScWatchStatus:
+      type: string
+      enum:
+      - open
+      - closed
+      title: ScWatchStatus
+    ScWatchTransition:
+      properties:
+        action:
+          $ref: '#/components/schemas/ScWatchAction'
+        reason:
+          anyOf:
+          - type: string
+            maxLength: 1000
+          - type: 'null'
+          title: Reason
+        pip_ca_ids:
+          anyOf:
+          - items:
+              type: string
+              format: uuid
+            type: array
+          - type: 'null'
+          title: Pip Ca Ids
+        decision:
+          anyOf:
+          - $ref: '#/components/schemas/ScWatchDecision'
+          - type: 'null'
+      additionalProperties: false
+      type: object
+      required:
+      - action
+      title: ScWatchTransition
+    ScWindow:
+      type: string
+      enum:
+      - r12_rate
+      - month
+      - month_end
+      - latest_3m
+      title: ScWindow
     ScaffoldBoard:
       properties:
         project_id:
@@ -137858,6 +143742,443 @@ components:
       - obstacle
       - other
       title: WorksImpact
+    XpColumnRead:
+      properties:
+        column_code:
+          type: string
+          title: Column Code
+        label_en:
+          type: string
+          title: Label En
+        label_ar:
+          type: string
+          title: Label Ar
+        pdpl_class:
+          $ref: '#/components/schemas/XpPdpl'
+        needs_capability:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Needs Capability
+        mask_mode:
+          anyOf:
+          - $ref: '#/components/schemas/XpMaskMode'
+          - type: 'null'
+        default:
+          type: boolean
+          title: Default
+        allowed:
+          type: boolean
+          title: Allowed
+          description: The caller may export this column unmasked
+      type: object
+      required:
+      - column_code
+      - label_en
+      - label_ar
+      - pdpl_class
+      - needs_capability
+      - mask_mode
+      - default
+      - allowed
+      title: XpColumnRead
+    XpDatasetList:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/XpDatasetRead'
+          type: array
+          title: Items
+      type: object
+      required:
+      - items
+      title: XpDatasetList
+    XpDatasetRead:
+      properties:
+        dataset_code:
+          type: string
+          title: Dataset Code
+        owner_module:
+          type: string
+          title: Owner Module
+        view_capability:
+          type: string
+          title: View Capability
+        export_capability:
+          type: string
+          title: Export Capability
+        label_en:
+          type: string
+          title: Label En
+        label_ar:
+          type: string
+          title: Label Ar
+        columns:
+          items:
+            $ref: '#/components/schemas/XpColumnRead'
+          type: array
+          title: Columns
+        purpose_required_when:
+          $ref: '#/components/schemas/XpPurposeRule'
+        aggregate:
+          type: boolean
+          title: Aggregate
+        pdf_allowed:
+          type: boolean
+          title: Pdf Allowed
+        project_required:
+          type: boolean
+          title: Project Required
+      type: object
+      required:
+      - dataset_code
+      - owner_module
+      - view_capability
+      - export_capability
+      - label_en
+      - label_ar
+      - columns
+      - purpose_required_when
+      - aggregate
+      - pdf_allowed
+      - project_required
+      title: XpDatasetRead
+    XpExportRequest:
+      properties:
+        dataset:
+          type: string
+          maxLength: 40
+          title: Dataset
+        format:
+          $ref: '#/components/schemas/XpFormat'
+          default: csv
+        project_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Project Id
+        filters:
+          additionalProperties: true
+          type: object
+          title: Filters
+        columns:
+          items:
+            type: string
+          type: array
+          title: Columns
+        purpose:
+          anyOf:
+          - $ref: '#/components/schemas/XpPurpose'
+          - type: 'null'
+        purpose_text:
+          anyOf:
+          - type: string
+            maxLength: 500
+          - type: 'null'
+          title: Purpose Text
+      additionalProperties: false
+      type: object
+      required:
+      - dataset
+      title: XpExportRequest
+      description: EX-1…EX-9. `columns` empty = the dataset's de-identified default set.
+    XpFileUrl:
+      properties:
+        url:
+          type: string
+          title: Url
+        expires_at:
+          type: string
+          format: date-time
+          title: Expires At
+      type: object
+      required:
+      - url
+      - expires_at
+      title: XpFileUrl
+    XpFormat:
+      type: string
+      enum:
+      - csv
+      - xlsx
+      - pdf
+      title: XpFormat
+    XpFrequency:
+      type: string
+      enum:
+      - weekly
+      - monthly
+      title: XpFrequency
+    XpJobPage:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/XpJobRead'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+          description: Total number of matching items across all pages.
+        page:
+          type: integer
+          title: Page
+          description: 1-based page number.
+        page_size:
+          type: integer
+          title: Page Size
+          description: Items per page (max 200).
+      type: object
+      required:
+      - items
+      - total
+      - page
+      - page_size
+      title: XpJobPage
+    XpJobRead:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        export_no:
+          type: string
+          title: Export No
+        dataset:
+          type: string
+          title: Dataset
+        format:
+          $ref: '#/components/schemas/XpFormat'
+        project_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Project Id
+        filters:
+          additionalProperties: true
+          type: object
+          title: Filters
+        columns:
+          items:
+            type: string
+          type: array
+          title: Columns
+        notes:
+          items:
+            type: string
+          type: array
+          title: Notes
+        purpose:
+          anyOf:
+          - $ref: '#/components/schemas/XpPurpose'
+          - type: 'null'
+        purpose_text:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Purpose Text
+        row_count:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Row Count
+        sha256:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Sha256
+        contains_personal:
+          type: boolean
+          title: Contains Personal
+        contains_sensitive:
+          type: boolean
+          title: Contains Sensitive
+        status:
+          $ref: '#/components/schemas/XpJobStatus'
+        expires_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Expires At
+        requested_by:
+          anyOf:
+          - $ref: '#/components/schemas/UserRef'
+          - type: 'null'
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        ready_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Ready At
+      type: object
+      required:
+      - id
+      - export_no
+      - dataset
+      - format
+      - project_id
+      - filters
+      - columns
+      - notes
+      - purpose
+      - purpose_text
+      - row_count
+      - sha256
+      - contains_personal
+      - contains_sensitive
+      - status
+      - expires_at
+      - requested_by
+      - created_at
+      - ready_at
+      title: XpJobRead
+    XpJobStatus:
+      type: string
+      enum:
+      - queued
+      - ready
+      - expired
+      - failed
+      title: XpJobStatus
+    XpMaskMode:
+      type: string
+      enum:
+      - omit
+      - mask_id
+      - person_n
+      - role_only
+      - privacy_case
+      title: XpMaskMode
+      description: List MM.
+    XpPdpl:
+      type: string
+      enum:
+      - none
+      - personal
+      - sensitive
+      - never
+      title: XpPdpl
+    XpPurpose:
+      type: string
+      enum:
+      - gosi
+      - mhrsd
+      - client_report
+      - legal
+      - insurance
+      - audit
+      - data_subject_request
+      - internal_analysis
+      - other
+      title: XpPurpose
+      description: List EP.
+    XpPurposeRule:
+      type: string
+      enum:
+      - sensitive_column
+      - injured_identity
+      - always
+      - never
+      title: XpPurposeRule
+    XpSubscriptionCreate:
+      properties:
+        dataset:
+          type: string
+          maxLength: 40
+          title: Dataset
+        project_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Project Id
+        filters:
+          additionalProperties: true
+          type: object
+          title: Filters
+        columns:
+          items:
+            type: string
+          type: array
+          title: Columns
+        format:
+          $ref: '#/components/schemas/XpFormat'
+          default: csv
+        frequency:
+          $ref: '#/components/schemas/XpFrequency'
+      additionalProperties: false
+      type: object
+      required:
+      - dataset
+      - frequency
+      title: XpSubscriptionCreate
+    XpSubscriptionList:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/XpSubscriptionRead'
+          type: array
+          title: Items
+      type: object
+      required:
+      - items
+      title: XpSubscriptionList
+    XpSubscriptionRead:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        dataset:
+          type: string
+          title: Dataset
+        project_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Project Id
+        filters:
+          additionalProperties: true
+          type: object
+          title: Filters
+        columns:
+          items:
+            type: string
+          type: array
+          title: Columns
+        format:
+          $ref: '#/components/schemas/XpFormat'
+        frequency:
+          $ref: '#/components/schemas/XpFrequency'
+        active:
+          type: boolean
+          title: Active
+        last_run_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Last Run At
+      type: object
+      required:
+      - id
+      - dataset
+      - project_id
+      - filters
+      - columns
+      - format
+      - frequency
+      - active
+      - last_run_at
+      title: XpSubscriptionRead
     ZoneAccessProfileList:
       properties:
         items:

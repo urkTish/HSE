@@ -85,9 +85,7 @@ class ScSettings(Base):
     scorecard_from_month: Mapped[date | None] = mapped_column(Date)
     source_live_from: Mapped[dict[str, str | None]] = mapped_column(JSONB, default=dict)
     sources_confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    sources_confirmed_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("users.id")
-    )
+    sources_confirmed_by_user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))
     values: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
     updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     updated_by_user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))
@@ -118,6 +116,7 @@ class ScCard(Audited, Base):
     band_grade: Mapped[ScGrade | None] = enum_col(ScGrade, nullable=True)
     grade: Mapped[ScGrade | None] = enum_col(ScGrade, nullable=True)
     caps_applied: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list)
+    excluded_metrics: Mapped[list[str]] = mapped_column(JSONB, default=list)  # DP-4
     pillars: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list)
     trend_delta: Mapped[Decimal | None] = mapped_column(EXACT)
     trend_label: Mapped[ScTrend | None] = enum_col(ScTrend, nullable=True)
@@ -235,9 +234,7 @@ class RpPack(Audited, Base):
 
     report_type: Mapped[RpType] = enum_col(RpType)
     project_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("projects.id"))
-    engagement_id: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("project_engagements.id")
-    )
+    engagement_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("project_engagements.id"))
     contractor_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("contractors.id"))
     period_start: Mapped[date] = mapped_column(Date)
     period_end: Mapped[date] = mapped_column(Date)
@@ -326,9 +323,7 @@ class XpJob(UUIDPk, Base):
     status: Mapped[XpJobStatus] = enum_col(XpJobStatus, default=XpJobStatus.queued)
     error: Mapped[str | None] = mapped_column(String(300))
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    subscription_id: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("xp_subscriptions.id")
-    )
+    subscription_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("xp_subscriptions.id"))
     requested_by_user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     ready_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
