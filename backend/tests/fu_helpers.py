@@ -1,3 +1,4 @@
+# ruff: noqa: E501
 """Helpers for Phase 6f tests (6f Appendix A world, clock 2026-10-06 10:00 Riyadh). Tests use the
 ``fu_seed`` fixture (Phase 0-6e template + the 6f seed, cloned per test) and ``clock``."""
 
@@ -18,9 +19,29 @@ from tests.heat_helpers import eng, local, notified, tick, uid, zone
 from tests.train_helpers import kpi
 
 __all__ = [
-    "due", "make_inc", "rules_from", "set_case", "status",
-    "API", "P", "eng", "expect", "f64", "fu2", "inc", "item", "kpi", "kpis", "lesson", "local",
-    "notified", "project", "reqs", "tick", "uid", "zone",
+    "API",
+    "P",
+    "due",
+    "eng",
+    "expect",
+    "f64",
+    "fu2",
+    "inc",
+    "item",
+    "kpi",
+    "kpis",
+    "lesson",
+    "local",
+    "make_inc",
+    "notified",
+    "project",
+    "reqs",
+    "rules_from",
+    "set_case",
+    "status",
+    "tick",
+    "uid",
+    "zone",
 ]  # fmt: skip
 
 
@@ -31,7 +52,9 @@ def inc(db: Session, ref: str) -> Incident:
 
 
 def fu2(db: Session) -> Incident:
-    x = db.scalar(select(Incident).where(Incident.title == "Escort vehicle contacts parked aircraft wingtip"))
+    x = db.scalar(
+        select(Incident).where(Incident.title == "Escort vehicle contacts parked aircraft wingtip")
+    )
     assert x is not None
     return x
 
@@ -59,7 +82,9 @@ def f64(name: str = "evidence.txt", text: str = "TEST evidence") -> FuFileInput:
     return FuFileInput(file_name=name, content_base64=base64.b64encode(text.encode()).decode())
 
 
-def kpis(c: TestClient, pid: Any, start: str = "2026-10-01", end: str = "2026-10-31", **params: Any) -> dict[str, Any]:
+def kpis(
+    c: TestClient, pid: Any, start: str = "2026-10-01", end: str = "2026-10-31", **params: Any
+) -> dict[str, Any]:
     r = c.get(
         f"{API}/kpi/incident-followup",
         params={"project_id": str(pid), "period": "custom", "start": start, "end": end, **params},
@@ -84,9 +109,20 @@ def make_inc(
 
     from app.core import crypto
     from app.core.hse_enums import (
-        Agency, BodyPart, CaseCategory, ClassificationStatus, IdType, IncidentStatus,
-        IncidentType, InjuryNature, InvestigationLevel, Mechanism, PermanentDisability,
-        PersonType, Trade, TreatedAt,
+        Agency,
+        BodyPart,
+        CaseCategory,
+        ClassificationStatus,
+        IdType,
+        IncidentStatus,
+        IncidentType,
+        InjuryNature,
+        InvestigationLevel,
+        Mechanism,
+        PermanentDisability,
+        PersonType,
+        Trade,
+        TreatedAt,
     )  # fmt: skip
     from app.models import InjuryCase, Investigation, Site
     from app.services.followup import requirements as rq
@@ -97,7 +133,10 @@ def make_inc(
     assert s is not None
     d = fc.local_day(occurred)
     seq = next_seq(db, Incident, pr.id, d.year)
-    types = kw.pop("incident_types", [IncidentType.injury_illness.value if cases else IncidentType.near_miss.value])
+    types = kw.pop(
+        "incident_types",
+        [IncidentType.injury_illness.value if cases else IncidentType.near_miss.value],
+    )
     i = Incident(
         id=uuid.uuid4(), project_id=pr.id, ref=f"INC-{pcode}-{d.year}-{seq:04d}", year=d.year, seq=seq,
         site_id=s.id, responsible_engagement_id=eng(db, pcode, eng_short).id, occurred_at=occurred,
@@ -142,7 +181,9 @@ def set_case(db: Session, i: Incident, no: int, cat: str) -> None:
     from app.core.hse_enums import CaseCategory
     from app.models import InjuryCase
 
-    c = db.scalar(select(InjuryCase).where(InjuryCase.incident_id == i.id, InjuryCase.person_no == no))
+    c = db.scalar(
+        select(InjuryCase).where(InjuryCase.incident_id == i.id, InjuryCase.person_no == no)
+    )
     assert c is not None
     c.derived_category = c.confirmed_category = CaseCategory(cat)
     db.flush()

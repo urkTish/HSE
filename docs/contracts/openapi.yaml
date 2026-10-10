@@ -127844,6 +127844,7 @@ components:
       type: string
       enum:
       - campaign
+      - lesson
       - incident
       - failed_item
       - observation_category

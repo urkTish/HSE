@@ -162,7 +162,7 @@ def test_AC42_topics(db: Session) -> None:
 
 
 def _campaign(db: Session, code: str, site_code: str = "S-LAND", **kw: Any) -> Any:
-    b = {"topic_id": str(topic(db, code).id), "reason": "lesson",
+    b = {"topic_id": str(topic(db, code).id), "reason": "seasonal",  # 6f LK-2: `lesson` needs a published lesson
          "message_en": "Brief every crew this week (TEST).", "site_ids": [str(site(db, site_code).id)],
          **kw}  # fmt: skip
     return campaigns.create_campaign(db, P(db, "faisal.harbi"), project(db, "ANIA-EXP").id,

@@ -294,7 +294,10 @@ def update_settings(
     out = settings_read(db, project_id)
     after = out.model_dump(mode="json")
     audit.record(
-        db, AuditAction.settings_changed, p.actor(project_id), entity_type=EntityType.followup_settings,
+        db,
+        AuditAction.settings_changed,
+        p.actor(project_id),
+        entity_type=EntityType.followup_settings,
         entity_id=project_id, project_id=project_id,
         before={k: before.get(k) for k in data}, after={k: after.get(k) for k in data},
     )  # fmt: skip

@@ -662,14 +662,19 @@ def publish(db: Session, p: Principal | None, ls: FuLesson, at: datetime) -> lis
     for pid in ls.distribution_project_ids or []:
         staff = fc.officers(db, pid) | fc.site_engineers(db, pid, None)
         fc.send(db, staff, NotificationKind.lesson_published,
-                f"Lesson {ls.lesson_no} published: {ls.title_en}",
-                f"نُشر الدرس {ls.lesson_no}: {ls.title_ar}", pid, ET.lesson, ls.id)  # fmt: skip
+                f"Lesson {ls.lesson_no} published: {ls.title_en}"[:200],
+                f"نُشر الدرس {ls.lesson_no}: {ls.title_ar}"[:200],
+                pid, ET.lesson, ls.id)  # fmt: skip
+    from app.services.cert import alerts  # noqa: PLC0415
+
     for it in made:
-        fc.send(db, fc.reps(db, it.project_id, it.engagement_id), NotificationKind.lesson_published,
-                f"Lesson {ls.lesson_no} for {fc.eng_code(db, it.engagement_id)}: brief your "
-                f"crews and acknowledge by {it.ack_due_on.isoformat()}.\n{en_b}",
-                f"الدرس {ls.lesson_no}: يرجى التوعية والإقرار قبل {it.ack_due_on.isoformat()}.\n"
-                f"{ar_b}", it.project_id, ET.lesson_distribution, it.id, email=True)  # fmt: skip
+        alerts.send(
+            db, fc.reps(db, it.project_id, it.engagement_id), NotificationKind.lesson_published,
+            f"Lesson {ls.lesson_no} for {fc.eng_code(db, it.engagement_id)}: brief your crews and "
+            f"acknowledge by {it.ack_due_on.isoformat()}.",
+            f"الدرس {ls.lesson_no}: يرجى التوعية والإقرار قبل {it.ack_due_on.isoformat()}.",
+            ET.lesson_distribution, it.id, it.project_id, email=True, body_en=en_b, body_ar=ar_b,
+        )  # fmt: skip
     return made
 
 
