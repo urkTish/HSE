@@ -1,0 +1,15 @@
+{
+  // GitHub Codespaces / Dev Containers: builds and starts the whole platform with
+  // `docker compose`, seeds the demo users, and forwards the app on port 3000.
+  "name": "HSE Platform",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "postCreateCommand": "test -f .env || cp .env.example .env",
+  "postStartCommand": "bash .devcontainer/start.sh",
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": { "label": "HSE app", "onAutoForward": "openBrowser" }
+  }
+}

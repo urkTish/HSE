@@ -4,7 +4,7 @@ These pin the details the build plan leaves open so backend and frontend integra
 
 ## Repo
 - `backend/` (Python 3.12, uv project, package `app`), `frontend/` (Next.js App Router, TypeScript strict), `docs/`.
-- Root `docker-compose.yml`: `db` (postgres:16), `minio`, `backend` (port 8000), `frontend` (port 3000).
+- Root `docker-compose.yml`: `db` (postgres:16), `backend` (port 8000), `scheduler`, `frontend` (port 3000). Attachments are stored on local disk (`STORAGE_DIR`), so there is no object-storage service (MinIO was removed: its Docker Hub image no longer exists).
 - CI: `.github/workflows/ci.yml` with a `backend` job and a `frontend` job.
 
 ## Backend
