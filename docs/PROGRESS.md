@@ -14,6 +14,8 @@
 - Phase 6f step = Design done (contract v0.12.0; 11 p6f specs green on a fresh seed; screenshots `docs/screenshots/phase-6f`; design pass `docs/design/phase-6f-findings.md`)
 - Phase 6g — Contractor HSE scorecard + reports export pack: spec `docs/specs/6g-scorecard-reports.md` v1.0 (56 ACs; §11 earlier-spec changes applied; contract v0.13.0)
 - Phase 6g step = Design done (contract v0.13.0; 21 p6g specs green on a fresh seed; screenshots `docs/screenshots/phase-6g`; design pass `docs/design/phase-6g-findings.md`)
+- Option 7a — Vehicle accident details (vehicle section on incidents, police / Najm rows, K-136…K-137, C41): spec `docs/specs/7a-vehicle-accident-details.md` v1.0 (28 ACs). **Planned, not started (awaiting HSE Manager go).** Handover `docs/HANDOVER-vehicle.md`.
+- Option 7b — Fleet & driver safety (landside fleet, driver authorisation, pre-use checks, journey management, mileage, telematics imports, vehicle gate hook; capabilities 233–240, K-138…K-144, E26, T26, C42–C43; needs 7a first): spec `docs/specs/7b-fleet-driver.md` v1.0 (46 ACs). **Planned, not started (awaiting HSE Manager go).** Handover `docs/HANDOVER-vehicle.md`.
 
 ## Phase log
 - Phase 0 — Foundation: built, e2e green, design pass done (2026-10-05). The user asked to continue phase after phase without per-phase approval; open questions are collected below for a single review.
