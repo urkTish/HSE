@@ -197,7 +197,7 @@ function SpillKits({ project }: { project: Project }) {
             {items.map((a) => (
               <li key={a.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm" data-testid="spill-kit" data-ready={a.readiness.ready}>
                 <span>
-                  <Link href={`/emergency-assets/${a.id}`} className="font-medium text-primary hover:underline">
+                  <Link href={`/emergency-asset-checks?asset=${a.id}`} className="font-medium text-primary hover:underline">
                     <Code>{a.asset_tag}</Code>
                   </Link>
                   <span className="block text-xs text-muted-foreground">

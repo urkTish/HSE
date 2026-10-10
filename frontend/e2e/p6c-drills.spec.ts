@@ -93,7 +93,11 @@ test.describe.serial("Drills", () => {
     const rows = dlg.getByTestId("crew-present-row");
     for (let i = 0; i < (await rows.count()); i++) await rows.nth(i).getByTestId("crew-present-check").check();
     if (await dlg.getByTestId("st-temp").count()) await dlg.getByTestId("st-temp").fill("33.0");
+    const answered = page.waitForResponse((r) => r.url().includes("/drill-resume") && r.request().method() === "POST");
     await dlg.getByTestId("step-confirm").click();
+    const res = await answered;
+    // a refused resume (SIMOPS, gas re-test after the break, crew eligibility) fails here with its reason
+    expect(res.ok(), await res.text()).toBeTruthy();
     await expect(page.getByTestId("permit-status")).toHaveAttribute("data-status", "active");
   });
 
