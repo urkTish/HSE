@@ -81,6 +81,13 @@ def main() -> None:
     sched.add_job(_job, "cron", hour=0, minute=13, args=["followup_daily"])
     sched.add_job(_job, "cron", hour=7, minute=10, args=["followup_alerts"])
     sched.add_job(_job, "interval", minutes=1, args=["followup_minute"])
+    # Phase 6g (spec 6g-scorecard-reports §4, SC-1…SC-4, EX-7, EX-8)
+    sched.add_job(_job, "cron", hour=6, minute=0, args=["scorecard_monthly"])
+    sched.add_job(_job, "cron", hour=0, minute=20, args=["scorecard_daily"])
+    sched.add_job(_job, "cron", hour=7, minute=0, args=["report_pack_daily"])
+    sched.add_job(_job, "interval", minutes=1, args=["export_jobs"])
+    sched.add_job(_job, "cron", hour=5, minute=30, args=["export_subscriptions"])
+    sched.add_job(_job, "cron", hour=3, minute=0, args=["export_purge"])
     sched.start()
 
 

@@ -952,6 +952,7 @@ import app.kpi.followup  # noqa: E402  (registers K-127…K-131 into _DISPATCH)
 import app.kpi.heat  # noqa: E402  (registers K-97…K-103 into _DISPATCH)
 import app.kpi.medical  # noqa: E402  (registers K-89…K-96 into _DISPATCH)
 import app.kpi.ptw  # noqa: E402  (registers K-46, K-46b, K-61…K-71 into _DISPATCH)
+import app.kpi.scorecard  # noqa: E402  (registers K-132…K-135 into _DISPATCH)
 import app.kpi.training  # noqa: E402, F401  (registers K-37 (rev.), K-82…K-88 into _DISPATCH)
 
 assert set(_DISPATCH) == set(KpiMetric) == set(CATALOGUE)  # noqa: S101

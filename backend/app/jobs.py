@@ -34,6 +34,7 @@ from app.models import (
 )
 from app.models.users import TokenKind
 from app.ptw_jobs import PHASE3_JOBS
+from app.scorecard_jobs import PHASE6G_JOBS
 from app.services import audit, notify
 from app.services.audit import SYSTEM
 from app.services.users import _active_manager_ids, deactivate
@@ -312,6 +313,7 @@ JOBS: dict[str, Callable[[Session], dict[str, Any]]] = {
     **PHASE6D_JOBS,
     **PHASE6E_JOBS,
     **PHASE6F_JOBS,
+    **PHASE6G_JOBS,
 }
 
 

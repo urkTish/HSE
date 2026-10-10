@@ -12,7 +12,8 @@
 - Phase 6e step = Design done (contract v0.11.0; 16 p6e specs green; screenshots `docs/screenshots/phase-6e`; design pass `docs/design/phase-6e-findings.md`)
 - Phase 6f — Incident follow-up (notification packs, lessons learned): spec `docs/specs/6f-incident-followup.md` v1.0 (48 ACs; §11 earlier-spec changes applied; contract v0.12.0)
 - Phase 6f step = Design done (contract v0.12.0; 11 p6f specs green on a fresh seed; screenshots `docs/screenshots/phase-6f`; design pass `docs/design/phase-6f-findings.md`)
-- Phase 6g — Contractor HSE scorecard + reports export pack: spec `docs/specs/6g-scorecard-reports.md` v1.0 written (56 ACs; §11 earlier-spec changes applied); contract next
+- Phase 6g — Contractor HSE scorecard + reports export pack: spec `docs/specs/6g-scorecard-reports.md` v1.0 (56 ACs; §11 earlier-spec changes applied; contract v0.13.0)
+- Phase 6g step = Backend done
 
 ## Phase log
 - Phase 0 — Foundation: built, e2e green, design pass done (2026-10-05). The user asked to continue phase after phase without per-phase approval; open questions are collected below for a single review.
@@ -22,6 +23,14 @@
 - Phase 4 — Third-party certification: built, e2e green, design pass done (2026-10-08).
 
 ## Done
+
+### Backend — Phase 6g contractor scorecard + reports export pack (contract v0.13.0, stage 2)
+- Scorecard (`app/services/scorecard/`: calc, inputs, cards, remarks, watch, config): reads existing KPIs only; pillars and metrics with weights and good / bad anchors per 200,000 h, 12-month small-number blending (Z) and minimum volumes, weight redistribution for missing / not-live modules (no grade below 60 % scored weight), caps CP-1…CP-3, grades. Monthly cycle: issue after the month lock (`scorecard_monthly`), comment window, disputes (P6g-4 identity check, P1-8 warning), resolution (data corrected / metric excluded / rejected), HSE Manager finalises, re-issue as a revision, restatement flag. No typed scores (PATCH on a line → 405). Contractor reps see their own scope, rank "n of N" and the median; other cards 404. Watch list WL-1…WL-7 (watch → improvement plan → suspension review, PIP, prefilled Phase 0 suspension form; the platform never suspends), commendation, E25.
+- Reports (`packs`, `distribution`, `render`): MCR (Phase 1 sections + module KPIs + scorecards, EN PDF, AR PDF, XLSX), SCP per contractor, CPS, OSHA300 log + 300A summary (de-identified; named copy download-only, 24 h), HEAT season report; frozen and numbered, re-issue as a revision with "SUPERSEDED BY" copies, due the 15th, distribution lists with external members on allowed domains only.
+- Generic export (`datasets`, `exports`): one registry for the parked register exports of Phases 0–6f, PDPL class and mask mode per column, purpose for sensitive columns, CSV (BOM, formula guard) / XLSX (EN + AR headers) / PDF, background jobs over 5,000 rows, 50 per day, 7-day / 24-hour expiry, subscriptions without personal data, Viewer aggregates ("<3"), dashboard PDF print (D-10). `GET /exports/{dataset}` serves the 6a–6f datasets too.
+- KPIs K-132…K-135 (`app/kpi/scorecard.py`, `GET /kpi/scorecards`); jobs `scorecard_monthly`, `scorecard_daily`, `report_pack_daily`, `export_jobs`, `export_subscriptions`, `export_purge` (`app/scorecard_jobs.py`). 45 endpoints.
+- Seed `app/seed_scorecard.py` (Appendix A §A; called by `app.seed`; ~90 s). Tests `test_sc_calc`, `test_sc_config`, `test_sc_cycle`, `test_sc_ranking`, `test_sc_packs`, `test_sc_exports`, `test_sc_kpis` (35 tests; ACs 1–50 and 52–56). Defaults D-222…D-229; PDF library fpdf2 + uharfbuzz (D-222).
+- Parked: AI tool T25 (AC 51), charts C39–C40, Hijri dates and the project logo on packs, the 6d audit report and 6f pack / bulletin PDFs still in HTML (D-177), an SMTP sender for external packs (no attachments in the outbox), automatic PDPL classes for wrapped (Phase 0–5) datasets beyond their declared special columns, the E25 "drop" path (needs three prior Final months on the seed).
 
 ### Design pass — Phase 6f incident follow-up (2026-10-10)
 - Findings `docs/design/phase-6f-findings.md`; before / after EN/AR, desktop and 390 px in `docs/screenshots/phase-6f/design/` (`screenshots-p6f.spec.ts`, `SHOT_SUFFIX`).
@@ -848,6 +857,7 @@
 - Phase 1 demo; then Phase 2 per the roadmap
 
 ## Parked
+- **Phase 6g backend (2026-10-10):** not built: AI tool T25 (AC51), charts C39–C40, Hijri dates and project logo on report packs, PDF for the 6d audit report and 6f packs / bulletins (still HTML), an SMTP sender (external packs log file names only). The engine applies CP-3 more often than the worked examples (late incident reports, midday-ban violations), so the seed writes fixture scores (D-226). Seed adds ~90 s to the test template build.
 - **Phase 6e frontend (2026-10-10):** no UI yet for provider edit after creation (D-207), spill-kit QR scanning and a prefilled WSA run from the area screen (D-206), AI tool T22, charts C34–C36, register exports and prints (not built in the backend), monitoring-device management. Screenshot runs on a production build: the `/spills` page never reaches network idle (the spec caps the wait at 30 s); not investigated.
 - **Phase 6e backend (2026-10-09):** not built: AI tool T22 / AI-19 (AC53), charts C34–C36 data, register exports and prints (export half of AC54), the Phase 1 expiring-items feed for 6e kinds, the spill number on the Phase 1 incident read model. No performance tests.
 - **Phase 6d backend (2026-10-09):** not built: AI tool T21 (AC57), charts C31–C33 data, register exports (AC58 export audit row), PDF audit reports (HTML for now, D-177), expiring-item entries. AC59's phone cache deletion is frontend work, and AC61 is tested on the reference lists only. No performance tests.

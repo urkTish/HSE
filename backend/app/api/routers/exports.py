@@ -14,6 +14,8 @@ from app.services import hse_exports
 from app.services.access import exports as access_exports
 from app.services.cert import exports as cert_exports
 from app.services.ptw import exports as ptw_exports
+from app.services.scorecard import datasets as xp_datasets
+from app.services.scorecard import exports as xp
 from app.services.train import exports as train_exports
 
 router = APIRouter(prefix="/exports", tags=["exports"])
@@ -126,6 +128,10 @@ def export_dataset(
             include_identity,
             purpose,
             purpose_text,
+        )
+    elif dataset.value in xp_datasets.NATIVE_BY_CODE:  # 6g EX-1 registry (Phases 6a–6f)
+        content, media_type, filename = xp.sync_get(
+            db, user, dataset.value, format_, project_id, status_
         )
     elif dataset in ptw_exports.DATASETS:
         content, media_type, filename = ptw_exports.export(

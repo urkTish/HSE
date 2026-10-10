@@ -189,6 +189,10 @@ def _owner(
 
     if owner_type in fu_files.FU_OWNERS:
         return fu_files.owner(db, p, owner_type, owner_id, write)
+    from app.services.scorecard import files as sc_files  # noqa: PLC0415
+
+    if owner_type in sc_files.SC_OWNERS:
+        return sc_files.owner(db, p, owner_type, owner_id, write)
     if owner_type in PERSONAL:
         return _access_owner(db, p, owner_type, owner_id, write)
     m = db.get(HseMeeting, owner_id)

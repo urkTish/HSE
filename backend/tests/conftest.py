@@ -475,6 +475,46 @@ def fu_seed(_fresh_data: None, _fu_template: str) -> None:
     _clone(_fu_template)
 
 
+SC_TEMPLATE = TEST_DB.rsplit("/", 1)[1] + "_sc_tpl"
+
+
+@pytest.fixture(scope="session")
+def _sc_template(_fu_template: str) -> str:
+    """Phase 0-6f template + the 6g Appendix A seed."""
+    from app.seed_scorecard import seed_scorecard_data
+
+    _clone(_fu_template)
+    with get_sessionmaker()() as db:
+        seed_scorecard_data(db)
+        db.commit()
+    get_engine().dispose()
+    name = _db_name()
+    _admin_exec(
+        _terminate(name),
+        f"DROP DATABASE IF EXISTS {SC_TEMPLATE}",
+        f"CREATE DATABASE {SC_TEMPLATE} TEMPLATE {name}",
+    )
+    return SC_TEMPLATE
+
+
+@pytest.fixture
+def sc_seed(_fresh_data: None, _sc_template: str) -> None:
+    """Replace the test database with a copy of the Phase 6g template."""
+    _clone(_sc_template)
+
+
+@pytest.fixture
+def sc_clock() -> Iterator[None]:
+    """Pin the clock to the 6g "today" (2026-10-12 10:00 Asia/Riyadh = 07:00Z)."""
+    from datetime import UTC, datetime
+
+    from app.core.clock import set_now
+
+    set_now(datetime(2026, 10, 12, 7, 0, tzinfo=UTC))
+    yield
+    set_now(None)
+
+
 @pytest.fixture
 def noon() -> Iterator[None]:
     """Pin the clock to Appendix A "today" (2026-10-06 12:00 Asia/Riyadh = 09:00Z)."""
