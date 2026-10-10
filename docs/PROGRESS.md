@@ -1,7 +1,7 @@
 # Progress
 
 ## Current
-- Phase: 6b — Heat stress (Phase 5 Training is PARKED, see below; Phase 6a design done, demo pending)
+- Phase: 6b — Heat stress (Phase 5 Training complete, no longer parked; Phase 6a design done, demo pending)
 - Module: heat stress (spec `docs/specs/6b-heat-stress.md` v1.0, §11 earlier-spec changes applied)
 - Phase 6b step = Design done (findings `docs/design/phase-6b-findings.md`; contract v0.8.0); phase demo next
 - Phase 6c — Emergency preparedness & drills (spec `docs/specs/6c-emergency-drills.md` v1.0, §11 earlier-spec changes applied; contract v0.9.0)
@@ -21,6 +21,7 @@
 - Phase 2 — Site / Airport access permits: built, e2e green, design pass done (2026-10-07).
 - Phase 3 — Permit to Work: built, e2e green, design pass done (2026-10-08).
 - Phase 4 — Third-party certification: built, e2e green, design pass done (2026-10-08).
+- Phase 5 — Training: complete (2026-10-10). Parked 2026-10-08, resumed after Phase 6; built, e2e green (full run 291 passed, 0 failed), design pass done.
 
 ## Done
 
@@ -223,6 +224,7 @@
 - Fixes from the AC tests (stage 2b): AT-5 window (D-117); P1-8 on Phase 5 free text, `effective_from` ignored (D-118); action-panel items `hook_block_soon_not_ready`, `holders_not_linked` and enforcement-line gaps (D-115); hook-policy change alerts carry the state id. Dashboard / action-panel performance: D-119.
 - Contract (still v0.6.0, additive): `SessionRead.warnings`, `MatrixLineCreate.effective_from`.
 - Decisions D-105 … D-119.
+- Completion (2026-10-10, un-parked): an audit of the test names against §9 found the parked note's "~47 ACs without tests" and "2 action-panel items" were out of date (both were done in the parking commit `1de006c`: tests for the 47 listed ACs, and the `training_hook_block_soon_not_ready` / `training_holders_not_linked` items with tests in `test_train_hooks_more.py`). The one AC without a dedicated assertion, AC61 second half (ne worker on 00057: `LANGUAGE_MISMATCH` at nomination, `failed` / `LANGUAGE_NOT_UNDERSTOOD` at Close despite passing scores), now has `test_P5AC61_language_block_on_high_risk`. No bug found; no contract or migration change. AC134 stays UI-only. Full backend suite green.
 
 ### Backend — Phase 5 contract v0.6.0 (stage 1)
 - `docs/contracts/openapi.yaml` v0.6.0: 57 new paths / 74 operations. Every one returns 501 `NOT_IMPLEMENTED` until stage 2; the Prism mock serves them now.
@@ -885,7 +887,6 @@
 - **Phase 6b backend (2026-10-09):** not built or not tested yet: AI tool T19 and T9 heat dimensions, charts C25–C27 data, heat exports (capability 176), expiring-items / dashboard band integration, WR-7 permit-only readings, GP-6 (heat training gap in `train/gaps.py`), retention purge (AC60, untested), season report `heat_awr_compliance` (null), AC61 i18n check. ACs 18, 19, 21, 25, 26, 28, 46, 50 and the AC20 resume steps have no dedicated backend test.
 - **Full e2e run after Phase 6a frontend (2026-10-09):** 203 passed, 8 failed, 7 skipped, 3 did not run (43.9 min). All p6a specs green. Failures outside 6a, left as TODO: p1-dashboard ×4 and p4-dashboard AC103 (dashboard load timeouts, as parked for Phase 5); p2-smoke (networkidle timeout); p5-smoke `/training-imports` shows the raw key `training.imports.scansHint` (the message contains `<certificate_no>`, which ICU reads as a tag); p2-settings HK-4 expects "block without a registered provider" to be refused for `medical_fitness`, but the 6a seed now registers a medical provider, so the test needs another kind or project.
 - **Phase 6a backend (2026-10-08):** not built or not tested yet: AI tools T18 / T9 `medical_gap_at_event` (AC106/107/108), the monthly E14 / E15 warning wiring (AC103/104), register exports with tier columns (AC124), retention / anonymisation of scans and fitness lines (AC126/127, untested), action-panel items for 6a, charts C22–C24 data, the field-check / competence Fitness section (AC133). ACs 19, 34, 45, 49, 56, 96, 98, 110, 112-113, 115, 125, 130-132, 134-135 have no dedicated backend test (several are frontend or covered by shared Phase 4 mechanisms).
-- **Phase 5 Training (parked 2026-10-08 at the HSE Manager's request, to resume after Phase 6):** backend and frontend built against contract v0.6.0; remaining: ~47 ACs without backend tests, 2 action-panel items, dashboard cold-load speed (~7 s), frontend e2e not yet green (dashboard timeouts), and the Phase 5 design pass.
 - (Phase 1, D-10) PDF export of the dashboard/monthly report: deferred by the coordinator. The frontend print view covers it for now.
 - (Phase 1, I-15) The check that the supervisor named on an incident holds a supervisor role on that site is not implemented; the field is free text.
 - (Phase 1) Attachment virus scanning: files are stored locally with `scan_status = skipped`. A scanner/object store is not chosen yet.

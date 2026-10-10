@@ -194,3 +194,43 @@ def test_P5AC54_P5AC55_void(api: Api, db: Session) -> None:
     assert recs and all(r.status == TrainingRecordStatus.revoked for r in recs)
     seen = api.as_("ahmed.zahrani").get(f"{API}/training-records/{recs[0].id}").json()
     assert "not accepted" in (seen.get("not_accepted_message_en") or "").lower(), seen
+
+
+def test_P5AC61_language_block_on_high_risk(api: Api, db: Session) -> None:
+    from app.train_jobs import training_minute
+
+    s = session(db, S57)
+    noura = api.as_("noura.qahtani")
+    suman = worker(db, "WKR-000006")  # primary_language ne; 00057 is en with [ur, hi]
+    s.capacity += 1  # 00057 is full in the seed
+    db.commit()
+    res = noura.post(f"{API}/training-sessions/{s.id}/nominations",
+                     json={"worker_ids": [str(suman.id)]})  # fmt: skip
+    assert res.status_code in (200, 201) and "LANGUAGE_MISMATCH" in res.text, res.text
+    training_minute(db, riyadh(2026, 10, 7, 7, 0))
+    training_minute(db, riyadh(2026, 10, 7, 16, 0))
+    db.commit()
+    set_now(riyadh(2026, 10, 7, 17))
+    noura = api.as_("noura.qahtani")  # new token at the moved clock
+    noms = noura.get(f"{API}/training-sessions/{s.id}/nominations").json()["items"]
+    entries = [{"nomination_id": n["id"], "status": "attended", "minutes_by_day": {"1": 480}}
+               for n in noms]  # fmt: skip
+    res = noura.put(f"{API}/training-sessions/{s.id}/attendance", json={"entries": entries})
+    assert res.status_code == 200, res.text
+    ass = [{"nomination_id": n["id"], "theory_score_pct": "95.00", "practical_result": "pass"}
+           for n in noms]  # fmt: skip
+    res = noura.put(f"{API}/training-sessions/{s.id}/assessments", json={"entries": ass})
+    assert res.status_code == 200, res.text
+    sheet = upload_pdf(noura, "training_attendance_sheet", s.id)
+    res = noura.post(f"{API}/training-sessions/{s.id}/close",
+                     json={"attendance_sheet_attachment_id": sheet})  # fmt: skip
+    assert res.status_code == 200, res.text
+    by_no = {
+        n["worker"]["worker_no"]: n
+        for n in noura.get(f"{API}/training-sessions/{s.id}/nominations").json()["items"]
+    }
+    assert by_no["WKR-000017"]["understood_language"] == "interpreter"
+    assert by_no["WKR-000017"]["result"] == "passed"
+    sm = by_no["WKR-000006"]
+    assert sm["understood_language"] == "none", sm
+    assert (sm["result"], sm["result_reason"]) == ("failed", "LANGUAGE_NOT_UNDERSTOOD"), sm
