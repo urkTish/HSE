@@ -12,7 +12,7 @@
 - Phase 6e step = Frontend done (contract v0.11.0; 16 p6e specs green; screenshots `docs/screenshots/phase-6e`); design pass next
 - Phase 6f — Incident follow-up (notification packs, lessons learned): spec `docs/specs/6f-incident-followup.md` v1.0 (48 ACs; §11 earlier-spec changes applied; contract v0.12.0)
 - Phase 6f step = Backend done
-- Phase 6g — Contractor HSE scorecard + reports export pack: spec `docs/specs/6g-scorecard-reports.md` v1.0 written (56 ACs; §11 earlier-spec changes not yet applied); contract next, after 6f
+- Phase 6g — Contractor HSE scorecard + reports export pack: spec `docs/specs/6g-scorecard-reports.md` v1.0 written (56 ACs; §11 earlier-spec changes applied); contract next
 
 ## Phase log
 - Phase 0 — Foundation: built, e2e green, design pass done (2026-10-05). The user asked to continue phase after phase without per-phase approval; open questions are collected below for a single review.

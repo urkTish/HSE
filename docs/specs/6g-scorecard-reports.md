@@ -582,7 +582,7 @@ Each has a default so the build can start.
 6. **Client report:** due on the 15th, EN and AR as two PDFs plus XLSX. Does any client require its own template (cell mapping) or a bilingual single file?
 7. **Contractor visibility:** reps see their own cards, rank "n of N" and the project median, but never other names. Do you want to show anonymous peer scores?
 
-## 11. Changes required in earlier specs (to be applied by the coordinator; this spec does not edit them)
+## 11. Changes required in earlier specs (applied 2026-10-10: 0-foundation v1.5, 1-dashboard v1.10, 6b-heat-stress v1.2, 6d-field-assurance v1.3; §11.3 item 1 is the dataset registry itself)
 
 ### 11.1 `0-foundation.md` (v1.3 after 6e) → next
 1. Matrix rows 224–232 (§5.15).

@@ -1092,12 +1092,9 @@ function NewConsignment({ project }: { project: Project }) {
       <p className="text-xs text-muted-foreground">{t("noOverride")}</p>
       {blocked && !refused ? (
         <Alert tone="danger" data-testid="cn-precheck">
-          <span className="flex items-start gap-2">
-            <Ban aria-hidden className="mt-0.5 size-4 shrink-0" />
-            <span className="flex flex-col gap-1">
-              <span className="font-semibold">{td("precheckTitle")}</span>
-              <span>{td("refusedFix")}</span>
-            </span>
+          <span className="flex flex-col gap-1">
+            <span className="font-semibold">{td("precheckTitle")}</span>
+            <span>{td("refusedFix")}</span>
           </span>
         </Alert>
       ) : null}

@@ -288,8 +288,14 @@ export function LimitBar({ value, limit, alert, unit, testId = "limit-bar" }: { 
   return (
     <div className="flex flex-col gap-1" data-testid={testId} data-over={over}>
       <div className="relative h-4 w-full overflow-hidden rounded bg-muted" aria-hidden>
-        <div className={cn("absolute inset-y-0 start-0", over ? "bg-danger" : "bg-success")} style={{ width: pct(v) }} />
-        {over ? <div className="absolute inset-y-0 start-0 bg-muted-foreground/40" style={{ width: pct(l) }} /> : null}
+        {over ? (
+          <>
+            <div className="absolute inset-y-0 start-0 bg-muted-foreground/40" style={{ width: pct(l) }} />
+            <div className="absolute inset-y-0 bg-danger" style={{ insetInlineStart: pct(l), width: `${Math.min(100, ((v - l) / max) * 100)}%` }} />
+          </>
+        ) : (
+          <div className="absolute inset-y-0 start-0 bg-success" style={{ width: pct(v) }} />
+        )}
         {Number.isFinite(a) && a > 0 && a < max ? <div className="absolute inset-y-0 w-0.5 bg-warning" style={{ insetInlineStart: pct(a) }} /> : null}
         <div className="absolute inset-y-0 w-1 bg-foreground" style={{ insetInlineStart: pct(l) }} />
       </div>

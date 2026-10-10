@@ -300,8 +300,8 @@ function Kpis({ project }: { project: Project }) {
                     <span className={cn("text-3xl font-semibold tabular-nums", m.rag === "red" && "text-danger", m.rag === "amber" && "text-warning")} data-testid="ek-value">
                       {show(m.display)}
                     </span>
-                    {/* The unit after the value unless the server's display already ends with it (dashboard KpiTile rule). */}
-                    {m.unit_en?.trim() && m.kind !== "count" && !m.display.trim().endsWith(m.unit_en.trim()) ? (
+                    {/* The unit after the value unless it is a plain count or the server's display already ends with it. */}
+                    {m.unit_en?.trim() && m.unit_en.trim() !== "count" && !m.display.trim().endsWith(m.unit_en.trim()) ? (
                       <span className="text-sm text-muted-foreground">{ar ? m.unit_ar : m.unit_en}</span>
                     ) : null}
                   </span>

@@ -1,6 +1,6 @@
 # Module Spec — Phase 0: Foundation
 
-**Version:** v1.4 · **Date:** 2026-10-09 · **Author:** HSE Consultant Agent · **Status:** Draft for HSE Manager review
+**Version:** v1.5 · **Date:** 2026-10-10 · **Author:** HSE Consultant Agent · **Status:** Draft for HSE Manager review
 **Covers:** auth & roles, permission matrix & scoping, projects → sites → zones, contractors, users, audit log, project settings, i18n EN/AR, PDPL baseline.
 **Out of scope:** dashboard, man-hours, incidents (Phase 1); permits, certificates, training (Phases 2–5). Anything found for later phases goes to `docs/PROGRESS.md` → "Parked".
 
@@ -207,7 +207,7 @@ Tier and parent are **per project** (a firm may be main contractor on one projec
 | Draft → Pending Approval | بانتظار الاعتماد | HSE Officer, HSE Manager | All required fields valid |
 | Pending Approval → Approved | معتمد | HSE Manager | — |
 | Pending Approval → Draft | مسودة | HSE Manager | Returned with comment |
-| Approved → Suspended | موقوف | HSE Manager | Reason required |
+| Approved → Suspended | موقوف | HSE Manager | Reason required; the reason may cite a 6g watch-list entry, and the form shows the contractor's engagements on all projects (v1.5, 6g WL-5) |
 | Suspended → Approved | معتمد | HSE Manager | Reason required |
 | Approved/Suspended → Demobilised | مُسرَّح | HSE Manager | All engagements have demobilisation_date ≤ today |
 | any → Blacklisted | محظور | HSE Manager | Reason required; terminal except Manager "lift blacklist" → Suspended |
@@ -293,7 +293,7 @@ Active (نشطة) → Temporarily Closed (مغلقة مؤقتاً) → Active; A
 48. Server errors return a stable code (e.g. `CONTRACTOR_SUSPENDED`) and the frontend maps it to EN/AR text.
 
 ### 5.8 Exports
-49. Exports (CSV/Excel) contain only fields the exporting user may read; contact fields are included only for roles with capability 11/3 (§5.10); every export is audited with row count and filter.
+49. Exports (CSV/Excel) contain only fields the exporting user may read; contact fields are included only for roles with capability 11/3 (§5.10); every export is audited with row count and filter. Exports go through the 6g dataset registry (6g EX-1…EX-11); column classes, masking and purposes are defined there per dataset (v1.5).
 
 ### 5.9 PDPL baseline (inherited by all later modules)
 - P1. Every field in every spec carries a PDPL class: none / personal / sensitive. Programmers must not add a field without a class.
@@ -488,3 +488,4 @@ Phase 0 computes no HSE KPIs; it supplies the dimensions and settings every KPI 
 - v1.2 (2026-10-09) — changes required by Phase 6d (`6d-field-assurance.md` v1.0 §11.1): capability rows 191–201 (6d §5.13: view libraries, author drafts, publish / retire and 6d settings, audits, audit report issue, stop-work release, briefing campaigns, record toolbox talks, view attendance names, view 6d registers and KPIs, voids). No existing rule changes.
 - v1.3 (2026-10-09) — changes required by Phase 6e (`6e-environmental.md` v1.0 §11.1): capability rows 202–214 (6e §5.17: view 6e registers and KPIs, aspects, permits / licences / providers, waste streams and storage, consignments, consignment close, instruments / points / limits / devices, readings and water, exceedance review and spill close, spills, complaints, 6e settings and provider decisions, voids). No existing rule changes.
 - v1.4 (2026-10-09) — changes required by Phase 6f (`6f-incident-followup.md` v1.0 §11.1): capability rows 215–223 (6f §5.10: view requirements / submissions / follow-up KPIs, generate packs and record submissions, approve packs and void submissions, rule profile / recipients / body directory / 6f settings and waivers, draft lessons and 6d links, publish / return / archive lessons, acknowledge lessons, view the lesson library, complete effectiveness checks); §3.4 contractor gains optional `gosi_establishment_no` (string(20), PDPL none, used by GOSI-WIR). No existing rule changes.
+- v1.5 (2026-10-10) — changes required by Phase 6g (`6g-scorecard-reports.md` v1.0 §11.1): capability rows 224–232 (6g §5.15: view scorecards / ranking / watch list, scorecard profiles and 6g settings, finalise / re-issue / exclude a metric / watch-list decisions / CPS, comment and dispute, resolve disputes, generate and review report packs, issue packs / distribution lists / schedules, view Issued packs and delivery log, export log and own subscriptions); rule 49 points to the 6g dataset registry; §4.2 Approved → Suspended reason may cite a 6g watch-list entry and the form lists the contractor's engagements on all projects. No existing rule changes.

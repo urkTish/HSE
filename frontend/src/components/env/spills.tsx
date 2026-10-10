@@ -421,9 +421,7 @@ function NewSpill({ project }: { project: Project }) {
       ) : null}
       {likelyReportable ? (
         <Alert tone="warning" data-testid="sp-reportable-preview">
-          <span className="flex items-start gap-2">
-            <ShieldAlert aria-hidden className="mt-0.5 size-4 shrink-0" />
-            <span className="flex flex-col gap-1">
+          <span className="flex flex-col gap-1">
               <span className="font-semibold">{td("whyReportable")}</span>
               <ul className="flex flex-col gap-1" data-testid="sp-reportable-why">
                 {why.map(({ k, Icon }) => (
@@ -434,7 +432,6 @@ function NewSpill({ project }: { project: Project }) {
                 ))}
               </ul>
               <span className="text-xs">{td("reportableNext")}</span>
-            </span>
           </span>
         </Alert>
       ) : null}

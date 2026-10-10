@@ -1,6 +1,6 @@
 # Module Spec — Phase 6b: Heat Stress Management (WBGT, work/rest regimes, acclimatisation, welfare checks, midday-ban compliance, heat-illness log)
 
-**Version:** v1.1 · **Date:** 2026-10-09 · **Author:** HSE Consultant Agent · **Status:** Draft. The HSE Manager asked to proceed without waiting for approval and will review the choices later (§10).
+**Version:** v1.2 · **Date:** 2026-10-10 · **Author:** HSE Consultant Agent · **Status:** Draft. The HSE Manager asked to proceed without waiting for approval and will review the choices later (§10).
 **Builds on:**
 - `0-foundation.md` v1.0: roles, scoping legend, rules 14, 28, 35 and 48, PDPL P1–P13, the capability matrix.
 - `1-dashboard.md` v1.4: setting `heat_season` (06-01 → 09-30), list N natures `heat_exhaustion` / `heat_stroke`, mechanism `exposure_heat`, observation category `heat_stress`, CA source types (§3.8), K-01 man-hours, warnings E1–E15, AI tools T1–T18, T9 dimension `heat_season`, chart C8, the action panel and expiring-items endpoint, seed W1/W3 and A.5.
@@ -26,7 +26,7 @@
 - Weather forecasts and NCM heat warnings (no interface assumed, §10 Q9).
 - Indoor thermal comfort and confined-space internal temperature (Phase 3 HT-6 stays as is).
 - Camp and accommodation heat conditions (welfare; not proposed).
-- PDF output of the season report (6g export pack; on-screen and XLSX here).
+- PDF output of the season report (on-screen and XLSX here; the PDF is the 6g `HEAT` pack, `6g-scorecard-reports.md` RP-10).
 - Personal physiological monitoring (heart rate, core temperature wearables). This is health data, and it is out of scope (§10 Q10).
 
 Conventions: `VERIFY` = clause or number to confirm against the current official text or the client's procedure. `ASSUMPTION` = Consultant default; the HSE Manager may override it (§10). "Must" = enforced server-side. Rule prefixes: HS configuration, WB readings, WR work/rest regime, HA heat alerts, AP acclimatisation, RS rest stations and welfare checks, MB midday ban (non-permit), HI heat-illness log, PH Phase 3 integration, HM KPIs/AI/season report, P6b- PDPL, BD6b boundary. Error codes are stable strings (Phase 0 rule 48). Times are local Asia/Riyadh unless marked UTC.
@@ -776,3 +776,4 @@ The generator creates only 6b records. It never changes Phase 1–6a records or 
 |---|---|---|---|
 | v1.0 | 2026-10-09 | HSE Consultant Agent | First issue. §1–§11 and Appendix A: instruments and monitoring points; WBGT readings (manual, station, import); ACGIH-based regime table (tighten only) with clothing and acclimatisation basis; zone heat state with relax and stale rules; heat alerts; acclimatisation plans (new worker, returner, post heat illness, period start); rest stations and welfare checks; midday-ban patrols and HSE Manager exemptions for non-permit work; heat-illness log with exposure context and controls review; Phase 3 WBGT stop, rest pauses and crew heat checks; season report. Capabilities 166–177, KPIs K-97…K-103, warnings E16–E17, AI tool T19, charts C25–C27. 61 acceptance criteria. Earlier-spec changes in §11, not yet applied: 0-foundation, 1-dashboard v1.6, 2-access-permits v1.5, 3-ptw v1.4, 6a v1.1, 5-training. |
 | v1.1 | 2026-10-09 | HSE Consultant Agent | Note required by Phase 6d (`6d-field-assurance.md` v1.0 §11.5); no rule changes: heat welfare checks and midday-ban patrols keep their fixed lists (list HW) outside 6d templates in 6d v1.0 and are never counted by 6d KPIs (BD6d-3). |
+| v1.2 | 2026-10-10 | HSE Consultant Agent | Note required by Phase 6g (`6g-scorecard-reports.md` v1.0 §11.3); no rule changes: the season-report PDF is the 6g `HEAT` pack (RP-10); the heat registers (176) are exported through the 6g dataset registry with their existing column rules. |
