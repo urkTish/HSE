@@ -9,7 +9,7 @@
 - Phase 6d — Field assurance (checklists, audits, toolbox talks): spec `docs/specs/6d-field-assurance.md` v1.0 (61 ACs; §11 earlier-spec changes applied; contract v0.10.0)
 - Phase 6d step = Design done (findings `docs/design/phase-6d-findings.md`; contract v0.10.0); phase demo next
 - Phase 6e — Environmental management: spec `docs/specs/6e-environmental.md` v1.0 (58 ACs; §11 earlier-spec changes applied; contract v0.11.0)
-- Phase 6e step = Backend done
+- Phase 6e step = Frontend done (contract v0.11.0; 16 p6e specs green; screenshots `docs/screenshots/phase-6e`); design pass next
 - Phase 6f — Incident follow-up (notification packs, lessons learned): spec `docs/specs/6f-incident-followup.md` v1.0 written (48 ACs; §11 earlier-spec changes applied); contract next
 - Phase 6g — Contractor HSE scorecard + reports export pack: spec `docs/specs/6g-scorecard-reports.md` v1.0 written (56 ACs; §11 earlier-spec changes not yet applied); contract next, after 6f
 
@@ -21,6 +21,15 @@
 - Phase 4 — Third-party certification: built, e2e green, design pass done (2026-10-08).
 
 ## Done
+
+### Frontend — Phase 6e environmental (contract v0.11.0, integrated with the stage 2 backend)
+- New "Environmental" sidebar section (`nav-env`, capability 202): overview (band + action panel), aspects, permits and providers, waste (consignments, dispatch, storage areas, streams), dust / noise / water (readings, phone entry, exceedances, points with instruments and background declarations, water), spills and complaints, KPIs K-118…K-126, settings.
+- Code: `src/components/env/` (common, overview, register, waste, monitoring, spills), `src/lib/api/env.ts`, `src/lib/env-enums.ts`, 28 routes under `src/app/[locale]/(app)/` (`env-*`, `waste-*`, `spills`). API types generated from contract v0.11.0 (D-209).
+- Rules on screen: dispatch refused without licences in force (server errors shown, no override); weighbridge ticket uploaded before the receipt; discrepancy reason above the setting; MWAN manifest required by class; tighten-only limits and settings; background dust labelled, not hidden; airside alert while an exceedance is open. Buttons follow capabilities 203–214; driver, plate and complainant contact hidden for viewers with a privacy note.
+- Phone: reading entry (point and requirement buttons, visual score 0–3, lab toggle, field calibration, photos) and the storage-area check (yes/no buttons, accumulation dates) at 390 px.
+- EN/AR strings in `scripts/i18n/p6-env.py` (735 keys added; merge leaves every other key unchanged). Reference-list labels come from `/env-reference` (D-204); KPI notes translated by pattern (D-208).
+- e2e: `p6e-register`, `p6e-waste`, `p6e-monitoring`, `p6e-events`, `p6e-overview` (16 tests, green on a fresh seed and a production build). `screenshots-p6e.spec.ts` (SCREENSHOTS=1) wrote 56 EN/AR screens to `docs/screenshots/phase-6e`. Defaults D-204…D-209.
+- Full e2e run (2026-10-10, HEAD bab8ce9 export): 278 passed, 1 failed, 17 skipped (42.3 min). The failure is outside 6e: `p6c-drills.spec.ts:78` "the receiver resumes a permit suspended for the drill (PE-2)" (permit stays `suspended`), left for the fixer.
 
 ### Backend — Phase 6e environmental (contract v0.11.0, stage 2)
 - Services under `app/services/env/`: settings (tighten-only), aspects (ASP-1…ASP-3), the org-wide provider register and licences, project permits (derived status, renewals, PRM-2 requirements), waste streams, storage areas (WST-2, AIR-2, WST-4 inspection answers, WST-5 deadlines) and consignments (CON-1…CON-8, AIR-3 AVP warning, receipt with ticket, discrepancy, reject → CA, void). Also instruments, `env_monitor` devices and station ingest (MON-2), points with tighten-only limits and permit conditions (LIM-1…LIM-3, PRM-5), readings (manual, lab, visual, derived 1 h / 24 h with data capture), background declarations, exceedances (episodes, background, late results, review → CA, AIR-1), spills (SPL-1…SPL-7, Phase 1 incident creation and linking), water and discharge days (WAT-1…WAT-3), complaints (CPL-1, CPL-2, P6e-2 contact visibility and retention), and the environment band and action panel. 72 endpoints, including `GET /kpi/environmental`.
@@ -808,6 +817,7 @@
 - Phase 1 demo; then Phase 2 per the roadmap
 
 ## Parked
+- **Phase 6e frontend (2026-10-10):** no UI yet for provider edit after creation (D-207), spill-kit QR scanning and a prefilled WSA run from the area screen (D-206), AI tool T22, charts C34–C36, register exports and prints (not built in the backend), monitoring-device management. Screenshot runs on a production build: the `/spills` page never reaches network idle (the spec caps the wait at 30 s); not investigated.
 - **Phase 6e backend (2026-10-09):** not built: AI tool T22 / AI-19 (AC53), charts C34–C36 data, register exports and prints (export half of AC54), the Phase 1 expiring-items feed for 6e kinds, the spill number on the Phase 1 incident read model. No performance tests.
 - **Phase 6d backend (2026-10-09):** not built: AI tool T21 (AC57), charts C31–C33 data, register exports (AC58 export audit row), PDF audit reports (HTML for now, D-177), expiring-item entries. AC59's phone cache deletion is frontend work, and AC61 is tested on the reference lists only. No performance tests.
 - **Phase 6c frontend (2026-10-09):** no UI yet for register exports (189), AI tool T20, charts C28–C30, check photos (no attachment owner) and the permit form's emergency-info prefill button (the backend pre-fills at Request, PE-6). The muster reader list is session-only (no list endpoint). Full e2e run failures outside 6c, left as TODO: p1-dashboard ×6, p1-modules:64, contractors AC17, p2-passes AP-4, p2-settings HK-4, p2-workers IN, p4-dashboard AC103, p5-check AC124, p5-dashboard, p5-hooks AC93, p6a-settings, p6b-settings-report:46 (the backend working tree had uncommitted 6d changes during the run).
