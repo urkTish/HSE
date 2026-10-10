@@ -11,9 +11,15 @@ PGUSER="${PGUSER:-hse}"
 export PGPASSWORD="${PGPASSWORD:-hse}"
 DB="${E2E_DB_NAME:-hse_e2e}"
 
-psql -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d postgres -v ON_ERROR_STOP=1 \
-  -c "DROP DATABASE IF EXISTS \"$DB\" WITH (FORCE)" \
-  -c "CREATE DATABASE \"$DB\""
+# E2E_PREPARE=only: create, migrate and seed the database, then exit (CI does this in its own step,
+# so the seed's duration is not charged to Playwright's server start-up wait).
+# E2E_PREPARE=skip: the database was prepared that way; just start the API on it.
+PREPARE="${E2E_PREPARE:-yes}"
+if [ "$PREPARE" != "skip" ]; then
+  psql -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d postgres -v ON_ERROR_STOP=1 \
+    -c "DROP DATABASE IF EXISTS \"$DB\" WITH (FORCE)" \
+    -c "CREATE DATABASE \"$DB\""
+fi
 
 export DATABASE_URL="postgresql+psycopg://$PGUSER:$PGPASSWORD@$PGHOST:$PGPORT/$DB"
 export JWT_SECRET="${JWT_SECRET:-e2e-only-secret-e2e-only-secret-e2e}"
@@ -23,9 +29,12 @@ export COOKIE_SECURE=false
 export FRONTEND_BASE_URL="${FRONTEND_BASE_URL:-http://localhost:3000}"
 export PRIVACY_NOTICE_VERSION="${PRIVACY_NOTICE_VERSION:-PN-1.0}"
 
-uv run alembic upgrade head
-# Loads every phase's Appendix A seed (Phase 0-6d, including the 6b heat, 6c emergency and 6d field seeds).
-uv run python -m app.seed
+if [ "$PREPARE" != "skip" ]; then
+  uv run alembic upgrade head
+  # Loads every phase's Appendix A seed (Phase 0-6d, including the 6b heat, 6c emergency and 6d field seeds).
+  uv run python -m app.seed
+fi
+[ "$PREPARE" = "only" ] && exit 0
 # Shared e2e clock (e2e/clock.ts): the API runs at the same shifted instant as the tests and browsers,
 # by default the PTW seed instant 2026-10-06 10:00 Riyadh, with time moving on (HSE_CLOCK_MODE advancing).
 if [ -n "${E2E_CLOCK_OFFSET_MS:-}" ]; then
