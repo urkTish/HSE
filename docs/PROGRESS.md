@@ -25,6 +25,11 @@
 
 ## Done
 
+### Platform restyle — emerald brand, platinum neutrals (2026-10-10, D-238)
+- HSE Manager request: professional eye-friendly green, platinum greys, "5-star" shapes and buttons. Done at token level (`tokens.css`, `globals.css`) plus `components/ui/*` and the shell; no page logic touched.
+- Brand `#0c574e` (dark `#5cc3b3`); sidebar `#0b231e`; platinum page `#f3f5f6`, borders `#d9dfe1`. Safety go-green split from the brand: GRANTED / Green tag `#1b7a2b`, success text `#216a1a` (ΔE2000 ≥ 19 from the brand).
+- Findings and contrast: `docs/design/restyle-findings.md`; before/after: `docs/screenshots/restyle/`. All phase screenshot folders (0–6g, consistency) regenerated. e2e 312 passed, 0 failed.
+
 ### Design pass — Phase 6g contractor scorecard + reports (2026-10-10)
 - Findings `docs/design/phase-6g-findings.md`; before / after EN/AR, desktop and 390 px in `docs/screenshots/phase-6g/design/` (`screenshots-p6g.spec.ts`, `SHOT_SUFFIX`).
 - Caps explained: "Lowered from band B to C by" with each cap's meaning and records on the card; caps with their meaning in the register and performance summary. Comment window as a state band (open with countdown, closed awaiting Final, Final, not issued).
