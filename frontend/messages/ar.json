@@ -925,7 +925,16 @@
       "water_entry": "قيد مياه",
       "discharge_day": "يوم تصريف",
       "env_complaint": "شكوى بيئية",
-      "env_monitor_device": "جهاز محطة رصد"
+      "env_monitor_device": "جهاز محطة رصد",
+      "followup_settings": "إعدادات المتابعة",
+      "followup_rule": "قاعدة الإخطار",
+      "followup_requirement": "متطلب الإخطار",
+      "followup_pack": "حزمة الإخطار",
+      "followup_submission": "إثبات إرسال الإخطار",
+      "lesson": "الدرس المستفاد",
+      "lesson_distribution": "توزيع الدرس",
+      "lesson_link": "رابط الدرس",
+      "lesson_effectiveness": "التحقق من فعالية الدرس"
     },
     "system": "النظام"
   },
@@ -1441,7 +1450,25 @@
       "DUPLICATE_WATER_ENTRY": "يوجد قيد مسبق لهذا الموقع والمصدر والشهر.",
       "CONSIGNMENT_CLOSED": "هذه الشحنة مغلقة ولا يمكن تعديلها.",
       "PERMIT_NOT_VALID": "تم الحفظ، لكن تصريح التصريف غير ساري في هذا اليوم. تم إبلاغ فريق الصحة والسلامة.",
-      "AVP_NOT_FOUND": "تم الحفظ، لكن لا يوجد تصريح مركبة ساري للجانب الجوي لهذه اللوحة في تاريخ الإرسال. تحقق من مرافقة المركبة."
+      "AVP_NOT_FOUND": "تم الحفظ، لكن لا يوجد تصريح مركبة ساري للجانب الجوي لهذه اللوحة في تاريخ الإرسال. تحقق من مرافقة المركبة.",
+      "RULE_LOOSENING": "يمكن تشديد القواعد النظامية فقط: خفّض الساعات أو أضف حالات موجبة.",
+      "CLIENT_RECIPIENT_REQUIRED": "أضف مستلمًا واحدًا على الأقل من العميل أو الاستشاري قبل تفعيل قاعدة العميل.",
+      "WAIVER_EVIDENCE_REQUIRED": "سبب الإعفاء هذا يتطلب ملف إثبات (والرقم المرجعي للجهة الأخرى).",
+      "INVESTIGATION_NOT_APPROVED": "يتطلب التقرير النهائي اعتماد التحقيق أولاً.",
+      "PACK_NOT_APPROVED": "استخدم حزمة معتمدة أو أرفق المستند المُرسل.",
+      "CHANNEL_NOT_ALLOWED": "الهاتف واللاسلكي والاجتماع للإبلاغ الشفهي فقط.",
+      "SUBMITTED_AT_INVALID": "يجب أن يكون وقت الإرسال بعد الحادثة وليس في المستقبل.",
+      "IDENTITY_IN_TEXT": "يحتوي النص على اسم المصاب أو رقم هويته. احذفه.",
+      "LESSON_INCOMPLETE": "الدرس غير مكتمل بعد (انظر القائمة).",
+      "REDACTION_NOT_CONFIRMED": "أكد إخفاء البيانات في كل صورة (دون وجوه أو أسماء أو لوحات).",
+      "SELF_APPROVAL": "يجب أن ينشر الدرس شخص غير مُعدّه.",
+      "NOT_DISTRIBUTED": "اختر مشروعًا واحدًا على الأقل لتوزيع الدرس عليه.",
+      "ON_BEHALF_NOTE_REQUIRED": "لهذا المقاول ممثل سلامة نشط. الإقرار نيابةً عنه يتطلب ملاحظة من 20 حرفًا على الأقل.",
+      "LESSON_NOT_PUBLISHED": "الدرس غير منشور بعد.",
+      "RATIONALE_REQUIRED": "النتيجة المختلفة عن المقترحة تتطلب مبررًا من 20 حرفًا على الأقل.",
+      "FOLLOW_UP_REQUIRED": "نتيجة «غير فعّال» تتطلب إجراءً تصحيحيًا للمتابعة أو درسًا جديدًا.",
+      "PACK_IMMUTABLE": "أُرسلت هذه الحزمة ولا يمكن تعديلها.",
+      "SUBMISSION_LOCKED": "يمكن تعديل الإرسال خلال 24 ساعة فقط. ألغه بدلاً من ذلك."
     }
   },
   "theme": {
@@ -1737,7 +1764,8 @@
       "heat_check": "فحص الإجهاد الحراري",
       "emergency": "الطوارئ",
       "field_audit": "تدقيق ميداني",
-      "environmental": "بيئي"
+      "environmental": "بيئي",
+      "lesson": "درس مستفاد"
     },
     "overdueBucket": {
       "1-7": "1–7 أيام",
@@ -1986,7 +2014,11 @@
       "training_attendance_sheet": "كشف الحضور الموقّع",
       "training_verification_evidence": "دليل التحقق من التدريب",
       "training_attendance_signature": "توقيع الحضور",
-      "fitness_scan": "صورة شهادة اللياقة"
+      "fitness_scan": "صورة شهادة اللياقة",
+      "fu_pack_file": "حزمة الإخطار",
+      "fu_pack_identity_file": "حزمة الإخطار (بيانات الهوية)",
+      "fu_evidence": "إثبات الإرسال",
+      "fu_lesson_photo": "صورة الدرس"
     },
     "workerIdType": {
       "iqama": "إقامة",
@@ -4769,7 +4801,8 @@
       "campaign": "حملة",
       "incident": "حادث حديث",
       "failed_item": "بند قائمة تحقق مخفق",
-      "observation_category": "اتجاه الملاحظات"
+      "observation_category": "اتجاه الملاحظات",
+      "lesson": "درس حديث"
     },
     "fdUnderstood": {
       "talk_language": "لغة الاجتماع",
@@ -4907,6 +4940,151 @@
       "contractor": "المقاول",
       "cause": "السبب",
       "substance": "المادة"
+    },
+    "fuStage": {
+      "verbal": "إبلاغ شفهي",
+      "written": "إخطار كتابي",
+      "interim": "تقرير مرحلي",
+      "final": "تقرير نهائي"
+    },
+    "fuRequirementStatus": {
+      "due": "مستحق",
+      "overdue": "متأخر",
+      "submitted": "تم الإرسال",
+      "acknowledged": "تم الاستلام",
+      "waived": "معفى",
+      "not_required": "غير مطلوب"
+    },
+    "fuRuleSource": {
+      "statutory": "نظامي",
+      "client": "العميل / الاستشاري"
+    },
+    "fuDeadlineBasis": {
+      "trigger": "من وقت تحقق الموجب",
+      "investigation_due": "موعد استحقاق التحقيق"
+    },
+    "fuFiler": {
+      "main_contractor": "المقاول الرئيسي",
+      "employer_engagement": "صاحب عمل المصاب",
+      "airport_operator": "مشغل المطار"
+    },
+    "fuFieldSet": {
+      "none": "دون بيانات هوية",
+      "identity": "بيانات الهوية",
+      "identity_medical": "الهوية والإصابة"
+    },
+    "fuPackStatus": {
+      "draft": "مسودة",
+      "approved": "معتمدة",
+      "submitted": "مُرسلة",
+      "superseded": "مستبدلة"
+    },
+    "fuChannel": {
+      "portal": "بوابة إلكترونية",
+      "email": "بريد إلكتروني",
+      "hand_delivered": "تسليم باليد",
+      "courier": "بريد سريع",
+      "phone_radio": "هاتف/لاسلكي",
+      "meeting": "اجتماع"
+    },
+    "fuSubmissionStatus": {
+      "recorded": "مسجل",
+      "acknowledged": "تم الاستلام",
+      "voided": "ملغى"
+    },
+    "fuWaiverReason": {
+      "not_covered_by_gosi": "غير مشمول بالتأمينات",
+      "body_confirmed_not_required": "أكدت الجهة عدم الحاجة",
+      "reported_by_other_party": "أبلغت جهة أخرى",
+      "incident_reclassified": "أعيد تصنيف الحادثة"
+    },
+    "fuTrigger": {
+      "recordable_contractor_case": "حالة مسجلة لعامل مقاول",
+      "commuting_case": "حالة أثناء التنقل",
+      "fatality": "وفاة",
+      "permanent_disability": "عجز دائم",
+      "lti": "إصابة مضيعة للوقت",
+      "fire_explosion_do": "حريق أو انفجار",
+      "any_do": "أي حدث خطر",
+      "hipo": "عالي الخطورة المحتملة",
+      "gaca_airside_flag": "مؤشر جانب جوي لدى الهيئة",
+      "any_airside_flag": "أي مؤشر جانب جوي",
+      "env_ncec": "بيئي (المركز الوطني)",
+      "env_airside": "بيئي في الجانب الجوي",
+      "any_recordable_case": "أي حالة مسجلة",
+      "property_damage_ge_sar": "أضرار ممتلكات تتجاوز قيمة"
+    },
+    "fuForm": {
+      "GOSI-WIR": "بيانات بلاغ إصابة عمل",
+      "MHRSD-LTR": "خطاب إلى مكتب العمل",
+      "CD-LTR": "خطاب إلى الدفاع المدني",
+      "GACA-OCR": "تقرير حدث للهيئة العامة للطيران المدني",
+      "AO-OCR": "تقرير حدث لمشغل المطار",
+      "NCEC-EIR": "تقرير حادث بيئي",
+      "CLIENT-FLASH": "التقرير الأولي للعميل",
+      "CLIENT-INTERIM": "التقرير المرحلي للعميل",
+      "CLIENT-FINAL": "التقرير النهائي للعميل"
+    },
+    "fuClientIdentity": {
+      "none": "دون هوية (الشخص 1 · المهنة · صاحب العمل)",
+      "name_and_trade": "الاسم والمهنة"
+    },
+    "fuRecipientRole": {
+      "client": "العميل",
+      "pmc": "الاستشاري"
+    },
+    "fuLessonStatus": {
+      "draft": "مسودة",
+      "in_review": "قيد المراجعة",
+      "published": "منشور",
+      "archived": "مؤرشف"
+    },
+    "fuLessonSource": {
+      "incident": "حادثة",
+      "external": "تنبيه خارجي"
+    },
+    "fuDistributionStatus": {
+      "pending": "بانتظار الإقرار",
+      "acknowledged": "تم الإقرار",
+      "not_applicable": "لا ينطبق",
+      "withdrawn": "مسحوب"
+    },
+    "fuAckResponse": {
+      "will_brief": "سيتم التوعية",
+      "not_applicable": "لا ينطبق علينا"
+    },
+    "fuLinkKind": {
+      "topic": "موضوع حديث السلامة",
+      "campaign": "حملة توعية",
+      "template_change": "طلب تعديل قائمة تحقق"
+    },
+    "fuChangeStatus": {
+      "open": "مفتوح",
+      "adopted": "معتمد",
+      "rejected": "مرفوض"
+    },
+    "fuEffectResult": {
+      "effective": "فعّال",
+      "partly_effective": "فعّال جزئياً",
+      "not_effective": "غير فعّال"
+    },
+    "fuCheckStatus": {
+      "scheduled": "مجدول",
+      "completed": "مكتمل"
+    },
+    "fuActionKind": {
+      "requirements_overdue": "إخطارات متأخرة",
+      "packs_awaiting_approval": "حزم بانتظار الاعتماد",
+      "lessons_past_publish_due": "دروس تجاوزت موعد النشر",
+      "acknowledgements_overdue": "إقرارات متأخرة",
+      "effectiveness_checks_overdue": "تحقق فعالية متأخر",
+      "template_changes_open": "طلبات تعديل قوائم التحقق مفتوحة أكثر من 30 يومًا"
+    },
+    "fuKpiGroupBy": {
+      "body": "الجهة",
+      "stage": "المرحلة",
+      "month": "الشهر",
+      "contractor": "المقاول"
     }
   },
   "workforce": {

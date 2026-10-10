@@ -925,7 +925,16 @@
       "water_entry": "Water entry",
       "discharge_day": "Discharge day",
       "env_complaint": "Environmental complaint",
-      "env_monitor_device": "Monitoring station device"
+      "env_monitor_device": "Monitoring station device",
+      "followup_settings": "Follow-up settings",
+      "followup_rule": "Notification rule",
+      "followup_requirement": "Notification requirement",
+      "followup_pack": "Notification pack",
+      "followup_submission": "Notification submission",
+      "lesson": "Lesson learned",
+      "lesson_distribution": "Lesson distribution",
+      "lesson_link": "Lesson link",
+      "lesson_effectiveness": "Lesson effectiveness check"
     },
     "system": "System"
   },
@@ -1441,7 +1450,25 @@
       "DUPLICATE_WATER_ENTRY": "There is already an entry for this site, source and month.",
       "CONSIGNMENT_CLOSED": "This consignment is closed and cannot be changed.",
       "PERMIT_NOT_VALID": "Saved, but the discharge permit is not in force on this day. The HSE team has been alerted.",
-      "AVP_NOT_FOUND": "Saved, but this plate has no active airside vehicle permit on the dispatch date. Check the vehicle was escorted."
+      "AVP_NOT_FOUND": "Saved, but this plate has no active airside vehicle permit on the dispatch date. Check the vehicle was escorted.",
+      "RULE_LOOSENING": "Statutory rules can only be tightened: lower the hours or add triggers.",
+      "CLIENT_RECIPIENT_REQUIRED": "Add at least one client or PMC recipient before activating a client rule.",
+      "WAIVER_EVIDENCE_REQUIRED": "This waiver reason needs an evidence file (and the other party's reference).",
+      "INVESTIGATION_NOT_APPROVED": "The final report needs the investigation approved first.",
+      "PACK_NOT_APPROVED": "Use an approved pack or attach the document you sent.",
+      "CHANNEL_NOT_ALLOWED": "Phone, radio and meetings are only for verbal stages.",
+      "SUBMITTED_AT_INVALID": "The sent time must be after the incident and not in the future.",
+      "IDENTITY_IN_TEXT": "The text contains the injured person's name or ID number. Remove it.",
+      "LESSON_INCOMPLETE": "The lesson is not complete yet (see the list).",
+      "REDACTION_NOT_CONFIRMED": "Confirm that every photo is redacted (no faces, names or plates).",
+      "SELF_APPROVAL": "Someone other than the author must publish this lesson.",
+      "NOT_DISTRIBUTED": "Choose at least one project to distribute the lesson to.",
+      "ON_BEHALF_NOTE_REQUIRED": "This contractor has an active HSE rep. Acknowledging on their behalf needs a note of at least 20 characters.",
+      "LESSON_NOT_PUBLISHED": "The lesson is not published yet.",
+      "RATIONALE_REQUIRED": "A result different from the suggestion needs a rationale of at least 20 characters.",
+      "FOLLOW_UP_REQUIRED": "'Not effective' needs a follow-up corrective action or a new lesson.",
+      "PACK_IMMUTABLE": "This pack has been submitted and cannot be changed.",
+      "SUBMISSION_LOCKED": "Submissions can only be edited for 24 hours. Void it instead."
     }
   },
   "theme": {
@@ -1737,7 +1764,8 @@
       "heat_check": "Heat check",
       "emergency": "Emergency",
       "field_audit": "Field audit",
-      "environmental": "Environmental"
+      "environmental": "Environmental",
+      "lesson": "Lesson learned"
     },
     "overdueBucket": {
       "1-7": "1–7 days",
@@ -1986,7 +2014,11 @@
       "training_attendance_sheet": "Signed attendance sheet",
       "training_verification_evidence": "Training verification evidence",
       "training_attendance_signature": "Attendance signature",
-      "fitness_scan": "Fitness certificate scan"
+      "fitness_scan": "Fitness certificate scan",
+      "fu_pack_file": "Notification pack",
+      "fu_pack_identity_file": "Notification pack (identity)",
+      "fu_evidence": "Submission evidence",
+      "fu_lesson_photo": "Lesson photo"
     },
     "workerIdType": {
       "iqama": "Iqama",
@@ -4769,7 +4801,8 @@
       "campaign": "Campaign",
       "incident": "Recent incident",
       "failed_item": "Failed checklist item",
-      "observation_category": "Observation trend"
+      "observation_category": "Observation trend",
+      "lesson": "Recent lesson"
     },
     "fdUnderstood": {
       "talk_language": "Talk language",
@@ -4907,6 +4940,151 @@
       "contractor": "Contractor",
       "cause": "Cause",
       "substance": "Substance"
+    },
+    "fuStage": {
+      "verbal": "Verbal",
+      "written": "Written",
+      "interim": "Interim report",
+      "final": "Final report"
+    },
+    "fuRequirementStatus": {
+      "due": "Due",
+      "overdue": "Overdue",
+      "submitted": "Submitted",
+      "acknowledged": "Acknowledged",
+      "waived": "Waived",
+      "not_required": "Not required"
+    },
+    "fuRuleSource": {
+      "statutory": "Statutory",
+      "client": "Client / PMC"
+    },
+    "fuDeadlineBasis": {
+      "trigger": "From the trigger",
+      "investigation_due": "Investigation due date"
+    },
+    "fuFiler": {
+      "main_contractor": "Main contractor",
+      "employer_engagement": "Injured worker's employer",
+      "airport_operator": "Airport operator"
+    },
+    "fuFieldSet": {
+      "none": "No identity",
+      "identity": "Identity",
+      "identity_medical": "Identity and injury"
+    },
+    "fuPackStatus": {
+      "draft": "Draft",
+      "approved": "Approved",
+      "submitted": "Submitted",
+      "superseded": "Superseded"
+    },
+    "fuChannel": {
+      "portal": "Portal",
+      "email": "Email",
+      "hand_delivered": "Hand delivered",
+      "courier": "Courier",
+      "phone_radio": "Phone / radio",
+      "meeting": "Meeting"
+    },
+    "fuSubmissionStatus": {
+      "recorded": "Recorded",
+      "acknowledged": "Acknowledged",
+      "voided": "Voided"
+    },
+    "fuWaiverReason": {
+      "not_covered_by_gosi": "Not covered by GOSI",
+      "body_confirmed_not_required": "Body confirmed not required",
+      "reported_by_other_party": "Reported by another party",
+      "incident_reclassified": "Incident reclassified"
+    },
+    "fuTrigger": {
+      "recordable_contractor_case": "Recordable contractor case",
+      "commuting_case": "Commuting case",
+      "fatality": "Fatality",
+      "permanent_disability": "Permanent disability",
+      "lti": "Lost time injury",
+      "fire_explosion_do": "Fire or explosion",
+      "any_do": "Any dangerous occurrence",
+      "hipo": "High potential (HiPo)",
+      "gaca_airside_flag": "GACA airside flag",
+      "any_airside_flag": "Any airside flag",
+      "env_ncec": "Environmental (NCEC)",
+      "env_airside": "Environmental, airside",
+      "any_recordable_case": "Any recordable case",
+      "property_damage_ge_sar": "Property damage over a value"
+    },
+    "fuForm": {
+      "GOSI-WIR": "GOSI work-injury data sheet",
+      "MHRSD-LTR": "Letter to the labour office",
+      "CD-LTR": "Letter to Civil Defense",
+      "GACA-OCR": "GACA occurrence report",
+      "AO-OCR": "Airport operator occurrence report",
+      "NCEC-EIR": "Environmental incident report",
+      "CLIENT-FLASH": "Client flash report",
+      "CLIENT-INTERIM": "Client interim report",
+      "CLIENT-FINAL": "Client final report"
+    },
+    "fuClientIdentity": {
+      "none": "De-identified (Person 1 · trade · employer)",
+      "name_and_trade": "Name and trade"
+    },
+    "fuRecipientRole": {
+      "client": "Client",
+      "pmc": "PMC"
+    },
+    "fuLessonStatus": {
+      "draft": "Draft",
+      "in_review": "In review",
+      "published": "Published",
+      "archived": "Archived"
+    },
+    "fuLessonSource": {
+      "incident": "Incident",
+      "external": "External alert"
+    },
+    "fuDistributionStatus": {
+      "pending": "Pending",
+      "acknowledged": "Acknowledged",
+      "not_applicable": "Not applicable",
+      "withdrawn": "Withdrawn"
+    },
+    "fuAckResponse": {
+      "will_brief": "We will brief our people",
+      "not_applicable": "Not applicable to us"
+    },
+    "fuLinkKind": {
+      "topic": "Toolbox topic",
+      "campaign": "Briefing campaign",
+      "template_change": "Checklist change request"
+    },
+    "fuChangeStatus": {
+      "open": "Open",
+      "adopted": "Adopted",
+      "rejected": "Rejected"
+    },
+    "fuEffectResult": {
+      "effective": "Effective",
+      "partly_effective": "Partly effective",
+      "not_effective": "Not effective"
+    },
+    "fuCheckStatus": {
+      "scheduled": "Scheduled",
+      "completed": "Completed"
+    },
+    "fuActionKind": {
+      "requirements_overdue": "Notifications overdue",
+      "packs_awaiting_approval": "Packs awaiting approval",
+      "lessons_past_publish_due": "Lessons past their publish date",
+      "acknowledgements_overdue": "Acknowledgements overdue",
+      "effectiveness_checks_overdue": "Effectiveness checks overdue",
+      "template_changes_open": "Checklist change requests open over 30 days"
+    },
+    "fuKpiGroupBy": {
+      "body": "Body",
+      "stage": "Stage",
+      "month": "Month",
+      "contractor": "Contractor"
     }
   },
   "workforce": {
