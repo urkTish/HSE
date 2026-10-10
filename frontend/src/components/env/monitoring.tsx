@@ -49,6 +49,7 @@ import { EXCEEDANCE_STATUSES } from "@/lib/env-enums";
 import { useSearchState } from "@/lib/url-state";
 import { cn } from "@/lib/utils";
 import { BackgroundBadge, Check, EnvMonitorSubNav, EnvReasonDialog, EnvStatusBadge, LimitBar, Measure, NoNamesHint, ResultBadge, StillNeeded, useBi, useEnvCaps, useEnvRef } from "./common";
+import { RegistryExport } from "@/components/scorecard/exports";
 
 type S = Schemas;
 type Project = S["ProjectRead"];
@@ -96,7 +97,7 @@ function Readings({ project }: { project: Project }) {
         }
       />
       <EnvMonitorSubNav />
-      <ListToolbar>
+      <ListToolbar actions={<RegistryExport dataset="env_readings" projectId={project.id} />}>
         <SelectFilter id="rd-point" label={t("point")} value={point} onChange={(v) => s.set({ point: v })} options={(points.data?.items ?? []).map((p) => ({ value: p.id, label: p.point_code }))} />
         <SelectFilter id="rd-param" label={t("parameter")} value={parameter} onChange={(v) => s.set({ parameter: v })} options={ref.options("parameters")} />
         <DateFilter id="rd-day" label={t("day")} value={day} onChange={(v) => s.set({ day: v })} />

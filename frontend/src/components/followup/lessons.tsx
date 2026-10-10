@@ -36,6 +36,7 @@ import { useRefLists } from "@/lib/reference";
 import { useDebounced } from "@/lib/use-debounced";
 import { useSearchState } from "@/lib/url-state";
 import { Choices, DayDue, DeadlineRule, FuBadge, LessonSubNav, ResultBadge, dayPassed, useBi, useFuCaps } from "./common";
+import { RegistryExport } from "@/components/scorecard/exports";
 
 type S = Schemas;
 type Lesson = S["FuLessonRead"];
@@ -80,7 +81,7 @@ export function LessonLibraryPage() {
         }
       />
       <LessonSubNav />
-      <ListToolbar>
+      <ListToolbar actions={<RegistryExport dataset="lessons" projectId={null} />}>
         <div className="flex flex-col gap-1.5 lg:w-72">
           <label htmlFor="ll-q" className="text-sm font-medium">
             {tc("search")}

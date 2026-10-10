@@ -36,6 +36,7 @@ import { useSearchState } from "@/lib/url-state";
 import { cn } from "@/lib/utils";
 import { Check, EnvReasonDialog, EnvStatusBadge, EnvWasteSubNav, Measure, useEnvCaps, useEnvRef } from "./common";
 import { PermitStatusBadge } from "./register";
+import { RegistryExport } from "@/components/scorecard/exports";
 
 type S = Schemas;
 type Project = S["ProjectRead"];
@@ -661,7 +662,7 @@ function Consignments({ project }: { project: Project }) {
         }
       />
       <EnvWasteSubNav />
-      <ListToolbar>
+      <ListToolbar actions={<RegistryExport dataset="waste_consignments" projectId={project.id} />}>
         <SelectFilter id="cn-status" label={tc("status")} value={status} onChange={(v) => s.set({ status: v })} options={CONSIGNMENT_STATUSES.map((x) => ({ value: x, label: te(`envConsignmentStatus.${x}`) }))} />
         <SelectFilter id="cn-stream" label={t("stream")} value={stream} onChange={(v) => s.set({ stream: v })} options={(streams.data?.items ?? []).filter((x) => x.active).map((x) => ({ value: x.stream_code, label: streamLabel(x.stream_code) }))} />
         <SelectFilter id="cn-provider" label={t("provider")} value={provider} onChange={(v) => s.set({ provider: v })} options={(providers.data?.items ?? []).map((p) => ({ value: p.id, label: p.provider_code }))} />

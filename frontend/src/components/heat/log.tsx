@@ -27,6 +27,7 @@ import { StackedDate } from "@/components/medical/common";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
 import { ChoiceMark, FreeText, HeatReasonDialog, RegimeBadge, SensitiveNote, Wbgt, useHeatCaps } from "./common";
+import { RegistryExport } from "@/components/scorecard/exports";
 
 type S = Schemas;
 type Project = S["ProjectRead"];
@@ -79,7 +80,7 @@ function Log({ project }: { project: Project }) {
     <div>
       <PageHeader title={t("title")} description={t("subtitle")} />
       <SensitiveNote>{t("noClinical")}</SensitiveNote>
-      <ListToolbar>
+      <ListToolbar actions={<RegistryExport dataset="heat_illness_log" projectId={project.id} />}>
         <SelectFilter id="hl-status" label={tc("status")} value={status} onChange={(v) => s.set({ status: v })} options={HEAT_LOG_STATUSES.map((x) => ({ value: x, label: te(`heatLogStatus.${x}`) }))} />
       </ListToolbar>
       {q.isLoading ? (

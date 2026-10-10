@@ -20,6 +20,7 @@ import { useSearchState } from "@/lib/url-state";
 import { cn } from "@/lib/utils";
 import { Countdown, DeadlineRule, FuSubNav, useFuCaps } from "./common";
 import { RequirementList } from "./requirements";
+import { RegistryExport } from "@/components/scorecard/exports";
 
 type S = Schemas;
 type Project = S["ProjectRead"];
@@ -205,7 +206,7 @@ function Register({ project }: { project: Project }) {
     <div>
       <PageHeader title={t("title")} description={t("subtitle")} />
       <FuSubNav />
-      <ListToolbar>
+      <ListToolbar actions={<RegistryExport dataset="notification_requirements" projectId={project.id} />}>
         <SelectFilter id="fr-status" label={t("status")} value={status} onChange={(v) => s.set({ status: v || null })} options={STATUSES.map((x) => ({ value: x, label: te(`fuRequirementStatus.${x}`) }))} />
         <SelectFilter id="fr-body" label={t("body")} value={body} onChange={(v) => s.set({ body: v || null })} options={BODIES.map((x) => ({ value: x, label: te(`externalBody.${x}`) }))} />
         <SelectFilter id="fr-stage" label={t("stage")} value={stage} onChange={(v) => s.set({ stage: v || null })} options={STAGES.map((x) => ({ value: x, label: te(`fuStage.${x}`) }))} />

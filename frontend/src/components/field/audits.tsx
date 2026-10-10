@@ -36,6 +36,7 @@ import { fromLocalInput, toLocalInput } from "@/components/emergency/common";
 import { AuditStatusBadge, FieldAuditSubNav, FieldReasonDialog, FieldSeverityBadge, GradeBadge, NoNamesHint, Score, useBi, useFieldCaps, useFieldRef } from "./common";
 import { FindingsTable } from "./inspect";
 import { answerReady, emptyAnswer, ItemAnswer, ManualFindings, toAnswerInput, toManualInput, useSections, type AnswerState, type ManualFinding } from "./run";
+import { RegistryExport } from "@/components/scorecard/exports";
 
 type S = Schemas;
 type Project = S["ProjectRead"];
@@ -77,7 +78,7 @@ function Audits({ project }: { project: Project }) {
         }
       />
       <FieldAuditSubNav />
-      <ListToolbar>
+      <ListToolbar actions={<RegistryExport dataset="field_audits" projectId={project.id} />}>
         <SelectFilter id="au-type" label={t("type")} value={type} onChange={(v) => s.set({ type: v, page: null })} options={refItems("audit_types").map((x) => ({ value: x.code as S["AuditType"], label: label("audit_types", x.code) }))} />
         <SelectFilter id="au-status" label={tc("status")} value={status} onChange={(v) => s.set({ status: v, page: null })} options={AUDIT_STATUSES.map((x) => ({ value: x, label: te(`fdAuditStatus.${x}`) }))} />
         <SelectFilter id="au-eng" label={t("auditee")} value={eng} onChange={(v) => s.set({ eng: v, page: null })} options={opts.engagements.map((x) => ({ value: x.value, label: x.label }))} />

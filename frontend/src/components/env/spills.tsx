@@ -38,6 +38,7 @@ import { useRefLists } from "@/lib/reference";
 import { useSearchState } from "@/lib/url-state";
 import { cn } from "@/lib/utils";
 import { Check, EnvEventSubNav, EnvReasonDialog, EnvStatusBadge, Measure, NoNamesHint, ResultBadge, StillNeeded, useBi, useEnvCaps, useEnvRef } from "./common";
+import { RegistryExport } from "@/components/scorecard/exports";
 
 type S = Schemas;
 type Project = S["ProjectRead"];
@@ -98,7 +99,7 @@ function Spills({ project }: { project: Project }) {
         }
       />
       <EnvEventSubNav />
-      <ListToolbar>
+      <ListToolbar actions={<RegistryExport dataset="env_spills" projectId={project.id} />}>
         <SelectFilter id="sp-status" label={tc("status")} value={status} onChange={(v) => s.set({ status: v })} options={SPILL_STATUSES.map((x) => ({ value: x, label: te(`envSpillStatus.${x}`) }))} />
         <SelectFilter
           id="sp-rep"
@@ -693,7 +694,7 @@ function Complaints({ project }: { project: Project }) {
         }
       />
       <EnvEventSubNav />
-      <ListToolbar>
+      <ListToolbar actions={<RegistryExport dataset="env_complaints" projectId={project.id} />}>
         <SelectFilter id="cp-status" label={tc("status")} value={status} onChange={(v) => s.set({ status: v })} options={COMPLAINT_STATUSES.map((x) => ({ value: x, label: te(`envComplaintStatus.${x}`) }))} />
       </ListToolbar>
       {q.isLoading ? (

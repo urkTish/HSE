@@ -33,6 +33,7 @@ import { EVENT_STATUSES, INCIDENT_EVENT_TYPES } from "@/lib/emergency-enums";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
 import { EmReasonDialog, EventStatusBadge, fromLocalInput, Minutes, NoNamesHint, nowLocal, toLocalInput, useEmCaps, useEmRef } from "./common";
+import { RegistryExport } from "@/components/scorecard/exports";
 
 type S = Schemas;
 type Project = S["ProjectRead"];
@@ -73,7 +74,7 @@ function Events({ project }: { project: Project }) {
           ) : null
         }
       />
-      <ListToolbar>
+      <ListToolbar actions={<RegistryExport dataset="emergency_events" projectId={project.id} />}>
         <SelectFilter id="ev-type" label={t("type")} value={type} onChange={(v) => s.set({ type: v, page: null })} options={refItems("event_types").map((x) => ({ value: x.code as S["EventType"], label: label("event_types", x.code) }))} />
         <SelectFilter id="ev-status" label={tc("status")} value={status} onChange={(v) => s.set({ status: v, page: null })} options={EVENT_STATUSES.map((x) => ({ value: x, label: te(`emEventStatus.${x}`) }))} />
       </ListToolbar>

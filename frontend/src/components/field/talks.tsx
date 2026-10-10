@@ -39,6 +39,7 @@ import { useSearchState } from "@/lib/url-state";
 import { fromLocalInput, nowLocal } from "@/components/emergency/common";
 import { CampaignStatusBadge, FieldReasonDialog, FieldTalkSubNav, NoNamesHint, OfflineLabel, PhotoPicker, SignaturePad, TalkStatusBadge, useBi, useFieldCaps, useFieldRef } from "./common";
 import { OfflinePackCard, OfflineSubmitNote, OutboxPanel } from "./offline";
+import { RegistryExport } from "@/components/scorecard/exports";
 
 type S = Schemas;
 type Project = S["ProjectRead"];
@@ -85,7 +86,7 @@ function Talks({ project }: { project: Project }) {
       />
       <FieldTalkSubNav />
       <OutboxPanel kind="talk" projectId={project.id} />
-      <ListToolbar>
+      <ListToolbar actions={<RegistryExport dataset="toolbox_talks" projectId={project.id} />}>
         <SelectFilter id="tk-site" label={t("site")} value={site} onChange={(v) => s.set({ site: v, page: null })} options={opts.sites.map((x) => ({ value: x.value, label: x.code }))} />
         <SelectFilter id="tk-host" label={t("host")} value={host} onChange={(v) => s.set({ host: v, page: null })} options={opts.engagements.map((x) => ({ value: x.value, label: x.label }))} />
         <SelectFilter id="tk-status" label={tc("status")} value={status} onChange={(v) => s.set({ status: v, page: null })} options={TALK_STATUSES.map((x) => ({ value: x, label: te(`fdTalkStatus.${x}`) }))} />

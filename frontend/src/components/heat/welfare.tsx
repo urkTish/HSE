@@ -29,6 +29,7 @@ import { StackedDate } from "@/components/medical/common";
 import { useSearchState } from "@/lib/url-state";
 import { cn } from "@/lib/utils";
 import { ChoiceMark, HeatFieldSubNav, HeatReasonDialog, RecordStatusBadge, Wbgt, nowLocalInput, useHeatCaps } from "./common";
+import { RegistryExport } from "@/components/scorecard/exports";
 
 type S = Schemas;
 type Project = S["ProjectRead"];
@@ -70,7 +71,7 @@ function Checks({ project }: { project: Project }) {
         }
       />
       <HeatFieldSubNav />
-      <ListToolbar>
+      <ListToolbar actions={<RegistryExport dataset="heat_welfare_checks" projectId={project.id} />}>
         <SelectFilter id="wc-station" label={t("station")} value={station} onChange={(v) => s.set({ station: v })} options={(stations.data?.items ?? []).map((x) => ({ value: x.id, label: x.station_code }))} />
         <DateFilter id="wc-day" label={t("day")} value={day} onChange={(v) => s.set({ day: v })} />
       </ListToolbar>

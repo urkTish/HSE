@@ -12,6 +12,7 @@ import { ChartRenderer } from "@/components/charts/chart-renderer";
 import { Link } from "@/i18n/navigation";
 import { AiAssistant } from "@/components/ai/ai-panel";
 import { PageHeader } from "@/components/common/page-header";
+import { DashboardPrintButton } from "@/components/scorecard/exports";
 import { ErrorState, LoadingState } from "@/components/common/states";
 import { useMeData } from "@/components/shell/me-context";
 import { api, downloadFile, unwrap, type Schemas } from "@/lib/api/client";
@@ -69,7 +70,12 @@ export function Dashboard() {
       <PageHeader
         title={th("welcome", { name: name(me.full_name_en, me.full_name_ar) })}
         description={project ? `${t("title")} · ${project.code}` : t("title")}
-        actions={pid && !filters.allProjects ? <AiAssistant projectId={pid} filters={toPreferences(pid, filters)} /> : null}
+        actions={
+          <>
+            {(pid || filters.allProjects) && can(me, "export.kpis", pid) ? <DashboardPrintButton query={query} /> : null}
+            {pid && !filters.allProjects ? <AiAssistant projectId={pid} filters={toPreferences(pid, filters)} /> : null}
+          </>
+        }
       />
       {isLoading ? (
         <LoadingState />

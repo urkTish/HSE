@@ -35,6 +35,7 @@ import { CHECK_ANSWERS, DRILL_SHIFTS, DRILL_STATUSES, MUSTER_DRILLS, PROJECT_DRI
 import { useLocalizedName } from "@/lib/i18n-helpers";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
+import { RegistryExport } from "@/components/scorecard/exports";
 import {
   AnswerButtons,
   DrillResultBadge,
@@ -204,7 +205,7 @@ function Drills({ project }: { project: Project }) {
         }
       />
       <EmDrillSubNav />
-      <ListToolbar>
+      <ListToolbar actions={<RegistryExport dataset="emergency_drills" projectId={project.id} />}>
         <SelectFilter id="dr-site" label={t("site")} value={site} onChange={(v) => s.set({ site: v, page: null })} options={opts.sites.map((x) => ({ value: x.value, label: x.code }))} />
         <SelectFilter id="dr-type" label={t("type")} value={type} onChange={(v) => s.set({ type: v, page: null })} options={refItems("drill_types").map((x) => ({ value: x.code as S["DrillType"], label: label("drill_types", x.code) }))} />
         <SelectFilter id="dr-status" label={tc("status")} value={status} onChange={(v) => s.set({ status: v, page: null })} options={DRILL_STATUSES.map((x) => ({ value: x, label: te(`emDrillStatus.${x}`) }))} />

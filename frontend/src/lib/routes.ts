@@ -10,6 +10,7 @@ export function entityRoute(type: Schemas["EntityType"] | string | null | undefi
     if (type === "medical_settings") return "/medical-settings";
     if (type === "heat_settings" || type === "heat_regime_table") return "/heat-settings";
     if (type === "followup_settings") return "/followup-settings";
+    if (type === "scorecard_settings" || type === "scorecard_profile") return "/scorecard-settings";
     if (type === "project_settings" && projectId) return `/projects/${projectId}/settings`;
     if (type === "hse_settings" && projectId) return `/hse-settings?project=${projectId}`;
     return null;
@@ -234,6 +235,22 @@ export function entityRoute(type: Schemas["EntityType"] | string | null | undefi
     case "followup_settings":
     case "followup_rule":
       return "/followup-settings";
+    case "scorecard":
+      return `/scorecards/${id}`;
+    case "scorecard_remark":
+      return "/scorecard-remarks";
+    case "watch_list_entry":
+      return `/watch-list/${id}`;
+    case "report_pack":
+      return `/report-packs/${id}`;
+    case "distribution_list":
+      return "/distribution-lists";
+    case "scorecard_profile":
+    case "scorecard_settings":
+      return "/scorecard-settings";
+    case "export_job":
+    case "export_subscription":
+      return "/exports";
     default:
       return null;
   }

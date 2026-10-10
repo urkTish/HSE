@@ -1,5 +1,9 @@
 "use client";
 import {
+  Trophy,
+  MessageCircleWarning,
+  FileStack,
+  FileDown,
   FireExtinguisher,
   OctagonAlert,
   MessagesSquare,
@@ -323,6 +327,21 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
       ]
     : [];
 
+  /* Phase 6g contractor scorecard (224–228) and reports / exports (229–232). */
+  const scorecardItems: Item[] = pid
+    ? [
+        ...(ac("scorecard.view") ? [{ href: "/scorecards", label: t("scCards"), Icon: Trophy, testId: "nav-sc-cards" }] : []),
+        ...(ac("scorecard.comment", "scorecard.resolve") ? [{ href: "/scorecard-remarks", label: t("scRemarks"), Icon: MessageCircleWarning, testId: "nav-sc-remarks" }] : []),
+        ...(ac("scorecard.view") ? [{ href: "/watch-list", label: t("scWatch"), Icon: Eye, testId: "nav-sc-watch" }] : []),
+        ...(ac("scorecard.view") ? [{ href: "/scorecard-kpis", label: t("scKpis"), Icon: FileBarChart, testId: "nav-sc-kpis" }] : []),
+        ...(ac("scorecard.settings") ? [{ href: "/scorecard-settings", label: t("scSettings"), Icon: SlidersHorizontal, testId: "nav-sc-settings" }] : []),
+      ]
+    : [];
+  const reportItems: Item[] = [
+    ...(pid && ac("report_pack.view", "report_pack.prepare") ? [{ href: "/report-packs", label: t("rpPacks"), Icon: FileStack, testId: "nav-rp-packs" }] : []),
+    ...(ac("export_log.view") ? [{ href: "/exports", label: t("xpExports"), Icon: FileDown, testId: "nav-xp-exports" }] : []),
+  ];
+
   const emergencyItems: Item[] = pid
     ? [
         ...(ac("emergency.view") ? [{ href: "/emergency-board", label: t("emergencyBoard"), Icon: ShieldAlert, testId: "nav-emergency-board" }] : []),
@@ -464,6 +483,30 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
               <p className="px-3 pt-1 pb-1 text-xs font-medium text-sidebar-muted">{t("followup")}</p>
               <ul className="mb-3 flex flex-col gap-1" data-testid="nav-followup">
                 {followupItems.map((i) => (
+                  <li key={i.href}>
+                    <NavLink item={i} onNavigate={onNavigate} />
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : null}
+          {scorecardItems.length > 0 ? (
+            <>
+              <p className="px-3 pt-1 pb-1 text-xs font-medium text-sidebar-muted">{t("scorecard")}</p>
+              <ul className="mb-3 flex flex-col gap-1" data-testid="nav-scorecard">
+                {scorecardItems.map((i) => (
+                  <li key={i.href}>
+                    <NavLink item={i} onNavigate={onNavigate} />
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : null}
+          {reportItems.length > 0 ? (
+            <>
+              <p className="px-3 pt-1 pb-1 text-xs font-medium text-sidebar-muted">{t("reportsExports")}</p>
+              <ul className="mb-3 flex flex-col gap-1" data-testid="nav-reports-exports">
+                {reportItems.map((i) => (
                   <li key={i.href}>
                     <NavLink item={i} onNavigate={onNavigate} />
                   </li>

@@ -28,6 +28,7 @@ import { useAssetChecks, useEmergencyAsset, useEmergencyAssets, useEmergencyRefr
 import { ASSET_STATUSES, CHECK_ANSWERS, EXPIRY_ITEMS, EXTINGUISHER_SUBTYPES, NOT_READY } from "@/lib/emergency-enums";
 import { useSearchState } from "@/lib/url-state";
 import { AnswerButtons, AssetStatusBadge, EmAssetSubNav, EmReasonDialog, fromLocalInput, nowLocal, ReadyBadge, useEmCaps, useEmRef } from "./common";
+import { RegistryExport } from "@/components/scorecard/exports";
 
 type S = Schemas;
 type Project = S["ProjectRead"];
@@ -88,7 +89,7 @@ function Assets({ project }: { project: Project }) {
         }
       />
       <EmAssetSubNav />
-      <ListToolbar>
+      <ListToolbar actions={<RegistryExport dataset="emergency_assets" projectId={project.id} />}>
         <SelectFilter id="as-site" label={t("site")} value={site} onChange={(v) => s.set({ site: v, page: null })} options={opts.sites.map((x) => ({ value: x.value, label: x.code }))} />
         <SelectFilter id="as-type" label={t("type")} value={type} onChange={(v) => s.set({ type: v, page: null })} options={refItems("asset_types").map((x) => ({ value: x.code, label: label("asset_types", x.code) }))} />
         <SelectFilter id="as-status" label={tc("status")} value={status} onChange={(v) => s.set({ status: v, page: null })} options={ASSET_STATUSES.map((x) => ({ value: x, label: te(`emAssetStatus.${x}`) }))} />

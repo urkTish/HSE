@@ -31,6 +31,7 @@ import { StackedDate } from "@/components/medical/common";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
 import { ChoiceMark, Codes, FreeText, HeatBanSubNav, HeatReasonDialog, RecordStatusBadge, nowLocalInput, useHeatCaps } from "./common";
+import { RegistryExport } from "@/components/scorecard/exports";
 
 type S = Schemas;
 type Project = S["ProjectRead"];
@@ -93,7 +94,7 @@ function Patrols({ project }: { project: Project }) {
       />
       <HeatBanSubNav />
       <BanWindow project={project} />
-      <ListToolbar>
+      <ListToolbar actions={<RegistryExport dataset="heat_patrols" projectId={project.id} />}>
         <SelectFilter id="bp-zone" label={t("zone")} value={zone} onChange={(v) => s.set({ zone: v })} options={opts.zones.map((z) => ({ value: z.value, label: z.label }))} />
         <SelectFilter id="bp-outcome" label={t("outcome")} value={outcome} onChange={(v) => s.set({ outcome: v })} options={PATROL_OUTCOMES.map((x) => ({ value: x, label: te(`patrolOutcome.${x}`) }))} />
         <DateFilter id="bp-day" label={t("day")} value={day} onChange={(v) => s.set({ day: v })} />
