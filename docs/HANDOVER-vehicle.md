@@ -1,26 +1,36 @@
 # Handover: vehicle options 7a / 7b (planned, not built)
 
-> **DO NOT START UNTIL TURKI (HSE Manager) SAYS GO, and only for the option he names (A = 7a, B = 7b; B includes A as stage 0).**
+> **DO NOT START UNTIL TURKI (HSE Manager) SAYS GO, and only for the option he names (A = 7a, B = 7b prototype). B no longer needs A technically; if both are chosen, build A first.**
 
-Written 2026-10-10 by the HSE Consultant agent. This file is self-contained: a fresh session can execute either option from it. A copy lives in the repo at `docs/HANDOVER-vehicle.md`.
+Written 2026-10-10, revised 2026-10-11 after Turki's answers (§0), by the HSE Consultant agent. This file is self-contained: a fresh session can execute either option from it. A copy lives in the repo at `docs/HANDOVER-vehicle.md`.
+
+## 0. Turki's answers (2026-10-11), verbatim, and what they changed
+
+| # | Question | Answer (verbatim) | Applied |
+|---|---|---|---|
+| 1 | Should the client get a copy of Najm / police reports? | "No but should be recoreded/archived" | 7a v1.1: report number, date and files archived on the incident for its retention period, files never deleted after Closed (VA-14, `ACCIDENT_REPORT_LOCKED`); no client copy, no client notification, no files in client views or exports (VA-15). |
+| 2 | Fleet scope: log visitor and delivery vehicles at the gate? | "Logging is more of Security scope than HSE" | 7b v2.0: gate logging and site-gate vehicle checks moved to "Out of scope (security)"; Phase 2 gates unchanged. |
+| 3 | Journey plan triggers (≥ 150 km, night, desert, crew bus)? | "sure but dont put too much project leave it in its prototype since we dont have now" | 7b v2.0: minimal journey-plan form, hint at 150 km or 22:00–05:00, no check-ins, no escalation; overdue is a list flag only. |
+| 4 | Telematics / IVMS, 12-point suspension? | "This is for logistics I'm in construction (prototype again)" | 7b v2.0: telematics, speeding events, points and suspension, mileage and km rates, long-haul features moved to "Out of scope (logistics)"; whole module marked **Prototype**, construction-focused. |
+| 5 | Are company-bus commuting crashes work-related? | "Not according to OSHA but should be recorded either way if not counted." | 7a v1.1: commuting (own car or company bus) never counted in K-137, regardless of `include_commuting_in_rates`; always recorded and shown as "Recorded, not counted" in counts, lists and C41 (VA-13). |
 
 ## 1. The two options
 
 | | Option A — `docs/specs/7a-vehicle-accident-details.md` | Option B — `docs/specs/7b-fleet-driver.md` |
 |---|---|---|
-| What | A vehicle-accident section on Phase 1 incidents: vehicles (own / contractor / hired / third party / unknown, plate, link to the Phase 2 vehicle), driver (worker or external, licence class and expiry checked at the time), road type, Najm / police report no., third-party damage, seat belt, speed, commuting link; police / Najm rows in 6f; K-136, K-137, C41 | Full module: landside fleet (extends the Phase 2 vehicle), driver authorisations (licence, DEF-DRV via Phase 5, DRIVER-FIT via 6a, points), pre-use checks on 6d templates with defect hold, journey plans with overdue escalation, monthly mileage, optional telematics CSV imports, site-gate vehicle checks; K-138…K-144, E26, T26, C42–C43, capabilities 233–240 |
-| Size | 28 ACs, no new capability, no new screen (incident pages + dashboard) | 46 ACs, ~6 new screens, new jobs |
-| Depends on | Phase 1, 2, 6f, 6g (all built) | **7a first**, then Phases 2, 5, 6a, 6d, 6g |
-| Rough effort | 1 backend + 1 frontend session, short design pass | Like 6e/6g: backend, frontend, design pass each a full session |
+| What | A vehicle-accident section on Phase 1 incidents: vehicles (own / contractor / hired / third party / unknown, plate, link to the Phase 2 vehicle), driver (worker or external, licence class and expiry checked at the time), road type, Najm / police report archived on the incident (no client copy), third-party damage, seat belt, speed, commuting link (recorded, not counted); police / Najm rows in 6f; K-136, K-137, C41 | **Prototype**, construction-focused: site vehicle & plant readiness (fields on the Phase 2 vehicle, document expiry, Phase 4 status for certified plant), driver / operator authorisations (licence, DEF-DRV via Phase 5, DRIVER-FIT via 6a, Phase 4 operator certificates), daily pre-use checks on 6d templates with defect hold, a minimal journey-plan form; K-138…K-140, capabilities 233–237. No gate, telematics, points, mileage or escalation. |
+| Size | 32 ACs, no new capability, no new screen (incident pages + dashboard) | 24 ACs, 4 small screens (site vehicles, authorisations, pre-use checks, journey plans) + settings, one daily job |
+| Depends on | Phase 1, 2, 6f, 6g (all built) | Phases 2, 4, 5, 6a, 6d, 6g (all built); 7a optional (only the §11.8 links) |
+| Rough effort | 1 backend + 1 frontend session, short design pass | About the same as A: 1 backend + 1 frontend session, short design pass |
 
-Numbering reserved (do not reuse): 7a = K-136…K-137, C41. 7b = capabilities 233–240, K-138…K-144, E26, T26, C42–C43, CA source `fleet`, hook kind `driver_authorisation`. Check again before building (`grep` the specs, `docs/DECISIONS.md`, `backend/app/core/enums.py`); if anything moved, renumber in the spec first.
+Numbering reserved (do not reuse): 7a = K-136…K-137, C41. 7b = capabilities 233–237, K-138…K-140, CA source `site_vehicle`, 6d owner type `vehicle_check`. Released by the 7b v2.0 shrink (free again): capabilities 238–240, K-141…K-144, E26, T26, C42–C43, CA source `fleet`, hook kind `driver_authorisation`. Check again before building (`grep` the specs, `docs/DECISIONS.md`, `backend/app/core/enums.py`); if anything moved, renumber in the spec first.
 
 ## 2. Repo and environment
 
 - Repo `urkTish/HSE`, branch **`claude/hse-platform-build-kannxy`** (no main branch, no PRs, no other branches). Working tree `/home/claude/HSE`.
 - **Backend** `backend/`: Python 3.12, uv, FastAPI, SQLAlchemy 2, Alembic, Postgres 16; pytest, ruff, mypy strict. Checks: `uv run ruff check . && uv run ruff format --check . && uv run mypy app && uv run pytest`; migrations `uv run alembic upgrade head && uv run alembic check`.
 - **Frontend** `frontend/`: Next.js App Router, strict TS, Tailwind, shadcn, TanStack Query, next-intl (`/en`, `/ar`, RTL). Checks: `npm run lint && npm run typecheck && npm run i18n:check && npm run build`, e2e `npm run test:e2e` (Playwright, Chromium at `/opt/pw-browsers`; never `playwright install` locally).
-- **Contract-first:** `docs/contracts/openapi.yaml`, generated with `uv run python -m app.export_openapi` (CI checks `--check`). Current **v0.13.0**. Bump: 7a → v0.14.0, 7b → v0.15.0 (or v0.14.0 if B is built together with A; then say so in PROGRESS). Frontend types: `npm run gen:api`.
+- **Contract-first:** `docs/contracts/openapi.yaml`, generated with `uv run python -m app.export_openapi` (CI checks `--check`). Current **v0.13.0**. Bump: the first option built → v0.14.0, the second → v0.15.0 (one bump if both are built together; say so in PROGRESS). Frontend types: `npm run gen:api`.
 - **Postgres** local, user/password `hse`/`hse`, DBs `hse`, `hse_test`; start with `pg_ctlcluster 16 main start` if down. **No Docker.**
 - **e2e:** `frontend/e2e/start-backend.sh` drops, migrates and seeds `E2E_DB_NAME` (default `hse_e2e`), runs the API on `E2E_BACKEND_PORT` (default 8000); frontend at `E2E_BASE_URL` (default http://localhost:3000). Shared clock `frontend/e2e/clock.ts`: `E2E_CLOCK_AT` default **2026-10-06T10:00+03:00**, passed to the API as `HSE_CLOCK_AT` (advancing). Specs 6g/7a/7b use `HSE_CLOCK_AT` = 2026-10-12 10:00 for backend tests; pick per test as the 6g tests do.
 - **Private DB / ports when other agents run:** use your own `E2E_DB_NAME`, `E2E_BACKEND_PORT` and frontend port; run a clean backend from `git archive HEAD | tar -x -C /tmp/…` with `E2E_BACKEND_DIR=<that dir>` when backend/ has uncommitted work.
@@ -30,9 +40,9 @@ Numbering reserved (do not reuse): 7a = K-136…K-137, C41. 7b = capabilities 23
 ## 3. Conventions (must follow)
 
 - `docs/CONVENTIONS.md`: error envelope `{"detail":{"code","message","message_ar"}}`; 401/403/404/409/422; lists `{items,total,page,page_size}`; cookie `hse_session`; QR `HSE2:<kind>:<token>`.
-- **D-202 schema prefixes:** a new Pydantic schema or enum whose plain name already exists in another module gets a module prefix (6e used `Env…`). Use `Veh…` / `Fleet…` (e.g. `FleetVehicleRead`, `VehIncidentVehicleRead`) so earlier OpenAPI component names do not change.
-- **i18n:** strings are written as EN/AR pairs in `frontend/scripts/i18n/p<phase>-<name>.py` (dict `P`, leaves `[en, ar]`), then `python3 scripts/i18n/merge.py` (globs `p[0-9]-*.py`, runs `consistency.py` last) regenerates `messages/en.json` / `ar.json`. Use `p7-vehicle.py` (7a) and `p7-fleet.py` (7b); add only new keys. ICU: escape `<…>` in messages.
-- **Design conventions:** `docs/design/consistency-pass-findings.md` and `docs/design/restyle-findings.md` (D-238: emerald brand `#0c574e`, platinum neutrals, safety-green split from brand; tokens only in `src/styles/tokens.css`). Irreversible record actions (void, revoke, withdraw, clear hold) go in the **page-end "Record actions" band** (`components/common/record-actions.tsx`); safety stops stay at the top. Month names, not `yyyy-mm`; plates, km and refs LTR inside RTL; compact cards at 390 px.
+- **D-202 schema prefixes:** a new Pydantic schema or enum whose plain name already exists in another module gets a module prefix (6e used `Env…`). Use `Veh…` (7a) / `SiteVeh…` (7b) (e.g. `VehIncidentVehicleRead`, `SiteVehReadinessRead`) so earlier OpenAPI component names do not change.
+- **i18n:** strings are written as EN/AR pairs in `frontend/scripts/i18n/p<phase>-<name>.py` (dict `P`, leaves `[en, ar]`), then `python3 scripts/i18n/merge.py` (globs `p[0-9]-*.py`, runs `consistency.py` last) regenerates `messages/en.json` / `ar.json`. Use `p7-vehicle.py` (7a) and `p7-site-vehicle.py` (7b); add only new keys. ICU: escape `<…>` in messages.
+- **Design conventions:** `docs/design/consistency-pass-findings.md` and `docs/design/restyle-findings.md` (D-238: emerald brand `#0c574e`, platinum neutrals, safety-green split from brand; tokens only in `src/styles/tokens.css`). Irreversible record actions (void, revoke, withdraw, clear hold, supersede an archived accident report) go in the **page-end "Record actions" band** (`components/common/record-actions.tsx`); safety stops stay at the top. Month names, not `yyyy-mm`; plates, km and refs LTR inside RTL; compact cards at 390 px.
 - **Commits:** WIP commits contain `[skip ci]`. **Never `git add -A`**; stage only your own files. Re-read `docs/PROGRESS.md` and `docs/DECISIONS.md` right before editing them (other agents edit them). Every commit message ends with:
   ```
   Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
@@ -52,10 +62,10 @@ Pipeline per option: **spec (done) → contract (backend stage 1, openapi bump) 
 
 ### Option A (7a)
 Backend:
-- `backend/app/models/hse.py` — `Incident` (new columns: vehicle_involved, road_type, road_location, journey_purpose, light, surface, report_authority, report_no, report_date, liability_pct_own, third_party_damage_*), new model `IncidentVehicle` (table `incident_vehicles`).
+- `backend/app/models/hse.py` — `Incident` (new columns: vehicle_involved, road_type, road_location, journey_purpose, light, surface, report_authority, report_no, report_date, liability_pct_own, third_party_damage_*, recorded_not_counted), new model `IncidentVehicle` (table `incident_vehicles`); report files through the existing attachments with a new owner `incident_accident_report` (superseded flag, no delete after Closed).
 - `backend/app/core/hse_enums.py` — `ExternalBody` + `najm`; new enums RoadType, JourneyPurpose, VehicleOwnership, VehicleRole, LicenceCheck, etc.; `backend/app/core/followup_enums.py` — triggers `rta_public_injury`, `rta_public_no_injury`.
 - `backend/alembic/versions/` — new `2026xxxx_0016_vehicle_accident.py` (latest is `20261010_0015_phase6g_scorecard_reports.py`).
-- `backend/app/schemas/incidents.py` (Veh-prefixed schemas), `backend/app/api/routers/incidents.py`, `backend/app/services/incidents.py`, `services/injury_cases.py` (commuting proposal VA-7), `services/investigations.py` (VEHICLE_SECTION_INCOMPLETE, prompts VA-4), `services/access/vehicles.py` (read-only lookup, plate normalisation).
+- `backend/app/schemas/incidents.py` (Veh-prefixed schemas), `backend/app/api/routers/incidents.py`, `backend/app/services/incidents.py` (close check VA-14, recorded_not_counted VA-13), `services/injury_cases.py` (commuting proposal VA-7), `services/investigations.py` (VEHICLE_SECTION_INCOMPLETE, prompts VA-4), `services/access/vehicles.py` (read-only lookup, plate normalisation); attachments service (owner `incident_accident_report`, 29-only, excluded from Viewer/Client and client report packs, VA-15).
 - 6f: `backend/app/services/followup/common.py` (statutory rows POL-V etc. live here → add POL-RTA, NAJM-V), `services/followup/requirements.py` (triggers), `services/followup/config.py`.
 - KPIs: `backend/app/kpi/catalogue.py` (K-136, K-137), new `backend/app/kpi/vehicle.py` registered in `kpi/engine.py` (pattern: `import app.kpi.scorecard  # registers …` at the end), `kpi/charts.py` (C41), `kpi/breakdowns.py` (road_type etc.).
 - AI: `backend/app/ai/tools.py` (T3 dimensions, T4 filters `t_search_incidents`, T5 detail), `ai/masking.py`.
@@ -67,39 +77,39 @@ Frontend:
 - `frontend/scripts/i18n/p7-vehicle.py`; e2e `frontend/e2e/p7a-vehicle.spec.ts`, screenshots spec `screenshots-p7a.spec.ts` → `docs/screenshots/phase-7a/`.
 Docs: spec §11 changes in `docs/specs/1-dashboard.md` (v1.11), `6f-incident-followup.md` (v1.1), `6g-scorecard-reports.md` (v1.1); `docs/PROGRESS.md`, `docs/DECISIONS.md`.
 
-### Option B (7b) — after A
+### Option B (7b, prototype)
 Backend:
-- `backend/app/models/access.py` — `Vehicle` (fleet columns), new `backend/app/models/fleet.py` (DriverAuthorisation, JourneyPlan, JourneyCheckIn, MileageReturn, TelematicsImport, TelematicsEvent, VehicleCheck).
-- Enums: new `backend/app/core/fleet_enums.py`; `backend/app/core/enums.py` — `Capability` 233–240 (after `export_log = "export_log.view"  # 232`) and role matrix; `access_enums.py` gate reason codes, hook kind `driver_authorisation`; `hse_enums.py` CA source `fleet`, ExpiringItemKind values.
-- Migration `…_0017_fleet_driver.py`.
-- Services: new `backend/app/services/fleet/` (vehicles, authorisations, checks, journeys, mileage, telematics, gate, hooks, settings); edit `services/access/gates.py`, `reasons.py`, `hooks.py`, `vehicles.py`; 6d `services/field/execution.py` (owner type `vehicle_check`); Phase 5 / 6a hook calls through the existing providers (`services/train/hook.py`, `services/med/hook.py`).
-- Routers: new `backend/app/api/routers/fleet_*.py`; schemas `backend/app/schemas/fleet.py` (Fleet-prefixed).
-- KPIs `backend/app/kpi/fleet.py` (+ `fleet_views.py`), `catalogue.py`, `engine.py`, `warnings.py` (E26), `charts.py` (C42–C43); AI `ai/tools.py` (T26 `get_fleet_summary`, T13 E26).
-- Jobs `backend/app/fleet_jobs.py` + `backend/app/scheduler.py` (`fleet_daily`, `fleet_minute`).
-- Seed `backend/app/seed_fleet.py` called from `app/seed.py` (after `seed_scorecard`); 6d templates VPU-L/H/B; courses DEF-DRV, BUS-DRV.
-- Tests `backend/tests/test_fleet_*.py`.
+- `backend/app/models/access.py` — `Vehicle` (site_scope, use_class, seats, operating card, docs_verified_*, idle_from/to, readiness), new `backend/app/models/site_vehicle.py` (DriverAuthorisation, VehicleCheck, JourneyPlan).
+- Enums: new `backend/app/core/site_vehicle_enums.py`; `backend/app/core/enums.py` — `Capability` 233–237 (after `export_log = "export_log.view"  # 232`) and role matrix; `hse_enums.py` CA source `site_vehicle`, ExpiringItemKind `site_vehicle_doc_expiry`, `driver_auth_expiry`.
+- Migration `…_0017_site_vehicle_readiness.py` (or `_0016_` if built before 7a).
+- Services: new `backend/app/services/site_vehicle/` (vehicles/readiness, authorisations, checks, journeys, settings); reads Phase 4 `services/cert/*` status and personnel-certificate hook, raises Phase 4 defects (source `pre_use_check`); 6d `services/field/execution.py` (owner type `vehicle_check`); Phase 5 / 6a hooks through the existing providers (`services/train/hook.py`, `services/med/hook.py`). **No change** to `services/access/gates.py` or gate reason codes.
+- Routers `backend/app/api/routers/site_vehicles.py`; schemas `backend/app/schemas/site_vehicle.py` (SiteVeh-prefixed).
+- KPIs `backend/app/kpi/site_vehicle.py`, `catalogue.py` (K-138…K-140), `engine.py`. No warning, chart or AI tool.
+- Job `site_vehicle_daily` in `backend/app/scheduler.py`.
+- Seed `backend/app/seed_site_vehicle.py` called from `app/seed.py` (after `seed_scorecard`, and after the 7a seed when present); 6d templates VPU-L/H/B; courses DEF-DRV, BUS-DRV.
+- Tests `backend/tests/test_site_vehicle_*.py`.
 Frontend:
-- New `frontend/src/components/fleet/` (fleet register, authorisations, checks, journey board, mileage, telematics imports, settings), routes under `src/app/[locale]/(app)/fleet/…`, sidebar section `nav-fleet` (`components/shell`), `src/lib/api/fleet.ts`.
-- Edit `components/access/vehicles.tsx` (fleet fields), `components/gate/*` (site-gate vehicle path), `components/dashboard/*` (road-safety band, C42–C43).
-- `frontend/scripts/i18n/p7-fleet.py`; e2e `p7b-fleet.spec.ts`, `p7b-journeys.spec.ts`, `p7b-gate.spec.ts`, `p7b-kpis.spec.ts`, screenshots → `docs/screenshots/phase-7b/`.
-Docs: §11 of 7b (0-foundation, 1-dashboard v1.12, 2-access-permits v1.8, 5-training, 6a, 6d, 6g, 7a).
+- New `frontend/src/components/site-vehicles/` (vehicles and readiness, authorisations, pre-use checks, journey plans, settings), routes under `src/app/[locale]/(app)/site-vehicles/…`, sidebar entry `nav-site-vehicles` with a "Prototype" badge, `src/lib/api/site-vehicles.ts`.
+- Edit `components/access/vehicles.tsx` (site fields), `components/dashboard/*` (three tiles). No gate screen changes.
+- `frontend/scripts/i18n/p7-site-vehicle.py`; e2e `p7b-site-vehicles.spec.ts`, screenshots → `docs/screenshots/phase-7b/`.
+Docs: §11 of 7b (0-foundation, 1-dashboard, 2-access-permits v1.8, 4 note, 5-training, 6a, 6d, 6g, 7a links).
 
 ## 6. Step lists
 
 ### A
-1. Re-check numbering (§1) and read 7a fully plus Phase 1 §3.3–§3.4, 6f §3.1/§3.11.
+1. Re-check numbering (§1) and read 7a v1.1 fully plus Phase 1 §3.3–§3.4 and I-4, 6f §3.1/§3.11.
 2. Backend stage 1: models, enums, schemas, routes; export contract **v0.14.0**; commit `[skip ci]`; post "contract out" in PROGRESS.
-3. Backend stage 2: services (VA-1…VA-12), 6f rows, K-136/K-137, C41, T3–T5, dataset, seed, tests for AC 1–28 (unit test VW1 exact). Apply §11 to 1-dashboard v1.11, 6f v1.1, 6g v1.1.
-4. Frontend: gen:api, vehicle section on form and detail, register filters, dashboard tile and C41, i18n `p7-vehicle.py`, e2e p7a.
+3. Backend stage 2: services (VA-1…VA-15: report archive and lock, no client copy, recorded-not-counted), 6f rows, K-136/K-137, C41 (with the recorded-not-counted segment), T3–T5, dataset, seed (five VW1 incidents incl. 0215), tests for AC 1–32 (unit test VW1 exact: K-136 = 5, K-137 = 0.32). Apply §11 to 1-dashboard v1.11, 6f v1.1, 6g v1.1.
+4. Frontend: gen:api, vehicle section and accident-report archive card on form and detail, "Recorded, not counted" badge and filter, register filters, dashboard tile and C41, i18n `p7-vehicle.py`, e2e p7a.
 5. Design pass (05): before / after EN/AR, desktop and 390 px; findings `docs/design/phase-7a-findings.md`.
 6. Fixer check (06): full e2e once on a fresh seed (baseline 312 passed, 0 failed), CI green; PROGRESS updated.
 
 ### B
-0. Do A (above) if not done.
-1. Re-check numbering; read 7b fully plus Phase 2 §3.12 / GC rules, 5 HK5-x, 6a DRIVER-FIT, 6d §3.1–§3.5.
-2. Backend stage 1: models, enums (capabilities 233–240), schemas (Fleet-prefixed), routes; contract **v0.15.0**.
-3. Backend stage 2 in build order 7b.1 → 7b.8; jobs; seed; tests for AC 1–46 (FW1–FW3 exact). Apply §11 changes.
-4. Frontend: fleet section, journey board (overdue first), gate path, dashboard band, i18n `p7-fleet.py`, e2e p7b.
+0. If A is also chosen, do A first (numbering and §11.8 links); otherwise B stands alone.
+1. Re-check numbering; read 7b v2.0 fully plus Phase 2 §3.12, Phase 4 §3.4 / §3.9 / §3.11 and list PCT, 5 HK5-x, 6a DRIVER-FIT, 6d §3.1–§3.5.
+2. Backend stage 1: models, enums (capabilities 233–237), schemas (SiteVeh-prefixed), routes; contract bump per §2.
+3. Backend stage 2 in build order 7b.1 → 7b.5; daily job; seed; tests for AC 1–24 (SW1–SW3 exact). Apply §11 changes. Keep it a prototype: build nothing listed under "Out of scope (security / logistics)".
+4. Frontend: site-vehicles section with "Prototype" badges, journey-plan form and list (Overdue flag only), dashboard tiles, i18n `p7-site-vehicle.py`, e2e p7b.
 5. Design pass; 6. Fixer check (full e2e once, CI green); PROGRESS.
 
 ## 7. Current state (2026-10-10)
@@ -108,4 +118,4 @@ Docs: §11 of 7b (0-foundation, 1-dashboard v1.12, 2-access-permits v1.8, 5-trai
 - Full e2e: **312 passed, 0 failed** (25 skipped) on a fresh seed; CI green (backend: lint, format, mypy, alembic, pytest, contract; frontend: lint, typecheck, i18n, build, e2e).
 - Contract **v0.13.0**; latest decision **D-238**; latest migration `20261010_0015_phase6g_scorecard_reports.py`.
 - Numbering in use: capabilities to 232, K-135, E25, T25, C40. Some numbered AI tools and chart data of earlier modules are still parked (e.g. 6g T25, C39–C40); see PROGRESS "Parked". 7a/7b numbers continue after them regardless.
-- Open questions for Turki on vehicles: 7a §10 (5 items) and 7b §10 (7 items).
+- Turki answered five questions on 2026-10-11 (§0); specs revised: 7a v1.1 (32 ACs), 7b v2.0 prototype (24 ACs). Still open: 7a §10 (4 items) and 7b §10 (2 items); none blocks the build.
