@@ -2,7 +2,8 @@
   // GitHub Codespaces / Dev Containers: builds and starts the whole platform with
   // `docker compose`, seeds the demo users, and forwards the app on port 3000.
   "name": "HSE Platform",
-  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  // Pinned to 24.04: the plain `ubuntu` tag moved to 26.04, which docker-in-docker:2 rejects.
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu24.04",
   "features": {
     "ghcr.io/devcontainers/features/docker-in-docker:2": {}
   },
