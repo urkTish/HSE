@@ -4,7 +4,7 @@
 import uuid
 from datetime import date, datetime
 
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from app.core.followup_enums import FuLessonStatus, FuRequirementStatus, FuStage
 from app.core.hse_enums import (
@@ -43,6 +43,13 @@ from app.core.hse_enums import (
     TreatedAt,
     Treatment,
 )
+from app.core.vehicle_enums import (
+    VehJourneyPurpose,
+    VehLight,
+    VehReportAuthority,
+    VehRoadType,
+    VehSurface,
+)
 from app.schemas.common import ApiModel, Page, PatchInput, StrictInput, Timestamps
 from app.schemas.followup import FuFileInput
 from app.schemas.hse_common import (
@@ -55,6 +62,7 @@ from app.schemas.hse_common import (
     ZoneRef,
 )
 from app.schemas.ptw_common import PermitRef
+from app.schemas.vehicle import VehSectionRead, _liability
 
 P3_HINT = "Do not enter person names, ID numbers or medical details here (P3)."
 ISO2 = r"^[A-Z]{2}$"
@@ -121,6 +129,39 @@ class _IncidentFields(StrictInput):
     dangerous_occurrence: DangerousOccurrenceInput | None = Field(
         default=None, description="Required iff dangerous_occurrence in incident_types."
     )
+    # ---- 7a vehicle section (§3.1); vehicle rows via /incidents/{id}/vehicles ----
+    vehicle_involved: bool = Field(
+        default=False,
+        description="7a VA-1: derived true (and locked) from vehicle signals; may be set true "
+        "manually (e.g. a near miss). Setting false while VA-1 holds → 422 "
+        "VEHICLE_INVOLVED_LOCKED.",
+    )
+    road_type: VehRoadType | None = Field(
+        default=None,
+        description="Required to report a vehicle incident (VA-2); airside ⇔ airside zone "
+        "(ROAD_TYPE_ZONE_MISMATCH).",
+    )
+    road_location: str | None = Field(
+        default=None, max_length=200, description="public_road: road name, direction, km."
+    )
+    journey_purpose: VehJourneyPurpose | None = Field(
+        default=None,
+        description="List JP; commuting_* ⇒ recorded_not_counted (VA-13) and commuting proposals "
+        "for worker cases (VA-7).",
+    )
+    light: VehLight | None = None
+    surface: VehSurface | None = None
+    report_authority: VehReportAuthority | None = Field(
+        default=None,
+        description="public_road: ≠ none_internal (ACCIDENT_REPORT_AUTHORITY_REQUIRED, VA-5).",
+    )
+    report_no: str | None = Field(default=None, max_length=40)
+    report_date: date | None = None
+    liability_pct_own: int | None = Field(default=None, description="0, 25, 50, 75 or 100.")
+    third_party_damage_desc: str | None = Field(default=None, max_length=500)
+    third_party_damage_cost_sar: SarAmount | None = None
+
+    _check_liability = field_validator("liability_pct_own")(_liability)
 
 
 class IncidentCreate(_IncidentFields):
@@ -134,7 +175,15 @@ class IncidentUpdate(PatchInput):
     draft). Closed/voided → 409 INVALID_TRANSITION."""
 
     non_nullable = frozenset(
-        {"site_id", "occurred_at", "incident_types", "primary_type", "title", "work_related"}
+        {
+            "site_id",
+            "occurred_at",
+            "incident_types",
+            "primary_type",
+            "title",
+            "work_related",
+            "vehicle_involved",
+        }
     )
 
     site_id: uuid.UUID | None = None
@@ -161,6 +210,28 @@ class IncidentUpdate(PatchInput):
     property_damage: PropertyDamageInput | None = None
     environmental: EnvironmentalInput | None = None
     dangerous_occurrence: DangerousOccurrenceInput | None = None
+    # 7a §3.1
+    vehicle_involved: bool | None = None
+    road_type: VehRoadType | None = None
+    road_location: str | None = Field(default=None, max_length=200)
+    journey_purpose: VehJourneyPurpose | None = None
+    light: VehLight | None = None
+    surface: VehSurface | None = None
+    report_authority: VehReportAuthority | None = None
+    report_no: str | None = Field(default=None, max_length=40)
+    report_date: date | None = None
+    liability_pct_own: int | None = None
+    third_party_damage_desc: str | None = Field(default=None, max_length=500)
+    third_party_damage_cost_sar: SarAmount | None = None
+    reason: str | None = Field(
+        default=None,
+        max_length=1000,
+        description="7a §4: ≥ 20 characters when vehicle-section fields are edited after the "
+        "investigation is approved (only vehicle fields may change in Pending Review / Actions "
+        "Pending).",
+    )
+
+    _check_liability = field_validator("liability_pct_own")(_liability)
 
 
 class PropertyDamageRead(ApiModel):
@@ -292,6 +363,14 @@ class IncidentRead(Timestamps):
         description="Transitions the caller may trigger now (UI hint; the server re-checks)."
     )
     warnings: list[ApiWarning] = Field(default_factory=list)
+    vehicle_involved: bool = Field(default=False, description="7a §3.1 (VA-1).")
+    recorded_not_counted: bool = Field(
+        default=False,
+        description="7a VA-13 badge 'Recorded, not counted — commuting (OSHA)'.",
+    )
+    vehicle_section: VehSectionRead | None = Field(
+        default=None, description="7a vehicle section; null when vehicle_involved is false."
+    )
 
 
 class IncidentListItem(ApiModel):
@@ -317,6 +396,14 @@ class IncidentListItem(ApiModel):
     late_report: bool
     investigation_level: InvestigationLevel | None
     investigation_due_date: date | None
+    vehicle_involved: bool = Field(default=False, description="7a.")
+    road_type: VehRoadType | None = None
+    recorded_not_counted: bool = Field(default=False, description="7a VA-13 badge.")
+    plates: list[str] = Field(
+        default_factory=list,
+        description="7a: plates of own / contractor / hired vehicles only (never third parties).",
+    )
+    report_no: str | None = Field(default=None, description="7a Najm / police report number.")
 
 
 class IncidentPage(Page[IncidentListItem]):

@@ -228,6 +228,7 @@ from app.models.train import (
     TrainingVerification,
 )
 from app.models.users import RoleAssignment, TokenKind, User, UserSession, UserToken
+from app.models.vehicle import IncidentVehicle
 
 __all__ = [
     "AccessSettings",
@@ -326,6 +327,7 @@ __all__ = [
     "HseMeeting",
     "HseSettings",
     "Incident",
+    "IncidentVehicle",
     "InductionCourse",
     "InductionRecord",
     "InductionRetrainingNote",

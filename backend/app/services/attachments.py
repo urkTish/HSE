@@ -68,6 +68,7 @@ PERSONAL = frozenset(
         AttachmentOwner.fu_evidence,  # 6f P6f-1
         AttachmentOwner.xp_export_file,  # 6g EX-8 (encrypted bucket)
         AttachmentOwner.sc_remark_file,  # 6g P6g-1
+        AttachmentOwner.incident_accident_report,  # 7a VA-14 / P7a-1
     }
 )
 PTW_OWNERS = frozenset(
@@ -193,6 +194,10 @@ def _owner(
 
     if owner_type in sc_files.SC_OWNERS:
         return sc_files.owner(db, p, owner_type, owner_id, write)
+    if owner_type == AttachmentOwner.incident_accident_report:
+        from app.services import incident_vehicles as veh  # noqa: PLC0415
+
+        return veh.file_owner(db, p, owner_id, write)
     if owner_type in PERSONAL:
         return _access_owner(db, p, owner_type, owner_id, write)
     m = db.get(HseMeeting, owner_id)
@@ -371,6 +376,13 @@ def upload(
 ) -> AttachmentRead:
     p.ensure_writer()
     settings = get_settings()
+    if owner_type == AttachmentOwner.incident_accident_report:
+        raise ApiError(
+            422,
+            ErrorCode.VALIDATION_ERROR,
+            "Upload accident report files through /incidents/{id}/accident-report/files.",
+            "ارفع ملفات محضر الحادث من خلال بطاقة محضر الحادث.",
+        )
     project_id, editable = _owner(db, p, owner_type, owner_id, write=True)
     if not editable:
         raise ApiError(
@@ -503,6 +515,10 @@ def delete(db: Session, p: Principal, attachment_id: uuid.UUID) -> None:
     a = _get(db, p, attachment_id)
     p.ensure_writer()
     _, editable = _owner(db, p, a.owner_type, a.owner_id, write=False)
+    if a.owner_type == AttachmentOwner.incident_accident_report:
+        from app.services import incident_vehicles as veh  # noqa: PLC0415
+
+        veh.ensure_deletable(db, a)
     if a.uploaded_by_user_id != p.user.id and not p.is_manager:
         raise forbidden_error("Only the uploader may delete an attachment.")
     if not editable:

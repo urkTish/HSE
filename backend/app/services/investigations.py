@@ -166,6 +166,9 @@ def missing_for_submit(db: Session, b: Bundle) -> list[str]:
 
 
 def submit(db: Session, b: Bundle) -> None:
+    from app.services import incident_vehicles as veh  # noqa: PLC0415
+
+    veh.check_investigation(db, b.inc)  # 7a VA-2
     missing = missing_for_submit(db, b)
     if missing:
         raise ApiError(

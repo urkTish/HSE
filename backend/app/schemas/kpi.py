@@ -527,6 +527,11 @@ class BreakdownResponse(ApiModel):
     total_count: int
     rows: list[BreakdownRow]
     other: BreakdownRow | None = Field(description="Remaining values beyond top_n.")
+    recorded_not_counted: int | None = Field(
+        default=None,
+        description="7a VA-13 (measure vehicle_incidents only): how many of total_count are "
+        "'Recorded, not counted' (commuting).",
+    )
 
 
 class PyramidLayerRead(ApiModel):

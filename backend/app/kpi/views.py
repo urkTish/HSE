@@ -85,6 +85,7 @@ def breakdown(
         total_count=bd.total,
         rows=[_row(r, bd, small_ok) for r in top],
         other=other,
+        recorded_not_counted=bd.recorded_not_counted,
     )
 
 

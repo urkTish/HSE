@@ -46,3 +46,24 @@ def redact(text: str | None, names: Iterable[str] = ()) -> str | None:
     for p in sorted(parts, key=len, reverse=True):
         out = re.sub(rf"(?<!\w){re.escape(p)}(?!\w)", NAME_MASK, out, flags=re.IGNORECASE)
     return re.sub(rf"(?:{re.escape(NAME_MASK)}\s*)+", NAME_MASK + " ", out).strip()
+
+
+PLATE_MASK = "[PLATE]"
+
+
+def redact_plates(
+    text: str | None, plates: Iterable[tuple[str | None, str | None, str]]
+) -> str | None:
+    """7a P7a-2: third-party plates (letters AR / EN, digits) never reach the model."""
+    if text is None:
+        return None
+    out = text
+    for ar, en, digits in plates:
+        for letters in (ar, en):
+            if letters:
+                spaced = r"\s*".join(re.escape(ch) for ch in letters if not ch.isspace())
+                out = re.sub(
+                    rf"{spaced}[\s-]*{re.escape(digits)}(?!\d)", PLATE_MASK, out, flags=re.I
+                )
+        out = re.sub(rf"(?<!\d){re.escape(digits)}(?!\d)", PLATE_MASK, out)
+    return out

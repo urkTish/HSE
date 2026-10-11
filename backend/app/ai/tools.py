@@ -21,7 +21,7 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.ai.masking import redact
+from app.ai.masking import redact, redact_plates
 from app.api.kpi_params import KpiQuery
 from app.core.access_enums import AccessKpiGroupBy
 from app.core.cert_enums import CertKpiGroupBy, EquipmentCertCategory
@@ -47,6 +47,7 @@ from app.core.hse_enums import (
 )
 from app.core.ptw_enums import PermitType, PtwKpiGroupBy
 from app.core.train_enums import CourseCategory, TrainingKpiGroupBy
+from app.core.vehicle_enums import COMPANY_OWNERSHIP, VehRoadType
 from app.kpi import (
     access_views,
     cert_views,
@@ -74,6 +75,7 @@ from app.models import (
     ProjectEngagement,
     Site,
     User,
+    Worker,
     Zone,
 )
 from app.schemas.ai import AiCitation
@@ -81,9 +83,11 @@ from app.schemas.kpi import ChartSpec, KpiContext, KpiValue
 from app.services import corrective_actions as ca_svc
 from app.services import dashboard as dash_svc
 from app.services import hse_settings
+from app.services import incident_vehicles as veh_svc
 from app.services import incidents as inc_svc
 from app.services import inspections as ins_svc
 from app.services import observations as obs_svc
+from app.services import vehicle_rules as vrules
 from app.services.hse_common import user_roles
 from app.services.permissions import Principal
 
@@ -193,7 +197,9 @@ TOOL_DEFS: list[dict[str, Any]] = [
     _tool(
         AiTool.get_breakdown,
         "Counts (and rates where man-hours exist) of a measure by a dimension. Cells of 1-2 "
-        "persons may be suppressed as '<3'.",
+        "persons may be suppressed as '<3'. vehicle_incidents (K-136 events) supports road_type, "
+        "vehicle_ownership, licence_check, seat_belt and journey_purpose and reports how many "
+        "are 'recorded, not counted' (commuting).",
         {
             "project_codes": PROJECTS,
             "measure": {"type": "string", "enum": [m.value for m in BreakdownMeasure]},
@@ -221,6 +227,8 @@ TOOL_DEFS: list[dict[str, Any]] = [
             "agency": {"type": "string"},
             "hipo": {"type": "boolean"},
             "status": {"type": "string", "enum": [s.value for s in IncidentStatus]},
+            "vehicle_involved": {"type": "boolean"},
+            "road_type": {"type": "string", "enum": [r.value for r in VehRoadType]},
             "limit": {"type": "integer", "minimum": 1, "maximum": 50},
         },
         [],
@@ -228,8 +236,9 @@ TOOL_DEFS: list[dict[str, Any]] = [
     _tool(
         AiTool.get_incident,
         "De-identified detail of one incident by ref: description (names and IDs redacted), "
-        "immediate actions, investigation (level, causes, root-cause codes, lessons) and linked "
-        "corrective actions.",
+        "immediate actions, investigation (level, causes, root-cause codes, lessons), linked "
+        "corrective actions and, for vehicle incidents, the vehicles (ownership, category, "
+        "role, damage, seat belt, speed band, licence check; no plates or driver names).",
         {"ref": {"type": "string"}},
         ["ref"],
     ),
@@ -835,6 +844,15 @@ def t_get_breakdown(ctx: ToolContext, params: dict[str, Any]) -> tuple[dict[str,
         "total": bd.total_count,
         "rows": [row(r) for r in bd.rows],
         "other": row(bd.other) if bd.other else None,
+        **(
+            {
+                "recorded_not_counted": bd.recorded_not_counted,
+                "recorded_not_counted_note": "Commuting vehicle incidents are recorded but not "
+                "counted in any rate (OSHA 1904.5, 7a VA-13).",
+            }
+            if bd.recorded_not_counted is not None
+            else {}
+        ),
         "cite": cid,
     }, narrowed or sc.narrowed
 
@@ -854,10 +872,23 @@ def _incident_rows(
         ).all()
     )
     tz = inc_svc.tz_of(ctx.project)
+    vrows = veh_svc.rows_for(db, [i.id for i in incs if i.vehicle_involved])
+    drivers = _driver_names(db, vrows)
     out = []
     for i in incs:
         cs = cases.get(i.id, [])
+        vs = vrows.get(i.id, [])
         names = ctx.names() + [c.person_name for c in cs if c.person_name]
+        names += [n for r in vs for n in drivers.get(r.id, [])]
+        plates = [
+            (r.plate_letters_ar, r.plate_letters_en, r.plate_digits)
+            for r in vs
+            if r.plate_digits and r.ownership not in COMPANY_OWNERSHIP
+        ]
+
+        def clean(text: str | None, names: list[str] = names, plates: Any = plates) -> str | None:
+            return redact_plates(redact(text, names), plates)
+
         out.append(
             {
                 "ref": i.ref,
@@ -892,12 +923,47 @@ def _incident_rows(
                 "hipo": i.hipo,
                 "status": i.status.value,
                 "work_related": i.work_related,
-                "title": redact(i.title, names),
+                "title": clean(i.title),
+                "vehicle_involved": i.vehicle_involved,
+                "road_type": i.road_type.value if i.road_type else None,
+                "recorded_not_counted": i.recorded_not_counted,
             }
         )
         if with_detail:
-            out[-1]["description"] = redact(i.description, names)
-            out[-1]["immediate_actions"] = redact(i.immediate_actions, names)
+            out[-1]["description"] = clean(i.description)
+            out[-1]["immediate_actions"] = clean(i.immediate_actions)
+            if i.vehicle_involved:
+                out[-1]["journey_purpose"] = i.journey_purpose.value if i.journey_purpose else None
+                out[-1]["vehicles"] = [
+                    {
+                        "vehicle": r.label,
+                        "ownership": r.ownership.value,
+                        "category": r.category.value if r.category else None,
+                        "role": r.role.value,
+                        "damage": r.damage.value if r.damage else None,
+                        "seat_belt": r.seat_belt.value if r.seat_belt else None,
+                        "speed_band": vrules.speed_band(r.speed_kmh).value,
+                        "licence_check": r.licence_check.value if r.licence_check else None,
+                    }
+                    for r in vs
+                ]
+    return out
+
+
+def _driver_names(db: Session, vrows: dict[uuid.UUID, list[Any]]) -> dict[uuid.UUID, list[str]]:
+    """7a P7a-2: driver names to redact (worker names and external driver names)."""
+    rows = [r for rs in vrows.values() for r in rs]
+    wids = [r.worker_id for r in rows if r.worker_id]
+    workers = {
+        w.id: (w.full_name_en, w.full_name_ar)
+        for w in db.scalars(select(Worker).where(Worker.id.in_(wids)))
+    }
+    out: dict[uuid.UUID, list[str]] = {}
+    for r in rows:
+        names = list(workers.get(r.worker_id, ())) if r.worker_id else []
+        if r.external_driver_name:
+            names.append(r.external_driver_name)
+        out[r.id] = [n for n in names if n]
     return out
 
 
@@ -929,6 +995,10 @@ def t_search_incidents(ctx: ToolContext, params: dict[str, Any]) -> tuple[dict[s
     ]
     if params.get("hipo") is not None:
         rows = [i for i in rows if i.hipo == bool(params["hipo"])]
+    if params.get("vehicle_involved") is not None:
+        rows = [i for i in rows if i.vehicle_involved == bool(params["vehicle_involved"])]
+    if params.get("road_type"):
+        rows = [i for i in rows if i.road_type == params["road_type"]]
     types = set(params.get("types") or [])
     if types:
         rows = [i for i in rows if types & set(i.incident_types)]

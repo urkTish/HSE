@@ -20,6 +20,7 @@ from app.core.hse_enums import (
     InvestigationLevel,
     Mechanism,
 )
+from app.core.vehicle_enums import VehLicenceCheck, VehOwnership, VehRoadType
 from app.schemas.incidents import (
     ClassificationConfirm,
     ExcludedCaseList,
@@ -86,6 +87,17 @@ def list_incidents(
     date_to: date | None = None,
     q: Annotated[str | None, Query(max_length=100, description="Ref/title search.")] = None,
     sort: IncidentSort = "-occurred_at",
+    vehicle_involved: Annotated[bool | None, Query(description="7a: vehicle incidents.")] = None,
+    road_type: VehRoadType | None = None,
+    ownership: Annotated[
+        VehOwnership | None, Query(description="7a: has a vehicle row with this ownership.")
+    ] = None,
+    licence_check: Annotated[
+        VehLicenceCheck | None, Query(description="7a: has a vehicle row with this result.")
+    ] = None,
+    recorded_not_counted: Annotated[
+        bool | None, Query(description="7a VA-13: 'Recorded, not counted' (commuting).")
+    ] = None,
 ) -> IncidentPage:
     return svc.list_page(
         db,
@@ -115,6 +127,11 @@ def list_incidents(
         date_to=date_to,
         q=q,
         sort=sort,
+        vehicle_involved=vehicle_involved,
+        road_type=road_type,
+        ownership=ownership,
+        licence_check=licence_check,
+        recorded_not_counted=recorded_not_counted,
     )
 
 

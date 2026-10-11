@@ -297,10 +297,11 @@ def get_data_quality(user: CurrentUser, db: DB, q: KpiParams) -> DataQualityResp
 @router.get(
     "/charts/{chart_id}",
     response_model=ChartResponse,
-    summary="Dashboard chart C1-C21 as a renderer-agnostic ChartSpec",
+    summary="Dashboard chart C1-C21, C41 as a renderer-agnostic ChartSpec",
     description=FILTERS + " C7 needs `dimension` (and optional `measure`, default "
     "injury_cases). Monthly charts cover the 12 months ending at the period end. C19-C21 "
-    "(training) need capability 143.",
+    "(training) need capability 143. C41 (7a): vehicle incidents by month stacked by road type "
+    "plus the 'Recorded, not counted' segment, with the K-137 line.",
     responses=KPI_ERRORS,
 )
 def get_chart(

@@ -124,6 +124,30 @@ class EventFact:
 
 
 @dataclass(frozen=True, slots=True)
+class VehFact:
+    """7a: a vehicle incident (vehicle_involved, status ∉ {draft, voided}), commuting and not
+    work-related included (K-136 counts every one; K-137 filters)."""
+
+    id: UUID
+    ref: str
+    d: date
+    eng: UUID | None
+    site: UUID
+    zone: UUID | None
+    types: frozenset[str]
+    primary: str
+    road_type: str | None
+    rnc: bool  # VA-13 recorded, not counted
+    work_related: bool = True
+    company: bool = False  # ≥ 1 own_company / contractor / hired vehicle
+    ownerships: frozenset[str] = frozenset()
+    licence_checks: frozenset[str] = frozenset()
+    seat_belts: frozenset[str] = frozenset()
+    journey_purpose: str | None = None
+    project: UUID | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class ObsFact:
     """Observations aggregated by date × engagement × site × zone × type × status."""
 
@@ -217,6 +241,7 @@ class Facts:
     tbt_from: dict[UUID, date] = field(default_factory=dict)
     cases: list[CaseFact] = field(default_factory=list)
     events: list[EventFact] = field(default_factory=list)
+    vehicles: list[VehFact] = field(default_factory=list)  # 7a
     obs: list[ObsFact] = field(default_factory=list)
     insp: list[InspFact] = field(default_factory=list)
     cas: list[CaFact] = field(default_factory=list)
@@ -325,6 +350,7 @@ class Facts:
         self.inds.sort(key=lambda r: r.d)
         self.cases.sort(key=lambda r: r.d)
         self.events.sort(key=lambda r: r.d)
+        self.vehicles.sort(key=lambda r: r.d)
         self.obs.sort(key=lambda r: r.d)
         return self
 

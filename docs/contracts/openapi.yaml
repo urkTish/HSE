@@ -46,7 +46,7 @@ info:
     \ 157.\n  No diagnosis, test result or clinical note is ever stored (P6-1). Medical hooks use the\
     \ shared\n  hook policy (kind `medical_fitness`; enable with `POST /projects/{id}/medical-hooks/enable`);\n\
     \  gate texts never say \"medical\". Site-clinic sign-off needs step-up re-auth.\n"
-  version: 0.13.0
+  version: 0.14.0
 paths:
   /api/v1/health:
     get:
@@ -5017,6 +5017,54 @@ paths:
           type: string
           default: -occurred_at
           title: Sort
+      - name: vehicle_involved
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: '7a: vehicle incidents.'
+          title: Vehicle Involved
+        description: '7a: vehicle incidents.'
+      - name: road_type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/VehRoadType'
+          - type: 'null'
+          title: Road Type
+      - name: ownership
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/VehOwnership'
+          - type: 'null'
+          description: '7a: has a vehicle row with this ownership.'
+          title: Ownership
+        description: '7a: has a vehicle row with this ownership.'
+      - name: licence_check
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/VehLicenceCheck'
+          - type: 'null'
+          description: '7a: has a vehicle row with this result.'
+          title: Licence Check
+        description: '7a: has a vehicle row with this result.'
+      - name: recorded_not_counted
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: '7a VA-13: ''Recorded, not counted'' (commuting).'
+          title: Recorded Not Counted
+        description: '7a VA-13: ''Recorded, not counted'' (commuting).'
       - name: page
         in: query
         required: false
@@ -11990,13 +12038,15 @@ paths:
     get:
       tags:
       - kpi
-      summary: Dashboard chart C1-C21 as a renderer-agnostic ChartSpec
+      summary: Dashboard chart C1-C21, C41 as a renderer-agnostic ChartSpec
       description: 'Common filters (all /kpi endpoints): `project_id` (repeatable) or `all_projects`,
         `site_id`, `zone_id`, `zone_type`, `engagement_id` (+ `include_subcontractors`, default true),
         `tier`, `period` (+ `anchor` or `start`/`end` for custom), `as_of`, `compare`. Role scope is applied
         first (D-3): a narrower scope is reported in `context.filters.scope_narrowed`. Capability 38.
         C7 needs `dimension` (and optional `measure`, default injury_cases). Monthly charts cover the
-        12 months ending at the period end. C19-C21 (training) need capability 143.'
+        12 months ending at the period end. C19-C21 (training) need capability 143. C41 (7a): vehicle
+        incidents by month stacked by road type plus the ''Recorded, not counted'' segment, with the K-137
+        line.'
       operationId: get_chart
       security:
       - sessionCookie: []
@@ -67655,6 +67705,518 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/incidents/{incident_id}/vehicles:
+    get:
+      tags:
+      - incident-vehicles
+      summary: List the vehicles of an incident (7a §3.2)
+      description: Driver identity, licence fields, hours on duty, insurer / policy and third-party plates
+        are null without capability 29 (P7a-1; `redacted_groups`); identity reads are audited.
+      operationId: list_incident_vehicles
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: incident_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Incident Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VehIncidentVehicleList'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+      - incident-vehicles
+      summary: Add a vehicle row (V1…V10; incident must be vehicle_involved)
+      description: Editable until the incident is Closed; after the investigation is approved a `reason`
+        ≥ 20 characters is required. 422 PLATE_IS_REGISTERED for a third_party plate in the Phase 2 register
+        (VA-6). licence_check is computed (VA-3); warnings VEHICLE_DOCS_EXPIRED_AT_TIME / LICENCE_NOT_VALID_AT_TIME
+        are not blocking (VA-4).
+      operationId: create_incident_vehicle
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: incident_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Incident Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VehIncidentVehicleCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VehIncidentVehicleRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/incident-vehicles/{vehicle_row_id}:
+    patch:
+      tags:
+      - incident-vehicles
+      summary: Edit a vehicle row
+      description: Driver identity, licence fields, hours on duty, insurer / policy and third-party plates
+        are null without capability 29 (P7a-1; `redacted_groups`); identity reads are audited.
+      operationId: update_incident_vehicle
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: vehicle_row_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Vehicle Row Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VehIncidentVehicleUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VehIncidentVehicleRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags:
+      - incident-vehicles
+      summary: Remove a vehicle row (a reported incident keeps ≥ 1, VEHICLE_REQUIRED)
+      operationId: delete_incident_vehicle
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: vehicle_row_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Vehicle Row Id
+      - name: reason
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            maxLength: 1000
+          - type: 'null'
+          description: ≥ 20 characters once the investigation is approved.
+          title: Reason
+        description: ≥ 20 characters once the investigation is approved.
+      responses:
+        '204':
+          description: Successful Response
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/incidents/{incident_id}/vehicle-prefill:
+    get:
+      tags:
+      - incident-vehicles
+      summary: Prefill a vehicle row from the Phase 2 register and a driver's ADP (VA-3, VA-6)
+      description: Vehicle by vehicle_id or by normalised plate (Arabic letters mapped to Latin). The
+        driver block (licence from the ADP) needs capability 29 and is audited.
+      operationId: prefill_incident_vehicle
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: incident_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Incident Id
+      - name: vehicle_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Vehicle Id
+      - name: plate_letters_ar
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            maxLength: 5
+          - type: 'null'
+          title: Plate Letters Ar
+      - name: plate_letters_en
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            maxLength: 3
+          - type: 'null'
+          title: Plate Letters En
+      - name: plate_digits
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            pattern: ^\d{1,4}$
+          - type: 'null'
+          title: Plate Digits
+      - name: worker_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Worker Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VehPrefillRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/incidents/{incident_id}/accident-report:
+    get:
+      tags:
+      - incident-vehicles
+      summary: The Najm / police accident report archive card (VA-14, VA-15)
+      description: Internal record, no client copy. Files are listed for capability 29 only.
+      operationId: get_accident_report
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: incident_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Incident Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VehAccidentReportRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags:
+      - incident-vehicles
+      summary: Set the accident report authority, number, date and liability
+      description: Allowed until the incident is Closed. Creates no 6f requirement or notification to
+        the client (VA-15). 422 ACCIDENT_REPORT_AUTHORITY_REQUIRED for public_road + none_internal.
+      operationId: put_accident_report
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: incident_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Incident Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VehAccidentReportUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VehAccidentReportRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/incidents/{incident_id}/accident-report/files:
+    post:
+      tags:
+      - incident-vehicles
+      summary: Archive a report file (PDF / image ≤ 10 MB; ≤ 5 current files; capability 29)
+      description: '`supersedes_id` replaces a current file: the earlier one stays archived as superseded
+        (audited). Files may be added after Closed; none can be deleted then (DELETE /attachments/{id}
+        → 409 ACCIDENT_REPORT_LOCKED). Download through POST /attachments/{id}/signed-url (403 without
+        capability 29).'
+      operationId: upload_accident_report_file
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: incident_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Incident Id
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_upload_accident_report_file'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VehAccidentReportRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/v1/privacy-notice:
     get:
       tags:
@@ -72586,6 +73148,7 @@ components:
       - rp_pack_file
       - xp_export_file
       - sc_remark_file
+      - incident_accident_report
       title: AttachmentOwner
     AttachmentRead:
       properties:
@@ -74869,6 +75432,22 @@ components:
       required:
       - file
       title: Body_import_wbgt_readings
+    Body_upload_accident_report_file:
+      properties:
+        file:
+          type: string
+          contentMediaType: application/octet-stream
+          title: File
+        supersedes_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Supersedes Id
+      type: object
+      required:
+      - file
+      title: Body_upload_accident_report_file
     Body_upload_attachment:
       properties:
         owner_type:
@@ -74920,6 +75499,11 @@ components:
       - inspection_type
       - control_level
       - ca_priority
+      - road_type
+      - vehicle_ownership
+      - licence_check
+      - seat_belt
+      - journey_purpose
       title: BreakdownDimension
       description: §6.8. age_band and nationality are restricted (D-7, AI-6).
     BreakdownMeasure:
@@ -74932,6 +75516,7 @@ components:
       - unsafe_observations
       - cas
       - inspections
+      - vehicle_incidents
       title: BreakdownMeasure
     BreakdownResponse:
       properties:
@@ -74968,6 +75553,13 @@ components:
           - $ref: '#/components/schemas/BreakdownRow'
           - type: 'null'
           description: Remaining values beyond top_n.
+        recorded_not_counted:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Recorded Not Counted
+          description: '7a VA-13 (measure vehicle_incidents only): how many of total_count are ''Recorded,
+            not counted'' (commuting).'
       type: object
       required:
       - context
@@ -78458,6 +79050,7 @@ components:
       - C19
       - C20
       - C21
+      - C41
       title: ChartId
       description: Dashboard charts §8.1 item 5.
     ChartKind:
@@ -86225,6 +86818,7 @@ components:
       - distribution_list
       - export_job
       - export_subscription
+      - incident_vehicle
       title: EntityType
       description: Entity types referenced by audit entries and change history.
     EntryDirection:
@@ -91010,6 +91604,14 @@ components:
       - SCORECARD_FINAL
       - EXPORT_RATE_LIMIT
       - SCORECARDS_NOT_FINAL
+      - ROAD_TYPE_ZONE_MISMATCH
+      - VEHICLE_REQUIRED
+      - VEHICLE_SECTION_INCOMPLETE
+      - ACCIDENT_REPORT_AUTHORITY_REQUIRED
+      - ACCIDENT_REPORT_MISSING
+      - PLATE_IS_REGISTERED
+      - ACCIDENT_REPORT_LOCKED
+      - VEHICLE_INVOLVED_LOCKED
       - NOT_IMPLEMENTED
       - INTERNAL_ERROR
       title: ErrorCode
@@ -92655,6 +93257,7 @@ components:
       - env_complaints
       - notification_requirements
       - lessons
+      - incident_vehicles
       title: ExportDataset
       description: Lists that can be exported (§5.8 rule 49, capability 18).
     ExportFormat:
@@ -92712,6 +93315,7 @@ components:
       - client
       - police
       - ncec
+      - najm
       title: ExternalBody
     ExternalNotificationRead:
       properties:
@@ -97609,6 +98213,8 @@ components:
       - env_airside
       - any_recordable_case
       - property_damage_ge_sar
+      - rta_public_injury
+      - rta_public_no_injury
       title: FuTrigger
       description: List NT.
     FuWaiverReason:
@@ -102473,6 +103079,75 @@ components:
           - $ref: '#/components/schemas/DangerousOccurrenceInput'
           - type: 'null'
           description: Required iff dangerous_occurrence in incident_types.
+        vehicle_involved:
+          type: boolean
+          title: Vehicle Involved
+          description: '7a VA-1: derived true (and locked) from vehicle signals; may be set true manually
+            (e.g. a near miss). Setting false while VA-1 holds → 422 VEHICLE_INVOLVED_LOCKED.'
+          default: false
+        road_type:
+          anyOf:
+          - $ref: '#/components/schemas/VehRoadType'
+          - type: 'null'
+          description: Required to report a vehicle incident (VA-2); airside ⇔ airside zone (ROAD_TYPE_ZONE_MISMATCH).
+        road_location:
+          anyOf:
+          - type: string
+            maxLength: 200
+          - type: 'null'
+          title: Road Location
+          description: 'public_road: road name, direction, km.'
+        journey_purpose:
+          anyOf:
+          - $ref: '#/components/schemas/VehJourneyPurpose'
+          - type: 'null'
+          description: List JP; commuting_* ⇒ recorded_not_counted (VA-13) and commuting proposals for
+            worker cases (VA-7).
+        light:
+          anyOf:
+          - $ref: '#/components/schemas/VehLight'
+          - type: 'null'
+        surface:
+          anyOf:
+          - $ref: '#/components/schemas/VehSurface'
+          - type: 'null'
+        report_authority:
+          anyOf:
+          - $ref: '#/components/schemas/VehReportAuthority'
+          - type: 'null'
+          description: 'public_road: ≠ none_internal (ACCIDENT_REPORT_AUTHORITY_REQUIRED, VA-5).'
+        report_no:
+          anyOf:
+          - type: string
+            maxLength: 40
+          - type: 'null'
+          title: Report No
+        report_date:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Report Date
+        liability_pct_own:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Liability Pct Own
+          description: 0, 25, 50, 75 or 100.
+        third_party_damage_desc:
+          anyOf:
+          - type: string
+            maxLength: 500
+          - type: 'null'
+          title: Third Party Damage Desc
+        third_party_damage_cost_sar:
+          anyOf:
+          - type: number
+            minimum: 0.0
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*(?:\d{0,10}|(?=[\d.]{1,13}0*$)\d{0,10}\.\d{0,2}0*$)
+          - type: 'null'
+          title: Third Party Damage Cost Sar
       additionalProperties: false
       type: object
       required:
@@ -102626,6 +103301,32 @@ components:
             format: date
           - type: 'null'
           title: Investigation Due Date
+        vehicle_involved:
+          type: boolean
+          title: Vehicle Involved
+          description: 7a.
+          default: false
+        road_type:
+          anyOf:
+          - $ref: '#/components/schemas/VehRoadType'
+          - type: 'null'
+        recorded_not_counted:
+          type: boolean
+          title: Recorded Not Counted
+          description: 7a VA-13 badge.
+          default: false
+        plates:
+          items:
+            type: string
+          type: array
+          title: Plates
+          description: '7a: plates of own / contractor / hired vehicles only (never third parties).'
+        report_no:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Report No
+          description: 7a Najm / police report number.
       type: object
       required:
       - id
@@ -102884,6 +103585,21 @@ components:
             $ref: '#/components/schemas/ApiWarning'
           type: array
           title: Warnings
+        vehicle_involved:
+          type: boolean
+          title: Vehicle Involved
+          description: 7a §3.1 (VA-1).
+          default: false
+        recorded_not_counted:
+          type: boolean
+          title: Recorded Not Counted
+          description: 7a VA-13 badge 'Recorded, not counted — commuting (OSHA)'.
+          default: false
+        vehicle_section:
+          anyOf:
+          - $ref: '#/components/schemas/VehSectionRead'
+          - type: 'null'
+          description: 7a vehicle section; null when vehicle_involved is false.
       type: object
       required:
       - created_at
@@ -103118,6 +103834,76 @@ components:
           anyOf:
           - $ref: '#/components/schemas/DangerousOccurrenceInput'
           - type: 'null'
+        vehicle_involved:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Vehicle Involved
+        road_type:
+          anyOf:
+          - $ref: '#/components/schemas/VehRoadType'
+          - type: 'null'
+        road_location:
+          anyOf:
+          - type: string
+            maxLength: 200
+          - type: 'null'
+          title: Road Location
+        journey_purpose:
+          anyOf:
+          - $ref: '#/components/schemas/VehJourneyPurpose'
+          - type: 'null'
+        light:
+          anyOf:
+          - $ref: '#/components/schemas/VehLight'
+          - type: 'null'
+        surface:
+          anyOf:
+          - $ref: '#/components/schemas/VehSurface'
+          - type: 'null'
+        report_authority:
+          anyOf:
+          - $ref: '#/components/schemas/VehReportAuthority'
+          - type: 'null'
+        report_no:
+          anyOf:
+          - type: string
+            maxLength: 40
+          - type: 'null'
+          title: Report No
+        report_date:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Report Date
+        liability_pct_own:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Liability Pct Own
+        third_party_damage_desc:
+          anyOf:
+          - type: string
+            maxLength: 500
+          - type: 'null'
+          title: Third Party Damage Desc
+        third_party_damage_cost_sar:
+          anyOf:
+          - type: number
+            minimum: 0.0
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*(?:\d{0,10}|(?=[\d.]{1,13}0*$)\d{0,10}\.\d{0,2}0*$)
+          - type: 'null'
+          title: Third Party Damage Cost Sar
+        reason:
+          anyOf:
+          - type: string
+            maxLength: 1000
+          - type: 'null'
+          title: Reason
+          description: '7a §4: ≥ 20 characters when vehicle-section fields are edited after the investigation
+            is approved (only vehicle fields may change in Pending Review / Actions Pending).'
       additionalProperties: false
       type: object
       title: IncidentUpdate
@@ -107827,6 +108613,8 @@ components:
       - K-133
       - K-134
       - K-135
+      - K-136
+      - K-137
       title: KpiMetric
       description: KPI catalogue §6.1. K-26 is split into one id per event type (DO / PD / ENV).
     KpiPlaceholder:
@@ -112960,6 +113748,8 @@ components:
       - report_pack_issued
       - delivery_bounced
       - export_ready
+      - vehicle_docs_not_valid
+      - accident_report_missing
       title: NotificationKind
       description: In-app notification kinds (§7).
     NotificationPage:
@@ -139770,6 +140560,1281 @@ components:
         applications that have not been issued yet (DECISIONS: the spec has no ADP/AVP application
 
         entity).'
+    VehAccidentReportRead:
+      properties:
+        incident_id:
+          type: string
+          format: uuid
+          title: Incident Id
+        report_authority:
+          anyOf:
+          - $ref: '#/components/schemas/VehReportAuthority'
+          - type: 'null'
+        report_no:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Report No
+        report_date:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Report Date
+        liability_pct_own:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Liability Pct Own
+        required_to_close:
+          type: boolean
+          title: Required To Close
+          description: report_authority ≠ none_internal and not waived through 6f (VA-5, VA-14).
+        waived:
+          type: boolean
+          title: Waived
+        locked:
+          type: boolean
+          title: Locked
+          description: 'Incident Closed: files may be added, none deleted.'
+        missing_to_close:
+          items:
+            type: string
+          type: array
+          title: Missing To Close
+          examples:
+          - - report_no
+            - report_date
+            - report_files
+        file_count:
+          type: integer
+          title: File Count
+          description: Current (not superseded) files.
+        files_visible:
+          type: boolean
+          title: Files Visible
+        files:
+          items:
+            $ref: '#/components/schemas/VehReportFileRead'
+          type: array
+          title: Files
+      type: object
+      required:
+      - incident_id
+      - report_authority
+      - report_no
+      - report_date
+      - liability_pct_own
+      - required_to_close
+      - waived
+      - locked
+      - missing_to_close
+      - file_count
+      - files_visible
+      - files
+      title: VehAccidentReportRead
+      description: 'The "Accident report (archive)" card (VA-14, VA-15). Internal record: no client copy.
+
+        Files are listed only for capability 29 (`files_visible`); others see number and date only.'
+    VehAccidentReportUpdate:
+      properties:
+        report_authority:
+          anyOf:
+          - $ref: '#/components/schemas/VehReportAuthority'
+          - type: 'null'
+        report_no:
+          anyOf:
+          - type: string
+            maxLength: 40
+          - type: 'null'
+          title: Report No
+          examples:
+          - NJM-TEST-2026-00871
+        report_date:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Report Date
+          description: ≥ the occurred date.
+        liability_pct_own:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Liability Pct Own
+          description: 0, 25, 50, 75 or 100.
+        reason:
+          anyOf:
+          - type: string
+            maxLength: 1000
+          - type: 'null'
+          title: Reason
+          description: Required (≥ 20 characters) once the investigation is approved (Phase 1 rule, 7a
+            §4).
+      additionalProperties: false
+      type: object
+      title: VehAccidentReportUpdate
+      description: 'Set the report record (allowed until the incident is Closed, also while Pending Review
+        or
+
+        Actions Pending). public_road requires an authority ≠ none_internal
+
+        (`ACCIDENT_REPORT_AUTHORITY_REQUIRED`).'
+    VehCategory:
+      type: string
+      enum:
+      - light_vehicle
+      - pickup
+      - van
+      - bus
+      - truck
+      - tipper
+      - water_tanker
+      - fuel_bowser
+      - concrete_mixer
+      - mobile_crane
+      - crawler_crane
+      - mewp
+      - forklift
+      - telehandler
+      - excavator
+      - wheel_loader
+      - grader
+      - roller
+      - paver
+      - milling_machine
+      - line_marking_vehicle
+      - sweeper
+      - lighting_tower
+      - trailer
+      - other
+      - private_car
+      - motorcycle
+      - bicycle_pedestrian
+      title: VehCategory
+      description: Phase 2 list VC + private_car, motorcycle, bicycle_pedestrian (§3.2).
+    VehDamage:
+      type: string
+      enum:
+      - none
+      - minor
+      - major
+      - total_loss
+      title: VehDamage
+    VehDocState:
+      type: string
+      enum:
+      - valid
+      - expired
+      - unknown
+      title: VehDocState
+    VehDocsInput:
+      properties:
+        istimara:
+          $ref: '#/components/schemas/VehDocState'
+          default: unknown
+        insurance:
+          $ref: '#/components/schemas/VehDocState'
+          default: unknown
+        mvpi:
+          $ref: '#/components/schemas/VehDocState'
+          default: unknown
+      additionalProperties: false
+      type: object
+      title: VehDocsInput
+      description: Documents valid at the time, entered when the row has no register vehicle (VA-4).
+    VehDocsRead:
+      properties:
+        istimara:
+          $ref: '#/components/schemas/VehDocState'
+        insurance:
+          $ref: '#/components/schemas/VehDocState'
+        mvpi:
+          $ref: '#/components/schemas/VehDocState'
+        source:
+          type: string
+          title: Source
+          description: '`register` (computed from the Phase 2 vehicle at the occurred date and frozen
+            at Closed, VA-4) or `entered`.'
+      type: object
+      required:
+      - istimara
+      - insurance
+      - mvpi
+      - source
+      title: VehDocsRead
+    VehDriverKind:
+      type: string
+      enum:
+      - worker
+      - external
+      - none
+      title: VehDriverKind
+    VehIncidentVehicleCreate:
+      properties:
+        engagement_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Engagement Id
+          description: 'Required for own_company / contractor / hired: an engagement of the project.'
+        vehicle_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Vehicle Id
+          description: Phase 2 vehicle of the same project; prefills plate, category, make_model and computes
+            docs_valid_at_time (VA-4).
+        plate_type:
+          anyOf:
+          - $ref: '#/components/schemas/PlateType'
+          - type: 'null'
+        plate_letters_ar:
+          anyOf:
+          - type: string
+            maxLength: 5
+          - type: 'null'
+          title: Plate Letters Ar
+          examples:
+          - ح ط ر
+        plate_letters_en:
+          anyOf:
+          - type: string
+            maxLength: 3
+          - type: 'null'
+          title: Plate Letters En
+          examples:
+          - JTR
+        plate_digits:
+          anyOf:
+          - type: string
+            pattern: ^\d{1,4}$
+          - type: 'null'
+          title: Plate Digits
+          examples:
+          - '9012'
+        category:
+          anyOf:
+          - $ref: '#/components/schemas/VehCategory'
+          - type: 'null'
+        make_model:
+          anyOf:
+          - type: string
+            maxLength: 60
+          - type: 'null'
+          title: Make Model
+        damage:
+          anyOf:
+          - $ref: '#/components/schemas/VehDamage'
+          - type: 'null'
+        damage_cost_sar:
+          anyOf:
+          - type: number
+            minimum: 0.0
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*(?:\d{0,10}|(?=[\d.]{1,13}0*$)\d{0,10}\.\d{0,2}0*$)
+          - type: 'null'
+          title: Damage Cost Sar
+        docs:
+          anyOf:
+          - $ref: '#/components/schemas/VehDocsInput'
+          - type: 'null'
+          description: Only when vehicle_id is not set (otherwise computed).
+        insurer:
+          anyOf:
+          - type: string
+            maxLength: 80
+          - type: 'null'
+          title: Insurer
+          description: third_party only.
+        policy_no:
+          anyOf:
+          - type: string
+            maxLength: 40
+          - type: 'null'
+          title: Policy No
+          description: third_party only.
+        seat_belt:
+          anyOf:
+          - $ref: '#/components/schemas/VehSeatBelt'
+          - type: 'null'
+        speed_kmh:
+          anyOf:
+          - type: integer
+            maximum: 250.0
+            minimum: 0.0
+          - type: 'null'
+          title: Speed Kmh
+        speed_limit_kmh:
+          anyOf:
+          - type: integer
+            maximum: 140.0
+            minimum: 5.0
+          - type: 'null'
+          title: Speed Limit Kmh
+        speed_source:
+          anyOf:
+          - $ref: '#/components/schemas/VehSpeedSource'
+          - type: 'null'
+        driver_kind:
+          anyOf:
+          - $ref: '#/components/schemas/VehDriverKind'
+          - type: 'null'
+        worker_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Worker Id
+          description: 'driver_kind worker: a Phase 2 worker with a deployment on the project; an ADP
+            on the project prefills licence issuer, class and expiry (VA-3).'
+        external_driver_name:
+          anyOf:
+          - type: string
+            maxLength: 120
+          - type: 'null'
+          title: External Driver Name
+        licence_issuer:
+          anyOf:
+          - $ref: '#/components/schemas/LicenceIssuer'
+          - type: 'null'
+        licence_class:
+          anyOf:
+          - $ref: '#/components/schemas/LicenceClass'
+          - type: 'null'
+        licence_expiry:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Licence Expiry
+        licence_no:
+          anyOf:
+          - type: string
+            maxLength: 30
+          - type: 'null'
+          title: Licence No
+          description: GCC / international licences only; a KSA licence number is never stored (it equals
+            the holder's ID) → 422.
+        hours_on_duty:
+          anyOf:
+          - type: number
+            maximum: 24.0
+            minimum: 0.0
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*(?:\d{0,3}|(?=[\d.]{1,5}0*$)\d{0,3}\.\d{0,1}0*$)
+          - type: 'null'
+          title: Hours On Duty
+        driver_case_no:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          title: Driver Case No
+          description: person_no of an injury case on this incident.
+        adp_offence_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Adp Offence Id
+          description: Phase 2 airside offence of the same project (VA-8).
+        reason:
+          anyOf:
+          - type: string
+            maxLength: 1000
+          - type: 'null'
+          title: Reason
+          description: Required (≥ 20 characters) once the investigation is approved (Phase 1 rule, 7a
+            §4).
+        ownership:
+          $ref: '#/components/schemas/VehOwnership'
+        role:
+          $ref: '#/components/schemas/VehRole'
+      additionalProperties: false
+      type: object
+      required:
+      - ownership
+      - role
+      title: VehIncidentVehicleCreate
+      description: 'Add a vehicle row (1–10 per incident). Only ownership and role are needed now; the
+        rest is
+
+        required before the investigation is submitted (VA-2). 422 `PLATE_IS_REGISTERED` when a
+
+        third_party plate is in the Phase 2 register (VA-6).'
+    VehIncidentVehicleList:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/VehIncidentVehicleRead'
+          type: array
+          title: Items
+      type: object
+      required:
+      - items
+      title: VehIncidentVehicleList
+    VehIncidentVehicleRead:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        incident_id:
+          type: string
+          format: uuid
+          title: Incident Id
+        seq:
+          type: integer
+          title: Seq
+        label:
+          type: string
+          title: Label
+          examples:
+          - V1
+        ownership:
+          $ref: '#/components/schemas/VehOwnership'
+        engagement:
+          anyOf:
+          - $ref: '#/components/schemas/EngagementRef'
+          - type: 'null'
+        vehicle:
+          anyOf:
+          - $ref: '#/components/schemas/VehVehicleRef'
+          - type: 'null'
+        suggested_vehicle:
+          anyOf:
+          - $ref: '#/components/schemas/VehVehicleRef'
+          - type: 'null'
+          description: 'VA-6: own / contractor / hired row without vehicle_id whose plate matches the
+            Phase 2 register.'
+        plate_type:
+          anyOf:
+          - $ref: '#/components/schemas/PlateType'
+          - type: 'null'
+        plate_letters_ar:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Plate Letters Ar
+        plate_letters_en:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Plate Letters En
+        plate_digits:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Plate Digits
+        category:
+          anyOf:
+          - $ref: '#/components/schemas/VehCategory'
+          - type: 'null'
+        make_model:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Make Model
+        role:
+          $ref: '#/components/schemas/VehRole'
+        damage:
+          anyOf:
+          - $ref: '#/components/schemas/VehDamage'
+          - type: 'null'
+        damage_cost_sar:
+          anyOf:
+          - type: string
+            pattern: ^-?\d+(\.\d+)?$
+            description: Decimal number serialised as a string (exact, no float rounding).
+          - type: 'null'
+          title: Damage Cost Sar
+        docs_valid_at_time:
+          $ref: '#/components/schemas/VehDocsRead'
+        insurer:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Insurer
+        policy_no:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Policy No
+        seat_belt:
+          anyOf:
+          - $ref: '#/components/schemas/VehSeatBelt'
+          - type: 'null'
+        speed_kmh:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Speed Kmh
+        speed_limit_kmh:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Speed Limit Kmh
+        speed_source:
+          anyOf:
+          - $ref: '#/components/schemas/VehSpeedSource'
+          - type: 'null'
+        driver_kind:
+          anyOf:
+          - $ref: '#/components/schemas/VehDriverKind'
+          - type: 'null'
+        worker:
+          anyOf:
+          - $ref: '#/components/schemas/VehWorkerRef'
+          - type: 'null'
+        external_driver_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: External Driver Name
+        licence_issuer:
+          anyOf:
+          - $ref: '#/components/schemas/LicenceIssuer'
+          - type: 'null'
+        licence_class:
+          anyOf:
+          - $ref: '#/components/schemas/LicenceClass'
+          - type: 'null'
+        licence_expiry:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Licence Expiry
+        licence_no:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Licence No
+        licence_prefilled_from_adp:
+          type: boolean
+          title: Licence Prefilled From Adp
+        licence_check:
+          anyOf:
+          - $ref: '#/components/schemas/VehLicenceCheck'
+          - type: 'null'
+          description: VA-3; visible to every reader.
+        hours_on_duty:
+          anyOf:
+          - type: string
+            pattern: ^-?\d+(\.\d+)?$
+            description: Decimal number serialised as a string (exact, no float rounding).
+          - type: 'null'
+          title: Hours On Duty
+        driver_case_no:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Driver Case No
+        adp_offence_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Adp Offence Id
+        driver_summary_en:
+          type: string
+          title: Driver Summary En
+          examples:
+          - 'Driver: worker of GULFPAVE · licence valid'
+        driver_summary_ar:
+          type: string
+          title: Driver Summary Ar
+        redacted_groups:
+          items:
+            type: string
+          type: array
+          title: Redacted Groups
+          description: '[''driver_identity''] when personal fields were withheld (P7a-1).'
+        warnings:
+          items:
+            $ref: '#/components/schemas/ApiWarning'
+          type: array
+          title: Warnings
+          description: VEHICLE_DOCS_EXPIRED_AT_TIME, LICENCE_NOT_VALID_AT_TIME (not blocking).
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - id
+      - incident_id
+      - seq
+      - label
+      - ownership
+      - engagement
+      - vehicle
+      - plate_type
+      - plate_letters_ar
+      - plate_letters_en
+      - plate_digits
+      - category
+      - make_model
+      - role
+      - damage
+      - damage_cost_sar
+      - docs_valid_at_time
+      - insurer
+      - policy_no
+      - seat_belt
+      - speed_kmh
+      - speed_limit_kmh
+      - speed_source
+      - driver_kind
+      - worker
+      - external_driver_name
+      - licence_issuer
+      - licence_class
+      - licence_expiry
+      - licence_no
+      - licence_prefilled_from_adp
+      - licence_check
+      - hours_on_duty
+      - driver_case_no
+      - adp_offence_id
+      - driver_summary_en
+      - driver_summary_ar
+      - redacted_groups
+      - created_at
+      - updated_at
+      title: VehIncidentVehicleRead
+      description: 'One vehicle row. Driver identity, licence class / expiry / number, hours on duty,
+        insurer,
+
+        policy and third-party plates are personal (P7a-1): they are null without capability 29 and
+
+        `redacted_groups` says so; `licence_check` and `driver_summary_*` stay visible. Reads that
+
+        return identity are audited (`sensitive_field_read`).'
+    VehIncidentVehicleUpdate:
+      properties:
+        ownership:
+          anyOf:
+          - $ref: '#/components/schemas/VehOwnership'
+          - type: 'null'
+        role:
+          anyOf:
+          - $ref: '#/components/schemas/VehRole'
+          - type: 'null'
+        engagement_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Engagement Id
+        vehicle_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Vehicle Id
+        plate_type:
+          anyOf:
+          - $ref: '#/components/schemas/PlateType'
+          - type: 'null'
+        plate_letters_ar:
+          anyOf:
+          - type: string
+            maxLength: 5
+          - type: 'null'
+          title: Plate Letters Ar
+        plate_letters_en:
+          anyOf:
+          - type: string
+            maxLength: 3
+          - type: 'null'
+          title: Plate Letters En
+        plate_digits:
+          anyOf:
+          - type: string
+            pattern: ^\d{1,4}$
+          - type: 'null'
+          title: Plate Digits
+        category:
+          anyOf:
+          - $ref: '#/components/schemas/VehCategory'
+          - type: 'null'
+        make_model:
+          anyOf:
+          - type: string
+            maxLength: 60
+          - type: 'null'
+          title: Make Model
+        damage:
+          anyOf:
+          - $ref: '#/components/schemas/VehDamage'
+          - type: 'null'
+        damage_cost_sar:
+          anyOf:
+          - type: number
+            minimum: 0.0
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*(?:\d{0,10}|(?=[\d.]{1,13}0*$)\d{0,10}\.\d{0,2}0*$)
+          - type: 'null'
+          title: Damage Cost Sar
+        docs:
+          anyOf:
+          - $ref: '#/components/schemas/VehDocsInput'
+          - type: 'null'
+        insurer:
+          anyOf:
+          - type: string
+            maxLength: 80
+          - type: 'null'
+          title: Insurer
+        policy_no:
+          anyOf:
+          - type: string
+            maxLength: 40
+          - type: 'null'
+          title: Policy No
+        seat_belt:
+          anyOf:
+          - $ref: '#/components/schemas/VehSeatBelt'
+          - type: 'null'
+        speed_kmh:
+          anyOf:
+          - type: integer
+            maximum: 250.0
+            minimum: 0.0
+          - type: 'null'
+          title: Speed Kmh
+        speed_limit_kmh:
+          anyOf:
+          - type: integer
+            maximum: 140.0
+            minimum: 5.0
+          - type: 'null'
+          title: Speed Limit Kmh
+        speed_source:
+          anyOf:
+          - $ref: '#/components/schemas/VehSpeedSource'
+          - type: 'null'
+        driver_kind:
+          anyOf:
+          - $ref: '#/components/schemas/VehDriverKind'
+          - type: 'null'
+        worker_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Worker Id
+        external_driver_name:
+          anyOf:
+          - type: string
+            maxLength: 120
+          - type: 'null'
+          title: External Driver Name
+        licence_issuer:
+          anyOf:
+          - $ref: '#/components/schemas/LicenceIssuer'
+          - type: 'null'
+        licence_class:
+          anyOf:
+          - $ref: '#/components/schemas/LicenceClass'
+          - type: 'null'
+        licence_expiry:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Licence Expiry
+        licence_no:
+          anyOf:
+          - type: string
+            maxLength: 30
+          - type: 'null'
+          title: Licence No
+        hours_on_duty:
+          anyOf:
+          - type: number
+            maximum: 24.0
+            minimum: 0.0
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*(?:\d{0,3}|(?=[\d.]{1,5}0*$)\d{0,3}\.\d{0,1}0*$)
+          - type: 'null'
+          title: Hours On Duty
+        driver_case_no:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          title: Driver Case No
+        adp_offence_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Adp Offence Id
+        reason:
+          anyOf:
+          - type: string
+            maxLength: 1000
+          - type: 'null'
+          title: Reason
+          description: Required (≥ 20 characters) once the investigation is approved (Phase 1 rule, 7a
+            §4).
+      additionalProperties: false
+      type: object
+      title: VehIncidentVehicleUpdate
+      description: Edit a vehicle row while the incident is not Closed or Voided.
+    VehJourneyPurpose:
+      type: string
+      enum:
+      - work_task
+      - material_delivery
+      - crew_transport
+      - commuting_company_transport
+      - commuting_own
+      - personal
+      - other
+      title: VehJourneyPurpose
+      description: List JP. The two `commuting_*` codes make the incident "Recorded, not counted" (VA-13).
+    VehLicenceCheck:
+      type: string
+      enum:
+      - valid
+      - expired
+      - wrong_class
+      - no_licence
+      - not_checked
+      title: VehLicenceCheck
+      description: VA-3, computed when the row is saved.
+    VehLight:
+      type: string
+      enum:
+      - daylight
+      - dusk_dawn
+      - dark_lit
+      - dark_unlit
+      title: VehLight
+    VehOwnership:
+      type: string
+      enum:
+      - own_company
+      - contractor
+      - hired
+      - third_party
+      - unknown
+      title: VehOwnership
+    VehPrefillDriver:
+      properties:
+        worker_id:
+          type: string
+          format: uuid
+          title: Worker Id
+        has_adp:
+          type: boolean
+          title: Has Adp
+        adp_no:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Adp No
+        licence_issuer:
+          anyOf:
+          - $ref: '#/components/schemas/LicenceIssuer'
+          - type: 'null'
+        licence_class:
+          anyOf:
+          - $ref: '#/components/schemas/LicenceClass'
+          - type: 'null'
+        licence_expiry:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Licence Expiry
+        licence_number_field:
+          type: boolean
+          title: Licence Number Field
+          description: False for KSA licences (the number equals the holder's ID and is never stored).
+      type: object
+      required:
+      - worker_id
+      - has_adp
+      - adp_no
+      - licence_issuer
+      - licence_class
+      - licence_expiry
+      - licence_number_field
+      title: VehPrefillDriver
+      description: 'VA-3 / AC8: a worker driver holding an ADP on the project. No KSA licence number field.'
+    VehPrefillRead:
+      properties:
+        vehicle:
+          anyOf:
+          - $ref: '#/components/schemas/VehPrefillVehicle'
+          - type: 'null'
+          description: Register vehicle (by vehicle_id, or matched by normalised plate, VA-6).
+        plate_registered:
+          type: boolean
+          title: Plate Registered
+          description: The plate is in the Phase 2 register (a third_party row would get PLATE_IS_REGISTERED).
+        driver:
+          anyOf:
+          - $ref: '#/components/schemas/VehPrefillDriver'
+          - type: 'null'
+      type: object
+      required:
+      - vehicle
+      - plate_registered
+      - driver
+      title: VehPrefillRead
+    VehPrefillVehicle:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        vehicle_no:
+          type: string
+          title: Vehicle No
+        engagement:
+          anyOf:
+          - $ref: '#/components/schemas/EngagementRef'
+          - type: 'null'
+        category:
+          $ref: '#/components/schemas/VehCategory'
+        make_model:
+          type: string
+          title: Make Model
+        plate_type:
+          $ref: '#/components/schemas/PlateType'
+        plate_letters_ar:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Plate Letters Ar
+        plate_letters_en:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Plate Letters En
+        plate_digits:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Plate Digits
+        docs_valid_at_time:
+          $ref: '#/components/schemas/VehDocsRead'
+      type: object
+      required:
+      - id
+      - vehicle_no
+      - engagement
+      - category
+      - make_model
+      - plate_type
+      - plate_letters_ar
+      - plate_letters_en
+      - plate_digits
+      - docs_valid_at_time
+      title: VehPrefillVehicle
+    VehPrompt:
+      properties:
+        code:
+          type: string
+          title: Code
+          examples:
+          - VEHICLE_DOCS_EXPIRED_AT_TIME
+          - LICENCE_NOT_VALID_AT_TIME
+        vehicle_seq:
+          type: integer
+          title: Vehicle Seq
+        message_en:
+          type: string
+          title: Message En
+        message_ar:
+          type: string
+          title: Message Ar
+      type: object
+      required:
+      - code
+      - vehicle_seq
+      - message_en
+      - message_ar
+      title: VehPrompt
+      description: VA-4 investigation prompt (a required root-cause consideration, not a block).
+    VehReportAuthority:
+      type: string
+      enum:
+      - najm
+      - traffic_police
+      - airport_operator
+      - none_internal
+      title: VehReportAuthority
+      description: '`none_internal` only for site_road / airside (VA-5).'
+    VehReportFileRead:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        file_name:
+          type: string
+          title: File Name
+        content_type:
+          type: string
+          title: Content Type
+        size_bytes:
+          type: integer
+          title: Size Bytes
+        sha256:
+          type: string
+          title: Sha256
+        uploaded_by:
+          $ref: '#/components/schemas/UserRef'
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        superseded:
+          type: boolean
+          title: Superseded
+        superseded_by_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Superseded By Id
+        superseded_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Superseded At
+      type: object
+      required:
+      - id
+      - file_name
+      - content_type
+      - size_bytes
+      - sha256
+      - uploaded_by
+      - created_at
+      - superseded
+      - superseded_by_id
+      - superseded_at
+      title: VehReportFileRead
+      description: An archived report file (capability 29 only, VA-15). Superseded versions are kept.
+    VehRoadType:
+      type: string
+      enum:
+      - site_road
+      - airside
+      - public_road
+      title: VehRoadType
+    VehRole:
+      type: string
+      enum:
+      - striking
+      - struck
+      - single_vehicle
+      - parked
+      title: VehRole
+    VehSeatBelt:
+      type: string
+      enum:
+      - worn
+      - not_worn
+      - unknown
+      - not_fitted
+      title: VehSeatBelt
+    VehSectionRead:
+      properties:
+        vehicle_involved_locked:
+          type: boolean
+          title: Vehicle Involved Locked
+          description: 'VA-1 signal holds (vehicle mechanism / agency, pd vehicle, DO vehicle overturn,
+            airside vehicle flag): vehicle_involved cannot be cleared.'
+        road_type:
+          anyOf:
+          - $ref: '#/components/schemas/VehRoadType'
+          - type: 'null'
+        road_location:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Road Location
+        journey_purpose:
+          anyOf:
+          - $ref: '#/components/schemas/VehJourneyPurpose'
+          - type: 'null'
+        light:
+          anyOf:
+          - $ref: '#/components/schemas/VehLight'
+          - type: 'null'
+        surface:
+          anyOf:
+          - $ref: '#/components/schemas/VehSurface'
+          - type: 'null'
+        third_party_damage_desc:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Third Party Damage Desc
+        third_party_damage_cost_sar:
+          anyOf:
+          - type: string
+            pattern: ^-?\d+(\.\d+)?$
+            description: Decimal number serialised as a string (exact, no float rounding).
+          - type: 'null'
+          title: Third Party Damage Cost Sar
+        recorded_not_counted:
+          type: boolean
+          title: Recorded Not Counted
+          description: 'VA-13: commuting journey → ''Recorded, not counted — commuting (OSHA)''.'
+        vehicles:
+          items:
+            $ref: '#/components/schemas/VehIncidentVehicleRead'
+          type: array
+          title: Vehicles
+        accident_report:
+          $ref: '#/components/schemas/VehAccidentReportRead'
+        missing_for_report:
+          items:
+            type: string
+          type: array
+          title: Missing For Report
+          description: 'VA-2: fields needed for Draft → Reported (road_type, vehicles).'
+        missing_for_investigation:
+          items:
+            type: string
+          type: array
+          title: Missing For Investigation
+          description: 'VA-2: fields needed before the investigation is submitted for approval (e.g. journey_purpose,
+            V1.seat_belt).'
+        investigation_prompts:
+          items:
+            $ref: '#/components/schemas/VehPrompt'
+          type: array
+          title: Investigation Prompts
+        commuting_proposed_case_ids:
+          items:
+            type: string
+            format: uuid
+          type: array
+          title: Commuting Proposed Case Ids
+          description: 'VA-7: worker cases proposed commuting = true (the classifier confirms).'
+        report_submission_offer:
+          anyOf:
+          - $ref: '#/components/schemas/VehSubmissionOffer'
+          - type: 'null'
+      type: object
+      required:
+      - vehicle_involved_locked
+      - road_type
+      - road_location
+      - journey_purpose
+      - light
+      - surface
+      - third_party_damage_desc
+      - third_party_damage_cost_sar
+      - recorded_not_counted
+      - vehicles
+      - accident_report
+      - missing_for_report
+      - missing_for_investigation
+      - investigation_prompts
+      - commuting_proposed_case_ids
+      - report_submission_offer
+      title: VehSectionRead
+      description: The incident's vehicle section (7a §3.1, §8). Present when vehicle_involved.
+    VehSpeedSource:
+      type: string
+      enum:
+      - vehicle_recorder
+      - report
+      - estimate
+      - unknown
+      title: VehSpeedSource
+    VehSubmissionOffer:
+      properties:
+        body:
+          $ref: '#/components/schemas/ExternalBody'
+        reference_no:
+          type: string
+          title: Reference No
+        requirement_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Requirement Id
+          description: 6f requirement to record against; null = the Phase 1 external notification.
+      type: object
+      required:
+      - body
+      - reference_no
+      - requirement_id
+      title: VehSubmissionOffer
+      description: 'AC21: report_no is entered and the police / Najm notification is still open → the
+        UI
+
+        offers to record the submission with this reference (6f requirement or Phase 1 I-20 row).'
+    VehSurface:
+      type: string
+      enum:
+      - dry
+      - wet
+      - sand_on_road
+      - gravel_unpaved
+      - other
+      title: VehSurface
+    VehVehicleRef:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        vehicle_no:
+          type: string
+          title: Vehicle No
+          examples:
+          - VEH-0002
+      type: object
+      required:
+      - id
+      - vehicle_no
+      title: VehVehicleRef
+    VehWorkerRef:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        worker_no:
+          type: string
+          title: Worker No
+        full_name_en:
+          type: string
+          title: Full Name En
+        full_name_ar:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Full Name Ar
+      type: object
+      required:
+      - id
+      - worker_no
+      - full_name_en
+      title: VehWorkerRef
+      description: Driver identity (capability 29 only, P7a-1).
     VehicleCategory:
       type: string
       enum:

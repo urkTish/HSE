@@ -67,6 +67,7 @@ PHASE6F_PENDING: frozenset[KpiMetric] = frozenset()
 PHASE6G_METRICS: frozenset[KpiMetric] = frozenset({M.K132, M.K133, M.K134, M.K135})
 PHASE6G_PENDING: frozenset[KpiMetric] = frozenset()
 """Scorecard and report KPIs not computed yet (none since Phase 6g stage 2)."""
+PHASE7A_METRICS: frozenset[KpiMetric] = frozenset({M.K136, M.K137})
 _PENDING = (
     PHASE2_PENDING | PHASE3_PENDING | PHASE4_PENDING | PHASE5_PENDING | PHASE6A_PENDING
     | PHASE6B_PENDING | PHASE6C_PENDING | PHASE6D_PENDING | PHASE6E_PENDING | PHASE6F_PENDING
@@ -111,6 +112,8 @@ class KpiDef:
             return f"6e-environmental §6.7 {self.metric.value}"
         if self.metric in PHASE6G_METRICS:
             return f"6g-scorecard-reports §6.7 {self.metric.value}"
+        if self.metric in PHASE7A_METRICS:
+            return f"7a-vehicle-accident-details §6.1 {self.metric.value}"
         if self.metric in PHASE6F_METRICS:
             return f"6f-incident-followup §6.2 {self.metric.value}"
         if self.metric in PHASE6D_METRICS:
@@ -686,12 +689,22 @@ CATALOGUE: dict[KpiMetric, KpiDef] = {
              "Client report on time", "تقرير العميل في الموعد",
              "MCR Rev 0 Issued on or before due_on ÷ MCR with due_on in the period and ≤ as_of "
              "× 100", numerator="On time", denominator="Due"),
+        # ---- Option 7a vehicle accident details (7a-vehicle-accident-details §6.1) ----
+        _count(M.K136, "Vehicle incidents", "حوادث المركبات", "Vehicle incidents",
+               "حوادث المركبات", G.lagging, LOW,
+               "n(incidents with vehicle_involved, status ∉ {Draft, Voided}, occurred in the "
+               "period), commuting included; chips by road type, primary type, with injury and "
+               "recorded, not counted"),
+        _rate(M.K137, "Vehicle incident rate", "معدل حوادث المركبات", "Vehicle rate",
+              "معدل حوادث المركبات",
+              "K-136 crashes (injury/illness or property damage) with ≥ 1 own / contractor / "
+              "hired vehicle, not recorded-not-counted"),
     ]
 }  # fmt: skip
 
 LAGGING_TILES = [
     M.K05, M.K06, M.K20, M.K10, M.K21, M.K22, M.K23, M.K09, M.K12, M.K24, M.K13, M.K25,
-    M.K14, M.K15, M.K16, M.K44,
+    M.K14, M.K15, M.K16, M.K44, M.K136,
 ]  # fmt: skip
 LEADING_TILES = [
     M.K30, M.K31, M.K32, M.K34, M.K35, M.K36, M.K37, M.K39, M.K41, M.K42, M.K27,

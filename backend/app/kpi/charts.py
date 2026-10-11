@@ -643,6 +643,73 @@ def c9(scope: Scope) -> ChartSpec:
     )
 
 
+def c41(scope: Scope) -> ChartSpec:
+    """7a §8: vehicle incidents per month stacked by road type (counted) plus a separate
+    "Recorded, not counted (commuting)" segment, with the K-137 line (VA-13)."""
+    from app.kpi import vehicle  # noqa: PLC0415
+
+    wins = _months(scope)
+    e = scope.engine
+    keys = [month_key(w.start) for w in wins]
+    per = [vehicle.vehicles_in(e, w) for w in wins]
+    series = []
+    for i, (code, (en, ar)) in enumerate(vehicle.ROAD_LABELS.items(), start=1):
+        pts = [
+            _pt(k, sum(1 for v in vs if v.road_type == code and not v.rnc), 0)
+            for k, vs in zip(keys, per, strict=True)
+        ]
+        series.append(
+            _series(code, en, ar, SeriesKind.bar, "left", f"series-{i}", pts, stack="vehicle")
+        )
+    series.append(
+        _series(
+            "recorded_not_counted",
+            "Recorded, not counted (commuting)",
+            "مسجل، غير محتسب (تنقل)",
+            SeriesKind.bar,
+            "left",
+            "series-4",
+            [_pt(k, sum(1 for v in vs if v.rnc), 0) for k, vs in zip(keys, per, strict=True)],
+            stack="vehicle",
+        )
+    )
+    k137 = [e.result(M.K137, e.aggregate(w)).value for w in wins]
+    series.append(
+        _series(
+            "k137",
+            "Vehicle incident rate (K-137)",
+            "معدل حوادث المركبات (K-137)",
+            SeriesKind.line,
+            "right",
+            "lagging",
+            [_pt(k, v, 2) for k, v in zip(keys, k137, strict=True)],
+        )
+    )
+    rate_en, rate_ar = fmt.hours_label(scope.config.rate_base)
+    return _spec(
+        scope,
+        ChartId.C41,
+        ChartKind.combo,
+        ("Vehicle incidents by month", "حوادث المركبات حسب الشهر"),
+        x_axis=_month_axis(wins),
+        y_axes=[
+            ChartAxis(
+                id="left", label_en="Incidents", label_ar="الحوادث", unit_en=None, unit_ar=None
+            ),
+            ChartAxis(
+                id="right",
+                label_en=f"K-137 ({rate_en})",
+                label_ar=f"K-137 ({rate_ar})",
+                unit_en=rate_en,
+                unit_ar=rate_ar,
+            ),
+        ],
+        series=series,
+        metric=M.K136,
+        base=True,
+    )
+
+
 def chart(
     db: Session,
     scope: Scope,
@@ -661,5 +728,6 @@ def chart(
         ChartId.C6: c6,
         ChartId.C8: c8,
         ChartId.C9: c9,
+        ChartId.C41: c41,
     }
     return builders[chart_id](scope)

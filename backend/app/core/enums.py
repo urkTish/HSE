@@ -692,6 +692,8 @@ class EntityType(StrEnum):
     distribution_list = "distribution_list"
     export_job = "export_job"
     export_subscription = "export_subscription"
+    # Option 7a
+    incident_vehicle = "incident_vehicle"
 
 
 class ExportDataset(StrEnum):
@@ -791,6 +793,8 @@ class ExportDataset(StrEnum):
     env_complaints = "env_complaints"
     notification_requirements = "notification_requirements"
     lessons = "lessons"
+    # Option 7a (one row per incident vehicle; never report files, VA-15)
+    incident_vehicles = "incident_vehicles"
 
 
 class ExportFormat(StrEnum):
@@ -1041,3 +1045,6 @@ class NotificationKind(StrEnum):
     report_pack_issued = "report_pack_issued"  # DL-4
     delivery_bounced = "delivery_bounced"  # DL-4
     export_ready = "export_ready"  # EX-7, SC-4
+    # ---- Option 7a (7a-vehicle-accident-details §7) ----
+    vehicle_docs_not_valid = "vehicle_docs_not_valid"  # VA-4
+    accident_report_missing = "accident_report_missing"  # report_no missing day 7, weekly

@@ -48,6 +48,7 @@ from app.kpi.facts import (
     MeetingFact,
     ObsFact,
     TbtFact,
+    VehFact,
     WfFact,
     ZoneFact,
 )
@@ -369,6 +370,44 @@ def _train_loader(db: Session, pids: tuple[uuid.UUID, ...], shared: Facts) -> An
     return run
 
 
+def vehicle_facts(db: Session, incs: list[Incident]) -> list[VehFact]:
+    """7a K-136 / K-137 / C41 inputs: vehicle incidents with their row attributes."""
+    from app.core.vehicle_enums import COMPANY_OWNERSHIP  # noqa: PLC0415
+    from app.models import IncidentVehicle  # noqa: PLC0415
+
+    rows: dict[uuid.UUID, list[IncidentVehicle]] = {}
+    if incs:
+        for r in db.scalars(
+            select(IncidentVehicle).where(IncidentVehicle.incident_id.in_([i.id for i in incs]))
+        ):
+            rows.setdefault(r.incident_id, []).append(r)
+    out = []
+    for inc in incs:
+        rs = rows.get(inc.id, [])
+        out.append(
+            VehFact(
+                id=inc.id,
+                ref=inc.ref,
+                d=inc.occurred_date,
+                eng=inc.responsible_engagement_id,
+                site=inc.site_id,
+                zone=inc.zone_id,
+                types=frozenset(inc.incident_types or []),
+                primary=inc.primary_type.value,
+                road_type=inc.road_type.value if inc.road_type else None,
+                rnc=bool(inc.recorded_not_counted),
+                work_related=bool(inc.work_related),
+                company=any(r.ownership in COMPANY_OWNERSHIP for r in rs),
+                ownerships=frozenset(r.ownership.value for r in rs),
+                licence_checks=frozenset(r.licence_check.value for r in rs if r.licence_check),
+                seat_belts=frozenset(r.seat_belt.value for r in rs if r.seat_belt),
+                journey_purpose=inc.journey_purpose.value if inc.journey_purpose else None,
+                project=inc.project_id,
+            )
+        )
+    return out
+
+
 def _load(
     db: Session,
     projects: Iterable[Project],
@@ -504,9 +543,12 @@ def _load(
         .where(Incident.project_id.in_(pids), Incident.status.not_in(EXCLUDED_INCIDENT))
     ).all()
     inv_attrs: dict[uuid.UUID, tuple[tuple[str, ...], bool | None]] = {}
+    veh_incs: list[Incident] = []
     for inc, rcs, ptw in inc_rows:
         codes = tuple(str(rc.get("code")) for rc in (rcs or []) if rc.get("code"))
         inv_attrs[inc.id] = (codes, ptw)
+        if inc.vehicle_involved:
+            veh_incs.append(inc)
         if not inc.work_related:
             continue
         local = inc.occurred_at.astimezone(tz[inc.project_id])
@@ -532,6 +574,8 @@ def _load(
                 title=inc.title,
             )
         )
+
+    facts.vehicles = vehicle_facts(db, veh_incs)
 
     # injury cases (all non-draft/void incidents; eligibility decided here)
     case_rows = db.execute(

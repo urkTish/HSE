@@ -60,7 +60,7 @@ C = Capability
 ET = EntityType
 PS = FuPackStatus
 GOVERNMENT = {ExternalBody.gosi, ExternalBody.mhrsd, ExternalBody.civil_defense,
-              ExternalBody.police, ExternalBody.ncec}  # fmt: skip
+              ExternalBody.police, ExternalBody.ncec, ExternalBody.najm}  # fmt: skip
 CLIENT_FORMS = {FuForm.CLIENT_FLASH, FuForm.CLIENT_INTERIM, FuForm.CLIENT_FINAL}
 IDENTITY_KEYS = ("person_name", "id_type", "id_number", "nationality")
 MEDICAL_KEYS = ("body_part", "nature", "treated_at", "first_day_off", "days_off")

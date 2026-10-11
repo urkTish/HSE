@@ -56,6 +56,7 @@ from app.api.routers import (
     heat_field,
     heat_readings,
     hse_settings,
+    incident_vehicles,
     incidents,
     inductions,
     inspections,
@@ -318,6 +319,8 @@ def create_app() -> FastAPI:
         scorecards,
         report_packs,
         export_jobs,
+        # Option 7a
+        incident_vehicles,
     ):
         app.include_router(module.router, prefix=API_PREFIX)
     app.include_router(auth.public_router, prefix=API_PREFIX)

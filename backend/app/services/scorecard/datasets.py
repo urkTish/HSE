@@ -43,6 +43,7 @@ from app.models import (
     FuRequirement,
     HeatIllnessEntry,
     HeatWelfareCheck,
+    IncidentVehicle,
     MedicalExaminer,
     MedicalImportBatch,
     MedicalPlanLine,
@@ -204,6 +205,19 @@ SPECIAL: dict[str, list[Col]] = {
 
 # ---- native registers (6a–6f) -------------------------------------------------------------------
 
+VEH_PERSONAL = [
+    ("plate_letters_ar", "Plate letters (AR)", "حروف اللوحة"),
+    ("plate_letters_en", "Plate letters (EN)", "حروف اللوحة (إنجليزي)"),
+    ("plate_digits", "Plate digits", "أرقام اللوحة"),
+    ("external_driver_name", "External driver", "السائق الخارجي"),
+    ("licence_issuer", "Licence issuer", "جهة إصدار الرخصة"),
+    ("licence_class", "Licence class", "فئة الرخصة"),
+    ("licence_expiry", "Licence expiry", "انتهاء الرخصة"),
+    ("licence_no", "Licence no.", "رقم الرخصة"),
+    ("hours_on_duty", "Hours on duty", "ساعات العمل"),
+    ("insurer", "Insurer", "شركة التأمين"),
+    ("policy_no", "Policy no.", "رقم الوثيقة"),
+]
 NATIVE: list[Dataset] = [
     # 6a (163; tier columns: reasons and scans never; names need 46)
     Dataset("fitness_codes", "6a", C.fitness_catalogue_view, C.export_medical, "Fitness codes",
@@ -287,6 +301,17 @@ NATIVE: list[Dataset] = [
     Dataset("lessons", "6f", C.lesson_library_view, C.lesson_library_view, "Lessons learned",
             "الدروس المستفادة", model=FuLesson, date_attr="published_at",
             project_required=False),
+    # Option 7a §8 (P7a-1: driver identity, licence and third-party columns need capability 29;
+    # report files are never a column, VA-15)
+    Dataset("incident_vehicles", "7a", C.incident_view, C.export_kpis, "Incident vehicles",
+            "المركبات المتورطة في الحوادث", model=IncidentVehicle, date_attr="occurred_date",
+            names_cap=C.injury_identity_view,
+            special=[Col("incident_ref", "Incident", "الحادثة"),
+                     Col("road_type", "Road type", "نوع الطريق"),
+                     Col("report_no", "Report no.", "رقم المحضر"),
+                     Col("recorded_not_counted", "Recorded, not counted", "مسجل، غير محتسب"),
+                     *[Col(k, en, ar, P.personal, C.injury_identity_view, MM.omit, False)
+                       for k, en, ar in VEH_PERSONAL]]),
 ]  # fmt: skip
 NATIVE_BY_CODE = {d.code: d for d in NATIVE}
 

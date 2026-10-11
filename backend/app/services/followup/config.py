@@ -64,6 +64,7 @@ LABELS: dict[str, dict[str, tuple[str, str]]] = {
         "airport_operator": ("Airport operator", "مشغل المطار"),
         "client": ("Client / PMC", "العميل / الاستشاري"),
         "ncec": ("NCEC", "المركز الوطني للرقابة على الالتزام البيئي"),
+        "najm": ("Najm", "نجم لخدمات التأمين"),
     },
     "stages": {
         "verbal": ("Verbal notice", "إبلاغ شفهي"),
@@ -89,6 +90,11 @@ LABELS: dict[str, dict[str, tuple[str, str]]] = {
         "env_airside": ("Environmental incident airside", "حادثة بيئية في جانب الطيران"),
         "any_recordable_case": ("Any recordable case", "أي حالة مسجلة"),
         "property_damage_ge_sar": ("Property damage ≥ SAR amount", "أضرار ممتلكات ≥ مبلغ"),
+        "rta_public_injury": ("Public-road accident with injury", "حادث طريق عام مع إصابة"),
+        "rta_public_no_injury": (
+            "Public-road accident without injury",
+            "حادث طريق عام دون إصابة",
+        ),
     },
     "forms": {
         "GOSI-WIR": ("GOSI work-injury data sheet", "بيانات بلاغ إصابة عمل"),

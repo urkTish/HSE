@@ -78,6 +78,13 @@ from app.core.hse_enums import (
     WorkforceStatus,
 )
 from app.core.hse_enums import AssetType as PdAssetType
+from app.core.vehicle_enums import (
+    VehJourneyPurpose,
+    VehLight,
+    VehReportAuthority,
+    VehRoadType,
+    VehSurface,
+)
 from app.db.base import Base
 from app.models.base import TimestampMixin, UUIDPk, enum_col
 
@@ -296,6 +303,25 @@ class Incident(UUIDPk, TimestampMixin, Base):
     created_by_user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))
     alerts_sent: Mapped[list[str]] = mapped_column(STRS, default=list)
     seed_fake: Mapped[bool] = mapped_column(Boolean, default=False)
+    # ---- 7a vehicle accident details (§3.1); vehicle rows in `incident_vehicles` ----
+    vehicle_involved: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    road_type: Mapped[VehRoadType | None] = enum_col(VehRoadType, nullable=True)
+    road_location: Mapped[str | None] = mapped_column(String(200))
+    journey_purpose: Mapped[VehJourneyPurpose | None] = enum_col(VehJourneyPurpose, nullable=True)
+    light: Mapped[VehLight | None] = enum_col(VehLight, nullable=True)
+    surface: Mapped[VehSurface | None] = enum_col(VehSurface, nullable=True)
+    report_authority: Mapped[VehReportAuthority | None] = enum_col(
+        VehReportAuthority, nullable=True
+    )
+    report_no: Mapped[str | None] = mapped_column(String(40))
+    report_date: Mapped[date | None] = mapped_column(Date)
+    liability_pct_own: Mapped[int | None] = mapped_column(Integer)
+    recorded_not_counted: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false"
+    )
+    third_party_damage_desc: Mapped[str | None] = mapped_column(String(500))
+    third_party_damage_cost_sar: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
+    report_alert_on: Mapped[date | None] = mapped_column(Date)  # 7a §7 report_no reminder
 
     @property
     def hipo(self) -> bool:
@@ -614,6 +640,9 @@ class Attachment(UUIDPk, Base):
     scan_status: Mapped[ScanStatus] = enum_col(ScanStatus)
     uploaded_by_user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    # 7a VA-14: a replaced accident-report file stays archived as a superseded version
+    superseded_by_id: Mapped[uuid.UUID | None] = mapped_column(PG_UUID(as_uuid=True))
+    superseded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 # ---- AI ------------------------------------------------------------------------------------------

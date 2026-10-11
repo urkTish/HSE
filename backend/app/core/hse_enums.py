@@ -187,6 +187,7 @@ class ExternalBody(StrEnum):
     client = "client"
     police = "police"
     ncec = "ncec"  # 1-dashboard v1.8 (6e §11.2): National Center for Environmental Compliance
+    najm = "najm"  # 1-dashboard v1.11 (7a §11.1): Najm for Insurance Services
 
 
 class NotificationState(StrEnum):
@@ -825,6 +826,9 @@ class AttachmentOwner(StrEnum):
     rp_pack_file = "rp_pack_file"
     xp_export_file = "xp_export_file"
     sc_remark_file = "sc_remark_file"  # dispute files (personal, P6g-1)
+    # Option 7a (VA-14, VA-15): Najm / police report files archived with the incident (personal
+    # bucket, capability 29 only, superseded versions kept, no delete after Closed, never exported)
+    incident_accident_report = "incident_accident_report"
 
 
 class ScanStatus(StrEnum):
@@ -1008,6 +1012,8 @@ class KpiMetric(StrEnum):
     K133 = "K-133"
     K134 = "K-134"
     K135 = "K-135"
+    K136 = "K-136"  # 7a-vehicle-accident-details §6.1: vehicle incidents
+    K137 = "K-137"  # vehicle incident rate per 200,000 h (commuting never counted, VA-13)
 
 
 class KpiKind(StrEnum):
@@ -1112,6 +1118,7 @@ class BreakdownMeasure(StrEnum):
     unsafe_observations = "unsafe_observations"
     cas = "cas"
     inspections = "inspections"
+    vehicle_incidents = "vehicle_incidents"  # 7a §8 (K-136 events)
 
 
 class BreakdownDimension(StrEnum):
@@ -1147,6 +1154,12 @@ class BreakdownDimension(StrEnum):
     inspection_type = "inspection_type"
     control_level = "control_level"
     ca_priority = "ca_priority"
+    # 7a §8 (vehicle_incidents only)
+    road_type = "road_type"
+    vehicle_ownership = "vehicle_ownership"
+    licence_check = "licence_check"
+    seat_belt = "seat_belt"
+    journey_purpose = "journey_purpose"
 
 
 RESTRICTED_DIMENSIONS: frozenset[BreakdownDimension] = frozenset(
@@ -1244,6 +1257,7 @@ class ChartId(StrEnum):
     C19 = "C19"  # 5-training §8.1: K-82 and K-83 by month with the E12 reference line
     C20 = "C20"  # training person-hours by month by course category + K-37 line
     C21 = "C21"  # training expiry profile next 90 days, weekly, booked / not booked
+    C41 = "C41"  # 7a §8: vehicle incidents by month by road type + recorded-not-counted, K-137 line
 
 
 class ChartKind(StrEnum):

@@ -34,6 +34,9 @@ class FuTrigger(StrEnum):
     env_airside = "env_airside"
     any_recordable_case = "any_recordable_case"
     property_damage_ge_sar = "property_damage_ge_sar"
+    # 7a VA-10 (6f v1.1): public-road accidents with / without injury (FAC only = no injury)
+    rta_public_injury = "rta_public_injury"
+    rta_public_no_injury = "rta_public_no_injury"
 
 
 class FuDeadlineBasis(StrEnum):

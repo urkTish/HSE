@@ -566,7 +566,9 @@ def _med(db: Session, c: InjuryCase, p: Principal) -> list[ApiWarning]:
     from app.services.heat import log as heat_log  # noqa: PLC0415
 
     heat_log.on_case(db, c)  # 6b HI-1
-    return warnings
+    from app.services import incident_vehicles as veh  # noqa: PLC0415
+
+    return warnings + veh.on_case(db, c)  # 7a VA-1, VA-7
 
 
 def _worker_no(db: Session, worker_id: uuid.UUID | None) -> str | None:

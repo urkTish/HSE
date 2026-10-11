@@ -56,6 +56,9 @@ SUPPORTED: dict[BreakdownMeasure, frozenset[BreakdownDimension]] = {
     MS.observations: frozenset(COMMON | {D.observation_category, D.observation_type}),
     MS.cas: frozenset(COMMON | {D.control_level, D.ca_priority}),
     MS.inspections: frozenset(COMMON | {D.inspection_type}),
+    MS.vehicle_incidents: frozenset(COMMON | {  # 7a §8
+        D.incident_type, D.road_type, D.vehicle_ownership, D.licence_check, D.seat_belt,
+        D.journey_purpose}),
 }  # fmt: skip
 SUPPORTED[MS.recordable_cases] = SUPPORTED[MS.injury_cases]
 SUPPORTED[MS.unsafe_observations] = SUPPORTED[MS.observations]
@@ -69,6 +72,7 @@ MEASURE_LABELS = {
     MS.unsafe_observations: ("Unsafe observations", "الملاحظات غير الآمنة"),
     MS.cas: ("Corrective actions", "الإجراءات التصحيحية"),
     MS.inspections: ("Inspections", "عمليات التفتيش"),
+    MS.vehicle_incidents: ("Vehicle incidents", "حوادث المركبات"),
 }
 DIMENSION_LABELS = {d: (d.value.replace("_", " ").capitalize(), d.value) for d in D}
 FIXED: dict[BreakdownDimension, dict[str, tuple[str, str]]] = {
@@ -93,6 +97,28 @@ FIXED: dict[BreakdownDimension, dict[str, tuple[str, str]]] = {
     D.weekday: {k: (en, ar) for k, en, ar in calendar.WEEKDAYS},
     D.control_level: {k.value: v for k, v in CONTROL_LABELS.items()},
     D.observation_type: {k.value: v for k, v in OBS_LABELS.items()},
+    # 7a (vehicle_incidents)
+    D.road_type: {"site_road": ("Site road", "طريق داخل الموقع"),
+                  "airside": ("Airside", "الجانب الجوي"),
+                  "public_road": ("Public road", "طريق عام")},
+    D.vehicle_ownership: {"own_company": ("Company vehicle", "مركبة الشركة"),
+                          "contractor": ("Contractor vehicle", "مركبة مقاول"),
+                          "hired": ("Hired", "مستأجرة"), "third_party": ("Third party", "طرف ثالث"),
+                          "unknown": ("Unknown (hit and run)", "غير معروفة")},
+    D.licence_check: {"valid": ("Licence valid", "الرخصة سارية"),
+                      "expired": ("Licence expired", "الرخصة منتهية"),
+                      "wrong_class": ("Wrong licence class", "فئة رخصة غير مناسبة"),
+                      "no_licence": ("No licence", "لا توجد رخصة"),
+                      "not_checked": ("Not checked", "لم يتم الفحص")},
+    D.seat_belt: {"worn": ("Worn", "مربوط"), "not_worn": ("Not worn", "غير مربوط"),
+                  "unknown": ("Unknown", "غير معروف"), "not_fitted": ("Not fitted", "غير مركب")},
+    D.journey_purpose: {"work_task": ("Work task", "مهمة عمل"),
+                        "material_delivery": ("Material delivery", "توصيل مواد"),
+                        "crew_transport": ("Crew transport", "نقل العمال"),
+                        "commuting_company_transport": ("Commuting, company transport",
+                                                        "تنقل بوسيلة الشركة"),
+                        "commuting_own": ("Commuting, own transport", "تنقل بوسيلة خاصة"),
+                        "personal": ("Personal", "شخصي"), "other": ("Other", "أخرى")},
 }  # fmt: skip
 REF_LISTS = {
     D.activity: ReferenceList.activity, D.mechanism: ReferenceList.mechanism,
@@ -121,6 +147,7 @@ class Breakdown:
     exposure_available: bool
     rate_base: int
     persons: bool
+    recorded_not_counted: int | None = None  # 7a VA-13 (vehicle_incidents only)
 
 
 def check_dimension(scope: Scope, measure: BreakdownMeasure, dim: BreakdownDimension) -> None:
@@ -180,6 +207,8 @@ def _keys(
         types = attrs.get("types")
         return sorted(types) if types else ["injury_illness"]  # type: ignore[call-overload]
     v = attrs.get(dim.value)
+    if isinstance(v, frozenset | set | list | tuple):  # 7a: one key per distinct row value
+        return sorted(str(x) for x in v) or [NONE_KEY]
     return [str(v) if v not in (None, "") else NONE_KEY]
 
 
@@ -225,6 +254,14 @@ def _items(
                 continue
             yield ({"d": d, "site": i.site, "zone": i.zone, "eng": i.eng,
                     "inspection_type": i.inspection_type}, 1)  # fmt: skip
+    elif measure == MS.vehicle_incidents:
+        from app.kpi.vehicle import vehicles_in  # noqa: PLC0415
+
+        for v in vehicles_in(engine, w):
+            yield ({"d": v.d, "site": v.site, "zone": v.zone, "eng": v.eng, "types": v.types,
+                    "road_type": v.road_type, "vehicle_ownership": v.ownerships,
+                    "licence_check": v.licence_checks, "seat_belt": v.seat_belts,
+                    "journey_purpose": v.journey_purpose, "rnc": v.rnc}, 1)  # fmt: skip
 
 
 def compute(
@@ -240,8 +277,10 @@ def compute(
     w = w or scope.window
     counts: Counter[str] = Counter()
     total = 0
+    rnc = 0
     for attrs, n in _items(scope, eng, measure, w):
         total += n
+        rnc += n if attrs.get("rnc") else 0
         keys = _keys(
             scope,
             dim,
@@ -272,7 +311,14 @@ def compute(
         for k in keys
     ]
     return Breakdown(
-        measure, dim, rows, total, exposure, scope.config.rate_base, measure in PERSON_MEASURES
+        measure,
+        dim,
+        rows,
+        total,
+        exposure,
+        scope.config.rate_base,
+        measure in PERSON_MEASURES,
+        rnc if measure == MS.vehicle_incidents else None,
     )
 
 

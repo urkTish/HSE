@@ -187,6 +187,9 @@ STATUTORY: dict[str, tuple[B, S, list[T], int | None, FuForm | None, FuFiler]] =
     "MHRSD-PD": (B.mhrsd, S.written, [T.permanent_disability], 72, FuForm.MHRSD_LTR,
                  FuFiler.main_contractor),
     "POL-V": (B.police, S.verbal, [T.fatality], 1, None, FuFiler.main_contractor),
+    # 7a VA-11 (6f v1.1): public-road accidents, police with injury, Najm without (VERIFY R2)
+    "POL-RTA": (B.police, S.verbal, [T.rta_public_injury], 1, None, FuFiler.main_contractor),
+    "NAJM-V": (B.najm, S.verbal, [T.rta_public_no_injury], 1, None, FuFiler.main_contractor),
     "CD-V": (B.civil_defense, S.verbal, [T.fire_explosion_do], 1, None, FuFiler.main_contractor),
     "CD-W": (B.civil_defense, S.written, [T.fire_explosion_do], 24, FuForm.CD_LTR,
              FuFiler.main_contractor),

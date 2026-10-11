@@ -36,11 +36,13 @@ from app.core.hse_enums import (
     RateExclusionReason,
     ReferenceList,
 )
+from app.core.vehicle_enums import VehOwnership, VehRoadType
 from app.models import (
     CorrectiveAction,
     ExternalNotification,
     HseSettings,
     Incident,
+    IncidentVehicle,
     InjuryCase,
     Investigation,
     Project,
@@ -65,6 +67,7 @@ from app.schemas.incidents import (
     PropertyDamageRead,
 )
 from app.services import audit, hse_settings, notify, projects
+from app.services import incident_vehicles as veh
 from app.services.common import ensure_open, invalid_transition, paginate, require_reason
 from app.services.hse_common import (
     Refs,
@@ -114,7 +117,11 @@ KPI_FIELDS = {
     "actual_severity",
     "activity",
     "shift",
+    "vehicle_involved",  # 7a K-136 / K-137
+    "road_type",
+    "journey_purpose",
 }
+VEH_EDIT_LATE = (ST.pending_review, ST.actions_pending)  # 7a §4: section editable until Closed
 
 
 # ---- pure rules ----------------------------------------------------------------------------------
@@ -220,6 +227,16 @@ def required_notifications(inc: Incident, cases: Sequence[InjuryCase]) -> list[R
             need(ExternalBody.mhrsd, f"{what} P{c.person_no}", at + timedelta(days=GOSI_DAYS))
         if cat == CaseCategory.FAT:
             need(ExternalBody.police, f"Fatality P{c.person_no}", at)
+    if (
+        inc.vehicle_involved
+        and inc.road_type == VehRoadType.public_road
+        and any(c.category != CaseCategory.FAC for c in cases)
+    ):
+        need(
+            ExternalBody.police,
+            "Public-road accident with injury (7a VA-12)",
+            at + timedelta(hours=1),
+        )
     if inc.do_category == DangerousOccurrenceCategory.fire_explosion:
         need(ExternalBody.civil_defense, "Fire/explosion dangerous occurrence", at)
     flags = {AirsideFlag(f) for f in inc.airside_flags or []} & GACA_FLAGS
@@ -589,6 +606,9 @@ def to_read(
         ],
         allowed_transitions=allowed_transitions(p, b),
         warnings=warnings or [],
+        vehicle_involved=inc.vehicle_involved,
+        recorded_not_counted=inc.recorded_not_counted,
+        vehicle_section=veh.section_read(db, p, inc, b.cases),
         created_at=inc.created_at,
         updated_at=inc.updated_at,
     )
@@ -762,6 +782,8 @@ def snapshot(inc: Incident) -> dict[str, Any]:
         "do_category",
         "status",
         "void_reason",
+        *veh.INCIDENT_FIELDS,
+        "recorded_not_counted",
     )
     return {k: getattr(inc, k) for k in keys}
 
@@ -797,6 +819,8 @@ def create(db: Session, p: Principal, project_id: uuid.UUID, body: IncidentCreat
     )
     _apply_fields(db, project, inc, data)
     _validate_shape(db, project, inc)
+    vdata = {k: data[k] for k in veh.INCIDENT_FIELDS if k in body.model_fields_set}
+    vwarn = veh.apply_incident(db, inc, vdata, [])
     db.add(inc)
     db.flush()
     audit.record(
@@ -808,7 +832,7 @@ def create(db: Session, p: Principal, project_id: uuid.UUID, body: IncidentCreat
         project_id=project.id,
         after=snapshot(inc),
     )
-    return to_read(db, p, bundle(db, inc), text_warnings(inc))
+    return to_read(db, p, bundle(db, inc), text_warnings(inc) + vwarn)
 
 
 def can_edit(p: Principal, b: Bundle) -> bool:
@@ -835,15 +859,24 @@ def update(db: Session, p: Principal, incident_id: uuid.UUID, body: IncidentUpda
     b = bundle(db, inc)
     ensure_open(b.project)
     p.ensure_writer()
-    if inc.status not in EDITABLE:
-        raise invalid_transition("Incident", inc.status, "edited")
-    if not can_edit(p, b):
-        raise forbidden_error()
+    changes = body.changes()
+    reason = changes.pop("reason", None)
+    vehicle_only = bool(changes) and set(changes) <= set(veh.INCIDENT_FIELDS)
+    if inc.status in VEH_EDIT_LATE and vehicle_only:
+        if not veh.can_write(p, inc):  # 7a §4: the vehicle section is editable until Closed
+            raise forbidden_error()
+        reason = veh.check_reason(db, inc, reason)
+    else:
+        if inc.status not in EDITABLE:
+            raise invalid_transition("Incident", inc.status, "edited")
+        if not can_edit(p, b):
+            raise forbidden_error()
     before = snapshot(inc)
     old_day = inc.occurred_date
-    changes = body.changes()
     _apply_fields(db, b.project, inc, changes)
     _validate_shape(db, b.project, inc)
+    vdata = {k: changes[k] for k in veh.INCIDENT_FIELDS if k in changes}
+    vwarn = veh.apply_incident(db, inc, vdata, b.cases)
     if inc.status != ST.draft:
         missing = missing_for_report(inc, b.cases)
         if missing:
@@ -861,12 +894,13 @@ def update(db: Session, p: Principal, incident_id: uuid.UUID, body: IncidentUpda
             project_id=inc.project_id,
             before=diff_before,
             after=diff_after,
+            details={"reason": reason} if reason else None,
         )
     if inc.status != ST.draft and KPI_FIELDS & set(diff_after):
         restate_if_locked(
             db, p, b, {old_day, inc.occurred_date}, f"{inc.ref} edited", f"تعديل {inc.ref}"
         )
-    return to_read(db, p, bundle(db, inc), text_warnings(inc))
+    return to_read(db, p, bundle(db, inc), text_warnings(inc) + vwarn)
 
 
 def delete(db: Session, p: Principal, incident_id: uuid.UUID) -> None:
@@ -1066,6 +1100,7 @@ def transition(
         if missing:
             raise validation_error(missing[0], f"{missing[0]} is required to report.")
         _validate_shape(db, b.project, inc)
+        veh.check_report(db, inc)  # 7a VA-2
         inc.reported_at = now()
         inc.reported_by_user_id = p.user.id
         counted_change = True
@@ -1091,6 +1126,8 @@ def transition(
                 "توجد إجراءات تصحيحية مفتوحة.",
             )
         _cases_confirmed(b)
+        veh.check_investigation(db, inc)  # 7a VA-2
+        veh.check_close(db, inc)  # 7a VA-14
         inc.status_reason = require_reason(body.reason, "quick-close the incident")
         inc.closed_at = now()
         details["quick_close"] = True
@@ -1112,6 +1149,8 @@ def transition(
             )
         _cases_confirmed(b)
         _higher_control(b, body.higher_control_justification)
+        if to == ST.closed:
+            veh.check_close(db, inc)  # 7a VA-14
         open_cas = [ca for ca in b.cas if ca.status in OPEN_CA]
         if to == ST.actions_pending and not open_cas:
             raise ApiError(
@@ -1143,6 +1182,7 @@ def transition(
                 "Corrective actions are still open.",
                 "لا تزال هناك إجراءات تصحيحية مفتوحة.",
             )
+        veh.check_close(db, inc)  # 7a VA-14
         inc.closed_at = now()
     elif to == ST.voided:
         inc.void_reason = require_reason(body.reason, "void the incident")
@@ -1182,6 +1222,8 @@ def transition(
         after={"status": to},
         details=details,
     )
+    if to == ST.closed:
+        veh.on_closed(db, inc)  # 7a VA-4: documents frozen at Closed
     if src == ST.draft and to == ST.reported:
         _report_alerts(db, b)
     if to in (ST.reported, ST.voided):
@@ -1202,9 +1244,12 @@ def settle_after_ca(db: Session, incident_id: uuid.UUID) -> None:
         return
     if any(ca.status in OPEN_CA for ca in linked_cas(db, incident_id)):
         return
+    if veh.close_gaps(db, inc):
+        return  # 7a VA-14: stays Actions Pending until the accident report is archived
     inc.status = ST.closed
     inc.closed_at = now()
     inc.updated_at = now()
+    veh.on_closed(db, inc)
     db.flush()
     audit.record(
         db,
@@ -1306,6 +1351,11 @@ def list_page(
     date_to: date | None = None,
     q: str | None = None,
     sort: str = "-occurred_at",
+    vehicle_involved: bool | None = None,
+    road_type: VehRoadType | None = None,
+    ownership: VehOwnership | None = None,
+    licence_check: Any = None,
+    recorded_not_counted: bool | None = None,
 ) -> IncidentPage:
     project = projects.get_visible(db, p, project_id)
     Inc = Incident  # noqa: N806
@@ -1390,6 +1440,19 @@ def list_page(
         stmt = stmt.where(Inc.occurred_date >= date_from)
     if date_to:
         stmt = stmt.where(Inc.occurred_date <= date_to)
+    if vehicle_involved is not None:
+        stmt = stmt.where(Inc.vehicle_involved.is_(vehicle_involved))
+    if road_type is not None:
+        stmt = stmt.where(Inc.road_type == road_type)
+    if recorded_not_counted is not None:
+        stmt = stmt.where(Inc.recorded_not_counted.is_(recorded_not_counted))
+    row_conds: list[Any] = []
+    if ownership is not None:
+        row_conds.append(IncidentVehicle.ownership == ownership)
+    if licence_check is not None:
+        row_conds.append(IncidentVehicle.licence_check == licence_check)
+    if row_conds:
+        stmt = stmt.where(exists().where(IncidentVehicle.incident_id == Inc.id, *row_conds))
     if q:
         like = f"%{q.strip()}%"
         stmt = stmt.where(or_(Inc.ref.ilike(like), Inc.title.ilike(like)))
@@ -1439,6 +1502,7 @@ def list_items(db: Session, items: Sequence[Incident]) -> list[IncidentListItem]
         zones=[i.zone_id for i in items],
         engs=[i.responsible_engagement_id for i in items],
     )
+    plates = veh.list_extras(db, items)
     out = []
     for i in items:
         s = settings.setdefault(i.project_id, hse_settings.get(db, i.project_id))
@@ -1470,6 +1534,11 @@ def list_items(db: Session, items: Sequence[Incident]) -> list[IncidentListItem]
                 late_report=i.late_report,
                 investigation_level=inv.level if inv else None,
                 investigation_due_date=inv.due_date if inv else None,
+                vehicle_involved=i.vehicle_involved,
+                road_type=i.road_type,
+                recorded_not_counted=i.recorded_not_counted,
+                plates=plates.get(i.id, []),
+                report_no=i.report_no,
             )
         )
     return out

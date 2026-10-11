@@ -43,6 +43,7 @@ from app.kpi.catalogue import (
     PHASE6E_METRICS,
     PHASE6F_METRICS,
     PHASE6G_METRICS,
+    PHASE7A_METRICS,
 )
 from app.kpi.facts import (
     CaseFact,
@@ -281,6 +282,7 @@ class Engine:
         self.all_cases = [c for c in facts.cases if keep(c.site, c.zone, c.eng)]
         self.cases = [c for c in self.all_cases if c.eligible]
         self.events = [e for e in facts.events if keep(e.site, e.zone, e.eng)]
+        self.vehicles = [v for v in facts.vehicles if keep(v.site, v.zone, v.eng)]  # 7a
         self.obs = [o for o in facts.obs if keep(o.site, o.zone, o.eng)]
         self.insp = [i for i in facts.insp if keep(i.site, i.zone, i.eng)]
         self.cas = [
@@ -692,6 +694,11 @@ class Engine:
         if metric == M.K39:
             ids = [m.id for m in self.meetings if w.contains(m.planned)]
             return (EntityType.hse_meeting, ids), None
+        if metric in (M.K136, M.K137):
+            from app.kpi.vehicle import vehicle_ids  # noqa: PLC0415
+
+            ids = vehicle_ids(self, w, rate=metric == M.K137)
+            return (EntityType.incident, ids), mh if metric == M.K137 else None
         return None, None
 
 
@@ -942,6 +949,7 @@ _DISPATCH: dict[KpiMetric, Callable[[Engine, Agg], Result]] = {
     **{m: _not_yet(m) for m in PHASE6E_METRICS},  # replaced by app.kpi.env
     **{m: _not_yet(m) for m in PHASE6F_METRICS},  # replaced by app.kpi.followup
     **{m: _not_yet(m) for m in PHASE6G_METRICS},  # replaced by app.kpi.scorecard
+    **{m: _not_yet(m) for m in PHASE7A_METRICS},  # replaced by app.kpi.vehicle
 }
 import app.kpi.access  # noqa: E402  (registers K-48…K-60 into _DISPATCH)
 import app.kpi.cert  # noqa: E402  (registers K-72…K-81 into _DISPATCH)
@@ -953,6 +961,7 @@ import app.kpi.heat  # noqa: E402  (registers K-97…K-103 into _DISPATCH)
 import app.kpi.medical  # noqa: E402  (registers K-89…K-96 into _DISPATCH)
 import app.kpi.ptw  # noqa: E402  (registers K-46, K-46b, K-61…K-71 into _DISPATCH)
 import app.kpi.scorecard  # noqa: E402  (registers K-132…K-135 into _DISPATCH)
-import app.kpi.training  # noqa: E402, F401  (registers K-37 (rev.), K-82…K-88 into _DISPATCH)
+import app.kpi.training  # noqa: E402  (registers K-37 (rev.), K-82…K-88 into _DISPATCH)
+import app.kpi.vehicle  # noqa: E402, F401  (registers K-136, K-137 into _DISPATCH)
 
 assert set(_DISPATCH) == set(KpiMetric) == set(CATALOGUE)  # noqa: S101

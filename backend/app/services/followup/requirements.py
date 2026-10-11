@@ -142,9 +142,26 @@ def true_keys(
     for t in wanted:
         if t in CASE_TRIGGERS:
             out |= {f"{t.value}:P{c.person_no}" for c in cases if _case_true(c, t)}
+        elif t in RTA_TRIGGERS:
+            if rta_trigger(inc, cases) == t:
+                out.add(t.value)
         elif _incident_true(db, inc, t, params):
             out.add(t.value)
     return out
+
+
+RTA_TRIGGERS = {T.rta_public_injury, T.rta_public_no_injury}
+
+
+def rta_trigger(inc: Incident, cases: Sequence[InjuryCase]) -> T | None:
+    """7a VA-10: a public-road accident with ≥ 1 case that is not first aid only → police
+    (`rta_public_injury`); no case or FAC only → Najm (`rta_public_no_injury`)."""
+    from app.core.vehicle_enums import VehRoadType  # noqa: PLC0415
+
+    if not inc.vehicle_involved or inc.road_type != VehRoadType.public_road:
+        return None
+    injured = any(c.category != CaseCategory.FAC for c in cases)
+    return T.rta_public_injury if injured else T.rta_public_no_injury
 
 
 def _per_case(r: FuRule) -> bool:
