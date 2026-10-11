@@ -212,7 +212,7 @@ Still open:
 3. **Seat belt and speed:** required "worn / not worn / unknown" for every vehicle; speed optional. Enough?
 4. **Third-party cost:** we record an estimate only. Do you want the insurer claim number and final settlement?
 
-## 11. Changes required in earlier specs (to apply when 7a is built)
+## 11. Changes required in earlier specs (applied 2026-10-11: 1-dashboard v1.11, 6f-incident-followup v1.1, 6g-scorecard-reports v1.1)
 
 ### 11.1 `1-dashboard.md` v1.10 → v1.11
 1. §3.3 incident fields of 7a §3.1 (incl. report_files archive and recorded_not_counted); new §3.3a incident vehicle (7a §3.2); §3.11 lists JP and LCV; notification body `najm`.

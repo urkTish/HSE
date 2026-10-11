@@ -39,6 +39,7 @@ def main() -> None:
     sched.add_job(_job, "cron", hour=6, minute=20, args=["lti_free_milestones"])
     sched.add_job(_job, "cron", hour=7, minute=0, args=["ca_alerts"])
     sched.add_job(_job, "cron", hour=7, minute=5, args=["inspection_due_alerts"])
+    sched.add_job(_job, "cron", hour=7, minute=10, args=["vehicle_report_reminders"])
     for i, name in enumerate(["incident_alerts", "high_risk_observations", "daily_return_missing"]):
         sched.add_job(_job, "cron", minute=15 + i * 5, args=[name])
     sched.add_job(_job, "cron", day_of_week="fri", hour=3, args=["anonymise_injury_identity"])

@@ -503,6 +503,34 @@ def sc_seed(_fresh_data: None, _sc_template: str) -> None:
     _clone(_sc_template)
 
 
+VEH_TEMPLATE = TEST_DB.rsplit("/", 1)[1] + "_veh_tpl"
+
+
+@pytest.fixture(scope="session")
+def _veh_template(_sc_template: str) -> str:
+    """Phase 0-6g template + the Option 7a Appendix A seed."""
+    from app.seed_vehicle import seed_vehicle_data
+
+    _clone(_sc_template)
+    with get_sessionmaker()() as db:
+        seed_vehicle_data(db)
+        db.commit()
+    get_engine().dispose()
+    name = _db_name()
+    _admin_exec(
+        _terminate(name),
+        f"DROP DATABASE IF EXISTS {VEH_TEMPLATE}",
+        f"CREATE DATABASE {VEH_TEMPLATE} TEMPLATE {name}",
+    )
+    return VEH_TEMPLATE
+
+
+@pytest.fixture
+def veh_seed(_fresh_data: None, _veh_template: str) -> None:
+    """Replace the test database with a copy of the Option 7a template."""
+    _clone(_veh_template)
+
+
 @pytest.fixture
 def sc_clock() -> Iterator[None]:
     """Pin the clock to the 6g "today" (2026-10-12 10:00 Asia/Riyadh = 07:00Z)."""

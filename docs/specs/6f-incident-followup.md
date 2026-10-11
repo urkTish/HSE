@@ -1,6 +1,6 @@
 # Module Spec — Phase 6f: Incident Follow-up (regulatory and client notification packs with deadlines, submission evidence and overdue tracking; lessons learned with review, distribution, acknowledgement, toolbox and checklist links, library and effectiveness checks)
 
-**Version:** v1.0 · **Date:** 2026-10-09 · **Author:** HSE Consultant Agent · **Status:** Draft. The HSE Manager asked to proceed without waiting for approval and will review the choices later (§10).
+**Version:** v1.1 · **Date:** 2026-10-11 · **Author:** HSE Consultant Agent · **Status:** Draft. The HSE Manager asked to proceed without waiting for approval and will review the choices later (§10).
 **Builds on:**
 - `0-foundation.md` v1.2: contractors and engagement tree, roles, scoping legend, rules 28, 35 and 48, PDPL P1–P13, the capability matrix (6e ends at 214).
 - `1-dashboard.md` v1.7: incidents (§3.3 `notifications`, airside_flags, do_category, hipo), injury cases (§3.4 person_type, case_category, commuting, permanent_disability, identity fields, gosi_case_ref), investigations (§3.5 level, due_date, root_causes, lessons_learned, approved_at), §4.2 incident states, I-14, I-16, **I-20 / I-21**, CAs (§3.8, CA-1…CA-8), P1-1…P1-8, capabilities 29–31 and 43, the §7 "external notification due" alert, T5, AI-19, the action panel and expiring-items endpoint.
@@ -73,7 +73,7 @@ PDPL column: **none / personal / sensitive** (Phase 0 P1–P2). Every entity car
 | Field | AR label | Type | Req | Validation | Example | PDPL |
 |---|---|---|---|---|---|---|
 | rule_code | الرمز | string(16) | Y | unique per project | GACA-W | none |
-| body | الجهة | enum | Y | Phase 1 body: `gosi` · `mhrsd` · `civil_defense` · `police` · `gaca` · `airport_operator` · `client` · `ncec` | gaca | none |
+| body | الجهة | enum | Y | Phase 1 body: `gosi` · `mhrsd` · `civil_defense` · `police` · `gaca` · `airport_operator` · `client` · `ncec`; v1.1 `najm` نجم (7a VA-11) | gaca | none |
 | stage | المرحلة | enum | Y | `verbal` إبلاغ شفهي · `written` إخطار كتابي · `interim` تقرير مرحلي · `final` تقرير نهائي | written | none |
 | source | المصدر | enum | sys | `statutory` (seeded, NR-3) · `client` | statutory | none |
 | triggers | الحالات الموجبة | enum[] | Y | ≥ 1 of list NT; any one true ⇒ required | [gaca_airside_flag] | none |
@@ -175,7 +175,7 @@ Only the HSE Manager edits them (capability 218); audited; "Allowed" is the only
 
 ### 3.11 Reference lists (seeded EN/AR; codes immutable)
 
-**NT — triggers** (evaluated on the incident and its cases; Draft and Voided incidents trigger nothing): `recordable_contractor_case` (a contractor_worker case FAT/LTI/RWC/JTC/MTC) · `commuting_case` · `fatality` · `permanent_disability` · `lti` · `fire_explosion_do` (do_category fire_explosion) · `any_do` · `hipo` · `gaca_airside_flag` (runway_incursion, aircraft_involved, ols_infringement, notam_breach) · `any_airside_flag` · `env_ncec` (6e condition) · `env_airside` (environmental in an airside zone, 6e) · `any_recordable_case` (any person type) · `property_damage_ge_sar` (parameter, SAR).
+**NT — triggers** (evaluated on the incident and its cases; Draft and Voided incidents trigger nothing): `recordable_contractor_case` (a contractor_worker case FAT/LTI/RWC/JTC/MTC) · `commuting_case` · `fatality` · `permanent_disability` · `lti` · `fire_explosion_do` (do_category fire_explosion) · `any_do` · `hipo` · `gaca_airside_flag` (runway_incursion, aircraft_involved, ols_infringement, notam_breach) · `any_airside_flag` · `env_ncec` (6e condition) · `env_airside` (environmental in an airside zone, 6e) · `any_recordable_case` (any person type) · `property_damage_ge_sar` (parameter, SAR) · v1.1 (7a VA-11): `rta_public_injury` (vehicle incident on public_road with an injury beyond first aid, any person type) · `rta_public_no_injury` (vehicle incident on public_road without one).
 
 **Default statutory profile** (seeded on every project; client rows seeded per §A.2):
 
@@ -189,6 +189,8 @@ Only the HSE Manager edits them (capability 218); audited; "Allowed" is the only
 | GACA-W | gaca · written | gaca_airside_flag | 72 h `VERIFY` R5 | GACA-OCR · main_contractor (or airport_operator, NR-10) |
 | AO-V / AO-W | airport_operator · verbal / written | gaca_airside_flag (V); any_airside_flag, env_airside (W) | 1 h / 24 h `VERIFY` R5 | — / AO-OCR · main_contractor |
 | NCEC-W | ncec · written | env_ncec | 24 h (6e) | NCEC-EIR · main_contractor |
+| POL-RTA | police · verbal | rta_public_injury | 1 h | — · main_contractor (v1.1, 7a VA-11) |
+| NAJM-V | najm · verbal | rta_public_no_injury | 1 h `VERIFY` 7a R2 | — · main_contractor (v1.1, 7a VA-11) |
 
 **PF — forms** (languages · field set): `GOSI-WIR` GOSI work-injury data sheet بيانات بلاغ إصابة عمل (ar · identity_medical: employer name, CR and GOSI establishment no., worker name AR/EN, ID type and number, nationality, occupation, date / time / place, how it happened, body part, nature, treating facility, first day off work, reporter role; fields mirror the portal `VERIFY` R1) · `MHRSD-LTR` letter to the labour office (ar · identity) · `CD-LTR` letter to Civil Defense (ar · none) · `GACA-OCR` / `AO-OCR` occurrence report (en + ar · none: date, time, location with stand / taxiway, aircraft or vehicle involved by registration or fleet no., NOTAM / WSP refs, immediate actions, operational impact) · `NCEC-EIR` environmental incident report (ar · none; 6e spill fields) · `CLIENT-FLASH` / `CLIENT-INTERIM` / `CLIENT-FINAL` (en + ar · `client_pack_identity`: none → case rows "Person n · trade · employer"; FINAL needs an approved investigation and adds causes, root-cause codes, CAs with control levels and the lesson no. when published).
 
@@ -530,3 +532,4 @@ No changes.
 | Version | Date | Author | Change |
 |---|---|---|---|
 | v1.0 | 2026-10-09 | HSE Consultant Agent | First issue. §1–§11 and Appendix A: per-project notification rule profile (statutory tighten-only, client / PMC rows) with stages and trigger-based deadlines replacing the fixed I-20 deadlines from a switch date; requirements with clock-start and reclassification rules, waivers; bilingual pre-filled packs (GOSI, MHRSD, Civil Defense, GACA, airport operator, NCEC, client flash / interim / final) with PDPL field sets and approval; submission evidence and acknowledgements; lessons learned from investigations with de-identification, review, cross-project distribution and acknowledgement, 6d topic / campaign / template-change links, searchable bilingual library, similar-lesson prompts and 90-day effectiveness checks. Capabilities 215–223, KPIs K-127…K-131, warning E24, AI tools T23–T24, charts C37–C38, CA source `lesson`. 48 acceptance criteria. Earlier-spec changes in §11, not yet applied. |
+| v1.1 | 2026-10-11 | HSE Consultant Agent | Changes required by Option 7a (`7a-vehicle-accident-details.md` v1.0 §11.2): list NT adds `rta_public_injury` and `rta_public_no_injury`; body list adds `najm`; statutory rows POL-RTA (police · verbal) and NAJM-V (najm · verbal), 1 h, form `—`. Tighten-only (NR-3) applies to both rows. No existing rule, worked example or KPI value changes (FU1–FU3 have no vehicle incident on a public road). |

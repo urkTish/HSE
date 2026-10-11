@@ -653,6 +653,10 @@ def main() -> int:
 
         seed_scorecard_data(db)
         db.commit()
+        from app.seed_vehicle import seed_vehicle_data  # noqa: PLC0415
+
+        seed_vehicle_data(db)  # Option 7a Appendix A (additive)
+        db.commit()
     print("Seed data loaded.")
     return 0
 

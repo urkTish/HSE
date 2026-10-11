@@ -5,6 +5,7 @@ import uuid
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -50,6 +51,7 @@ from app.models import (
     User,
 )
 from app.services import audit, hse_settings, notify
+from app.services import incident_vehicles as veh
 from app.services import incidents as inc_svc
 from app.services import inspections as ins_svc
 from app.services import workforce as wf_svc
@@ -642,6 +644,12 @@ def anonymise_injury_identity(db: Session, at: datetime | None = None) -> dict[s
     return {"anonymised": n}
 
 
+def vehicle_report_reminders(db: Session, day: date | None = None) -> dict[str, Any]:
+    """7a §7: Najm / police report number still missing at the reminder date (re-sent weekly)."""
+    d0 = day or now().astimezone(ZoneInfo("Asia/Riyadh")).date()
+    return {"notified": veh.report_reminders(db, d0)}
+
+
 PHASE1_JOBS = {
     "ca_alerts": ca_alerts,
     "inspections_generate": inspections_generate,
@@ -655,4 +663,5 @@ PHASE1_JOBS = {
     "leading_warnings": leading_warnings,
     "lti_free_milestones": lti_free_milestones,
     "anonymise_injury_identity": anonymise_injury_identity,
+    "vehicle_report_reminders": vehicle_report_reminders,
 }
