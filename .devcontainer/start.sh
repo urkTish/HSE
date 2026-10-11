@@ -3,6 +3,13 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+# The Docker daemon may still be starting when this runs.
+echo "Waiting for Docker..."
+for _ in $(seq 1 60); do
+  docker info >/dev/null 2>&1 && break
+  sleep 2
+done
+
 docker compose up -d --build
 
 echo "Waiting for the backend..."
