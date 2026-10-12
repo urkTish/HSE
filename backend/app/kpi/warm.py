@@ -4,10 +4,11 @@ A cold dashboard read loads every fact section of its scope (incidents and hours
 certification, training with the per-project requirement base, medical): about 5 s for
 ANIA-EXP and 4 s more for All projects, while any committed fact write clears the whole cache.
 This module rebuilds, off the request path, the scopes that were cached when a write cleared
-them and that a request read within the cache TTL (and, at startup, each project and the
-all-projects scope), once the writes have settled
-for `KPI_WARM_DELAY` seconds. A request that arrives mid-build waits on the same single-flight
-locks (app.kpi.data) instead of starting a second build.
+them and that a request read in the last WARM_READ_WINDOW_S (and, at startup, each project
+and the all-projects scope), once the writes have settled for `KPI_WARM_DELAY` seconds; a
+build stops early when a newer write has already dropped it. A request that arrives
+mid-build waits on the same single-flight locks (app.kpi.data) instead of starting a second
+build.
 
 Off when the cache is off (kpi_cache_seconds = 0, as in the test suite) or kpi_warm is false.
 """
@@ -34,6 +35,8 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 KPI_WARM_DELAY = 1.5  # seconds without a new fact write before rebuilding
+# Scopes in use: read by a request in the last 30 minutes (or since the process started).
+WARM_READ_WINDOW_S = 1800.0
 
 _LOCK = threading.Lock()
 _PENDING: dict[tuple[uuid.UUID, ...], None] = {}  # insertion order: most used first
@@ -119,11 +122,11 @@ def _run() -> None:
 
 
 def _recently_read(key: tuple[uuid.UUID, ...]) -> bool:
-    """Only scopes a request read within the cache TTL are rebuilt; the others load on their
-    next read as before."""
+    """Only scopes a request read within WARM_READ_WINDOW_S (at least the cache TTL) are
+    rebuilt; the others load on their next read as before."""
     from app.kpi import data  # noqa: PLC0415
 
-    return data.read_within(key, get_settings().kpi_cache_seconds)
+    return data.read_within(key, max(WARM_READ_WINDOW_S, get_settings().kpi_cache_seconds))
 
 
 def _all_projects() -> tuple[uuid.UUID, ...] | None:
@@ -147,21 +150,37 @@ def warm(key: tuple[uuid.UUID, ...]) -> None:
         if len(projects) != len(key):
             return  # a project went away
         hse = {p.id: hse_settings.get(db, p.id) for p in projects}
+        gen = data.generation()
         data.load(db, projects, hse, reader=False)
         facts = data.cached(db, key)
         if facts is None:  # a write landed during the build
             return
-        _ = (facts.access, facts.ptw, facts.cert, facts.med)
+
+        def stale() -> bool:
+            # A newer fact write has dropped these facts: the rest of this build would be
+            # thrown away, so stop and leave the interpreter to requests (that write's own
+            # rebuild follows once writes settle).
+            return data.generation() != gen
+
+        for section in ("access", "ptw", "cert", "med"):
+            if stale():
+                return
+            getattr(facts, section)
         train = facts.train
         if train is not None:
             for pid in key:
+                if stale():
+                    return
                 train._base(pid)
                 # K-82..K-84 evaluate each sparkline month of the default (current month) view
                 for d in _sparkline_days(projects, pid):
+                    if stale():
+                        return
                     train.peval(pid, d)
-        if len(projects) == 1:
+        if len(projects) == 1 and not stale():
             _action_panel_inputs(db, projects[0], train)
-            _exercise_views(db, projects[0])
+            if not stale():
+                _exercise_views(db, projects[0])
         # closed, not rolled back: a rollback would expire the cached ORM rows (CertSettings,
         # ...) and later requests could not refresh them from another session
 

@@ -101,16 +101,16 @@ def test_warm_builds_every_section_of_a_scope(db: Session) -> None:
 
 
 @pytest.mark.usefixtures("cache_on")
-def test_warm_rebuilds_only_scopes_read_within_the_ttl() -> None:
-    """A rebuilt scope is not a read: scopes no request asked for within the TTL (e.g. All
-    projects opened once) are not rebuilt after every later write."""
+def test_warm_rebuilds_only_scopes_read_recently() -> None:
+    """A rebuilt scope is not a read: scopes no request asked for within the warm window (e.g.
+    All projects opened once) are not rebuilt after every later write."""
     from app.kpi import warm
 
     seen, unseen = (uuid.uuid4(),), (uuid.uuid4(), uuid.uuid4())
     data.touch([seen])
     assert warm._recently_read(seen)
     assert not warm._recently_read(unseen)
-    data._LAST_READ[seen] -= 21  # older than the 20 s TTL of the fixture
+    data._LAST_READ[seen] -= warm.WARM_READ_WINDOW_S + 1
     assert not warm._recently_read(seen)
 
 

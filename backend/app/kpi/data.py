@@ -229,6 +229,12 @@ def clear_cache() -> None:
         train_facts._SHARED.clear()
 
 
+def generation() -> int:
+    """The facts generation (advances on every committed fact write)."""
+    with _CACHE_LOCK:
+        return _GENERATION
+
+
 def touch(keys: Iterable[tuple[uuid.UUID, ...]]) -> None:
     """Record a read of these scopes now (see _LAST_READ)."""
     at = time.monotonic()
