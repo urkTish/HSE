@@ -14,7 +14,7 @@
 - Phase 6f step = Design done (contract v0.12.0; 11 p6f specs green on a fresh seed; screenshots `docs/screenshots/phase-6f`; design pass `docs/design/phase-6f-findings.md`)
 - Phase 6g — Contractor HSE scorecard + reports export pack: spec `docs/specs/6g-scorecard-reports.md` v1.0 (56 ACs; §11 earlier-spec changes applied; contract v0.13.0)
 - Phase 6g step = Design done (contract v0.13.0; 21 p6g specs green on a fresh seed; screenshots `docs/screenshots/phase-6g`; design pass `docs/design/phase-6g-findings.md`)
-- Option 7a — Vehicle accident details (vehicle section on incidents, police / Najm rows, Najm / police report archived with no client copy, commuting recorded but not counted, K-136…K-137, C41): spec `docs/specs/7a-vehicle-accident-details.md` v1.1 (32 ACs; HSE Manager answers 2026-10-11). **Building: 7a contract out (v0.14.0, stage 1); backend stage 2 in progress.** Handover `docs/HANDOVER-vehicle.md`.
+- Option 7a — Vehicle accident details (vehicle section on incidents, police / Najm rows, Najm / police report archived with no client copy, commuting recorded but not counted, K-136…K-137, C41): spec `docs/specs/7a-vehicle-accident-details.md` v1.1 (32 ACs; HSE Manager answers 2026-10-11). **7a backend done (contract v0.14.0); frontend next.** Handover `docs/HANDOVER-vehicle.md`.
 - Option 7b — Site vehicle & plant readiness, **Prototype** (construction: readiness fields and document expiry, driver / operator authorisation, pre-use checks, minimal journey-plan form; capabilities 233–237, K-138…K-140; gate logging (security) and telematics / points / mileage (logistics) out of scope; 7a optional): spec `docs/specs/7b-fleet-driver.md` v2.0 (24 ACs). **Planned, not started (awaiting HSE Manager go).** Handover `docs/HANDOVER-vehicle.md`.
 
 ## Phase log
@@ -27,7 +27,10 @@
 
 ## Done
 
-### Backend — Option 7a vehicle accident details (contract v0.14.0, stage 1: 7a contract out)
+### Backend — Option 7a vehicle accident details (contract v0.14.0; stage 1 contract out, stage 2 done 2026-10-12)
+- Stage 2: services VA-1…VA-15 (report archive + lock, no client copy, recorded-not-counted), 6f rows POL-RTA / NAJM-V, K-136 / K-137, C41, AI T3–T5 with plate / driver masking, 6g dataset `incident_vehicles`, job `vehicle_report_reminders` (07:10). Seed `app/seed_vehicle.py` (Appendix A, additive; D-239). Specs: 1-dashboard v1.11, 6f v1.1, 6g v1.1. Tests `test_vehicle_accident.py` (VW1 exact K-136 = 5, K-137 = 0.32) and `test_phase7a_contract.py`.
+- Checks: ruff, format, mypy clean; pytest 1062 passed, 0 failed (baseline 1042 / 0); alembic upgrade head + check clean, downgrade round-trip OK; contract `--check` clean; full `app.seed` runs on a fresh DB.
+- For the fixer: on the full seed, September ANIA-EXP Phase 1 counts gain 0201 (MTC), 0204 (near miss) and 0209 (property damage) (D-239); check e2e specs that read live September values. Parked: T9 compare by road type / journey purpose (D-243); AC32 is UI only.
 - Contract v0.14.0 exported (`docs/contracts/openapi.yaml`); schemas and enums `Veh`-prefixed (D-202). Migration 0016 (`incident_vehicles`, incident vehicle / report columns, superseded report files, POL-RTA / NAJM-V statutory rows).
 - **Frontend note (endpoints / schemas / fields):**
   - Incident: `POST/PATCH /incidents` take `vehicle_involved`, `road_type`, `road_location`, `journey_purpose`, `light`, `surface`, `report_authority`, `report_no`, `report_date`, `liability_pct_own`, `third_party_damage_desc`, `third_party_damage_cost_sar`; PATCH also `reason` (≥ 20 chars for vehicle-field edits after the investigation is approved; only vehicle fields may change in Pending Review / Actions Pending). `IncidentRead` adds `vehicle_involved`, `recorded_not_counted`, `vehicle_section` (`VehSectionRead`: `vehicle_involved_locked`, road fields, `vehicles[]`, `accident_report`, `missing_for_report`, `missing_for_investigation`, `investigation_prompts[]`, `commuting_proposed_case_ids`, `report_submission_offer`).
