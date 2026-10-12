@@ -4,7 +4,8 @@ A cold dashboard read loads every fact section of its scope (incidents and hours
 certification, training with the per-project requirement base, medical): about 5 s for
 ANIA-EXP and 4 s more for All projects, while any committed fact write clears the whole cache.
 This module rebuilds, off the request path, the scopes that were cached when a write cleared
-them (and, at startup, each project and the all-projects scope), once the writes have settled
+them and that a request read within the cache TTL (and, at startup, each project and the
+all-projects scope), once the writes have settled
 for `KPI_WARM_DELAY` seconds. A request that arrives mid-build waits on the same single-flight
 locks (app.kpi.data) instead of starting a second build.
 
@@ -72,7 +73,11 @@ def start() -> None:
     except Exception:
         log.warning("kpi warm: project list unavailable", exc_info=True)
         return
-    note([(p,) for p in pids] + ([tuple(pids)] if len(pids) > 1 else []))
+    from app.kpi import data  # noqa: PLC0415
+
+    keys = [(p,) for p in pids] + ([tuple(pids)] if len(pids) > 1 else [])
+    data.touch(keys)  # a fresh process: warm every scope once
+    note(keys)
 
 
 def _ensure_thread() -> None:
@@ -98,6 +103,7 @@ def _run() -> None:
             keys = list(_PENDING)
             _PENDING.clear()
             _WAKE.clear()
+        keys = [k for k in keys if _recently_read(k)]
         if any(len(k) > 1 for k in keys):  # an All-projects scope: also the current full set
             full = _all_projects()
             if full and full not in keys:
@@ -110,6 +116,14 @@ def _run() -> None:
                 warm(key)
             except Exception:
                 log.warning("kpi warm failed for %s", key, exc_info=True)
+
+
+def _recently_read(key: tuple[uuid.UUID, ...]) -> bool:
+    """Only scopes a request read within the cache TTL are rebuilt; the others load on their
+    next read as before."""
+    from app.kpi import data  # noqa: PLC0415
+
+    return data.read_within(key, get_settings().kpi_cache_seconds)
 
 
 def _all_projects() -> tuple[uuid.UUID, ...] | None:
@@ -133,7 +147,7 @@ def warm(key: tuple[uuid.UUID, ...]) -> None:
         if len(projects) != len(key):
             return  # a project went away
         hse = {p.id: hse_settings.get(db, p.id) for p in projects}
-        data.load(db, projects, hse)
+        data.load(db, projects, hse, reader=False)
         facts = data.cached(db, key)
         if facts is None:  # a write landed during the build
             return

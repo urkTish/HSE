@@ -546,6 +546,26 @@ def repeat_events(scope: Scope, engine: Engine, m: Window) -> list[str]:
 
 
 def evaluate(scope: Scope, months: list[Window]) -> list[Warn]:
+    """E1-E… for these complete months, memoised on the cached facts: the result depends only
+    on the facts build, the effective filter, the evaluation day and the months, and a past
+    month view (e.g. the dashboard's September action panel) re-evaluated every warning per
+    request (1-2 s on the full seed)."""
+    key = (
+        "leading_warnings",
+        scope.flt,
+        frozenset((p, frozenset(s)) for p, s in scope.project_sites.items()),
+        scope.as_of,
+        scope.config,
+        tuple((m.start, m.end) for m in months),
+    )
+    memo = scope.facts.memo
+    hit = memo.get(key)
+    if hit is None:
+        hit = memo[key] = _evaluate(scope, months)
+    return list(hit)
+
+
+def _evaluate(scope: Scope, months: list[Window]) -> list[Warn]:
     out: list[Warn] = []
     for proj in scope.projects:
         sites = scope.project_sites.get(proj.id, frozenset())

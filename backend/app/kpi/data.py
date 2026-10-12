@@ -98,6 +98,10 @@ def case_eligible(incident: Incident, c: InjuryCase, s: HseSettings) -> tuple[bo
 _CACHE: dict[tuple[uuid.UUID, ...], tuple[float, int, Facts]] = {}
 _CACHE_LOCK = threading.Lock()
 _GENERATION = 0
+# When a request last asked for each scope (monotonic). The warm thread rebuilds only scopes
+# read within the TTL: a rebuilt entry used to count as "cached" again, so every scope ever
+# opened (All projects, a project viewed once) was rebuilt after every later write.
+_LAST_READ: dict[tuple[uuid.UUID, ...], float] = {}
 
 
 # Writes that never change a KPI fact; the 30-second session heartbeat (deps.py) would
@@ -225,18 +229,40 @@ def clear_cache() -> None:
         train_facts._SHARED.clear()
 
 
+def touch(keys: Iterable[tuple[uuid.UUID, ...]]) -> None:
+    """Record a read of these scopes now (see _LAST_READ)."""
+    at = time.monotonic()
+    with _CACHE_LOCK:
+        if len(_LAST_READ) > 256:
+            _LAST_READ.clear()
+        for k in keys:
+            _LAST_READ[k] = at
+
+
+def read_within(key: tuple[uuid.UUID, ...], seconds: float) -> bool:
+    """Whether a request read this scope in the last `seconds`."""
+    with _CACHE_LOCK:
+        t = _LAST_READ.get(key)
+    return t is not None and time.monotonic() - t < seconds
+
+
 def load(
     db: Session,
     projects: Iterable[Project],
     hse: dict[uuid.UUID, HseSettings],
+    *,
+    reader: bool = True,
 ) -> Facts:
     """Facts for these projects, cached for `kpi_cache_seconds` (see Settings). The cached
-    Facts are read-only for every consumer; the lazy access facts load at most once."""
+    Facts are read-only for every consumer; the lazy access facts load at most once.
+    `reader=False` (the warm thread) does not count as a read of the scope."""
     plist = list(projects)
     ttl = get_settings().kpi_cache_seconds
     if ttl <= 0:
         return _load(db, plist, hse)
     key = tuple(sorted(p.id for p in plist))
+    if reader:
+        touch([key])
     _sync_db_generation(db)
     hit = _cached(db, key, ttl)
     if hit is not None:
