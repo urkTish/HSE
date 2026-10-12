@@ -125,6 +125,10 @@ def test_dispute_resolve_ac17_18(db: Session) -> None:
         .order_by(CorrectiveAction.ref)
     )
     assert ca is not None
+    # Seeded Phase 1 rows carry the real time they were seeded at, which passed the dispute
+    # (2026-10-12 08:30 Riyadh) on that very day: pin "last changed before the dispute".
+    ca.updated_at = datetime(2026, 10, 1, 9, tzinfo=UTC)
+    db.flush()
     body = ScRemarkResolve(
         resolution=ScResolution.upheld_data_corrected,
         resolution_text="The record was corrected in Phase 3.",
