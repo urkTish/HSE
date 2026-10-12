@@ -10,6 +10,8 @@ import { ErrorState, LoadingState } from "@/components/common/states";
 import { Link } from "@/i18n/navigation";
 import type { Schemas } from "@/lib/api/client";
 import { useKpi, useKpiSources, type KpiQuery } from "@/lib/api/kpi";
+import { useIncidents } from "@/lib/api/hse";
+import { RecordedNotCountedBadge } from "@/components/incidents/vehicle-section";
 import { useDisplay } from "@/lib/digits";
 import { useFormatters } from "@/lib/use-formatters";
 import { apiPathToRoute } from "@/lib/routes";
@@ -92,6 +94,11 @@ function DrillDialog({ metric, label, query, projectId, onClose }: { metric: Met
   const [part, setPart] = useState<"numerator" | "denominator">("numerator");
   const [page, setPage] = useState(1);
   const sources = useKpiSources(metric, part, page, query);
+  // 7a VA-13: mark commuting vehicle incidents in the K-136 / K-137 drill-down. The source rows carry no flag,
+  // so the project's "recorded, not counted" incidents are read from the register (contract request in PROGRESS).
+  const vehicleMetric = metric === "K-136" || metric === "K-137";
+  const rnc = useIncidents(vehicleMetric && projectId ? projectId : "", { recorded_not_counted: true, page_size: 200 });
+  const rncIds = new Set((vehicleMetric ? (rnc.data?.items ?? []) : []).map((x) => x.id));
   const k = kpi.data?.kpi;
   const title = label ?? (k ? (ar ? k.label_ar : k.label_en) : metric);
   const hasDenominator = Boolean(k?.denominator_label_en);
@@ -178,6 +185,7 @@ function DrillDialog({ metric, label, query, projectId, onClose }: { metric: Met
                       <>
                         {r.ref ? <bdi className="ltr block text-xs font-medium text-muted-foreground">{r.ref}</bdi> : null}
                         <span className="block font-medium">{ar ? r.label_ar : r.label_en}</span>
+                        {r.entity_type === "incident" && rncIds.has(r.id) ? <RecordedNotCountedBadge className="mt-1" /> : null}
                         <span className="block text-xs text-muted-foreground">
                           {[date(r.date), r.site_code, r.engagement_code].filter(Boolean).map((x, i) => (
                             <span key={i}>

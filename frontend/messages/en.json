@@ -960,7 +960,8 @@
       "report_pack": "Report pack",
       "distribution_list": "Distribution list",
       "export_job": "Export",
-      "export_subscription": "Export subscription"
+      "export_subscription": "Export subscription",
+      "incident_vehicle": "Incident vehicle"
     },
     "system": "System"
   },
@@ -1521,7 +1522,15 @@
       "PACK_ISSUED_IMMUTABLE": "This pack has been issued and cannot be changed. Re-issue it instead.",
       "SCORECARD_FINAL": "This scorecard is Final.",
       "EXPORT_RATE_LIMIT": "Daily limit of 50 exports reached. Try again tomorrow.",
-      "SCORECARDS_NOT_FINAL": "The month's scorecards are not Final. Wait, or issue with the provisional watermark and a reason."
+      "SCORECARDS_NOT_FINAL": "The month's scorecards are not Final. Wait, or issue with the provisional watermark and a reason.",
+      "ROAD_TYPE_ZONE_MISMATCH": "Road type airside is allowed only in an airside zone, and an airside zone needs road type airside.",
+      "VEHICLE_REQUIRED": "Add at least one vehicle (ownership and role).",
+      "VEHICLE_SECTION_INCOMPLETE": "The vehicle section is incomplete:",
+      "ACCIDENT_REPORT_AUTHORITY_REQUIRED": "A public-road accident needs a Najm, traffic police or airport operator report.",
+      "ACCIDENT_REPORT_MISSING": "The accident report is missing:",
+      "PLATE_IS_REGISTERED": "This plate is in the vehicle register: record it as an own, contractor or hired vehicle.",
+      "VEHICLE_INVOLVED_LOCKED": "A vehicle signal is recorded on this incident: it stays a vehicle incident.",
+      "ACCIDENT_REPORT_LOCKED": "The incident is closed: accident report files are archived and cannot be deleted. Upload a corrected file to supersede one."
     }
   },
   "theme": {
@@ -1703,7 +1712,8 @@
       "airport_operator": "Airport operator",
       "client": "Client",
       "police": "Police",
-      "ncec": "NCEC"
+      "ncec": "NCEC",
+      "najm": "Najm"
     },
     "notificationState": {
       "due": "Due",
@@ -1891,7 +1901,12 @@
       "observation_type": "Observation type",
       "inspection_type": "Inspection type",
       "control_level": "Control level",
-      "ca_priority": "Action priority"
+      "ca_priority": "Action priority",
+      "road_type": "Road type",
+      "vehicle_ownership": "Vehicle ownership",
+      "licence_check": "Licence check",
+      "seat_belt": "Seat belt",
+      "journey_purpose": "Journey purpose"
     },
     "measure": {
       "injury_cases": "Injury cases",
@@ -1900,7 +1915,8 @@
       "observations": "Observations",
       "unsafe_observations": "Unsafe observations",
       "cas": "Corrective actions",
-      "inspections": "Inspections"
+      "inspections": "Inspections",
+      "vehicle_incidents": "Vehicle incidents"
     },
     "exportPurpose": {
       "gosi": "GOSI claim",
@@ -2080,7 +2096,8 @@
       "fu_lesson_photo": "Lesson photo",
       "rp_pack_file": "Report pack file",
       "xp_export_file": "Export file",
-      "sc_remark_file": "Scorecard comment file"
+      "sc_remark_file": "Scorecard comment file",
+      "incident_accident_report": "Accident report (Najm / police)"
     },
     "workerIdType": {
       "iqama": "Iqama",
@@ -2317,7 +2334,10 @@
       "sweeper": "Sweeper",
       "lighting_tower": "Lighting tower",
       "trailer": "Trailer",
-      "other": "Other"
+      "other": "Other",
+      "private_car": "Private car",
+      "motorcycle": "Motorcycle",
+      "bicycle_pedestrian": "Bicycle / pedestrian"
     },
     "checklistItem": {
       "amber_beacon": "Amber beacon",
@@ -5074,7 +5094,9 @@
       "env_ncec": "Environmental (NCEC)",
       "env_airside": "Environmental, airside",
       "any_recordable_case": "Any recordable case",
-      "property_damage_ge_sar": "Property damage over a value"
+      "property_damage_ge_sar": "Property damage over a value",
+      "rta_public_injury": "Public-road accident with injury",
+      "rta_public_no_injury": "Public-road accident without injury"
     },
     "fuForm": {
       "GOSI-WIR": "GOSI work-injury data sheet",
@@ -14353,5 +14375,266 @@
       "sumOff": "should total 100",
       "saveFirst": "Save the changes before activating."
     }
+  },
+  "veh": {
+    "section": "Vehicle accident",
+    "sectionHint": "Fill this for any crash, near miss or damage involving a vehicle or mobile plant. Vehicles are added on the incident page after saving.",
+    "lockedHint": "Set by a vehicle signal on this incident (vehicle mechanism or agency, damaged vehicle, vehicle overturn or airside vehicle flag): it cannot be cleared.",
+    "commutingHint": "Commuting journeys are recorded but not counted in the vehicle incident rate or any injury rate (OSHA). Worker cases on this incident will be proposed as commuting.",
+    "reportLater": "A vehicle incident is reported from its page once at least one vehicle (ownership and role) is added.",
+    "reasonHint": "The investigation is approved: give a reason (at least 20 characters) for changing the vehicle section.",
+    "reasonTooShort": "At least 20 characters.",
+    "publicRoadOnly": "Public road only",
+    "fields": {
+      "vehicle_involved": "Vehicle involved",
+      "road_type": "Road type",
+      "road_location": "Road location",
+      "road_location_hint": "Road name, direction and km marker",
+      "journey_purpose": "Journey purpose",
+      "light": "Light",
+      "surface": "Road surface",
+      "report_authority": "Report authority",
+      "report_no": "Report number",
+      "report_date": "Report date",
+      "liability_pct_own": "Liability on our vehicle",
+      "third_party_damage_desc": "Third-party damage",
+      "third_party_damage_cost_sar": "Third-party damage cost (SAR)",
+      "reason": "Reason for the change",
+      "ownership": "Ownership",
+      "engagement": "Contractor",
+      "vehicle": "Vehicle in the register",
+      "plate": "Plate",
+      "plate_type": "Plate type",
+      "plate_letters_ar": "Plate letters (Arabic)",
+      "plate_letters_en": "Plate letters (Latin)",
+      "plate_digits": "Plate digits",
+      "category": "Category",
+      "make_model": "Make and model",
+      "role": "Role",
+      "damage": "Damage",
+      "damage_cost_sar": "Damage cost (SAR)",
+      "docs": "Documents valid at the time",
+      "istimara": "Istimara",
+      "insurance": "Insurance",
+      "mvpi": "MVPI (Fahas)",
+      "insurer": "Insurer",
+      "policy_no": "Policy number",
+      "seat_belt": "Seat belt (driver)",
+      "speed": "Speed",
+      "speed_kmh": "Speed (km/h)",
+      "speed_limit_kmh": "Speed limit (km/h)",
+      "speed_source": "Speed source",
+      "driver": "Driver",
+      "driver_kind": "Driver",
+      "worker": "Worker",
+      "worker_search": "Find worker (name or number)",
+      "external_driver_name": "External driver name",
+      "licence_issuer": "Licence issuer",
+      "licence_class": "Licence class",
+      "licence_expiry": "Licence expiry",
+      "licence_no": "Licence number (GCC / international)",
+      "licence_check": "Licence check at the time",
+      "hours_on_duty": "Hours on duty before the accident",
+      "driver_case_no": "Driver's injury case",
+      "report_files": "Report copy (archive)"
+    },
+    "noKsaLicenceNo": "KSA licence numbers are not stored (the number equals the holder's ID).",
+    "prefilledFromAdp": "Prefilled from the driver's ADP {adp}",
+    "prefilledFromVehicle": "Prefilled from {vehicle}",
+    "plateRegistered": "This plate is in the vehicle register: record it as an own, contractor or hired vehicle.",
+    "enum": {
+      "roadType": {
+        "site_road": "Site road",
+        "airside": "Airside",
+        "public_road": "Public road"
+      },
+      "journeyPurpose": {
+        "work_task": "Work task",
+        "material_delivery": "Material delivery",
+        "crew_transport": "Crew transport (during the shift)",
+        "commuting_company_transport": "Commuting by company bus or car",
+        "commuting_own": "Commuting by own vehicle",
+        "personal": "Personal",
+        "other": "Other"
+      },
+      "light": {
+        "daylight": "Daylight",
+        "dusk_dawn": "Dusk or dawn",
+        "dark_lit": "Dark, street lights on",
+        "dark_unlit": "Dark, no lighting"
+      },
+      "surface": {
+        "dry": "Dry",
+        "wet": "Wet",
+        "sand_on_road": "Sand on the road",
+        "gravel_unpaved": "Gravel / unpaved",
+        "other": "Other"
+      },
+      "authority": {
+        "najm": "Najm",
+        "traffic_police": "Traffic police",
+        "airport_operator": "Airport operator",
+        "none_internal": "Internal only"
+      },
+      "ownership": {
+        "own_company": "Company vehicle",
+        "contractor": "Contractor vehicle",
+        "hired": "Hired",
+        "third_party": "Third party",
+        "unknown": "Unknown (hit and run)"
+      },
+      "role": {
+        "striking": "Striking vehicle",
+        "struck": "Struck vehicle",
+        "single_vehicle": "Single vehicle",
+        "parked": "Parked"
+      },
+      "damage": {
+        "none": "None",
+        "minor": "Minor",
+        "major": "Major",
+        "total_loss": "Total loss"
+      },
+      "docState": {
+        "valid": "Valid",
+        "expired": "Expired",
+        "unknown": "Unknown"
+      },
+      "docSource": {
+        "register": "from the vehicle register at the accident date",
+        "entered": "entered"
+      },
+      "seatBelt": {
+        "worn": "Worn",
+        "not_worn": "Not worn",
+        "unknown": "Unknown",
+        "not_fitted": "Not fitted"
+      },
+      "speedSource": {
+        "vehicle_recorder": "Dash camera / on-board recorder",
+        "report": "Najm / police report",
+        "estimate": "Estimate",
+        "unknown": "Unknown"
+      },
+      "driverKind": {
+        "worker": "Registered worker",
+        "external": "External driver",
+        "none": "No driver (parked)"
+      },
+      "licenceCheck": {
+        "valid": "Licence valid",
+        "expired": "Licence expired",
+        "wrong_class": "Wrong licence class",
+        "no_licence": "No licence",
+        "not_checked": "Not checked"
+      }
+    },
+    "rnc": {
+      "badge": "Recorded, not counted — commuting (OSHA)",
+      "short": "Recorded, not counted",
+      "explain": "A commuting journey (own vehicle or company transport) is not work-related under OSHA: it stays in the register and in the vehicle incident count, but never in the vehicle incident rate (K-137) or any injury rate."
+    },
+    "list": {
+      "vehicleInvolved": "Vehicle incidents only",
+      "roadType": "Road type",
+      "ownership": "Vehicle ownership",
+      "licenceCheck": "Licence check",
+      "recordedNotCounted": "Recorded, not counted (commuting)",
+      "any": "Any",
+      "plate": "Plate",
+      "reportNo": "Report no.",
+      "vehicle": "Vehicle"
+    },
+    "card": {
+      "title": "Vehicles",
+      "add": "Add vehicle",
+      "addTitle": "Add a vehicle",
+      "editTitle": "Edit vehicle {label}",
+      "removeConfirm": "Remove vehicle {label} from this incident?",
+      "removed": "Vehicle removed",
+      "none": "No vehicle added yet.",
+      "road": "Road",
+      "conditions": "Conditions",
+      "missingForReport": "Needed to report",
+      "missingForInvestigation": "Needed before the investigation is submitted",
+      "prompts": "Investigation prompts",
+      "promptsHint": "A required root-cause consideration for the investigation, not a block.",
+      "commutingProposed": "Commuting journey: {n, plural, one {# worker case is} other {# worker cases are}} proposed as commuting. The classifier confirms on each case.",
+      "openCase": "Open case {no}",
+      "driverHidden": "Driver identity, licence details and third-party plates are shown to authorised users only.",
+      "suggested": "The plate matches {vehicle} in the register",
+      "useSuggested": "Link to {vehicle}",
+      "docsFrom": "Documents",
+      "hoursOnDuty": "{h} h on duty",
+      "speedOf": "{speed} of {limit} km/h",
+      "speedOnly": "{speed} km/h",
+      "cost": "{cost} SAR",
+      "pickVehicle": "Not in the register",
+      "noWorker": "No matching worker"
+    },
+    "report": {
+      "title": "Accident report (archive)",
+      "internal": "Internal record kept with the incident for its retention period. No copy goes to the client.",
+      "edit": "Edit report",
+      "editTitle": "Accident report",
+      "files": "Report files",
+      "noFiles": "No report file archived yet.",
+      "filesHidden": "Report files are shown to users who may see injured-person identity only.",
+      "fileCount": "{n, plural, one {# current file} other {# current files}}",
+      "superseded": "Superseded",
+      "supersededOn": "Superseded {at}",
+      "current": "Current",
+      "upload": "Archive a report file",
+      "replace": "Upload corrected file",
+      "replaceHint": "The earlier file is kept as a superseded version.",
+      "uploaded": "Report file archived",
+      "locked": "The incident is closed: report files are archived and cannot be deleted. A corrected file can still be added; it supersedes the earlier one.",
+      "requiredToClose": "Needed to close the incident",
+      "waived": "Waived through the follow-up requirement",
+      "notRequired": "Not required (internal only)",
+      "complete": "Complete",
+      "offerTitle": "Record the {body} submission?",
+      "offerBody": "Report number {ref} is entered. Record the {body} notification as made with this reference.",
+      "offerAction": "Record submission",
+      "offerFollowup": "Record it in the follow-up panel",
+      "uploadedBy": "{name}, {at}"
+    },
+    "missing": {
+      "road_type": "Road type",
+      "road_location": "Road location",
+      "journey_purpose": "Journey purpose",
+      "report_authority": "Report authority",
+      "report_no": "Report number",
+      "report_date": "Report date",
+      "report_files": "Report file",
+      "vehicles": "At least one vehicle",
+      "ownership": "Ownership",
+      "role": "Role",
+      "engagement_id": "Contractor",
+      "plate": "Plate",
+      "category": "Category",
+      "damage": "Damage",
+      "seat_belt": "Seat belt",
+      "driver_kind": "Driver",
+      "worker_id": "Driver (worker)",
+      "external_driver_name": "External driver name",
+      "licence_issuer": "Licence issuer",
+      "licence_class": "Licence class",
+      "licence_expiry": "Licence expiry"
+    },
+    "dash": {
+      "k137": "Rate (K-137)",
+      "chipsLabel": "Vehicle incident breakdown"
+    },
+    "case": {
+      "proposed": "This incident's journey purpose is commuting, so this worker case is proposed as commuting (recorded, not counted in rates). Confirm by ticking Commuting.",
+      "accept": "Mark as commuting",
+      "mismatch": "This case is marked commuting but the incident's journey purpose is not commuting. You can still save."
+    }
+  },
+  "apiWarning": {
+    "COMMUTING_PURPOSE_MISMATCH": "A case is marked commuting but the journey purpose is not commuting.",
+    "VEHICLE_DOCS_EXPIRED_AT_TIME": "A vehicle document was not valid at the time of the accident: consider it in the investigation.",
+    "LICENCE_NOT_VALID_AT_TIME": "The driver's licence was not valid for this vehicle at the time: consider it in the investigation."
   }
 }

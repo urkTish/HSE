@@ -38,6 +38,8 @@ const TRIGGERS: S["FuTrigger"][] = [
   "env_airside",
   "any_recordable_case",
   "property_damage_ge_sar",
+  "rta_public_injury",
+  "rta_public_no_injury",
 ];
 const FORMS: S["FuForm"][] = ["CLIENT-FLASH", "CLIENT-INTERIM", "CLIENT-FINAL"];
 const STAGES: S["FuStage"][] = ["verbal", "written", "interim", "final"];

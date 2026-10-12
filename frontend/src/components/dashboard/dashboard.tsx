@@ -29,6 +29,7 @@ import { DrillNumber, DrillProvider, useDrill } from "./drill";
 import { FilterBar } from "./filter-bar";
 import { HeadlineValue, KpiTile } from "./kpi-tile";
 import { ActionPanel, ExpiringItems, InsightsPanel, LeagueTable, Panel, SafetyPyramid } from "./panels";
+import { C41_METRIC, VehicleTileChips } from "./vehicle-tile";
 
 type Show = (v: string | number | null | undefined) => string;
 
@@ -157,9 +158,13 @@ function DashboardBody({ query, projectId }: { query: KpiQuery; projectId: strin
               {t("lagging")}
             </h2>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5" data-testid="lagging-tiles">
-              {d.data.lagging.map((tile) => (
-                <KpiTile key={tile.metric} tile={tile} show={show} />
-              ))}
+              {d.data.lagging.map((tile) =>
+                tile.metric === "K-136" ? (
+                  <KpiTile key={tile.metric} tile={tile} show={show} extra={<VehicleTileChips tile={tile} query={query} show={show} />} />
+                ) : (
+                  <KpiTile key={tile.metric} tile={tile} show={show} />
+                ),
+              )}
             </div>
           </section>
           <section aria-labelledby="leading-h">
@@ -707,6 +712,7 @@ function Charts({ query, projectId, show }: { query: KpiQuery; projectId: string
         {(["C1", "C2", "C3", "C5", "C8", "C9"] as const).map((id) => (
           <ChartCard key={id} id={id} query={query} projectId={projectId} show={show} />
         ))}
+        <ChartCard id="C41" query={query} projectId={projectId} show={show} className="lg:col-span-2" metricFor={C41_METRIC} />
         <ChartCard
           id="C7"
           query={query}
@@ -794,6 +800,7 @@ function ChartCard({
   extra,
   controls,
   className,
+  metricFor,
 }: {
   id: Schemas["ChartId"];
   query: KpiQuery;
@@ -805,6 +812,8 @@ function ChartCard({
   };
   controls?: ReactNode;
   className?: string;
+  /** Series key → KPI to drill (C41's road-type bars open K-136, its line K-137); default: the key when it is a K-nn metric. */
+  metricFor?: (seriesKey: string) => Schemas["KpiMetric"] | null;
 }) {
   const ar = useLocale() === "ar";
   const digits = useArabicDigits(projectId);
@@ -824,10 +833,11 @@ function ChartCard({
             arabicDigits={digits}
             actions={controls}
             onPointClick={(seriesKey, x) => {
-              if (!METRIC_RE.test(seriesKey)) return;
+              const metric = metricFor ? metricFor(seriesKey) : METRIC_RE.test(seriesKey) ? (seriesKey as Schemas["KpiMetric"]) : null;
+              if (!metric) return;
               const series = spec.series.find((s) => s.key === seriesKey);
               const label = series ? (ar ? series.label_ar : series.label_en) : seriesKey;
-              open(seriesKey as Schemas["KpiMetric"], `${label} · ${show(x)}`, monthOverride(x) ?? {});
+              open(metric, `${label} · ${show(x)}`, monthOverride(x) ?? {});
             }}
           />
         </>

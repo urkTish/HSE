@@ -960,7 +960,8 @@
       "report_pack": "حزمة التقارير",
       "distribution_list": "قائمة التوزيع",
       "export_job": "التصدير",
-      "export_subscription": "اشتراك التصدير"
+      "export_subscription": "اشتراك التصدير",
+      "incident_vehicle": "مركبة الحادث"
     },
     "system": "النظام"
   },
@@ -1521,7 +1522,15 @@
       "PACK_ISSUED_IMMUTABLE": "صدرت هذه الحزمة ولا يمكن تعديلها. أعد إصدارها بدلًا من ذلك.",
       "SCORECARD_FINAL": "بطاقة الأداء هذه معتمدة.",
       "EXPORT_RATE_LIMIT": "بلغت الحد اليومي (50 تصديرًا). حاول غدًا.",
-      "SCORECARDS_NOT_FINAL": "بطاقات أداء الشهر غير معتمدة. انتظر أو أصدر بعلامة «مبدئي» مع ذكر السبب."
+      "SCORECARDS_NOT_FINAL": "بطاقات أداء الشهر غير معتمدة. انتظر أو أصدر بعلامة «مبدئي» مع ذكر السبب.",
+      "ROAD_TYPE_ZONE_MISMATCH": "نوع الطريق \"الجانب الجوي\" يتطلب منطقة جانب جوي، ومنطقة الجانب الجوي تتطلب هذا النوع.",
+      "VEHICLE_REQUIRED": "أضف مركبة واحدة على الأقل (الملكية والدور).",
+      "VEHICLE_SECTION_INCOMPLETE": "قسم المركبات غير مكتمل:",
+      "ACCIDENT_REPORT_AUTHORITY_REQUIRED": "حادث الطريق العام يتطلب محضر نجم أو المرور أو مشغل المطار.",
+      "ACCIDENT_REPORT_MISSING": "محضر الحادث غير مكتمل:",
+      "PLATE_IS_REGISTERED": "هذه اللوحة مسجلة في سجل المركبات: سجّلها كمركبة الشركة أو المقاول أو مستأجرة.",
+      "VEHICLE_INVOLVED_LOCKED": "تم تسجيل مؤشر مركبة في هذا الحادث: يبقى حادث مركبة.",
+      "ACCIDENT_REPORT_LOCKED": "الحادث مغلق: ملفات محضر الحادث مؤرشفة ولا يمكن حذفها. ارفع ملفاً مصححاً ليحل محل أحدها."
     }
   },
   "theme": {
@@ -1703,7 +1712,8 @@
       "airport_operator": "مشغل المطار",
       "client": "العميل",
       "police": "الشرطة",
-      "ncec": "المركز الوطني للرقابة على الالتزام البيئي"
+      "ncec": "المركز الوطني للرقابة على الالتزام البيئي",
+      "najm": "نجم"
     },
     "notificationState": {
       "due": "مستحق",
@@ -1891,7 +1901,12 @@
       "observation_type": "نوع الملاحظة",
       "inspection_type": "نوع التفتيش",
       "control_level": "مستوى التحكم",
-      "ca_priority": "أولوية الإجراء"
+      "ca_priority": "أولوية الإجراء",
+      "road_type": "نوع الطريق",
+      "vehicle_ownership": "ملكية المركبة",
+      "licence_check": "فحص الرخصة",
+      "seat_belt": "حزام الأمان",
+      "journey_purpose": "غرض الرحلة"
     },
     "measure": {
       "injury_cases": "حالات الإصابة",
@@ -1900,7 +1915,8 @@
       "observations": "الملاحظات",
       "unsafe_observations": "الملاحظات غير الآمنة",
       "cas": "الإجراءات التصحيحية",
-      "inspections": "عمليات التفتيش"
+      "inspections": "عمليات التفتيش",
+      "vehicle_incidents": "حوادث المركبات"
     },
     "exportPurpose": {
       "gosi": "مطالبة التأمينات (GOSI)",
@@ -2080,7 +2096,8 @@
       "fu_lesson_photo": "صورة الدرس",
       "rp_pack_file": "ملف حزمة التقارير",
       "xp_export_file": "ملف التصدير",
-      "sc_remark_file": "مرفق ملاحظة بطاقة الأداء"
+      "sc_remark_file": "مرفق ملاحظة بطاقة الأداء",
+      "incident_accident_report": "محضر الحادث (نجم / المرور)"
     },
     "workerIdType": {
       "iqama": "إقامة",
@@ -2317,7 +2334,10 @@
       "sweeper": "كانسة",
       "lighting_tower": "برج إنارة",
       "trailer": "مقطورة",
-      "other": "أخرى"
+      "other": "أخرى",
+      "private_car": "سيارة خاصة",
+      "motorcycle": "دراجة نارية",
+      "bicycle_pedestrian": "دراجة / مشاة"
     },
     "checklistItem": {
       "amber_beacon": "منارة كهرمانية",
@@ -5074,7 +5094,9 @@
       "env_ncec": "بيئي (المركز الوطني)",
       "env_airside": "بيئي في الجانب الجوي",
       "any_recordable_case": "أي حالة مسجلة",
-      "property_damage_ge_sar": "أضرار ممتلكات تتجاوز قيمة"
+      "property_damage_ge_sar": "أضرار ممتلكات تتجاوز قيمة",
+      "rta_public_injury": "حادث طريق عام مع إصابة",
+      "rta_public_no_injury": "حادث طريق عام دون إصابة"
     },
     "fuForm": {
       "GOSI-WIR": "بيانات بلاغ إصابة عمل",
@@ -14353,5 +14375,266 @@
       "sumOff": "يجب أن يكون المجموع 100",
       "saveFirst": "احفظ التغييرات قبل التفعيل."
     }
+  },
+  "veh": {
+    "section": "حادث مركبة",
+    "sectionHint": "املأ هذا القسم لأي تصادم أو حادث وشيك أو ضرر يتعلق بمركبة أو معدة متحركة. تُضاف المركبات من صفحة الحادث بعد الحفظ.",
+    "lockedHint": "تم تحديده بسبب مؤشر مركبة في هذا الحادث (آلية أو مسبب مركبة، مركبة متضررة، انقلاب مركبة أو مؤشر مركبة في الجانب الجوي): لا يمكن إلغاؤه.",
+    "commutingHint": "رحلات التنقل تُسجَّل ولا تُحتسب في معدل حوادث المركبات ولا في أي معدل إصابات (OSHA). ستُقترح حالات العمال في هذا الحادث كحالات تنقل.",
+    "reportLater": "يُبلَّغ عن حادث المركبة من صفحته بعد إضافة مركبة واحدة على الأقل (الملكية والدور).",
+    "reasonHint": "التحقيق معتمد: اذكر سبباً (20 حرفاً على الأقل) لتعديل قسم المركبات.",
+    "reasonTooShort": "20 حرفاً على الأقل.",
+    "publicRoadOnly": "للطريق العام فقط",
+    "fields": {
+      "vehicle_involved": "حادث مركبة",
+      "road_type": "نوع الطريق",
+      "road_location": "موقع الطريق",
+      "road_location_hint": "اسم الطريق والاتجاه وعلامة الكيلومتر",
+      "journey_purpose": "غرض الرحلة",
+      "light": "الإضاءة",
+      "surface": "سطح الطريق",
+      "report_authority": "جهة محضر الحادث",
+      "report_no": "رقم المحضر",
+      "report_date": "تاريخ المحضر",
+      "liability_pct_own": "نسبة المسؤولية على مركبتنا",
+      "third_party_damage_desc": "أضرار الطرف الثالث",
+      "third_party_damage_cost_sar": "تكلفة أضرار الطرف الثالث (ريال)",
+      "reason": "سبب التعديل",
+      "ownership": "الملكية",
+      "engagement": "المقاول",
+      "vehicle": "المركبة في السجل",
+      "plate": "اللوحة",
+      "plate_type": "نوع اللوحة",
+      "plate_letters_ar": "حروف اللوحة (عربي)",
+      "plate_letters_en": "حروف اللوحة (لاتيني)",
+      "plate_digits": "أرقام اللوحة",
+      "category": "الفئة",
+      "make_model": "الطراز",
+      "role": "الدور",
+      "damage": "الضرر",
+      "damage_cost_sar": "تكلفة الضرر (ريال)",
+      "docs": "المستندات سارية وقت الحادث",
+      "istimara": "الاستمارة",
+      "insurance": "التأمين",
+      "mvpi": "الفحص الدوري",
+      "insurer": "شركة التأمين",
+      "policy_no": "رقم الوثيقة",
+      "seat_belt": "حزام الأمان (السائق)",
+      "speed": "السرعة",
+      "speed_kmh": "السرعة (كم/س)",
+      "speed_limit_kmh": "الحد الأقصى للسرعة (كم/س)",
+      "speed_source": "مصدر السرعة",
+      "driver": "السائق",
+      "driver_kind": "السائق",
+      "worker": "العامل",
+      "worker_search": "ابحث عن عامل (الاسم أو الرقم)",
+      "external_driver_name": "اسم السائق الخارجي",
+      "licence_issuer": "جهة إصدار الرخصة",
+      "licence_class": "فئة الرخصة",
+      "licence_expiry": "انتهاء الرخصة",
+      "licence_no": "رقم الرخصة (خليجية / دولية)",
+      "licence_check": "فحص الرخصة وقت الحادث",
+      "hours_on_duty": "ساعات العمل قبل الحادث",
+      "driver_case_no": "حالة الإصابة للسائق",
+      "report_files": "نسخة المحضر (أرشيف)"
+    },
+    "noKsaLicenceNo": "لا يُحفظ رقم الرخصة السعودية (فهو رقم هوية حاملها).",
+    "prefilledFromAdp": "مُعبأ من تصريح القيادة في الجانب الجوي {adp}",
+    "prefilledFromVehicle": "مُعبأ من {vehicle}",
+    "plateRegistered": "هذه اللوحة مسجلة في سجل المركبات: سجّلها كمركبة الشركة أو المقاول أو مستأجرة.",
+    "enum": {
+      "roadType": {
+        "site_road": "طريق داخل الموقع",
+        "airside": "الجانب الجوي",
+        "public_road": "طريق عام"
+      },
+      "journeyPurpose": {
+        "work_task": "مهمة عمل",
+        "material_delivery": "توصيل مواد",
+        "crew_transport": "نقل العمال (أثناء الوردية)",
+        "commuting_company_transport": "تنقل بوسيلة الشركة",
+        "commuting_own": "تنقل بوسيلة خاصة",
+        "personal": "شخصي",
+        "other": "أخرى"
+      },
+      "light": {
+        "daylight": "ضوء النهار",
+        "dusk_dawn": "الغسق أو الفجر",
+        "dark_lit": "ظلام مع إنارة",
+        "dark_unlit": "ظلام بلا إنارة"
+      },
+      "surface": {
+        "dry": "جاف",
+        "wet": "مبلل",
+        "sand_on_road": "رمال على الطريق",
+        "gravel_unpaved": "حصى / غير معبد",
+        "other": "أخرى"
+      },
+      "authority": {
+        "najm": "نجم",
+        "traffic_police": "المرور",
+        "airport_operator": "مشغل المطار",
+        "none_internal": "داخلي فقط"
+      },
+      "ownership": {
+        "own_company": "مركبة الشركة",
+        "contractor": "مركبة مقاول",
+        "hired": "مستأجرة",
+        "third_party": "طرف ثالث",
+        "unknown": "غير معروفة (هروب)"
+      },
+      "role": {
+        "striking": "المركبة الصادمة",
+        "struck": "المركبة المصدومة",
+        "single_vehicle": "حادث منفرد",
+        "parked": "متوقفة"
+      },
+      "damage": {
+        "none": "لا يوجد",
+        "minor": "طفيف",
+        "major": "كبير",
+        "total_loss": "خسارة كلية"
+      },
+      "docState": {
+        "valid": "ساري",
+        "expired": "منتهي",
+        "unknown": "غير معروف"
+      },
+      "docSource": {
+        "register": "من سجل المركبات بتاريخ الحادث",
+        "entered": "مُدخل يدوياً"
+      },
+      "seatBelt": {
+        "worn": "مربوط",
+        "not_worn": "غير مربوط",
+        "unknown": "غير معروف",
+        "not_fitted": "غير مركّب"
+      },
+      "speedSource": {
+        "vehicle_recorder": "كاميرا المركبة / المسجل",
+        "report": "محضر نجم / المرور",
+        "estimate": "تقدير",
+        "unknown": "غير معروف"
+      },
+      "driverKind": {
+        "worker": "عامل مسجل",
+        "external": "سائق خارجي",
+        "none": "لا يوجد (متوقفة)"
+      },
+      "licenceCheck": {
+        "valid": "الرخصة سارية",
+        "expired": "الرخصة منتهية",
+        "wrong_class": "فئة رخصة غير مناسبة",
+        "no_licence": "لا توجد رخصة",
+        "not_checked": "لم تُفحص"
+      }
+    },
+    "rnc": {
+      "badge": "مسجل، غير محتسب — تنقل (OSHA)",
+      "short": "مسجل، غير محتسب",
+      "explain": "رحلة التنقل (بمركبة خاصة أو وسيلة الشركة) ليست مرتبطة بالعمل وفق OSHA: تبقى في السجل وفي عدد حوادث المركبات، ولا تُحتسب أبداً في معدل حوادث المركبات (K-137) ولا في أي معدل إصابات."
+    },
+    "list": {
+      "vehicleInvolved": "حوادث المركبات فقط",
+      "roadType": "نوع الطريق",
+      "ownership": "ملكية المركبة",
+      "licenceCheck": "فحص الرخصة",
+      "recordedNotCounted": "مسجل، غير محتسب (تنقل)",
+      "any": "الكل",
+      "plate": "اللوحة",
+      "reportNo": "رقم المحضر",
+      "vehicle": "مركبة"
+    },
+    "card": {
+      "title": "المركبات",
+      "add": "إضافة مركبة",
+      "addTitle": "إضافة مركبة",
+      "editTitle": "تعديل المركبة {label}",
+      "removeConfirm": "إزالة المركبة {label} من هذا الحادث؟",
+      "removed": "أُزيلت المركبة",
+      "none": "لم تُضف أي مركبة بعد.",
+      "road": "الطريق",
+      "conditions": "الظروف",
+      "missingForReport": "مطلوب للإبلاغ",
+      "missingForInvestigation": "مطلوب قبل تقديم التحقيق",
+      "prompts": "اعتبارات للتحقيق",
+      "promptsHint": "اعتبار إلزامي عند تحليل الأسباب الجذرية في التحقيق، وليس منعاً.",
+      "commutingProposed": "رحلة تنقل: {n, plural, zero {لا حالات مقترحة} one {حالة عامل واحدة مقترحة} two {حالتا عامل مقترحتان} few {# حالات عمال مقترحة} many {# حالة عمال مقترحة} other {# حالة عمال مقترحة}} كحالات تنقل. يؤكد المصنِّف ذلك في كل حالة.",
+      "openCase": "فتح الحالة {no}",
+      "driverHidden": "هوية السائق وتفاصيل الرخصة ولوحات الطرف الثالث تظهر للمستخدمين المخوّلين فقط.",
+      "suggested": "اللوحة تطابق {vehicle} في السجل",
+      "useSuggested": "ربط بـ {vehicle}",
+      "docsFrom": "المستندات",
+      "hoursOnDuty": "{h} ساعة عمل",
+      "speedOf": "{speed} من {limit} كم/س",
+      "speedOnly": "{speed} كم/س",
+      "cost": "{cost} ريال",
+      "pickVehicle": "غير مسجلة",
+      "noWorker": "لا يوجد عامل مطابق"
+    },
+    "report": {
+      "title": "محضر الحادث (أرشيف)",
+      "internal": "سجل داخلي يُحفظ مع الحادث طوال مدة الاحتفاظ به. لا تُرسل نسخة إلى العميل.",
+      "edit": "تعديل المحضر",
+      "editTitle": "محضر الحادث",
+      "files": "ملفات المحضر",
+      "noFiles": "لم يُؤرشف أي ملف للمحضر بعد.",
+      "filesHidden": "ملفات المحضر تظهر فقط لمن يحق له رؤية هوية المصاب.",
+      "fileCount": "{n, plural, zero {لا ملفات حالية} one {ملف حالي واحد} two {ملفان حاليان} few {# ملفات حالية} many {# ملفاً حالياً} other {# ملف حالي}}",
+      "superseded": "مستبدل",
+      "supersededOn": "استُبدل {at}",
+      "current": "حالي",
+      "upload": "أرشفة ملف المحضر",
+      "replace": "رفع ملف مصحح",
+      "replaceHint": "يُحفظ الملف السابق كنسخة مستبدلة.",
+      "uploaded": "تمت أرشفة ملف المحضر",
+      "locked": "الحادث مغلق: ملفات المحضر مؤرشفة ولا يمكن حذفها. ما زال بالإمكان إضافة ملف مصحح يحل محل السابق.",
+      "requiredToClose": "مطلوب لإغلاق الحادث",
+      "waived": "معفى عبر متطلب المتابعة",
+      "notRequired": "غير مطلوب (داخلي فقط)",
+      "complete": "مكتمل",
+      "offerTitle": "تسجيل الإبلاغ إلى {body}؟",
+      "offerBody": "تم إدخال رقم المحضر {ref}. سجّل الإبلاغ إلى {body} كمُنجز بهذا المرجع.",
+      "offerAction": "تسجيل الإبلاغ",
+      "offerFollowup": "سجّله في لوحة المتابعة",
+      "uploadedBy": "{name}، {at}"
+    },
+    "missing": {
+      "road_type": "نوع الطريق",
+      "road_location": "موقع الطريق",
+      "journey_purpose": "غرض الرحلة",
+      "report_authority": "جهة المحضر",
+      "report_no": "رقم المحضر",
+      "report_date": "تاريخ المحضر",
+      "report_files": "ملف المحضر",
+      "vehicles": "مركبة واحدة على الأقل",
+      "ownership": "الملكية",
+      "role": "الدور",
+      "engagement_id": "المقاول",
+      "plate": "اللوحة",
+      "category": "الفئة",
+      "damage": "الضرر",
+      "seat_belt": "حزام الأمان",
+      "driver_kind": "السائق",
+      "worker_id": "السائق (عامل)",
+      "external_driver_name": "اسم السائق الخارجي",
+      "licence_issuer": "جهة إصدار الرخصة",
+      "licence_class": "فئة الرخصة",
+      "licence_expiry": "انتهاء الرخصة"
+    },
+    "dash": {
+      "k137": "المعدل (K-137)",
+      "chipsLabel": "تفصيل حوادث المركبات"
+    },
+    "case": {
+      "proposed": "غرض الرحلة في هذا الحادث هو التنقل، لذا تُقترح هذه الحالة كحالة تنقل (مسجلة ولا تُحتسب في المعدلات). أكّد ذلك بتحديد خيار التنقل.",
+      "accept": "تحديد كتنقل",
+      "mismatch": "هذه الحالة مسجلة كتنقل بينما غرض الرحلة في الحادث ليس تنقلاً. يمكنك الحفظ مع ذلك."
+    }
+  },
+  "apiWarning": {
+    "COMMUTING_PURPOSE_MISMATCH": "حالة مسجلة كتنقل بينما غرض الرحلة ليس تنقلاً.",
+    "VEHICLE_DOCS_EXPIRED_AT_TIME": "أحد مستندات المركبة لم يكن سارياً وقت الحادث: يجب أخذه بالاعتبار في التحقيق.",
+    "LICENCE_NOT_VALID_AT_TIME": "رخصة السائق لم تكن سارية لهذه المركبة وقت الحادث: يجب أخذ ذلك بالاعتبار في التحقيق."
   }
 }

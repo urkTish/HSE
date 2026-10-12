@@ -14,7 +14,7 @@
 - Phase 6f step = Design done (contract v0.12.0; 11 p6f specs green on a fresh seed; screenshots `docs/screenshots/phase-6f`; design pass `docs/design/phase-6f-findings.md`)
 - Phase 6g — Contractor HSE scorecard + reports export pack: spec `docs/specs/6g-scorecard-reports.md` v1.0 (56 ACs; §11 earlier-spec changes applied; contract v0.13.0)
 - Phase 6g step = Design done (contract v0.13.0; 21 p6g specs green on a fresh seed; screenshots `docs/screenshots/phase-6g`; design pass `docs/design/phase-6g-findings.md`)
-- Option 7a — Vehicle accident details (vehicle section on incidents, police / Najm rows, Najm / police report archived with no client copy, commuting recorded but not counted, K-136…K-137, C41): spec `docs/specs/7a-vehicle-accident-details.md` v1.1 (32 ACs; HSE Manager answers 2026-10-11). **7a backend done (contract v0.14.0); frontend next.** Handover `docs/HANDOVER-vehicle.md`.
+- Option 7a — Vehicle accident details (vehicle section on incidents, police / Najm rows, Najm / police report archived with no client copy, commuting recorded but not counted, K-136…K-137, C41): spec `docs/specs/7a-vehicle-accident-details.md` v1.1 (32 ACs; HSE Manager answers 2026-10-11). **7a backend and frontend done (contract v0.14.0); design pass next.** Handover `docs/HANDOVER-vehicle.md`.
 - Option 7b — Site vehicle & plant readiness, **Prototype** (construction: readiness fields and document expiry, driver / operator authorisation, pre-use checks, minimal journey-plan form; capabilities 233–237, K-138…K-140; gate logging (security) and telematics / points / mileage (logistics) out of scope; 7a optional): spec `docs/specs/7b-fleet-driver.md` v2.0 (24 ACs). **Planned, not started (awaiting HSE Manager go).** Handover `docs/HANDOVER-vehicle.md`.
 
 ## Phase log
@@ -26,6 +26,13 @@
 - Phase 5 — Training: complete (2026-10-10). Parked 2026-10-08, resumed after Phase 6; built, e2e green (full run 291 passed, 0 failed), design pass done.
 
 ## Done
+
+### Frontend — Option 7a vehicle accident details (contract v0.14.0, 2026-10-12)
+- API types regenerated (`npm run gen:api`). Incident page: "Vehicle accident" card (`components/incidents/vehicle-section.tsx`: road / journey / conditions with an edit dialog, VA-2 missing lists, VA-4 investigation prompts, VA-7 commuting proposals, vehicle rows as compact cards at 390 px with add / edit / remove dialog, register-vehicle and ADP licence prefill, third-party plate check) and "Accident report (archive)" card (authority, number, date, liability, close status, files incl. superseded versions, upload / supersede, locked after Closed, files only when `files_visible` (capability 29), AC21 offer to record the 6f / Phase 1 police or Najm submission with the report number).
+- Badge "Recorded, not counted — commuting (OSHA)" on the incident header, register rows and the K-136 / K-137 drill-down. Register filters: vehicle involved, road type, ownership, licence check, recorded-not-counted; plate and report no. columns (shown when the page has a vehicle incident). Incident form: vehicle section (VA-1 lock shown, commuting hint, report fields); a vehicle incident is reported from its page. Case form: commuting proposal (button) and the COMMUTING_PURPOSE_MISMATCH warning; API warnings now use local EN/AR text by code (`apiWarning.*`). PDPL: personal fields render only when the API returns them (P7a-1), with a note.
+- Dashboard: K-136 tile with chips (road types, with injury, recorded-not-counted, K-137 rate) and chart C41 through the chart renderer (bars drill K-136, the line K-137). 6f: body `najm` label and filter, triggers `rta_public_*` in the rule form.
+- Strings `scripts/i18n/p7-vehicle.py` (new keys only; `veh.*`, `apiWarning.*`, new enum / error / audit values). Decision D-244.
+- Checks: lint, typecheck, i18n (12,696 keys), build green. e2e `p7a-vehicle.spec.ts` 10 passed (AC2/3/9, 13, 14, 17, 18, 21, 23, 24, 28, 32) on a fresh seed (own DB hse_e2e_7a, ports 8010 / 3010). Affected specs on the same seed: p1-incidents 7/7, p1-dashboard 10/10 (the "Filters live in the URL… drill-down" test failed once right after the cold backend start and passed on rerun), p6f-notifications 3/3, p6f-settings 2/2. `screenshots-p7a.spec.ts` (SCREENSHOTS=1) wrote 20 EN/AR screens (desktop, viewer, 390 px) to `docs/screenshots/phase-7a`.
 
 ### Backend — Option 7a vehicle accident details (contract v0.14.0; stage 1 contract out, stage 2 done 2026-10-12)
 - Stage 2: services VA-1…VA-15 (report archive + lock, no client copy, recorded-not-counted), 6f rows POL-RTA / NAJM-V, K-136 / K-137, C41, AI T3–T5 with plate / driver masking, 6g dataset `incident_vehicles`, job `vehicle_report_reminders` (07:10). Seed `app/seed_vehicle.py` (Appendix A, additive; D-239). Specs: 1-dashboard v1.11, 6f v1.1, 6g v1.1. Tests `test_vehicle_accident.py` (VW1 exact K-136 = 5, K-137 = 0.32) and `test_phase7a_contract.py`.
@@ -958,6 +965,8 @@
 - (Backend, ops) With 4 API workers the KPI cache can show figures up to 20 s old after a write made through another worker, and the gate rate limit (120/min) is counted per worker. Acceptable for v1.0?
 
 ## Contract requests
+- (Frontend 7a, low) A `recorded_not_counted` flag (or a badge label) on `SourceRecord` for incident rows: the K-136 / K-137 drill-down now cross-reads the project register (`recorded_not_counted=true`, up to 200 rows) to show the badge, and shows none for all-projects scopes (D-244).
+- (Frontend 7a, low) `IncidentCreate.vehicle_involved` is generated as required although the server defaults it; the form omits it on create so VA-1 can derive it (sending false with a signal returns VEHICLE_INVOLVED_LOCKED).
 - (Frontend 6g, low) `comment_open` (or `can_comment`) on `ScCardRead`, so the comment / dispute button follows the server instead of the browser clock (D-233).
 - 6d (frontend): `AnswerInput.photo_ids` (keep already-stored photos) so re-saving audit answers does not re-send photos (D-191); Arabic KPI notes (or note codes) on `FieldKpiResponse.notes` instead of English strings (D-190).
 - (Frontend 6c) `GET /projects/{id}/muster-devices` (list the muster readers with AP, label, last seen, revoked) — the page can only list devices registered in the current session.

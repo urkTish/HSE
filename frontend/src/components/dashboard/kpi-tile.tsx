@@ -1,7 +1,7 @@
 "use client";
 import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import type { Schemas } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
 import { DrillNumber } from "./drill";
@@ -103,7 +103,7 @@ function showUnit(tile: Tile): boolean {
   return !tile.display.trim().endsWith(u);
 }
 
-export function KpiTile({ tile, show }: { tile: Tile; show: (v: string) => string }) {
+export function KpiTile({ tile, show, extra }: { tile: Tile; show: (v: string) => string; extra?: ReactNode }) {
   const t = useTranslations("dashboard");
   const te = useTranslations("enums");
   const ar = useLocale() === "ar";
@@ -128,7 +128,9 @@ export function KpiTile({ tile, show }: { tile: Tile; show: (v: string) => strin
         {showUnit(tile) ? <span className="ms-1 text-xs font-normal text-muted-foreground">{ar ? tile.unit_ar : tile.unit_en}</span> : null}
       </DrillNumber>
       {cmp ? <Comparison c={cmp} show={show} /> : null}
-      {tile.components.length > 0 ? (
+      {extra ? (
+        extra
+      ) : tile.components.length > 0 ? (
         <p className="text-xs text-muted-foreground">{tile.components.map((c) => `${ar ? c.label_ar : c.label_en} ${show(c.display)}`).join(" · ")}</p>
       ) : null}
       {tile.target_display ? <p className="text-[11px] text-muted-foreground">{t("target", { value: show(tile.target_display) })}</p> : null}

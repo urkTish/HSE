@@ -27,6 +27,7 @@ import { applyServerErrors } from "@/lib/forms";
 import { useFieldErrorTranslator } from "@/lib/i18n-helpers";
 import { useLocalDraft, useOnline } from "@/lib/local-draft";
 import { useRefLists } from "@/lib/reference";
+import { VEH_AUTHORITIES, VEH_COMMUTING, VEH_JOURNEY_PURPOSES, VEH_LIABILITY, VEH_LIGHTS, VEH_ROAD_TYPES, VEH_SURFACES } from "@/lib/vehicle-enums";
 
 type IncType = Schemas["IncidentType"];
 type Flag = Schemas["AirsideFlag"];
@@ -34,6 +35,7 @@ const DEC = /^\d+(\.\d{1,2})?$/;
 
 export function IncidentForm({ project, incident }: { project: Schemas["ProjectRead"]; incident?: Schemas["IncidentRead"] }) {
   const t = useTranslations("incidents");
+  const tveh = useTranslations("veh");
   const te = useTranslations("enums");
   const tv = useTranslations("validation");
   const tc = useTranslations("common");
@@ -79,6 +81,18 @@ export function IncidentForm({ project, incident }: { project: Schemas["ProjectR
           env_contained: z.boolean(),
           env_reached: z.string(),
           do_category: z.string(),
+          vehicle_involved: z.boolean(),
+          road_type: z.string(),
+          road_location: z.string().max(200, tv("maxLength", { max: 200 })),
+          journey_purpose: z.string(),
+          light: z.string(),
+          surface: z.string(),
+          report_authority: z.string(),
+          report_no: z.string().max(40, tv("maxLength", { max: 40 })),
+          report_date: z.string(),
+          liability_pct_own: z.string(),
+          third_party_damage_desc: z.string().max(500, tv("maxLength", { max: 500 })),
+          third_party_damage_cost_sar: z.string().refine((v) => v === "" || DEC.test(v), tv("number")),
         })
         .superRefine((v, ctx) => {
           if (v.incident_types.includes("near_miss") && v.incident_types.length > 1) ctx.addIssue({ code: "custom", path: ["incident_types"], message: t("nearMissExclusive") });
@@ -130,6 +144,18 @@ export function IncidentForm({ project, incident }: { project: Schemas["ProjectR
       env_contained: incident?.environmental?.contained ?? false,
       env_reached: incident?.environmental?.reached ?? "",
       do_category: incident?.dangerous_occurrence?.category ?? "",
+      vehicle_involved: incident?.vehicle_involved ?? false,
+      road_type: incident?.vehicle_section?.road_type ?? "",
+      road_location: incident?.vehicle_section?.road_location ?? "",
+      journey_purpose: incident?.vehicle_section?.journey_purpose ?? "",
+      light: incident?.vehicle_section?.light ?? "",
+      surface: incident?.vehicle_section?.surface ?? "",
+      report_authority: incident?.vehicle_section?.accident_report.report_authority ?? "",
+      report_no: incident?.vehicle_section?.accident_report.report_no ?? "",
+      report_date: incident?.vehicle_section?.accident_report.report_date ?? "",
+      liability_pct_own: incident?.vehicle_section?.accident_report.liability_pct_own != null ? String(incident.vehicle_section.accident_report.liability_pct_own) : "",
+      third_party_damage_desc: incident?.vehicle_section?.third_party_damage_desc ?? "",
+      third_party_damage_cost_sar: incident?.vehicle_section?.third_party_damage_cost_sar ?? "",
     },
   });
   const draft = useLocalDraft(`incident.${project.id}`, form, !incident);
@@ -138,6 +164,10 @@ export function IncidentForm({ project, incident }: { project: Schemas["ProjectR
   const zoneId = useWatch({ control: form.control, name: "zone_id" });
   const types = useWatch({ control: form.control, name: "incident_types" });
   const workRelated = useWatch({ control: form.control, name: "work_related" });
+  const vehicle = useWatch({ control: form.control, name: "vehicle_involved" });
+  const roadType = useWatch({ control: form.control, name: "road_type" });
+  const journey = useWatch({ control: form.control, name: "journey_purpose" });
+  const vehicleLocked = Boolean(incident?.vehicle_section?.vehicle_involved_locked);
   const textForHint = `${useWatch({ control: form.control, name: "title" })} ${useWatch({ control: form.control, name: "description" })} ${useWatch({ control: form.control, name: "immediate_actions" })}`;
   const zones = opts.zones.filter((z) => z.siteId === siteId);
   const engagements = opts.engagements.filter((e) => !siteId || e.siteIds.includes(siteId));
@@ -178,11 +208,34 @@ export function IncidentForm({ project, incident }: { project: Schemas["ProjectR
           }
         : null,
       dangerous_occurrence: has("dangerous_occurrence") ? { category: v.do_category as Schemas["DangerousOccurrenceCategory"] } : null,
+      // 7a: on create an unticked box sends nothing (the server derives VA-1); on edit it can clear a manual flag.
+      ...(v.vehicle_involved
+        ? {
+            vehicle_involved: true,
+            road_type: (v.road_type || null) as Schemas["VehRoadType"] | null,
+            road_location: v.road_type === "public_road" ? v.road_location.trim() || null : null,
+            journey_purpose: (v.journey_purpose || null) as Schemas["VehJourneyPurpose"] | null,
+            light: (v.light || null) as Schemas["VehLight"] | null,
+            surface: (v.surface || null) as Schemas["VehSurface"] | null,
+            report_authority: (v.report_authority || null) as Schemas["VehReportAuthority"] | null,
+            report_no: v.report_no.trim() || null,
+            report_date: v.report_date || null,
+            liability_pct_own: v.liability_pct_own === "" ? null : Number(v.liability_pct_own),
+            third_party_damage_desc: v.third_party_damage_desc.trim() || null,
+            third_party_damage_cost_sar: v.third_party_damage_cost_sar || null,
+          }
+        : incident?.vehicle_involved
+          ? { vehicle_involved: false }
+          : {}),
     };
     try {
       let saved = incident
         ? await unwrap(api.PATCH("/api/v1/incidents/{incident_id}", { params: { path: { incident_id: incident.id } }, body }))
-        : await unwrap(api.POST("/api/v1/projects/{project_id}/incidents", { params: { path: { project_id: project.id } }, body }));
+        : await unwrap(api.POST("/api/v1/projects/{project_id}/incidents", {
+            params: { path: { project_id: project.id } },
+            // vehicle_involved has a server default; leaving it out lets VA-1 derive it (false would be refused when a signal holds).
+            body: body as Schemas["IncidentCreate"],
+          }));
       draft.clear();
       warn(saved.warnings);
       if (report && saved.status === "draft" && !has("injury_illness")) {
@@ -423,6 +476,99 @@ export function IncidentForm({ project, incident }: { project: Schemas["ProjectR
           </CheckboxField>
         </FormSection>
       ) : null}
+      <FormSection title={tveh("section")} description={tveh("sectionHint")}>
+        <CheckboxField id="vehicle_involved" label={tveh("fields.vehicle_involved")}>
+          <Checkbox {...form.register("vehicle_involved")} disabled={vehicleLocked} data-testid="vehicle-involved" />
+        </CheckboxField>
+        {vehicleLocked ? <p className="text-xs text-muted-foreground sm:col-span-2" data-testid="vehicle-locked">{tveh("lockedHint")}</p> : null}
+        {vehicle ? (
+          <>
+            <FormField id="road_type" label={tveh("fields.road_type")} error={errors.road_type?.message} required>
+              <Select {...form.register("road_type")} data-testid="road-type">
+                <option value="">{tc("select")}</option>
+                {VEH_ROAD_TYPES.map((x) => (
+                  <option key={x} value={x}>
+                    {tveh(`enum.roadType.${x}`)}
+                  </option>
+                ))}
+              </Select>
+            </FormField>
+            <FormField id="journey_purpose" label={tveh("fields.journey_purpose")} error={errors.journey_purpose?.message} required>
+              <Select {...form.register("journey_purpose")} data-testid="journey-purpose">
+                <option value="">{tc("select")}</option>
+                {VEH_JOURNEY_PURPOSES.map((x) => (
+                  <option key={x} value={x}>
+                    {tveh(`enum.journeyPurpose.${x}`)}
+                  </option>
+                ))}
+              </Select>
+            </FormField>
+            {VEH_COMMUTING.includes(journey as Schemas["VehJourneyPurpose"]) ? (
+              <Alert tone="info" className="sm:col-span-2" data-testid="commuting-hint">
+                {tveh("commutingHint")}
+              </Alert>
+            ) : null}
+            {roadType === "public_road" ? (
+              <FormField id="road_location" label={tveh("fields.road_location")} error={errors.road_location?.message} hint={tveh("fields.road_location_hint")} required className="sm:col-span-2">
+                <Input maxLength={200} {...form.register("road_location")} data-testid="road-location" />
+              </FormField>
+            ) : null}
+            <FormField id="light" label={tveh("fields.light")}>
+              <Select {...form.register("light")}>
+                <option value="">{tc("select")}</option>
+                {VEH_LIGHTS.map((x) => (
+                  <option key={x} value={x}>
+                    {tveh(`enum.light.${x}`)}
+                  </option>
+                ))}
+              </Select>
+            </FormField>
+            <FormField id="surface" label={tveh("fields.surface")}>
+              <Select {...form.register("surface")}>
+                <option value="">{tc("select")}</option>
+                {VEH_SURFACES.map((x) => (
+                  <option key={x} value={x}>
+                    {tveh(`enum.surface.${x}`)}
+                  </option>
+                ))}
+              </Select>
+            </FormField>
+            <FormField id="report_authority" label={tveh("fields.report_authority")} error={errors.report_authority?.message} required={roadType === "public_road"}>
+              <Select {...form.register("report_authority")} data-testid="report-authority">
+                <option value="">{tc("select")}</option>
+                {VEH_AUTHORITIES.filter((x) => !(roadType === "public_road" && x === "none_internal")).map((x) => (
+                  <option key={x} value={x}>
+                    {tveh(`enum.authority.${x}`)}
+                  </option>
+                ))}
+              </Select>
+            </FormField>
+            <FormField id="report_no" label={tveh("fields.report_no")} error={errors.report_no?.message}>
+              <Input maxLength={40} className="ltr" dir="ltr" {...form.register("report_no")} data-testid="report-no" />
+            </FormField>
+            <FormField id="report_date" label={tveh("fields.report_date")} error={errors.report_date?.message}>
+              <Input type="date" {...form.register("report_date")} data-testid="report-date" />
+            </FormField>
+            <FormField id="liability_pct_own" label={tveh("fields.liability_pct_own")}>
+              <Select {...form.register("liability_pct_own")}>
+                <option value="">—</option>
+                {VEH_LIABILITY.map((x) => (
+                  <option key={x} value={String(x)}>
+                    {x} %
+                  </option>
+                ))}
+              </Select>
+            </FormField>
+            <FormField id="third_party_damage_desc" label={tveh("fields.third_party_damage_desc")} error={errors.third_party_damage_desc?.message}>
+              <Input maxLength={500} {...form.register("third_party_damage_desc")} />
+            </FormField>
+            <FormField id="third_party_damage_cost_sar" label={tveh("fields.third_party_damage_cost_sar")} error={errors.third_party_damage_cost_sar?.message}>
+              <Input inputMode="decimal" className="ltr" {...form.register("third_party_damage_cost_sar")} />
+            </FormField>
+            {!incident ? <p className="text-xs text-muted-foreground sm:col-span-2">{tveh("reportLater")}</p> : null}
+          </>
+        ) : null}
+      </FormSection>
       {types.includes("dangerous_occurrence") ? (
         <FormSection title={t("fields.do")}>
           <FormField id="do_category" label={t("fields.do_category")} error={errors.do_category?.message} required>
@@ -439,12 +585,12 @@ export function IncidentForm({ project, incident }: { project: Schemas["ProjectR
       ) : null}
       <MutationError error={error} />
       <div className="flex flex-wrap gap-2">
-        {!incident && !types.includes("injury_illness") ? (
+        {!incident && !types.includes("injury_illness") && !vehicle ? (
           <Button type="button" disabled={isSubmitting} onClick={form.handleSubmit((v) => save(v, true))} data-testid="save-report">
             {t("saveReport")}
           </Button>
         ) : null}
-        <Button type="submit" variant={incident || types.includes("injury_illness") ? "default" : "outline"} disabled={isSubmitting} data-testid="save">
+        <Button type="submit" variant={incident || types.includes("injury_illness") || vehicle ? "default" : "outline"} disabled={isSubmitting} data-testid="save">
           {isSubmitting ? tc("saving") : incident ? tc("save") : t("saveDraft")}
         </Button>
         <Button variant="ghost" asChild>

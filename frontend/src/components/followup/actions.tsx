@@ -82,7 +82,7 @@ export function GeneratePackDialog({ req, onClose }: { req: Req; onClose: () => 
 
 /* ───────────── record a submission with evidence: SB-1…SB-3 ───────────── */
 
-export function SubmissionDialog({ req, onClose }: { req: Req; onClose: () => void }) {
+export function SubmissionDialog({ req, onClose, initialRef = "" }: { req: Req; onClose: () => void; initialRef?: string }) {
   const t = useTranslations("fu.submit");
   const te = useTranslations("enums");
   const refresh = useFuRefresh();
@@ -92,7 +92,7 @@ export function SubmissionDialog({ req, onClose }: { req: Req; onClose: () => vo
   const [channel, setChannel] = useState<S["FuChannel"] | "">(verbal ? "phone_radio" : approvedPack ? "portal" : "");
   const [at, setAt] = useState(utcToZonedInput(new Date().toISOString(), tz));
   const [desk, setDesk] = useState("");
-  const [refNo, setRefNo] = useState("");
+  const [refNo, setRefNo] = useState(initialRef);
   const [note, setNote] = useState("");
   const [evidence, setEvidence] = useState<File[]>([]);
   const [stamped, setStamped] = useState<File[]>([]);

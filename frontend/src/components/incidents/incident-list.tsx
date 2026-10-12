@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
 import { ExportButtons } from "@/components/common/export-buttons";
 import { LinkFilterNote } from "@/components/common/link-filter-note";
-import { ListToolbar, SearchFilter } from "@/components/common/list-toolbar";
+import { ListToolbar, SearchFilter, SelectFilter } from "@/components/common/list-toolbar";
 import { MultiSelect } from "@/components/common/multi-select";
 import { PageHeader } from "@/components/common/page-header";
 import { Pagination } from "@/components/common/pagination";
@@ -25,11 +25,14 @@ import { CASE_CATEGORIES, INCIDENT_STATUSES, INCIDENT_TYPES } from "@/lib/enums"
 import { can, canWrite } from "@/lib/permissions";
 import { useSearchState } from "@/lib/url-state";
 import { StackedDate } from "@/components/medical/common";
+import { VEH_LICENCE_CHECKS, VEH_OWNERSHIPS, VEH_ROAD_TYPES } from "@/lib/vehicle-enums";
+import { RecordedNotCountedBadge } from "./vehicle-section";
 
 const PAGE_SIZE = 50;
 
 export function IncidentList({ project }: { project: Schemas["ProjectRead"] }) {
   const t = useTranslations("incidents");
+  const tv = useTranslations("veh");
   const te = useTranslations("enums");
   const tc = useTranslations("common");
   const me = useMeData();
@@ -65,12 +68,18 @@ export function IncidentList({ project }: { project: Schemas["ProjectRead"] }) {
     date_from: s.get("date_from") || null,
     date_to: s.get("date_to") || null,
     q: s.get("q") || null,
+    vehicle_involved: s.getBool("vehicle_involved") ?? null,
+    road_type: (s.get("road_type") as Schemas["VehRoadType"] | null) || null,
+    ownership: (s.get("ownership") as Schemas["VehOwnership"] | null) || null,
+    licence_check: (s.get("licence_check") as Schemas["VehLicenceCheck"] | null) || null,
+    recorded_not_counted: s.getBool("recorded_not_counted") ?? null,
     sort: "-occurred_at" as const,
     page,
     page_size: PAGE_SIZE,
   };
   const query = useIncidents(project.id, q);
   const items = query.data?.items ?? [];
+  const vehicleCols = items.some((r) => r.vehicle_involved);
 
   return (
     <div>
@@ -144,6 +153,17 @@ export function IncidentList({ project }: { project: Schemas["ProjectRead"] }) {
           <Checkbox checked={q.hipo === true} onChange={(e) => s.set({ hipo: e.target.checked ? "true" : null })} data-testid="hipo-filter" />
           {t("filters.hipoOnly")}
         </label>
+        <label className="flex min-h-11 items-center gap-2 text-sm">
+          <Checkbox checked={q.vehicle_involved === true} onChange={(e) => s.set({ vehicle_involved: e.target.checked ? "true" : null })} data-testid="vehicle-filter" />
+          {tv("list.vehicleInvolved")}
+        </label>
+        <label className="flex min-h-11 items-center gap-2 text-sm">
+          <Checkbox checked={q.recorded_not_counted === true} onChange={(e) => s.set({ recorded_not_counted: e.target.checked ? "true" : null })} data-testid="rnc-filter" />
+          {tv("list.recordedNotCounted")}
+        </label>
+        <SelectFilter id="inc-road" label={tv("list.roadType")} value={q.road_type ?? ""} onChange={(v) => s.set({ road_type: v || null })} options={VEH_ROAD_TYPES.map((x) => ({ value: x, label: tv(`enum.roadType.${x}`) }))} />
+        <SelectFilter id="inc-ownership" label={tv("list.ownership")} value={q.ownership ?? ""} onChange={(v) => s.set({ ownership: v || null })} options={VEH_OWNERSHIPS.map((x) => ({ value: x, label: tv(`enum.ownership.${x}`) }))} />
+        <SelectFilter id="inc-licence" label={tv("list.licenceCheck")} value={q.licence_check ?? ""} onChange={(v) => s.set({ licence_check: v || null })} options={VEH_LICENCE_CHECKS.map((x) => ({ value: x, label: tv(`enum.licenceCheck.${x}`) }))} />
       </ListToolbar>
       {query.isLoading ? (
         <LoadingState />
@@ -163,12 +183,14 @@ export function IncidentList({ project }: { project: Schemas["ProjectRead"] }) {
                 <TH>{t("list.severity")}</TH>
                 <TH>{t("list.cases")}</TH>
                 <TH>{t("list.investigation")}</TH>
+                {vehicleCols ? <TH>{tv("list.plate")}</TH> : null}
+                {vehicleCols ? <TH>{tv("list.reportNo")}</TH> : null}
                 <TH>{t("list.status")}</TH>
               </TR>
             </THead>
             <TBody>
               {items.map((r) => (
-                <TR key={r.id} data-testid="incident-row" data-ref={r.ref}>
+                <TR key={r.id} data-testid="incident-row" data-ref={r.ref} data-vehicle={r.vehicle_involved ? "true" : "false"} data-rnc={r.recorded_not_counted ? "true" : "false"}>
                   <TD label={t("list.ref")}>
                     <Link href={`/incidents/${r.id}`} className="ltr font-medium text-primary hover:underline">
                       {r.ref}
@@ -225,10 +247,39 @@ export function IncidentList({ project }: { project: Schemas["ProjectRead"] }) {
                       "—"
                     )}
                   </TD>
+                  {vehicleCols ? (
+                    <TD label={tv("list.plate")}>
+                      {r.plates?.length ? (
+                        <span className="inline-flex flex-wrap gap-1" data-testid="row-plates">
+                          {r.plates.map((p) => (
+                            <bdi key={p} dir="ltr" className="ltr rounded border px-1.5 font-mono text-xs">
+                              {p}
+                            </bdi>
+                          ))}
+                        </span>
+                      ) : r.vehicle_involved && r.road_type ? (
+                        <span className="text-xs text-muted-foreground">{tv(`enum.roadType.${r.road_type}`)}</span>
+                      ) : (
+                        "—"
+                      )}
+                    </TD>
+                  ) : null}
+                  {vehicleCols ? (
+                    <TD label={tv("list.reportNo")}>
+                      {r.report_no ? (
+                        <bdi dir="ltr" className="ltr text-xs" data-testid="row-report-no">
+                          {r.report_no}
+                        </bdi>
+                      ) : (
+                        "—"
+                      )}
+                    </TD>
+                  ) : null}
                   <TD label={t("list.status")}>
                     <span className="inline-flex flex-wrap items-center gap-1">
                       <StatusBadge status={r.status} label={te(`incidentStatus.${r.status}`)} />
                       {r.late_report ? <StatusBadge status="late" label={t("late")} /> : null}
+                      {r.recorded_not_counted ? <RecordedNotCountedBadge /> : null}
                     </span>
                   </TD>
                 </TR>

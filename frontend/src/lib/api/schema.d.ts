@@ -1879,8 +1879,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Dashboard chart C1-C21 as a renderer-agnostic ChartSpec
-         * @description Common filters (all /kpi endpoints): `project_id` (repeatable) or `all_projects`, `site_id`, `zone_id`, `zone_type`, `engagement_id` (+ `include_subcontractors`, default true), `tier`, `period` (+ `anchor` or `start`/`end` for custom), `as_of`, `compare`. Role scope is applied first (D-3): a narrower scope is reported in `context.filters.scope_narrowed`. Capability 38. C7 needs `dimension` (and optional `measure`, default injury_cases). Monthly charts cover the 12 months ending at the period end. C19-C21 (training) need capability 143.
+         * Dashboard chart C1-C21, C41 as a renderer-agnostic ChartSpec
+         * @description Common filters (all /kpi endpoints): `project_id` (repeatable) or `all_projects`, `site_id`, `zone_id`, `zone_type`, `engagement_id` (+ `include_subcontractors`, default true), `tier`, `period` (+ `anchor` or `start`/`end` for custom), `as_of`, `compare`. Role scope is applied first (D-3): a narrower scope is reported in `context.filters.scope_narrowed`. Capability 38. C7 needs `dimension` (and optional `measure`, default injury_cases). Monthly charts cover the 12 months ending at the period end. C19-C21 (training) need capability 143. C41 (7a): vehicle incidents by month stacked by road type plus the 'Recorded, not counted' segment, with the K-137 line.
          */
         get: operations["get_chart"];
         put?: never;
@@ -12985,6 +12985,115 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/incidents/{incident_id}/vehicles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the vehicles of an incident (7a §3.2)
+         * @description Driver identity, licence fields, hours on duty, insurer / policy and third-party plates are null without capability 29 (P7a-1; `redacted_groups`); identity reads are audited.
+         */
+        get: operations["list_incident_vehicles"];
+        put?: never;
+        /**
+         * Add a vehicle row (V1…V10; incident must be vehicle_involved)
+         * @description Editable until the incident is Closed; after the investigation is approved a `reason` ≥ 20 characters is required. 422 PLATE_IS_REGISTERED for a third_party plate in the Phase 2 register (VA-6). licence_check is computed (VA-3); warnings VEHICLE_DOCS_EXPIRED_AT_TIME / LICENCE_NOT_VALID_AT_TIME are not blocking (VA-4).
+         */
+        post: operations["create_incident_vehicle"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/incident-vehicles/{vehicle_row_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove a vehicle row (a reported incident keeps ≥ 1, VEHICLE_REQUIRED) */
+        delete: operations["delete_incident_vehicle"];
+        options?: never;
+        head?: never;
+        /**
+         * Edit a vehicle row
+         * @description Driver identity, licence fields, hours on duty, insurer / policy and third-party plates are null without capability 29 (P7a-1; `redacted_groups`); identity reads are audited.
+         */
+        patch: operations["update_incident_vehicle"];
+        trace?: never;
+    };
+    "/api/v1/incidents/{incident_id}/vehicle-prefill": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Prefill a vehicle row from the Phase 2 register and a driver's ADP (VA-3, VA-6)
+         * @description Vehicle by vehicle_id or by normalised plate (Arabic letters mapped to Latin). The driver block (licence from the ADP) needs capability 29 and is audited.
+         */
+        get: operations["prefill_incident_vehicle"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/incidents/{incident_id}/accident-report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The Najm / police accident report archive card (VA-14, VA-15)
+         * @description Internal record, no client copy. Files are listed for capability 29 only.
+         */
+        get: operations["get_accident_report"];
+        /**
+         * Set the accident report authority, number, date and liability
+         * @description Allowed until the incident is Closed. Creates no 6f requirement or notification to the client (VA-15). 422 ACCIDENT_REPORT_AUTHORITY_REQUIRED for public_road + none_internal.
+         */
+        put: operations["put_accident_report"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/incidents/{incident_id}/accident-report/files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Archive a report file (PDF / image ≤ 10 MB; ≤ 5 current files; capability 29)
+         * @description `supersedes_id` replaces a current file: the earlier one stays archived as superseded (audited). Files may be added after Closed; none can be deleted then (DELETE /attachments/{id} → 409 ACCIDENT_REPORT_LOCKED). Download through POST /attachments/{id}/signed-url (403 without capability 29).
+         */
+        post: operations["upload_accident_report_file"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/privacy-notice": {
         parameters: {
             query?: never;
@@ -15524,7 +15633,7 @@ export interface components {
          * AttachmentOwner
          * @enum {string}
          */
-        AttachmentOwner: "incident" | "injury_case_medical" | "observation" | "corrective_action_evidence" | "hse_meeting_minutes" | "worker_photo" | "pass_application_id_copy" | "induction_signature" | "offence_evidence" | "permit_document" | "permit_attachment" | "ptw_audit_photo" | "gas_test_signature" | "crew_briefing_signature" | "tpi_accreditation_certificate" | "equipment_document" | "equipment_certificate_scan" | "personnel_cert_scan" | "verification_evidence" | "defect_photo" | "defect_evidence" | "scaffold_inspection_photo" | "training_record_scan" | "training_accreditation_certificate" | "trainer_authorisation_evidence" | "training_attendance_sheet" | "training_verification_evidence" | "training_attendance_signature" | "fitness_scan" | "field_photo" | "stop_work_photo" | "toolbox_signature" | "toolbox_sheet" | "field_audit_report" | "env_permit_document" | "consignment_ticket" | "env_photo" | "fu_pack_file" | "fu_pack_identity_file" | "fu_evidence" | "fu_lesson_photo" | "rp_pack_file" | "xp_export_file" | "sc_remark_file";
+        AttachmentOwner: "incident" | "injury_case_medical" | "observation" | "corrective_action_evidence" | "hse_meeting_minutes" | "worker_photo" | "pass_application_id_copy" | "induction_signature" | "offence_evidence" | "permit_document" | "permit_attachment" | "ptw_audit_photo" | "gas_test_signature" | "crew_briefing_signature" | "tpi_accreditation_certificate" | "equipment_document" | "equipment_certificate_scan" | "personnel_cert_scan" | "verification_evidence" | "defect_photo" | "defect_evidence" | "scaffold_inspection_photo" | "training_record_scan" | "training_accreditation_certificate" | "trainer_authorisation_evidence" | "training_attendance_sheet" | "training_verification_evidence" | "training_attendance_signature" | "fitness_scan" | "field_photo" | "stop_work_photo" | "toolbox_signature" | "toolbox_sheet" | "field_audit_report" | "env_permit_document" | "consignment_ticket" | "env_photo" | "fu_pack_file" | "fu_pack_identity_file" | "fu_evidence" | "fu_lesson_photo" | "rp_pack_file" | "xp_export_file" | "sc_remark_file" | "incident_accident_report";
         /** AttachmentRead */
         AttachmentRead: {
             /**
@@ -16816,6 +16925,13 @@ export interface components {
              */
             file: string;
         };
+        /** Body_upload_accident_report_file */
+        Body_upload_accident_report_file: {
+            /** File */
+            file: string;
+            /** Supersedes Id */
+            supersedes_id?: string | null;
+        };
         /** Body_upload_attachment */
         Body_upload_attachment: {
             owner_type: components["schemas"]["AttachmentOwner"];
@@ -16832,12 +16948,12 @@ export interface components {
          * @description §6.8. age_band and nationality are restricted (D-7, AI-6).
          * @enum {string}
          */
-        BreakdownDimension: "site" | "zone" | "zone_type" | "airside_area" | "contractor" | "tier" | "activity" | "mechanism" | "agency" | "body_part" | "nature" | "case_category" | "incident_type" | "root_cause_level" | "root_cause_code" | "shift" | "hour_band" | "weekday" | "month" | "heat_season" | "ramadan" | "days_on_site_band" | "trade" | "age_band" | "nationality" | "observation_category" | "observation_type" | "inspection_type" | "control_level" | "ca_priority";
+        BreakdownDimension: "site" | "zone" | "zone_type" | "airside_area" | "contractor" | "tier" | "activity" | "mechanism" | "agency" | "body_part" | "nature" | "case_category" | "incident_type" | "root_cause_level" | "root_cause_code" | "shift" | "hour_band" | "weekday" | "month" | "heat_season" | "ramadan" | "days_on_site_band" | "trade" | "age_band" | "nationality" | "observation_category" | "observation_type" | "inspection_type" | "control_level" | "ca_priority" | "road_type" | "vehicle_ownership" | "licence_check" | "seat_belt" | "journey_purpose";
         /**
          * BreakdownMeasure
          * @enum {string}
          */
-        BreakdownMeasure: "injury_cases" | "recordable_cases" | "events_by_type" | "observations" | "unsafe_observations" | "cas" | "inspections";
+        BreakdownMeasure: "injury_cases" | "recordable_cases" | "events_by_type" | "observations" | "unsafe_observations" | "cas" | "inspections" | "vehicle_incidents";
         /** BreakdownResponse */
         BreakdownResponse: {
             context: components["schemas"]["KpiContext"];
@@ -16858,6 +16974,11 @@ export interface components {
             rows: components["schemas"]["BreakdownRow"][];
             /** @description Remaining values beyond top_n. */
             other: components["schemas"]["BreakdownRow"] | null;
+            /**
+             * Recorded Not Counted
+             * @description 7a VA-13 (measure vehicle_incidents only): how many of total_count are 'Recorded, not counted' (commuting).
+             */
+            recorded_not_counted?: number | null;
         };
         /** BreakdownRow */
         BreakdownRow: {
@@ -18685,7 +18806,7 @@ export interface components {
          * @description Dashboard charts §8.1 item 5.
          * @enum {string}
          */
-        ChartId: "C1" | "C2" | "C3" | "C4" | "C5" | "C6" | "C7" | "C8" | "C9" | "C10" | "C11" | "C12" | "C13" | "C14" | "C15" | "C16" | "C17" | "C18" | "C19" | "C20" | "C21";
+        ChartId: "C1" | "C2" | "C3" | "C4" | "C5" | "C6" | "C7" | "C8" | "C9" | "C10" | "C11" | "C12" | "C13" | "C14" | "C15" | "C16" | "C17" | "C18" | "C19" | "C20" | "C21" | "C41";
         /**
          * ChartKind
          * @enum {string}
@@ -22825,7 +22946,7 @@ export interface components {
          * @description Entity types referenced by audit entries and change history.
          * @enum {string}
          */
-        EntityType: "project" | "site" | "zone" | "contractor" | "project_engagement" | "user" | "role_assignment" | "project_settings" | "audit_log" | "workforce_return" | "workforce_import_batch" | "workforce_month" | "incident" | "injury_case" | "investigation" | "observation" | "inspection_plan" | "inspection" | "corrective_action" | "hse_meeting" | "hse_settings" | "reference_list_item" | "attachment" | "ai_answer" | "monthly_report" | "kpi" | "worker" | "worker_deployment" | "induction_course" | "induction_record" | "zone_access_profile" | "airport_pass_category" | "airport_pass_area" | "pass_application" | "airport_pass" | "adp" | "airside_offence" | "vehicle" | "avp" | "notam_request" | "obstacle_clearance" | "wap" | "ops_event" | "credential_event" | "gate" | "gate_device" | "gate_log" | "access_settings" | "permit" | "permit_shift" | "permit_handover" | "permit_suspension" | "permit_exemption" | "permit_type_config" | "zone_ptw_profile" | "zone_adjacency" | "ptw_appointment" | "jsa" | "gas_detector" | "bump_test" | "gas_test" | "isolation_certificate" | "lock" | "personal_lock_event" | "simops_rule" | "simops_conflict" | "simops_coordination" | "ptw_audit" | "ptw_settings" | "tpi" | "tpi_accreditation" | "tpi_client_approval" | "equipment_item" | "equipment_deployment" | "equipment_certificate" | "configuration_event" | "scaffold" | "scaffold_inspection" | "personnel_certificate" | "cert_verification" | "equipment_defect" | "certification_ban" | "hook_policy_state" | "cert_import_batch" | "cert_settings" | "cert_type" | "training_course" | "training_provider" | "training_provider_accreditation" | "trainer_authorisation" | "training_matrix_line" | "training_profile" | "training_exemption" | "training_session" | "training_nomination" | "training_record" | "training_verification" | "training_import_batch" | "training_settings" | "training_retraining_note" | "fitness_code" | "medical_provider" | "medical_examiner" | "medical_plan_line" | "health_profile" | "fitness_assessment" | "fitness_verification" | "fitness_hold" | "fitness_referral" | "medical_import_batch" | "medical_settings" | "heat_instrument" | "monitoring_point" | "wbgt_reading" | "heat_regime_table" | "acclimatisation_plan" | "rest_station" | "heat_welfare_check" | "ban_patrol" | "ban_exemption" | "heat_illness_entry" | "heat_season_report" | "heat_settings" | "erp" | "assembly_point" | "emergency_contact" | "zone_emergency_profile" | "emergency_roster" | "rescue_team" | "emergency_asset" | "emergency_asset_check" | "emergency_drill" | "emergency_muster" | "emergency_event" | "emergency_settings" | "muster_device" | "checklist_template" | "toolbox_topic" | "checklist_response" | "field_finding" | "stop_work_order" | "field_audit" | "toolbox_talk" | "briefing_campaign" | "field_settings" | "env_settings" | "env_aspect" | "env_provider" | "env_permit" | "waste_stream" | "waste_storage_area" | "waste_consignment" | "env_instrument" | "env_point" | "env_reading" | "background_declaration" | "env_exceedance" | "spill" | "water_entry" | "discharge_day" | "env_complaint" | "env_monitor_device" | "followup_settings" | "followup_rule" | "followup_requirement" | "followup_pack" | "followup_submission" | "lesson" | "lesson_distribution" | "lesson_link" | "lesson_effectiveness" | "scorecard_profile" | "scorecard_settings" | "scorecard" | "scorecard_remark" | "watch_list_entry" | "report_pack" | "distribution_list" | "export_job" | "export_subscription";
+        EntityType: "project" | "site" | "zone" | "contractor" | "project_engagement" | "user" | "role_assignment" | "project_settings" | "audit_log" | "workforce_return" | "workforce_import_batch" | "workforce_month" | "incident" | "injury_case" | "investigation" | "observation" | "inspection_plan" | "inspection" | "corrective_action" | "hse_meeting" | "hse_settings" | "reference_list_item" | "attachment" | "ai_answer" | "monthly_report" | "kpi" | "worker" | "worker_deployment" | "induction_course" | "induction_record" | "zone_access_profile" | "airport_pass_category" | "airport_pass_area" | "pass_application" | "airport_pass" | "adp" | "airside_offence" | "vehicle" | "avp" | "notam_request" | "obstacle_clearance" | "wap" | "ops_event" | "credential_event" | "gate" | "gate_device" | "gate_log" | "access_settings" | "permit" | "permit_shift" | "permit_handover" | "permit_suspension" | "permit_exemption" | "permit_type_config" | "zone_ptw_profile" | "zone_adjacency" | "ptw_appointment" | "jsa" | "gas_detector" | "bump_test" | "gas_test" | "isolation_certificate" | "lock" | "personal_lock_event" | "simops_rule" | "simops_conflict" | "simops_coordination" | "ptw_audit" | "ptw_settings" | "tpi" | "tpi_accreditation" | "tpi_client_approval" | "equipment_item" | "equipment_deployment" | "equipment_certificate" | "configuration_event" | "scaffold" | "scaffold_inspection" | "personnel_certificate" | "cert_verification" | "equipment_defect" | "certification_ban" | "hook_policy_state" | "cert_import_batch" | "cert_settings" | "cert_type" | "training_course" | "training_provider" | "training_provider_accreditation" | "trainer_authorisation" | "training_matrix_line" | "training_profile" | "training_exemption" | "training_session" | "training_nomination" | "training_record" | "training_verification" | "training_import_batch" | "training_settings" | "training_retraining_note" | "fitness_code" | "medical_provider" | "medical_examiner" | "medical_plan_line" | "health_profile" | "fitness_assessment" | "fitness_verification" | "fitness_hold" | "fitness_referral" | "medical_import_batch" | "medical_settings" | "heat_instrument" | "monitoring_point" | "wbgt_reading" | "heat_regime_table" | "acclimatisation_plan" | "rest_station" | "heat_welfare_check" | "ban_patrol" | "ban_exemption" | "heat_illness_entry" | "heat_season_report" | "heat_settings" | "erp" | "assembly_point" | "emergency_contact" | "zone_emergency_profile" | "emergency_roster" | "rescue_team" | "emergency_asset" | "emergency_asset_check" | "emergency_drill" | "emergency_muster" | "emergency_event" | "emergency_settings" | "muster_device" | "checklist_template" | "toolbox_topic" | "checklist_response" | "field_finding" | "stop_work_order" | "field_audit" | "toolbox_talk" | "briefing_campaign" | "field_settings" | "env_settings" | "env_aspect" | "env_provider" | "env_permit" | "waste_stream" | "waste_storage_area" | "waste_consignment" | "env_instrument" | "env_point" | "env_reading" | "background_declaration" | "env_exceedance" | "spill" | "water_entry" | "discharge_day" | "env_complaint" | "env_monitor_device" | "followup_settings" | "followup_rule" | "followup_requirement" | "followup_pack" | "followup_submission" | "lesson" | "lesson_distribution" | "lesson_link" | "lesson_effectiveness" | "scorecard_profile" | "scorecard_settings" | "scorecard" | "scorecard_remark" | "watch_list_entry" | "report_pack" | "distribution_list" | "export_job" | "export_subscription" | "incident_vehicle";
         /**
          * EntryDirection
          * @enum {string}
@@ -24937,7 +25058,7 @@ export interface components {
          * @description Machine-readable error codes. Stable: the frontend translates these.
          * @enum {string}
          */
-        ErrorCode: "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "ACCOUNT_LOCKED" | "SESSION_EXPIRED" | "PRIVACY_ACK_REQUIRED" | "PRIVACY_NOTICE_VERSION_MISMATCH" | "INVITE_INVALID" | "INVITE_EXPIRED" | "RESET_TOKEN_INVALID" | "WEAK_PASSWORD" | "CURRENT_PASSWORD_INCORRECT" | "FORBIDDEN" | "READ_ONLY_ROLE" | "CONTRACTOR_SUSPENDED" | "SELF_MODIFICATION_FORBIDDEN" | "ROLE_NOT_ASSIGNABLE" | "NOT_FOUND" | "VALIDATION_ERROR" | "DUPLICATE_VALUE" | "INVALID_TRANSITION" | "TRANSITION_CONDITION_NOT_MET" | "PROJECT_CLOSED" | "SITE_INACTIVE" | "ZONE_ARCHIVED" | "CONTRACTOR_NOT_APPROVED" | "LAST_HSE_MANAGER" | "SOD_CONFLICT" | "DUPLICATE_RETURN" | "PERIOD_LOCKED" | "VERIFIER_IS_CREATOR" | "OUTSIDE_MOBILISATION" | "IMPORT_FILE_INVALID" | "IMPORT_HAS_ERRORS" | "IMPORT_EXPIRED" | "IMPORT_NOT_VALIDATED" | "NEAR_MISS_EXCLUSIVE" | "INJURY_CASE_REQUIRED" | "INVESTIGATION_LEVEL_TOO_LOW" | "INVESTIGATION_INCOMPLETE" | "INVESTIGATION_LEAD_NOT_ALLOWED" | "INVESTIGATION_TEAM_INCOMPLETE" | "APPROVER_IS_LEAD" | "CASES_NOT_CONFIRMED" | "HIGHER_CONTROL_REQUIRED" | "JUSTIFICATION_REQUIRED" | "POSSIBLE_ID_NUMBER" | "SAFE_OBSERVATION_IMMUTABLE" | "FINDING_CA_REQUIRED" | "VERIFIER_IS_OWNER" | "VERIFIER_ROLE_NOT_ALLOWED" | "EVIDENCE_REQUIRED" | "EXTENSION_LIMIT_REACHED" | "DUE_DATE_TOO_LATE" | "RESTRICTED_DIMENSION" | "MIXED_PROJECT_SCOPE" | "EXPORT_PURPOSE_REQUIRED" | "FILE_TOO_LARGE" | "FILE_TYPE_NOT_ALLOWED" | "SIGNED_URL_INVALID" | "AI_DISABLED" | "AI_TRANSFER_APPROVAL_REQUIRED" | "AI_UNAVAILABLE" | "AI_RATE_LIMITED" | "GATE_DEVICE_FORBIDDEN" | "GATE_DEVICE_REVOKED" | "GATE_RATE_LIMITED" | "PAIRING_NOT_FOUND" | "WORKER_EXISTS" | "WORKER_EXISTS_OUT_OF_SCOPE" | "ADULT_ATTESTATION_REQUIRED" | "DEPLOYMENT_EXISTS" | "WORKER_BANNED" | "PHOTO_REQUIRED" | "DELIVERER_NOT_ALLOWED" | "INDUCTION_PREREQUISITE" | "INDUCTION_ATTEMPTS_EXCEEDED" | "INDUCTION_TOO_SHORT" | "INDUCTION_EDIT_LOCKED" | "PROFILE_LOOSENING" | "HOOK_PROVIDER_MISSING" | "NOT_AIRPORT_PROJECT" | "APPLICATION_OPEN" | "ID_EXPIRES_SOON" | "ID_EXPIRED" | "VALIDITY_EXCEEDS_LIMIT" | "BACKGROUND_NOT_CLEARED" | "ENDORSER_NOT_ALLOWED" | "PREREQUISITES_NOT_MET" | "AREA_NOT_REQUESTED" | "ADP_PASS_REQUIRED" | "ADP_EXISTS" | "LICENCE_NOT_VALID" | "RTF_REQUIRED" | "TESTS_NOT_VALID" | "SUSPENSION_PERIOD_RUNNING" | "AVP_PRECONDITION" | "AVP_EXISTS" | "LATE_JUSTIFICATION_REQUIRED" | "OB_CONDITIONS_REQUIRED" | "CLEARANCE_NOT_LINKABLE" | "WAP_DURATION_EXCEEDED" | "WSP_REQUIRED" | "WAP_BLOCKED" | "CREW_INVALID" | "FOD_HANDBACK_REQUIRED" | "OPS_ZONES_LOCKED" | "SYSTEM_SUSPENSION" | "CREDENTIAL_TERMINAL" | "REAUTH_REQUIRED" | "COSIGNER_INVALID" | "CONTRACTOR_BLACKLISTED" | "MIXED_SIDE_ZONES" | "ZONES_NOT_SAME_SITE" | "RECEIVER_LIMIT" | "CREW_NOT_IN_TREE" | "DURATION_EXCEEDS_LIMIT" | "BACKDATED_PERMIT" | "PERMIT_READ_ONLY" | "KEY_ROLE_BUSY" | "APPOINTMENT_INVALID" | "ISSUER_APPOINTMENT_MANAGER_ONLY" | "JSA_MISSING" | "JSA_NOT_APPROVED" | "JSA_TYPE_MISMATCH" | "JSA_MANDATORY_HAZARD_MISSING" | "JSA_RESIDUAL_EXTREME" | "JSA_FROZEN" | "RESIDUAL_ACCEPTANCE_MISSING" | "RESIDUAL_ABOVE_INITIAL" | "PPE_ONLY_CONTROLS" | "TEMPLATE_REVIEW_DUE" | "HSE_REVIEW_MISSING" | "DOCUMENT_MISSING" | "CHECKLIST_INCOMPLETE" | "ROLE_MISSING" | "KEY_ROLE_INELIGIBLE" | "NO_ELIGIBLE_CREW" | "HOOK_NOT_MET" | "GAS_TEST_REQUIRED" | "GAS_TEST_FAILED" | "GAS_TEST_EXPIRED" | "DETECTOR_CALIBRATION_OVERDUE" | "DETECTOR_NOT_IN_SERVICE" | "BUMP_TEST_MISSING" | "DETECTOR_SENSOR_MISSING" | "BACKDATED_TEST" | "CSE_POINTS_REQUIRED" | "TESTER_SIGNATURE_REQUIRED" | "ISOLATION_NOT_VERIFIED" | "VERIFIER_IS_APPLIER" | "PERSONAL_LOCKS_MISSING" | "DEISOLATION_BLOCKED" | "LOCK_NOT_AVAILABLE" | "SIMOPS_PROHIBITED" | "SIMOPS_COORDINATION_REQUIRED" | "SIMOPS_RULE_LOCKED" | "WAP_NOT_ACTIVE" | "WAP_CREW_MISSING" | "OUTSIDE_WAP_WINDOW" | "NOTAM_NOT_IN_EFFECT" | "OBS_CLEARANCE_REQUIRED" | "AIRCRAFT_PROXIMITY" | "WIND_LIMIT_EXCEEDED" | "MIDDAY_BAN" | "MIDDAY_BAN_WINDOW" | "OUTSIDE_WINDOW" | "LICENCE_INVALID" | "BARRIER_TOO_SMALL" | "BARRIER_NOT_VERIFIED" | "FIRE_IMPAIRMENT_NOT_APPROVED" | "UTILITY_CLEARANCE_MISSING" | "FALL_CLEARANCE_INSUFFICIENT" | "HAZARDOUS_AREA_PROHIBITED" | "FIRE_WATCH_RUNNING" | "ENTRANTS_INSIDE" | "HEAT_CONTROLS_REQUIRED" | "HANDOVER_LIMIT" | "HANDOVER_TOO_EARLY" | "MECHANICAL_NEAR_SERVICE" | "INSPECTION_REQUIRED" | "ENERGIZED_HV_PROHIBITED" | "EXEMPTION_REQUIRED" | "CAPACITY_EXCEEDED" | "REVALIDATION_NOT_ALLOWED" | "CREW_NOT_BRIEFED" | "CAUSE_NOT_CLEARED" | "PAUSE_NOT_ALLOWED" | "CLOSURE_INCOMPLETE" | "POST_EXPIRY_CHECK_PENDING" | "CA_REQUIRED" | "AUDIT_LOCKED" | "CODE_IN_OTHER_CATALOGUE" | "TPI_NOT_ACCEPTABLE" | "TPI_NOT_APPROVED" | "TPI_SUSPENDED" | "TPI_BLACKLISTED" | "TPI_ACCREDITATION_INVALID" | "TPI_SCOPE_NOT_COVERED" | "TPI_NOT_CLIENT_APPROVED" | "TPI_NOT_INDEPENDENT" | "TPI_ACCREDITATION_REQUIRED" | "STANDARD_KIND_MISMATCH" | "SCOPE_EXCEEDS_ACCREDITATION" | "EQUIPMENT_EXISTS" | "EQUIPMENT_EXISTS_OUT_OF_SCOPE" | "EQUIPMENT_BLACKLISTED" | "CATEGORY_MISMATCH" | "VEHICLE_ALREADY_LINKED" | "USE_DETECTOR_REGISTER" | "ATTRIBUTE_REQUIRED" | "RELIEF_ABOVE_MAWP" | "EQUIPMENT_NOT_IN_SERVICE" | "EQUIPMENT_DEPLOYED_ELSEWHERE" | "TAG_EXISTS" | "EQUIPMENT_RETIRED" | "EQUIPMENT_NOT_REGISTERED" | "EQUIPMENT_NOT_DEPLOYED" | "OPERATOR_REQUIRED" | "EQUIPMENT_NOT_APPROVED" | "EQUIPMENT_OUT_OF_SERVICE" | "EQUIPMENT_QUARANTINED" | "ARRIVAL_INSPECTION_MISSING" | "CERT_EXISTS" | "CERT_NO_REUSED" | "CERT_ALREADY_EXPIRED" | "SCAN_REQUIRED" | "SERIAL_MISMATCH" | "LOAD_TEST_REQUIRED" | "SWL_ABOVE_RATING" | "LIFTING_DUTY_NOT_CERTIFIED" | "LIMITATION_CONFLICT" | "COLOUR_CODE_OUT_OF_PERIOD" | "CONFIGURATION_MISMATCH" | "CONFIGURATION_CHANGED" | "INSPECTION_BEFORE_EVENT" | "BACKDATED_EVENT" | "CONFIGURATION_EVENT_NOT_ALLOWED" | "SCAFFOLD_DESIGN_REQUIRED" | "CREW_NOT_CERTIFIED" | "INSPECTOR_NOT_CERTIFIED" | "BACKDATED_INSPECTION" | "RESTRICTIONS_REQUIRED" | "SCAFFOLD_NOT_REGISTERED" | "SCAFFOLD_INSPECTION_OVERDUE" | "SCAFFOLD_TAG_RED" | "SCAFFOLD_INSPECTION_REQUIRED" | "SCAFFOLD_YELLOW_TAG" | "CERT_ID_MISMATCH" | "NAME_MISMATCH_CONFIRMATION" | "LEVEL_NOT_ACCEPTED" | "LEVEL_REQUIRED" | "CERT_SCOPE_MISMATCH" | "CERT_LIMITATION" | "CARD_RESTRICTION_REVIEW" | "TRADE_CERT_MISSING" | "HOLDER_BANNED" | "CERT_HOLDER_BANNED" | "CERT_MISSING" | "CERT_EXPIRED" | "CERT_UNVERIFIED" | "CERT_SUSPENDED" | "CERT_REVOKED" | "SWL_LIMITATION" | "WORKER_NOT_IN_SCOPE" | "CHANNEL_NOT_REGISTERED" | "VERIFICATION_URL_FOREIGN_DOMAIN" | "EVIDENCE_REQUIRED_FOR_METHOD" | "VERIFICATION_CLOSED" | "ACCESSORY_REPAIR_NOT_ALLOWED" | "TPI_REINSPECTION_REQUIRED" | "DEFECTS_OPEN" | "PHYSICAL_TAG_REQUIRED" | "TPI_DEFECT_NOT_CANCELLABLE" | "PHASE4_NOT_ENABLED" | "HOOK_POLICY_LOOSENING" | "CRITICAL_CODE_NO_DEFERRAL" | "DEFERRAL_USED" | "DEFERRAL_TOO_LONG" | "HOOK_NOT_MET_WARN" | "EXPIRING_7D" | "UNKNOWN_CODE" | "TOKEN_UNKNOWN" | "CREDENTIAL_REVOKED" | "OUT_OF_SCOPE" | "SETTING_LOOSENING" | "EVIDENCE_DOMAIN_MISMATCH" | "IMPORT_SOURCE_NOT_ALLOWED" | "TPI_BLACKLIST_SCOPE_REQUIRED" | "INDUCTION_OWNED_BY_PHASE2" | "CATALOGUE_LOOSENING" | "ACCREDITED_PROVIDER_REQUIRED" | "PRACTICAL_REQUIRED" | "PREREQUISITE_CYCLE" | "COURSE_IN_USE" | "COURSE_INACTIVE" | "PROVIDER_NOT_ACCEPTABLE" | "PROVIDER_NOT_APPROVED" | "PROVIDER_SUSPENDED" | "PROVIDER_BLACKLISTED" | "ACCREDITATION_INVALID" | "ACCREDITATION_SCOPE" | "INTERNAL_NOT_ALLOWED" | "CONTRACTOR_DELIVERY_NOT_ALLOWED" | "NOT_OWN_TREE" | "PROVIDER_ACCREDITATION_REQUIRED" | "PROVIDER_BLACKLIST_SCOPE_REQUIRED" | "TRAINER_NOT_AUTHORISED" | "TRAINER_NOT_TRAINED" | "TRAINER_EVIDENCE_REQUIRED" | "AUTHORISATION_TOO_LONG" | "LINE_DERIVED_FROM_HOOK" | "DUE_DAYS_NOT_ALLOWED" | "ANY_OF_NOT_ALLOWED" | "MATRIX_LOOSENING" | "EXEMPTION_NOT_ALLOWED" | "ZONE_NOT_IN_DEPLOYMENT_SITES" | "SESSION_TOO_SHORT" | "SESSION_DAY_TOO_LONG" | "SESSION_FULL" | "SESSION_IN_PAST" | "BACKDATED_SESSION" | "SCHEDULE_CLASH" | "TRAINING_PREREQUISITE" | "TRAINING_ATTEMPTS_EXCEEDED" | "NOMINATIONS_INCOMPLETE" | "ATTENDANCE_SHEET_REQUIRED" | "ATTENDANCE_INSUFFICIENT" | "ATTENDANCE_DAY_NOT_REACHED" | "ASSESSOR_REQUIRED" | "LANGUAGE_NOT_UNDERSTOOD" | "LANGUAGE_MISMATCH" | "RECORD_ALREADY_EXPIRED" | "REFRESHER_NOT_ELIGIBLE" | "RECORD_EDIT_LOCKED" | "TRAINING_REGISTER_NOT_LIVE" | "TRAINING_REGISTER_LATER" | "TRAINING_HOOKS_NOT_ENABLED" | "TRAINING_MISSING" | "TRAINING_EXPIRED" | "TRAINING_PENDING_REVIEW" | "TRAINING_UNVERIFIED" | "TRAINING_SUSPENDED" | "TRAINING_REVOKED" | "TRAINING_VERIFICATION_FAILED" | "INDUCTION_NOT_VALID" | "HOLDER_NOT_LINKED" | "SESSION_NOT_EDITABLE" | "FITNESS_CODE_IN_USE" | "MEDICAL_PROVIDER_NOT_ACCEPTABLE" | "PROVIDER_KIND_NOT_ALLOWED" | "NOT_PROJECT_CLINIC" | "LICENCE_CHECK_REQUIRED" | "EXAMINER_LICENCE_INVALID" | "EXAMINER_NOT_QUALIFIED" | "EXAMINER_NOT_LINKED" | "PLAN_LOOSENING" | "BACKDATED_ASSESSMENT" | "FITNESS_ALREADY_EXPIRED" | "DUPLICATE_CODE_LINE" | "RESTRICTIONS_NOT_ALLOWED" | "REVIEW_DATE_INVALID" | "HOLD_REFERENCE_INVALID" | "PURPOSE_NOTICE_REQUIRED" | "SECOND_OPINION_REQUIRED" | "ASSESSMENT_LOCKED" | "CLINICAL_DATA_IN_SCAN" | "HOLD_RELEASE_REQUIRES_ASSESSMENT" | "MEDICAL_REGISTER_NOT_LIVE" | "MEDICAL_REGISTER_LATER" | "NO_MEDICAL_PROVIDER" | "MEDICAL_HOOKS_NOT_ENABLED" | "INCIDENT_RECORD_EXPECTED" | "RTW_BEFORE_CLEARANCE" | "PROHIBITED_DATA_HINT" | "MEDICAL_HOLD" | "MEDICAL_UNFIT" | "MEDICAL_PENDING_REVIEW" | "MEDICAL_UNVERIFIED" | "MEDICAL_REVOKED" | "MEDICAL_VERIFICATION_FAILED" | "MEDICAL_MISSING" | "RESTRICTION_CONFLICT" | "MEDICAL_REVIEW_DUE" | "MEDICAL_EXPIRED" | "WORKER_UNKNOWN" | "INSTRUMENT_NOT_COMPLIANT" | "INSTRUMENT_CALIBRATION_EXPIRED" | "ZONE_ALREADY_COVERED" | "REGIME_LOOSENING" | "PERIOD_TOO_SHORT" | "HEAT_COVERAGE_INCOMPLETE" | "WBGT_REQUIRED" | "VALUE_OUT_OF_RANGE" | "BACKDATED_READING" | "WBGT_COMPONENT_MISMATCH" | "STATION_INACTIVE" | "NA_NOT_ALLOWED" | "NOT_IN_BAN_WINDOW" | "NO_ACTIVE_EXEMPTION" | "OUTSIDE_BAN_PERIOD" | "TOO_LATE_TO_CHANGE" | "HEAT_STOP" | "WBGT_READING_REQUIRED" | "HEAT_RESTRICTION" | "HEAT_STOP_FOR_WORKER" | "WORKER_ACCLIMATISING" | "ERP_INCOMPLETE" | "ERP_NOT_APPROVED" | "RESCUE_PLAN_REF_REQUIRED" | "DRILL_FREQUENCY_TOO_LOW" | "ASSEMBLY_POINT_IN_RESTRICTED_AREA" | "ZONE_WITHOUT_ASSEMBLY_POINT" | "ALREADY_IN_TEAM" | "CHECK_BACKDATED" | "CHECK_WITHOUT_SCAN" | "TIMELINE_ORDER" | "INCIDENT_LINK_REQUIRED" | "RESCUE_TEAM_NOT_REGISTERED" | "RESCUE_DRILL_OVERDUE" | "HEIGHT_RESCUE_NOT_READY" | "NO_READY_EXTINGUISHER" | "TEMPLATE_INCOMPLETE" | "TEMPLATE_IN_USE" | "TEMPLATE_REQUIRED" | "TEMPLATE_NOT_APPLICABLE" | "TEMPLATE_IMMUTABLE" | "SEVERITY_LOWERED" | "FIX_ON_SPOT_NOT_ALLOWED" | "STOP_RECORD_REQUIRED" | "STOP_RELEASE_CA_REQUIRED" | "STOP_WORK_ACTIVE" | "OFFLINE_SUBMIT_TOO_LATE" | "CLOCK_SKEW" | "TOPIC_INCOMPLETE" | "TOPIC_REVIEW_OVERDUE" | "WORKER_NOT_MOBILISED" | "DUPLICATE_ATTENDEE" | "ATTENDANCE_EVIDENCE_REQUIRED" | "TALK_LOCKED" | "TBT_SHORT" | "ASPECT_CONTROL_REQUIRED" | "CONTROL_LEVEL_TOO_LOW" | "PRODUCER_REGISTRATION_INVALID" | "PROVIDER_LICENCE_INVALID" | "LICENCE_SCOPE_MISMATCH" | "STREAM_NOT_ACCEPTED" | "CONTAINMENT_INSUFFICIENT" | "AIRSIDE_STORAGE_NOT_SECURED" | "MANIFEST_REF_REQUIRED" | "DISCREPANCY_REASON_REQUIRED" | "FIELD_CALIBRATION_REQUIRED" | "LIMIT_LOOSENING" | "ENGAGEMENT_REQUIRED" | "INCIDENT_FIELDS_REQUIRED" | "INCIDENT_NOT_ENVIRONMENTAL" | "CLEANUP_WASTE_UNTRACKED" | "DUPLICATE_WATER_ENTRY" | "CONSIGNMENT_CLOSED" | "PERMIT_NOT_VALID" | "AVP_NOT_FOUND" | "RULE_LOOSENING" | "CLIENT_RECIPIENT_REQUIRED" | "WAIVER_EVIDENCE_REQUIRED" | "INVESTIGATION_NOT_APPROVED" | "PACK_NOT_APPROVED" | "CHANNEL_NOT_ALLOWED" | "SUBMITTED_AT_INVALID" | "IDENTITY_IN_TEXT" | "LESSON_INCOMPLETE" | "REDACTION_NOT_CONFIRMED" | "SELF_APPROVAL" | "NOT_DISTRIBUTED" | "ON_BEHALF_NOTE_REQUIRED" | "LESSON_NOT_PUBLISHED" | "RATIONALE_REQUIRED" | "FOLLOW_UP_REQUIRED" | "PACK_IMMUTABLE" | "SUBMISSION_LOCKED" | "WEIGHTS_NOT_100" | "LAGGING_WEIGHT_OUT_OF_RANGE" | "CAP_REQUIRED" | "PROFILE_BACKDATED" | "SOURCES_NOT_CONFIRMED" | "COMMENT_WINDOW_CLOSED" | "COMMENT_WINDOW_OPEN" | "DISPUTES_OPEN" | "CORRECTION_NOT_FOUND" | "CAP_NOT_EXCLUDABLE" | "WATCH_ENTRY_OPEN" | "PIP_INCOMPLETE" | "SOURCE_REPORT_NOT_PUBLISHED" | "SELF_REVIEW" | "RECIPIENT_SCOPE" | "EXTERNAL_NOT_ALLOWED" | "PACK_TOO_LARGE_FOR_EMAIL" | "COLUMN_NOT_EXPORTABLE" | "PURPOSE_REQUIRED" | "EXPORT_TOO_LARGE" | "SUBSCRIPTION_PERSONAL_DATA" | "SETTING_OUT_OF_RANGE" | "COLUMN_NOT_PERMITTED" | "PACK_ISSUED_IMMUTABLE" | "SCORECARD_FINAL" | "EXPORT_RATE_LIMIT" | "SCORECARDS_NOT_FINAL" | "NOT_IMPLEMENTED" | "INTERNAL_ERROR";
+        ErrorCode: "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "ACCOUNT_LOCKED" | "SESSION_EXPIRED" | "PRIVACY_ACK_REQUIRED" | "PRIVACY_NOTICE_VERSION_MISMATCH" | "INVITE_INVALID" | "INVITE_EXPIRED" | "RESET_TOKEN_INVALID" | "WEAK_PASSWORD" | "CURRENT_PASSWORD_INCORRECT" | "FORBIDDEN" | "READ_ONLY_ROLE" | "CONTRACTOR_SUSPENDED" | "SELF_MODIFICATION_FORBIDDEN" | "ROLE_NOT_ASSIGNABLE" | "NOT_FOUND" | "VALIDATION_ERROR" | "DUPLICATE_VALUE" | "INVALID_TRANSITION" | "TRANSITION_CONDITION_NOT_MET" | "PROJECT_CLOSED" | "SITE_INACTIVE" | "ZONE_ARCHIVED" | "CONTRACTOR_NOT_APPROVED" | "LAST_HSE_MANAGER" | "SOD_CONFLICT" | "DUPLICATE_RETURN" | "PERIOD_LOCKED" | "VERIFIER_IS_CREATOR" | "OUTSIDE_MOBILISATION" | "IMPORT_FILE_INVALID" | "IMPORT_HAS_ERRORS" | "IMPORT_EXPIRED" | "IMPORT_NOT_VALIDATED" | "NEAR_MISS_EXCLUSIVE" | "INJURY_CASE_REQUIRED" | "INVESTIGATION_LEVEL_TOO_LOW" | "INVESTIGATION_INCOMPLETE" | "INVESTIGATION_LEAD_NOT_ALLOWED" | "INVESTIGATION_TEAM_INCOMPLETE" | "APPROVER_IS_LEAD" | "CASES_NOT_CONFIRMED" | "HIGHER_CONTROL_REQUIRED" | "JUSTIFICATION_REQUIRED" | "POSSIBLE_ID_NUMBER" | "SAFE_OBSERVATION_IMMUTABLE" | "FINDING_CA_REQUIRED" | "VERIFIER_IS_OWNER" | "VERIFIER_ROLE_NOT_ALLOWED" | "EVIDENCE_REQUIRED" | "EXTENSION_LIMIT_REACHED" | "DUE_DATE_TOO_LATE" | "RESTRICTED_DIMENSION" | "MIXED_PROJECT_SCOPE" | "EXPORT_PURPOSE_REQUIRED" | "FILE_TOO_LARGE" | "FILE_TYPE_NOT_ALLOWED" | "SIGNED_URL_INVALID" | "AI_DISABLED" | "AI_TRANSFER_APPROVAL_REQUIRED" | "AI_UNAVAILABLE" | "AI_RATE_LIMITED" | "GATE_DEVICE_FORBIDDEN" | "GATE_DEVICE_REVOKED" | "GATE_RATE_LIMITED" | "PAIRING_NOT_FOUND" | "WORKER_EXISTS" | "WORKER_EXISTS_OUT_OF_SCOPE" | "ADULT_ATTESTATION_REQUIRED" | "DEPLOYMENT_EXISTS" | "WORKER_BANNED" | "PHOTO_REQUIRED" | "DELIVERER_NOT_ALLOWED" | "INDUCTION_PREREQUISITE" | "INDUCTION_ATTEMPTS_EXCEEDED" | "INDUCTION_TOO_SHORT" | "INDUCTION_EDIT_LOCKED" | "PROFILE_LOOSENING" | "HOOK_PROVIDER_MISSING" | "NOT_AIRPORT_PROJECT" | "APPLICATION_OPEN" | "ID_EXPIRES_SOON" | "ID_EXPIRED" | "VALIDITY_EXCEEDS_LIMIT" | "BACKGROUND_NOT_CLEARED" | "ENDORSER_NOT_ALLOWED" | "PREREQUISITES_NOT_MET" | "AREA_NOT_REQUESTED" | "ADP_PASS_REQUIRED" | "ADP_EXISTS" | "LICENCE_NOT_VALID" | "RTF_REQUIRED" | "TESTS_NOT_VALID" | "SUSPENSION_PERIOD_RUNNING" | "AVP_PRECONDITION" | "AVP_EXISTS" | "LATE_JUSTIFICATION_REQUIRED" | "OB_CONDITIONS_REQUIRED" | "CLEARANCE_NOT_LINKABLE" | "WAP_DURATION_EXCEEDED" | "WSP_REQUIRED" | "WAP_BLOCKED" | "CREW_INVALID" | "FOD_HANDBACK_REQUIRED" | "OPS_ZONES_LOCKED" | "SYSTEM_SUSPENSION" | "CREDENTIAL_TERMINAL" | "REAUTH_REQUIRED" | "COSIGNER_INVALID" | "CONTRACTOR_BLACKLISTED" | "MIXED_SIDE_ZONES" | "ZONES_NOT_SAME_SITE" | "RECEIVER_LIMIT" | "CREW_NOT_IN_TREE" | "DURATION_EXCEEDS_LIMIT" | "BACKDATED_PERMIT" | "PERMIT_READ_ONLY" | "KEY_ROLE_BUSY" | "APPOINTMENT_INVALID" | "ISSUER_APPOINTMENT_MANAGER_ONLY" | "JSA_MISSING" | "JSA_NOT_APPROVED" | "JSA_TYPE_MISMATCH" | "JSA_MANDATORY_HAZARD_MISSING" | "JSA_RESIDUAL_EXTREME" | "JSA_FROZEN" | "RESIDUAL_ACCEPTANCE_MISSING" | "RESIDUAL_ABOVE_INITIAL" | "PPE_ONLY_CONTROLS" | "TEMPLATE_REVIEW_DUE" | "HSE_REVIEW_MISSING" | "DOCUMENT_MISSING" | "CHECKLIST_INCOMPLETE" | "ROLE_MISSING" | "KEY_ROLE_INELIGIBLE" | "NO_ELIGIBLE_CREW" | "HOOK_NOT_MET" | "GAS_TEST_REQUIRED" | "GAS_TEST_FAILED" | "GAS_TEST_EXPIRED" | "DETECTOR_CALIBRATION_OVERDUE" | "DETECTOR_NOT_IN_SERVICE" | "BUMP_TEST_MISSING" | "DETECTOR_SENSOR_MISSING" | "BACKDATED_TEST" | "CSE_POINTS_REQUIRED" | "TESTER_SIGNATURE_REQUIRED" | "ISOLATION_NOT_VERIFIED" | "VERIFIER_IS_APPLIER" | "PERSONAL_LOCKS_MISSING" | "DEISOLATION_BLOCKED" | "LOCK_NOT_AVAILABLE" | "SIMOPS_PROHIBITED" | "SIMOPS_COORDINATION_REQUIRED" | "SIMOPS_RULE_LOCKED" | "WAP_NOT_ACTIVE" | "WAP_CREW_MISSING" | "OUTSIDE_WAP_WINDOW" | "NOTAM_NOT_IN_EFFECT" | "OBS_CLEARANCE_REQUIRED" | "AIRCRAFT_PROXIMITY" | "WIND_LIMIT_EXCEEDED" | "MIDDAY_BAN" | "MIDDAY_BAN_WINDOW" | "OUTSIDE_WINDOW" | "LICENCE_INVALID" | "BARRIER_TOO_SMALL" | "BARRIER_NOT_VERIFIED" | "FIRE_IMPAIRMENT_NOT_APPROVED" | "UTILITY_CLEARANCE_MISSING" | "FALL_CLEARANCE_INSUFFICIENT" | "HAZARDOUS_AREA_PROHIBITED" | "FIRE_WATCH_RUNNING" | "ENTRANTS_INSIDE" | "HEAT_CONTROLS_REQUIRED" | "HANDOVER_LIMIT" | "HANDOVER_TOO_EARLY" | "MECHANICAL_NEAR_SERVICE" | "INSPECTION_REQUIRED" | "ENERGIZED_HV_PROHIBITED" | "EXEMPTION_REQUIRED" | "CAPACITY_EXCEEDED" | "REVALIDATION_NOT_ALLOWED" | "CREW_NOT_BRIEFED" | "CAUSE_NOT_CLEARED" | "PAUSE_NOT_ALLOWED" | "CLOSURE_INCOMPLETE" | "POST_EXPIRY_CHECK_PENDING" | "CA_REQUIRED" | "AUDIT_LOCKED" | "CODE_IN_OTHER_CATALOGUE" | "TPI_NOT_ACCEPTABLE" | "TPI_NOT_APPROVED" | "TPI_SUSPENDED" | "TPI_BLACKLISTED" | "TPI_ACCREDITATION_INVALID" | "TPI_SCOPE_NOT_COVERED" | "TPI_NOT_CLIENT_APPROVED" | "TPI_NOT_INDEPENDENT" | "TPI_ACCREDITATION_REQUIRED" | "STANDARD_KIND_MISMATCH" | "SCOPE_EXCEEDS_ACCREDITATION" | "EQUIPMENT_EXISTS" | "EQUIPMENT_EXISTS_OUT_OF_SCOPE" | "EQUIPMENT_BLACKLISTED" | "CATEGORY_MISMATCH" | "VEHICLE_ALREADY_LINKED" | "USE_DETECTOR_REGISTER" | "ATTRIBUTE_REQUIRED" | "RELIEF_ABOVE_MAWP" | "EQUIPMENT_NOT_IN_SERVICE" | "EQUIPMENT_DEPLOYED_ELSEWHERE" | "TAG_EXISTS" | "EQUIPMENT_RETIRED" | "EQUIPMENT_NOT_REGISTERED" | "EQUIPMENT_NOT_DEPLOYED" | "OPERATOR_REQUIRED" | "EQUIPMENT_NOT_APPROVED" | "EQUIPMENT_OUT_OF_SERVICE" | "EQUIPMENT_QUARANTINED" | "ARRIVAL_INSPECTION_MISSING" | "CERT_EXISTS" | "CERT_NO_REUSED" | "CERT_ALREADY_EXPIRED" | "SCAN_REQUIRED" | "SERIAL_MISMATCH" | "LOAD_TEST_REQUIRED" | "SWL_ABOVE_RATING" | "LIFTING_DUTY_NOT_CERTIFIED" | "LIMITATION_CONFLICT" | "COLOUR_CODE_OUT_OF_PERIOD" | "CONFIGURATION_MISMATCH" | "CONFIGURATION_CHANGED" | "INSPECTION_BEFORE_EVENT" | "BACKDATED_EVENT" | "CONFIGURATION_EVENT_NOT_ALLOWED" | "SCAFFOLD_DESIGN_REQUIRED" | "CREW_NOT_CERTIFIED" | "INSPECTOR_NOT_CERTIFIED" | "BACKDATED_INSPECTION" | "RESTRICTIONS_REQUIRED" | "SCAFFOLD_NOT_REGISTERED" | "SCAFFOLD_INSPECTION_OVERDUE" | "SCAFFOLD_TAG_RED" | "SCAFFOLD_INSPECTION_REQUIRED" | "SCAFFOLD_YELLOW_TAG" | "CERT_ID_MISMATCH" | "NAME_MISMATCH_CONFIRMATION" | "LEVEL_NOT_ACCEPTED" | "LEVEL_REQUIRED" | "CERT_SCOPE_MISMATCH" | "CERT_LIMITATION" | "CARD_RESTRICTION_REVIEW" | "TRADE_CERT_MISSING" | "HOLDER_BANNED" | "CERT_HOLDER_BANNED" | "CERT_MISSING" | "CERT_EXPIRED" | "CERT_UNVERIFIED" | "CERT_SUSPENDED" | "CERT_REVOKED" | "SWL_LIMITATION" | "WORKER_NOT_IN_SCOPE" | "CHANNEL_NOT_REGISTERED" | "VERIFICATION_URL_FOREIGN_DOMAIN" | "EVIDENCE_REQUIRED_FOR_METHOD" | "VERIFICATION_CLOSED" | "ACCESSORY_REPAIR_NOT_ALLOWED" | "TPI_REINSPECTION_REQUIRED" | "DEFECTS_OPEN" | "PHYSICAL_TAG_REQUIRED" | "TPI_DEFECT_NOT_CANCELLABLE" | "PHASE4_NOT_ENABLED" | "HOOK_POLICY_LOOSENING" | "CRITICAL_CODE_NO_DEFERRAL" | "DEFERRAL_USED" | "DEFERRAL_TOO_LONG" | "HOOK_NOT_MET_WARN" | "EXPIRING_7D" | "UNKNOWN_CODE" | "TOKEN_UNKNOWN" | "CREDENTIAL_REVOKED" | "OUT_OF_SCOPE" | "SETTING_LOOSENING" | "EVIDENCE_DOMAIN_MISMATCH" | "IMPORT_SOURCE_NOT_ALLOWED" | "TPI_BLACKLIST_SCOPE_REQUIRED" | "INDUCTION_OWNED_BY_PHASE2" | "CATALOGUE_LOOSENING" | "ACCREDITED_PROVIDER_REQUIRED" | "PRACTICAL_REQUIRED" | "PREREQUISITE_CYCLE" | "COURSE_IN_USE" | "COURSE_INACTIVE" | "PROVIDER_NOT_ACCEPTABLE" | "PROVIDER_NOT_APPROVED" | "PROVIDER_SUSPENDED" | "PROVIDER_BLACKLISTED" | "ACCREDITATION_INVALID" | "ACCREDITATION_SCOPE" | "INTERNAL_NOT_ALLOWED" | "CONTRACTOR_DELIVERY_NOT_ALLOWED" | "NOT_OWN_TREE" | "PROVIDER_ACCREDITATION_REQUIRED" | "PROVIDER_BLACKLIST_SCOPE_REQUIRED" | "TRAINER_NOT_AUTHORISED" | "TRAINER_NOT_TRAINED" | "TRAINER_EVIDENCE_REQUIRED" | "AUTHORISATION_TOO_LONG" | "LINE_DERIVED_FROM_HOOK" | "DUE_DAYS_NOT_ALLOWED" | "ANY_OF_NOT_ALLOWED" | "MATRIX_LOOSENING" | "EXEMPTION_NOT_ALLOWED" | "ZONE_NOT_IN_DEPLOYMENT_SITES" | "SESSION_TOO_SHORT" | "SESSION_DAY_TOO_LONG" | "SESSION_FULL" | "SESSION_IN_PAST" | "BACKDATED_SESSION" | "SCHEDULE_CLASH" | "TRAINING_PREREQUISITE" | "TRAINING_ATTEMPTS_EXCEEDED" | "NOMINATIONS_INCOMPLETE" | "ATTENDANCE_SHEET_REQUIRED" | "ATTENDANCE_INSUFFICIENT" | "ATTENDANCE_DAY_NOT_REACHED" | "ASSESSOR_REQUIRED" | "LANGUAGE_NOT_UNDERSTOOD" | "LANGUAGE_MISMATCH" | "RECORD_ALREADY_EXPIRED" | "REFRESHER_NOT_ELIGIBLE" | "RECORD_EDIT_LOCKED" | "TRAINING_REGISTER_NOT_LIVE" | "TRAINING_REGISTER_LATER" | "TRAINING_HOOKS_NOT_ENABLED" | "TRAINING_MISSING" | "TRAINING_EXPIRED" | "TRAINING_PENDING_REVIEW" | "TRAINING_UNVERIFIED" | "TRAINING_SUSPENDED" | "TRAINING_REVOKED" | "TRAINING_VERIFICATION_FAILED" | "INDUCTION_NOT_VALID" | "HOLDER_NOT_LINKED" | "SESSION_NOT_EDITABLE" | "FITNESS_CODE_IN_USE" | "MEDICAL_PROVIDER_NOT_ACCEPTABLE" | "PROVIDER_KIND_NOT_ALLOWED" | "NOT_PROJECT_CLINIC" | "LICENCE_CHECK_REQUIRED" | "EXAMINER_LICENCE_INVALID" | "EXAMINER_NOT_QUALIFIED" | "EXAMINER_NOT_LINKED" | "PLAN_LOOSENING" | "BACKDATED_ASSESSMENT" | "FITNESS_ALREADY_EXPIRED" | "DUPLICATE_CODE_LINE" | "RESTRICTIONS_NOT_ALLOWED" | "REVIEW_DATE_INVALID" | "HOLD_REFERENCE_INVALID" | "PURPOSE_NOTICE_REQUIRED" | "SECOND_OPINION_REQUIRED" | "ASSESSMENT_LOCKED" | "CLINICAL_DATA_IN_SCAN" | "HOLD_RELEASE_REQUIRES_ASSESSMENT" | "MEDICAL_REGISTER_NOT_LIVE" | "MEDICAL_REGISTER_LATER" | "NO_MEDICAL_PROVIDER" | "MEDICAL_HOOKS_NOT_ENABLED" | "INCIDENT_RECORD_EXPECTED" | "RTW_BEFORE_CLEARANCE" | "PROHIBITED_DATA_HINT" | "MEDICAL_HOLD" | "MEDICAL_UNFIT" | "MEDICAL_PENDING_REVIEW" | "MEDICAL_UNVERIFIED" | "MEDICAL_REVOKED" | "MEDICAL_VERIFICATION_FAILED" | "MEDICAL_MISSING" | "RESTRICTION_CONFLICT" | "MEDICAL_REVIEW_DUE" | "MEDICAL_EXPIRED" | "WORKER_UNKNOWN" | "INSTRUMENT_NOT_COMPLIANT" | "INSTRUMENT_CALIBRATION_EXPIRED" | "ZONE_ALREADY_COVERED" | "REGIME_LOOSENING" | "PERIOD_TOO_SHORT" | "HEAT_COVERAGE_INCOMPLETE" | "WBGT_REQUIRED" | "VALUE_OUT_OF_RANGE" | "BACKDATED_READING" | "WBGT_COMPONENT_MISMATCH" | "STATION_INACTIVE" | "NA_NOT_ALLOWED" | "NOT_IN_BAN_WINDOW" | "NO_ACTIVE_EXEMPTION" | "OUTSIDE_BAN_PERIOD" | "TOO_LATE_TO_CHANGE" | "HEAT_STOP" | "WBGT_READING_REQUIRED" | "HEAT_RESTRICTION" | "HEAT_STOP_FOR_WORKER" | "WORKER_ACCLIMATISING" | "ERP_INCOMPLETE" | "ERP_NOT_APPROVED" | "RESCUE_PLAN_REF_REQUIRED" | "DRILL_FREQUENCY_TOO_LOW" | "ASSEMBLY_POINT_IN_RESTRICTED_AREA" | "ZONE_WITHOUT_ASSEMBLY_POINT" | "ALREADY_IN_TEAM" | "CHECK_BACKDATED" | "CHECK_WITHOUT_SCAN" | "TIMELINE_ORDER" | "INCIDENT_LINK_REQUIRED" | "RESCUE_TEAM_NOT_REGISTERED" | "RESCUE_DRILL_OVERDUE" | "HEIGHT_RESCUE_NOT_READY" | "NO_READY_EXTINGUISHER" | "TEMPLATE_INCOMPLETE" | "TEMPLATE_IN_USE" | "TEMPLATE_REQUIRED" | "TEMPLATE_NOT_APPLICABLE" | "TEMPLATE_IMMUTABLE" | "SEVERITY_LOWERED" | "FIX_ON_SPOT_NOT_ALLOWED" | "STOP_RECORD_REQUIRED" | "STOP_RELEASE_CA_REQUIRED" | "STOP_WORK_ACTIVE" | "OFFLINE_SUBMIT_TOO_LATE" | "CLOCK_SKEW" | "TOPIC_INCOMPLETE" | "TOPIC_REVIEW_OVERDUE" | "WORKER_NOT_MOBILISED" | "DUPLICATE_ATTENDEE" | "ATTENDANCE_EVIDENCE_REQUIRED" | "TALK_LOCKED" | "TBT_SHORT" | "ASPECT_CONTROL_REQUIRED" | "CONTROL_LEVEL_TOO_LOW" | "PRODUCER_REGISTRATION_INVALID" | "PROVIDER_LICENCE_INVALID" | "LICENCE_SCOPE_MISMATCH" | "STREAM_NOT_ACCEPTED" | "CONTAINMENT_INSUFFICIENT" | "AIRSIDE_STORAGE_NOT_SECURED" | "MANIFEST_REF_REQUIRED" | "DISCREPANCY_REASON_REQUIRED" | "FIELD_CALIBRATION_REQUIRED" | "LIMIT_LOOSENING" | "ENGAGEMENT_REQUIRED" | "INCIDENT_FIELDS_REQUIRED" | "INCIDENT_NOT_ENVIRONMENTAL" | "CLEANUP_WASTE_UNTRACKED" | "DUPLICATE_WATER_ENTRY" | "CONSIGNMENT_CLOSED" | "PERMIT_NOT_VALID" | "AVP_NOT_FOUND" | "RULE_LOOSENING" | "CLIENT_RECIPIENT_REQUIRED" | "WAIVER_EVIDENCE_REQUIRED" | "INVESTIGATION_NOT_APPROVED" | "PACK_NOT_APPROVED" | "CHANNEL_NOT_ALLOWED" | "SUBMITTED_AT_INVALID" | "IDENTITY_IN_TEXT" | "LESSON_INCOMPLETE" | "REDACTION_NOT_CONFIRMED" | "SELF_APPROVAL" | "NOT_DISTRIBUTED" | "ON_BEHALF_NOTE_REQUIRED" | "LESSON_NOT_PUBLISHED" | "RATIONALE_REQUIRED" | "FOLLOW_UP_REQUIRED" | "PACK_IMMUTABLE" | "SUBMISSION_LOCKED" | "WEIGHTS_NOT_100" | "LAGGING_WEIGHT_OUT_OF_RANGE" | "CAP_REQUIRED" | "PROFILE_BACKDATED" | "SOURCES_NOT_CONFIRMED" | "COMMENT_WINDOW_CLOSED" | "COMMENT_WINDOW_OPEN" | "DISPUTES_OPEN" | "CORRECTION_NOT_FOUND" | "CAP_NOT_EXCLUDABLE" | "WATCH_ENTRY_OPEN" | "PIP_INCOMPLETE" | "SOURCE_REPORT_NOT_PUBLISHED" | "SELF_REVIEW" | "RECIPIENT_SCOPE" | "EXTERNAL_NOT_ALLOWED" | "PACK_TOO_LARGE_FOR_EMAIL" | "COLUMN_NOT_EXPORTABLE" | "PURPOSE_REQUIRED" | "EXPORT_TOO_LARGE" | "SUBSCRIPTION_PERSONAL_DATA" | "SETTING_OUT_OF_RANGE" | "COLUMN_NOT_PERMITTED" | "PACK_ISSUED_IMMUTABLE" | "SCORECARD_FINAL" | "EXPORT_RATE_LIMIT" | "SCORECARDS_NOT_FINAL" | "ROAD_TYPE_ZONE_MISMATCH" | "VEHICLE_REQUIRED" | "VEHICLE_SECTION_INCOMPLETE" | "ACCIDENT_REPORT_AUTHORITY_REQUIRED" | "ACCIDENT_REPORT_MISSING" | "PLATE_IS_REGISTERED" | "ACCIDENT_REPORT_LOCKED" | "VEHICLE_INVOLVED_LOCKED" | "NOT_IMPLEMENTED" | "INTERNAL_ERROR";
         /** ErrorDetail */
         ErrorDetail: {
             /** @description Stable machine code; map it to EN/AR UI text. */
@@ -25785,7 +25906,7 @@ export interface components {
          * @description Lists that can be exported (§5.8 rule 49, capability 18).
          * @enum {string}
          */
-        ExportDataset: "projects" | "sites" | "zones" | "contractors" | "engagements" | "users" | "audit_log" | "workforce_returns" | "incidents" | "observations" | "inspections" | "corrective_actions" | "hse_meetings" | "workers" | "deployments" | "inductions" | "pass_applications" | "airport_passes" | "adps" | "airside_offences" | "vehicles" | "avps" | "waps" | "notam_requests" | "obstacle_clearances" | "ops_events" | "gate_log" | "permits" | "permit_suspensions" | "gas_tests" | "gas_detectors" | "isolations" | "locks" | "ptw_appointments" | "jsa_templates" | "simops_conflicts" | "ptw_audits" | "tpis" | "equipment" | "equipment_deployments" | "equipment_certificates" | "scaffolds" | "personnel_certificates" | "cert_verifications" | "equipment_defects" | "blacklist_register" | "cert_imports" | "training_courses" | "training_providers" | "trainer_authorisations" | "training_matrix" | "training_sessions" | "training_attendance" | "training_records" | "training_verifications" | "training_gaps" | "refresher_plan" | "training_hours" | "training_imports" | "fitness_codes" | "medical_providers" | "medical_examiners" | "medical_plan" | "fitness_status" | "fitness_gaps" | "fitness_holds" | "fitness_referrals" | "fitness_verifications" | "medical_imports" | "heat_patrols" | "heat_welfare_checks" | "heat_illness_log" | "emergency_drills" | "emergency_assets" | "emergency_events" | "field_inspections" | "field_audits" | "toolbox_talks" | "waste_consignments" | "env_readings" | "env_spills" | "env_complaints" | "notification_requirements" | "lessons";
+        ExportDataset: "projects" | "sites" | "zones" | "contractors" | "engagements" | "users" | "audit_log" | "workforce_returns" | "incidents" | "observations" | "inspections" | "corrective_actions" | "hse_meetings" | "workers" | "deployments" | "inductions" | "pass_applications" | "airport_passes" | "adps" | "airside_offences" | "vehicles" | "avps" | "waps" | "notam_requests" | "obstacle_clearances" | "ops_events" | "gate_log" | "permits" | "permit_suspensions" | "gas_tests" | "gas_detectors" | "isolations" | "locks" | "ptw_appointments" | "jsa_templates" | "simops_conflicts" | "ptw_audits" | "tpis" | "equipment" | "equipment_deployments" | "equipment_certificates" | "scaffolds" | "personnel_certificates" | "cert_verifications" | "equipment_defects" | "blacklist_register" | "cert_imports" | "training_courses" | "training_providers" | "trainer_authorisations" | "training_matrix" | "training_sessions" | "training_attendance" | "training_records" | "training_verifications" | "training_gaps" | "refresher_plan" | "training_hours" | "training_imports" | "fitness_codes" | "medical_providers" | "medical_examiners" | "medical_plan" | "fitness_status" | "fitness_gaps" | "fitness_holds" | "fitness_referrals" | "fitness_verifications" | "medical_imports" | "heat_patrols" | "heat_welfare_checks" | "heat_illness_log" | "emergency_drills" | "emergency_assets" | "emergency_events" | "field_inspections" | "field_audits" | "toolbox_talks" | "waste_consignments" | "env_readings" | "env_spills" | "env_complaints" | "notification_requirements" | "lessons" | "incident_vehicles";
         /**
          * ExportFormat
          * @enum {string}
@@ -25818,7 +25939,7 @@ export interface components {
          * ExternalBody
          * @enum {string}
          */
-        ExternalBody: "gosi" | "mhrsd" | "civil_defense" | "gaca" | "airport_operator" | "client" | "police" | "ncec";
+        ExternalBody: "gosi" | "mhrsd" | "civil_defense" | "gaca" | "airport_operator" | "client" | "police" | "ncec" | "najm";
         /**
          * ExternalNotificationRead
          * @description I-20: required notifications are derived; recorded ones show done.
@@ -28301,7 +28422,7 @@ export interface components {
          * @description List NT.
          * @enum {string}
          */
-        FuTrigger: "recordable_contractor_case" | "commuting_case" | "fatality" | "permanent_disability" | "lti" | "fire_explosion_do" | "any_do" | "hipo" | "gaca_airside_flag" | "any_airside_flag" | "env_ncec" | "env_airside" | "any_recordable_case" | "property_damage_ge_sar";
+        FuTrigger: "recordable_contractor_case" | "commuting_case" | "fatality" | "permanent_disability" | "lti" | "fire_explosion_do" | "any_do" | "hipo" | "gaca_airside_flag" | "any_airside_flag" | "env_ncec" | "env_airside" | "any_recordable_case" | "property_damage_ge_sar" | "rta_public_injury" | "rta_public_no_injury";
         /**
          * FuWaiverReason
          * @description List WV.
@@ -30948,6 +31069,38 @@ export interface components {
             environmental?: components["schemas"]["EnvironmentalInput"] | null;
             /** @description Required iff dangerous_occurrence in incident_types. */
             dangerous_occurrence?: components["schemas"]["DangerousOccurrenceInput"] | null;
+            /**
+             * Vehicle Involved
+             * @description 7a VA-1: derived true (and locked) from vehicle signals; may be set true manually (e.g. a near miss). Setting false while VA-1 holds → 422 VEHICLE_INVOLVED_LOCKED.
+             * @default false
+             */
+            vehicle_involved: boolean;
+            /** @description Required to report a vehicle incident (VA-2); airside ⇔ airside zone (ROAD_TYPE_ZONE_MISMATCH). */
+            road_type?: components["schemas"]["VehRoadType"] | null;
+            /**
+             * Road Location
+             * @description public_road: road name, direction, km.
+             */
+            road_location?: string | null;
+            /** @description List JP; commuting_* ⇒ recorded_not_counted (VA-13) and commuting proposals for worker cases (VA-7). */
+            journey_purpose?: components["schemas"]["VehJourneyPurpose"] | null;
+            light?: components["schemas"]["VehLight"] | null;
+            surface?: components["schemas"]["VehSurface"] | null;
+            /** @description public_road: ≠ none_internal (ACCIDENT_REPORT_AUTHORITY_REQUIRED, VA-5). */
+            report_authority?: components["schemas"]["VehReportAuthority"] | null;
+            /** Report No */
+            report_no?: string | null;
+            /** Report Date */
+            report_date?: string | null;
+            /**
+             * Liability Pct Own
+             * @description 0, 25, 50, 75 or 100.
+             */
+            liability_pct_own?: number | null;
+            /** Third Party Damage Desc */
+            third_party_damage_desc?: string | null;
+            /** Third Party Damage Cost Sar */
+            third_party_damage_cost_sar?: number | string | null;
         };
         /**
          * IncidentDefectPrompt
@@ -31034,6 +31187,29 @@ export interface components {
             investigation_level: components["schemas"]["InvestigationLevel"] | null;
             /** Investigation Due Date */
             investigation_due_date: string | null;
+            /**
+             * Vehicle Involved
+             * @description 7a.
+             * @default false
+             */
+            vehicle_involved: boolean;
+            road_type?: components["schemas"]["VehRoadType"] | null;
+            /**
+             * Recorded Not Counted
+             * @description 7a VA-13 badge.
+             * @default false
+             */
+            recorded_not_counted: boolean;
+            /**
+             * Plates
+             * @description 7a: plates of own / contractor / hired vehicles only (never third parties).
+             */
+            plates?: string[];
+            /**
+             * Report No
+             * @description 7a Najm / police report number.
+             */
+            report_no?: string | null;
         };
         /** IncidentPage */
         IncidentPage: {
@@ -31169,6 +31345,20 @@ export interface components {
             allowed_transitions: components["schemas"]["IncidentStatus"][];
             /** Warnings */
             warnings?: components["schemas"]["ApiWarning"][];
+            /**
+             * Vehicle Involved
+             * @description 7a §3.1 (VA-1).
+             * @default false
+             */
+            vehicle_involved: boolean;
+            /**
+             * Recorded Not Counted
+             * @description 7a VA-13 badge 'Recorded, not counted — commuting (OSHA)'.
+             * @default false
+             */
+            recorded_not_counted: boolean;
+            /** @description 7a vehicle section; null when vehicle_involved is false. */
+            vehicle_section?: components["schemas"]["VehSectionRead"] | null;
         };
         /**
          * IncidentShift
@@ -31256,6 +31446,30 @@ export interface components {
             property_damage?: components["schemas"]["PropertyDamageInput"] | null;
             environmental?: components["schemas"]["EnvironmentalInput"] | null;
             dangerous_occurrence?: components["schemas"]["DangerousOccurrenceInput"] | null;
+            /** Vehicle Involved */
+            vehicle_involved?: boolean | null;
+            road_type?: components["schemas"]["VehRoadType"] | null;
+            /** Road Location */
+            road_location?: string | null;
+            journey_purpose?: components["schemas"]["VehJourneyPurpose"] | null;
+            light?: components["schemas"]["VehLight"] | null;
+            surface?: components["schemas"]["VehSurface"] | null;
+            report_authority?: components["schemas"]["VehReportAuthority"] | null;
+            /** Report No */
+            report_no?: string | null;
+            /** Report Date */
+            report_date?: string | null;
+            /** Liability Pct Own */
+            liability_pct_own?: number | null;
+            /** Third Party Damage Desc */
+            third_party_damage_desc?: string | null;
+            /** Third Party Damage Cost Sar */
+            third_party_damage_cost_sar?: number | string | null;
+            /**
+             * Reason
+             * @description 7a §4: ≥ 20 characters when vehicle-section fields are edited after the investigation is approved (only vehicle fields may change in Pending Review / Actions Pending).
+             */
+            reason?: string | null;
         };
         /** InductionAttendee */
         InductionAttendee: {
@@ -33647,7 +33861,7 @@ export interface components {
          * @description KPI catalogue §6.1. K-26 is split into one id per event type (DO / PD / ENV).
          * @enum {string}
          */
-        KpiMetric: "K-01" | "K-02" | "K-03" | "K-04" | "K-05" | "K-05b" | "K-06" | "K-07" | "K-08" | "K-09" | "K-10" | "K-11" | "K-12" | "K-13" | "K-14" | "K-15" | "K-16" | "K-17" | "K-18" | "K-20" | "K-21" | "K-22" | "K-23" | "K-24" | "K-25" | "K-26a" | "K-26b" | "K-26c" | "K-27" | "K-28" | "K-29" | "K-30" | "K-31" | "K-32" | "K-33" | "K-34" | "K-35" | "K-35b" | "K-36" | "K-37" | "K-38" | "K-39" | "K-40" | "K-41" | "K-42" | "K-42b" | "K-43" | "K-44" | "K-45" | "K-46" | "K-47" | "K-48" | "K-49" | "K-50" | "K-51" | "K-52" | "K-53" | "K-53b" | "K-54" | "K-55" | "K-56" | "K-57" | "K-58" | "K-59" | "K-60" | "K-46b" | "K-61" | "K-62" | "K-63" | "K-64" | "K-65" | "K-66" | "K-67" | "K-68" | "K-69" | "K-70" | "K-71" | "K-72" | "K-73" | "K-74" | "K-75" | "K-76" | "K-77" | "K-78" | "K-79" | "K-80" | "K-81" | "K-82" | "K-83" | "K-84" | "K-85" | "K-86" | "K-87" | "K-88" | "K-89" | "K-90" | "K-91" | "K-92" | "K-93" | "K-94" | "K-95" | "K-96" | "K-97" | "K-98" | "K-99" | "K-100" | "K-101" | "K-102" | "K-103" | "K-104" | "K-105" | "K-106" | "K-107" | "K-108" | "K-109" | "K-110" | "K-111" | "K-112" | "K-113" | "K-114" | "K-115" | "K-116" | "K-117" | "K-118" | "K-119" | "K-120" | "K-121" | "K-122" | "K-123" | "K-124" | "K-125" | "K-126" | "K-127" | "K-128" | "K-129" | "K-130" | "K-131" | "K-132" | "K-133" | "K-134" | "K-135";
+        KpiMetric: "K-01" | "K-02" | "K-03" | "K-04" | "K-05" | "K-05b" | "K-06" | "K-07" | "K-08" | "K-09" | "K-10" | "K-11" | "K-12" | "K-13" | "K-14" | "K-15" | "K-16" | "K-17" | "K-18" | "K-20" | "K-21" | "K-22" | "K-23" | "K-24" | "K-25" | "K-26a" | "K-26b" | "K-26c" | "K-27" | "K-28" | "K-29" | "K-30" | "K-31" | "K-32" | "K-33" | "K-34" | "K-35" | "K-35b" | "K-36" | "K-37" | "K-38" | "K-39" | "K-40" | "K-41" | "K-42" | "K-42b" | "K-43" | "K-44" | "K-45" | "K-46" | "K-47" | "K-48" | "K-49" | "K-50" | "K-51" | "K-52" | "K-53" | "K-53b" | "K-54" | "K-55" | "K-56" | "K-57" | "K-58" | "K-59" | "K-60" | "K-46b" | "K-61" | "K-62" | "K-63" | "K-64" | "K-65" | "K-66" | "K-67" | "K-68" | "K-69" | "K-70" | "K-71" | "K-72" | "K-73" | "K-74" | "K-75" | "K-76" | "K-77" | "K-78" | "K-79" | "K-80" | "K-81" | "K-82" | "K-83" | "K-84" | "K-85" | "K-86" | "K-87" | "K-88" | "K-89" | "K-90" | "K-91" | "K-92" | "K-93" | "K-94" | "K-95" | "K-96" | "K-97" | "K-98" | "K-99" | "K-100" | "K-101" | "K-102" | "K-103" | "K-104" | "K-105" | "K-106" | "K-107" | "K-108" | "K-109" | "K-110" | "K-111" | "K-112" | "K-113" | "K-114" | "K-115" | "K-116" | "K-117" | "K-118" | "K-119" | "K-120" | "K-121" | "K-122" | "K-123" | "K-124" | "K-125" | "K-126" | "K-127" | "K-128" | "K-129" | "K-130" | "K-131" | "K-132" | "K-133" | "K-134" | "K-135" | "K-136" | "K-137";
         /** KpiPlaceholder */
         KpiPlaceholder: {
             metric: components["schemas"]["KpiMetric"];
@@ -36344,7 +36558,7 @@ export interface components {
          * @description In-app notification kinds (§7).
          * @enum {string}
          */
-        NotificationKind: "account_locked" | "contractor_cr_expiry" | "contractor_submitted" | "contractor_status_changed" | "engagement_parent_blacklisted" | "settings_changed" | "audit_chain_break" | "last_hse_manager_risk" | "role_assignment_ending" | "invite_expired" | "inactive_account" | "incident_reported" | "incident_unclassified" | "external_notification_due" | "investigation_due" | "preliminary_report_missing" | "open_lti_case" | "case_restated" | "ca_assigned" | "ca_due" | "ca_overdue" | "ca_pending_verification" | "high_risk_observation_without_ca" | "daily_return_missing" | "data_completeness_low" | "month_lock_approaching" | "inspection_due" | "inspection_missed" | "leading_warning" | "lti_free_milestone" | "monthly_report_ready" | "import_committed_with_warnings" | "induction_expiry" | "reinduction_due" | "worker_id_expiry" | "passport_registration" | "airport_pass_expiry" | "bg_recheck_due" | "pass_application_update" | "pass_application_stale" | "adp_expiry" | "avp_expiry" | "vehicle_document_expiry" | "adp_suspended" | "adp_suspension_ended" | "raised_suspension_pending" | "credential_status_changed" | "return_due" | "return_overdue" | "credential_lost" | "lost_authority_not_notified" | "revoked_token_scanned" | "admitted_despite_denial" | "contractor_blacklisted_passes" | "wap_update" | "wap_blocked" | "wap_crew_excluded" | "wap_suspended" | "wap_ending" | "notam_ending" | "notam_late" | "notam_not_issued" | "notam_ended_with_waps" | "obstacle_clearance_update" | "obstacle_clearance_ending" | "ops_suspension" | "permit_requested" | "permit_review_reminder" | "permit_reviewed" | "permit_update" | "permit_not_issued" | "permit_issue_lapsed" | "shift_end_approaching" | "shift_lapsed" | "gas_retest_due" | "gas_test_failed" | "permit_suspended" | "midday_ban" | "fire_watch_ended" | "permit_ending" | "permit_expired" | "post_expiry_check_pending" | "simops_conflict" | "ptw_critical_finding" | "ptw_audits_behind_plan" | "gas_detector_calibration_due" | "gas_detector_quarantined" | "ptw_appointment_expiry" | "jsa_template_review_due" | "isolation_review_due" | "isolation_orphan" | "lock_cut" | "crew_eligibility_expiring" | "ptw_exemption" | "crew_excluded" | "equipment_cert_expiry" | "equipment_quarantined" | "personnel_cert_expiry" | "personnel_cert_expiring_on_crew" | "tpi_accreditation_expiry" | "tpi_client_approval_expiry" | "certificate_submitted" | "certificate_review_reminder" | "certificate_returned" | "verification_due" | "verification_unable" | "verification_failed" | "scaffold_tag_expiry" | "scaffold_tag_red" | "equipment_stop_use" | "defect_rectification_due" | "equipment_out_of_service" | "configuration_event" | "arrival_inspection_due" | "blacklist_changed" | "ban_review_due" | "hook_block_approaching" | "hook_policy_changed" | "trade_cert_missing" | "cert_import_update" | "training_record_expiry" | "training_expiring_on_crew" | "training_refresher_due" | "training_refresher_booked_late" | "training_gap_on_live_work" | "training_gap_at_mobilisation" | "training_session_update" | "training_session_reminder" | "training_session_close_due" | "training_session_voided" | "training_record_submitted" | "training_verification_due" | "training_verification_unable" | "training_verification_failed" | "training_record_status" | "training_cert_no_reused" | "trainer_authorisation_expiry" | "trainer_authorisation_lapsed_sessions" | "training_provider_accreditation_expiry" | "training_provider_status" | "training_attempts_exceeded" | "training_import_update" | "fitness_expiry" | "fitness_expiring_on_crew" | "fitness_review_due" | "fitness_hold_created" | "fitness_referral_raised" | "fitness_referral_overdue" | "fitness_work_during_hold" | "fitness_rtw_before_clearance" | "fitness_restricted_days_prompt" | "fitness_signoff_due" | "fitness_certificate_submitted" | "fitness_verification_due" | "fitness_verification_unable" | "fitness_verification_failed" | "fitness_clinical_data_rejected" | "fitness_cert_no_reused" | "fitness_permanently_unfit" | "fitness_second_opinion" | "medical_licence_expiry" | "medical_provider_status" | "medical_reexamination_list" | "exposure_group_removed" | "fitness_catalogue_shortened" | "medical_import_update" | "heat_regime_raised" | "heat_reading_overdue" | "heat_ban_prewarn" | "heat_ban_violation" | "heat_exemption" | "heat_welfare_fail" | "heat_welfare_missing" | "heat_plan_created" | "heat_plan_unconfirmed" | "heat_illness_entry" | "heat_review_overdue" | "heat_calibration_expiry" | "heat_coverage_gap" | "emergency_event" | "emergency_unaccounted" | "emergency_coverage_short" | "emergency_drill_due" | "emergency_evaluation_overdue" | "emergency_asset_failed" | "emergency_asset_due" | "emergency_team_not_current" | "emergency_erp_review" | "stop_work_order" | "critical_item_failure" | "inspection_coverage_gap" | "audit_due" | "audit_report_overdue" | "briefing_campaign" | "offline_submission_rejected" | "field_library_review" | "env_exceedance" | "airside_dust_alert" | "env_spill_reportable" | "env_permit_expiry" | "env_instrument_calibration" | "consignment_overdue" | "consignment_rejected" | "haz_storage_deadline" | "post_storm_check" | "discharge_permit_invalid" | "env_complaint" | "aspect_review" | "followup_requirement" | "followup_pack_approval" | "lesson_publish_due" | "lesson_published" | "lesson_ack_due" | "lesson_effectiveness_due" | "scorecard_issued" | "scorecard_comment_window" | "scorecard_dispute" | "scorecard_finalise_due" | "scorecard_month_not_locked" | "scorecard_sources" | "scorecard_revised" | "watch_list" | "pip_due" | "report_pack_due" | "report_pack_issued" | "delivery_bounced" | "export_ready";
+        NotificationKind: "account_locked" | "contractor_cr_expiry" | "contractor_submitted" | "contractor_status_changed" | "engagement_parent_blacklisted" | "settings_changed" | "audit_chain_break" | "last_hse_manager_risk" | "role_assignment_ending" | "invite_expired" | "inactive_account" | "incident_reported" | "incident_unclassified" | "external_notification_due" | "investigation_due" | "preliminary_report_missing" | "open_lti_case" | "case_restated" | "ca_assigned" | "ca_due" | "ca_overdue" | "ca_pending_verification" | "high_risk_observation_without_ca" | "daily_return_missing" | "data_completeness_low" | "month_lock_approaching" | "inspection_due" | "inspection_missed" | "leading_warning" | "lti_free_milestone" | "monthly_report_ready" | "import_committed_with_warnings" | "induction_expiry" | "reinduction_due" | "worker_id_expiry" | "passport_registration" | "airport_pass_expiry" | "bg_recheck_due" | "pass_application_update" | "pass_application_stale" | "adp_expiry" | "avp_expiry" | "vehicle_document_expiry" | "adp_suspended" | "adp_suspension_ended" | "raised_suspension_pending" | "credential_status_changed" | "return_due" | "return_overdue" | "credential_lost" | "lost_authority_not_notified" | "revoked_token_scanned" | "admitted_despite_denial" | "contractor_blacklisted_passes" | "wap_update" | "wap_blocked" | "wap_crew_excluded" | "wap_suspended" | "wap_ending" | "notam_ending" | "notam_late" | "notam_not_issued" | "notam_ended_with_waps" | "obstacle_clearance_update" | "obstacle_clearance_ending" | "ops_suspension" | "permit_requested" | "permit_review_reminder" | "permit_reviewed" | "permit_update" | "permit_not_issued" | "permit_issue_lapsed" | "shift_end_approaching" | "shift_lapsed" | "gas_retest_due" | "gas_test_failed" | "permit_suspended" | "midday_ban" | "fire_watch_ended" | "permit_ending" | "permit_expired" | "post_expiry_check_pending" | "simops_conflict" | "ptw_critical_finding" | "ptw_audits_behind_plan" | "gas_detector_calibration_due" | "gas_detector_quarantined" | "ptw_appointment_expiry" | "jsa_template_review_due" | "isolation_review_due" | "isolation_orphan" | "lock_cut" | "crew_eligibility_expiring" | "ptw_exemption" | "crew_excluded" | "equipment_cert_expiry" | "equipment_quarantined" | "personnel_cert_expiry" | "personnel_cert_expiring_on_crew" | "tpi_accreditation_expiry" | "tpi_client_approval_expiry" | "certificate_submitted" | "certificate_review_reminder" | "certificate_returned" | "verification_due" | "verification_unable" | "verification_failed" | "scaffold_tag_expiry" | "scaffold_tag_red" | "equipment_stop_use" | "defect_rectification_due" | "equipment_out_of_service" | "configuration_event" | "arrival_inspection_due" | "blacklist_changed" | "ban_review_due" | "hook_block_approaching" | "hook_policy_changed" | "trade_cert_missing" | "cert_import_update" | "training_record_expiry" | "training_expiring_on_crew" | "training_refresher_due" | "training_refresher_booked_late" | "training_gap_on_live_work" | "training_gap_at_mobilisation" | "training_session_update" | "training_session_reminder" | "training_session_close_due" | "training_session_voided" | "training_record_submitted" | "training_verification_due" | "training_verification_unable" | "training_verification_failed" | "training_record_status" | "training_cert_no_reused" | "trainer_authorisation_expiry" | "trainer_authorisation_lapsed_sessions" | "training_provider_accreditation_expiry" | "training_provider_status" | "training_attempts_exceeded" | "training_import_update" | "fitness_expiry" | "fitness_expiring_on_crew" | "fitness_review_due" | "fitness_hold_created" | "fitness_referral_raised" | "fitness_referral_overdue" | "fitness_work_during_hold" | "fitness_rtw_before_clearance" | "fitness_restricted_days_prompt" | "fitness_signoff_due" | "fitness_certificate_submitted" | "fitness_verification_due" | "fitness_verification_unable" | "fitness_verification_failed" | "fitness_clinical_data_rejected" | "fitness_cert_no_reused" | "fitness_permanently_unfit" | "fitness_second_opinion" | "medical_licence_expiry" | "medical_provider_status" | "medical_reexamination_list" | "exposure_group_removed" | "fitness_catalogue_shortened" | "medical_import_update" | "heat_regime_raised" | "heat_reading_overdue" | "heat_ban_prewarn" | "heat_ban_violation" | "heat_exemption" | "heat_welfare_fail" | "heat_welfare_missing" | "heat_plan_created" | "heat_plan_unconfirmed" | "heat_illness_entry" | "heat_review_overdue" | "heat_calibration_expiry" | "heat_coverage_gap" | "emergency_event" | "emergency_unaccounted" | "emergency_coverage_short" | "emergency_drill_due" | "emergency_evaluation_overdue" | "emergency_asset_failed" | "emergency_asset_due" | "emergency_team_not_current" | "emergency_erp_review" | "stop_work_order" | "critical_item_failure" | "inspection_coverage_gap" | "audit_due" | "audit_report_overdue" | "briefing_campaign" | "offline_submission_rejected" | "field_library_review" | "env_exceedance" | "airside_dust_alert" | "env_spill_reportable" | "env_permit_expiry" | "env_instrument_calibration" | "consignment_overdue" | "consignment_rejected" | "haz_storage_deadline" | "post_storm_check" | "discharge_permit_invalid" | "env_complaint" | "aspect_review" | "followup_requirement" | "followup_pack_approval" | "lesson_publish_due" | "lesson_published" | "lesson_ack_due" | "lesson_effectiveness_due" | "scorecard_issued" | "scorecard_comment_window" | "scorecard_dispute" | "scorecard_finalise_due" | "scorecard_month_not_locked" | "scorecard_sources" | "scorecard_revised" | "watch_list" | "pip_due" | "report_pack_due" | "report_pack_issued" | "delivery_bounced" | "export_ready" | "vehicle_docs_not_valid" | "accident_report_missing";
         /** NotificationPage */
         NotificationPage: {
             /** Items */
@@ -50781,6 +50995,639 @@ export interface components {
          */
         ValidityStatus: "pending" | "active" | "suspended" | "revoked" | "expired" | "withdrawn";
         /**
+         * VehAccidentReportRead
+         * @description The "Accident report (archive)" card (VA-14, VA-15). Internal record: no client copy.
+         *     Files are listed only for capability 29 (`files_visible`); others see number and date only.
+         */
+        VehAccidentReportRead: {
+            /**
+             * Incident Id
+             * Format: uuid
+             */
+            incident_id: string;
+            report_authority: components["schemas"]["VehReportAuthority"] | null;
+            /** Report No */
+            report_no: string | null;
+            /** Report Date */
+            report_date: string | null;
+            /** Liability Pct Own */
+            liability_pct_own: number | null;
+            /**
+             * Required To Close
+             * @description report_authority ≠ none_internal and not waived through 6f (VA-5, VA-14).
+             */
+            required_to_close: boolean;
+            /** Waived */
+            waived: boolean;
+            /**
+             * Locked
+             * @description Incident Closed: files may be added, none deleted.
+             */
+            locked: boolean;
+            /**
+             * Missing To Close
+             * @example [
+             *       "report_no",
+             *       "report_date",
+             *       "report_files"
+             *     ]
+             */
+            missing_to_close: string[];
+            /**
+             * File Count
+             * @description Current (not superseded) files.
+             */
+            file_count: number;
+            /** Files Visible */
+            files_visible: boolean;
+            /** Files */
+            files: components["schemas"]["VehReportFileRead"][];
+        };
+        /**
+         * VehAccidentReportUpdate
+         * @description Set the report record (allowed until the incident is Closed, also while Pending Review or
+         *     Actions Pending). public_road requires an authority ≠ none_internal
+         *     (`ACCIDENT_REPORT_AUTHORITY_REQUIRED`).
+         */
+        VehAccidentReportUpdate: {
+            report_authority?: components["schemas"]["VehReportAuthority"] | null;
+            /**
+             * Report No
+             * @example NJM-TEST-2026-00871
+             */
+            report_no?: string | null;
+            /**
+             * Report Date
+             * @description ≥ the occurred date.
+             */
+            report_date?: string | null;
+            /**
+             * Liability Pct Own
+             * @description 0, 25, 50, 75 or 100.
+             */
+            liability_pct_own?: number | null;
+            /**
+             * Reason
+             * @description Required (≥ 20 characters) once the investigation is approved (Phase 1 rule, 7a §4).
+             */
+            reason?: string | null;
+        };
+        /**
+         * VehCategory
+         * @description Phase 2 list VC + private_car, motorcycle, bicycle_pedestrian (§3.2).
+         * @enum {string}
+         */
+        VehCategory: "light_vehicle" | "pickup" | "van" | "bus" | "truck" | "tipper" | "water_tanker" | "fuel_bowser" | "concrete_mixer" | "mobile_crane" | "crawler_crane" | "mewp" | "forklift" | "telehandler" | "excavator" | "wheel_loader" | "grader" | "roller" | "paver" | "milling_machine" | "line_marking_vehicle" | "sweeper" | "lighting_tower" | "trailer" | "other" | "private_car" | "motorcycle" | "bicycle_pedestrian";
+        /**
+         * VehDamage
+         * @enum {string}
+         */
+        VehDamage: "none" | "minor" | "major" | "total_loss";
+        /**
+         * VehDocState
+         * @enum {string}
+         */
+        VehDocState: "valid" | "expired" | "unknown";
+        /**
+         * VehDocsInput
+         * @description Documents valid at the time, entered when the row has no register vehicle (VA-4).
+         */
+        VehDocsInput: {
+            /** @default unknown */
+            istimara: components["schemas"]["VehDocState"];
+            /** @default unknown */
+            insurance: components["schemas"]["VehDocState"];
+            /** @default unknown */
+            mvpi: components["schemas"]["VehDocState"];
+        };
+        /** VehDocsRead */
+        VehDocsRead: {
+            istimara: components["schemas"]["VehDocState"];
+            insurance: components["schemas"]["VehDocState"];
+            mvpi: components["schemas"]["VehDocState"];
+            /**
+             * Source
+             * @description `register` (computed from the Phase 2 vehicle at the occurred date and frozen at Closed, VA-4) or `entered`.
+             */
+            source: string;
+        };
+        /**
+         * VehDriverKind
+         * @enum {string}
+         */
+        VehDriverKind: "worker" | "external" | "none";
+        /**
+         * VehIncidentVehicleCreate
+         * @description Add a vehicle row (1–10 per incident). Only ownership and role are needed now; the rest is
+         *     required before the investigation is submitted (VA-2). 422 `PLATE_IS_REGISTERED` when a
+         *     third_party plate is in the Phase 2 register (VA-6).
+         */
+        VehIncidentVehicleCreate: {
+            /**
+             * Engagement Id
+             * @description Required for own_company / contractor / hired: an engagement of the project.
+             */
+            engagement_id?: string | null;
+            /**
+             * Vehicle Id
+             * @description Phase 2 vehicle of the same project; prefills plate, category, make_model and computes docs_valid_at_time (VA-4).
+             */
+            vehicle_id?: string | null;
+            plate_type?: components["schemas"]["PlateType"] | null;
+            /**
+             * Plate Letters Ar
+             * @example ح ط ر
+             */
+            plate_letters_ar?: string | null;
+            /**
+             * Plate Letters En
+             * @example JTR
+             */
+            plate_letters_en?: string | null;
+            /**
+             * Plate Digits
+             * @example 9012
+             */
+            plate_digits?: string | null;
+            category?: components["schemas"]["VehCategory"] | null;
+            /** Make Model */
+            make_model?: string | null;
+            damage?: components["schemas"]["VehDamage"] | null;
+            /** Damage Cost Sar */
+            damage_cost_sar?: number | string | null;
+            /** @description Only when vehicle_id is not set (otherwise computed). */
+            docs?: components["schemas"]["VehDocsInput"] | null;
+            /**
+             * Insurer
+             * @description third_party only.
+             */
+            insurer?: string | null;
+            /**
+             * Policy No
+             * @description third_party only.
+             */
+            policy_no?: string | null;
+            seat_belt?: components["schemas"]["VehSeatBelt"] | null;
+            /** Speed Kmh */
+            speed_kmh?: number | null;
+            /** Speed Limit Kmh */
+            speed_limit_kmh?: number | null;
+            speed_source?: components["schemas"]["VehSpeedSource"] | null;
+            driver_kind?: components["schemas"]["VehDriverKind"] | null;
+            /**
+             * Worker Id
+             * @description driver_kind worker: a Phase 2 worker with a deployment on the project; an ADP on the project prefills licence issuer, class and expiry (VA-3).
+             */
+            worker_id?: string | null;
+            /** External Driver Name */
+            external_driver_name?: string | null;
+            licence_issuer?: components["schemas"]["LicenceIssuer"] | null;
+            licence_class?: components["schemas"]["LicenceClass"] | null;
+            /** Licence Expiry */
+            licence_expiry?: string | null;
+            /**
+             * Licence No
+             * @description GCC / international licences only; a KSA licence number is never stored (it equals the holder's ID) → 422.
+             */
+            licence_no?: string | null;
+            /** Hours On Duty */
+            hours_on_duty?: number | string | null;
+            /**
+             * Driver Case No
+             * @description person_no of an injury case on this incident.
+             */
+            driver_case_no?: number | null;
+            /**
+             * Adp Offence Id
+             * @description Phase 2 airside offence of the same project (VA-8).
+             */
+            adp_offence_id?: string | null;
+            /**
+             * Reason
+             * @description Required (≥ 20 characters) once the investigation is approved (Phase 1 rule, 7a §4).
+             */
+            reason?: string | null;
+            ownership: components["schemas"]["VehOwnership"];
+            role: components["schemas"]["VehRole"];
+        };
+        /** VehIncidentVehicleList */
+        VehIncidentVehicleList: {
+            /** Items */
+            items: components["schemas"]["VehIncidentVehicleRead"][];
+        };
+        /**
+         * VehIncidentVehicleRead
+         * @description One vehicle row. Driver identity, licence class / expiry / number, hours on duty, insurer,
+         *     policy and third-party plates are personal (P7a-1): they are null without capability 29 and
+         *     `redacted_groups` says so; `licence_check` and `driver_summary_*` stay visible. Reads that
+         *     return identity are audited (`sensitive_field_read`).
+         */
+        VehIncidentVehicleRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Incident Id
+             * Format: uuid
+             */
+            incident_id: string;
+            /** Seq */
+            seq: number;
+            /**
+             * Label
+             * @example V1
+             */
+            label: string;
+            ownership: components["schemas"]["VehOwnership"];
+            engagement: components["schemas"]["EngagementRef"] | null;
+            vehicle: components["schemas"]["VehVehicleRef"] | null;
+            /** @description VA-6: own / contractor / hired row without vehicle_id whose plate matches the Phase 2 register. */
+            suggested_vehicle?: components["schemas"]["VehVehicleRef"] | null;
+            plate_type: components["schemas"]["PlateType"] | null;
+            /** Plate Letters Ar */
+            plate_letters_ar: string | null;
+            /** Plate Letters En */
+            plate_letters_en: string | null;
+            /** Plate Digits */
+            plate_digits: string | null;
+            category: components["schemas"]["VehCategory"] | null;
+            /** Make Model */
+            make_model: string | null;
+            role: components["schemas"]["VehRole"];
+            damage: components["schemas"]["VehDamage"] | null;
+            /** Damage Cost Sar */
+            damage_cost_sar: string | null;
+            docs_valid_at_time: components["schemas"]["VehDocsRead"];
+            /** Insurer */
+            insurer: string | null;
+            /** Policy No */
+            policy_no: string | null;
+            seat_belt: components["schemas"]["VehSeatBelt"] | null;
+            /** Speed Kmh */
+            speed_kmh: number | null;
+            /** Speed Limit Kmh */
+            speed_limit_kmh: number | null;
+            speed_source: components["schemas"]["VehSpeedSource"] | null;
+            driver_kind: components["schemas"]["VehDriverKind"] | null;
+            worker: components["schemas"]["VehWorkerRef"] | null;
+            /** External Driver Name */
+            external_driver_name: string | null;
+            licence_issuer: components["schemas"]["LicenceIssuer"] | null;
+            licence_class: components["schemas"]["LicenceClass"] | null;
+            /** Licence Expiry */
+            licence_expiry: string | null;
+            /** Licence No */
+            licence_no: string | null;
+            /** Licence Prefilled From Adp */
+            licence_prefilled_from_adp: boolean;
+            /** @description VA-3; visible to every reader. */
+            licence_check: components["schemas"]["VehLicenceCheck"] | null;
+            /** Hours On Duty */
+            hours_on_duty: string | null;
+            /** Driver Case No */
+            driver_case_no: number | null;
+            /** Adp Offence Id */
+            adp_offence_id: string | null;
+            /**
+             * Driver Summary En
+             * @example Driver: worker of GULFPAVE · licence valid
+             */
+            driver_summary_en: string;
+            /** Driver Summary Ar */
+            driver_summary_ar: string;
+            /**
+             * Redacted Groups
+             * @description ['driver_identity'] when personal fields were withheld (P7a-1).
+             */
+            redacted_groups: string[];
+            /**
+             * Warnings
+             * @description VEHICLE_DOCS_EXPIRED_AT_TIME, LICENCE_NOT_VALID_AT_TIME (not blocking).
+             */
+            warnings?: components["schemas"]["ApiWarning"][];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * VehIncidentVehicleUpdate
+         * @description Edit a vehicle row while the incident is not Closed or Voided.
+         */
+        VehIncidentVehicleUpdate: {
+            ownership?: components["schemas"]["VehOwnership"] | null;
+            role?: components["schemas"]["VehRole"] | null;
+            /** Engagement Id */
+            engagement_id?: string | null;
+            /** Vehicle Id */
+            vehicle_id?: string | null;
+            plate_type?: components["schemas"]["PlateType"] | null;
+            /** Plate Letters Ar */
+            plate_letters_ar?: string | null;
+            /** Plate Letters En */
+            plate_letters_en?: string | null;
+            /** Plate Digits */
+            plate_digits?: string | null;
+            category?: components["schemas"]["VehCategory"] | null;
+            /** Make Model */
+            make_model?: string | null;
+            damage?: components["schemas"]["VehDamage"] | null;
+            /** Damage Cost Sar */
+            damage_cost_sar?: number | string | null;
+            docs?: components["schemas"]["VehDocsInput"] | null;
+            /** Insurer */
+            insurer?: string | null;
+            /** Policy No */
+            policy_no?: string | null;
+            seat_belt?: components["schemas"]["VehSeatBelt"] | null;
+            /** Speed Kmh */
+            speed_kmh?: number | null;
+            /** Speed Limit Kmh */
+            speed_limit_kmh?: number | null;
+            speed_source?: components["schemas"]["VehSpeedSource"] | null;
+            driver_kind?: components["schemas"]["VehDriverKind"] | null;
+            /** Worker Id */
+            worker_id?: string | null;
+            /** External Driver Name */
+            external_driver_name?: string | null;
+            licence_issuer?: components["schemas"]["LicenceIssuer"] | null;
+            licence_class?: components["schemas"]["LicenceClass"] | null;
+            /** Licence Expiry */
+            licence_expiry?: string | null;
+            /** Licence No */
+            licence_no?: string | null;
+            /** Hours On Duty */
+            hours_on_duty?: number | string | null;
+            /** Driver Case No */
+            driver_case_no?: number | null;
+            /** Adp Offence Id */
+            adp_offence_id?: string | null;
+            /**
+             * Reason
+             * @description Required (≥ 20 characters) once the investigation is approved (Phase 1 rule, 7a §4).
+             */
+            reason?: string | null;
+        };
+        /**
+         * VehJourneyPurpose
+         * @description List JP. The two `commuting_*` codes make the incident "Recorded, not counted" (VA-13).
+         * @enum {string}
+         */
+        VehJourneyPurpose: "work_task" | "material_delivery" | "crew_transport" | "commuting_company_transport" | "commuting_own" | "personal" | "other";
+        /**
+         * VehLicenceCheck
+         * @description VA-3, computed when the row is saved.
+         * @enum {string}
+         */
+        VehLicenceCheck: "valid" | "expired" | "wrong_class" | "no_licence" | "not_checked";
+        /**
+         * VehLight
+         * @enum {string}
+         */
+        VehLight: "daylight" | "dusk_dawn" | "dark_lit" | "dark_unlit";
+        /**
+         * VehOwnership
+         * @enum {string}
+         */
+        VehOwnership: "own_company" | "contractor" | "hired" | "third_party" | "unknown";
+        /**
+         * VehPrefillDriver
+         * @description VA-3 / AC8: a worker driver holding an ADP on the project. No KSA licence number field.
+         */
+        VehPrefillDriver: {
+            /**
+             * Worker Id
+             * Format: uuid
+             */
+            worker_id: string;
+            /** Has Adp */
+            has_adp: boolean;
+            /** Adp No */
+            adp_no: string | null;
+            licence_issuer: components["schemas"]["LicenceIssuer"] | null;
+            licence_class: components["schemas"]["LicenceClass"] | null;
+            /** Licence Expiry */
+            licence_expiry: string | null;
+            /**
+             * Licence Number Field
+             * @description False for KSA licences (the number equals the holder's ID and is never stored).
+             */
+            licence_number_field: boolean;
+        };
+        /** VehPrefillRead */
+        VehPrefillRead: {
+            /** @description Register vehicle (by vehicle_id, or matched by normalised plate, VA-6). */
+            vehicle: components["schemas"]["VehPrefillVehicle"] | null;
+            /**
+             * Plate Registered
+             * @description The plate is in the Phase 2 register (a third_party row would get PLATE_IS_REGISTERED).
+             */
+            plate_registered: boolean;
+            driver: components["schemas"]["VehPrefillDriver"] | null;
+        };
+        /** VehPrefillVehicle */
+        VehPrefillVehicle: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Vehicle No */
+            vehicle_no: string;
+            engagement: components["schemas"]["EngagementRef"] | null;
+            category: components["schemas"]["VehCategory"];
+            /** Make Model */
+            make_model: string;
+            plate_type: components["schemas"]["PlateType"];
+            /** Plate Letters Ar */
+            plate_letters_ar: string | null;
+            /** Plate Letters En */
+            plate_letters_en: string | null;
+            /** Plate Digits */
+            plate_digits: string | null;
+            docs_valid_at_time: components["schemas"]["VehDocsRead"];
+        };
+        /**
+         * VehPrompt
+         * @description VA-4 investigation prompt (a required root-cause consideration, not a block).
+         */
+        VehPrompt: {
+            /**
+             * Code
+             * @example VEHICLE_DOCS_EXPIRED_AT_TIME
+             * @example LICENCE_NOT_VALID_AT_TIME
+             */
+            code: string;
+            /** Vehicle Seq */
+            vehicle_seq: number;
+            /** Message En */
+            message_en: string;
+            /** Message Ar */
+            message_ar: string;
+        };
+        /**
+         * VehReportAuthority
+         * @description `none_internal` only for site_road / airside (VA-5).
+         * @enum {string}
+         */
+        VehReportAuthority: "najm" | "traffic_police" | "airport_operator" | "none_internal";
+        /**
+         * VehReportFileRead
+         * @description An archived report file (capability 29 only, VA-15). Superseded versions are kept.
+         */
+        VehReportFileRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** File Name */
+            file_name: string;
+            /** Content Type */
+            content_type: string;
+            /** Size Bytes */
+            size_bytes: number;
+            /** Sha256 */
+            sha256: string;
+            uploaded_by: components["schemas"]["UserRef"];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Superseded */
+            superseded: boolean;
+            /** Superseded By Id */
+            superseded_by_id: string | null;
+            /** Superseded At */
+            superseded_at: string | null;
+        };
+        /**
+         * VehRoadType
+         * @enum {string}
+         */
+        VehRoadType: "site_road" | "airside" | "public_road";
+        /**
+         * VehRole
+         * @enum {string}
+         */
+        VehRole: "striking" | "struck" | "single_vehicle" | "parked";
+        /**
+         * VehSeatBelt
+         * @enum {string}
+         */
+        VehSeatBelt: "worn" | "not_worn" | "unknown" | "not_fitted";
+        /**
+         * VehSectionRead
+         * @description The incident's vehicle section (7a §3.1, §8). Present when vehicle_involved.
+         */
+        VehSectionRead: {
+            /**
+             * Vehicle Involved Locked
+             * @description VA-1 signal holds (vehicle mechanism / agency, pd vehicle, DO vehicle overturn, airside vehicle flag): vehicle_involved cannot be cleared.
+             */
+            vehicle_involved_locked: boolean;
+            road_type: components["schemas"]["VehRoadType"] | null;
+            /** Road Location */
+            road_location: string | null;
+            journey_purpose: components["schemas"]["VehJourneyPurpose"] | null;
+            light: components["schemas"]["VehLight"] | null;
+            surface: components["schemas"]["VehSurface"] | null;
+            /** Third Party Damage Desc */
+            third_party_damage_desc: string | null;
+            /** Third Party Damage Cost Sar */
+            third_party_damage_cost_sar: string | null;
+            /**
+             * Recorded Not Counted
+             * @description VA-13: commuting journey → 'Recorded, not counted — commuting (OSHA)'.
+             */
+            recorded_not_counted: boolean;
+            /** Vehicles */
+            vehicles: components["schemas"]["VehIncidentVehicleRead"][];
+            accident_report: components["schemas"]["VehAccidentReportRead"];
+            /**
+             * Missing For Report
+             * @description VA-2: fields needed for Draft → Reported (road_type, vehicles).
+             */
+            missing_for_report: string[];
+            /**
+             * Missing For Investigation
+             * @description VA-2: fields needed before the investigation is submitted for approval (e.g. journey_purpose, V1.seat_belt).
+             */
+            missing_for_investigation: string[];
+            /** Investigation Prompts */
+            investigation_prompts: components["schemas"]["VehPrompt"][];
+            /**
+             * Commuting Proposed Case Ids
+             * @description VA-7: worker cases proposed commuting = true (the classifier confirms).
+             */
+            commuting_proposed_case_ids: string[];
+            report_submission_offer: components["schemas"]["VehSubmissionOffer"] | null;
+        };
+        /**
+         * VehSpeedSource
+         * @enum {string}
+         */
+        VehSpeedSource: "vehicle_recorder" | "report" | "estimate" | "unknown";
+        /**
+         * VehSubmissionOffer
+         * @description AC21: report_no is entered and the police / Najm notification is still open → the UI
+         *     offers to record the submission with this reference (6f requirement or Phase 1 I-20 row).
+         */
+        VehSubmissionOffer: {
+            body: components["schemas"]["ExternalBody"];
+            /** Reference No */
+            reference_no: string;
+            /**
+             * Requirement Id
+             * @description 6f requirement to record against; null = the Phase 1 external notification.
+             */
+            requirement_id: string | null;
+        };
+        /**
+         * VehSurface
+         * @enum {string}
+         */
+        VehSurface: "dry" | "wet" | "sand_on_road" | "gravel_unpaved" | "other";
+        /** VehVehicleRef */
+        VehVehicleRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Vehicle No
+             * @example VEH-0002
+             */
+            vehicle_no: string;
+        };
+        /**
+         * VehWorkerRef
+         * @description Driver identity (capability 29 only, P7a-1).
+         */
+        VehWorkerRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Worker No */
+            worker_no: string;
+            /** Full Name En */
+            full_name_en: string;
+            /** Full Name Ar */
+            full_name_ar?: string | null;
+        };
+        /**
          * VehicleCategory
          * @description List VC (§3.21).
          * @enum {string}
@@ -58867,6 +59714,15 @@ export interface operations {
                 /** @description Ref/title search. */
                 q?: string | null;
                 sort?: "occurred_at" | "-occurred_at" | "ref" | "-ref" | "status";
+                /** @description 7a: vehicle incidents. */
+                vehicle_involved?: boolean | null;
+                road_type?: components["schemas"]["VehRoadType"] | null;
+                /** @description 7a: has a vehicle row with this ownership. */
+                ownership?: components["schemas"]["VehOwnership"] | null;
+                /** @description 7a: has a vehicle row with this result. */
+                licence_check?: components["schemas"]["VehLicenceCheck"] | null;
+                /** @description 7a VA-13: 'Recorded, not counted' (commuting). */
+                recorded_not_counted?: boolean | null;
                 /** @description 1-based page number. */
                 page?: number;
                 /** @description Items per page. */
@@ -116734,6 +117590,538 @@ export interface operations {
             };
             /** @description Not found or outside the caller's project/contractor scope. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_incident_vehicles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                incident_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VehIncidentVehicleList"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_incident_vehicle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                incident_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VehIncidentVehicleCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VehIncidentVehicleRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    delete_incident_vehicle: {
+        parameters: {
+            query?: {
+                /** @description ≥ 20 characters once the investigation is approved. */
+                reason?: string | null;
+            };
+            header?: never;
+            path: {
+                vehicle_row_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_incident_vehicle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vehicle_row_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VehIncidentVehicleUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VehIncidentVehicleRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    prefill_incident_vehicle: {
+        parameters: {
+            query?: {
+                vehicle_id?: string | null;
+                plate_letters_ar?: string | null;
+                plate_letters_en?: string | null;
+                plate_digits?: string | null;
+                worker_id?: string | null;
+            };
+            header?: never;
+            path: {
+                incident_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VehPrefillRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_accident_report: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                incident_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VehAccidentReportRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    put_accident_report: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                incident_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VehAccidentReportUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VehAccidentReportRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    upload_accident_report_file: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                incident_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_accident_report_file"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VehAccidentReportRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -24,12 +24,14 @@ import { AGE_BANDS, BODY_SIDES, ID_TYPES, PERMANENT_DISABILITY, PERSON_TYPES, PR
 import { applyServerErrors } from "@/lib/forms";
 import { useFieldErrorTranslator } from "@/lib/i18n-helpers";
 import { useRefLists } from "@/lib/reference";
+import { VEH_COMMUTING } from "@/lib/vehicle-enums";
 
 const ID_RE: Record<Schemas["IdType"], RegExp> = { iqama: /^2\d{9}$/, national_id: /^1\d{9}$/, gcc_id: /^[A-Z0-9]{6,15}$/, passport: /^[A-Z0-9]{6,9}$/ };
 type Treatment = Schemas["Treatment"];
 
 export function CaseForm({ incident, kase }: { incident: Schemas["IncidentRead"]; kase?: Schemas["InjuryCaseRead"] }) {
   const t = useTranslations("cases");
+  const tvc = useTranslations("veh.case");
   const te = useTranslations("enums");
   const tv = useTranslations("validation");
   const tc = useTranslations("common");
@@ -146,6 +148,13 @@ export function CaseForm({ incident, kase }: { incident: Schemas["IncidentRead"]
   const personType = useWatch({ control: form.control, name: "person_type" });
   const fatal = useWatch({ control: form.control, name: "fatal" });
   const privacy = useWatch({ control: form.control, name: "privacy_case" });
+  const commuting = useWatch({ control: form.control, name: "commuting" });
+  // 7a VA-7: a commuting journey proposes commuting = true on worker cases; a commuting case on a non-commuting journey warns.
+  const journey = incident.vehicle_involved ? (incident.vehicle_section?.journey_purpose ?? null) : null;
+  const commutingJourney = journey !== null && VEH_COMMUTING.includes(journey);
+  const workerCase = personType === "contractor_worker" || personType === "client_pmc_staff";
+  const proposed = commutingJourney && workerCase && !commuting;
+  const mismatch = journey !== null && !commutingJourney && commuting;
   const treatmentOpts = ref.options("treatment");
   const groups = Array.from(new Set(treatmentOpts.map((o) => o.group ?? "other")));
 
@@ -245,8 +254,23 @@ export function CaseForm({ incident, kase }: { incident: Schemas["IncidentRead"]
         {sel("mechanism", t("fields.mechanism"), ref.options("mechanism"), true)}
         {sel("agency", t("fields.agency"), ref.options("agency"), true)}
         <CheckboxField id="case-commuting" label={t("fields.commuting")}>
-          <Checkbox {...form.register("commuting")} />
+          <Checkbox {...form.register("commuting")} data-testid="case-commuting" />
         </CheckboxField>
+        {proposed ? (
+          <Alert tone="info" className="sm:col-span-2" data-testid="commuting-proposed">
+            <span className="flex flex-wrap items-center gap-2">
+              {tvc("proposed")}
+              <Button type="button" size="sm" variant="outline" onClick={() => form.setValue("commuting", true, { shouldDirty: true })} data-testid="commuting-accept">
+                {tvc("accept")}
+              </Button>
+            </span>
+          </Alert>
+        ) : null}
+        {mismatch ? (
+          <Alert tone="warning" className="sm:col-span-2" data-testid="commuting-mismatch" data-code="COMMUTING_PURPOSE_MISMATCH">
+            {tvc("mismatch")}
+          </Alert>
+        ) : null}
       </FormSection>
       {!hideIdentity ? (
         <FormSection title={t("identity")}>

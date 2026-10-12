@@ -36,6 +36,7 @@ import { useErrorMessage, useLocalizedName } from "@/lib/i18n-helpers";
 import { can, canWrite } from "@/lib/permissions";
 import { useRefLists } from "@/lib/reference";
 import { useFormatters } from "@/lib/use-formatters";
+import { AccidentReportCard, RecordedNotCountedBadge, VehicleSectionCard } from "./vehicle-section";
 
 type Status = Schemas["IncidentStatus"];
 const LEVEL_RANK: Record<Schemas["InvestigationLevel"], number> = { L1: 1, L2: 2, L3: 3 };
@@ -106,6 +107,7 @@ export function IncidentDetail({ id }: { id: string }) {
                   <StatusBadge status={r.status} label={te(`incidentStatus.${r.status}`)} />
                   {r.hipo ? <StatusBadge status="warning" label={t("hipo")} /> : null}
                   {r.late_report ? <StatusBadge status="late" label={t("late")} /> : null}
+                  {r.recorded_not_counted ? <RecordedNotCountedBadge /> : null}
                 </CardTitle>
               </div>
               <div className="flex gap-2">
@@ -259,6 +261,9 @@ export function IncidentDetail({ id }: { id: string }) {
               </CardContent>
             </Card>
           ) : null}
+
+          <VehicleSectionCard incident={r} />
+          <AccidentReportCard incident={r} />
 
           <Card data-testid="notifications-card">
             <CardHeader>

@@ -25,7 +25,7 @@ import { RegistryExport } from "@/components/scorecard/exports";
 type S = Schemas;
 type Project = S["ProjectRead"];
 
-const BODIES: S["ExternalBody"][] = ["gosi", "mhrsd", "civil_defense", "police", "gaca", "airport_operator", "client", "ncec"];
+const BODIES: S["ExternalBody"][] = ["gosi", "mhrsd", "civil_defense", "police", "najm", "gaca", "airport_operator", "client", "ncec"];
 const STAGES: S["FuStage"][] = ["verbal", "written", "interim", "final"];
 const STATUSES: S["FuRequirementStatus"][] = ["overdue", "due", "submitted", "acknowledged", "waived", "not_required"];
 

@@ -127,12 +127,26 @@ export function MutationError({ error }: { error: unknown }) {
       {missing.length ? (
         <ul className="mt-1 list-inside list-disc text-xs" data-testid="error-missing">
           {missing.map((m) => (
-            <li key={m}>
-              <bdi className="ltr font-mono">{m}</bdi>
+            <li key={m} data-missing={m}>
+              <MissingItem code={m} />
             </li>
           ))}
         </ul>
       ) : null}
     </Alert>
+  );
+}
+
+/** A meta.missing entry: 7a vehicle fields ("road_type", "V1.seat_belt") in words, anything else as the code. */
+function MissingItem({ code }: { code: string }) {
+  const tm = useTranslations("veh.missing");
+  const m = /^(V\d+)\.(.+)$/.exec(code);
+  const field = m ? (m[2] ?? "") : code;
+  if (!tm.has(field as "road_type")) return <bdi className="ltr font-mono">{code}</bdi>;
+  return (
+    <>
+      {m ? <bdi className="ltr font-medium">{m[1]} · </bdi> : null}
+      {tm(field as "road_type")}
+    </>
   );
 }
