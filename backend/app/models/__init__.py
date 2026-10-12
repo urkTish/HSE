@@ -211,6 +211,12 @@ from app.models.scorecard import (
     XpJob,
     XpSubscription,
 )
+from app.models.site_vehicle import (
+    DriverAuthorisation,
+    JourneyPlan,
+    SiteVehicleSettings,
+    VehicleCheck,
+)
 from app.models.train import (
     TrainerAuthorisation,
     TrainingCourse,
@@ -265,6 +271,7 @@ __all__ = [
     "Deployment",
     "DischargeDay",
     "Drill",
+    "DriverAuthorisation",
     "EmailMessage",
     "EmergencyAsset",
     "EmergencyContact",
@@ -338,6 +345,7 @@ __all__ = [
     "IsolationCertificate",
     "IsolationPoint",
     "JobMark",
+    "JourneyPlan",
     "Jsa",
     "Lock",
     "MedicalExaminer",
@@ -400,6 +408,7 @@ __all__ = [
     "SimopsCoordination",
     "SimopsRule",
     "Site",
+    "SiteVehicleSettings",
     "Spill",
     "StopWorkOrder",
     "TalkAttendance",
@@ -427,6 +436,7 @@ __all__ = [
     "UserSession",
     "UserToken",
     "Vehicle",
+    "VehicleCheck",
     "Wap",
     "WapCrew",
     "WapVehicle",

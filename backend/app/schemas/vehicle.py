@@ -129,6 +129,15 @@ class _VehRowFields(StrictInput):
     adp_offence_id: uuid.UUID | None = Field(
         default=None, description="Phase 2 airside offence of the same project (VA-8)."
     )
+    pre_use_check_id: uuid.UUID | None = Field(
+        default=None,
+        description="7a v1.2 (7b §11.8): the day's 7b pre-use check of the linked register "
+        "vehicle (optional).",
+    )
+    journey_plan_id: uuid.UUID | None = Field(
+        default=None,
+        description="7a v1.2 (7b §11.8): the 7b journey plan of the trip (optional).",
+    )
     reason: str | None = Field(default=None, max_length=1000, description=REASON_HINT)
 
 
@@ -177,6 +186,8 @@ class VehIncidentVehicleUpdate(PatchInput):
     )
     driver_case_no: int | None = Field(default=None, ge=1)
     adp_offence_id: uuid.UUID | None = None
+    pre_use_check_id: uuid.UUID | None = None
+    journey_plan_id: uuid.UUID | None = None
     reason: str | None = Field(default=None, max_length=1000, description=REASON_HINT)
 
 
@@ -226,6 +237,14 @@ class VehIncidentVehicleRead(ApiModel):
     hours_on_duty: DecimalStr | None
     driver_case_no: int | None
     adp_offence_id: uuid.UUID | None
+    pre_use_check_id: uuid.UUID | None = Field(
+        default=None, description="7b link (§11.8): pre-use check of the vehicle."
+    )
+    pre_use_check_no: str | None = None
+    journey_plan_id: uuid.UUID | None = Field(
+        default=None, description="7b link (§11.8): journey plan of the trip."
+    )
+    journey_plan_no: str | None = None
     driver_summary_en: str = Field(examples=["Driver: worker of GULFPAVE · licence valid"])
     driver_summary_ar: str
     redacted_groups: list[str] = Field(

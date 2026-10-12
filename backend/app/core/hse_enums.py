@@ -701,6 +701,7 @@ class CaSourceType(StrEnum):
     environmental = "environmental"  # 1-dashboard v1.8: 6e exceedance, consignment, area, spill
     lesson = "lesson"  # 1-dashboard v1.9: 6f effectiveness check (EF-5)
     scorecard = "scorecard"  # 1-dashboard v1.10: 6g watch-list entry (WL-2, WL-3)
+    site_vehicle = "site_vehicle"  # 1-dashboard v1.12: 7b pre-use check critical fail (PU-3)
     ai_recommendation = "ai_recommendation"
     other = "other"
 
@@ -1014,6 +1015,9 @@ class KpiMetric(StrEnum):
     K135 = "K-135"
     K136 = "K-136"  # 7a-vehicle-accident-details §6.1: vehicle incidents
     K137 = "K-137"  # vehicle incident rate per 200,000 h (commuting never counted, VA-13)
+    K138 = "K-138"  # 7b-fleet-driver §6.4: site vehicle & plant readiness
+    K139 = "K-139"  # driver / operator authorisation compliance
+    K140 = "K-140"  # pre-use check compliance
 
 
 class KpiKind(StrEnum):
@@ -1424,6 +1428,9 @@ class ExpiringItemKind(StrEnum):
     scorecard_finalise_due = "scorecard_finalise_due"
     report_pack_due = "report_pack_due"
     pip_due = "pip_due"
+    # Option 7b (7b-fleet-driver §8)
+    site_vehicle_doc_expiry = "site_vehicle_doc_expiry"
+    driver_auth_expiry = "driver_auth_expiry"
 
 
 class Severity(StrEnum):

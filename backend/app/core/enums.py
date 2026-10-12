@@ -290,6 +290,12 @@ class Capability(StrEnum):
     report_pack_issue = "report_pack.issue"  # 230 issue, re-issue, distribution, schedules
     report_pack_view = "report_pack.view"  # 231 Issued packs and delivery log
     export_log = "export_log.view"  # 232 export log; own subscriptions
+    # ---- Option 7b (7b-fleet-driver §5.7, Prototype) ----
+    site_vehicle_view = "site_vehicle.view"  # 233 site vehicles, readiness, authorisations, checks
+    site_vehicle_manage = "site_vehicle.manage"  # 234 register / edit, verify docs, clear hold
+    driver_auth_manage = "driver_auth.manage"  # 235 activate … revoke (C: propose)
+    pre_use_record = "pre_use.record"  # 236 pre-use checks; journey plans
+    site_vehicle_settings = "site_vehicle.settings"  # 237 7b settings (HSE Manager)
 
 
 class CapabilityScope(StrEnum):
@@ -694,6 +700,11 @@ class EntityType(StrEnum):
     export_subscription = "export_subscription"
     # Option 7a
     incident_vehicle = "incident_vehicle"
+    # Option 7b
+    site_vehicle_settings = "site_vehicle_settings"
+    driver_authorisation = "driver_authorisation"
+    vehicle_check = "vehicle_check"
+    journey_plan = "journey_plan"
 
 
 class ExportDataset(StrEnum):
@@ -795,6 +806,11 @@ class ExportDataset(StrEnum):
     lessons = "lessons"
     # Option 7a (one row per incident vehicle; never report files, VA-15)
     incident_vehicles = "incident_vehicles"
+    # Option 7b §8 (personal columns per P7b-1)
+    site_vehicles = "site_vehicles"
+    driver_authorisations = "driver_authorisations"
+    pre_use_checks = "pre_use_checks"
+    journey_plans = "journey_plans"
 
 
 class ExportFormat(StrEnum):
@@ -1048,3 +1064,7 @@ class NotificationKind(StrEnum):
     # ---- Option 7a (7a-vehicle-accident-details §7) ----
     vehicle_docs_not_valid = "vehicle_docs_not_valid"  # VA-4
     accident_report_missing = "accident_report_missing"  # report_no missing day 7, weekly
+    # ---- Option 7b (7b-fleet-driver §7; no journey alerts) ----
+    site_vehicle_doc_expiry = "site_vehicle_doc_expiry"  # SV-2 30 / 14 / 7 / 0 days
+    driver_auth_expiry = "driver_auth_expiry"  # 30 / 7 / 0 days
+    vehicle_defect_hold = "vehicle_defect_hold"  # PU-3 set / cleared

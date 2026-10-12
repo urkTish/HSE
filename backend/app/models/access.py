@@ -79,6 +79,12 @@ from app.core.access_enums import (
 )
 from app.core.clock import now
 from app.core.hse_enums import Trade
+from app.core.site_vehicle_enums import (
+    SiteVehDriverGroup,
+    SiteVehReadiness,
+    SiteVehScope,
+    SiteVehUseClass,
+)
 from app.db.base import Base
 from app.models.base import TimestampMixin, UUIDPk, enum_col
 
@@ -608,6 +614,22 @@ class Vehicle(Audited, Base):
     insurance_expiry: Mapped[date] = mapped_column(Date)
     mvpi_expiry: Mapped[date | None] = mapped_column(Date)
     status: Mapped[VehicleStatus] = enum_col(VehicleStatus, default=VehicleStatus.active)
+    # ---- Option 7b §3.1 (Prototype): site vehicle & plant readiness fields --------------------
+    site_scope: Mapped[SiteVehScope] = enum_col(
+        SiteVehScope, default=SiteVehScope.airside_only, server_default="airside_only"
+    )
+    use_class: Mapped[SiteVehUseClass | None] = enum_col(SiteVehUseClass, nullable=True)
+    driver_group: Mapped[SiteVehDriverGroup | None] = enum_col(SiteVehDriverGroup, nullable=True)
+    seats: Mapped[int | None] = mapped_column(Integer)
+    operating_card_no: Mapped[str | None] = mapped_column(String(30))
+    operating_card_expiry: Mapped[date | None] = mapped_column(Date)
+    docs_verified_by_user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))
+    docs_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    idle_from: Mapped[date | None] = mapped_column(Date)
+    idle_to: Mapped[date | None] = mapped_column(Date)
+    readiness: Mapped[SiteVehReadiness | None] = enum_col(SiteVehReadiness, nullable=True)
+    readiness_on: Mapped[date | None] = mapped_column(Date)
+    withdrawn_on: Mapped[date | None] = mapped_column(Date)
 
 
 class Avp(Audited, CredentialFields, Base):

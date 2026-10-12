@@ -46,7 +46,7 @@ info:
     \ 157.\n  No diagnosis, test result or clinical note is ever stored (P6-1). Medical hooks use the\
     \ shared\n  hook policy (kind `medical_fitness`; enable with `POST /projects/{id}/medical-hooks/enable`);\n\
     \  gate texts never say \"medical\". Site-clinic sign-off needs step-up re-auth.\n"
-  version: 0.14.0
+  version: 0.15.0
 paths:
   /api/v1/health:
     get:
@@ -16193,6 +16193,326 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ScKpiResponse'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/kpi/site-vehicles:
+    get:
+      tags:
+      - kpi
+      summary: Site vehicle & plant readiness KPIs K-138…K-140 (7b §6.4, prototype)
+      description: 'Common filters (all /kpi endpoints): `project_id` (repeatable) or `all_projects`,
+        `site_id`, `zone_id`, `zone_type`, `engagement_id` (+ `include_subcontractors`, default true),
+        `tier`, `period` (+ `anchor` or `start`/`end` for custom), `as_of`, `compare`. Role scope is applied
+        first (D-3): a narrower scope is reported in `context.filters.scope_narrowed`. Capability 38.
+        Capability 233 (the Viewer / Client included: aggregates only, SK-2). Only projects with site_vehicles_from
+        set count. Contractor filter = the engagement operating the vehicle or (K-139) employing the driver
+        (SK-1). K-140 for a rest day is "—".'
+      operationId: get_site_vehicle_kpis
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: metric
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/KpiMetric'
+          - type: 'null'
+          description: 'Default: K-138…K-140.'
+          title: Metric
+        description: 'Default: K-138…K-140.'
+      - name: group_by
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/SiteVehKpiGroupBy'
+          - type: 'null'
+          title: Group By
+      - name: project_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+              format: uuid
+          - type: 'null'
+          description: Project(s). Repeat for several. Required unless all_projects=true. Out-of-scope
+            ids → 404.
+          title: Project Id
+        description: Project(s). Repeat for several. Required unless all_projects=true. Out-of-scope ids
+          → 404.
+      - name: all_projects
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: 'HSE Manager only: every project (K-R12 bases banner).'
+          default: false
+          title: All Projects
+        description: 'HSE Manager only: every project (K-R12 bases banner).'
+      - name: site_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+              format: uuid
+          - type: 'null'
+          description: Sites (multi).
+          title: Site Id
+        description: Sites (multi).
+      - name: zone_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+              format: uuid
+          - type: 'null'
+          description: Zones (multi).
+          title: Zone Id
+        description: Zones (multi).
+      - name: zone_type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/ZoneType'
+          - type: 'null'
+          description: airside / landside / other.
+          title: Zone Type
+        description: airside / landside / other.
+      - name: engagement_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+              format: uuid
+          - type: 'null'
+          description: Contractor engagement(s); roll-up per include_subcontractors.
+          title: Engagement Id
+        description: Contractor engagement(s); roll-up per include_subcontractors.
+      - name: include_subcontractors
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: 'K-R5: engagement + descendants (default) or this only.'
+          default: true
+          title: Include Subcontractors
+        description: 'K-R5: engagement + descendants (default) or this only.'
+      - name: tier
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: integer
+            ge: 1
+            le: 3
+          - type: 'null'
+          description: Tier 1/2/3.
+          title: Tier
+        description: Tier 1/2/3.
+      - name: period
+        in: query
+        required: false
+        schema:
+          $ref: '#/components/schemas/PeriodPreset'
+          description: K-R10 preset.
+          default: month
+        description: K-R10 preset.
+      - name: anchor
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          description: A date inside the wanted day/week/month/quarter/year (default as_of). mtd/qtd/ytd/r12/itd
+            end at as_of.
+          title: Anchor
+        description: A date inside the wanted day/week/month/quarter/year (default as_of). mtd/qtd/ytd/r12/itd
+          end at as_of.
+      - name: start
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          description: 'period=custom: first day.'
+          title: Start
+        description: 'period=custom: first day.'
+      - name: end
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          description: 'period=custom: last day (inclusive).'
+          title: End
+        description: 'period=custom: last day (inclusive).'
+      - name: as_of
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          description: Evaluation date; default today (project timezone).
+          title: As Of
+        description: Evaluation date; default today (project timezone).
+      - name: compare
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/ComparisonKind'
+          - type: 'null'
+          description: 'Comparisons to compute (K-R11). Default: previous.'
+          title: Compare
+        description: 'Comparisons to compute (K-R11). Default: previous.'
+      - name: gate_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+              format: uuid
+          - type: 'null'
+          description: 'Gate(s): filters gate KPIs (K-52, K-53, K-53b) only.'
+          title: Gate Id
+        description: 'Gate(s): filters gate KPIs (K-52, K-53, K-53b) only.'
+      - name: permit_type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/PermitType'
+          - type: 'null'
+          description: 'Phase 3: filters PTW KPIs (K-46, K-46b, K-61…K-71) only.'
+          title: Permit Type
+        description: 'Phase 3: filters PTW KPIs (K-46, K-46b, K-61…K-71) only.'
+      - name: equipment_category
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/EquipmentCertCategory'
+          - type: 'null'
+          description: 'Phase 4: filters equipment / scaffold KPIs (K-72…K-75, K-78, K-80).'
+          title: Equipment Category
+        description: 'Phase 4: filters equipment / scaffold KPIs (K-72…K-75, K-78, K-80).'
+      - name: cert_type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          description: 'Phase 4: personnel certificate type code(s) (PCT); filters K-76, K-77, K-78 persons,
+            K-79.'
+          title: Cert Type
+        description: 'Phase 4: personnel certificate type code(s) (PCT); filters K-76, K-77, K-78 persons,
+          K-79.'
+      - name: trade
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/Trade'
+          - type: 'null'
+          description: 'Phase 5: deployment trade(s); filters training KPIs (K-82…K-88) only.'
+          title: Trade
+        description: 'Phase 5: deployment trade(s); filters training KPIs (K-82…K-88) only.'
+      - name: course_code
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          description: 'Phase 5: course code(s); filters training KPIs (K-82…K-88) only.'
+          title: Course Code
+        description: 'Phase 5: course code(s); filters training KPIs (K-82…K-88) only.'
+      - name: course_category
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/CourseCategory'
+          - type: 'null'
+          description: 'Phase 5: course category (CAT-C); filters training KPIs only.'
+          title: Course Category
+        description: 'Phase 5: course category (CAT-C); filters training KPIs only.'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteVehKpiResponse'
         '401':
           description: Not authenticated, session expired, or login rejected.
           content:
@@ -68217,6 +68537,1847 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/site-vehicle-settings:
+    get:
+      tags:
+      - site-vehicles
+      summary: 7b settings (§3.5; capability 233 or 237)
+      operationId: get_site_vehicle_settings
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteVehSettingsRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags:
+      - site-vehicles
+      summary: Update 7b settings (capability 237, HSE Manager; SETTING_OUT_OF_RANGE)
+      description: Setting site_vehicles_from switches 7b on (and adds the Phase 5 courses DEF-DRV and
+        BUS-DRV when missing); null switches it off.
+      operationId: update_site_vehicle_settings
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SiteVehSettingsUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteVehSettingsRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/site-vehicles/reference:
+    get:
+      tags:
+      - site-vehicles
+      summary: 7b reference lists SU, DG and EN/AR labels of states and warnings (§3.6)
+      operationId: get_site_vehicle_reference
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteVehReference'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+  /api/v1/projects/{project_id}/site-vehicles:
+    get:
+      tags:
+      - site-vehicles
+      summary: Site vehicles & plant with readiness (capability 233; not Viewer)
+      description: Readiness is derived for today (§4.1). Contractor HSE Reps list their own engagement's
+        vehicles (SV-4). 422 SITE_VEHICLES_NOT_LIVE while site_vehicles_from is null.
+      operationId: list_site_vehicles
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      - name: readiness
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/SiteVehReadiness'
+          - type: 'null'
+          title: Readiness
+      - name: engagement_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+              format: uuid
+          - type: 'null'
+          title: Engagement Id
+      - name: use_class
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/SiteVehUseClass'
+          - type: 'null'
+          title: Use Class
+      - name: driver_group
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/SiteVehDriverGroup'
+          - type: 'null'
+          title: Driver Group
+      - name: documents
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/SiteVehDocsFilter'
+          - type: 'null'
+          title: Documents
+      - name: phase4_linked
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Phase4 Linked
+      - name: q
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            maxLength: 60
+          - type: 'null'
+          title: Q
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          description: 1-based page number.
+          default: 1
+          title: Page
+        description: 1-based page number.
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          description: Items per page.
+          default: 50
+          title: Page Size
+        description: Items per page.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteVehPage'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+      - site-vehicles
+      summary: 'Register a site vehicle or plant (capability 234; reps: own engagement)'
+      description: Creates the Phase 2 vehicle with the 7b fields (BD7b-1). 422 OPERATING_CARD_REQUIRED;
+        Phase 2 duplicate plate / VIN → 409 DUPLICATE_VALUE. 422 SITE_VEHICLES_NOT_LIVE while site_vehicles_from
+        is null.
+      operationId: create_site_vehicle
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SiteVehCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteVehRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/site-vehicles/summary:
+    get:
+      tags:
+      - site-vehicles
+      summary: Site vehicle aggregates for today (capability 233, Viewer included)
+      operationId: site_vehicle_summary
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteVehSummary'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/site-vehicles/{vehicle_id}:
+    get:
+      tags:
+      - site-vehicles
+      summary: A site vehicle with readiness, documents, Phase 4 link and today's check
+      operationId: get_site_vehicle
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: vehicle_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Vehicle Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteVehRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags:
+      - site-vehicles
+      summary: Edit 7b fields / documents, or enrol a Phase 2 vehicle (capability 234)
+      description: Changing a document date clears the verification (SV-4). 7b never edits Phase 4 status
+        (SV-3). 422 SITE_VEHICLES_NOT_LIVE while site_vehicles_from is null.
+      operationId: update_site_vehicle
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: vehicle_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Vehicle Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SiteVehUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteVehRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/site-vehicles/{vehicle_id}/verify-documents:
+    post:
+      tags:
+      - site-vehicles
+      summary: Verify the document scans (capability 234; HSE Officer / Manager, not reps)
+      operationId: verify_site_vehicle_documents
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: vehicle_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Vehicle Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteVehRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/site-vehicles/{vehicle_id}/clear-hold:
+    post:
+      tags:
+      - site-vehicles
+      summary: Clear the defect hold (capability 234; repair note + passing check, PU-3)
+      description: 409 VEHICLE_DEFECT_HOLD without a passing check completed after the hold.
+      operationId: clear_site_vehicle_hold
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: vehicle_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Vehicle Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SiteVehClearHold'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteVehRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/site-vehicles/{vehicle_id}/withdraw:
+    post:
+      tags:
+      - site-vehicles
+      summary: Withdraw a site vehicle (capability 234; Phase 2 status withdrawn)
+      operationId: withdraw_site_vehicle
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: vehicle_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Vehicle Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SiteVehWithdraw'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteVehRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/driver-authorisations:
+    get:
+      tags:
+      - site-vehicles
+      summary: Driver / operator authorisations (capability 233; not Viewer)
+      description: Driver names follow capability 46 (WA-19); a Site engineer sees authorisation status
+        only (`redacted`, P7b-1). 422 SITE_VEHICLES_NOT_LIVE while site_vehicles_from is null.
+      operationId: list_driver_authorisations
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/SiteVehAuthStatus'
+          - type: 'null'
+          title: Status
+      - name: group
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/SiteVehDriverGroup'
+          - type: 'null'
+          title: Group
+      - name: engagement_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+              format: uuid
+          - type: 'null'
+          title: Engagement Id
+      - name: worker_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Worker Id
+      - name: expiring_within_days
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+            maximum: 365
+            minimum: 0
+          - type: 'null'
+          title: Expiring Within Days
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          description: 1-based page number.
+          default: 1
+          title: Page
+        description: 1-based page number.
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          description: Items per page.
+          default: 50
+          title: Page Size
+        description: Items per page.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteVehAuthPage'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+      - site-vehicles
+      summary: Propose a driver / operator authorisation → Draft (capability 235; reps propose)
+      description: One live authorisation per worker (409 DUPLICATE_VALUE). 422 LICENCE_CLASS_NOT_COVERING,
+        ASSESSMENT_TOO_OLD. Hooks are evaluated at once (DA-2); warning HOOK_NOT_MET_WARN. 422 SITE_VEHICLES_NOT_LIVE
+        while site_vehicles_from is null.
+      operationId: create_driver_authorisation
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SiteVehAuthCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteVehAuthRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/driver-authorisations/prefill:
+    get:
+      tags:
+      - site-vehicles
+      summary: Licence prefill from the worker's ADP (capability 235)
+      operationId: prefill_driver_authorisation
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      - name: worker_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Worker Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteVehAuthPrefill'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/driver-authorisations/{auth_id}:
+    get:
+      tags:
+      - site-vehicles
+      summary: A driver / operator authorisation
+      description: Driver names follow capability 46 (WA-19); a Site engineer sees authorisation status
+        only (`redacted`, P7b-1).
+      operationId: get_driver_authorisation
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: auth_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Auth Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteVehAuthRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags:
+      - site-vehicles
+      summary: Edit a Draft authorisation (capability 235)
+      operationId: update_driver_authorisation
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: auth_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Auth Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SiteVehAuthUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteVehAuthRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/driver-authorisations/{auth_id}/transition:
+    post:
+      tags:
+      - site-vehicles
+      summary: Activate, suspend, reinstate or revoke (capability 235; not reps; §4.2)
+      description: 'Activation re-checks DA-1 and the hooks: policy block → 422 HOOK_NOT_MET; warn → warning
+        HOOK_NOT_MET_WARN. Suspend needs a reason ≥ 20 characters.'
+      operationId: transition_driver_authorisation
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: auth_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Auth Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SiteVehAuthTransition'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteVehAuthRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/pre-use-checks:
+    get:
+      tags:
+      - site-vehicles
+      summary: Pre-use checks (capability 233; not Viewer)
+      description: Driver names follow capability 46 (WA-19); a Site engineer sees authorisation status
+        only (`redacted`, P7b-1). 422 SITE_VEHICLES_NOT_LIVE while site_vehicles_from is null.
+      operationId: list_pre_use_checks
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      - name: date_from
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Date From
+      - name: date_to
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Date To
+      - name: vehicle_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Vehicle Id
+      - name: engagement_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+              format: uuid
+          - type: 'null'
+          title: Engagement Id
+      - name: passed
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Passed
+      - name: source
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/SiteVehCheckSource'
+          - type: 'null'
+          title: Source
+      - name: driver_authorised
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Driver Authorised
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          description: 1-based page number.
+          default: 1
+          title: Page
+        description: 1-based page number.
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          description: Items per page.
+          default: 50
+          title: Page Size
+        description: Items per page.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteVehCheckPage'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+      - site-vehicles
+      summary: Record a pre-use check (capability 236; PU-1…PU-6)
+      description: 6d answer rules apply. A failed critical item puts a vehicle without a Phase 4 link
+        on defect hold with a finding and a CA (source site_vehicle); a Phase 4-linked item gets a Phase
+        4 Defect (source pre_use_check, category A). 422 PRE_USE_CHECK_EXISTS, DRIVER_NOT_AUTHORISED (policy
+        block); warnings DRIVER_NOT_AUTHORISED_WARN, VEHICLE_DOCS_UNVERIFIED. 422 SITE_VEHICLES_NOT_LIVE
+        while site_vehicles_from is null.
+      operationId: create_pre_use_check
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SiteVehCheckCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteVehCheckRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/pre-use-checks/form:
+    get:
+      tags:
+      - site-vehicles
+      summary: Template and today's state for one vehicle (capability 236)
+      operationId: pre_use_check_form
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      - name: vehicle_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Vehicle Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteVehCheckForm'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/pre-use-checks/missing:
+    get:
+      tags:
+      - site-vehicles
+      summary: Required vehicles without a check for a day, per contractor (PU-1)
+      operationId: missing_pre_use_checks
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      - name: day
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Day
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteVehMissingRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/pre-use-checks/{check_id}:
+    get:
+      tags:
+      - site-vehicles
+      summary: A pre-use check with findings, CA and Phase 4 defect links
+      operationId: get_pre_use_check
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: check_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Check Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteVehCheckRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/journey-plans/hint:
+    post:
+      tags:
+      - site-vehicles
+      summary: Is a journey plan recommended? (JM-1 hint only)
+      operationId: journey_plan_hint
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SiteVehJourneyHintInput'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteVehJourneyHint'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/journey-plans:
+    get:
+      tags:
+      - site-vehicles
+      summary: Journey plans (capability 233; not Viewer); `overdue` is a display flag
+      operationId: list_journey_plans
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/SiteVehJourneyStatus'
+          - type: 'null'
+          title: Status
+      - name: overdue
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Overdue
+      - name: date_from
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Date From
+      - name: date_to
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Date To
+      - name: vehicle_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Vehicle Id
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          description: 1-based page number.
+          default: 1
+          title: Page
+        description: 1-based page number.
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          description: Items per page.
+          default: 50
+          title: Page Size
+        description: Items per page.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteVehJourneyPage'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+      - site-vehicles
+      summary: Create a journey plan (capability 236; JM-2)
+      description: 409 VEHICLE_NOT_READY; 422 PASSENGERS_EXCEED_SEATS, JOURNEY_TIMES_INVALID, JOURNEY_CONTACT_IS_DRIVER,
+        DRIVER_NOT_AUTHORISED (policy block); warnings DRIVER_NOT_AUTHORISED_WARN, JOURNEY_PLAN_RECOMMENDED.
+        422 SITE_VEHICLES_NOT_LIVE while site_vehicles_from is null.
+      operationId: create_journey_plan
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SiteVehJourneyCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteVehJourneyRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/journey-plans/{plan_id}:
+    get:
+      tags:
+      - site-vehicles
+      summary: A journey plan
+      operationId: get_journey_plan
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: plan_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Plan Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteVehJourneyRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/journey-plans/{plan_id}/arrive:
+    post:
+      tags:
+      - site-vehicles
+      summary: '"Mark arrived" (capability 236)'
+      operationId: arrive_journey_plan
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: plan_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Plan Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SiteVehJourneyArrive'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteVehJourneyRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/journey-plans/{plan_id}/cancel:
+    post:
+      tags:
+      - site-vehicles
+      summary: Cancel a Planned journey plan (capability 236)
+      operationId: cancel_journey_plan
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: plan_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Plan Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SiteVehJourneyCancel'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteVehJourneyRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/v1/privacy-notice:
     get:
       tags:
@@ -76266,6 +78427,7 @@ components:
       - environmental
       - lesson
       - scorecard
+      - site_vehicle
       - ai_recommendation
       - other
       title: CaSourceType
@@ -76948,6 +79110,11 @@ components:
       - report_pack.issue
       - report_pack.view
       - export_log.view
+      - site_vehicle.view
+      - site_vehicle.manage
+      - driver_auth.manage
+      - pre_use.record
+      - site_vehicle.settings
       title: Capability
       description: 'Rows of the permission matrix: 1-19 Phase 0 (0-foundation §5.10), 20-45 Phase 1
 
@@ -86819,6 +88986,10 @@ components:
       - export_job
       - export_subscription
       - incident_vehicle
+      - site_vehicle_settings
+      - driver_authorisation
+      - vehicle_check
+      - journey_plan
       title: EntityType
       description: Entity types referenced by audit entries and change history.
     EntryDirection:
@@ -91612,6 +93783,18 @@ components:
       - PLATE_IS_REGISTERED
       - ACCIDENT_REPORT_LOCKED
       - VEHICLE_INVOLVED_LOCKED
+      - SITE_VEHICLES_NOT_LIVE
+      - OPERATING_CARD_REQUIRED
+      - LICENCE_CLASS_NOT_COVERING
+      - ASSESSMENT_TOO_OLD
+      - DRIVER_NOT_AUTHORISED
+      - PRE_USE_CHECK_EXISTS
+      - PASSENGERS_EXCEED_SEATS
+      - JOURNEY_TIMES_INVALID
+      - JOURNEY_CONTACT_IS_DRIVER
+      - VEHICLE_DEFECT_HOLD
+      - VEHICLE_NOT_READY
+      - AUTH_NOT_ACTIVE
       - NOT_IMPLEMENTED
       - INTERNAL_ERROR
       title: ErrorCode
@@ -93121,6 +95304,8 @@ components:
       - scorecard_finalise_due
       - report_pack_due
       - pip_due
+      - site_vehicle_doc_expiry
+      - driver_auth_expiry
       title: ExpiringItemKind
     ExpiringItemsResponse:
       properties:
@@ -93258,6 +95443,10 @@ components:
       - notification_requirements
       - lessons
       - incident_vehicles
+      - site_vehicles
+      - driver_authorisations
+      - pre_use_checks
+      - journey_plans
       title: ExportDataset
       description: Lists that can be exported (§5.8 rule 49, capability 18).
     ExportFormat:
@@ -101819,6 +104008,15 @@ components:
       - policy
       - available_from_phase
       title: HookProviderInfo
+    HookProviderStatus:
+      type: string
+      enum:
+      - met
+      - not_met
+      - expiring
+      - unknown_code
+      title: HookProviderStatus
+      description: HK-3 provider contract result.
     HookReadinessReport:
       properties:
         project_id:
@@ -108615,6 +110813,9 @@ components:
       - K-135
       - K-136
       - K-137
+      - K-138
+      - K-139
+      - K-140
       title: KpiMetric
       description: KPI catalogue §6.1. K-26 is split into one id per event type (DO / PD / ENV).
     KpiPlaceholder:
@@ -113750,6 +115951,9 @@ components:
       - export_ready
       - vehicle_docs_not_valid
       - accident_report_missing
+      - site_vehicle_doc_expiry
+      - driver_auth_expiry
+      - vehicle_defect_hold
       title: NotificationKind
       description: In-app notification kinds (§7).
     NotificationPage:
@@ -126002,6 +128206,7 @@ components:
       enum:
       - inspection
       - audit
+      - vehicle_check
       title: ResponseOwnerType
     ResponseRead:
       properties:
@@ -133161,6 +135366,2238 @@ components:
       additionalProperties: false
       type: object
       title: SiteUpdate
+    SiteVehAuthCreate:
+      properties:
+        groups:
+          items:
+            $ref: '#/components/schemas/SiteVehDriverGroup'
+          type: array
+          minItems: 1
+          title: Groups
+        licence_issuer:
+          anyOf:
+          - $ref: '#/components/schemas/LicenceIssuer'
+          - type: 'null'
+        licence_class:
+          anyOf:
+          - $ref: '#/components/schemas/LicenceClass'
+          - type: 'null'
+          description: Must cover every road group (LCV; LICENCE_CLASS_NOT_COVERING).
+        licence_expiry:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Licence Expiry
+        assessment_date:
+          type: string
+          format: date
+          title: Assessment Date
+          description: ≤ 12 months before issued_on (ASSESSMENT_TOO_OLD).
+        assessor:
+          type: string
+          maxLength: 120
+          minLength: 2
+          title: Assessor
+        issued_on:
+          type: string
+          format: date
+          title: Issued On
+        own_valid_until:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Own Valid Until
+          description: Default issued_on + driver_auth_validity_months − 1 day.
+        plant_vehicle_ids:
+          items:
+            type: string
+            format: uuid
+          type: array
+          title: Plant Vehicle Ids
+          description: 'Group plant: site plant operated; a Phase 4-linked item adds its EQC operator-certificate
+            hook (DA-2).'
+        worker_id:
+          type: string
+          format: uuid
+          title: Worker Id
+      additionalProperties: false
+      type: object
+      required:
+      - groups
+      - assessment_date
+      - assessor
+      - issued_on
+      - worker_id
+      title: SiteVehAuthCreate
+      description: 'Draft (235; a Contractor HSE Rep proposes for his engagement tree). Licence fields
+        left
+
+        empty are prefilled from the worker''s ADP when one exists.'
+    SiteVehAuthPage:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/SiteVehAuthRead'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+          description: Total number of matching items across all pages.
+        page:
+          type: integer
+          title: Page
+          description: 1-based page number.
+        page_size:
+          type: integer
+          title: Page Size
+          description: Items per page (max 200).
+      type: object
+      required:
+      - items
+      - total
+      - page
+      - page_size
+      title: SiteVehAuthPage
+    SiteVehAuthPrefill:
+      properties:
+        worker_id:
+          type: string
+          format: uuid
+          title: Worker Id
+        adp_no:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Adp No
+        licence_issuer:
+          anyOf:
+          - $ref: '#/components/schemas/LicenceIssuer'
+          - type: 'null'
+        licence_class:
+          anyOf:
+          - $ref: '#/components/schemas/LicenceClass'
+          - type: 'null'
+        licence_expiry:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Licence Expiry
+        live_authorisation_no:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Live Authorisation No
+          description: One live authorisation per worker.
+      type: object
+      required:
+      - worker_id
+      - adp_no
+      - licence_issuer
+      - licence_class
+      - licence_expiry
+      - live_authorisation_no
+      title: SiteVehAuthPrefill
+    SiteVehAuthRead:
+      properties:
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+          description: UTC timestamp.
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+          description: UTC timestamp.
+        id:
+          type: string
+          format: uuid
+          title: Id
+        auth_no:
+          type: string
+          title: Auth No
+          examples:
+          - DA-ANIA-EXP-0042
+        project_id:
+          type: string
+          format: uuid
+          title: Project Id
+        worker:
+          $ref: '#/components/schemas/WorkerRef'
+        engagement:
+          anyOf:
+          - $ref: '#/components/schemas/EngagementRef'
+          - type: 'null'
+        groups:
+          items:
+            $ref: '#/components/schemas/SiteVehDriverGroup'
+          type: array
+          title: Groups
+        status:
+          $ref: '#/components/schemas/SiteVehAuthStatus'
+        redacted:
+          type: boolean
+          title: Redacted
+          description: 'Site engineer: status only (P7b-1, AC 12).'
+        licence_issuer:
+          anyOf:
+          - $ref: '#/components/schemas/LicenceIssuer'
+          - type: 'null'
+        licence_class:
+          anyOf:
+          - $ref: '#/components/schemas/LicenceClass'
+          - type: 'null'
+        licence_expiry:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Licence Expiry
+        licence_prefilled_from_adp:
+          type: boolean
+          title: Licence Prefilled From Adp
+        assessment_date:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Assessment Date
+        assessor:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Assessor
+        issued_on:
+          type: string
+          format: date
+          title: Issued On
+        own_valid_until:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Own Valid Until
+        effective_valid_until:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Effective Valid Until
+        limiting_factor:
+          anyOf:
+          - $ref: '#/components/schemas/SiteVehLimitingFactor'
+          - type: 'null'
+        hook_results:
+          items:
+            $ref: '#/components/schemas/SiteVehHookResultRead'
+          type: array
+          title: Hook Results
+        hooks_evaluated_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Hooks Evaluated At
+        plant_vehicle_ids:
+          items:
+            type: string
+            format: uuid
+          type: array
+          title: Plant Vehicle Ids
+        status_reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Status Reason
+        status_changed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Status Changed At
+        activated_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Activated At
+        warnings:
+          items:
+            $ref: '#/components/schemas/ApiWarning'
+          type: array
+          title: Warnings
+      type: object
+      required:
+      - created_at
+      - updated_at
+      - id
+      - auth_no
+      - project_id
+      - worker
+      - engagement
+      - groups
+      - status
+      - redacted
+      - licence_issuer
+      - licence_class
+      - licence_expiry
+      - licence_prefilled_from_adp
+      - assessment_date
+      - assessor
+      - issued_on
+      - own_valid_until
+      - effective_valid_until
+      - limiting_factor
+      - hook_results
+      - hooks_evaluated_at
+      - plant_vehicle_ids
+      - status_reason
+      - status_changed_at
+      - activated_at
+      title: SiteVehAuthRead
+    SiteVehAuthStatus:
+      type: string
+      enum:
+      - draft
+      - active
+      - suspended
+      - expired
+      - revoked
+      title: SiteVehAuthStatus
+      description: §4.2 driver / operator authorisation.
+    SiteVehAuthTransition:
+      properties:
+        to_status:
+          $ref: '#/components/schemas/SiteVehAuthStatus'
+        reason:
+          anyOf:
+          - type: string
+            maxLength: 500
+          - type: 'null'
+          title: Reason
+      additionalProperties: false
+      type: object
+      required:
+      - to_status
+      title: SiteVehAuthTransition
+      description: '§4.2: activate (draft / suspended → active; DA-1), suspend (reason ≥ 20), revoke (final).
+
+        Capability 235 (not reps).'
+    SiteVehAuthUpdate:
+      properties:
+        groups:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/SiteVehDriverGroup'
+            type: array
+            minItems: 1
+          - type: 'null'
+          title: Groups
+        licence_issuer:
+          anyOf:
+          - $ref: '#/components/schemas/LicenceIssuer'
+          - type: 'null'
+        licence_class:
+          anyOf:
+          - $ref: '#/components/schemas/LicenceClass'
+          - type: 'null'
+        licence_expiry:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Licence Expiry
+        assessment_date:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Assessment Date
+        assessor:
+          anyOf:
+          - type: string
+            maxLength: 120
+            minLength: 2
+          - type: 'null'
+          title: Assessor
+        issued_on:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Issued On
+        own_valid_until:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Own Valid Until
+        plant_vehicle_ids:
+          anyOf:
+          - items:
+              type: string
+              format: uuid
+            type: array
+          - type: 'null'
+          title: Plant Vehicle Ids
+      additionalProperties: false
+      type: object
+      title: SiteVehAuthUpdate
+      description: Draft only.
+    SiteVehBreakdown:
+      properties:
+        metric:
+          type: string
+          title: Metric
+        group_by:
+          $ref: '#/components/schemas/SiteVehKpiGroupBy'
+        rows:
+          items:
+            $ref: '#/components/schemas/SiteVehBreakdownRow'
+          type: array
+          title: Rows
+      type: object
+      required:
+      - metric
+      - group_by
+      - rows
+      title: SiteVehBreakdown
+    SiteVehBreakdownRow:
+      properties:
+        key:
+          type: string
+          title: Key
+        label_en:
+          type: string
+          title: Label En
+        label_ar:
+          type: string
+          title: Label Ar
+        value:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Value
+        display:
+          type: string
+          title: Display
+        numerator:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Numerator
+        denominator:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Denominator
+      type: object
+      required:
+      - key
+      - label_en
+      - label_ar
+      - value
+      - display
+      title: SiteVehBreakdownRow
+    SiteVehCheckCreate:
+      properties:
+        vehicle_id:
+          type: string
+          format: uuid
+          title: Vehicle Id
+        driver_worker_id:
+          type: string
+          format: uuid
+          title: Driver Worker Id
+        check_date:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Check Date
+          description: Default today (local).
+        answers:
+          items:
+            $ref: '#/components/schemas/AnswerInput'
+          type: array
+          minItems: 1
+          title: Answers
+        source:
+          $ref: '#/components/schemas/SiteVehCheckSource'
+          default: app
+        paper_photo:
+          anyOf:
+          - $ref: '#/components/schemas/PhotoInput'
+          - type: 'null'
+          description: Required when source = paper (PU-5).
+        completed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Completed At
+      additionalProperties: false
+      type: object
+      required:
+      - vehicle_id
+      - driver_worker_id
+      - answers
+      title: SiteVehCheckCreate
+      description: 'Capability 236. Template by driver group (VPU-L light, VPU-B bus, VPU-H heavy / plant),
+
+        pinned at start; 6d answer rules (EXE-2). One Completed check per vehicle per date (422
+
+        PRE_USE_CHECK_EXISTS; a re-check is allowed while the vehicle is on defect hold). PU-6
+
+        under block → 422 DRIVER_NOT_AUTHORISED; under warn the warning is returned.'
+    SiteVehCheckForm:
+      properties:
+        vehicle:
+          $ref: '#/components/schemas/SiteVehVehicleRef'
+        template:
+          $ref: '#/components/schemas/TemplateRead'
+        check_date:
+          type: string
+          format: date
+          title: Check Date
+        existing_check_no:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Existing Check No
+        on_defect_hold:
+          type: boolean
+          title: On Defect Hold
+        readiness:
+          $ref: '#/components/schemas/SiteVehReadiness'
+      type: object
+      required:
+      - vehicle
+      - template
+      - check_date
+      - existing_check_no
+      - on_defect_hold
+      - readiness
+      title: SiteVehCheckForm
+      description: 'What the check screen needs for one vehicle: the published template and today''s state.'
+    SiteVehCheckPage:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/SiteVehCheckRead'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+          description: Total number of matching items across all pages.
+        page:
+          type: integer
+          title: Page
+          description: 1-based page number.
+        page_size:
+          type: integer
+          title: Page Size
+          description: Items per page (max 200).
+      type: object
+      required:
+      - items
+      - total
+      - page
+      - page_size
+      title: SiteVehCheckPage
+    SiteVehCheckRead:
+      properties:
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+          description: UTC timestamp.
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+          description: UTC timestamp.
+        id:
+          type: string
+          format: uuid
+          title: Id
+        check_no:
+          type: string
+          title: Check No
+          examples:
+          - VPC-ANIA-EXP-20261011-0031
+        project_id:
+          type: string
+          format: uuid
+          title: Project Id
+        vehicle:
+          $ref: '#/components/schemas/SiteVehVehicleRef'
+        engagement:
+          anyOf:
+          - $ref: '#/components/schemas/EngagementRef'
+          - type: 'null'
+        driver:
+          $ref: '#/components/schemas/WorkerRef'
+        driver_group:
+          anyOf:
+          - $ref: '#/components/schemas/SiteVehDriverGroup'
+          - type: 'null'
+        driver_authorised:
+          type: boolean
+          title: Driver Authorised
+        authorisation_no:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorisation No
+        check_date:
+          type: string
+          format: date
+          title: Check Date
+        template_code:
+          type: string
+          title: Template Code
+        response_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Response Id
+        passed:
+          type: boolean
+          title: Passed
+        critical_fail_count:
+          type: integer
+          title: Critical Fail Count
+        failed_items:
+          items:
+            type: string
+          type: array
+          title: Failed Items
+        source:
+          $ref: '#/components/schemas/SiteVehCheckSource'
+        paper_photo_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Paper Photo Id
+        recorded_by:
+          anyOf:
+          - $ref: '#/components/schemas/UserRef'
+          - type: 'null'
+        completed_at:
+          type: string
+          format: date-time
+          title: Completed At
+        findings:
+          items:
+            $ref: '#/components/schemas/SiteVehFindingRead'
+          type: array
+          title: Findings
+        phase4_defect_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Phase4 Defect Id
+        phase4_defect_no:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Phase4 Defect No
+        hold_set:
+          type: boolean
+          title: Hold Set
+        hold_cleared_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Hold Cleared At
+        hold_repair_note:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Hold Repair Note
+        warnings:
+          items:
+            $ref: '#/components/schemas/ApiWarning'
+          type: array
+          title: Warnings
+      type: object
+      required:
+      - created_at
+      - updated_at
+      - id
+      - check_no
+      - project_id
+      - vehicle
+      - engagement
+      - driver
+      - driver_group
+      - driver_authorised
+      - authorisation_no
+      - check_date
+      - template_code
+      - response_id
+      - passed
+      - critical_fail_count
+      - failed_items
+      - source
+      - paper_photo_id
+      - recorded_by
+      - completed_at
+      - findings
+      - phase4_defect_id
+      - phase4_defect_no
+      - hold_set
+      - hold_cleared_at
+      - hold_repair_note
+      title: SiteVehCheckRead
+    SiteVehCheckSource:
+      type: string
+      enum:
+      - app
+      - paper
+      title: SiteVehCheckSource
+      description: 'PU-5: `paper` = answers transcribed from a signed paper card (photo attached).'
+    SiteVehClearHold:
+      properties:
+        repair_note:
+          type: string
+          maxLength: 1000
+          minLength: 10
+          title: Repair Note
+      additionalProperties: false
+      type: object
+      required:
+      - repair_note
+      title: SiteVehClearHold
+      description: 'PU-3 / §4.1: needs a passing check completed after the hold (else 409
+
+        VEHICLE_DEFECT_HOLD).'
+    SiteVehCreate:
+      properties:
+        engagement_id:
+          type: string
+          format: uuid
+          title: Engagement Id
+        owner_type:
+          $ref: '#/components/schemas/VehicleOwnerType'
+        category:
+          $ref: '#/components/schemas/VehicleCategory'
+        plate_type:
+          $ref: '#/components/schemas/PlateType'
+        plate_letters_ar:
+          anyOf:
+          - type: string
+            maxLength: 5
+          - type: 'null'
+          title: Plate Letters Ar
+        plate_letters_en:
+          anyOf:
+          - type: string
+            maxLength: 3
+          - type: 'null'
+          title: Plate Letters En
+        plate_digits:
+          anyOf:
+          - type: string
+            pattern: ^\d{1,4}$
+          - type: 'null'
+          title: Plate Digits
+        fleet_no:
+          type: string
+          maxLength: 20
+          minLength: 1
+          title: Fleet No
+        serial_or_vin:
+          type: string
+          maxLength: 30
+          minLength: 1
+          title: Serial Or Vin
+        make_model:
+          type: string
+          maxLength: 80
+          minLength: 1
+          title: Make Model
+        year:
+          type: integer
+          minimum: 1990.0
+          title: Year
+        colour:
+          type: string
+          maxLength: 30
+          minLength: 1
+          title: Colour
+          default: White
+        travel_height_m:
+          anyOf:
+          - type: number
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          - type: 'null'
+          title: Travel Height M
+          description: Default 2.00 m.
+        max_working_height_m_agl:
+          anyOf:
+          - type: number
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          - type: 'null'
+          title: Max Working Height M Agl
+          description: Default travel.
+        istimara_expiry:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Istimara Expiry
+        insurance_policy_no:
+          type: string
+          maxLength: 40
+          minLength: 1
+          title: Insurance Policy No
+        insurance_expiry:
+          type: string
+          format: date
+          title: Insurance Expiry
+        mvpi_expiry:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Mvpi Expiry
+        site_scope:
+          $ref: '#/components/schemas/SiteVehScope'
+          description: site or both (airside_only is Phase 2 only).
+        use_class:
+          $ref: '#/components/schemas/SiteVehUseClass'
+        seats:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Seats
+          description: 'crew_bus / crew_pickup: 2–60.'
+        operating_card_no:
+          anyOf:
+          - type: string
+            maxLength: 30
+          - type: 'null'
+          title: Operating Card No
+        operating_card_expiry:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Operating Card Expiry
+        idle_from:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Idle From
+        idle_to:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Idle To
+      additionalProperties: false
+      type: object
+      required:
+      - engagement_id
+      - owner_type
+      - category
+      - plate_type
+      - fleet_no
+      - serial_or_vin
+      - make_model
+      - year
+      - insurance_policy_no
+      - insurance_expiry
+      - site_scope
+      - use_class
+      title: SiteVehCreate
+      description: 'Capability 234 (reps: own engagement). Creates the Phase 2 vehicle (VEH-nnnn) with
+        the
+
+        7b fields; Phase 2 plate / VIN / document rules apply (Istimara and MVPI required when
+
+        plated). 422 OPERATING_CARD_REQUIRED for crew_bus / tipper / goods_heavy with a plate.'
+    SiteVehDocRead:
+      properties:
+        kind:
+          type: string
+          title: Kind
+          description: istimara · insurance · mvpi · operating_card
+        expiry:
+          type: string
+          format: date
+          title: Expiry
+        days_left:
+          type: integer
+          title: Days Left
+        state:
+          type: string
+          title: State
+          description: valid · expiring (≤ 30 days) · expired
+      type: object
+      required:
+      - kind
+      - expiry
+      - days_left
+      - state
+      title: SiteVehDocRead
+    SiteVehDocsFilter:
+      type: string
+      enum:
+      - expired
+      - expiring_30d
+      - unverified
+      title: SiteVehDocsFilter
+      description: Register filter on the vehicle documents.
+    SiteVehDriverGroup:
+      type: string
+      enum:
+      - light
+      - bus
+      - heavy
+      - plant
+      title: SiteVehDriverGroup
+      description: 'List DG (§3.6). light / bus / heavy are road groups (licence class per LCV); plant
+        needs
+
+        no road licence (Phase 4 operator certificate or a practical assessment).'
+    SiteVehFindingRead:
+      properties:
+        finding_no:
+          type: string
+          title: Finding No
+        item_code:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Item Code
+        severity:
+          $ref: '#/components/schemas/app__core__field_enums__FindingSeverity'
+        critical_item:
+          type: boolean
+          title: Critical Item
+        ca_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Ca Id
+        ca_ref:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ca Ref
+      type: object
+      required:
+      - finding_no
+      - item_code
+      - severity
+      - critical_item
+      - ca_id
+      - ca_ref
+      title: SiteVehFindingRead
+    SiteVehHoldRead:
+      properties:
+        check_id:
+          type: string
+          format: uuid
+          title: Check Id
+        check_no:
+          type: string
+          title: Check No
+        set_on:
+          type: string
+          format: date
+          title: Set On
+        failed_items:
+          items:
+            type: string
+          type: array
+          title: Failed Items
+        ca_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Ca Id
+        ca_ref:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ca Ref
+      type: object
+      required:
+      - check_id
+      - check_no
+      - set_on
+      - failed_items
+      - ca_id
+      - ca_ref
+      title: SiteVehHoldRead
+    SiteVehHookResult:
+      type: string
+      enum:
+      - met
+      - warn
+      - not_met
+      title: SiteVehHookResult
+      description: 'DA-2 result of one hook: met; warn (not met under policy warn); not_met.'
+    SiteVehHookResultRead:
+      properties:
+        kind:
+          $ref: '#/components/schemas/HookKind'
+        code:
+          type: string
+          title: Code
+          examples:
+          - DEF-DRV
+          - DRIVER-FIT
+          - PLANT-OPERATOR
+        result:
+          $ref: '#/components/schemas/SiteVehHookResult'
+        provider_status:
+          $ref: '#/components/schemas/HookProviderStatus'
+        valid_until:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Valid Until
+        ref:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ref
+        reason_code:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Reason Code
+        vehicle_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Vehicle Id
+          description: The plant whose Phase 4 EQC gave the operator code.
+      type: object
+      required:
+      - kind
+      - code
+      - result
+      - provider_status
+      - valid_until
+      - ref
+      - reason_code
+      title: SiteVehHookResultRead
+    SiteVehJourneyArrive:
+      properties:
+        arrived_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Arrived At
+          description: Default now.
+      additionalProperties: false
+      type: object
+      title: SiteVehJourneyArrive
+    SiteVehJourneyCancel:
+      properties:
+        reason:
+          type: string
+          maxLength: 500
+          minLength: 5
+          title: Reason
+      additionalProperties: false
+      type: object
+      required:
+      - reason
+      title: SiteVehJourneyCancel
+    SiteVehJourneyCreate:
+      properties:
+        vehicle_id:
+          type: string
+          format: uuid
+          title: Vehicle Id
+        driver_worker_id:
+          type: string
+          format: uuid
+          title: Driver Worker Id
+        passengers:
+          type: integer
+          maximum: 59.0
+          minimum: 0.0
+          title: Passengers
+        origin:
+          type: string
+          maxLength: 120
+          minLength: 2
+          title: Origin
+        destination:
+          type: string
+          maxLength: 120
+          minLength: 2
+          title: Destination
+        distance_km:
+          type: integer
+          maximum: 1000.0
+          minimum: 1.0
+          title: Distance Km
+        planned_depart:
+          type: string
+          format: date-time
+          title: Planned Depart
+        planned_arrive:
+          type: string
+          format: date-time
+          title: Planned Arrive
+        contact_user_id:
+          type: string
+          format: uuid
+          title: Contact User Id
+        notes:
+          anyOf:
+          - type: string
+            maxLength: 500
+          - type: 'null'
+          title: Notes
+      additionalProperties: false
+      type: object
+      required:
+      - vehicle_id
+      - driver_worker_id
+      - passengers
+      - origin
+      - destination
+      - distance_km
+      - planned_depart
+      - planned_arrive
+      - contact_user_id
+      title: SiteVehJourneyCreate
+      description: 'Capability 236. JM-2: 409 VEHICLE_NOT_READY (defect_hold / not_certified / withdrawn);
+
+        PU-6 policy; 422 PASSENGERS_EXCEED_SEATS, JOURNEY_TIMES_INVALID, JOURNEY_CONTACT_IS_DRIVER.'
+    SiteVehJourneyHint:
+      properties:
+        recommended:
+          type: boolean
+          title: Recommended
+        reasons:
+          items:
+            type: string
+          type: array
+          title: Reasons
+          description: distance · night
+        message_en:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Message En
+        message_ar:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Message Ar
+      type: object
+      required:
+      - recommended
+      - reasons
+      - message_en
+      - message_ar
+      title: SiteVehJourneyHint
+      description: 'JM-1: a hint only; the platform never requires a plan.'
+    SiteVehJourneyHintInput:
+      properties:
+        distance_km:
+          type: integer
+          maximum: 1000.0
+          minimum: 1.0
+          title: Distance Km
+        planned_depart:
+          type: string
+          format: date-time
+          title: Planned Depart
+        planned_arrive:
+          type: string
+          format: date-time
+          title: Planned Arrive
+      additionalProperties: false
+      type: object
+      required:
+      - distance_km
+      - planned_depart
+      - planned_arrive
+      title: SiteVehJourneyHintInput
+    SiteVehJourneyPage:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/SiteVehJourneyRead'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+          description: Total number of matching items across all pages.
+        page:
+          type: integer
+          title: Page
+          description: 1-based page number.
+        page_size:
+          type: integer
+          title: Page Size
+          description: Items per page (max 200).
+      type: object
+      required:
+      - items
+      - total
+      - page
+      - page_size
+      title: SiteVehJourneyPage
+    SiteVehJourneyRead:
+      properties:
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+          description: UTC timestamp.
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+          description: UTC timestamp.
+        id:
+          type: string
+          format: uuid
+          title: Id
+        plan_no:
+          type: string
+          title: Plan No
+          examples:
+          - JP-ANIA-EXP-2026-0118
+        project_id:
+          type: string
+          format: uuid
+          title: Project Id
+        vehicle:
+          $ref: '#/components/schemas/SiteVehVehicleRef'
+        engagement:
+          anyOf:
+          - $ref: '#/components/schemas/EngagementRef'
+          - type: 'null'
+        driver:
+          $ref: '#/components/schemas/WorkerRef'
+        driver_group:
+          anyOf:
+          - $ref: '#/components/schemas/SiteVehDriverGroup'
+          - type: 'null'
+        driver_authorised:
+          type: boolean
+          title: Driver Authorised
+        passengers:
+          type: integer
+          title: Passengers
+        origin:
+          type: string
+          title: Origin
+        destination:
+          type: string
+          title: Destination
+        distance_km:
+          type: integer
+          title: Distance Km
+        planned_depart:
+          type: string
+          format: date-time
+          title: Planned Depart
+        planned_arrive:
+          type: string
+          format: date-time
+          title: Planned Arrive
+        contact:
+          anyOf:
+          - $ref: '#/components/schemas/UserRef'
+          - type: 'null'
+        notes:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Notes
+        hint_recommended:
+          type: boolean
+          title: Hint Recommended
+        status:
+          $ref: '#/components/schemas/SiteVehJourneyStatus'
+        overdue:
+          type: boolean
+          title: Overdue
+          description: 'Display flag only: Planned and now > planned_arrive + 60 min (no alert).'
+        arrived_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Arrived At
+        cancelled_reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Cancelled Reason
+        warnings:
+          items:
+            $ref: '#/components/schemas/ApiWarning'
+          type: array
+          title: Warnings
+      type: object
+      required:
+      - created_at
+      - updated_at
+      - id
+      - plan_no
+      - project_id
+      - vehicle
+      - engagement
+      - driver
+      - driver_group
+      - driver_authorised
+      - passengers
+      - origin
+      - destination
+      - distance_km
+      - planned_depart
+      - planned_arrive
+      - contact
+      - notes
+      - hint_recommended
+      - status
+      - overdue
+      - arrived_at
+      - cancelled_reason
+      title: SiteVehJourneyRead
+    SiteVehJourneyStatus:
+      type: string
+      enum:
+      - planned
+      - arrived
+      - cancelled
+      title: SiteVehJourneyStatus
+      description: §4.3 (prototype). Overdue is a display flag only.
+    SiteVehKpiGroupBy:
+      type: string
+      enum:
+      - contractor
+      - month
+      title: SiteVehKpiGroupBy
+      description: GET /kpi/site-vehicles breakdowns.
+    SiteVehKpiResponse:
+      properties:
+        context:
+          $ref: '#/components/schemas/KpiContext'
+        metrics:
+          items:
+            $ref: '#/components/schemas/KpiValue'
+          type: array
+          title: Metrics
+        breakdowns:
+          items:
+            $ref: '#/components/schemas/SiteVehBreakdown'
+          type: array
+          title: Breakdowns
+        notes:
+          items:
+            type: string
+          type: array
+          title: Notes
+      type: object
+      required:
+      - context
+      - metrics
+      - breakdowns
+      - notes
+      title: SiteVehKpiResponse
+      description: 'GET /kpi/site-vehicles: K-138…K-140 (aggregates only; SK-2).'
+    SiteVehLabel:
+      properties:
+        code:
+          type: string
+          title: Code
+        label_en:
+          type: string
+          title: Label En
+        label_ar:
+          type: string
+          title: Label Ar
+      type: object
+      required:
+      - code
+      - label_en
+      - label_ar
+      title: SiteVehLabel
+    SiteVehLimitingFactor:
+      type: string
+      enum:
+      - own_validity
+      - licence
+      - worker_id
+      - deployment_end
+      - training
+      - medical
+      - operator_certificate
+      title: SiteVehLimitingFactor
+      description: '§6.1: the term that gives effective_valid_until.'
+    SiteVehMissingByContractor:
+      properties:
+        engagement:
+          anyOf:
+          - $ref: '#/components/schemas/EngagementRef'
+          - type: 'null'
+        required:
+          type: integer
+          title: Required
+        completed:
+          type: integer
+          title: Completed
+        missing:
+          type: integer
+          title: Missing
+      type: object
+      required:
+      - engagement
+      - required
+      - completed
+      - missing
+      title: SiteVehMissingByContractor
+    SiteVehMissingRead:
+      properties:
+        date:
+          type: string
+          format: date
+          title: Date
+        working_day:
+          type: boolean
+          title: Working Day
+        required:
+          type: integer
+          title: Required
+        completed:
+          type: integer
+          title: Completed
+        items:
+          items:
+            $ref: '#/components/schemas/SiteVehMissingRow'
+          type: array
+          title: Items
+        by_contractor:
+          items:
+            $ref: '#/components/schemas/SiteVehMissingByContractor'
+          type: array
+          title: By Contractor
+      type: object
+      required:
+      - date
+      - working_day
+      - required
+      - completed
+      - items
+      - by_contractor
+      title: SiteVehMissingRead
+      description: 'PU-1 for one day: required vehicles without a Completed check, per contractor.'
+    SiteVehMissingRow:
+      properties:
+        vehicle:
+          $ref: '#/components/schemas/SiteVehVehicleRef'
+        engagement:
+          anyOf:
+          - $ref: '#/components/schemas/EngagementRef'
+          - type: 'null'
+        readiness:
+          $ref: '#/components/schemas/SiteVehReadiness'
+      type: object
+      required:
+      - vehicle
+      - engagement
+      - readiness
+      title: SiteVehMissingRow
+    SiteVehPage:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/SiteVehRead'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+          description: Total number of matching items across all pages.
+        page:
+          type: integer
+          title: Page
+          description: 1-based page number.
+        page_size:
+          type: integer
+          title: Page Size
+          description: Items per page (max 200).
+      type: object
+      required:
+      - items
+      - total
+      - page
+      - page_size
+      title: SiteVehPage
+    SiteVehPhase4Read:
+      properties:
+        equipment_id:
+          type: string
+          format: uuid
+          title: Equipment Id
+        equipment_no:
+          type: string
+          title: Equipment No
+          examples:
+          - EQP-000214
+        service_status:
+          $ref: '#/components/schemas/ServiceStatus'
+        operator_code:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Operator Code
+          description: EQC operator certificate code (DA-2).
+      type: object
+      required:
+      - equipment_id
+      - equipment_no
+      - service_status
+      - operator_code
+      title: SiteVehPhase4Read
+      description: 'SV-3: the Phase 4 equipment item linked to this vehicle (read-only in 7b).'
+    SiteVehPolicy:
+      type: string
+      enum:
+      - warn
+      - block
+      title: SiteVehPolicy
+      description: §3.5 driver_hook_policy / driver_auth_policy.
+    SiteVehRead:
+      properties:
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+          description: UTC timestamp.
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+          description: UTC timestamp.
+        id:
+          type: string
+          format: uuid
+          title: Id
+        vehicle_no:
+          type: string
+          title: Vehicle No
+          examples:
+          - VEH-0107
+        project_id:
+          type: string
+          format: uuid
+          title: Project Id
+        engagement:
+          $ref: '#/components/schemas/EngagementRef'
+        owner_type:
+          $ref: '#/components/schemas/VehicleOwnerType'
+        category:
+          $ref: '#/components/schemas/VehicleCategory'
+        plate_type:
+          $ref: '#/components/schemas/PlateType'
+        plate_letters_ar:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Plate Letters Ar
+        plate_letters_en:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Plate Letters En
+        plate_digits:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Plate Digits
+        fleet_no:
+          type: string
+          title: Fleet No
+        serial_or_vin:
+          type: string
+          title: Serial Or Vin
+        make_model:
+          type: string
+          title: Make Model
+        year:
+          type: integer
+          title: Year
+        site_scope:
+          $ref: '#/components/schemas/SiteVehScope'
+        use_class:
+          anyOf:
+          - $ref: '#/components/schemas/SiteVehUseClass'
+          - type: 'null'
+        driver_group:
+          anyOf:
+          - $ref: '#/components/schemas/SiteVehDriverGroup'
+          - type: 'null'
+        seats:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Seats
+        operating_card_no:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Operating Card No
+        operating_card_expiry:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Operating Card Expiry
+        istimara_expiry:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Istimara Expiry
+        insurance_policy_no:
+          type: string
+          title: Insurance Policy No
+        insurance_expiry:
+          type: string
+          format: date
+          title: Insurance Expiry
+        mvpi_expiry:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Mvpi Expiry
+        documents:
+          items:
+            $ref: '#/components/schemas/SiteVehDocRead'
+          type: array
+          title: Documents
+        docs_verified:
+          type: boolean
+          title: Docs Verified
+        docs_verified_by:
+          anyOf:
+          - $ref: '#/components/schemas/UserRef'
+          - type: 'null'
+        docs_verified_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Docs Verified At
+        idle_from:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Idle From
+        idle_to:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Idle To
+        status:
+          $ref: '#/components/schemas/VehicleStatus'
+        withdrawn_on:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Withdrawn On
+        readiness:
+          $ref: '#/components/schemas/SiteVehReadiness'
+          description: §4.1 today (derived; first match wins).
+        readiness_reasons:
+          items:
+            type: string
+          type: array
+          title: Readiness Reasons
+          description: e.g. insurance:2026-10-19, defect_hold:VPC-…, phase4:out_of_service.
+        phase4:
+          anyOf:
+          - $ref: '#/components/schemas/SiteVehPhase4Read'
+          - type: 'null'
+        hold:
+          anyOf:
+          - $ref: '#/components/schemas/SiteVehHoldRead'
+          - type: 'null'
+        today_check:
+          anyOf:
+          - $ref: '#/components/schemas/SiteVehTodayCheck'
+          - type: 'null'
+        pre_use_required_today:
+          type: boolean
+          title: Pre Use Required Today
+        warnings:
+          items:
+            $ref: '#/components/schemas/ApiWarning'
+          type: array
+          title: Warnings
+          description: VEHICLE_DOCS_UNVERIFIED (readiness unchanged, SV-4).
+      type: object
+      required:
+      - created_at
+      - updated_at
+      - id
+      - vehicle_no
+      - project_id
+      - engagement
+      - owner_type
+      - category
+      - plate_type
+      - plate_letters_ar
+      - plate_letters_en
+      - plate_digits
+      - fleet_no
+      - serial_or_vin
+      - make_model
+      - year
+      - site_scope
+      - use_class
+      - driver_group
+      - seats
+      - operating_card_no
+      - operating_card_expiry
+      - istimara_expiry
+      - insurance_policy_no
+      - insurance_expiry
+      - mvpi_expiry
+      - documents
+      - docs_verified
+      - docs_verified_by
+      - docs_verified_at
+      - idle_from
+      - idle_to
+      - status
+      - withdrawn_on
+      - readiness
+      - readiness_reasons
+      - phase4
+      - hold
+      - today_check
+      - pre_use_required_today
+      title: SiteVehRead
+    SiteVehReadiness:
+      type: string
+      enum:
+      - withdrawn
+      - idle
+      - defect_hold
+      - not_certified
+      - docs_expired
+      - ready
+      title: SiteVehReadiness
+      description: §4.1, in precedence order (first matching state wins).
+    SiteVehReference:
+      properties:
+        use_classes:
+          items:
+            $ref: '#/components/schemas/SiteVehUseClassRead'
+          type: array
+          title: Use Classes
+        driver_groups:
+          items:
+            $ref: '#/components/schemas/SiteVehLabel'
+          type: array
+          title: Driver Groups
+        readiness:
+          items:
+            $ref: '#/components/schemas/SiteVehLabel'
+          type: array
+          title: Readiness
+        authorisation_statuses:
+          items:
+            $ref: '#/components/schemas/SiteVehLabel'
+          type: array
+          title: Authorisation Statuses
+        journey_statuses:
+          items:
+            $ref: '#/components/schemas/SiteVehLabel'
+          type: array
+          title: Journey Statuses
+        limiting_factors:
+          items:
+            $ref: '#/components/schemas/SiteVehLabel'
+          type: array
+          title: Limiting Factors
+        warnings:
+          items:
+            $ref: '#/components/schemas/SiteVehLabel'
+          type: array
+          title: Warnings
+        prototype_badge:
+          $ref: '#/components/schemas/SiteVehLabel'
+      type: object
+      required:
+      - use_classes
+      - driver_groups
+      - readiness
+      - authorisation_statuses
+      - journey_statuses
+      - limiting_factors
+      - warnings
+      - prototype_badge
+      title: SiteVehReference
+      description: Lists SU and DG plus the EN/AR labels of every 7b state and code.
+    SiteVehScope:
+      type: string
+      enum:
+      - airside_only
+      - site
+      - both
+      title: SiteVehScope
+      description: §3.1 site_scope. Existing Phase 2 rows default to `airside_only` (SV-1).
+    SiteVehSettingsRead:
+      properties:
+        project_id:
+          type: string
+          format: uuid
+          title: Project Id
+        live:
+          type: boolean
+          title: Live
+        site_vehicles_from:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Site Vehicles From
+        driver_auth_validity_months:
+          type: integer
+          title: Driver Auth Validity Months
+          description: 12–36 (default 24 ASSUMPTION).
+        defensive_driving_code:
+          type: string
+          title: Defensive Driving Code
+          examples:
+          - DEF-DRV
+        bus_driving_code:
+          type: string
+          title: Bus Driving Code
+          examples:
+          - BUS-DRV
+        driver_hook_policy:
+          $ref: '#/components/schemas/SiteVehPolicy'
+        driver_auth_policy:
+          $ref: '#/components/schemas/SiteVehPolicy'
+        pre_use_required_groups:
+          items:
+            $ref: '#/components/schemas/SiteVehDriverGroup'
+          type: array
+          title: Pre Use Required Groups
+        rest_weekday:
+          $ref: '#/components/schemas/Weekday'
+        journey_hint_km:
+          type: integer
+          title: Journey Hint Km
+          description: 50–500 (prototype default 150).
+        journey_hint_night_from:
+          type: string
+          title: Journey Hint Night From
+          examples:
+          - '22:00'
+        journey_hint_night_to:
+          type: string
+          title: Journey Hint Night To
+          examples:
+          - 05:00
+        updated_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Updated At
+        updated_by:
+          anyOf:
+          - $ref: '#/components/schemas/UserRef'
+          - type: 'null'
+      type: object
+      required:
+      - project_id
+      - live
+      - site_vehicles_from
+      - driver_auth_validity_months
+      - defensive_driving_code
+      - bus_driving_code
+      - driver_hook_policy
+      - driver_auth_policy
+      - pre_use_required_groups
+      - rest_weekday
+      - journey_hint_km
+      - journey_hint_night_from
+      - journey_hint_night_to
+      - updated_at
+      - updated_by
+      title: SiteVehSettingsRead
+      description: '§3.5. `live` = site_vehicles_from is set (null = 7b off: other 7b endpoints answer
+        422
+
+        SITE_VEHICLES_NOT_LIVE).'
+    SiteVehSettingsUpdate:
+      properties:
+        site_vehicles_from:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Site Vehicles From
+          description: ≤ today + 30; null = off.
+        driver_auth_validity_months:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Driver Auth Validity Months
+        defensive_driving_code:
+          anyOf:
+          - type: string
+            maxLength: 20
+          - type: 'null'
+          title: Defensive Driving Code
+        bus_driving_code:
+          anyOf:
+          - type: string
+            maxLength: 20
+          - type: 'null'
+          title: Bus Driving Code
+        driver_hook_policy:
+          anyOf:
+          - $ref: '#/components/schemas/SiteVehPolicy'
+          - type: 'null'
+        driver_auth_policy:
+          anyOf:
+          - $ref: '#/components/schemas/SiteVehPolicy'
+          - type: 'null'
+        pre_use_required_groups:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/SiteVehDriverGroup'
+            type: array
+          - type: 'null'
+          title: Pre Use Required Groups
+        rest_weekday:
+          anyOf:
+          - $ref: '#/components/schemas/Weekday'
+          - type: 'null'
+        journey_hint_km:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Journey Hint Km
+        journey_hint_night_from:
+          anyOf:
+          - type: string
+            pattern: ^([01]\d|2[0-3]):[0-5]\d$
+          - type: 'null'
+          title: Journey Hint Night From
+        journey_hint_night_to:
+          anyOf:
+          - type: string
+            pattern: ^([01]\d|2[0-3]):[0-5]\d$
+          - type: 'null'
+          title: Journey Hint Night To
+      additionalProperties: false
+      type: object
+      title: SiteVehSettingsUpdate
+      description: 'Capability 237 (HSE Manager); out of range → 422 SETTING_OUT_OF_RANGE. Course codes
+        must
+
+        exist in the Phase 5 catalogue (DEF-DRV / BUS-DRV are created when 7b is first switched on).'
+    SiteVehSummary:
+      properties:
+        project_id:
+          type: string
+          format: uuid
+          title: Project Id
+        as_of:
+          type: string
+          format: date
+          title: As Of
+        live:
+          type: boolean
+          title: Live
+        site_vehicles:
+          type: integer
+          title: Site Vehicles
+        by_readiness:
+          additionalProperties:
+            type: integer
+          type: object
+          title: By Readiness
+        docs_expired:
+          type: integer
+          title: Docs Expired
+        docs_expiring_30d:
+          type: integer
+          title: Docs Expiring 30D
+        docs_unverified:
+          type: integer
+          title: Docs Unverified
+        pre_use_required_today:
+          type: integer
+          title: Pre Use Required Today
+        pre_use_done_today:
+          type: integer
+          title: Pre Use Done Today
+        active_authorisations:
+          type: integer
+          title: Active Authorisations
+        authorisations_expiring_30d:
+          type: integer
+          title: Authorisations Expiring 30D
+        journeys_planned:
+          type: integer
+          title: Journeys Planned
+        journeys_overdue:
+          type: integer
+          title: Journeys Overdue
+      type: object
+      required:
+      - project_id
+      - as_of
+      - live
+      - site_vehicles
+      - by_readiness
+      - docs_expired
+      - docs_expiring_30d
+      - docs_unverified
+      - pre_use_required_today
+      - pre_use_done_today
+      - active_authorisations
+      - authorisations_expiring_30d
+      - journeys_planned
+      - journeys_overdue
+      title: SiteVehSummary
+      description: 'Aggregates (Viewer / Client allowed): counts only, no plates or names.'
+    SiteVehTodayCheck:
+      properties:
+        check_id:
+          type: string
+          format: uuid
+          title: Check Id
+        check_no:
+          type: string
+          title: Check No
+        passed:
+          type: boolean
+          title: Passed
+      type: object
+      required:
+      - check_id
+      - check_no
+      - passed
+      title: SiteVehTodayCheck
+    SiteVehUpdate:
+      properties:
+        site_scope:
+          anyOf:
+          - $ref: '#/components/schemas/SiteVehScope'
+          - type: 'null'
+        use_class:
+          anyOf:
+          - $ref: '#/components/schemas/SiteVehUseClass'
+          - type: 'null'
+        seats:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Seats
+        operating_card_no:
+          anyOf:
+          - type: string
+            maxLength: 30
+          - type: 'null'
+          title: Operating Card No
+        operating_card_expiry:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Operating Card Expiry
+        istimara_expiry:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Istimara Expiry
+        insurance_policy_no:
+          anyOf:
+          - type: string
+            maxLength: 40
+            minLength: 1
+          - type: 'null'
+          title: Insurance Policy No
+        insurance_expiry:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Insurance Expiry
+        mvpi_expiry:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Mvpi Expiry
+        idle_from:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Idle From
+        idle_to:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Idle To
+        fleet_no:
+          anyOf:
+          - type: string
+            maxLength: 20
+            minLength: 1
+          - type: 'null'
+          title: Fleet No
+        make_model:
+          anyOf:
+          - type: string
+            maxLength: 80
+            minLength: 1
+          - type: 'null'
+          title: Make Model
+      additionalProperties: false
+      type: object
+      title: SiteVehUpdate
+      description: 'Capability 234. Also enrols an existing Phase 2 (airside_only) vehicle by setting
+
+        site_scope = site / both with a use_class (SV-1). Changing a document date clears the
+
+        document verification (SV-4).'
+    SiteVehUseClass:
+      type: string
+      enum:
+      - pool_car
+      - crew_pickup
+      - crew_bus
+      - tipper
+      - goods_heavy
+      - water_tanker
+      - earthmoving_plant
+      - other_plant
+      title: SiteVehUseClass
+      description: 'List SU (§3.6): site use class → driver group.'
+    SiteVehUseClassRead:
+      properties:
+        code:
+          type: string
+          title: Code
+        label_en:
+          type: string
+          title: Label En
+        label_ar:
+          type: string
+          title: Label Ar
+        driver_group:
+          $ref: '#/components/schemas/SiteVehDriverGroup'
+        seats_required:
+          type: boolean
+          title: Seats Required
+          description: 'crew_bus, crew_pickup: seats 2–60.'
+        operating_card_required:
+          type: boolean
+          title: Operating Card Required
+          description: crew_bus, tipper, goods_heavy when plated (R2 VERIFY).
+      type: object
+      required:
+      - code
+      - label_en
+      - label_ar
+      - driver_group
+      - seats_required
+      - operating_card_required
+      title: SiteVehUseClassRead
+    SiteVehVehicleRef:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        vehicle_no:
+          type: string
+          title: Vehicle No
+        fleet_no:
+          type: string
+          title: Fleet No
+        make_model:
+          type: string
+          title: Make Model
+        use_class:
+          anyOf:
+          - $ref: '#/components/schemas/SiteVehUseClass'
+          - type: 'null'
+        driver_group:
+          anyOf:
+          - $ref: '#/components/schemas/SiteVehDriverGroup'
+          - type: 'null'
+      type: object
+      required:
+      - id
+      - vehicle_no
+      - fleet_no
+      - make_model
+      - use_class
+      - driver_group
+      title: SiteVehVehicleRef
+    SiteVehWithdraw:
+      properties:
+        reason:
+          type: string
+          maxLength: 500
+          minLength: 10
+          title: Reason
+        withdrawn_on:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Withdrawn On
+          description: Default today.
+      additionalProperties: false
+      type: object
+      required:
+      - reason
+      title: SiteVehWithdraw
     SoilType:
       type: string
       enum:
@@ -140941,6 +145378,21 @@ components:
           - type: 'null'
           title: Adp Offence Id
           description: Phase 2 airside offence of the same project (VA-8).
+        pre_use_check_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Pre Use Check Id
+          description: '7a v1.2 (7b §11.8): the day''s 7b pre-use check of the linked register vehicle
+            (optional).'
+        journey_plan_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Journey Plan Id
+          description: '7a v1.2 (7b §11.8): the 7b journey plan of the trip (optional).'
         reason:
           anyOf:
           - type: string
@@ -141139,6 +145591,30 @@ components:
             format: uuid
           - type: 'null'
           title: Adp Offence Id
+        pre_use_check_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Pre Use Check Id
+          description: '7b link (§11.8): pre-use check of the vehicle.'
+        pre_use_check_no:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Pre Use Check No
+        journey_plan_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Journey Plan Id
+          description: '7b link (§11.8): journey plan of the trip.'
+        journey_plan_no:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Journey Plan No
         driver_summary_en:
           type: string
           title: Driver Summary En
@@ -141379,6 +145855,18 @@ components:
             format: uuid
           - type: 'null'
           title: Adp Offence Id
+        pre_use_check_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Pre Use Check Id
+        journey_plan_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Journey Plan Id
         reason:
           anyOf:
           - type: string
@@ -142134,6 +146622,20 @@ components:
             format: uuid
           - type: 'null'
           title: Active Avp Id
+        site_scope:
+          $ref: '#/components/schemas/SiteVehScope'
+          description: '7b §3.1 (v1.8): airside_only (default for existing rows) · site · both. Site fields
+            and readiness are on GET /site-vehicles/{id}.'
+          default: airside_only
+        use_class:
+          anyOf:
+          - $ref: '#/components/schemas/SiteVehUseClass'
+          - type: 'null'
+        readiness:
+          anyOf:
+          - $ref: '#/components/schemas/SiteVehReadiness'
+          - type: 'null'
+          description: 7b stored readiness (refreshed daily and on change).
         warnings:
           items:
             $ref: '#/components/schemas/ApiWarning'

@@ -68,6 +68,8 @@ PHASE6G_METRICS: frozenset[KpiMetric] = frozenset({M.K132, M.K133, M.K134, M.K13
 PHASE6G_PENDING: frozenset[KpiMetric] = frozenset()
 """Scorecard and report KPIs not computed yet (none since Phase 6g stage 2)."""
 PHASE7A_METRICS: frozenset[KpiMetric] = frozenset({M.K136, M.K137})
+PHASE7B_METRICS: frozenset[KpiMetric] = frozenset({M.K138, M.K139, M.K140})
+"""Option 7b site vehicle & plant readiness KPIs (prototype; app.kpi.site_vehicle)."""
 _PENDING = (
     PHASE2_PENDING | PHASE3_PENDING | PHASE4_PENDING | PHASE5_PENDING | PHASE6A_PENDING
     | PHASE6B_PENDING | PHASE6C_PENDING | PHASE6D_PENDING | PHASE6E_PENDING | PHASE6F_PENDING
@@ -114,6 +116,8 @@ class KpiDef:
             return f"6g-scorecard-reports §6.7 {self.metric.value}"
         if self.metric in PHASE7A_METRICS:
             return f"7a-vehicle-accident-details §6.1 {self.metric.value}"
+        if self.metric in PHASE7B_METRICS:
+            return f"7b-fleet-driver §6.4 {self.metric.value}"
         if self.metric in PHASE6F_METRICS:
             return f"6f-incident-followup §6.2 {self.metric.value}"
         if self.metric in PHASE6D_METRICS:
@@ -699,6 +703,22 @@ CATALOGUE: dict[KpiMetric, KpiDef] = {
               "معدل حوادث المركبات",
               "K-136 crashes (injury/illness or property damage) with ≥ 1 own / contractor / "
               "hired vehicle, not recorded-not-counted"),
+        # ---- Option 7b site vehicle & plant readiness, prototype (7b-fleet-driver §6.4) ----
+        _pct(M.K138, "Site vehicle & plant readiness", "جاهزية مركبات ومعدات الموقع",
+             "Vehicle readiness", "جاهزية المركبات",
+             "site vehicles with readiness ready at as_of ÷ site vehicles not withdrawn and not "
+             "idle × 100; chips by readiness state", numerator="Ready",
+             denominator="Site vehicles (not withdrawn / idle)"),
+        _pct(M.K139, "Driver / operator authorisation compliance",
+             "التزام تفويض السائقين والمشغلين", "Driver authorisation", "تفويض السائقين",
+             "pre-use checks and journey plans (not Cancelled) in the period whose driver held an "
+             "Active authorisation covering the group ÷ those records × 100",
+             numerator="Authorised", denominator="Records"),
+        _pct(M.K140, "Pre-use check compliance", "الالتزام بالفحص اليومي", "Pre-use checks",
+             "الفحص اليومي",
+             "required vehicle-days with a Completed check ÷ required vehicle-days (groups in "
+             "pre_use_required_groups, not rest_weekday, not idle, not withdrawn) × 100; chip "
+             "paper", numerator="Checked vehicle-days", denominator="Required vehicle-days"),
     ]
 }  # fmt: skip
 

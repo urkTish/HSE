@@ -58,6 +58,7 @@ from app.services.cert import dashboard_items as cert_items
 from app.services.hse_common import Refs, project_today
 from app.services.permissions import Principal, forbidden_error
 from app.services.ptw import dashboard_items as ptw_items
+from app.services.site_vehicle import dashboard_items as site_vehicle_items
 from app.services.train import dashboard_items as train_items
 
 LABELS: dict[ActionPanelItem, tuple[str, str]] = {
@@ -512,6 +513,7 @@ def expiring_items(
     items.extend(ptw_items.expiring(db, p, project, day, horizon, include_overdue))
     items.extend(cert_items.expiring(db, p, project, day, horizon, include_overdue))
     items.extend(train_items.expiring(db, p, project, day, horizon, include_overdue))
+    items.extend(site_vehicle_items.expiring(db, p, project, day, horizon, include_overdue))
     items.sort(key=lambda x: (x.due_date, x.kind.value, x.ref or ""))
     return ExpiringItemsResponse(
         project_id=project.id, as_of=day, within_days=within_days, items=items

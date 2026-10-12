@@ -79,6 +79,7 @@ from app.api.routers import (
     scaffolds,
     scorecards,
     simops,
+    site_vehicles,
     sites,
     tpis,
     trainer_authorisations,
@@ -321,6 +322,8 @@ def create_app() -> FastAPI:
         export_jobs,
         # Option 7a
         incident_vehicles,
+        # Option 7b (prototype)
+        site_vehicles,
     ):
         app.include_router(module.router, prefix=API_PREFIX)
     app.include_router(auth.public_router, prefix=API_PREFIX)
