@@ -1,5 +1,5 @@
 "use client";
-import { CalendarPlus, ClipboardCheck, Pencil, Plus, Route, ShieldCheck, Wrench } from "lucide-react";
+import { Ban, CalendarPlus, CheckCircle2, ClipboardCheck, ClipboardX, OctagonAlert, Pencil, Plus, Route, ShieldCheck, ShieldQuestion, TriangleAlert, Wrench } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -27,6 +27,7 @@ import { PLATE_TYPES, VEHICLE_CATEGORIES, VEHICLE_OWNER_TYPES } from "@/lib/acce
 import { api, unwrap, type Schemas } from "@/lib/api/client";
 import { useSiteVehicle, useSiteVehicles, useSvRefresh, useSvSummary } from "@/lib/api/site-vehicles";
 import { useDisplay } from "@/lib/digits";
+import { useLocalizedName } from "@/lib/i18n-helpers";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
 import { cn } from "@/lib/utils";
@@ -78,6 +79,7 @@ function Register({ project }: { project: S["ProjectRead"] }) {
 /** Readiness counts and today's numbers as the server returns them (Viewer / Client included). */
 function Summary({ project }: { project: S["ProjectRead"] }) {
   const t = useTranslations("sv.summary");
+  const td = useTranslations("svDesign.summary");
   const l = useSvLabels();
   const show = useDisplay(project.id);
   const caps = useSvCaps(project.id);
@@ -89,11 +91,16 @@ function Summary({ project }: { project: S["ProjectRead"] }) {
   const by = d.by_readiness as Record<string, number>;
   const link = !caps.aggregatesOnly;
   const tile = (key: string, label: string, value: number, tone: "danger" | "warning" | "ok" | "neutral", filter?: Record<string, string>) => {
+    const alarm = (tone === "danger" || tone === "warning") && value > 0;
     const body = (
       <>
         <span className="text-xs text-muted-foreground">{label}</span>
-        <span className={cn("text-2xl font-semibold tabular-nums", tone === "danger" && value > 0 && "text-danger", tone === "warning" && value > 0 && "text-warning", tone === "ok" && "text-success")} data-testid="sv-sum-value">
-          {show(value)}
+        <span className="inline-flex items-center gap-1.5">
+          <span className={cn("text-2xl font-semibold tabular-nums", tone === "danger" && value > 0 && "text-danger", tone === "warning" && value > 0 && "text-warning", tone === "ok" && "text-success")} data-testid="sv-sum-value">
+            {show(value)}
+          </span>
+          {/* never colour alone: a red / amber count carries an icon too */}
+          {alarm ? <TriangleAlert aria-hidden className={cn("size-4 shrink-0", tone === "danger" ? "text-danger" : "text-warning")} /> : null}
         </span>
       </>
     );
@@ -111,11 +118,13 @@ function Summary({ project }: { project: S["ProjectRead"] }) {
   };
   return (
     <section aria-label={t("label")} className="flex flex-col gap-2" data-testid="sv-summary">
-      <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+      <h2 className="text-xs font-semibold tracking-[0.02em] text-muted-foreground">{td("readinessNow")}</h2>
+      <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-7">
         {tile("site_vehicles", t("vehicles"), d.site_vehicles, "neutral", { readiness: "" })}
         {READINESS.map((r) => tile(r, l.readiness(r), by[r] ?? 0, r === "ready" ? "ok" : r === "idle" || r === "withdrawn" ? "neutral" : "danger", { readiness: r }))}
       </ul>
-      <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+      <h2 className="mt-2 text-xs font-semibold tracking-[0.02em] text-muted-foreground">{td("todayAhead")}</h2>
+      <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
         {tile("docs_expiring_30d", t("docsExpiring"), d.docs_expiring_30d, "warning", { documents: "expiring_30d" })}
         {tile("docs_unverified", t("docsUnverified"), d.docs_unverified, "warning", { documents: "unverified" })}
         {tile("pre_use_today", t("preUseToday", { done: show(d.pre_use_done_today), required: show(d.pre_use_required_today) }), d.pre_use_required_today - d.pre_use_done_today, "warning")}
@@ -170,45 +179,47 @@ function VehicleTable({ project }: { project: S["ProjectRead"] }) {
         <ErrorState error={q.error} onRetry={() => q.refetch()} />
       ) : items.length ? (
         <>
-          <Table data-testid="sv-vehicles">
+          <Table compact data-testid="sv-vehicles">
             <THead>
               <TR>
                 <TH>{t("vehicle")}</TH>
+                <TH>{t("readiness")}</TH>
                 <TH>{t("plate")}</TH>
                 <TH>{t("useClass")}</TH>
                 <TH>{tc("contractor")}</TH>
-                <TH>{t("documents")}</TH>
                 <TH>{t("today")}</TH>
-                <TH>{t("readiness")}</TH>
+                <TH>{t("documents")}</TH>
               </TR>
             </THead>
             <TBody>
               {items.map((v) => (
                 <TR key={v.id} data-testid="sv-vehicle-row" data-vehicle={v.vehicle_no} data-readiness={v.readiness}>
-                  <TD label={t("vehicle")}>
-                    <Link href={`/site-vehicles/${v.id}`} className="ltr font-medium text-primary hover:underline">
+                  <TD label={t("vehicle")} className="md:min-w-36">
+                    <Link href={`/site-vehicles/${v.id}`} className="ltr font-medium whitespace-nowrap text-primary hover:underline">
                       {v.vehicle_no}
                     </Link>
                     <span className="block text-xs text-muted-foreground">
-                      <bdi className="ltr">{v.fleet_no}</bdi> · {v.make_model}
+                      <bdi className="ltr whitespace-nowrap">{v.fleet_no}</bdi> · {v.make_model}
                     </span>
                   </TD>
-                  <TD label={t("plate")}>{v.plate_type === "none" ? <span className="text-muted-foreground">{t("noPlate")}</span> : <Plate ar={v.plate_letters_ar} en={v.plate_letters_en} digits={v.plate_digits} />}</TD>
-                  <TD label={t("useClass")}>
-                    {l.useClass(v.use_class)}
-                    <span className="block text-xs text-muted-foreground">{l.group(v.driver_group)}</span>
+                  <TD label={t("readiness")} className="max-md:order-1 max-md:ms-auto">
+                    <ReadinessBadge readiness={v.readiness} />
                   </TD>
-                  <TD label={tc("contractor")}>
+                  <TD label={t("plate")} className="max-md:order-2">
+                    {v.plate_type === "none" ? <span className="text-xs text-muted-foreground">{t("noPlate")}</span> : <Plate ar={v.plate_letters_ar} en={v.plate_letters_en} digits={v.plate_digits} />}
+                  </TD>
+                  <TD label={t("useClass")} className="max-md:order-2">
+                    {l.useClass(v.use_class)}
+                    <span className="block text-xs text-muted-foreground max-md:ms-1 max-md:inline">{l.group(v.driver_group)}</span>
+                  </TD>
+                  <TD label={tc("contractor")} className="max-md:order-2">
                     <Code>{v.engagement.short_code}</Code>
                   </TD>
-                  <TD label={t("documents")}>
+                  <TD label={t("today")} className="max-md:order-3">
+                    <TodayCell v={v} inTable />
+                  </TD>
+                  <TD label={t("documents")} className="max-md:order-3 md:min-w-48">
                     <DocsCell v={v} date={date} />
-                  </TD>
-                  <TD label={t("today")}>
-                    <TodayCell v={v} />
-                  </TD>
-                  <TD label={t("readiness")}>
-                    <ReadinessBadge readiness={v.readiness} />
                   </TD>
                 </TR>
               ))}
@@ -229,9 +240,10 @@ function DocsCell({ v, date }: { v: Vehicle; date: (d: string) => string }) {
   const worst = [...v.documents].sort((a, b) => a.days_left - b.days_left)[0];
   return (
     <span className="flex flex-col items-start gap-1">
-      {worst && worst.state !== "valid" ? <DocChip d={worst} date={date} /> : v.documents.length ? <span className="text-xs text-muted-foreground">{t("docsValid")}</span> : <span className="text-xs text-muted-foreground">{v.phase4 ? t("phase4Docs") : "—"}</span>}
+      {worst && worst.state !== "valid" ? <DocChip d={worst} date={date} wrap /> : v.documents.length ? <span className="text-xs text-muted-foreground">{t("docsValid")}</span> : <span className="text-xs text-muted-foreground">{v.phase4 ? t("phase4Docs") : "—"}</span>}
       {!v.docs_verified && v.documents.length ? (
-        <span className="text-xs font-medium text-warning" data-testid="sv-unverified">
+        <span className="inline-flex items-center gap-1 text-xs font-medium text-warning" data-testid="sv-unverified">
+          <ShieldQuestion aria-hidden className="size-3.5 shrink-0" />
           {t("unverified")}
         </span>
       ) : null}
@@ -239,17 +251,26 @@ function DocsCell({ v, date }: { v: Vehicle; date: (d: string) => string }) {
   );
 }
 
-function TodayCell({ v }: { v: Vehicle }) {
+/** Today's pre-use check: icon + words (never colour alone); "check" spelled out where the column name is not shown. */
+function TodayCell({ v, inTable }: { v: Vehicle; inTable?: boolean }) {
   const t = useTranslations("sv.vehicle");
+  const td = useTranslations("svDesign");
   if (v.today_check)
     return (
-      <Link href={`/site-vehicles/checks/${v.today_check.check_id}`} className={cn("text-xs font-medium hover:underline", v.today_check.passed ? "text-success" : "text-danger")} data-testid="sv-today-check">
+      <Link
+        href={`/site-vehicles/checks/${v.today_check.check_id}`}
+        className={cn("inline-flex items-center gap-1 text-xs font-medium hover:underline", v.today_check.passed ? "text-success" : "text-danger")}
+        data-testid="sv-today-check"
+      >
+        {v.today_check.passed ? <CheckCircle2 aria-hidden className="size-3.5 shrink-0" /> : <OctagonAlert aria-hidden className="size-3.5 shrink-0" />}
         <bdi className="ltr">{v.today_check.check_no}</bdi> · {v.today_check.passed ? t("checkPassed") : t("checkFailed")}
       </Link>
     );
   return v.pre_use_required_today ? (
-    <span className="text-xs font-medium text-warning" data-testid="sv-today-missing">
+    <span className="inline-flex items-center gap-1 text-xs font-medium text-warning" data-testid="sv-today-missing" title={td("checkMissingLong")}>
+      <ClipboardX aria-hidden className="size-3.5 shrink-0" />
       {t("checkMissing")}
+      {inTable ? <span className="md:hidden">· {td("todaysCheck")}</span> : null}
     </span>
   ) : (
     <span className="text-xs text-muted-foreground">{t("checkNotRequired")}</span>
@@ -517,6 +538,7 @@ function Detail({ project, id }: { project: S["ProjectRead"]; id: string }) {
   const q = useSiteVehicle(id);
   const caps = useSvCaps(project.id);
   const { date, dateTime } = useFormatters(project.id);
+  const name = useLocalizedName();
   const [act, setAct] = useState<Act>(null);
   if (q.isError) return <ErrorState error={q.error} onRetry={() => q.refetch()} />;
   if (!q.data) return <LoadingState />;
@@ -669,10 +691,13 @@ function Detail({ project, id }: { project: S["ProjectRead"]; id: string }) {
             {v.docs_verified ? (
               <span className="inline-flex items-center gap-1 font-medium text-success">
                 <ShieldCheck aria-hidden className="size-4" />
-                {t("verifiedBy", { by: v.docs_verified_by?.full_name_en ?? "—", at: dateTime(v.docs_verified_at) })}
+                {t("verifiedBy", { by: v.docs_verified_by ? name(v.docs_verified_by.full_name_en, v.docs_verified_by.full_name_ar) : "—", at: dateTime(v.docs_verified_at) })}
               </span>
             ) : v.documents.length ? (
-              <span className="font-medium text-warning">{t("unverified")}</span>
+              <span className="inline-flex items-center gap-1 font-medium text-warning">
+                <ShieldQuestion aria-hidden className="size-4" />
+                {t("unverified")}
+              </span>
             ) : null}
           </p>
           <FieldList>
@@ -708,7 +733,8 @@ function Detail({ project, id }: { project: S["ProjectRead"]; id: string }) {
               {t("clearHold")}
             </Button>
           ) : null}
-          <Button variant="destructive" onClick={() => setAct("withdraw")} data-testid="sv-withdraw">
+          <Button variant="destructive-outline" onClick={() => setAct("withdraw")} data-testid="sv-withdraw">
+            <Ban aria-hidden />
             {t("withdraw")}
           </Button>
         </RecordActions>

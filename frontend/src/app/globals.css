@@ -211,6 +211,44 @@
     align-items: center;
     min-height: var(--touch-target);
   }
+  /*
+   * Compact cards (Table `compact`, 7b design pass): a long register stays a short card per row.
+   * The cells flow as one wrapped block without column labels; a cell keeps its label only with
+   * `data-keep-label`, and `data-full` gives a cell its own line. Order comes from the TD classes.
+   */
+  .table-stack.table-compact tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.75rem;
+    padding: 0.625rem 1rem;
+  }
+  .table-stack.table-compact td {
+    display: block;
+    width: auto;
+    max-width: 100%;
+    padding: 0;
+  }
+  .table-stack.table-compact td::before {
+    content: none;
+  }
+  .table-stack.table-compact td[data-keep-label]::before {
+    content: attr(data-label) ": ";
+    display: inline;
+    padding: 0;
+  }
+  .table-stack.table-compact td[data-full] {
+    width: 100%;
+  }
+  .table-stack.table-compact td:empty {
+    display: none;
+  }
+  /* The row's title takes the first line with the status beside it; the other cells wrap below. */
+  .table-stack.table-compact td:first-child {
+    flex: 1 1 60%;
+    min-width: 0;
+    font-size: var(--text-sm);
+  }
 }
 
 /*

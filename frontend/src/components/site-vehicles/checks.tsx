@@ -1,5 +1,5 @@
 "use client";
-import { CheckCircle2, ClipboardCheck, FileImage, OctagonAlert, Plus, XCircle } from "lucide-react";
+import { CheckCircle2, ChevronDown, ChevronUp, ClipboardCheck, FileImage, OctagonAlert, Plus, Wrench, XCircle } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
@@ -21,6 +21,7 @@ import { ListToolbar, SelectFilter } from "@/components/common/list-toolbar";
 import { PageHeader } from "@/components/common/page-header";
 import { Pagination } from "@/components/common/pagination";
 import { useProjectOptions } from "@/components/common/pickers";
+import { StackedDate } from "@/components/medical/common";
 import { EmptyState, ErrorState, LoadingState, MutationError } from "@/components/common/states";
 import { CriticalMark, PhotoPicker, useBi } from "@/components/field/common";
 import { DateFilter } from "@/components/training/common";
@@ -32,12 +33,15 @@ import { useDisplay } from "@/lib/digits";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
 import { cn } from "@/lib/utils";
+import { ChoiceMark } from "@/components/heat/common";
 import { CheckResultBadge, DriverText, PrototypeBadge, ReadinessBadge, SvGate, SvSubNav, VehicleRefText, useSvCaps, useSvLabels } from "./common";
 
 type S = Schemas;
 type Item = S["TemplateItem-Output"];
 type Ans = { answer: "" | "compliant" | "non_compliant" | "na"; note: string };
 const PAGE_SIZE = 50;
+/** Today's missing checks: the first six, then "Show all" (a full site is 20+ cards). */
+const MISSING_FOLD = 6;
 
 /* ═════════════ register + today's missing list (§8, PU-1) ═════════════ */
 
@@ -51,7 +55,6 @@ function Register({ project }: { project: S["ProjectRead"] }) {
   const l = useSvLabels();
   const caps = useSvCaps(project.id);
   const opts = useProjectOptions(project.id);
-  const { date } = useFormatters(project.id);
   const s = useSearchState();
   const page = s.getInt("page", 1) ?? 1;
   const from = s.get("date_from") ?? "";
@@ -130,7 +133,7 @@ function Register({ project }: { project: S["ProjectRead"] }) {
         <ErrorState error={q.error} onRetry={() => q.refetch()} />
       ) : items.length ? (
         <>
-          <Table data-testid="sv-checks">
+          <Table compact data-testid="sv-checks">
             <THead>
               <TR>
                 <TH>{t("no")}</TH>
@@ -144,7 +147,7 @@ function Register({ project }: { project: S["ProjectRead"] }) {
               {items.map((c) => (
                 <TR key={c.id} data-testid="sv-check-row" data-no={c.check_no} data-passed={c.passed} data-source={c.source}>
                   <TD label={t("no")}>
-                    <Link href={`/site-vehicles/checks/${c.id}`} className="ltr font-medium text-primary hover:underline">
+                    <Link href={`/site-vehicles/checks/${c.id}`} className="ltr font-medium text-primary hover:underline [overflow-wrap:anywhere]">
                       {c.check_no}
                     </Link>
                     {c.source === "paper" ? (
@@ -154,17 +157,24 @@ function Register({ project }: { project: S["ProjectRead"] }) {
                       </Badge>
                     ) : null}
                   </TD>
-                  <TD label={t("date")}>{date(c.check_date)}</TD>
-                  <TD label={t("vehicle")}>
+                  <TD label={t("date")} className="max-md:order-2 max-md:text-xs">
+                    <StackedDate v={c.check_date} projectId={project.id} />
+                  </TD>
+                  <TD label={t("vehicle")} className="max-md:order-2">
                     <VehicleRefText v={c.vehicle} />
                   </TD>
-                  <TD label={t("driver")}>
+                  <TD label={t("driver")} data-full="" className="max-md:order-3">
                     <DriverText w={c.driver} />
                     <AuthorisedMark ok={c.driver_authorised} />
                   </TD>
-                  <TD label={t("result")}>
+                  <TD label={t("result")} className="max-md:order-1 max-md:ms-auto">
                     <CheckResultBadge passed={c.passed} critical={c.critical_fail_count} />
-                    {c.hold_set ? <span className="block text-xs font-medium text-danger">{t("holdSet")}</span> : null}
+                    {c.hold_set ? (
+                      <span className="mt-0.5 flex items-center gap-1 text-xs font-medium text-danger">
+                        <Wrench aria-hidden className="size-3.5 shrink-0" />
+                        {t("holdSet")}
+                      </span>
+                    ) : null}
                   </TD>
                 </TR>
               ))}
@@ -198,6 +208,8 @@ function Missing({ project }: { project: S["ProjectRead"] }) {
   const s = useSearchState();
   const day = s.get("day") ?? "";
   const q = useMissingChecks(project.id, day);
+  const td = useTranslations("svDesign.missing");
+  const [allMissing, setAllMissing] = useState(false);
   const d = q.data;
   return (
     <Card data-testid="sv-missing">
@@ -234,7 +246,7 @@ function Missing({ project }: { project: S["ProjectRead"] }) {
                 ))}
             </ul>
             <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {d.items.map((m) => (
+              {(allMissing ? d.items : d.items.slice(0, MISSING_FOLD)).map((m) => (
                 <li key={m.vehicle.id} className="flex items-center justify-between gap-2 rounded-lg border p-2 text-sm" data-testid="sv-missing-vehicle" data-vehicle={m.vehicle.vehicle_no}>
                   <span className="min-w-0">
                     <VehicleRefText v={m.vehicle} />
@@ -255,6 +267,14 @@ function Missing({ project }: { project: S["ProjectRead"] }) {
                 </li>
               ))}
             </ul>
+            {d.items.length > MISSING_FOLD ? (
+              <div>
+                <Button type="button" variant="ghost" size="sm" className="min-h-11" aria-expanded={allMissing} onClick={() => setAllMissing((x) => !x)} data-testid="sv-missing-more">
+                  {allMissing ? <ChevronUp aria-hidden /> : <ChevronDown aria-hidden />}
+                  {allMissing ? td("showFewer") : td("showAll", { n: show(d.items.length) })}
+                </Button>
+              </div>
+            ) : null}
           </>
         )}
       </CardContent>
@@ -279,6 +299,8 @@ function CheckForm({ project }: { project: S["ProjectRead"] }) {
   const refresh = useSvRefresh();
   const warn = useWarningToasts();
   const caps = useSvCaps(project.id);
+  const td = useTranslations("svDesign.form");
+  const show = useDisplay(project.id);
   const sp = useSearchParams();
   const [vehicleId, setVehicleId] = useState(sp.get("vehicle") ?? "");
   const [dep, setDep] = useState<S["DeploymentRead"] | null>(null);
@@ -445,20 +467,30 @@ function CheckForm({ project }: { project: S["ProjectRead"] }) {
                         <span className="flex-1 font-medium">{bi(it.text_en, it.text_ar)}</span>
                         {it.critical ? <CriticalMark /> : null}
                       </div>
-                      <div className="grid grid-cols-2 gap-2 sm:flex">
-                        <Button type="button" variant={x.answer === "compliant" ? "default" : "outline"} className="min-h-12 sm:min-w-28" aria-pressed={x.answer === "compliant"} onClick={() => setA(it.item_code, { answer: "compliant" })} data-testid={`pu-ok-${it.item_code}`}>
-                          <CheckCircle2 aria-hidden />
+                      {/* 6d convention: radio-style answers with a filled / empty mark, not only a fill colour */}
+                      <div role="radiogroup" aria-label={bi(it.text_en, it.text_ar)} className="grid grid-cols-2 gap-2 sm:flex">
+                        <Button
+                          type="button"
+                          role="radio"
+                          aria-checked={x.answer === "compliant"}
+                          variant={x.answer === "compliant" ? "default" : "outline"}
+                          className="min-h-12 justify-start sm:min-w-32"
+                          onClick={() => setA(it.item_code, { answer: "compliant" })}
+                          data-testid={`pu-ok-${it.item_code}`}
+                        >
+                          <ChoiceMark on={x.answer === "compliant"} />
                           {t("ok")}
                         </Button>
                         <Button
                           type="button"
+                          role="radio"
+                          aria-checked={fail}
                           variant={fail ? "destructive" : "outline"}
-                          className="min-h-12 sm:min-w-28"
-                          aria-pressed={fail}
+                          className={cn("min-h-12 justify-start sm:min-w-32", !fail && "border-danger/40")}
                           onClick={() => setA(it.item_code, { answer: "non_compliant" })}
                           data-testid={`pu-fail-${it.item_code}`}
                         >
-                          <XCircle aria-hidden />
+                          <ChoiceMark on={fail} />
                           {t("defect")}
                         </Button>
                       </div>
@@ -491,7 +523,13 @@ function CheckForm({ project }: { project: S["ProjectRead"] }) {
         <LoadingState />
       ) : null}
       <MutationError error={error} />
-      <div className="sticky bottom-0 z-10 -mx-4 flex flex-wrap gap-2 border-t bg-background/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0">
+      <div className="sticky bottom-0 z-10 -mx-4 flex flex-wrap items-center gap-2 border-t bg-background/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0">
+        {all.length ? (
+          <p className="w-full text-xs text-muted-foreground" aria-live="polite" data-testid="pu-progress" data-open={open.length}>
+            {td("answered", { done: show(all.length - open.length), total: show(all.length) })}
+            {failing.length ? <span className="font-medium text-danger"> · {td("defects", { n: show(failing.length) })}</span> : null}
+          </p>
+        ) : null}
         <Button type="button" className="min-h-12 flex-1 sm:flex-none" disabled={busy || !form.data} onClick={() => void submit()} data-testid="pu-submit">
           {busy ? tc("saving") : t("submit")}
         </Button>

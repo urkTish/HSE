@@ -89,7 +89,7 @@ export function Plate({ ar, en, digits, display }: { ar?: string | null; en?: st
   if (!digits && !ar && !display) return <>—</>;
   if (!digits && display) return <bdi className="ltr">{display}</bdi>;
   return (
-    <span className="inline-flex items-baseline gap-1.5 rounded border px-1.5 py-0.5 font-medium" data-testid="plate">
+    <span className="inline-flex items-baseline gap-1.5 rounded border px-1.5 py-0.5 font-medium whitespace-nowrap" data-testid="plate">
       {ar ? (
         <span dir="rtl" lang="ar">
           {ar}

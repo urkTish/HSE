@@ -30,7 +30,7 @@ import { api, unwrap, type Schemas } from "@/lib/api/client";
 import { hk, useIncident } from "@/lib/api/hse";
 import { useProjectSettings } from "@/lib/api/queries";
 import { DEFAULT_TIME_ZONE, utcToZonedInput, zonedInputToUtc } from "@/lib/datetime";
-import { useDisplay } from "@/lib/digits";
+import { groupDecimal, useDisplay } from "@/lib/digits";
 import { INVESTIGATION_LEVELS, INVESTIGATION_METHODS } from "@/lib/enums";
 import { useErrorMessage, useLocalizedName } from "@/lib/i18n-helpers";
 import { can, canWrite } from "@/lib/permissions";
@@ -48,6 +48,7 @@ function needsReason(from: Status, to: Status): boolean {
 
 export function IncidentDetail({ id }: { id: string }) {
   const t = useTranslations("incidents");
+  const tveh = useTranslations("veh");
   const tcs = useTranslations("cases");
   const te = useTranslations("enums");
   const tc = useTranslations("common");
@@ -175,7 +176,7 @@ export function IncidentDetail({ id }: { id: string }) {
                 {r.airside_flags.length > 0 ? <FieldItem label={t("fields.airside_flags")}>{r.airside_flags.map((x) => te(`airsideFlag.${x}`)).join(" · ")}</FieldItem> : null}
                 {r.property_damage ? (
                   <FieldItem label={t("fields.pd")}>
-                    {te(`assetType.${r.property_damage.asset_type}`)} · {show(r.property_damage.estimated_cost_sar)} SAR
+                    {te(`assetType.${r.property_damage.asset_type}`)} · <span className="tabular-nums">{tveh("card.cost", { cost: show(groupDecimal(r.property_damage.estimated_cost_sar)) })}</span>
                   </FieldItem>
                 ) : null}
                 {r.environmental ? (

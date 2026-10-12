@@ -1,5 +1,5 @@
 "use client";
-import { Pause, Play, Plus, ShieldCheck } from "lucide-react";
+import { Ban, CheckCircle2, Pause, Play, Plus, ShieldCheck, TriangleAlert, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -23,6 +23,7 @@ import { PageHeader } from "@/components/common/page-header";
 import { Pagination } from "@/components/common/pagination";
 import { useProjectOptions } from "@/components/common/pickers";
 import { RecordActions } from "@/components/common/record-actions";
+import { StackedDate } from "@/components/medical/common";
 import { EmptyState, ErrorState, LoadingState, MutationError } from "@/components/common/states";
 import { Link, useRouter } from "@/i18n/navigation";
 import { LICENCE_CLASSES, LICENCE_ISSUERS } from "@/lib/access-enums";
@@ -50,7 +51,6 @@ function Register({ project }: { project: S["ProjectRead"] }) {
   const l = useSvLabels();
   const caps = useSvCaps(project.id);
   const opts = useProjectOptions(project.id);
-  const { date } = useFormatters(project.id);
   const s = useSearchState();
   const page = s.getInt("page", 1) ?? 1;
   const status = (s.get("status") ?? "") as S["SiteVehAuthStatus"] | "";
@@ -110,7 +110,7 @@ function Register({ project }: { project: S["ProjectRead"] }) {
         <ErrorState error={q.error} onRetry={() => q.refetch()} />
       ) : items.length ? (
         <>
-          <Table data-testid="sv-auths">
+          <Table compact data-testid="sv-auths">
             <THead>
               <TR>
                 <TH>{t("no")}</TH>
@@ -125,20 +125,20 @@ function Register({ project }: { project: S["ProjectRead"] }) {
               {items.map((a) => (
                 <TR key={a.id} data-testid="sv-auth-row" data-no={a.auth_no} data-status={a.status} data-redacted={a.redacted}>
                   <TD label={t("no")}>
-                    <Link href={`/site-vehicles/authorisations/${a.id}`} className="ltr font-medium text-primary hover:underline">
+                    <Link href={`/site-vehicles/authorisations/${a.id}`} className="ltr font-medium whitespace-nowrap text-primary hover:underline">
                       {a.auth_no}
                     </Link>
                   </TD>
-                  <TD label={t("driver")}>
+                  <TD label={t("driver")} data-full="" className="max-md:order-2">
                     <DriverText w={a.worker} />
                   </TD>
-                  <TD label={t("groups")}>{l.groups(a.groups).join(" · ")}</TD>
-                  <TD label={tc("contractor")}>{a.engagement ? <Code>{a.engagement.short_code}</Code> : "—"}</TD>
-                  <TD label={t("validUntil")}>
-                    {a.redacted ? <span className="text-xs text-muted-foreground">{t("statusOnly")}</span> : date(a.effective_valid_until)}
+                  <TD label={t("groups")} className="max-md:order-3">{l.groups(a.groups).join(" · ")}</TD>
+                  <TD label={tc("contractor")} className="max-md:order-3">{a.engagement ? <Code>{a.engagement.short_code}</Code> : "—"}</TD>
+                  <TD label={t("validUntil")} data-keep-label="" className="max-md:order-4 max-md:text-xs">
+                    {a.redacted ? <span className="text-xs text-muted-foreground">{t("statusOnly")}</span> : <StackedDate v={a.effective_valid_until} projectId={project.id} className="max-md:inline-flex max-md:flex-row max-md:gap-1" />}
                     {!a.redacted && a.limiting_factor && a.limiting_factor !== "own_validity" ? <span className="block text-xs text-muted-foreground">{l.limiting(a.limiting_factor)}</span> : null}
                   </TD>
-                  <TD label={t("status")}>
+                  <TD label={t("status")} className="max-md:order-1 max-md:ms-auto">
                     <AuthStatusBadge status={a.status} />
                   </TD>
                 </TR>
@@ -484,7 +484,8 @@ function Detail({ project, id }: { project: S["ProjectRead"]; id: string }) {
       <HistoryPanel entityType="driver_authorisation" entityId={a.id} />
       {decide && !final ? (
         <RecordActions testId="da-record-actions">
-          <Button variant="destructive" onClick={() => setMove("revoked")} data-testid="da-revoke">
+          <Button variant="destructive-outline" onClick={() => setMove("revoked")} data-testid="da-revoke">
+            <Ban aria-hidden />
             {t("revoke")}
           </Button>
         </RecordActions>
@@ -498,6 +499,7 @@ function HookBadge({ result }: { result: S["SiteVehHookResult"] }) {
   const l = useSvLabels();
   return (
     <Badge tone={result === "met" ? "success" : result === "warn" ? "warning" : "danger"} className={cn("font-medium")}>
+      {result === "met" ? <CheckCircle2 aria-hidden /> : result === "warn" ? <TriangleAlert aria-hidden /> : <XCircle aria-hidden />}
       {l.hook(result)}
     </Badge>
   );

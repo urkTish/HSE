@@ -224,7 +224,7 @@ export function CheckResultBadge({ passed, critical }: { passed: boolean; critic
 }
 
 /** One road document: kind, date and the state (valid / expiring ≤ 30 days / expired). */
-export function DocChip({ d, date }: { d: S["SiteVehDocRead"]; date: (v: string) => string }) {
+export function DocChip({ d, date, wrap }: { d: S["SiteVehDocRead"]; date: (v: string) => string; wrap?: boolean }) {
   const t = useTranslations("sv.vehicle");
   const l = useSvLabels();
   const expired = d.state === "expired";
@@ -232,7 +232,8 @@ export function DocChip({ d, date }: { d: S["SiteVehDocRead"]; date: (v: string)
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs whitespace-nowrap",
+        "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs",
+        wrap ? "items-start [&>svg]:mt-0.5" : "whitespace-nowrap",
         expired ? "bg-danger-bg font-medium text-danger" : soon ? "bg-warning-bg font-medium text-warning" : "text-muted-foreground",
       )}
       data-testid="sv-doc"

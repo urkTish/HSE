@@ -187,13 +187,17 @@ function VehicleList({ project }: { project: Schemas["ProjectRead"] }) {
 
 function SiteUseCell({ v }: { v: Vehicle }) {
   const l = useSvLabels();
-  if (!v.site_scope || v.site_scope === "airside_only") return <span className="text-xs text-muted-foreground">{l.scope("airside_only")}</span>;
-  return (
-    <span className="flex flex-col items-start gap-1" data-testid="vehicle-site-use">
-      <span className="text-xs">
-        {l.scope(v.site_scope)} · {l.useClass(v.use_class)}
+  // Airside-only vehicles have no 7b site use: a muted dash (named for screen readers), so the column stays narrow.
+  if (!v.site_scope || v.site_scope === "airside_only")
+    return (
+      <span className="text-muted-foreground" title={l.scope("airside_only")} aria-label={l.scope("airside_only")}>
+        —
       </span>
+    );
+  return (
+    <span className="flex flex-col items-start gap-1" data-testid="vehicle-site-use" title={l.scope(v.site_scope)}>
       {v.readiness ? <ReadinessBadge readiness={v.readiness} /> : null}
+      <span className="text-xs text-muted-foreground">{l.useClass(v.use_class)}</span>
     </span>
   );
 }

@@ -1,8 +1,8 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
-import { Lightbulb, MapPinCheck, Plus } from "lucide-react";
+import { MapPinCheck, Plus, XCircle } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Alert } from "@/components/ui/alert";
@@ -23,6 +23,7 @@ import { PageHeader } from "@/components/common/page-header";
 import { Pagination } from "@/components/common/pagination";
 import { UserSelect } from "@/components/common/pickers";
 import { RecordActions } from "@/components/common/record-actions";
+import { StackedDate } from "@/components/medical/common";
 import { EmptyState, ErrorState, LoadingState, MutationError } from "@/components/common/states";
 import { fromLocalInput } from "@/components/emergency/common";
 import { DateFilter } from "@/components/training/common";
@@ -30,6 +31,7 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
 import { useJourneyPlan, useJourneyPlans, useSiteVehicles, useSvRefresh } from "@/lib/api/site-vehicles";
 import { useDebounced } from "@/lib/use-debounced";
+import { formatDateTime } from "@/lib/datetime";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
 import { DriverText, JOURNEY_STATUSES, JourneyStatusBadge, PrototypeBadge, SvGate, SvSubNav, VehicleRefText, useSvCaps, useSvLabels } from "./common";
@@ -49,7 +51,7 @@ function Register({ project }: { project: S["ProjectRead"] }) {
   const tc = useTranslations("common");
   const l = useSvLabels();
   const caps = useSvCaps(project.id);
-  const { dateTime } = useFormatters(project.id);
+  const { prefs } = useFormatters(project.id);
   const s = useSearchState();
   const page = s.getInt("page", 1) ?? 1;
   const status = (s.get("status") ?? "") as S["SiteVehJourneyStatus"] | "";
@@ -62,6 +64,7 @@ function Register({ project }: { project: S["ProjectRead"] }) {
     { enabled: !caps.aggregatesOnly },
   );
   const [arrive, setArrive] = useState<Plan | null>(null);
+  const arrow = useLocale() === "ar" ? "←" : "→";
   if (caps.aggregatesOnly) return <Alert tone="info">{tc("notAllowed")}</Alert>;
   const items = q.data?.items ?? [];
   return (
@@ -97,7 +100,7 @@ function Register({ project }: { project: S["ProjectRead"] }) {
         <ErrorState error={q.error} onRetry={() => q.refetch()} />
       ) : items.length ? (
         <>
-          <Table data-testid="sv-journeys">
+          <Table compact data-testid="sv-journeys">
             <THead>
               <TR>
                 <TH>{t("no")}</TH>
@@ -106,48 +109,48 @@ function Register({ project }: { project: S["ProjectRead"] }) {
                 <TH>{t("depart")}</TH>
                 <TH>{t("arrive")}</TH>
                 <TH>{t("status")}</TH>
-                {caps.record ? <TH className="sr-only">{tc("actions")}</TH> : null}
               </TR>
             </THead>
             <TBody>
               {items.map((j) => (
                 <TR key={j.id} data-testid="sv-journey-row" data-no={j.plan_no} data-status={j.status} data-overdue={j.overdue}>
                   <TD label={t("no")}>
-                    <Link href={`/site-vehicles/journeys/${j.id}`} className="ltr font-medium text-primary hover:underline">
+                    <Link href={`/site-vehicles/journeys/${j.id}`} className="ltr font-medium whitespace-nowrap text-primary hover:underline">
                       {j.plan_no}
                     </Link>
                   </TD>
-                  <TD label={t("route")}>
-                    <span dir="auto">{j.origin}</span> → <span dir="auto">{j.destination}</span>
+                  <TD label={t("route")} data-full="" className="max-md:order-2 md:min-w-40">
+                    <span dir="auto">{j.origin}</span> {arrow} <span dir="auto">{j.destination}</span>
                     <span className="block text-xs text-muted-foreground">
                       <bdi className="ltr">{t("km", { n: j.distance_km })}</bdi>
                       {j.passengers ? ` · ${t("pax", { n: j.passengers })}` : ""}
                     </span>
                   </TD>
-                  <TD label={t("vehicle")}>
+                  <TD label={t("vehicle")} data-full="" className="max-md:order-3 md:min-w-44">
                     <VehicleRefText v={j.vehicle} />
                     <span className="block">
                       <DriverText w={j.driver} />
                     </span>
                   </TD>
-                  <TD label={t("depart")}>{dateTime(j.planned_depart)}</TD>
-                  <TD label={t("arrive")}>
-                    {dateTime(j.planned_arrive)}
-                    {j.arrived_at ? <span className="block text-xs text-muted-foreground">{t("arrivedAt", { at: dateTime(j.arrived_at) })}</span> : null}
+                  <TD label={t("depart")} data-keep-label="" className="max-md:order-4 max-md:text-xs">
+                    <StackedDate v={j.planned_depart} time projectId={project.id} className="max-md:inline-flex max-md:flex-row max-md:gap-1" />
                   </TD>
-                  <TD label={t("status")}>
-                    <JourneyStatusBadge status={j.status} overdue={j.overdue} />
+                  <TD label={t("arrive")} data-keep-label="" className="max-md:order-4 max-md:text-xs">
+                    <StackedDate v={j.planned_arrive} time projectId={project.id} className="max-md:inline-flex max-md:flex-row max-md:gap-1" />
+                    {j.arrived_at ? <span className="block text-xs whitespace-nowrap text-muted-foreground">{t("arrivedAt", { at: formatDateTime(j.arrived_at, { ...prefs, showHijri: false }) })}</span> : null}
                   </TD>
-                  {caps.record ? (
-                    <TD>
-                      {j.status === "planned" ? (
-                        <Button size="sm" variant="outline" onClick={() => setArrive(j)} data-testid="jp-arrive">
+                  <TD label={t("status")} className="max-md:order-1 max-md:ms-auto">
+                    <span className="flex flex-col items-start gap-1.5">
+                      <JourneyStatusBadge status={j.status} overdue={j.overdue} />
+                      {/* the one everyday step sits with the status: no extra column (7b design pass) */}
+                      {caps.record && j.status === "planned" ? (
+                        <Button size="sm" variant="outline" className="max-md:min-h-11" onClick={() => setArrive(j)} data-testid="jp-arrive">
                           <MapPinCheck aria-hidden />
                           {t("markArrived")}
                         </Button>
                       ) : null}
-                    </TD>
-                  ) : null}
+                    </span>
+                  </TD>
                 </TR>
               ))}
             </TBody>
@@ -268,13 +271,16 @@ function PlanForm({ project, settings }: { project: S["ProjectRead"]; settings: 
         <div className="sm:col-span-2" aria-live="polite">
           {hint ? (
             hint.recommended ? (
-              <Alert tone="warning" data-testid="jp-hint" data-reasons={hint.reasons.join(",")}>
-                <span className="flex items-start gap-2">
-                  <Lightbulb aria-hidden className="mt-0.5 size-4 shrink-0" />
-                  <span>
-                    <span className="font-medium">{t("hint")}</span> {hint.reasons.map((r) => t(`hintReason.${r === "night" ? "night" : "distance"}`, { km: settings.journey_hint_km, from: settings.journey_hint_night_from, to: settings.journey_hint_night_to })).join(" ")}
-                  </span>
-                </span>
+              /* advice, not a hazard: info tone (the platform never requires a plan, JM-1) */
+              <Alert tone="info" data-testid="jp-hint" data-reasons={hint.reasons.join(",")}>
+                <p className="font-medium">{t("hint")}</p>
+                <ul className="mt-1 list-disc ps-5">
+                  {hint.reasons.map((r) => (
+                    <li key={r} className="first-letter:uppercase">
+                      {t(`hintReason.${r === "night" ? "night" : "distance"}`, { km: settings.journey_hint_km, from: settings.journey_hint_night_from, to: settings.journey_hint_night_to })}
+                    </li>
+                  ))}
+                </ul>
               </Alert>
             ) : (
               <p className="text-xs text-muted-foreground" data-testid="jp-no-hint">
@@ -298,12 +304,12 @@ function PlanForm({ project, settings }: { project: S["ProjectRead"]; settings: 
               ))}
           </Select>
         </FormField>
-        <FormField id="jp-contact" label={t("contact")} required error={errors.contact} hint={t("contactHint")}>
-          <UserSelect projectId={project.id} value={f.contact} onChange={set("contact")} data-testid="jp-contact" />
-        </FormField>
         <div className="sm:col-span-2">
           <DeploymentPicker id="jp-driver" projectId={project.id} value={dep} onChange={setDep} status={["mobilised"]} label={t("driver")} required error={errors.driver} />
         </div>
+        <FormField id="jp-contact" label={t("contact")} required error={errors.contact} hint={t("contactHint")}>
+          <UserSelect projectId={project.id} value={f.contact} onChange={set("contact")} data-testid="jp-contact" />
+        </FormField>
         <FormField id="jp-notes" label={t("notes")} className="sm:col-span-2" hint={t("notesHint")}>
           <Textarea maxLength={500} value={f.notes} onChange={set("notes")} data-testid="jp-notes" />
         </FormField>
@@ -350,10 +356,12 @@ function Detail({ project, id }: { project: S["ProjectRead"]; id: string }) {
   const q = useJourneyPlan(id);
   const { dateTime } = useFormatters(project.id);
   const [act, setAct] = useState<"arrive" | "cancel" | null>(null);
+  const ar = useLocale() === "ar";
   if (q.isError) return <ErrorState error={q.error} onRetry={() => q.refetch()} />;
   if (!q.data) return <LoadingState />;
   const j = q.data;
   const planned = j.status === "planned";
+  const arrow = ar ? "←" : "→";
   return (
     <div className="flex flex-col gap-6" data-testid="sv-journey-detail" data-status={j.status} data-overdue={j.overdue}>
       <div>
@@ -366,7 +374,7 @@ function Detail({ project, id }: { project: S["ProjectRead"]; id: string }) {
               <PrototypeBadge />
             </>
           }
-          description={`${j.origin} → ${j.destination}`}
+          description={`\u2068${j.origin}\u2069 ${arrow} \u2068${j.destination}\u2069`}
           actions={
             caps.record && planned ? (
               <Button onClick={() => setAct("arrive")} data-testid="jp-arrive">
@@ -422,7 +430,8 @@ function Detail({ project, id }: { project: S["ProjectRead"]; id: string }) {
       <HistoryPanel entityType="journey_plan" entityId={j.id} />
       {caps.record && planned ? (
         <RecordActions testId="jp-record-actions">
-          <Button variant="destructive" onClick={() => setAct("cancel")} data-testid="jp-cancel">
+          <Button variant="destructive-outline" onClick={() => setAct("cancel")} data-testid="jp-cancel">
+            <XCircle aria-hidden />
             {t("cancel")}
           </Button>
         </RecordActions>

@@ -8,13 +8,17 @@ import { pinProject } from "./p6a-helpers";
 // Option 7b (Prototype) demo screenshots: writes to docs/screenshots/phase-7b only with SCREENSHOTS=1 (fresh seed);
 // otherwise the run is skipped. SHOT_DIR overrides the folder (e.g. test-results/shots).
 const OUT = process.env.SHOT_DIR ?? join(__dirname, "..", "..", "docs", "screenshots", "phase-7b");
+// Design pass: SHOT_SUFFIX=before|after writes <OUT>/design/<name>-<locale>-<suffix>.png instead.
+const SFX = process.env.SHOT_SUFFIX ?? "";
 test.skip(!process.env.SCREENSHOTS, "screenshots only on demand");
 test.setTimeout(600_000);
 
 async function shot(page: Page, name: string, fullPage = true) {
   await page.waitForLoadState("networkidle", { timeout: 20_000 }).catch(() => undefined);
   await page.waitForTimeout(600);
-  await page.screenshot({ path: join(OUT, name), fullPage });
+  const dir = SFX ? join(OUT, "design") : OUT;
+  mkdirSync(dir, { recursive: true });
+  await page.screenshot({ path: join(dir, SFX ? name.replace(/\.png$/, `-${SFX}.png`) : name), fullPage });
 }
 
 type V = { id: string; vehicle_no: string };
@@ -80,6 +84,14 @@ for (const locale of ["en", "ar"] as const) {
     await expect(tiles).toBeVisible();
     await tiles.scrollIntoViewIfNeeded();
     await shot(page, `11-dashboard-tiles-${locale}.png`, false);
+    // Phase 2 vehicle register: the "Site use" column and the site-use card (7b §11).
+    await go("/vehicles");
+    await expect(page.getByTestId("vehicle-site-use").first()).toBeVisible();
+    await shot(page, `16-phase2-register-site-use-${locale}.png`, false);
+    await go(`/vehicles/${vid("VEH-0107")}`);
+    await expect(page.getByTestId("vehicle-site-card")).toBeVisible();
+    await page.getByTestId("vehicle-site-card").scrollIntoViewIfNeeded();
+    await shot(page, `17-phase2-vehicle-site-card-${locale}.png`, false);
 
     // Viewer: aggregates only.
     await page.context().clearCookies();

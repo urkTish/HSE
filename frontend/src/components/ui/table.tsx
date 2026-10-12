@@ -4,11 +4,13 @@ import { cn } from "@/lib/utils";
 /**
  * Data table. On phones (< 768px) rows stack into cards by default (`stack`), each cell showing its
  * column name from the TD `label` prop; pass `stack={false}` for small inline tables that fit.
+ * `compact` keeps each phone card short: cells flow without labels (TD `data-keep-label` keeps one,
+ * `data-full` puts a cell on its own line); use it for long registers whose values explain themselves.
  */
-export function Table({ className, stack = true, ...props }: React.TableHTMLAttributes<HTMLTableElement> & { stack?: boolean }) {
+export function Table({ className, stack = true, compact = false, ...props }: React.TableHTMLAttributes<HTMLTableElement> & { stack?: boolean; compact?: boolean }) {
   return (
     <div className="w-full overflow-x-auto rounded-xl border border-border bg-surface shadow-sm">
-      <table className={cn("w-full caption-bottom text-sm", stack && "table-stack", className)} {...props} />
+      <table className={cn("w-full caption-bottom text-sm", stack && "table-stack", stack && compact && "table-compact", className)} {...props} />
     </div>
   );
 }

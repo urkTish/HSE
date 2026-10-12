@@ -1,5 +1,5 @@
 "use client";
-import { Plus, ShieldOff, TriangleAlert } from "lucide-react";
+import { FileText, Plus, ShieldOff, TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -33,6 +33,7 @@ const PAGE_SIZE = 50;
 export function IncidentList({ project }: { project: Schemas["ProjectRead"] }) {
   const t = useTranslations("incidents");
   const tv = useTranslations("veh");
+  const td = useTranslations("vehDesign");
   const te = useTranslations("enums");
   const tc = useTranslations("common");
   const me = useMeData();
@@ -80,6 +81,38 @@ export function IncidentList({ project }: { project: Schemas["ProjectRead"] }) {
   const query = useIncidents(project.id, q);
   const items = query.data?.items ?? [];
   const vehicleCols = items.some((r) => r.vehicle_involved);
+  // Plates, then the archived report no. under them. With the vehicle filter on, the column follows the title so it stays in view at 1280 px.
+  const vehicleFirst = vehicleCols && q.vehicle_involved === true;
+  const vehicleCell = (r: (typeof items)[number]) => (
+    <TD label={td("vehicleCol")}>
+      {r.vehicle_involved ? (
+        <span className="flex flex-col items-start gap-1">
+          {r.plates?.length ? (
+            <span className="inline-flex flex-wrap gap-1" data-testid="row-plates" aria-label={tv("list.plate")}>
+              {r.plates.map((p) => (
+                <bdi key={p} dir="ltr" className="ltr rounded border px-1.5 font-mono text-xs whitespace-nowrap">
+                  {p}
+                </bdi>
+              ))}
+            </span>
+          ) : r.road_type ? (
+            <span className="text-xs text-muted-foreground">{tv(`enum.roadType.${r.road_type}`)}</span>
+          ) : null}
+          {r.report_no ? (
+            <span className="relative text-xs whitespace-nowrap text-muted-foreground">
+              <span className="sr-only">{tv("list.reportNo")}: </span>
+              <FileText aria-hidden className="me-1 inline size-3.5 align-[-2px]" />
+              <bdi dir="ltr" className="ltr whitespace-nowrap" data-testid="row-report-no">
+                {r.report_no}
+              </bdi>
+            </span>
+          ) : null}
+        </span>
+      ) : (
+        "—"
+      )}
+    </TD>
+  );
 
   return (
     <div>
@@ -149,18 +182,21 @@ export function IncidentList({ project }: { project: Schemas["ProjectRead"] }) {
           onChange={(v) => s.set({ status: v })}
           testId="inc-status-filter"
         />
-        <label className="flex min-h-11 items-center gap-2 text-sm">
-          <Checkbox checked={q.hipo === true} onChange={(e) => s.set({ hipo: e.target.checked ? "true" : null })} data-testid="hipo-filter" />
-          {t("filters.hipoOnly")}
-        </label>
-        <label className="flex min-h-11 items-center gap-2 text-sm">
-          <Checkbox checked={q.vehicle_involved === true} onChange={(e) => s.set({ vehicle_involved: e.target.checked ? "true" : null })} data-testid="vehicle-filter" />
-          {tv("list.vehicleInvolved")}
-        </label>
-        <label className="flex min-h-11 items-center gap-2 text-sm">
-          <Checkbox checked={q.recorded_not_counted === true} onChange={(e) => s.set({ recorded_not_counted: e.target.checked ? "true" : null })} data-testid="rnc-filter" />
-          {tv("list.recordedNotCounted")}
-        </label>
+        {/* the three yes/no filters stay together on one line (7a design pass) */}
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-0 self-end sm:col-span-2 lg:basis-full">
+          <label className="flex min-h-11 items-center gap-2 text-sm">
+            <Checkbox checked={q.hipo === true} onChange={(e) => s.set({ hipo: e.target.checked ? "true" : null })} data-testid="hipo-filter" />
+            {t("filters.hipoOnly")}
+          </label>
+          <label className="flex min-h-11 items-center gap-2 text-sm">
+            <Checkbox checked={q.vehicle_involved === true} onChange={(e) => s.set({ vehicle_involved: e.target.checked ? "true" : null })} data-testid="vehicle-filter" />
+            {tv("list.vehicleInvolved")}
+          </label>
+          <label className="flex min-h-11 items-center gap-2 text-sm">
+            <Checkbox checked={q.recorded_not_counted === true} onChange={(e) => s.set({ recorded_not_counted: e.target.checked ? "true" : null })} data-testid="rnc-filter" />
+            {tv("list.recordedNotCounted")}
+          </label>
+        </div>
         <SelectFilter id="inc-road" label={tv("list.roadType")} value={q.road_type ?? ""} onChange={(v) => s.set({ road_type: v || null })} options={VEH_ROAD_TYPES.map((x) => ({ value: x, label: tv(`enum.roadType.${x}`) }))} />
         <SelectFilter id="inc-ownership" label={tv("list.ownership")} value={q.ownership ?? ""} onChange={(v) => s.set({ ownership: v || null })} options={VEH_OWNERSHIPS.map((x) => ({ value: x, label: tv(`enum.ownership.${x}`) }))} />
         <SelectFilter id="inc-licence" label={tv("list.licenceCheck")} value={q.licence_check ?? ""} onChange={(v) => s.set({ licence_check: v || null })} options={VEH_LICENCE_CHECKS.map((x) => ({ value: x, label: tv(`enum.licenceCheck.${x}`) }))} />
@@ -178,13 +214,13 @@ export function IncidentList({ project }: { project: Schemas["ProjectRead"] }) {
                 <TH>{t("list.occurred")}</TH>
                 <TH>{t("list.type")}</TH>
                 <TH>{t("list.title")}</TH>
+                {vehicleFirst ? <TH>{td("vehicleCol")}</TH> : null}
                 <TH>{t("list.site")}</TH>
                 <TH>{t("list.contractor")}</TH>
                 <TH>{t("list.severity")}</TH>
                 <TH>{t("list.cases")}</TH>
                 <TH>{t("list.investigation")}</TH>
-                {vehicleCols ? <TH>{tv("list.plate")}</TH> : null}
-                {vehicleCols ? <TH>{tv("list.reportNo")}</TH> : null}
+                {vehicleCols && !vehicleFirst ? <TH>{td("vehicleCol")}</TH> : null}
                 <TH>{t("list.status")}</TH>
               </TR>
             </THead>
@@ -207,6 +243,7 @@ export function IncidentList({ project }: { project: Schemas["ProjectRead"] }) {
                     </span>
                   </TD>
                   <TD label={t("list.title")} className="md:min-w-48">{r.title}</TD>
+                  {vehicleFirst ? vehicleCell(r) : null}
                   <TD label={t("list.site")}>
                     <span className="ltr">
                       {r.site.code}
@@ -247,34 +284,7 @@ export function IncidentList({ project }: { project: Schemas["ProjectRead"] }) {
                       "—"
                     )}
                   </TD>
-                  {vehicleCols ? (
-                    <TD label={tv("list.plate")}>
-                      {r.plates?.length ? (
-                        <span className="inline-flex flex-wrap gap-1" data-testid="row-plates">
-                          {r.plates.map((p) => (
-                            <bdi key={p} dir="ltr" className="ltr rounded border px-1.5 font-mono text-xs">
-                              {p}
-                            </bdi>
-                          ))}
-                        </span>
-                      ) : r.vehicle_involved && r.road_type ? (
-                        <span className="text-xs text-muted-foreground">{tv(`enum.roadType.${r.road_type}`)}</span>
-                      ) : (
-                        "—"
-                      )}
-                    </TD>
-                  ) : null}
-                  {vehicleCols ? (
-                    <TD label={tv("list.reportNo")}>
-                      {r.report_no ? (
-                        <bdi dir="ltr" className="ltr text-xs" data-testid="row-report-no">
-                          {r.report_no}
-                        </bdi>
-                      ) : (
-                        "—"
-                      )}
-                    </TD>
-                  ) : null}
+                  {vehicleCols && !vehicleFirst ? vehicleCell(r) : null}
                   <TD label={t("list.status")}>
                     <span className="inline-flex flex-wrap items-center gap-1">
                       <StatusBadge status={r.status} label={te(`incidentStatus.${r.status}`)} />

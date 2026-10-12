@@ -14,8 +14,8 @@
 - Phase 6f step = Design done (contract v0.12.0; 11 p6f specs green on a fresh seed; screenshots `docs/screenshots/phase-6f`; design pass `docs/design/phase-6f-findings.md`)
 - Phase 6g — Contractor HSE scorecard + reports export pack: spec `docs/specs/6g-scorecard-reports.md` v1.0 (56 ACs; §11 earlier-spec changes applied; contract v0.13.0)
 - Phase 6g step = Design done (contract v0.13.0; 21 p6g specs green on a fresh seed; screenshots `docs/screenshots/phase-6g`; design pass `docs/design/phase-6g-findings.md`)
-- Option 7a — Vehicle accident details (vehicle section on incidents, police / Najm rows, Najm / police report archived with no client copy, commuting recorded but not counted, K-136…K-137, C41): spec `docs/specs/7a-vehicle-accident-details.md` v1.1 (32 ACs; HSE Manager answers 2026-10-11). **7a backend and frontend done (contract v0.14.0); design pass next.** Handover `docs/HANDOVER-vehicle.md`.
-- Option 7b — Site vehicle & plant readiness, **Prototype** (construction: readiness fields and document expiry, driver / operator authorisation, pre-use checks, minimal journey-plan form; capabilities 233–237, K-138…K-140; gate logging (security) and telematics / points / mileage (logistics) out of scope; 7a optional): spec `docs/specs/7b-fleet-driver.md` v2.1 (24 ACs). **7b backend and frontend done (contract v0.15.0, Prototype); design pass next.** Handover `docs/HANDOVER-vehicle.md`.
+- Option 7a — Vehicle accident details (vehicle section on incidents, police / Najm rows, Najm / police report archived with no client copy, commuting recorded but not counted, K-136…K-137, C41): spec `docs/specs/7a-vehicle-accident-details.md` v1.1 (32 ACs; HSE Manager answers 2026-10-11). **7a backend and frontend done (contract v0.14.0); design pass done (`docs/design/phase-7a-findings.md`); fixer check next.** Handover `docs/HANDOVER-vehicle.md`.
+- Option 7b — Site vehicle & plant readiness, **Prototype** (construction: readiness fields and document expiry, driver / operator authorisation, pre-use checks, minimal journey-plan form; capabilities 233–237, K-138…K-140; gate logging (security) and telematics / points / mileage (logistics) out of scope; 7a optional): spec `docs/specs/7b-fleet-driver.md` v2.1 (24 ACs). **7b backend and frontend done (contract v0.15.0, Prototype); design pass done (`docs/design/phase-7b-findings.md`); fixer check next.** Handover `docs/HANDOVER-vehicle.md`.
 
 ## Phase log
 - Phase 0 — Foundation: built, e2e green, design pass done (2026-10-05). The user asked to continue phase after phase without per-phase approval; open questions are collected below for a single review.
@@ -26,6 +26,12 @@
 - Phase 5 — Training: complete (2026-10-10). Parked 2026-10-08, resumed after Phase 6; built, e2e green (full run 291 passed, 0 failed), design pass done.
 
 ## Done
+
+### Design pass — Options 7a / 7b vehicles (2026-10-12)
+- Findings `docs/design/phase-7a-findings.md` and `docs/design/phase-7b-findings.md`; before / after EN/AR, desktop and 390 px in `docs/screenshots/phase-7a|7b/design/` (`screenshots-p7a|p7b.spec.ts`, `SHOT_SUFFIX`); demo sets regenerated (7b adds 16 / 17, Phase 2 site use).
+- 7a: costs grouped and localised ("18,000 SAR", also the Phase 1 property damage line); one "Vehicle / report no." register column, placed after the title when the vehicle filter is on (was off-screen at 1280 px); report files restructured and "Upload corrected file" moved to a Record actions band; labelled close state and licence validity; dialog hints per dialog; Arabic third-party damage no longer reordered.
+- 7b: Arabic plates no longer break per letter; Readiness second column; new `compact` stacked-table mode (phone lists: vehicles 9,232 → 4,739 px, journeys 7,615 → 4,013 px); icons with words for today's check, unverified, hook badges and summary counts; withdraw / revoke / cancel `destructive-outline`; summary in two labelled groups; Mark arrived in the status cell; locale route arrow; info-tone journey hint; pre-use radiogroups with progress; missing-checks fold; compact Phase 2 site-use cell.
+- Strings `scripts/i18n/p7-vehicledesign.py` (`vehDesign.*`, `svDesign.*`, 27 new keys per locale). Lint, typecheck, i18n (13,102 keys) and build green; p7a-vehicle + p7b-site-vehicles 28 passed, 0 failed (fresh seed). Proposals P52–P58 below.
 
 ### Frontend — Option 7b site vehicle & plant readiness, Prototype (contract v0.15.0, 2026-10-12)
 - API types regenerated; hooks `src/lib/api/site-vehicles.ts`; components `src/components/site-vehicles/` (common, vehicles, authorisations, checks, journeys, settings); 13 routes under `/site-vehicles` (vehicles list / new / detail, `authorisations`, `checks`, `journeys` each list / new / detail, `settings`). Every 7b page and the sidebar entry `nav-site-vehicles` carry the "Prototype" badge; the entry shows to holders of 233–237 when 7b is live (or to 237 holders, to switch it on). A project with 7b off shows a "not live" notice (settings link for the HSE Manager).
@@ -1052,6 +1058,15 @@ L items from the Phase 4 design pass (details in `docs/design/phase-4-findings.m
 - **P16. Certificate line on the deployment page.** The equipment-on-project page (the one an engineer opens for "the crane on my site") shows usable / not usable but not the certificate number, TPI, SWL and limitations. Needs `current_line` on `EquipmentDeploymentRead`.
 - **P17. Tag board field display.** A "problems only" toggle and a kiosk / TV mode for site offices (large tiles, problems first per zone, auto-refresh, no navigation chrome).
 - **P1 / P2 also apply to Phase 4.** Two-calendar dates make certificate rows 4–5 lines; equipment, scaffold and personnel-card actions come before the state on phones.
+
+L items from the Options 7a / 7b design pass (details in `docs/design/phase-7a-findings.md`, `docs/design/phase-7b-findings.md`):
+- **P52. "Vehicle accidents" register view** (plate, ownership, road type, report authority / no., report state, liability, third-party cost), with P7.
+- **P53. `accident_report_state` on the incident list item** for a "Report missing" flag in the register and K-136 drill-down (contract).
+- **P54. Arabic chart citations** (`citation_ar` on ChartSpec, or the parts); every chart's citation is English on the Arabic dashboard (contract).
+- **P55. Site-office readiness board** (kiosk / TV, problems first; shares P17).
+- **P56. Reminder for missing pre-use checks** to the contractor's HSE rep (backend job).
+- **P57. One vehicle page** joining the Phase 2 access page and the 7b site-vehicle page.
+- **P58. Missing checks grouped by contractor** with counts and expand.
 
 L items from the Phase 6g design pass (details in `docs/design/phase-6g-findings.md`):
 - **P48. Compact ranking rows on phones** (rank · contractor · score · grade, expand for caps, trend, coverage).

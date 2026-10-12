@@ -1,6 +1,6 @@
 "use client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Car, Download, FileUp, Info, Pencil, Plus, ShieldAlert, Trash2 } from "lucide-react";
+import { Car, Download, FileText, FileUp, Info, Lock, Pencil, Plus, ShieldAlert, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
@@ -16,6 +16,7 @@ import { ApiWarnings, useWarningToasts } from "@/components/common/api-warnings"
 import { FieldItem, FieldList } from "@/components/common/field-list";
 import { FormField } from "@/components/common/form-field";
 import { useProjectOptions } from "@/components/common/pickers";
+import { RecordActions } from "@/components/common/record-actions";
 import { MutationError } from "@/components/common/states";
 import { StatusBadge } from "@/components/common/status-badge";
 import { SubmissionDialog } from "@/components/followup/actions";
@@ -27,7 +28,7 @@ import { useFuRequirements } from "@/lib/api/followup";
 import { hk } from "@/lib/api/hse";
 import { useProjectSettings } from "@/lib/api/queries";
 import { DEFAULT_TIME_ZONE, utcToZonedInput, zonedInputToUtc } from "@/lib/datetime";
-import { useDisplay } from "@/lib/digits";
+import { groupDecimal, useDisplay } from "@/lib/digits";
 import { useErrorMessage, useLocalizedName } from "@/lib/i18n-helpers";
 import { canWrite } from "@/lib/permissions";
 import { useFormatters } from "@/lib/use-formatters";
@@ -219,8 +220,12 @@ export function VehicleSectionCard({ incident: r }: { incident: Incident }) {
           {conditions ? <FieldItem label={t("card.conditions")}>{conditions}</FieldItem> : null}
           {v.third_party_damage_desc || v.third_party_damage_cost_sar ? (
             <FieldItem label={t("fields.third_party_damage_desc")}>
-              {v.third_party_damage_desc ?? ""}
-              {v.third_party_damage_cost_sar ? <span className="text-muted-foreground"> · {t("card.cost", { cost: show(v.third_party_damage_cost_sar) })}</span> : null}
+              {v.third_party_damage_desc ? <span dir="auto">{v.third_party_damage_desc}</span> : null}
+              {v.third_party_damage_cost_sar ? (
+                <span className="block text-muted-foreground tabular-nums" data-testid="veh-tp-cost">
+                  {t("card.cost", { cost: show(groupDecimal(v.third_party_damage_cost_sar)) })}
+                </span>
+              ) : null}
             </FieldItem>
           ) : null}
         </FieldList>
@@ -294,6 +299,7 @@ function Line({ label, children, testId }: { label: string; children: ReactNode;
 /** One vehicle as a compact card (works at 390 px). Personal fields are null without capability 29 (P7a-1). */
 function VehicleRowCard({ row, incident: r, editable, onEdit, onRemove }: { row: Row; incident: Incident; editable: boolean; onEdit: () => void; onRemove: () => void }) {
   const t = useTranslations("veh");
+  const td = useTranslations("vehDesign");
   const tc = useTranslations("common");
   const L = useVehLabels();
   const ar = useLocale() === "ar";
@@ -310,8 +316,8 @@ function VehicleRowCard({ row, incident: r, editable, onEdit, onRemove }: { row:
   const hasPlate = Boolean(row.plate_digits || row.plate_letters_en || row.plate_letters_ar);
   return (
     <li className="flex min-w-0 flex-col gap-2 rounded-lg border bg-surface p-3" data-testid="veh-row" data-label={row.label} data-ownership={row.ownership} data-licence-check={row.licence_check ?? ""}>
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="flex min-w-0 flex-col gap-0.5">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <p className="flex flex-wrap items-center gap-2 text-sm font-semibold">
             <bdi className="ltr rounded bg-muted px-1.5 text-xs">{row.label}</bdi>
             {L.ownership(row.ownership)}
@@ -323,7 +329,7 @@ function VehicleRowCard({ row, incident: r, editable, onEdit, onRemove }: { row:
           </p>
         </div>
         {editable ? (
-          <div className="flex gap-1">
+          <div className="-me-1 -mt-1 flex shrink-0 gap-1">
             <Button size="icon" variant="ghost" aria-label={`${tc("edit")} ${row.label}`} onClick={onEdit} data-testid="veh-edit">
               <Pencil aria-hidden />
             </Button>
@@ -349,7 +355,12 @@ function VehicleRowCard({ row, incident: r, editable, onEdit, onRemove }: { row:
         ) : null}
         <Line label={t("fields.damage")}>
           {L.damage(row.damage)}
-          {row.damage_cost_sar ? <span className="text-muted-foreground"> · {t("card.cost", { cost: show(row.damage_cost_sar) })}</span> : null}
+          {row.damage_cost_sar ? (
+            <span className="text-muted-foreground tabular-nums" data-testid="veh-cost">
+              {" "}
+              · {t("card.cost", { cost: show(groupDecimal(row.damage_cost_sar)) })}
+            </span>
+          ) : null}
         </Line>
         <Line label={t("card.docsFrom")} testId="veh-docs">
           <span className="inline-flex flex-wrap justify-end gap-1" title={t(`enum.docSource.${docs.source === "register" ? "register" : "entered"}`)}>
@@ -389,7 +400,7 @@ function VehicleRowCard({ row, incident: r, editable, onEdit, onRemove }: { row:
         {row.licence_class || row.licence_expiry || row.licence_issuer ? (
           <Line label={t("fields.licence_class")} testId="veh-licence">
             {[row.licence_issuer ? L.issuer(row.licence_issuer) : null, row.licence_class ? L.licenceClass(row.licence_class) : null].filter(Boolean).join(" · ")}
-            {row.licence_expiry ? <span className="text-muted-foreground"> · {date(row.licence_expiry)}</span> : null}
+            {row.licence_expiry ? <span className="block text-xs text-muted-foreground">{td("licenceValidUntil", { date: date(row.licence_expiry) })}</span> : null}
             {row.licence_no ? (
               <span className="text-muted-foreground">
                 {" "}
@@ -421,6 +432,7 @@ function VehicleRowCard({ row, incident: r, editable, onEdit, onRemove }: { row:
 
 function RoadDialog({ incident: r, section: v, onClose }: { incident: Incident; section: Section; onClose: () => void }) {
   const t = useTranslations("veh");
+  const td = useTranslations("vehDesign");
   const tc = useTranslations("common");
   const L = useVehLabels();
   const refresh = useVehRefresh(r.id);
@@ -473,7 +485,7 @@ function RoadDialog({ incident: r, section: v, onClose }: { incident: Incident; 
       <DialogContent closeLabel={tc("close")} className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>{t("section")}</DialogTitle>
-          <DialogDescription>{t("sectionHint")}</DialogDescription>
+          <DialogDescription>{td("roadDialogHint")}</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 sm:grid-cols-2">
           <FormField id="vr-road_type" label={t("fields.road_type")} required>
@@ -587,6 +599,7 @@ const s = (v: string | number | null | undefined) => (v === null || v === undefi
 
 function VehicleRowDialog({ incident: r, row, onClose }: { incident: Incident; row?: Row; onClose: () => void }) {
   const t = useTranslations("veh");
+  const td = useTranslations("vehDesign");
   const tc = useTranslations("common");
   const L = useVehLabels();
   const name = useLocalizedName();
@@ -802,7 +815,7 @@ function VehicleRowDialog({ incident: r, row, onClose }: { incident: Incident; r
       <DialogContent closeLabel={tc("close")} className="max-w-3xl" data-testid="veh-dialog">
         <DialogHeader>
           <DialogTitle>{row ? t("card.editTitle", { label: row.label }) : t("card.addTitle")}</DialogTitle>
-          <DialogDescription>{t("sectionHint")}</DialogDescription>
+          <DialogDescription>{td("vehicleDialogHint")}</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 sm:grid-cols-2">
           {select("ownership", t("fields.ownership"), VEH_OWNERSHIPS, (x) => L.ownership(x as S["VehOwnership"]), true)}
@@ -854,8 +867,9 @@ function VehicleRowDialog({ incident: r, row, onClose }: { incident: Incident; r
           {select("damage", t("fields.damage"), VEH_DAMAGES, (x) => L.damage(x as S["VehDamage"]), true)}
           {text("damage_cost_sar", t("fields.damage_cost_sar"), { ltr: true, inputMode: "decimal" })}
           {!(f.vehicle_id && company) ? (
-            <fieldset className="grid grid-cols-3 gap-2 sm:col-span-2">
-              <legend className="mb-1 text-sm font-medium">{t("fields.docs")}</legend>
+            <fieldset className="flex flex-col gap-2 sm:col-span-2">
+              <legend className="mb-2 text-sm font-semibold">{t("fields.docs")}</legend>
+              <div className="grid gap-2 sm:grid-cols-3">
               {(["istimara", "insurance", "mvpi"] as const).map((k) => (
                 <FormField key={k} id={`vd-${k}`} label={t(`fields.${k}`)}>
                   <Select value={f[k]} onChange={set(k)}>
@@ -867,6 +881,7 @@ function VehicleRowDialog({ incident: r, row, onClose }: { incident: Incident; r
                   </Select>
                 </FormField>
               ))}
+              </div>
             </fieldset>
           ) : null}
           {thirdParty && !hideIdentity ? (
@@ -959,6 +974,7 @@ function size(n: number): string {
 
 export function AccidentReportCard({ incident: r }: { incident: Incident }) {
   const t = useTranslations("veh");
+  const td = useTranslations("vehDesign.report");
   const tc = useTranslations("common");
   const te = useTranslations("enums");
   const L = useVehLabels();
@@ -979,6 +995,7 @@ export function AccidentReportCard({ incident: r }: { incident: Incident }) {
   const a = v.accident_report;
   const offer = v.report_submission_offer;
   const files = [...a.files].sort((x, y) => Number(x.superseded) - Number(y.superseded) || y.created_at.localeCompare(x.created_at));
+  const current = files.filter((x) => !x.superseded);
 
   async function upload(list: FileList | null) {
     const file = list?.[0];
@@ -1032,7 +1049,7 @@ export function AccidentReportCard({ incident: r }: { incident: Incident }) {
   return (
     <Card data-testid="accident-report-card" data-locked={a.locked ? "true" : "false"}>
       <CardHeader className="flex-row flex-wrap items-start justify-between gap-2">
-        <div className="flex flex-col gap-1">
+        <div className="flex min-w-48 flex-1 basis-0 flex-col gap-1">
           <CardTitle>{t("report.title")}</CardTitle>
           <p className="text-xs text-muted-foreground">{t("report.internal")}</p>
         </div>
@@ -1061,6 +1078,7 @@ export function AccidentReportCard({ incident: r }: { incident: Incident }) {
           <FieldItem label={t("fields.liability_pct_own")}>{a.liability_pct_own !== null ? <bdi className="ltr">{a.liability_pct_own} %</bdi> : "—"}</FieldItem>
         </FieldList>
         <div className="flex flex-wrap items-center gap-2" data-testid="ar-state" data-state={state.status}>
+          <span className="text-xs text-muted-foreground">{td("closeCheck")}</span>
           <StatusBadge status={state.status} label={state.label} />
         </div>
         <MissingList title={t("report.requiredToClose")} items={a.required_to_close && !a.waived ? a.missing_to_close : []} testId="ar-missing" />
@@ -1083,41 +1101,48 @@ export function AccidentReportCard({ incident: r }: { incident: Incident }) {
         <div className="flex flex-col gap-2">
           <h3 className="text-sm font-semibold">{t("report.files")}</h3>
           {!a.files_visible ? (
-            <p className="text-sm text-muted-foreground" data-testid="ar-files-hidden">
-              {t("report.filesHidden")} <span className="text-xs">({t("report.fileCount", { n: a.file_count })})</span>
+            <p className="flex items-start gap-2 text-sm text-muted-foreground" data-testid="ar-files-hidden">
+              <Lock aria-hidden className="mt-0.5 size-4 shrink-0" />
+              <span>
+                {t("report.filesHidden")} <span className="text-xs">({t("report.fileCount", { n: a.file_count })})</span>
+              </span>
             </p>
           ) : files.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t("report.noFiles")}</p>
           ) : (
             <ul className="flex flex-col divide-y rounded-lg border" data-testid="ar-files">
               {files.map((x) => (
-                <li key={x.id} className={cn("flex flex-wrap items-center gap-2 px-3 py-2 text-sm", x.superseded && "bg-muted/40")} data-testid="ar-file" data-superseded={x.superseded ? "true" : "false"}>
-                  <span className="min-w-0 flex-1">
-                    <bdi className="ltr block truncate">{x.file_name}</bdi>
-                    <span className="block text-xs text-muted-foreground">
-                      {size(x.size_bytes)} · {t("report.uploadedBy", { name: name(x.uploaded_by.full_name_en, x.uploaded_by.full_name_ar), at: dateTime(x.created_at) })}
+                <li
+                  key={x.id}
+                  className={cn("flex flex-col gap-2 px-3 py-2.5 text-sm sm:flex-row sm:items-center", x.superseded && "bg-muted/40")}
+                  data-testid="ar-file"
+                  data-superseded={x.superseded ? "true" : "false"}
+                >
+                  <span className="flex min-w-0 flex-1 items-start gap-2">
+                    <FileText aria-hidden className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                    <span className="min-w-0">
+                      <bdi className={cn("ltr block font-medium [overflow-wrap:anywhere]", x.superseded && "font-normal text-muted-foreground line-through")}>{x.file_name}</bdi>
+                      <span className="block text-xs text-muted-foreground">
+                        {size(x.size_bytes)} · {t("report.uploadedBy", { name: name(x.uploaded_by.full_name_en, x.uploaded_by.full_name_ar), at: dateTime(x.created_at) })}
+                      </span>
                     </span>
                   </span>
-                  {x.superseded ? (
-                    <StatusBadge status="superseded" label={x.superseded_at ? t("report.supersededOn", { at: date(x.superseded_at) }) : t("report.superseded")} />
-                  ) : (
-                    <StatusBadge status="valid" label={t("report.current")} />
-                  )}
-                  <Button variant="ghost" size="sm" onClick={() => void open(x.id)}>
-                    <Download aria-hidden />
-                    {tc("download")}
-                  </Button>
-                  {canUpload && !x.superseded ? (
-                    <Button variant="ghost" size="sm" onClick={() => pick(x.id)} disabled={busy} data-testid="ar-replace" title={t("report.replaceHint")}>
-                      <FileUp aria-hidden />
-                      {t("report.replace")}
+                  <span className="flex flex-wrap items-center gap-1 ps-6 sm:ps-0">
+                    {x.superseded ? (
+                      <StatusBadge status="superseded" label={x.superseded_at ? t("report.supersededOn", { at: date(x.superseded_at) }) : t("report.superseded")} />
+                    ) : (
+                      <StatusBadge status="valid" label={t("report.current")} />
+                    )}
+                    <Button variant="ghost" size="sm" onClick={() => void open(x.id)}>
+                      <Download aria-hidden />
+                      {tc("download")}
                     </Button>
-                  ) : null}
-                  {editable && !a.locked && !x.superseded ? (
-                    <Button variant="ghost" size="icon" aria-label={tc("delete")} onClick={() => void remove(x.id)} data-testid="ar-delete">
-                      <Trash2 aria-hidden />
-                    </Button>
-                  ) : null}
+                    {editable && !a.locked && !x.superseded ? (
+                      <Button variant="ghost" size="icon" aria-label={`${tc("delete")} ${x.file_name}`} onClick={() => void remove(x.id)} data-testid="ar-delete">
+                        <Trash2 aria-hidden />
+                      </Button>
+                    ) : null}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -1132,6 +1157,17 @@ export function AccidentReportCard({ incident: r }: { incident: Incident }) {
           ) : null}
           <input ref={fileRef} type="file" accept="image/*,application/pdf" className="sr-only" onChange={(e) => void upload(e.target.files)} data-testid="ar-file-input" aria-label={t("report.upload")} />
         </div>
+        {/* Superseding an archived report cannot be undone (the old file stays, marked superseded): record-actions band. */}
+        {a.files_visible && canUpload && current.length ? (
+          <RecordActions label={td("replaceBand")} testId="ar-record-actions" className="mt-2">
+            {current.map((x) => (
+              <Button key={x.id} variant="destructive-outline" size="sm" onClick={() => pick(x.id)} disabled={busy} data-testid="ar-replace" title={t("report.replaceHint")}>
+                <FileUp aria-hidden />
+                {current.length > 1 ? td("replaceNamed", { name: x.file_name }) : t("report.replace")}
+              </Button>
+            ))}
+          </RecordActions>
+        ) : null}
       </CardContent>
       {editOpen ? <ReportDialog incident={r} report={a} onClose={() => setEditOpen(false)} /> : null}
       {offerOpen && offer ? <OfferDialog incident={r} offer={offer} onClose={() => setOfferOpen(false)} /> : null}

@@ -15079,5 +15079,32 @@
       "open": "Open the records behind {label}",
       "fraction": "{n} of {d}"
     }
+  },
+  "vehDesign": {
+    "vehicleCol": "Vehicle / report no.",
+    "licenceValidUntil": "valid until {date}",
+    "roadDialogHint": "Road, journey and conditions of this accident. Once the investigation is approved, a change needs a reason.",
+    "vehicleDialogHint": "One vehicle or item of mobile plant involved in this incident. A plate found in the vehicle register fills the vehicle and its documents.",
+    "report": {
+      "closeCheck": "Needed to close:",
+      "replaceBand": "Replace an archived report file: the current file is kept, marked superseded. This cannot be undone.",
+      "replaceNamed": "Upload corrected file for {name}"
+    }
+  },
+  "svDesign": {
+    "todaysCheck": "today's check",
+    "checkMissingLong": "Today's pre-use check has not been recorded",
+    "summary": {
+      "readinessNow": "Readiness now",
+      "todayAhead": "Today and the next 30 days"
+    },
+    "missing": {
+      "showAll": "Show all {n}",
+      "showFewer": "Show fewer"
+    },
+    "form": {
+      "answered": "{done} of {total} items answered",
+      "defects": "defects: {n}"
+    }
   }
 }
