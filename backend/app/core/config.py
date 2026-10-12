@@ -60,6 +60,9 @@ class Settings(BaseSettings):
     kpi_cache_seconds: int = 300
     # Rebuild dropped KPI cache scopes in the background once writes settle (app.kpi.warm).
     kpi_warm: bool = True
+    # Heavy KPI / dashboard reads computing at once per process (app.api.deps.cpu_slot); the GIL
+    # serialises them anyway, and more only makes short requests wait behind them.
+    kpi_cpu_slots: int = 3
     ai_questions_per_user_day: int = 60  # AI-17
     ai_reports_per_project_month: int = 10  # AI-17
     ai_insights_cache_minutes: int = 360

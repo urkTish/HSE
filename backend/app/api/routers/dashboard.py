@@ -6,7 +6,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query
 
-from app.api.deps import DB, CurrentUser
+from app.api.deps import CPU_SLOT, DB, CurrentUser
 from app.api.kpi_params import KpiParams
 from app.core.errors import error_responses
 from app.schemas.dashboard import (
@@ -23,6 +23,7 @@ router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 @router.get(
     "/action-panel",
     response_model=ActionPanelResponse,
+    dependencies=[CPU_SLOT],
     summary="Action panel counts with links to pre-filtered lists (§8.1 item 6)",
     description="Uses the /kpi filters (site, zone, contractor…); counts are evaluated at "
     "`as_of`. Exactly one project.",
@@ -35,6 +36,7 @@ def get_action_panel(user: CurrentUser, db: DB, q: KpiParams) -> ActionPanelResp
 @router.get(
     "/expiring-items",
     response_model=ExpiringItemsResponse,
+    dependencies=[CPU_SLOT],
     summary="Items falling due soon or overdue (CAs, investigations, notifications, inspections)",
     responses=error_responses(401, 403, 404, 422),
 )

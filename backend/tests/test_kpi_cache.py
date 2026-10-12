@@ -233,3 +233,34 @@ def test_snapshot_ignores_a_parallel_plan(db: Session) -> None:
         snaps.add(service.snapshot(sc))
         assert all(list(r.ids) == sorted(r.ids) for r in (*sc.engine.wf, *sc.engine.obs))
     assert len(snaps) == 1
+
+
+def test_cpu_slot_bounds_heavy_reads(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A dashboard's ~25 KPI reads compute at most kpi_cpu_slots at a time per process."""
+    import contextlib
+    import threading
+    import time
+
+    from app.api import deps
+
+    monkeypatch.setattr(get_settings(), "kpi_cpu_slots", 2)
+    monkeypatch.setattr(deps, "_SLOTS", [])
+    slot = contextlib.contextmanager(deps.cpu_slot)
+    active, peak, lock = [0], [0], threading.Lock()
+
+    def work() -> None:
+        with slot():
+            with lock:
+                active[0] += 1
+                peak[0] = max(peak[0], active[0])
+            time.sleep(0.05)
+            with lock:
+                active[0] -= 1
+
+    threads = [threading.Thread(target=work) for _ in range(6)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert peak[0] == 2
+    assert active[0] == 0

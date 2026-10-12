@@ -7,7 +7,7 @@ from typing import Annotated, Literal
 
 from fastapi import APIRouter, Query, Response
 
-from app.api.deps import DB, CurrentUser, PageParams
+from app.api.deps import CPU_SLOT, DB, CurrentUser, PageParams
 from app.api.kpi_params import KpiParams
 from app.core.access_enums import AccessKpiGroupBy
 from app.core.cert_enums import CertKpiGroupBy
@@ -78,7 +78,7 @@ from app.schemas.scorecard import ScKpiResponse
 from app.schemas.site_vehicle import SiteVehKpiResponse
 from app.schemas.training_kpi import TrainingKpiResponse
 
-router = APIRouter(prefix="/kpi", tags=["kpi"])
+router = APIRouter(prefix="/kpi", tags=["kpi"], dependencies=[CPU_SLOT])
 
 FILTERS = (
     "Common filters (all /kpi endpoints): `project_id` (repeatable) or `all_projects`, "

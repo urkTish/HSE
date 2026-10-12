@@ -1,5 +1,6 @@
 """Shared FastAPI dependencies: DB session, authentication, pagination."""
 
+import threading
 import uuid
 from collections.abc import Iterator
 from dataclasses import dataclass
@@ -58,6 +59,25 @@ def get_db() -> Iterator[Session]:
 
 
 DB = Annotated[Session, Depends(get_db, scope="function")]
+
+_SLOTS: list[threading.BoundedSemaphore] = []
+_SLOTS_LOCK = threading.Lock()
+
+
+def cpu_slot() -> Iterator[None]:
+    """Bound the heavy KPI / dashboard reads computing at once in this process. They are CPU
+    bound and the GIL runs one at a time anyway; a dashboard opens ~25 of them together, and
+    when all ran at once every short request (login, logout, a save) waited for the GIL after
+    each database round trip and took 5-10 s. Waiting here does not hold the GIL."""
+    with _SLOTS_LOCK:
+        if not _SLOTS:
+            _SLOTS.append(threading.BoundedSemaphore(max(1, get_settings().kpi_cpu_slots)))
+        slots = _SLOTS[0]
+    with slots:
+        yield
+
+
+CPU_SLOT = Depends(cpu_slot, scope="function")
 
 
 @dataclass(frozen=True)
