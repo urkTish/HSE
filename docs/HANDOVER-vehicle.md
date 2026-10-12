@@ -112,10 +112,11 @@ Docs: §11 of 7b (0-foundation, 1-dashboard, 2-access-permits v1.8, 4 note, 5-tr
 4. Frontend: site-vehicles section with "Prototype" badges, journey-plan form and list (Overdue flag only), dashboard tiles, i18n `p7-site-vehicle.py`, e2e p7b.
 5. Design pass; 6. Fixer check (full e2e once, CI green); PROGRESS.
 
-## 7. Current state (2026-10-10)
+## 7. Current state (2026-10-12, after the 7a / 7b fixer check)
 
-- All modules built: Phases 0–5 and 6a–6g, each with spec, backend, screens and design pass; platform restyle D-238 done.
-- Full e2e: **312 passed, 0 failed** (25 skipped) on a fresh seed; CI green (backend: lint, format, mypy, alembic, pytest, contract; frontend: lint, typecheck, i18n, build, e2e).
-- Contract **v0.13.0**; latest decision **D-238**; latest migration `20261010_0015_phase6g_scorecard_reports.py`.
-- Numbering in use: capabilities to 232, K-135, E25, T25, C40. Some numbered AI tools and chart data of earlier modules are still parked (e.g. 6g T25, C39–C40); see PROGRESS "Parked". 7a/7b numbers continue after them regardless.
+- All modules built: Phases 0–5, 6a–6g, Option 7a (vehicle accident details) and Option 7b (site vehicle & plant readiness, Prototype), each with spec, backend, screens and design pass; fixer check done.
+- CI green on `5155dab` ([run 38270472537](https://github.com/urkTish/HSE/actions/runs/38270472537)): backend lint, format, mypy, alembic, pytest, contract; frontend lint, typecheck, i18n, build and e2e (**340 passed, 0 failed, 33 skipped**, 43.5 min). CI runs the e2e on every push.
+- Local full e2e on this (slower) machine: 329 passed, 10 failed, 33 skipped, 1 did not run (1.3 h); on a fresh-seed re-run of the 10, 7 pass and 3 are load timeouts parked in PROGRESS (all three pass on CI).
+- Contract **v0.15.1**; latest decision **D-264**; latest migration `20261012_0017_site_vehicle_readiness.py`.
+- Numbering in use: capabilities to 237, K-140, C41 (7a / 7b); before them K-135, E25, T25, C40. Some numbered AI tools and chart data of earlier modules are still parked (e.g. 6g T25, C39–C40); see PROGRESS "Parked". 7a/7b numbers continue after them regardless.
 - Turki answered five questions on 2026-10-11 (§0); specs revised: 7a v1.1 (32 ACs), 7b v2.0 prototype (24 ACs). Still open: 7a §10 (4 items) and 7b §10 (2 items); none blocks the build.
