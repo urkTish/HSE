@@ -46,7 +46,7 @@ info:
     \ 157.\n  No diagnosis, test result or clinical note is ever stored (P6-1). Medical hooks use the\
     \ shared\n  hook policy (kind `medical_fitness`; enable with `POST /projects/{id}/medical-hooks/enable`);\n\
     \  gate texts never say \"medical\". Site-clinic sign-off needs step-up re-auth.\n"
-  version: 0.15.0
+  version: 0.15.1
 paths:
   /api/v1/health:
     get:
@@ -105278,11 +105278,13 @@ components:
           - type: 'null'
           description: Required iff dangerous_occurrence in incident_types.
         vehicle_involved:
-          type: boolean
+          anyOf:
+          - type: boolean
+          - type: 'null'
           title: Vehicle Involved
-          description: '7a VA-1: derived true (and locked) from vehicle signals; may be set true manually
-            (e.g. a near miss). Setting false while VA-1 holds → 422 VEHICLE_INVOLVED_LOCKED.'
-          default: false
+          description: '7a VA-1: optional; omitted or null → false unless derived true (and locked) from
+            vehicle signals; may be set true manually (e.g. a near miss). Setting false while VA-1 holds
+            → 422 VEHICLE_INVOLVED_LOCKED.'
         road_type:
           anyOf:
           - $ref: '#/components/schemas/VehRoadType'
@@ -137650,6 +137652,12 @@ components:
           title: Detail Path
           description: API path of the record (e.g. /api/v1/incidents/{id}); null when the caller may
             not open it.
+        recorded_not_counted:
+          type: boolean
+          title: Recorded Not Counted
+          description: '7a VA-13: incident rows only; true for a commuting vehicle incident (badge "Recorded,
+            not counted — commuting (OSHA)"). Always false for other rows.'
+          default: false
       type: object
       required:
       - entity_type

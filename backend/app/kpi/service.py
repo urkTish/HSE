@@ -916,6 +916,7 @@ def _records(db: Session, scope: Scope, et: EntityType, ids: list[uuid.UUID]) ->
         eng: uuid.UUID | None,
         path: str | None,
         label_ar: str | None = None,
+        rnc: bool = False,
     ) -> None:
         out.append(
             SourceRecord(
@@ -928,6 +929,7 @@ def _records(db: Session, scope: Scope, et: EntityType, ids: list[uuid.UUID]) ->
                 site_code=sites.get(site) if site else None,
                 engagement_code=code(eng) if eng else None,
                 detail_path=path,
+                recorded_not_counted=rnc,
             )
         )
 
@@ -954,8 +956,9 @@ def _records(db: Session, scope: Scope, et: EntityType, ids: list[uuid.UUID]) ->
             eng = inc.responsible_engagement_id
             ok = can_open_incident(p, inc.project_id, inc.site_id, eng)
             label = f"{inc.primary_type.value} · {code(eng)} · {sites.get(inc.site_id, '')}"
-            add(inc.id, inc.ref, inc.occurred_date, label, inc.site_id, eng,
-                f"{API}/incidents/{inc.id}" if ok else None)  # fmt: skip
+            path = f"{API}/incidents/{inc.id}" if ok else None
+            add(inc.id, inc.ref, inc.occurred_date, label, inc.site_id, eng, path,
+                rnc=inc.recorded_not_counted)  # fmt: skip
     elif et == EntityType.observation:
         for o in db.scalars(select(Observation).where(Observation.id.in_(ids))):
             eng = o.observed_engagement_id

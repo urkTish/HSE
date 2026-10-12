@@ -31497,10 +31497,9 @@ export interface components {
             dangerous_occurrence?: components["schemas"]["DangerousOccurrenceInput"] | null;
             /**
              * Vehicle Involved
-             * @description 7a VA-1: derived true (and locked) from vehicle signals; may be set true manually (e.g. a near miss). Setting false while VA-1 holds → 422 VEHICLE_INVOLVED_LOCKED.
-             * @default false
+             * @description 7a VA-1: optional; omitted or null → false unless derived true (and locked) from vehicle signals; may be set true manually (e.g. a near miss). Setting false while VA-1 holds → 422 VEHICLE_INVOLVED_LOCKED.
              */
-            vehicle_involved: boolean;
+            vehicle_involved?: boolean | null;
             /** @description Required to report a vehicle incident (VA-2); airside ⇔ airside zone (ROAD_TYPE_ZONE_MISMATCH). */
             road_type?: components["schemas"]["VehRoadType"] | null;
             /**
@@ -48640,6 +48639,12 @@ export interface components {
              * @description API path of the record (e.g. /api/v1/incidents/{id}); null when the caller may not open it.
              */
             detail_path: string | null;
+            /**
+             * Recorded Not Counted
+             * @description 7a VA-13: incident rows only; true for a commuting vehicle incident (badge "Recorded, not counted — commuting (OSHA)"). Always false for other rows.
+             * @default false
+             */
+            recorded_not_counted: boolean;
         };
         /** SourceRecordPage */
         SourceRecordPage: {

@@ -130,11 +130,11 @@ class _IncidentFields(StrictInput):
         default=None, description="Required iff dangerous_occurrence in incident_types."
     )
     # ---- 7a vehicle section (§3.1); vehicle rows via /incidents/{id}/vehicles ----
-    vehicle_involved: bool = Field(
-        default=False,
-        description="7a VA-1: derived true (and locked) from vehicle signals; may be set true "
-        "manually (e.g. a near miss). Setting false while VA-1 holds → 422 "
-        "VEHICLE_INVOLVED_LOCKED.",
+    vehicle_involved: bool | None = Field(
+        default=None,
+        description="7a VA-1: optional; omitted or null → false unless derived true (and "
+        "locked) from vehicle signals; may be set true manually (e.g. a near miss). Setting "
+        "false while VA-1 holds → 422 VEHICLE_INVOLVED_LOCKED.",
     )
     road_type: VehRoadType | None = Field(
         default=None,

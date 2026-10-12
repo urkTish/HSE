@@ -147,6 +147,7 @@ def warm(key: tuple[uuid.UUID, ...]) -> None:
                     train.peval(pid, d)
         if len(projects) == 1:
             _action_panel_inputs(db, projects[0], train)
+            _exercise_views(db, projects[0])
         # closed, not rolled back: a rollback would expire the cached ORM rows (CertSettings,
         # ...) and later requests could not refresh them from another session
 
@@ -165,6 +166,47 @@ def _action_panel_inputs(db: Session, project: Project, train: Any) -> None:
     if train is not None:
         train.peval_full(project.id, day)
     dashboard_items.not_ready_count(db, system_principal(db), project.id, day)
+
+
+_EXERCISED: set[uuid.UUID] = set()
+
+
+def _exercise_views(db: Session, project: Project) -> None:
+    """Once per process and project: build the default dashboard bundle and action panel off
+    the request path. The facts are cached above, but the first real view in a process still
+    paid its one-time costs (lazy imports, Pydantic schema builds, per-module memo tables)
+    while the page's other requests competed for the same interpreter; the first ANIA-EXP
+    dashboard after a start took 8 s with warm facts. Nothing is returned or kept beyond those
+    process caches, and the session is closed without a commit."""
+    if project.id in _EXERCISED:
+        return
+    _EXERCISED.add(project.id)
+    from app.api.kpi_params import KpiQuery  # noqa: PLC0415
+    from app.core.hse_enums import ComparisonKind, PeriodPreset  # noqa: PLC0415
+    from app.hse_jobs import system_principal  # noqa: PLC0415
+    from app.kpi import scope as kscope  # noqa: PLC0415
+    from app.kpi import service as ksvc  # noqa: PLC0415
+    from app.services import dashboard  # noqa: PLC0415
+
+    p = system_principal(db)
+    q = KpiQuery(
+        project_ids=[project.id],
+        all_projects=False,
+        site_ids=[],
+        zone_ids=[],
+        zone_type=None,
+        engagement_ids=[],
+        include_subcontractors=True,
+        tiers=[],
+        period=PeriodPreset.month,
+        anchor=None,
+        start=None,
+        end=None,
+        as_of=None,
+        compare=[ComparisonKind.previous],
+    )
+    ksvc.dashboard(kscope.build(db, p, q), db)
+    dashboard.action_panel(db, p, q)
 
 
 def _sparkline_days(projects: list[Project], pid: uuid.UUID) -> list[date]:

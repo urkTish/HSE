@@ -640,6 +640,11 @@ class SourceRecord(ApiModel):
         description="API path of the record (e.g. /api/v1/incidents/{id}); null when the "
         "caller may not open it."
     )
+    recorded_not_counted: bool = Field(
+        default=False,
+        description="7a VA-13: incident rows only; true for a commuting vehicle incident "
+        '(badge "Recorded, not counted — commuting (OSHA)"). Always false for other rows.',
+    )
 
 
 class SourceRecordPage(Page[SourceRecord]):

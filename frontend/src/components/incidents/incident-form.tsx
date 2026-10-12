@@ -233,8 +233,8 @@ export function IncidentForm({ project, incident }: { project: Schemas["ProjectR
         ? await unwrap(api.PATCH("/api/v1/incidents/{incident_id}", { params: { path: { incident_id: incident.id } }, body }))
         : await unwrap(api.POST("/api/v1/projects/{project_id}/incidents", {
             params: { path: { project_id: project.id } },
-            // vehicle_involved has a server default; leaving it out lets VA-1 derive it (false would be refused when a signal holds).
-            body: body as Schemas["IncidentCreate"],
+            // vehicle_involved is optional on create; leaving it out lets VA-1 derive it (false would be refused when a signal holds).
+            body,
           }));
       draft.clear();
       warn(saved.warnings);

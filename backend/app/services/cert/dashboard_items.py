@@ -147,6 +147,7 @@ class _Ctx:
         self._worker_eng: dict[uuid.UUID, uuid.UUID | None] = {}
         self._workers_loaded = False
         self._item_eng: dict[uuid.UUID, tuple[uuid.UUID, bool]] | None = None
+        self._cert_item: dict[uuid.UUID, uuid.UUID] | None = None
 
     def ok(self, eng: uuid.UUID | None, sites: list[uuid.UUID] | None = None) -> bool:
         g = self.grant
@@ -190,11 +191,20 @@ class _Ctx:
                 prev = self._item_eng.get(d.equipment_id)
                 if prev is None or live or not prev[1]:
                     self._item_eng[d.equipment_id] = (d.engagement_id, live)
-        item_id = self.db.scalar(
-            select(EquipmentCertLine.equipment_id)
-            .where(EquipmentCertLine.certificate_id == cert.id)
-            .limit(1)
-        )
+        if self._cert_item is None:
+            # one query for every certificate's first line (was one query per certificate)
+            self._cert_item = {}
+            for cid, eid in self.db.execute(
+                select(EquipmentCertLine.certificate_id, EquipmentCertLine.equipment_id)
+                .join(
+                    EquipmentCertificate,
+                    EquipmentCertificate.id == EquipmentCertLine.certificate_id,
+                )
+                .where(EquipmentCertificate.project_id == self.project.id)
+                .order_by(EquipmentCertLine.certificate_id, EquipmentCertLine.equipment_id)
+            ):
+                self._cert_item.setdefault(cid, eid)
+        item_id = self._cert_item.get(cert.id)
         hit = self._item_eng.get(item_id) if item_id else None
         return hit[0] if hit else None
 

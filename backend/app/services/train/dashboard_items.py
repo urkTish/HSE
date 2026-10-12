@@ -128,7 +128,7 @@ class _Ctx:
         scope = p.projects.get(project.id)
         self.counts_only = bool(scope and scope.read_only and not p.is_manager)
         self.refs = Refs(db)
-        self._mob: dict[uuid.UUID, Deployment] | None = None
+        self._mob: dict[uuid.UUID, Any] | None = None
 
     def ok(self, eng: uuid.UUID | None, sites: list[uuid.UUID] | None = None) -> bool:
         g = self.grant
@@ -138,12 +138,15 @@ class _Ctx:
             return False
         return g.site_ids is None or sites is None or bool(set(sites) & set(g.site_ids))
 
-    def mobilised(self, worker_id: uuid.UUID) -> Deployment | None:
+    def mobilised(self, worker_id: uuid.UUID) -> Any:
+        """The holder's mobilised deployment (engagement_id, site_ids only), or None."""
         if self._mob is None:
             self._mob = {
                 d.worker_id: d
-                for d in self.db.scalars(
-                    select(Deployment).where(
+                for d in self.db.execute(
+                    select(
+                        Deployment.worker_id, Deployment.engagement_id, Deployment.site_ids
+                    ).where(
                         Deployment.project_id == self.project.id,
                         Deployment.status == DeploymentStatus.mobilised,
                     )
@@ -322,19 +325,24 @@ def action_items(
             return False
         return c.ok(eng)
 
+    # only the columns the counts read: the full rows (~15k on the seed) cost about a second
     recs = [
         r
-        for r in db.scalars(
-            select(TrainingRecord).where(
-                TrainingRecord.project_id == pid, TrainingRecord.status.in_(LIVE)
-            )
+        for r in db.execute(
+            select(
+                TrainingRecord.engagement_id,
+                TrainingRecord.status,
+                TrainingRecord.submitted_at,
+                TrainingRecord.verification_status,
+                TrainingRecord.verification_due_on,
+            ).where(TrainingRecord.project_id == pid, TrainingRecord.status.in_(LIVE))
         )
         if ok(r.engagement_id)
     ]
     rlink = f"{base}/training-records"
     at = now()
 
-    def counted(pred: Callable[[TrainingRecord], bool]) -> Counter[uuid.UUID | None]:
+    def counted(pred: Callable[[Any], bool]) -> Counter[uuid.UUID | None]:
         return Counter(r.engagement_id for r in recs if pred(r))
 
     review = counted(

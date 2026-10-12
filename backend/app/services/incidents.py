@@ -816,10 +816,13 @@ def create(db: Session, p: Principal, project_id: uuid.UUID, body: IncidentCreat
         incident_types=[],
         airside_flags=[],
         alerts_sent=[],
+        vehicle_involved=False,
     )
     _apply_fields(db, project, inc, data)
     _validate_shape(db, project, inc)
     vdata = {k: data[k] for k in veh.INCIDENT_FIELDS if k in body.model_fields_set}
+    if vdata.get("vehicle_involved", False) is None:
+        del vdata["vehicle_involved"]  # null = omitted: VA-1 derives it
     vwarn = veh.apply_incident(db, inc, vdata, [])
     db.add(inc)
     db.flush()

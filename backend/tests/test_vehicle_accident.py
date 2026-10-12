@@ -209,6 +209,8 @@ class TestSection:
     def test_ac1_signal_locks(self, db: Session) -> None:
         inc = _create(db, incident_types=["injury_illness"], primary_type="injury_illness")
         assert inc.vehicle_involved is False
+        # vehicle_involved is optional on create: null is the same as leaving it out
+        assert _create(db, vehicle_involved=None).vehicle_involved is False
         _case(db, inc.id)
         read = inc_svc.read(db, P(db, "noura.qahtani"), inc.id)
         assert read.vehicle_involved is True
@@ -652,6 +654,13 @@ class TestSeed:
             chips["recorded_not_counted"],
         ) == (3, 1, 1, 2)
         assert k137.numerator == 2 and k137.value is not None and k137.value > 0
+        # drill-down rows carry the VA-13 flag (0212 and 0215 are the commuting incidents)
+        from app.kpi import service as ksvc
+
+        src = ksvc.source_records(db, s, M.K136, "numerator", 1, 50)
+        flagged = {r.id for r in src.items if r.recorded_not_counted}
+        assert len(src.items) == 5
+        assert flagged == {_by_title(db, "0212").id, _by_title(db, "0215").id}
         # AC27: scope follows the caller's grant. RAWABI's tree holds GULFPAVE and NAJD as
         # subcontractors in the seed, so Ahmed sees all five; Omar (S-AIR only) sees 0209 only.
         ahmed = sc("ahmed.zahrani")
