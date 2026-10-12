@@ -30,6 +30,7 @@ import { FilterBar } from "./filter-bar";
 import { HeadlineValue, KpiTile } from "./kpi-tile";
 import { ActionPanel, ExpiringItems, InsightsPanel, LeagueTable, Panel, SafetyPyramid } from "./panels";
 import { C41_METRIC, VehicleTileChips } from "./vehicle-tile";
+import { SiteVehicleTiles } from "./site-vehicle-tiles";
 
 type Show = (v: string | number | null | undefined) => string;
 
@@ -180,6 +181,7 @@ function DashboardBody({ query, projectId }: { query: KpiQuery; projectId: strin
               ))}
             </div>
           </section>
+          {filters.allProjects ? null : <SiteVehicleTiles query={query} projectId={projectId} show={show} />}
           <Charts query={query} projectId={projectId} show={show} />
           {can(me, "access_kpi.view", projectId) ? <AccessCharts query={query} projectId={projectId} show={show} /> : null}
           {can(me, "ptw_kpi.view", projectId) ? <PtwCharts query={query} projectId={projectId} show={show} /> : null}

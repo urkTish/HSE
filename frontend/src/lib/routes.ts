@@ -10,6 +10,7 @@ export function entityRoute(type: Schemas["EntityType"] | string | null | undefi
     if (type === "medical_settings") return "/medical-settings";
     if (type === "heat_settings" || type === "heat_regime_table") return "/heat-settings";
     if (type === "followup_settings") return "/followup-settings";
+    if (type === "site_vehicle_settings") return "/site-vehicles/settings";
     if (type === "scorecard_settings" || type === "scorecard_profile") return "/scorecard-settings";
     if (type === "project_settings" && projectId) return `/projects/${projectId}/settings`;
     if (type === "hse_settings" && projectId) return `/hse-settings?project=${projectId}`;
@@ -251,12 +252,26 @@ export function entityRoute(type: Schemas["EntityType"] | string | null | undefi
     case "export_job":
     case "export_subscription":
       return "/exports";
+    // Option 7b site vehicles (Prototype)
+    case "site_vehicle_settings":
+      return "/site-vehicles/settings";
+    case "driver_authorisation":
+      return `/site-vehicles/authorisations/${id}`;
+    case "vehicle_check":
+      return `/site-vehicles/checks/${id}`;
+    case "journey_plan":
+      return `/site-vehicles/journeys/${id}`;
     default:
       return null;
   }
 }
 
 const DETAIL: [RegExp, string][] = [
+  // Option 7b site vehicles (Prototype): expiring items and notifications point at these.
+  [/^\/api\/v1\/site-vehicles\/([0-9a-f-]{36})$/, "/site-vehicles/$1"],
+  [/^\/api\/v1\/driver-authorisations\/([0-9a-f-]{36})$/, "/site-vehicles/authorisations/$1"],
+  [/^\/api\/v1\/pre-use-checks\/([0-9a-f-]{36})$/, "/site-vehicles/checks/$1"],
+  [/^\/api\/v1\/journey-plans\/([0-9a-f-]{36})$/, "/site-vehicles/journeys/$1"],
   [/^\/api\/v1\/incidents\/([0-9a-f-]{36})(?:\/investigation)?$/, "/incidents/$1"],
   [/^\/api\/v1\/injury-cases\/([0-9a-f-]{36})$/, "/injury-cases/$1"],
   [/^\/api\/v1\/observations\/([0-9a-f-]{36})$/, "/observations/$1"],
@@ -402,6 +417,10 @@ const LISTS: [RegExp, string][] = [
   [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/fitness-holds$/, "/fitness-holds"],
   [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/fitness-referrals$/, "/fitness-referrals"],
   [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/medical-imports$/, "/medical-imports"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/site-vehicles$/, "/site-vehicles"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/driver-authorisations$/, "/site-vehicles/authorisations"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/pre-use-checks$/, "/site-vehicles/checks"],
+  [/^\/api\/v1\/projects\/([0-9a-f-]{36})\/journey-plans$/, "/site-vehicles/journeys"],
 ];
 
 /** Map an action-panel `ListLink` to the UI list with the same filters in the URL. */

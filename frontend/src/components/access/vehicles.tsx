@@ -38,6 +38,7 @@ import { useSearchState } from "@/lib/url-state";
 import { AccessPrintHeader, AirportOnly, BiLabel, Code, DaysLeft, Plate, QrImage, StepDialog, SubNav, ValidityBadge, ValidityLine } from "./common";
 import { CredentialPanel } from "./credential-actions";
 import { RecordActions } from "@/components/common/record-actions";
+import { PrototypeBadge, ReadinessBadge, useSvLabels } from "@/components/site-vehicles/common";
 
 const PAGE_SIZE = 50;
 type Vehicle = Schemas["VehicleRead"];
@@ -85,6 +86,9 @@ function VehicleList({ project }: { project: Schemas["ProjectRead"] }) {
     page_size: PAGE_SIZE,
   });
   const items = query.data?.items ?? [];
+  const tsv = useTranslations("sv.vehicle");
+  // Option 7b (Prototype): site fields show once any vehicle of the page is used on site.
+  const siteUse = items.some((v) => v.site_scope && v.site_scope !== "airside_only");
   return (
     <div>
       <PageHeader
@@ -133,12 +137,13 @@ function VehicleList({ project }: { project: Schemas["ProjectRead"] }) {
                 <TH>{tc("contractor")}</TH>
                 <TH>{t("fields.max_working_height_m_agl")}</TH>
                 <TH>{t("documents")}</TH>
+                {siteUse ? <TH>{tsv("siteUse")}</TH> : null}
                 <TH>{tc("status")}</TH>
               </TR>
             </THead>
             <TBody>
               {items.map((v) => (
-                <TR key={v.id} data-testid="vehicle-row">
+                <TR key={v.id} data-testid="vehicle-row" data-site-scope={v.site_scope ?? "airside_only"}>
                   <TD label={t("fields.vehicle_no")}>
                     <Link href={`/vehicles/${v.id}`} className="ltr font-medium text-primary hover:underline">
                       {v.vehicle_no}
@@ -157,6 +162,11 @@ function VehicleList({ project }: { project: Schemas["ProjectRead"] }) {
                     {v.documents_valid ? <StatusBadge status="valid" label={t("docsValid")} /> : <StatusBadge status="expired" label={t("docsExpired")} />}
                     {v.earliest_document_expiry ? <span className="block text-xs text-muted-foreground">{date(v.earliest_document_expiry)}</span> : null}
                   </TD>
+                  {siteUse ? (
+                    <TD label={tsv("siteUse")}>
+                      <SiteUseCell v={v} />
+                    </TD>
+                  ) : null}
                   <TD label={tc("status")}>
                     <StatusBadge status={v.status} label={te(`vehicleStatus.${v.status}`)} />
                   </TD>
@@ -170,6 +180,49 @@ function VehicleList({ project }: { project: Schemas["ProjectRead"] }) {
         <EmptyState />
       )}
     </div>
+  );
+}
+
+/* ───────────── Option 7b site use (Prototype): read-only here, edited on the site vehicle page ───────────── */
+
+function SiteUseCell({ v }: { v: Vehicle }) {
+  const l = useSvLabels();
+  if (!v.site_scope || v.site_scope === "airside_only") return <span className="text-xs text-muted-foreground">{l.scope("airside_only")}</span>;
+  return (
+    <span className="flex flex-col items-start gap-1" data-testid="vehicle-site-use">
+      <span className="text-xs">
+        {l.scope(v.site_scope)} · {l.useClass(v.use_class)}
+      </span>
+      {v.readiness ? <ReadinessBadge readiness={v.readiness} /> : null}
+    </span>
+  );
+}
+
+function SiteUseCard({ v }: { v: Vehicle }) {
+  const t = useTranslations("sv.vehicle");
+  const l = useSvLabels();
+  const me = useMeData();
+  return (
+    <Card data-testid="vehicle-site-card">
+      <CardHeader className="flex flex-row flex-wrap items-center gap-2">
+        <CardTitle className="text-base">{t("siteUse")}</CardTitle>
+        <PrototypeBadge compact />
+      </CardHeader>
+      <CardContent>
+        <FieldList>
+          <FieldItem label={t("scope")}>{l.scope(v.site_scope)}</FieldItem>
+          <FieldItem label={t("useClass")}>{l.useClass(v.use_class)}</FieldItem>
+          <FieldItem label={t("readiness")}>{v.readiness ? <ReadinessBadge readiness={v.readiness} /> : "—"}</FieldItem>
+          {can(me, "site_vehicle.view", v.project_id) ? (
+            <FieldItem label={t("siteVehiclePage")}>
+              <Link href={`/site-vehicles/${v.id}`} className="text-primary hover:underline" data-testid="vehicle-site-link">
+                {t("openSiteVehicle")}
+              </Link>
+            </FieldItem>
+          ) : null}
+        </FieldList>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -515,6 +568,7 @@ export function VehicleDetail({ id }: { id: string }) {
           </FieldList>
         </CardContent>
       </Card>
+      {v.site_scope && v.site_scope !== "airside_only" ? <SiteUseCard v={v} /> : null}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">{t("avps")}</CardTitle>

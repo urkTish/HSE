@@ -85,14 +85,17 @@ import {
   Lightbulb,
   MailCheck,
   Repeat2,
+  Bus,
 } from "lucide-react";
-import type { ComponentType, SVGProps } from "react";
+import type { ComponentType, ReactNode, SVGProps } from "react";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import { can, type Capability } from "@/lib/permissions";
 import { useCurrentProject } from "@/lib/current-project";
 import { useMeData } from "@/components/shell/me-context";
+import { PrototypeBadge } from "@/components/site-vehicles/common";
+import { useSvSettings } from "@/lib/api/site-vehicles";
 
 interface Item {
   href: string;
@@ -100,6 +103,7 @@ interface Item {
   Icon: ComponentType<SVGProps<SVGSVGElement>>;
   exact?: boolean;
   testId: string;
+  badge?: ReactNode;
 }
 
 function NavLink({ item, onNavigate }: { item: Item; onNavigate?: () => void }) {
@@ -121,6 +125,7 @@ function NavLink({ item, onNavigate }: { item: Item; onNavigate?: () => void }) 
       {/* Icons are not directional, so they are not mirrored in RTL. */}
       <item.Icon aria-hidden className={cn("size-5 shrink-0", active ? "text-sidebar-indicator" : "text-sidebar-muted")} />
       <span className="truncate">{item.label}</span>
+      {item.badge ? <span className="ms-auto shrink-0">{item.badge}</span> : null}
     </Link>
   );
 }
@@ -207,6 +212,12 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
         ...(ac("access_settings.edit") ? [{ href: "/access-settings", label: t("accessSettings"), Icon: Plane, testId: "nav-access-settings" }] : []),
       ]
     : [];
+
+  // Option 7b site vehicles (233–237, Prototype): shown once 7b is switched on, or to the HSE Manager who switches it on.
+  const svAny = ac("site_vehicle.view", "site_vehicle.manage", "driver_auth.manage", "pre_use.record", "site_vehicle.settings");
+  const svSettings = useSvSettings(pid ?? "", { enabled: Boolean(pid) && svAny });
+  if (pid && svAny && (svSettings.data?.live || ac("site_vehicle.settings")))
+    accessItems.push({ href: "/site-vehicles", label: t("siteVehicles"), Icon: Bus, testId: "nav-site-vehicles", badge: <PrototypeBadge compact /> });
 
   const ptwView = ac("permit.view");
   const ptwItems: Item[] = pid

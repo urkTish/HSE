@@ -2131,6 +2131,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/kpi/site-vehicles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Site vehicle & plant readiness KPIs K-138…K-140 (7b §6.4, prototype)
+         * @description Common filters (all /kpi endpoints): `project_id` (repeatable) or `all_projects`, `site_id`, `zone_id`, `zone_type`, `engagement_id` (+ `include_subcontractors`, default true), `tier`, `period` (+ `anchor` or `start`/`end` for custom), `as_of`, `compare`. Role scope is applied first (D-3): a narrower scope is reported in `context.filters.scope_narrowed`. Capability 38. Capability 233 (the Viewer / Client included: aggregates only, SK-2). Only projects with site_vehicles_from set count. Contractor filter = the engagement operating the vehicle or (K-139) employing the driver (SK-1). K-140 for a rest day is "—".
+         */
+        get: operations["get_site_vehicle_kpis"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/dashboard/action-panel": {
         parameters: {
             query?: never;
@@ -13094,6 +13114,406 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/{project_id}/site-vehicle-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 7b settings (§3.5; capability 233 or 237) */
+        get: operations["get_site_vehicle_settings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update 7b settings (capability 237, HSE Manager; SETTING_OUT_OF_RANGE)
+         * @description Setting site_vehicles_from switches 7b on (and adds the Phase 5 courses DEF-DRV and BUS-DRV when missing); null switches it off.
+         */
+        patch: operations["update_site_vehicle_settings"];
+        trace?: never;
+    };
+    "/api/v1/site-vehicles/reference": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 7b reference lists SU, DG and EN/AR labels of states and warnings (§3.6) */
+        get: operations["get_site_vehicle_reference"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/site-vehicles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Site vehicles & plant with readiness (capability 233; not Viewer)
+         * @description Readiness is derived for today (§4.1). Contractor HSE Reps list their own engagement's vehicles (SV-4). 422 SITE_VEHICLES_NOT_LIVE while site_vehicles_from is null.
+         */
+        get: operations["list_site_vehicles"];
+        put?: never;
+        /**
+         * Register a site vehicle or plant (capability 234; reps: own engagement)
+         * @description Creates the Phase 2 vehicle with the 7b fields (BD7b-1). 422 OPERATING_CARD_REQUIRED; Phase 2 duplicate plate / VIN → 409 DUPLICATE_VALUE. 422 SITE_VEHICLES_NOT_LIVE while site_vehicles_from is null.
+         */
+        post: operations["create_site_vehicle"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/site-vehicles/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Site vehicle aggregates for today (capability 233, Viewer included) */
+        get: operations["site_vehicle_summary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/site-vehicles/{vehicle_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A site vehicle with readiness, documents, Phase 4 link and today's check */
+        get: operations["get_site_vehicle"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Edit 7b fields / documents, or enrol a Phase 2 vehicle (capability 234)
+         * @description Changing a document date clears the verification (SV-4). 7b never edits Phase 4 status (SV-3). 422 SITE_VEHICLES_NOT_LIVE while site_vehicles_from is null.
+         */
+        patch: operations["update_site_vehicle"];
+        trace?: never;
+    };
+    "/api/v1/site-vehicles/{vehicle_id}/verify-documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Verify the document scans (capability 234; HSE Officer / Manager, not reps) */
+        post: operations["verify_site_vehicle_documents"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/site-vehicles/{vehicle_id}/clear-hold": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Clear the defect hold (capability 234; repair note + passing check, PU-3)
+         * @description 409 VEHICLE_DEFECT_HOLD without a passing check completed after the hold.
+         */
+        post: operations["clear_site_vehicle_hold"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/site-vehicles/{vehicle_id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Withdraw a site vehicle (capability 234; Phase 2 status withdrawn) */
+        post: operations["withdraw_site_vehicle"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/driver-authorisations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Driver / operator authorisations (capability 233; not Viewer)
+         * @description Driver names follow capability 46 (WA-19); a Site engineer sees authorisation status only (`redacted`, P7b-1). 422 SITE_VEHICLES_NOT_LIVE while site_vehicles_from is null.
+         */
+        get: operations["list_driver_authorisations"];
+        put?: never;
+        /**
+         * Propose a driver / operator authorisation → Draft (capability 235; reps propose)
+         * @description One live authorisation per worker (409 DUPLICATE_VALUE). 422 LICENCE_CLASS_NOT_COVERING, ASSESSMENT_TOO_OLD. Hooks are evaluated at once (DA-2); warning HOOK_NOT_MET_WARN. 422 SITE_VEHICLES_NOT_LIVE while site_vehicles_from is null.
+         */
+        post: operations["create_driver_authorisation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/driver-authorisations/prefill": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Licence prefill from the worker's ADP (capability 235) */
+        get: operations["prefill_driver_authorisation"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/driver-authorisations/{auth_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A driver / operator authorisation
+         * @description Driver names follow capability 46 (WA-19); a Site engineer sees authorisation status only (`redacted`, P7b-1).
+         */
+        get: operations["get_driver_authorisation"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edit a Draft authorisation (capability 235) */
+        patch: operations["update_driver_authorisation"];
+        trace?: never;
+    };
+    "/api/v1/driver-authorisations/{auth_id}/transition": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Activate, suspend, reinstate or revoke (capability 235; not reps; §4.2)
+         * @description Activation re-checks DA-1 and the hooks: policy block → 422 HOOK_NOT_MET; warn → warning HOOK_NOT_MET_WARN. Suspend needs a reason ≥ 20 characters.
+         */
+        post: operations["transition_driver_authorisation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/pre-use-checks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Pre-use checks (capability 233; not Viewer)
+         * @description Driver names follow capability 46 (WA-19); a Site engineer sees authorisation status only (`redacted`, P7b-1). 422 SITE_VEHICLES_NOT_LIVE while site_vehicles_from is null.
+         */
+        get: operations["list_pre_use_checks"];
+        put?: never;
+        /**
+         * Record a pre-use check (capability 236; PU-1…PU-6)
+         * @description 6d answer rules apply. A failed critical item puts a vehicle without a Phase 4 link on defect hold with a finding and a CA (source site_vehicle); a Phase 4-linked item gets a Phase 4 Defect (source pre_use_check, category A). 422 PRE_USE_CHECK_EXISTS, DRIVER_NOT_AUTHORISED (policy block); warnings DRIVER_NOT_AUTHORISED_WARN, VEHICLE_DOCS_UNVERIFIED. 422 SITE_VEHICLES_NOT_LIVE while site_vehicles_from is null.
+         */
+        post: operations["create_pre_use_check"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/pre-use-checks/form": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Template and today's state for one vehicle (capability 236) */
+        get: operations["pre_use_check_form"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/pre-use-checks/missing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Required vehicles without a check for a day, per contractor (PU-1) */
+        get: operations["missing_pre_use_checks"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pre-use-checks/{check_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A pre-use check with findings, CA and Phase 4 defect links */
+        get: operations["get_pre_use_check"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/journey-plans/hint": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Is a journey plan recommended? (JM-1 hint only) */
+        post: operations["journey_plan_hint"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/journey-plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Journey plans (capability 233; not Viewer); `overdue` is a display flag */
+        get: operations["list_journey_plans"];
+        put?: never;
+        /**
+         * Create a journey plan (capability 236; JM-2)
+         * @description 409 VEHICLE_NOT_READY; 422 PASSENGERS_EXCEED_SEATS, JOURNEY_TIMES_INVALID, JOURNEY_CONTACT_IS_DRIVER, DRIVER_NOT_AUTHORISED (policy block); warnings DRIVER_NOT_AUTHORISED_WARN, JOURNEY_PLAN_RECOMMENDED. 422 SITE_VEHICLES_NOT_LIVE while site_vehicles_from is null.
+         */
+        post: operations["create_journey_plan"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/journey-plans/{plan_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A journey plan */
+        get: operations["get_journey_plan"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/journey-plans/{plan_id}/arrive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** "Mark arrived" (capability 236) */
+        post: operations["arrive_journey_plan"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/journey-plans/{plan_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel a Planned journey plan (capability 236) */
+        post: operations["cancel_journey_plan"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/privacy-notice": {
         parameters: {
             query?: never;
@@ -17383,7 +17803,7 @@ export interface components {
          * CaSourceType
          * @enum {string}
          */
-        CaSourceType: "incident" | "observation" | "inspection" | "ptw_audit" | "equipment_defect" | "heat_check" | "emergency" | "field_audit" | "environmental" | "lesson" | "scorecard" | "ai_recommendation" | "other";
+        CaSourceType: "incident" | "observation" | "inspection" | "ptw_audit" | "equipment_defect" | "heat_check" | "emergency" | "field_audit" | "environmental" | "lesson" | "scorecard" | "site_vehicle" | "ai_recommendation" | "other";
         /**
          * CaStatus
          * @enum {string}
@@ -17615,7 +18035,7 @@ export interface components {
          *     Rows with two capabilities (23, 32, 33, 41) are split into one value per action.
          * @enum {string}
          */
-        Capability: "project.manage" | "project.view" | "site_zone.manage" | "site_zone.view" | "contractor.create" | "contractor.approve" | "engagement.manage" | "contractor.view" | "contractor.view_contacts" | "user.invite" | "user.view_directory" | "user.view_contacts" | "user.manage_status" | "settings.edit" | "settings.view" | "audit_log.read" | "history.view" | "export.lists" | "profile.edit_own" | "workforce.edit" | "workforce.import" | "workforce.verify" | "workforce.lock" | "workforce.unlock" | "workforce.view" | "incident.report" | "incident.classify" | "investigation.edit" | "investigation.approve" | "injury.identity_view" | "injury.medical_view" | "incident.view" | "observation.create" | "observation.close" | "inspection.plan_manage" | "inspection.record" | "ca.create" | "ca.update_own" | "ca.verify" | "ca.approve_extension" | "dashboard.view" | "breakdown.sensitive_view" | "ai.ask" | "monthly_report.generate" | "monthly_report.review" | "monthly_report.publish" | "monthly_report.view" | "export.kpis" | "export.identity" | "hse_settings.edit" | "observer.identity_view" | "worker.view" | "worker.edit" | "worker.unmask_id" | "worker.ban" | "induction.course_manage" | "induction.record" | "induction.suspend_revoke" | "pass_application.create" | "pass_application.endorse" | "pass_application.process" | "background_check.view" | "credential.suspend_raise" | "credential.suspend_confirm" | "credential.custody" | "adp.apply" | "adp.issue" | "offence.record" | "vehicle.edit" | "avp.issue" | "wap.edit" | "wap.approve" | "wap.suspend" | "wap.close" | "notam.edit" | "notam.process" | "obstacle.edit" | "obstacle.decide" | "access_works.view" | "gate.check" | "gate.manage" | "gate_log.view" | "access_kpi.view" | "export.access" | "export.access_identity" | "access_settings.edit" | "zone_profile.edit" | "permit.view" | "permit.prepare" | "permit.receive" | "permit.area_review" | "permit.hse_review" | "permit.issue" | "permit.suspend" | "permit.cancel" | "gas_test.record" | "gas_detector.manage" | "isolation.manage" | "personal_lock.record" | "deisolation.authorise" | "lock_cut.approve" | "jsa_template.manage" | "simops.coordinate" | "ptw_zone_profile.edit" | "ptw_settings.edit" | "ptw_appointment.manage" | "ptw_audit.conduct" | "ptw_exemption.grant" | "ptw_kpi.view" | "export.ptw" | "cert_register.view" | "equipment.edit" | "cert.review" | "cert.verify" | "equipment.mobilise" | "defect.raise" | "defect.rectify" | "defect.close" | "scaffold.inspect" | "tpi.edit" | "cert.blacklist" | "cert.suspend" | "personnel_cert.view" | "personnel_cert.submit" | "personnel_cert.scan_view" | "cert.import" | "cert.check" | "cert_kpi.view" | "export.cert" | "cert_settings.edit" | "training_catalogue.view" | "training_course.edit" | "training_provider.edit" | "training_provider.decide" | "training_matrix.edit" | "training_profile.edit" | "trainer.authorise" | "training_session.manage" | "training.nominate" | "training_attendance.record" | "training_session.close" | "training_record.view" | "training_record.submit" | "training_record.review" | "training_scan.view" | "training_record.suspend" | "training.import" | "training.check" | "training_kpi.view" | "export.training" | "training_settings.edit" | "fitness_catalogue.view" | "fitness_code.edit" | "medical_provider.edit" | "medical_provider.decide" | "medical_plan.edit" | "health_profile.edit" | "fitness.record_clinic" | "fitness.submit_external" | "fitness.review" | "fitness.status_view" | "fitness.functional_view" | "fitness.clinical_view" | "fitness_referral.raise" | "fitness_hold.manage" | "fitness_scan.view" | "fitness.import" | "medical_kpi.view" | "export.medical" | "medical_settings.edit" | "fitness.subject_report" | "heat.view" | "heat_reading.record" | "heat_register.manage" | "heat_welfare.record" | "heat_patrol.record" | "heat_exemption.grant" | "heat_plan.manage" | "heat_log.view" | "heat_kpi.view" | "heat_settings.edit" | "export.heat" | "heat.void" | "emergency.view" | "erp.prepare" | "erp.approve" | "emergency_roster.manage" | "emergency_asset.manage" | "emergency_check.record" | "drill.plan" | "drill.run" | "drill.evaluate" | "emergency.declare" | "emergency.all_clear" | "emergency_kpi.view" | "emergency.void" | "field_library.view" | "field_library.author" | "field_library.publish" | "field_audit.conduct" | "field_audit.issue" | "stop_work.release" | "briefing_campaign.manage" | "toolbox.record" | "toolbox_names.view" | "field.view" | "field.void" | "env.view" | "env_aspect.manage" | "env_permit.manage" | "waste_area.manage" | "consignment.record" | "consignment.close" | "env_monitoring.manage" | "env_reading.record" | "env.review" | "spill.record" | "env_complaint.manage" | "env.settings" | "env.void" | "followup.view" | "followup.record" | "followup.approve" | "followup.settings" | "lesson.draft" | "lesson.publish" | "lesson.acknowledge" | "lesson_library.view" | "lesson.effectiveness" | "scorecard.view" | "scorecard.settings" | "scorecard.manage" | "scorecard.comment" | "scorecard.resolve" | "report_pack.prepare" | "report_pack.issue" | "report_pack.view" | "export_log.view";
+        Capability: "project.manage" | "project.view" | "site_zone.manage" | "site_zone.view" | "contractor.create" | "contractor.approve" | "engagement.manage" | "contractor.view" | "contractor.view_contacts" | "user.invite" | "user.view_directory" | "user.view_contacts" | "user.manage_status" | "settings.edit" | "settings.view" | "audit_log.read" | "history.view" | "export.lists" | "profile.edit_own" | "workforce.edit" | "workforce.import" | "workforce.verify" | "workforce.lock" | "workforce.unlock" | "workforce.view" | "incident.report" | "incident.classify" | "investigation.edit" | "investigation.approve" | "injury.identity_view" | "injury.medical_view" | "incident.view" | "observation.create" | "observation.close" | "inspection.plan_manage" | "inspection.record" | "ca.create" | "ca.update_own" | "ca.verify" | "ca.approve_extension" | "dashboard.view" | "breakdown.sensitive_view" | "ai.ask" | "monthly_report.generate" | "monthly_report.review" | "monthly_report.publish" | "monthly_report.view" | "export.kpis" | "export.identity" | "hse_settings.edit" | "observer.identity_view" | "worker.view" | "worker.edit" | "worker.unmask_id" | "worker.ban" | "induction.course_manage" | "induction.record" | "induction.suspend_revoke" | "pass_application.create" | "pass_application.endorse" | "pass_application.process" | "background_check.view" | "credential.suspend_raise" | "credential.suspend_confirm" | "credential.custody" | "adp.apply" | "adp.issue" | "offence.record" | "vehicle.edit" | "avp.issue" | "wap.edit" | "wap.approve" | "wap.suspend" | "wap.close" | "notam.edit" | "notam.process" | "obstacle.edit" | "obstacle.decide" | "access_works.view" | "gate.check" | "gate.manage" | "gate_log.view" | "access_kpi.view" | "export.access" | "export.access_identity" | "access_settings.edit" | "zone_profile.edit" | "permit.view" | "permit.prepare" | "permit.receive" | "permit.area_review" | "permit.hse_review" | "permit.issue" | "permit.suspend" | "permit.cancel" | "gas_test.record" | "gas_detector.manage" | "isolation.manage" | "personal_lock.record" | "deisolation.authorise" | "lock_cut.approve" | "jsa_template.manage" | "simops.coordinate" | "ptw_zone_profile.edit" | "ptw_settings.edit" | "ptw_appointment.manage" | "ptw_audit.conduct" | "ptw_exemption.grant" | "ptw_kpi.view" | "export.ptw" | "cert_register.view" | "equipment.edit" | "cert.review" | "cert.verify" | "equipment.mobilise" | "defect.raise" | "defect.rectify" | "defect.close" | "scaffold.inspect" | "tpi.edit" | "cert.blacklist" | "cert.suspend" | "personnel_cert.view" | "personnel_cert.submit" | "personnel_cert.scan_view" | "cert.import" | "cert.check" | "cert_kpi.view" | "export.cert" | "cert_settings.edit" | "training_catalogue.view" | "training_course.edit" | "training_provider.edit" | "training_provider.decide" | "training_matrix.edit" | "training_profile.edit" | "trainer.authorise" | "training_session.manage" | "training.nominate" | "training_attendance.record" | "training_session.close" | "training_record.view" | "training_record.submit" | "training_record.review" | "training_scan.view" | "training_record.suspend" | "training.import" | "training.check" | "training_kpi.view" | "export.training" | "training_settings.edit" | "fitness_catalogue.view" | "fitness_code.edit" | "medical_provider.edit" | "medical_provider.decide" | "medical_plan.edit" | "health_profile.edit" | "fitness.record_clinic" | "fitness.submit_external" | "fitness.review" | "fitness.status_view" | "fitness.functional_view" | "fitness.clinical_view" | "fitness_referral.raise" | "fitness_hold.manage" | "fitness_scan.view" | "fitness.import" | "medical_kpi.view" | "export.medical" | "medical_settings.edit" | "fitness.subject_report" | "heat.view" | "heat_reading.record" | "heat_register.manage" | "heat_welfare.record" | "heat_patrol.record" | "heat_exemption.grant" | "heat_plan.manage" | "heat_log.view" | "heat_kpi.view" | "heat_settings.edit" | "export.heat" | "heat.void" | "emergency.view" | "erp.prepare" | "erp.approve" | "emergency_roster.manage" | "emergency_asset.manage" | "emergency_check.record" | "drill.plan" | "drill.run" | "drill.evaluate" | "emergency.declare" | "emergency.all_clear" | "emergency_kpi.view" | "emergency.void" | "field_library.view" | "field_library.author" | "field_library.publish" | "field_audit.conduct" | "field_audit.issue" | "stop_work.release" | "briefing_campaign.manage" | "toolbox.record" | "toolbox_names.view" | "field.view" | "field.void" | "env.view" | "env_aspect.manage" | "env_permit.manage" | "waste_area.manage" | "consignment.record" | "consignment.close" | "env_monitoring.manage" | "env_reading.record" | "env.review" | "spill.record" | "env_complaint.manage" | "env.settings" | "env.void" | "followup.view" | "followup.record" | "followup.approve" | "followup.settings" | "lesson.draft" | "lesson.publish" | "lesson.acknowledge" | "lesson_library.view" | "lesson.effectiveness" | "scorecard.view" | "scorecard.settings" | "scorecard.manage" | "scorecard.comment" | "scorecard.resolve" | "report_pack.prepare" | "report_pack.issue" | "report_pack.view" | "export_log.view" | "site_vehicle.view" | "site_vehicle.manage" | "driver_auth.manage" | "pre_use.record" | "site_vehicle.settings";
         /** CapabilityGrant */
         CapabilityGrant: {
             capability: components["schemas"]["Capability"];
@@ -22946,7 +23366,7 @@ export interface components {
          * @description Entity types referenced by audit entries and change history.
          * @enum {string}
          */
-        EntityType: "project" | "site" | "zone" | "contractor" | "project_engagement" | "user" | "role_assignment" | "project_settings" | "audit_log" | "workforce_return" | "workforce_import_batch" | "workforce_month" | "incident" | "injury_case" | "investigation" | "observation" | "inspection_plan" | "inspection" | "corrective_action" | "hse_meeting" | "hse_settings" | "reference_list_item" | "attachment" | "ai_answer" | "monthly_report" | "kpi" | "worker" | "worker_deployment" | "induction_course" | "induction_record" | "zone_access_profile" | "airport_pass_category" | "airport_pass_area" | "pass_application" | "airport_pass" | "adp" | "airside_offence" | "vehicle" | "avp" | "notam_request" | "obstacle_clearance" | "wap" | "ops_event" | "credential_event" | "gate" | "gate_device" | "gate_log" | "access_settings" | "permit" | "permit_shift" | "permit_handover" | "permit_suspension" | "permit_exemption" | "permit_type_config" | "zone_ptw_profile" | "zone_adjacency" | "ptw_appointment" | "jsa" | "gas_detector" | "bump_test" | "gas_test" | "isolation_certificate" | "lock" | "personal_lock_event" | "simops_rule" | "simops_conflict" | "simops_coordination" | "ptw_audit" | "ptw_settings" | "tpi" | "tpi_accreditation" | "tpi_client_approval" | "equipment_item" | "equipment_deployment" | "equipment_certificate" | "configuration_event" | "scaffold" | "scaffold_inspection" | "personnel_certificate" | "cert_verification" | "equipment_defect" | "certification_ban" | "hook_policy_state" | "cert_import_batch" | "cert_settings" | "cert_type" | "training_course" | "training_provider" | "training_provider_accreditation" | "trainer_authorisation" | "training_matrix_line" | "training_profile" | "training_exemption" | "training_session" | "training_nomination" | "training_record" | "training_verification" | "training_import_batch" | "training_settings" | "training_retraining_note" | "fitness_code" | "medical_provider" | "medical_examiner" | "medical_plan_line" | "health_profile" | "fitness_assessment" | "fitness_verification" | "fitness_hold" | "fitness_referral" | "medical_import_batch" | "medical_settings" | "heat_instrument" | "monitoring_point" | "wbgt_reading" | "heat_regime_table" | "acclimatisation_plan" | "rest_station" | "heat_welfare_check" | "ban_patrol" | "ban_exemption" | "heat_illness_entry" | "heat_season_report" | "heat_settings" | "erp" | "assembly_point" | "emergency_contact" | "zone_emergency_profile" | "emergency_roster" | "rescue_team" | "emergency_asset" | "emergency_asset_check" | "emergency_drill" | "emergency_muster" | "emergency_event" | "emergency_settings" | "muster_device" | "checklist_template" | "toolbox_topic" | "checklist_response" | "field_finding" | "stop_work_order" | "field_audit" | "toolbox_talk" | "briefing_campaign" | "field_settings" | "env_settings" | "env_aspect" | "env_provider" | "env_permit" | "waste_stream" | "waste_storage_area" | "waste_consignment" | "env_instrument" | "env_point" | "env_reading" | "background_declaration" | "env_exceedance" | "spill" | "water_entry" | "discharge_day" | "env_complaint" | "env_monitor_device" | "followup_settings" | "followup_rule" | "followup_requirement" | "followup_pack" | "followup_submission" | "lesson" | "lesson_distribution" | "lesson_link" | "lesson_effectiveness" | "scorecard_profile" | "scorecard_settings" | "scorecard" | "scorecard_remark" | "watch_list_entry" | "report_pack" | "distribution_list" | "export_job" | "export_subscription" | "incident_vehicle";
+        EntityType: "project" | "site" | "zone" | "contractor" | "project_engagement" | "user" | "role_assignment" | "project_settings" | "audit_log" | "workforce_return" | "workforce_import_batch" | "workforce_month" | "incident" | "injury_case" | "investigation" | "observation" | "inspection_plan" | "inspection" | "corrective_action" | "hse_meeting" | "hse_settings" | "reference_list_item" | "attachment" | "ai_answer" | "monthly_report" | "kpi" | "worker" | "worker_deployment" | "induction_course" | "induction_record" | "zone_access_profile" | "airport_pass_category" | "airport_pass_area" | "pass_application" | "airport_pass" | "adp" | "airside_offence" | "vehicle" | "avp" | "notam_request" | "obstacle_clearance" | "wap" | "ops_event" | "credential_event" | "gate" | "gate_device" | "gate_log" | "access_settings" | "permit" | "permit_shift" | "permit_handover" | "permit_suspension" | "permit_exemption" | "permit_type_config" | "zone_ptw_profile" | "zone_adjacency" | "ptw_appointment" | "jsa" | "gas_detector" | "bump_test" | "gas_test" | "isolation_certificate" | "lock" | "personal_lock_event" | "simops_rule" | "simops_conflict" | "simops_coordination" | "ptw_audit" | "ptw_settings" | "tpi" | "tpi_accreditation" | "tpi_client_approval" | "equipment_item" | "equipment_deployment" | "equipment_certificate" | "configuration_event" | "scaffold" | "scaffold_inspection" | "personnel_certificate" | "cert_verification" | "equipment_defect" | "certification_ban" | "hook_policy_state" | "cert_import_batch" | "cert_settings" | "cert_type" | "training_course" | "training_provider" | "training_provider_accreditation" | "trainer_authorisation" | "training_matrix_line" | "training_profile" | "training_exemption" | "training_session" | "training_nomination" | "training_record" | "training_verification" | "training_import_batch" | "training_settings" | "training_retraining_note" | "fitness_code" | "medical_provider" | "medical_examiner" | "medical_plan_line" | "health_profile" | "fitness_assessment" | "fitness_verification" | "fitness_hold" | "fitness_referral" | "medical_import_batch" | "medical_settings" | "heat_instrument" | "monitoring_point" | "wbgt_reading" | "heat_regime_table" | "acclimatisation_plan" | "rest_station" | "heat_welfare_check" | "ban_patrol" | "ban_exemption" | "heat_illness_entry" | "heat_season_report" | "heat_settings" | "erp" | "assembly_point" | "emergency_contact" | "zone_emergency_profile" | "emergency_roster" | "rescue_team" | "emergency_asset" | "emergency_asset_check" | "emergency_drill" | "emergency_muster" | "emergency_event" | "emergency_settings" | "muster_device" | "checklist_template" | "toolbox_topic" | "checklist_response" | "field_finding" | "stop_work_order" | "field_audit" | "toolbox_talk" | "briefing_campaign" | "field_settings" | "env_settings" | "env_aspect" | "env_provider" | "env_permit" | "waste_stream" | "waste_storage_area" | "waste_consignment" | "env_instrument" | "env_point" | "env_reading" | "background_declaration" | "env_exceedance" | "spill" | "water_entry" | "discharge_day" | "env_complaint" | "env_monitor_device" | "followup_settings" | "followup_rule" | "followup_requirement" | "followup_pack" | "followup_submission" | "lesson" | "lesson_distribution" | "lesson_link" | "lesson_effectiveness" | "scorecard_profile" | "scorecard_settings" | "scorecard" | "scorecard_remark" | "watch_list_entry" | "report_pack" | "distribution_list" | "export_job" | "export_subscription" | "incident_vehicle" | "site_vehicle_settings" | "driver_authorisation" | "vehicle_check" | "journey_plan";
         /**
          * EntryDirection
          * @enum {string}
@@ -25058,7 +25478,7 @@ export interface components {
          * @description Machine-readable error codes. Stable: the frontend translates these.
          * @enum {string}
          */
-        ErrorCode: "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "ACCOUNT_LOCKED" | "SESSION_EXPIRED" | "PRIVACY_ACK_REQUIRED" | "PRIVACY_NOTICE_VERSION_MISMATCH" | "INVITE_INVALID" | "INVITE_EXPIRED" | "RESET_TOKEN_INVALID" | "WEAK_PASSWORD" | "CURRENT_PASSWORD_INCORRECT" | "FORBIDDEN" | "READ_ONLY_ROLE" | "CONTRACTOR_SUSPENDED" | "SELF_MODIFICATION_FORBIDDEN" | "ROLE_NOT_ASSIGNABLE" | "NOT_FOUND" | "VALIDATION_ERROR" | "DUPLICATE_VALUE" | "INVALID_TRANSITION" | "TRANSITION_CONDITION_NOT_MET" | "PROJECT_CLOSED" | "SITE_INACTIVE" | "ZONE_ARCHIVED" | "CONTRACTOR_NOT_APPROVED" | "LAST_HSE_MANAGER" | "SOD_CONFLICT" | "DUPLICATE_RETURN" | "PERIOD_LOCKED" | "VERIFIER_IS_CREATOR" | "OUTSIDE_MOBILISATION" | "IMPORT_FILE_INVALID" | "IMPORT_HAS_ERRORS" | "IMPORT_EXPIRED" | "IMPORT_NOT_VALIDATED" | "NEAR_MISS_EXCLUSIVE" | "INJURY_CASE_REQUIRED" | "INVESTIGATION_LEVEL_TOO_LOW" | "INVESTIGATION_INCOMPLETE" | "INVESTIGATION_LEAD_NOT_ALLOWED" | "INVESTIGATION_TEAM_INCOMPLETE" | "APPROVER_IS_LEAD" | "CASES_NOT_CONFIRMED" | "HIGHER_CONTROL_REQUIRED" | "JUSTIFICATION_REQUIRED" | "POSSIBLE_ID_NUMBER" | "SAFE_OBSERVATION_IMMUTABLE" | "FINDING_CA_REQUIRED" | "VERIFIER_IS_OWNER" | "VERIFIER_ROLE_NOT_ALLOWED" | "EVIDENCE_REQUIRED" | "EXTENSION_LIMIT_REACHED" | "DUE_DATE_TOO_LATE" | "RESTRICTED_DIMENSION" | "MIXED_PROJECT_SCOPE" | "EXPORT_PURPOSE_REQUIRED" | "FILE_TOO_LARGE" | "FILE_TYPE_NOT_ALLOWED" | "SIGNED_URL_INVALID" | "AI_DISABLED" | "AI_TRANSFER_APPROVAL_REQUIRED" | "AI_UNAVAILABLE" | "AI_RATE_LIMITED" | "GATE_DEVICE_FORBIDDEN" | "GATE_DEVICE_REVOKED" | "GATE_RATE_LIMITED" | "PAIRING_NOT_FOUND" | "WORKER_EXISTS" | "WORKER_EXISTS_OUT_OF_SCOPE" | "ADULT_ATTESTATION_REQUIRED" | "DEPLOYMENT_EXISTS" | "WORKER_BANNED" | "PHOTO_REQUIRED" | "DELIVERER_NOT_ALLOWED" | "INDUCTION_PREREQUISITE" | "INDUCTION_ATTEMPTS_EXCEEDED" | "INDUCTION_TOO_SHORT" | "INDUCTION_EDIT_LOCKED" | "PROFILE_LOOSENING" | "HOOK_PROVIDER_MISSING" | "NOT_AIRPORT_PROJECT" | "APPLICATION_OPEN" | "ID_EXPIRES_SOON" | "ID_EXPIRED" | "VALIDITY_EXCEEDS_LIMIT" | "BACKGROUND_NOT_CLEARED" | "ENDORSER_NOT_ALLOWED" | "PREREQUISITES_NOT_MET" | "AREA_NOT_REQUESTED" | "ADP_PASS_REQUIRED" | "ADP_EXISTS" | "LICENCE_NOT_VALID" | "RTF_REQUIRED" | "TESTS_NOT_VALID" | "SUSPENSION_PERIOD_RUNNING" | "AVP_PRECONDITION" | "AVP_EXISTS" | "LATE_JUSTIFICATION_REQUIRED" | "OB_CONDITIONS_REQUIRED" | "CLEARANCE_NOT_LINKABLE" | "WAP_DURATION_EXCEEDED" | "WSP_REQUIRED" | "WAP_BLOCKED" | "CREW_INVALID" | "FOD_HANDBACK_REQUIRED" | "OPS_ZONES_LOCKED" | "SYSTEM_SUSPENSION" | "CREDENTIAL_TERMINAL" | "REAUTH_REQUIRED" | "COSIGNER_INVALID" | "CONTRACTOR_BLACKLISTED" | "MIXED_SIDE_ZONES" | "ZONES_NOT_SAME_SITE" | "RECEIVER_LIMIT" | "CREW_NOT_IN_TREE" | "DURATION_EXCEEDS_LIMIT" | "BACKDATED_PERMIT" | "PERMIT_READ_ONLY" | "KEY_ROLE_BUSY" | "APPOINTMENT_INVALID" | "ISSUER_APPOINTMENT_MANAGER_ONLY" | "JSA_MISSING" | "JSA_NOT_APPROVED" | "JSA_TYPE_MISMATCH" | "JSA_MANDATORY_HAZARD_MISSING" | "JSA_RESIDUAL_EXTREME" | "JSA_FROZEN" | "RESIDUAL_ACCEPTANCE_MISSING" | "RESIDUAL_ABOVE_INITIAL" | "PPE_ONLY_CONTROLS" | "TEMPLATE_REVIEW_DUE" | "HSE_REVIEW_MISSING" | "DOCUMENT_MISSING" | "CHECKLIST_INCOMPLETE" | "ROLE_MISSING" | "KEY_ROLE_INELIGIBLE" | "NO_ELIGIBLE_CREW" | "HOOK_NOT_MET" | "GAS_TEST_REQUIRED" | "GAS_TEST_FAILED" | "GAS_TEST_EXPIRED" | "DETECTOR_CALIBRATION_OVERDUE" | "DETECTOR_NOT_IN_SERVICE" | "BUMP_TEST_MISSING" | "DETECTOR_SENSOR_MISSING" | "BACKDATED_TEST" | "CSE_POINTS_REQUIRED" | "TESTER_SIGNATURE_REQUIRED" | "ISOLATION_NOT_VERIFIED" | "VERIFIER_IS_APPLIER" | "PERSONAL_LOCKS_MISSING" | "DEISOLATION_BLOCKED" | "LOCK_NOT_AVAILABLE" | "SIMOPS_PROHIBITED" | "SIMOPS_COORDINATION_REQUIRED" | "SIMOPS_RULE_LOCKED" | "WAP_NOT_ACTIVE" | "WAP_CREW_MISSING" | "OUTSIDE_WAP_WINDOW" | "NOTAM_NOT_IN_EFFECT" | "OBS_CLEARANCE_REQUIRED" | "AIRCRAFT_PROXIMITY" | "WIND_LIMIT_EXCEEDED" | "MIDDAY_BAN" | "MIDDAY_BAN_WINDOW" | "OUTSIDE_WINDOW" | "LICENCE_INVALID" | "BARRIER_TOO_SMALL" | "BARRIER_NOT_VERIFIED" | "FIRE_IMPAIRMENT_NOT_APPROVED" | "UTILITY_CLEARANCE_MISSING" | "FALL_CLEARANCE_INSUFFICIENT" | "HAZARDOUS_AREA_PROHIBITED" | "FIRE_WATCH_RUNNING" | "ENTRANTS_INSIDE" | "HEAT_CONTROLS_REQUIRED" | "HANDOVER_LIMIT" | "HANDOVER_TOO_EARLY" | "MECHANICAL_NEAR_SERVICE" | "INSPECTION_REQUIRED" | "ENERGIZED_HV_PROHIBITED" | "EXEMPTION_REQUIRED" | "CAPACITY_EXCEEDED" | "REVALIDATION_NOT_ALLOWED" | "CREW_NOT_BRIEFED" | "CAUSE_NOT_CLEARED" | "PAUSE_NOT_ALLOWED" | "CLOSURE_INCOMPLETE" | "POST_EXPIRY_CHECK_PENDING" | "CA_REQUIRED" | "AUDIT_LOCKED" | "CODE_IN_OTHER_CATALOGUE" | "TPI_NOT_ACCEPTABLE" | "TPI_NOT_APPROVED" | "TPI_SUSPENDED" | "TPI_BLACKLISTED" | "TPI_ACCREDITATION_INVALID" | "TPI_SCOPE_NOT_COVERED" | "TPI_NOT_CLIENT_APPROVED" | "TPI_NOT_INDEPENDENT" | "TPI_ACCREDITATION_REQUIRED" | "STANDARD_KIND_MISMATCH" | "SCOPE_EXCEEDS_ACCREDITATION" | "EQUIPMENT_EXISTS" | "EQUIPMENT_EXISTS_OUT_OF_SCOPE" | "EQUIPMENT_BLACKLISTED" | "CATEGORY_MISMATCH" | "VEHICLE_ALREADY_LINKED" | "USE_DETECTOR_REGISTER" | "ATTRIBUTE_REQUIRED" | "RELIEF_ABOVE_MAWP" | "EQUIPMENT_NOT_IN_SERVICE" | "EQUIPMENT_DEPLOYED_ELSEWHERE" | "TAG_EXISTS" | "EQUIPMENT_RETIRED" | "EQUIPMENT_NOT_REGISTERED" | "EQUIPMENT_NOT_DEPLOYED" | "OPERATOR_REQUIRED" | "EQUIPMENT_NOT_APPROVED" | "EQUIPMENT_OUT_OF_SERVICE" | "EQUIPMENT_QUARANTINED" | "ARRIVAL_INSPECTION_MISSING" | "CERT_EXISTS" | "CERT_NO_REUSED" | "CERT_ALREADY_EXPIRED" | "SCAN_REQUIRED" | "SERIAL_MISMATCH" | "LOAD_TEST_REQUIRED" | "SWL_ABOVE_RATING" | "LIFTING_DUTY_NOT_CERTIFIED" | "LIMITATION_CONFLICT" | "COLOUR_CODE_OUT_OF_PERIOD" | "CONFIGURATION_MISMATCH" | "CONFIGURATION_CHANGED" | "INSPECTION_BEFORE_EVENT" | "BACKDATED_EVENT" | "CONFIGURATION_EVENT_NOT_ALLOWED" | "SCAFFOLD_DESIGN_REQUIRED" | "CREW_NOT_CERTIFIED" | "INSPECTOR_NOT_CERTIFIED" | "BACKDATED_INSPECTION" | "RESTRICTIONS_REQUIRED" | "SCAFFOLD_NOT_REGISTERED" | "SCAFFOLD_INSPECTION_OVERDUE" | "SCAFFOLD_TAG_RED" | "SCAFFOLD_INSPECTION_REQUIRED" | "SCAFFOLD_YELLOW_TAG" | "CERT_ID_MISMATCH" | "NAME_MISMATCH_CONFIRMATION" | "LEVEL_NOT_ACCEPTED" | "LEVEL_REQUIRED" | "CERT_SCOPE_MISMATCH" | "CERT_LIMITATION" | "CARD_RESTRICTION_REVIEW" | "TRADE_CERT_MISSING" | "HOLDER_BANNED" | "CERT_HOLDER_BANNED" | "CERT_MISSING" | "CERT_EXPIRED" | "CERT_UNVERIFIED" | "CERT_SUSPENDED" | "CERT_REVOKED" | "SWL_LIMITATION" | "WORKER_NOT_IN_SCOPE" | "CHANNEL_NOT_REGISTERED" | "VERIFICATION_URL_FOREIGN_DOMAIN" | "EVIDENCE_REQUIRED_FOR_METHOD" | "VERIFICATION_CLOSED" | "ACCESSORY_REPAIR_NOT_ALLOWED" | "TPI_REINSPECTION_REQUIRED" | "DEFECTS_OPEN" | "PHYSICAL_TAG_REQUIRED" | "TPI_DEFECT_NOT_CANCELLABLE" | "PHASE4_NOT_ENABLED" | "HOOK_POLICY_LOOSENING" | "CRITICAL_CODE_NO_DEFERRAL" | "DEFERRAL_USED" | "DEFERRAL_TOO_LONG" | "HOOK_NOT_MET_WARN" | "EXPIRING_7D" | "UNKNOWN_CODE" | "TOKEN_UNKNOWN" | "CREDENTIAL_REVOKED" | "OUT_OF_SCOPE" | "SETTING_LOOSENING" | "EVIDENCE_DOMAIN_MISMATCH" | "IMPORT_SOURCE_NOT_ALLOWED" | "TPI_BLACKLIST_SCOPE_REQUIRED" | "INDUCTION_OWNED_BY_PHASE2" | "CATALOGUE_LOOSENING" | "ACCREDITED_PROVIDER_REQUIRED" | "PRACTICAL_REQUIRED" | "PREREQUISITE_CYCLE" | "COURSE_IN_USE" | "COURSE_INACTIVE" | "PROVIDER_NOT_ACCEPTABLE" | "PROVIDER_NOT_APPROVED" | "PROVIDER_SUSPENDED" | "PROVIDER_BLACKLISTED" | "ACCREDITATION_INVALID" | "ACCREDITATION_SCOPE" | "INTERNAL_NOT_ALLOWED" | "CONTRACTOR_DELIVERY_NOT_ALLOWED" | "NOT_OWN_TREE" | "PROVIDER_ACCREDITATION_REQUIRED" | "PROVIDER_BLACKLIST_SCOPE_REQUIRED" | "TRAINER_NOT_AUTHORISED" | "TRAINER_NOT_TRAINED" | "TRAINER_EVIDENCE_REQUIRED" | "AUTHORISATION_TOO_LONG" | "LINE_DERIVED_FROM_HOOK" | "DUE_DAYS_NOT_ALLOWED" | "ANY_OF_NOT_ALLOWED" | "MATRIX_LOOSENING" | "EXEMPTION_NOT_ALLOWED" | "ZONE_NOT_IN_DEPLOYMENT_SITES" | "SESSION_TOO_SHORT" | "SESSION_DAY_TOO_LONG" | "SESSION_FULL" | "SESSION_IN_PAST" | "BACKDATED_SESSION" | "SCHEDULE_CLASH" | "TRAINING_PREREQUISITE" | "TRAINING_ATTEMPTS_EXCEEDED" | "NOMINATIONS_INCOMPLETE" | "ATTENDANCE_SHEET_REQUIRED" | "ATTENDANCE_INSUFFICIENT" | "ATTENDANCE_DAY_NOT_REACHED" | "ASSESSOR_REQUIRED" | "LANGUAGE_NOT_UNDERSTOOD" | "LANGUAGE_MISMATCH" | "RECORD_ALREADY_EXPIRED" | "REFRESHER_NOT_ELIGIBLE" | "RECORD_EDIT_LOCKED" | "TRAINING_REGISTER_NOT_LIVE" | "TRAINING_REGISTER_LATER" | "TRAINING_HOOKS_NOT_ENABLED" | "TRAINING_MISSING" | "TRAINING_EXPIRED" | "TRAINING_PENDING_REVIEW" | "TRAINING_UNVERIFIED" | "TRAINING_SUSPENDED" | "TRAINING_REVOKED" | "TRAINING_VERIFICATION_FAILED" | "INDUCTION_NOT_VALID" | "HOLDER_NOT_LINKED" | "SESSION_NOT_EDITABLE" | "FITNESS_CODE_IN_USE" | "MEDICAL_PROVIDER_NOT_ACCEPTABLE" | "PROVIDER_KIND_NOT_ALLOWED" | "NOT_PROJECT_CLINIC" | "LICENCE_CHECK_REQUIRED" | "EXAMINER_LICENCE_INVALID" | "EXAMINER_NOT_QUALIFIED" | "EXAMINER_NOT_LINKED" | "PLAN_LOOSENING" | "BACKDATED_ASSESSMENT" | "FITNESS_ALREADY_EXPIRED" | "DUPLICATE_CODE_LINE" | "RESTRICTIONS_NOT_ALLOWED" | "REVIEW_DATE_INVALID" | "HOLD_REFERENCE_INVALID" | "PURPOSE_NOTICE_REQUIRED" | "SECOND_OPINION_REQUIRED" | "ASSESSMENT_LOCKED" | "CLINICAL_DATA_IN_SCAN" | "HOLD_RELEASE_REQUIRES_ASSESSMENT" | "MEDICAL_REGISTER_NOT_LIVE" | "MEDICAL_REGISTER_LATER" | "NO_MEDICAL_PROVIDER" | "MEDICAL_HOOKS_NOT_ENABLED" | "INCIDENT_RECORD_EXPECTED" | "RTW_BEFORE_CLEARANCE" | "PROHIBITED_DATA_HINT" | "MEDICAL_HOLD" | "MEDICAL_UNFIT" | "MEDICAL_PENDING_REVIEW" | "MEDICAL_UNVERIFIED" | "MEDICAL_REVOKED" | "MEDICAL_VERIFICATION_FAILED" | "MEDICAL_MISSING" | "RESTRICTION_CONFLICT" | "MEDICAL_REVIEW_DUE" | "MEDICAL_EXPIRED" | "WORKER_UNKNOWN" | "INSTRUMENT_NOT_COMPLIANT" | "INSTRUMENT_CALIBRATION_EXPIRED" | "ZONE_ALREADY_COVERED" | "REGIME_LOOSENING" | "PERIOD_TOO_SHORT" | "HEAT_COVERAGE_INCOMPLETE" | "WBGT_REQUIRED" | "VALUE_OUT_OF_RANGE" | "BACKDATED_READING" | "WBGT_COMPONENT_MISMATCH" | "STATION_INACTIVE" | "NA_NOT_ALLOWED" | "NOT_IN_BAN_WINDOW" | "NO_ACTIVE_EXEMPTION" | "OUTSIDE_BAN_PERIOD" | "TOO_LATE_TO_CHANGE" | "HEAT_STOP" | "WBGT_READING_REQUIRED" | "HEAT_RESTRICTION" | "HEAT_STOP_FOR_WORKER" | "WORKER_ACCLIMATISING" | "ERP_INCOMPLETE" | "ERP_NOT_APPROVED" | "RESCUE_PLAN_REF_REQUIRED" | "DRILL_FREQUENCY_TOO_LOW" | "ASSEMBLY_POINT_IN_RESTRICTED_AREA" | "ZONE_WITHOUT_ASSEMBLY_POINT" | "ALREADY_IN_TEAM" | "CHECK_BACKDATED" | "CHECK_WITHOUT_SCAN" | "TIMELINE_ORDER" | "INCIDENT_LINK_REQUIRED" | "RESCUE_TEAM_NOT_REGISTERED" | "RESCUE_DRILL_OVERDUE" | "HEIGHT_RESCUE_NOT_READY" | "NO_READY_EXTINGUISHER" | "TEMPLATE_INCOMPLETE" | "TEMPLATE_IN_USE" | "TEMPLATE_REQUIRED" | "TEMPLATE_NOT_APPLICABLE" | "TEMPLATE_IMMUTABLE" | "SEVERITY_LOWERED" | "FIX_ON_SPOT_NOT_ALLOWED" | "STOP_RECORD_REQUIRED" | "STOP_RELEASE_CA_REQUIRED" | "STOP_WORK_ACTIVE" | "OFFLINE_SUBMIT_TOO_LATE" | "CLOCK_SKEW" | "TOPIC_INCOMPLETE" | "TOPIC_REVIEW_OVERDUE" | "WORKER_NOT_MOBILISED" | "DUPLICATE_ATTENDEE" | "ATTENDANCE_EVIDENCE_REQUIRED" | "TALK_LOCKED" | "TBT_SHORT" | "ASPECT_CONTROL_REQUIRED" | "CONTROL_LEVEL_TOO_LOW" | "PRODUCER_REGISTRATION_INVALID" | "PROVIDER_LICENCE_INVALID" | "LICENCE_SCOPE_MISMATCH" | "STREAM_NOT_ACCEPTED" | "CONTAINMENT_INSUFFICIENT" | "AIRSIDE_STORAGE_NOT_SECURED" | "MANIFEST_REF_REQUIRED" | "DISCREPANCY_REASON_REQUIRED" | "FIELD_CALIBRATION_REQUIRED" | "LIMIT_LOOSENING" | "ENGAGEMENT_REQUIRED" | "INCIDENT_FIELDS_REQUIRED" | "INCIDENT_NOT_ENVIRONMENTAL" | "CLEANUP_WASTE_UNTRACKED" | "DUPLICATE_WATER_ENTRY" | "CONSIGNMENT_CLOSED" | "PERMIT_NOT_VALID" | "AVP_NOT_FOUND" | "RULE_LOOSENING" | "CLIENT_RECIPIENT_REQUIRED" | "WAIVER_EVIDENCE_REQUIRED" | "INVESTIGATION_NOT_APPROVED" | "PACK_NOT_APPROVED" | "CHANNEL_NOT_ALLOWED" | "SUBMITTED_AT_INVALID" | "IDENTITY_IN_TEXT" | "LESSON_INCOMPLETE" | "REDACTION_NOT_CONFIRMED" | "SELF_APPROVAL" | "NOT_DISTRIBUTED" | "ON_BEHALF_NOTE_REQUIRED" | "LESSON_NOT_PUBLISHED" | "RATIONALE_REQUIRED" | "FOLLOW_UP_REQUIRED" | "PACK_IMMUTABLE" | "SUBMISSION_LOCKED" | "WEIGHTS_NOT_100" | "LAGGING_WEIGHT_OUT_OF_RANGE" | "CAP_REQUIRED" | "PROFILE_BACKDATED" | "SOURCES_NOT_CONFIRMED" | "COMMENT_WINDOW_CLOSED" | "COMMENT_WINDOW_OPEN" | "DISPUTES_OPEN" | "CORRECTION_NOT_FOUND" | "CAP_NOT_EXCLUDABLE" | "WATCH_ENTRY_OPEN" | "PIP_INCOMPLETE" | "SOURCE_REPORT_NOT_PUBLISHED" | "SELF_REVIEW" | "RECIPIENT_SCOPE" | "EXTERNAL_NOT_ALLOWED" | "PACK_TOO_LARGE_FOR_EMAIL" | "COLUMN_NOT_EXPORTABLE" | "PURPOSE_REQUIRED" | "EXPORT_TOO_LARGE" | "SUBSCRIPTION_PERSONAL_DATA" | "SETTING_OUT_OF_RANGE" | "COLUMN_NOT_PERMITTED" | "PACK_ISSUED_IMMUTABLE" | "SCORECARD_FINAL" | "EXPORT_RATE_LIMIT" | "SCORECARDS_NOT_FINAL" | "ROAD_TYPE_ZONE_MISMATCH" | "VEHICLE_REQUIRED" | "VEHICLE_SECTION_INCOMPLETE" | "ACCIDENT_REPORT_AUTHORITY_REQUIRED" | "ACCIDENT_REPORT_MISSING" | "PLATE_IS_REGISTERED" | "ACCIDENT_REPORT_LOCKED" | "VEHICLE_INVOLVED_LOCKED" | "NOT_IMPLEMENTED" | "INTERNAL_ERROR";
+        ErrorCode: "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "ACCOUNT_LOCKED" | "SESSION_EXPIRED" | "PRIVACY_ACK_REQUIRED" | "PRIVACY_NOTICE_VERSION_MISMATCH" | "INVITE_INVALID" | "INVITE_EXPIRED" | "RESET_TOKEN_INVALID" | "WEAK_PASSWORD" | "CURRENT_PASSWORD_INCORRECT" | "FORBIDDEN" | "READ_ONLY_ROLE" | "CONTRACTOR_SUSPENDED" | "SELF_MODIFICATION_FORBIDDEN" | "ROLE_NOT_ASSIGNABLE" | "NOT_FOUND" | "VALIDATION_ERROR" | "DUPLICATE_VALUE" | "INVALID_TRANSITION" | "TRANSITION_CONDITION_NOT_MET" | "PROJECT_CLOSED" | "SITE_INACTIVE" | "ZONE_ARCHIVED" | "CONTRACTOR_NOT_APPROVED" | "LAST_HSE_MANAGER" | "SOD_CONFLICT" | "DUPLICATE_RETURN" | "PERIOD_LOCKED" | "VERIFIER_IS_CREATOR" | "OUTSIDE_MOBILISATION" | "IMPORT_FILE_INVALID" | "IMPORT_HAS_ERRORS" | "IMPORT_EXPIRED" | "IMPORT_NOT_VALIDATED" | "NEAR_MISS_EXCLUSIVE" | "INJURY_CASE_REQUIRED" | "INVESTIGATION_LEVEL_TOO_LOW" | "INVESTIGATION_INCOMPLETE" | "INVESTIGATION_LEAD_NOT_ALLOWED" | "INVESTIGATION_TEAM_INCOMPLETE" | "APPROVER_IS_LEAD" | "CASES_NOT_CONFIRMED" | "HIGHER_CONTROL_REQUIRED" | "JUSTIFICATION_REQUIRED" | "POSSIBLE_ID_NUMBER" | "SAFE_OBSERVATION_IMMUTABLE" | "FINDING_CA_REQUIRED" | "VERIFIER_IS_OWNER" | "VERIFIER_ROLE_NOT_ALLOWED" | "EVIDENCE_REQUIRED" | "EXTENSION_LIMIT_REACHED" | "DUE_DATE_TOO_LATE" | "RESTRICTED_DIMENSION" | "MIXED_PROJECT_SCOPE" | "EXPORT_PURPOSE_REQUIRED" | "FILE_TOO_LARGE" | "FILE_TYPE_NOT_ALLOWED" | "SIGNED_URL_INVALID" | "AI_DISABLED" | "AI_TRANSFER_APPROVAL_REQUIRED" | "AI_UNAVAILABLE" | "AI_RATE_LIMITED" | "GATE_DEVICE_FORBIDDEN" | "GATE_DEVICE_REVOKED" | "GATE_RATE_LIMITED" | "PAIRING_NOT_FOUND" | "WORKER_EXISTS" | "WORKER_EXISTS_OUT_OF_SCOPE" | "ADULT_ATTESTATION_REQUIRED" | "DEPLOYMENT_EXISTS" | "WORKER_BANNED" | "PHOTO_REQUIRED" | "DELIVERER_NOT_ALLOWED" | "INDUCTION_PREREQUISITE" | "INDUCTION_ATTEMPTS_EXCEEDED" | "INDUCTION_TOO_SHORT" | "INDUCTION_EDIT_LOCKED" | "PROFILE_LOOSENING" | "HOOK_PROVIDER_MISSING" | "NOT_AIRPORT_PROJECT" | "APPLICATION_OPEN" | "ID_EXPIRES_SOON" | "ID_EXPIRED" | "VALIDITY_EXCEEDS_LIMIT" | "BACKGROUND_NOT_CLEARED" | "ENDORSER_NOT_ALLOWED" | "PREREQUISITES_NOT_MET" | "AREA_NOT_REQUESTED" | "ADP_PASS_REQUIRED" | "ADP_EXISTS" | "LICENCE_NOT_VALID" | "RTF_REQUIRED" | "TESTS_NOT_VALID" | "SUSPENSION_PERIOD_RUNNING" | "AVP_PRECONDITION" | "AVP_EXISTS" | "LATE_JUSTIFICATION_REQUIRED" | "OB_CONDITIONS_REQUIRED" | "CLEARANCE_NOT_LINKABLE" | "WAP_DURATION_EXCEEDED" | "WSP_REQUIRED" | "WAP_BLOCKED" | "CREW_INVALID" | "FOD_HANDBACK_REQUIRED" | "OPS_ZONES_LOCKED" | "SYSTEM_SUSPENSION" | "CREDENTIAL_TERMINAL" | "REAUTH_REQUIRED" | "COSIGNER_INVALID" | "CONTRACTOR_BLACKLISTED" | "MIXED_SIDE_ZONES" | "ZONES_NOT_SAME_SITE" | "RECEIVER_LIMIT" | "CREW_NOT_IN_TREE" | "DURATION_EXCEEDS_LIMIT" | "BACKDATED_PERMIT" | "PERMIT_READ_ONLY" | "KEY_ROLE_BUSY" | "APPOINTMENT_INVALID" | "ISSUER_APPOINTMENT_MANAGER_ONLY" | "JSA_MISSING" | "JSA_NOT_APPROVED" | "JSA_TYPE_MISMATCH" | "JSA_MANDATORY_HAZARD_MISSING" | "JSA_RESIDUAL_EXTREME" | "JSA_FROZEN" | "RESIDUAL_ACCEPTANCE_MISSING" | "RESIDUAL_ABOVE_INITIAL" | "PPE_ONLY_CONTROLS" | "TEMPLATE_REVIEW_DUE" | "HSE_REVIEW_MISSING" | "DOCUMENT_MISSING" | "CHECKLIST_INCOMPLETE" | "ROLE_MISSING" | "KEY_ROLE_INELIGIBLE" | "NO_ELIGIBLE_CREW" | "HOOK_NOT_MET" | "GAS_TEST_REQUIRED" | "GAS_TEST_FAILED" | "GAS_TEST_EXPIRED" | "DETECTOR_CALIBRATION_OVERDUE" | "DETECTOR_NOT_IN_SERVICE" | "BUMP_TEST_MISSING" | "DETECTOR_SENSOR_MISSING" | "BACKDATED_TEST" | "CSE_POINTS_REQUIRED" | "TESTER_SIGNATURE_REQUIRED" | "ISOLATION_NOT_VERIFIED" | "VERIFIER_IS_APPLIER" | "PERSONAL_LOCKS_MISSING" | "DEISOLATION_BLOCKED" | "LOCK_NOT_AVAILABLE" | "SIMOPS_PROHIBITED" | "SIMOPS_COORDINATION_REQUIRED" | "SIMOPS_RULE_LOCKED" | "WAP_NOT_ACTIVE" | "WAP_CREW_MISSING" | "OUTSIDE_WAP_WINDOW" | "NOTAM_NOT_IN_EFFECT" | "OBS_CLEARANCE_REQUIRED" | "AIRCRAFT_PROXIMITY" | "WIND_LIMIT_EXCEEDED" | "MIDDAY_BAN" | "MIDDAY_BAN_WINDOW" | "OUTSIDE_WINDOW" | "LICENCE_INVALID" | "BARRIER_TOO_SMALL" | "BARRIER_NOT_VERIFIED" | "FIRE_IMPAIRMENT_NOT_APPROVED" | "UTILITY_CLEARANCE_MISSING" | "FALL_CLEARANCE_INSUFFICIENT" | "HAZARDOUS_AREA_PROHIBITED" | "FIRE_WATCH_RUNNING" | "ENTRANTS_INSIDE" | "HEAT_CONTROLS_REQUIRED" | "HANDOVER_LIMIT" | "HANDOVER_TOO_EARLY" | "MECHANICAL_NEAR_SERVICE" | "INSPECTION_REQUIRED" | "ENERGIZED_HV_PROHIBITED" | "EXEMPTION_REQUIRED" | "CAPACITY_EXCEEDED" | "REVALIDATION_NOT_ALLOWED" | "CREW_NOT_BRIEFED" | "CAUSE_NOT_CLEARED" | "PAUSE_NOT_ALLOWED" | "CLOSURE_INCOMPLETE" | "POST_EXPIRY_CHECK_PENDING" | "CA_REQUIRED" | "AUDIT_LOCKED" | "CODE_IN_OTHER_CATALOGUE" | "TPI_NOT_ACCEPTABLE" | "TPI_NOT_APPROVED" | "TPI_SUSPENDED" | "TPI_BLACKLISTED" | "TPI_ACCREDITATION_INVALID" | "TPI_SCOPE_NOT_COVERED" | "TPI_NOT_CLIENT_APPROVED" | "TPI_NOT_INDEPENDENT" | "TPI_ACCREDITATION_REQUIRED" | "STANDARD_KIND_MISMATCH" | "SCOPE_EXCEEDS_ACCREDITATION" | "EQUIPMENT_EXISTS" | "EQUIPMENT_EXISTS_OUT_OF_SCOPE" | "EQUIPMENT_BLACKLISTED" | "CATEGORY_MISMATCH" | "VEHICLE_ALREADY_LINKED" | "USE_DETECTOR_REGISTER" | "ATTRIBUTE_REQUIRED" | "RELIEF_ABOVE_MAWP" | "EQUIPMENT_NOT_IN_SERVICE" | "EQUIPMENT_DEPLOYED_ELSEWHERE" | "TAG_EXISTS" | "EQUIPMENT_RETIRED" | "EQUIPMENT_NOT_REGISTERED" | "EQUIPMENT_NOT_DEPLOYED" | "OPERATOR_REQUIRED" | "EQUIPMENT_NOT_APPROVED" | "EQUIPMENT_OUT_OF_SERVICE" | "EQUIPMENT_QUARANTINED" | "ARRIVAL_INSPECTION_MISSING" | "CERT_EXISTS" | "CERT_NO_REUSED" | "CERT_ALREADY_EXPIRED" | "SCAN_REQUIRED" | "SERIAL_MISMATCH" | "LOAD_TEST_REQUIRED" | "SWL_ABOVE_RATING" | "LIFTING_DUTY_NOT_CERTIFIED" | "LIMITATION_CONFLICT" | "COLOUR_CODE_OUT_OF_PERIOD" | "CONFIGURATION_MISMATCH" | "CONFIGURATION_CHANGED" | "INSPECTION_BEFORE_EVENT" | "BACKDATED_EVENT" | "CONFIGURATION_EVENT_NOT_ALLOWED" | "SCAFFOLD_DESIGN_REQUIRED" | "CREW_NOT_CERTIFIED" | "INSPECTOR_NOT_CERTIFIED" | "BACKDATED_INSPECTION" | "RESTRICTIONS_REQUIRED" | "SCAFFOLD_NOT_REGISTERED" | "SCAFFOLD_INSPECTION_OVERDUE" | "SCAFFOLD_TAG_RED" | "SCAFFOLD_INSPECTION_REQUIRED" | "SCAFFOLD_YELLOW_TAG" | "CERT_ID_MISMATCH" | "NAME_MISMATCH_CONFIRMATION" | "LEVEL_NOT_ACCEPTED" | "LEVEL_REQUIRED" | "CERT_SCOPE_MISMATCH" | "CERT_LIMITATION" | "CARD_RESTRICTION_REVIEW" | "TRADE_CERT_MISSING" | "HOLDER_BANNED" | "CERT_HOLDER_BANNED" | "CERT_MISSING" | "CERT_EXPIRED" | "CERT_UNVERIFIED" | "CERT_SUSPENDED" | "CERT_REVOKED" | "SWL_LIMITATION" | "WORKER_NOT_IN_SCOPE" | "CHANNEL_NOT_REGISTERED" | "VERIFICATION_URL_FOREIGN_DOMAIN" | "EVIDENCE_REQUIRED_FOR_METHOD" | "VERIFICATION_CLOSED" | "ACCESSORY_REPAIR_NOT_ALLOWED" | "TPI_REINSPECTION_REQUIRED" | "DEFECTS_OPEN" | "PHYSICAL_TAG_REQUIRED" | "TPI_DEFECT_NOT_CANCELLABLE" | "PHASE4_NOT_ENABLED" | "HOOK_POLICY_LOOSENING" | "CRITICAL_CODE_NO_DEFERRAL" | "DEFERRAL_USED" | "DEFERRAL_TOO_LONG" | "HOOK_NOT_MET_WARN" | "EXPIRING_7D" | "UNKNOWN_CODE" | "TOKEN_UNKNOWN" | "CREDENTIAL_REVOKED" | "OUT_OF_SCOPE" | "SETTING_LOOSENING" | "EVIDENCE_DOMAIN_MISMATCH" | "IMPORT_SOURCE_NOT_ALLOWED" | "TPI_BLACKLIST_SCOPE_REQUIRED" | "INDUCTION_OWNED_BY_PHASE2" | "CATALOGUE_LOOSENING" | "ACCREDITED_PROVIDER_REQUIRED" | "PRACTICAL_REQUIRED" | "PREREQUISITE_CYCLE" | "COURSE_IN_USE" | "COURSE_INACTIVE" | "PROVIDER_NOT_ACCEPTABLE" | "PROVIDER_NOT_APPROVED" | "PROVIDER_SUSPENDED" | "PROVIDER_BLACKLISTED" | "ACCREDITATION_INVALID" | "ACCREDITATION_SCOPE" | "INTERNAL_NOT_ALLOWED" | "CONTRACTOR_DELIVERY_NOT_ALLOWED" | "NOT_OWN_TREE" | "PROVIDER_ACCREDITATION_REQUIRED" | "PROVIDER_BLACKLIST_SCOPE_REQUIRED" | "TRAINER_NOT_AUTHORISED" | "TRAINER_NOT_TRAINED" | "TRAINER_EVIDENCE_REQUIRED" | "AUTHORISATION_TOO_LONG" | "LINE_DERIVED_FROM_HOOK" | "DUE_DAYS_NOT_ALLOWED" | "ANY_OF_NOT_ALLOWED" | "MATRIX_LOOSENING" | "EXEMPTION_NOT_ALLOWED" | "ZONE_NOT_IN_DEPLOYMENT_SITES" | "SESSION_TOO_SHORT" | "SESSION_DAY_TOO_LONG" | "SESSION_FULL" | "SESSION_IN_PAST" | "BACKDATED_SESSION" | "SCHEDULE_CLASH" | "TRAINING_PREREQUISITE" | "TRAINING_ATTEMPTS_EXCEEDED" | "NOMINATIONS_INCOMPLETE" | "ATTENDANCE_SHEET_REQUIRED" | "ATTENDANCE_INSUFFICIENT" | "ATTENDANCE_DAY_NOT_REACHED" | "ASSESSOR_REQUIRED" | "LANGUAGE_NOT_UNDERSTOOD" | "LANGUAGE_MISMATCH" | "RECORD_ALREADY_EXPIRED" | "REFRESHER_NOT_ELIGIBLE" | "RECORD_EDIT_LOCKED" | "TRAINING_REGISTER_NOT_LIVE" | "TRAINING_REGISTER_LATER" | "TRAINING_HOOKS_NOT_ENABLED" | "TRAINING_MISSING" | "TRAINING_EXPIRED" | "TRAINING_PENDING_REVIEW" | "TRAINING_UNVERIFIED" | "TRAINING_SUSPENDED" | "TRAINING_REVOKED" | "TRAINING_VERIFICATION_FAILED" | "INDUCTION_NOT_VALID" | "HOLDER_NOT_LINKED" | "SESSION_NOT_EDITABLE" | "FITNESS_CODE_IN_USE" | "MEDICAL_PROVIDER_NOT_ACCEPTABLE" | "PROVIDER_KIND_NOT_ALLOWED" | "NOT_PROJECT_CLINIC" | "LICENCE_CHECK_REQUIRED" | "EXAMINER_LICENCE_INVALID" | "EXAMINER_NOT_QUALIFIED" | "EXAMINER_NOT_LINKED" | "PLAN_LOOSENING" | "BACKDATED_ASSESSMENT" | "FITNESS_ALREADY_EXPIRED" | "DUPLICATE_CODE_LINE" | "RESTRICTIONS_NOT_ALLOWED" | "REVIEW_DATE_INVALID" | "HOLD_REFERENCE_INVALID" | "PURPOSE_NOTICE_REQUIRED" | "SECOND_OPINION_REQUIRED" | "ASSESSMENT_LOCKED" | "CLINICAL_DATA_IN_SCAN" | "HOLD_RELEASE_REQUIRES_ASSESSMENT" | "MEDICAL_REGISTER_NOT_LIVE" | "MEDICAL_REGISTER_LATER" | "NO_MEDICAL_PROVIDER" | "MEDICAL_HOOKS_NOT_ENABLED" | "INCIDENT_RECORD_EXPECTED" | "RTW_BEFORE_CLEARANCE" | "PROHIBITED_DATA_HINT" | "MEDICAL_HOLD" | "MEDICAL_UNFIT" | "MEDICAL_PENDING_REVIEW" | "MEDICAL_UNVERIFIED" | "MEDICAL_REVOKED" | "MEDICAL_VERIFICATION_FAILED" | "MEDICAL_MISSING" | "RESTRICTION_CONFLICT" | "MEDICAL_REVIEW_DUE" | "MEDICAL_EXPIRED" | "WORKER_UNKNOWN" | "INSTRUMENT_NOT_COMPLIANT" | "INSTRUMENT_CALIBRATION_EXPIRED" | "ZONE_ALREADY_COVERED" | "REGIME_LOOSENING" | "PERIOD_TOO_SHORT" | "HEAT_COVERAGE_INCOMPLETE" | "WBGT_REQUIRED" | "VALUE_OUT_OF_RANGE" | "BACKDATED_READING" | "WBGT_COMPONENT_MISMATCH" | "STATION_INACTIVE" | "NA_NOT_ALLOWED" | "NOT_IN_BAN_WINDOW" | "NO_ACTIVE_EXEMPTION" | "OUTSIDE_BAN_PERIOD" | "TOO_LATE_TO_CHANGE" | "HEAT_STOP" | "WBGT_READING_REQUIRED" | "HEAT_RESTRICTION" | "HEAT_STOP_FOR_WORKER" | "WORKER_ACCLIMATISING" | "ERP_INCOMPLETE" | "ERP_NOT_APPROVED" | "RESCUE_PLAN_REF_REQUIRED" | "DRILL_FREQUENCY_TOO_LOW" | "ASSEMBLY_POINT_IN_RESTRICTED_AREA" | "ZONE_WITHOUT_ASSEMBLY_POINT" | "ALREADY_IN_TEAM" | "CHECK_BACKDATED" | "CHECK_WITHOUT_SCAN" | "TIMELINE_ORDER" | "INCIDENT_LINK_REQUIRED" | "RESCUE_TEAM_NOT_REGISTERED" | "RESCUE_DRILL_OVERDUE" | "HEIGHT_RESCUE_NOT_READY" | "NO_READY_EXTINGUISHER" | "TEMPLATE_INCOMPLETE" | "TEMPLATE_IN_USE" | "TEMPLATE_REQUIRED" | "TEMPLATE_NOT_APPLICABLE" | "TEMPLATE_IMMUTABLE" | "SEVERITY_LOWERED" | "FIX_ON_SPOT_NOT_ALLOWED" | "STOP_RECORD_REQUIRED" | "STOP_RELEASE_CA_REQUIRED" | "STOP_WORK_ACTIVE" | "OFFLINE_SUBMIT_TOO_LATE" | "CLOCK_SKEW" | "TOPIC_INCOMPLETE" | "TOPIC_REVIEW_OVERDUE" | "WORKER_NOT_MOBILISED" | "DUPLICATE_ATTENDEE" | "ATTENDANCE_EVIDENCE_REQUIRED" | "TALK_LOCKED" | "TBT_SHORT" | "ASPECT_CONTROL_REQUIRED" | "CONTROL_LEVEL_TOO_LOW" | "PRODUCER_REGISTRATION_INVALID" | "PROVIDER_LICENCE_INVALID" | "LICENCE_SCOPE_MISMATCH" | "STREAM_NOT_ACCEPTED" | "CONTAINMENT_INSUFFICIENT" | "AIRSIDE_STORAGE_NOT_SECURED" | "MANIFEST_REF_REQUIRED" | "DISCREPANCY_REASON_REQUIRED" | "FIELD_CALIBRATION_REQUIRED" | "LIMIT_LOOSENING" | "ENGAGEMENT_REQUIRED" | "INCIDENT_FIELDS_REQUIRED" | "INCIDENT_NOT_ENVIRONMENTAL" | "CLEANUP_WASTE_UNTRACKED" | "DUPLICATE_WATER_ENTRY" | "CONSIGNMENT_CLOSED" | "PERMIT_NOT_VALID" | "AVP_NOT_FOUND" | "RULE_LOOSENING" | "CLIENT_RECIPIENT_REQUIRED" | "WAIVER_EVIDENCE_REQUIRED" | "INVESTIGATION_NOT_APPROVED" | "PACK_NOT_APPROVED" | "CHANNEL_NOT_ALLOWED" | "SUBMITTED_AT_INVALID" | "IDENTITY_IN_TEXT" | "LESSON_INCOMPLETE" | "REDACTION_NOT_CONFIRMED" | "SELF_APPROVAL" | "NOT_DISTRIBUTED" | "ON_BEHALF_NOTE_REQUIRED" | "LESSON_NOT_PUBLISHED" | "RATIONALE_REQUIRED" | "FOLLOW_UP_REQUIRED" | "PACK_IMMUTABLE" | "SUBMISSION_LOCKED" | "WEIGHTS_NOT_100" | "LAGGING_WEIGHT_OUT_OF_RANGE" | "CAP_REQUIRED" | "PROFILE_BACKDATED" | "SOURCES_NOT_CONFIRMED" | "COMMENT_WINDOW_CLOSED" | "COMMENT_WINDOW_OPEN" | "DISPUTES_OPEN" | "CORRECTION_NOT_FOUND" | "CAP_NOT_EXCLUDABLE" | "WATCH_ENTRY_OPEN" | "PIP_INCOMPLETE" | "SOURCE_REPORT_NOT_PUBLISHED" | "SELF_REVIEW" | "RECIPIENT_SCOPE" | "EXTERNAL_NOT_ALLOWED" | "PACK_TOO_LARGE_FOR_EMAIL" | "COLUMN_NOT_EXPORTABLE" | "PURPOSE_REQUIRED" | "EXPORT_TOO_LARGE" | "SUBSCRIPTION_PERSONAL_DATA" | "SETTING_OUT_OF_RANGE" | "COLUMN_NOT_PERMITTED" | "PACK_ISSUED_IMMUTABLE" | "SCORECARD_FINAL" | "EXPORT_RATE_LIMIT" | "SCORECARDS_NOT_FINAL" | "ROAD_TYPE_ZONE_MISMATCH" | "VEHICLE_REQUIRED" | "VEHICLE_SECTION_INCOMPLETE" | "ACCIDENT_REPORT_AUTHORITY_REQUIRED" | "ACCIDENT_REPORT_MISSING" | "PLATE_IS_REGISTERED" | "ACCIDENT_REPORT_LOCKED" | "VEHICLE_INVOLVED_LOCKED" | "SITE_VEHICLES_NOT_LIVE" | "OPERATING_CARD_REQUIRED" | "LICENCE_CLASS_NOT_COVERING" | "ASSESSMENT_TOO_OLD" | "DRIVER_NOT_AUTHORISED" | "PRE_USE_CHECK_EXISTS" | "PASSENGERS_EXCEED_SEATS" | "JOURNEY_TIMES_INVALID" | "JOURNEY_CONTACT_IS_DRIVER" | "VEHICLE_DEFECT_HOLD" | "VEHICLE_NOT_READY" | "AUTH_NOT_ACTIVE" | "NOT_IMPLEMENTED" | "INTERNAL_ERROR";
         /** ErrorDetail */
         ErrorDetail: {
             /** @description Stable machine code; map it to EN/AR UI text. */
@@ -25869,7 +26289,7 @@ export interface components {
          * ExpiringItemKind
          * @enum {string}
          */
-        ExpiringItemKind: "ca_due" | "investigation_due" | "external_notification_due" | "inspection_planned" | "month_lock" | "induction_expiry" | "reinduction_due" | "worker_id_expiry" | "airport_pass_expiry" | "bg_recheck_due" | "adp_expiry" | "adp_suspension_end" | "avp_expiry" | "vehicle_document_expiry" | "wap_expiry" | "notam_expiry" | "obstacle_clearance_expiry" | "pass_return_due" | "ptw_valid_to" | "ptw_shift_end" | "gas_retest_due" | "fire_watch_end" | "gas_detector_calibration_due" | "ptw_appointment_expiry" | "isolation_review_due" | "jsa_template_review_due" | "equipment_cert_expiry" | "personnel_cert_expiry" | "scaffold_inspection_due" | "defect_rectification_due" | "tpi_accreditation_expiry" | "tpi_client_approval_expiry" | "certificate_verification_due" | "hook_block_date" | "training_record_expiry" | "training_refresher_due" | "trainer_authorisation_expiry" | "training_provider_accreditation_expiry" | "training_verification_due" | "training_session_close_due" | "fitness_expiry" | "fitness_restriction_review" | "fitness_unfit_review" | "referral_assessment_due" | "fitness_signoff_due" | "fitness_verification_due" | "examiner_licence_expiry" | "medical_provider_licence_expiry" | "scorecard_comment_window" | "scorecard_dispute_due" | "scorecard_finalise_due" | "report_pack_due" | "pip_due";
+        ExpiringItemKind: "ca_due" | "investigation_due" | "external_notification_due" | "inspection_planned" | "month_lock" | "induction_expiry" | "reinduction_due" | "worker_id_expiry" | "airport_pass_expiry" | "bg_recheck_due" | "adp_expiry" | "adp_suspension_end" | "avp_expiry" | "vehicle_document_expiry" | "wap_expiry" | "notam_expiry" | "obstacle_clearance_expiry" | "pass_return_due" | "ptw_valid_to" | "ptw_shift_end" | "gas_retest_due" | "fire_watch_end" | "gas_detector_calibration_due" | "ptw_appointment_expiry" | "isolation_review_due" | "jsa_template_review_due" | "equipment_cert_expiry" | "personnel_cert_expiry" | "scaffold_inspection_due" | "defect_rectification_due" | "tpi_accreditation_expiry" | "tpi_client_approval_expiry" | "certificate_verification_due" | "hook_block_date" | "training_record_expiry" | "training_refresher_due" | "trainer_authorisation_expiry" | "training_provider_accreditation_expiry" | "training_verification_due" | "training_session_close_due" | "fitness_expiry" | "fitness_restriction_review" | "fitness_unfit_review" | "referral_assessment_due" | "fitness_signoff_due" | "fitness_verification_due" | "examiner_licence_expiry" | "medical_provider_licence_expiry" | "scorecard_comment_window" | "scorecard_dispute_due" | "scorecard_finalise_due" | "report_pack_due" | "pip_due" | "site_vehicle_doc_expiry" | "driver_auth_expiry";
         /** ExpiringItemsResponse */
         ExpiringItemsResponse: {
             /**
@@ -25906,7 +26326,7 @@ export interface components {
          * @description Lists that can be exported (§5.8 rule 49, capability 18).
          * @enum {string}
          */
-        ExportDataset: "projects" | "sites" | "zones" | "contractors" | "engagements" | "users" | "audit_log" | "workforce_returns" | "incidents" | "observations" | "inspections" | "corrective_actions" | "hse_meetings" | "workers" | "deployments" | "inductions" | "pass_applications" | "airport_passes" | "adps" | "airside_offences" | "vehicles" | "avps" | "waps" | "notam_requests" | "obstacle_clearances" | "ops_events" | "gate_log" | "permits" | "permit_suspensions" | "gas_tests" | "gas_detectors" | "isolations" | "locks" | "ptw_appointments" | "jsa_templates" | "simops_conflicts" | "ptw_audits" | "tpis" | "equipment" | "equipment_deployments" | "equipment_certificates" | "scaffolds" | "personnel_certificates" | "cert_verifications" | "equipment_defects" | "blacklist_register" | "cert_imports" | "training_courses" | "training_providers" | "trainer_authorisations" | "training_matrix" | "training_sessions" | "training_attendance" | "training_records" | "training_verifications" | "training_gaps" | "refresher_plan" | "training_hours" | "training_imports" | "fitness_codes" | "medical_providers" | "medical_examiners" | "medical_plan" | "fitness_status" | "fitness_gaps" | "fitness_holds" | "fitness_referrals" | "fitness_verifications" | "medical_imports" | "heat_patrols" | "heat_welfare_checks" | "heat_illness_log" | "emergency_drills" | "emergency_assets" | "emergency_events" | "field_inspections" | "field_audits" | "toolbox_talks" | "waste_consignments" | "env_readings" | "env_spills" | "env_complaints" | "notification_requirements" | "lessons" | "incident_vehicles";
+        ExportDataset: "projects" | "sites" | "zones" | "contractors" | "engagements" | "users" | "audit_log" | "workforce_returns" | "incidents" | "observations" | "inspections" | "corrective_actions" | "hse_meetings" | "workers" | "deployments" | "inductions" | "pass_applications" | "airport_passes" | "adps" | "airside_offences" | "vehicles" | "avps" | "waps" | "notam_requests" | "obstacle_clearances" | "ops_events" | "gate_log" | "permits" | "permit_suspensions" | "gas_tests" | "gas_detectors" | "isolations" | "locks" | "ptw_appointments" | "jsa_templates" | "simops_conflicts" | "ptw_audits" | "tpis" | "equipment" | "equipment_deployments" | "equipment_certificates" | "scaffolds" | "personnel_certificates" | "cert_verifications" | "equipment_defects" | "blacklist_register" | "cert_imports" | "training_courses" | "training_providers" | "trainer_authorisations" | "training_matrix" | "training_sessions" | "training_attendance" | "training_records" | "training_verifications" | "training_gaps" | "refresher_plan" | "training_hours" | "training_imports" | "fitness_codes" | "medical_providers" | "medical_examiners" | "medical_plan" | "fitness_status" | "fitness_gaps" | "fitness_holds" | "fitness_referrals" | "fitness_verifications" | "medical_imports" | "heat_patrols" | "heat_welfare_checks" | "heat_illness_log" | "emergency_drills" | "emergency_assets" | "emergency_events" | "field_inspections" | "field_audits" | "toolbox_talks" | "waste_consignments" | "env_readings" | "env_spills" | "env_complaints" | "notification_requirements" | "lessons" | "incident_vehicles" | "site_vehicles" | "driver_authorisations" | "pre_use_checks" | "journey_plans";
         /**
          * ExportFormat
          * @enum {string}
@@ -30383,6 +30803,12 @@ export interface components {
             general_block_from?: string | null;
         };
         /**
+         * HookProviderStatus
+         * @description HK-3 provider contract result.
+         * @enum {string}
+         */
+        HookProviderStatus: "met" | "not_met" | "expiring" | "unknown_code";
+        /**
          * HookReadinessReport
          * @description HK4-7 (capability 122): never prevents the switch.
          */
@@ -33861,7 +34287,7 @@ export interface components {
          * @description KPI catalogue §6.1. K-26 is split into one id per event type (DO / PD / ENV).
          * @enum {string}
          */
-        KpiMetric: "K-01" | "K-02" | "K-03" | "K-04" | "K-05" | "K-05b" | "K-06" | "K-07" | "K-08" | "K-09" | "K-10" | "K-11" | "K-12" | "K-13" | "K-14" | "K-15" | "K-16" | "K-17" | "K-18" | "K-20" | "K-21" | "K-22" | "K-23" | "K-24" | "K-25" | "K-26a" | "K-26b" | "K-26c" | "K-27" | "K-28" | "K-29" | "K-30" | "K-31" | "K-32" | "K-33" | "K-34" | "K-35" | "K-35b" | "K-36" | "K-37" | "K-38" | "K-39" | "K-40" | "K-41" | "K-42" | "K-42b" | "K-43" | "K-44" | "K-45" | "K-46" | "K-47" | "K-48" | "K-49" | "K-50" | "K-51" | "K-52" | "K-53" | "K-53b" | "K-54" | "K-55" | "K-56" | "K-57" | "K-58" | "K-59" | "K-60" | "K-46b" | "K-61" | "K-62" | "K-63" | "K-64" | "K-65" | "K-66" | "K-67" | "K-68" | "K-69" | "K-70" | "K-71" | "K-72" | "K-73" | "K-74" | "K-75" | "K-76" | "K-77" | "K-78" | "K-79" | "K-80" | "K-81" | "K-82" | "K-83" | "K-84" | "K-85" | "K-86" | "K-87" | "K-88" | "K-89" | "K-90" | "K-91" | "K-92" | "K-93" | "K-94" | "K-95" | "K-96" | "K-97" | "K-98" | "K-99" | "K-100" | "K-101" | "K-102" | "K-103" | "K-104" | "K-105" | "K-106" | "K-107" | "K-108" | "K-109" | "K-110" | "K-111" | "K-112" | "K-113" | "K-114" | "K-115" | "K-116" | "K-117" | "K-118" | "K-119" | "K-120" | "K-121" | "K-122" | "K-123" | "K-124" | "K-125" | "K-126" | "K-127" | "K-128" | "K-129" | "K-130" | "K-131" | "K-132" | "K-133" | "K-134" | "K-135" | "K-136" | "K-137";
+        KpiMetric: "K-01" | "K-02" | "K-03" | "K-04" | "K-05" | "K-05b" | "K-06" | "K-07" | "K-08" | "K-09" | "K-10" | "K-11" | "K-12" | "K-13" | "K-14" | "K-15" | "K-16" | "K-17" | "K-18" | "K-20" | "K-21" | "K-22" | "K-23" | "K-24" | "K-25" | "K-26a" | "K-26b" | "K-26c" | "K-27" | "K-28" | "K-29" | "K-30" | "K-31" | "K-32" | "K-33" | "K-34" | "K-35" | "K-35b" | "K-36" | "K-37" | "K-38" | "K-39" | "K-40" | "K-41" | "K-42" | "K-42b" | "K-43" | "K-44" | "K-45" | "K-46" | "K-47" | "K-48" | "K-49" | "K-50" | "K-51" | "K-52" | "K-53" | "K-53b" | "K-54" | "K-55" | "K-56" | "K-57" | "K-58" | "K-59" | "K-60" | "K-46b" | "K-61" | "K-62" | "K-63" | "K-64" | "K-65" | "K-66" | "K-67" | "K-68" | "K-69" | "K-70" | "K-71" | "K-72" | "K-73" | "K-74" | "K-75" | "K-76" | "K-77" | "K-78" | "K-79" | "K-80" | "K-81" | "K-82" | "K-83" | "K-84" | "K-85" | "K-86" | "K-87" | "K-88" | "K-89" | "K-90" | "K-91" | "K-92" | "K-93" | "K-94" | "K-95" | "K-96" | "K-97" | "K-98" | "K-99" | "K-100" | "K-101" | "K-102" | "K-103" | "K-104" | "K-105" | "K-106" | "K-107" | "K-108" | "K-109" | "K-110" | "K-111" | "K-112" | "K-113" | "K-114" | "K-115" | "K-116" | "K-117" | "K-118" | "K-119" | "K-120" | "K-121" | "K-122" | "K-123" | "K-124" | "K-125" | "K-126" | "K-127" | "K-128" | "K-129" | "K-130" | "K-131" | "K-132" | "K-133" | "K-134" | "K-135" | "K-136" | "K-137" | "K-138" | "K-139" | "K-140";
         /** KpiPlaceholder */
         KpiPlaceholder: {
             metric: components["schemas"]["KpiMetric"];
@@ -36558,7 +36984,7 @@ export interface components {
          * @description In-app notification kinds (§7).
          * @enum {string}
          */
-        NotificationKind: "account_locked" | "contractor_cr_expiry" | "contractor_submitted" | "contractor_status_changed" | "engagement_parent_blacklisted" | "settings_changed" | "audit_chain_break" | "last_hse_manager_risk" | "role_assignment_ending" | "invite_expired" | "inactive_account" | "incident_reported" | "incident_unclassified" | "external_notification_due" | "investigation_due" | "preliminary_report_missing" | "open_lti_case" | "case_restated" | "ca_assigned" | "ca_due" | "ca_overdue" | "ca_pending_verification" | "high_risk_observation_without_ca" | "daily_return_missing" | "data_completeness_low" | "month_lock_approaching" | "inspection_due" | "inspection_missed" | "leading_warning" | "lti_free_milestone" | "monthly_report_ready" | "import_committed_with_warnings" | "induction_expiry" | "reinduction_due" | "worker_id_expiry" | "passport_registration" | "airport_pass_expiry" | "bg_recheck_due" | "pass_application_update" | "pass_application_stale" | "adp_expiry" | "avp_expiry" | "vehicle_document_expiry" | "adp_suspended" | "adp_suspension_ended" | "raised_suspension_pending" | "credential_status_changed" | "return_due" | "return_overdue" | "credential_lost" | "lost_authority_not_notified" | "revoked_token_scanned" | "admitted_despite_denial" | "contractor_blacklisted_passes" | "wap_update" | "wap_blocked" | "wap_crew_excluded" | "wap_suspended" | "wap_ending" | "notam_ending" | "notam_late" | "notam_not_issued" | "notam_ended_with_waps" | "obstacle_clearance_update" | "obstacle_clearance_ending" | "ops_suspension" | "permit_requested" | "permit_review_reminder" | "permit_reviewed" | "permit_update" | "permit_not_issued" | "permit_issue_lapsed" | "shift_end_approaching" | "shift_lapsed" | "gas_retest_due" | "gas_test_failed" | "permit_suspended" | "midday_ban" | "fire_watch_ended" | "permit_ending" | "permit_expired" | "post_expiry_check_pending" | "simops_conflict" | "ptw_critical_finding" | "ptw_audits_behind_plan" | "gas_detector_calibration_due" | "gas_detector_quarantined" | "ptw_appointment_expiry" | "jsa_template_review_due" | "isolation_review_due" | "isolation_orphan" | "lock_cut" | "crew_eligibility_expiring" | "ptw_exemption" | "crew_excluded" | "equipment_cert_expiry" | "equipment_quarantined" | "personnel_cert_expiry" | "personnel_cert_expiring_on_crew" | "tpi_accreditation_expiry" | "tpi_client_approval_expiry" | "certificate_submitted" | "certificate_review_reminder" | "certificate_returned" | "verification_due" | "verification_unable" | "verification_failed" | "scaffold_tag_expiry" | "scaffold_tag_red" | "equipment_stop_use" | "defect_rectification_due" | "equipment_out_of_service" | "configuration_event" | "arrival_inspection_due" | "blacklist_changed" | "ban_review_due" | "hook_block_approaching" | "hook_policy_changed" | "trade_cert_missing" | "cert_import_update" | "training_record_expiry" | "training_expiring_on_crew" | "training_refresher_due" | "training_refresher_booked_late" | "training_gap_on_live_work" | "training_gap_at_mobilisation" | "training_session_update" | "training_session_reminder" | "training_session_close_due" | "training_session_voided" | "training_record_submitted" | "training_verification_due" | "training_verification_unable" | "training_verification_failed" | "training_record_status" | "training_cert_no_reused" | "trainer_authorisation_expiry" | "trainer_authorisation_lapsed_sessions" | "training_provider_accreditation_expiry" | "training_provider_status" | "training_attempts_exceeded" | "training_import_update" | "fitness_expiry" | "fitness_expiring_on_crew" | "fitness_review_due" | "fitness_hold_created" | "fitness_referral_raised" | "fitness_referral_overdue" | "fitness_work_during_hold" | "fitness_rtw_before_clearance" | "fitness_restricted_days_prompt" | "fitness_signoff_due" | "fitness_certificate_submitted" | "fitness_verification_due" | "fitness_verification_unable" | "fitness_verification_failed" | "fitness_clinical_data_rejected" | "fitness_cert_no_reused" | "fitness_permanently_unfit" | "fitness_second_opinion" | "medical_licence_expiry" | "medical_provider_status" | "medical_reexamination_list" | "exposure_group_removed" | "fitness_catalogue_shortened" | "medical_import_update" | "heat_regime_raised" | "heat_reading_overdue" | "heat_ban_prewarn" | "heat_ban_violation" | "heat_exemption" | "heat_welfare_fail" | "heat_welfare_missing" | "heat_plan_created" | "heat_plan_unconfirmed" | "heat_illness_entry" | "heat_review_overdue" | "heat_calibration_expiry" | "heat_coverage_gap" | "emergency_event" | "emergency_unaccounted" | "emergency_coverage_short" | "emergency_drill_due" | "emergency_evaluation_overdue" | "emergency_asset_failed" | "emergency_asset_due" | "emergency_team_not_current" | "emergency_erp_review" | "stop_work_order" | "critical_item_failure" | "inspection_coverage_gap" | "audit_due" | "audit_report_overdue" | "briefing_campaign" | "offline_submission_rejected" | "field_library_review" | "env_exceedance" | "airside_dust_alert" | "env_spill_reportable" | "env_permit_expiry" | "env_instrument_calibration" | "consignment_overdue" | "consignment_rejected" | "haz_storage_deadline" | "post_storm_check" | "discharge_permit_invalid" | "env_complaint" | "aspect_review" | "followup_requirement" | "followup_pack_approval" | "lesson_publish_due" | "lesson_published" | "lesson_ack_due" | "lesson_effectiveness_due" | "scorecard_issued" | "scorecard_comment_window" | "scorecard_dispute" | "scorecard_finalise_due" | "scorecard_month_not_locked" | "scorecard_sources" | "scorecard_revised" | "watch_list" | "pip_due" | "report_pack_due" | "report_pack_issued" | "delivery_bounced" | "export_ready" | "vehicle_docs_not_valid" | "accident_report_missing";
+        NotificationKind: "account_locked" | "contractor_cr_expiry" | "contractor_submitted" | "contractor_status_changed" | "engagement_parent_blacklisted" | "settings_changed" | "audit_chain_break" | "last_hse_manager_risk" | "role_assignment_ending" | "invite_expired" | "inactive_account" | "incident_reported" | "incident_unclassified" | "external_notification_due" | "investigation_due" | "preliminary_report_missing" | "open_lti_case" | "case_restated" | "ca_assigned" | "ca_due" | "ca_overdue" | "ca_pending_verification" | "high_risk_observation_without_ca" | "daily_return_missing" | "data_completeness_low" | "month_lock_approaching" | "inspection_due" | "inspection_missed" | "leading_warning" | "lti_free_milestone" | "monthly_report_ready" | "import_committed_with_warnings" | "induction_expiry" | "reinduction_due" | "worker_id_expiry" | "passport_registration" | "airport_pass_expiry" | "bg_recheck_due" | "pass_application_update" | "pass_application_stale" | "adp_expiry" | "avp_expiry" | "vehicle_document_expiry" | "adp_suspended" | "adp_suspension_ended" | "raised_suspension_pending" | "credential_status_changed" | "return_due" | "return_overdue" | "credential_lost" | "lost_authority_not_notified" | "revoked_token_scanned" | "admitted_despite_denial" | "contractor_blacklisted_passes" | "wap_update" | "wap_blocked" | "wap_crew_excluded" | "wap_suspended" | "wap_ending" | "notam_ending" | "notam_late" | "notam_not_issued" | "notam_ended_with_waps" | "obstacle_clearance_update" | "obstacle_clearance_ending" | "ops_suspension" | "permit_requested" | "permit_review_reminder" | "permit_reviewed" | "permit_update" | "permit_not_issued" | "permit_issue_lapsed" | "shift_end_approaching" | "shift_lapsed" | "gas_retest_due" | "gas_test_failed" | "permit_suspended" | "midday_ban" | "fire_watch_ended" | "permit_ending" | "permit_expired" | "post_expiry_check_pending" | "simops_conflict" | "ptw_critical_finding" | "ptw_audits_behind_plan" | "gas_detector_calibration_due" | "gas_detector_quarantined" | "ptw_appointment_expiry" | "jsa_template_review_due" | "isolation_review_due" | "isolation_orphan" | "lock_cut" | "crew_eligibility_expiring" | "ptw_exemption" | "crew_excluded" | "equipment_cert_expiry" | "equipment_quarantined" | "personnel_cert_expiry" | "personnel_cert_expiring_on_crew" | "tpi_accreditation_expiry" | "tpi_client_approval_expiry" | "certificate_submitted" | "certificate_review_reminder" | "certificate_returned" | "verification_due" | "verification_unable" | "verification_failed" | "scaffold_tag_expiry" | "scaffold_tag_red" | "equipment_stop_use" | "defect_rectification_due" | "equipment_out_of_service" | "configuration_event" | "arrival_inspection_due" | "blacklist_changed" | "ban_review_due" | "hook_block_approaching" | "hook_policy_changed" | "trade_cert_missing" | "cert_import_update" | "training_record_expiry" | "training_expiring_on_crew" | "training_refresher_due" | "training_refresher_booked_late" | "training_gap_on_live_work" | "training_gap_at_mobilisation" | "training_session_update" | "training_session_reminder" | "training_session_close_due" | "training_session_voided" | "training_record_submitted" | "training_verification_due" | "training_verification_unable" | "training_verification_failed" | "training_record_status" | "training_cert_no_reused" | "trainer_authorisation_expiry" | "trainer_authorisation_lapsed_sessions" | "training_provider_accreditation_expiry" | "training_provider_status" | "training_attempts_exceeded" | "training_import_update" | "fitness_expiry" | "fitness_expiring_on_crew" | "fitness_review_due" | "fitness_hold_created" | "fitness_referral_raised" | "fitness_referral_overdue" | "fitness_work_during_hold" | "fitness_rtw_before_clearance" | "fitness_restricted_days_prompt" | "fitness_signoff_due" | "fitness_certificate_submitted" | "fitness_verification_due" | "fitness_verification_unable" | "fitness_verification_failed" | "fitness_clinical_data_rejected" | "fitness_cert_no_reused" | "fitness_permanently_unfit" | "fitness_second_opinion" | "medical_licence_expiry" | "medical_provider_status" | "medical_reexamination_list" | "exposure_group_removed" | "fitness_catalogue_shortened" | "medical_import_update" | "heat_regime_raised" | "heat_reading_overdue" | "heat_ban_prewarn" | "heat_ban_violation" | "heat_exemption" | "heat_welfare_fail" | "heat_welfare_missing" | "heat_plan_created" | "heat_plan_unconfirmed" | "heat_illness_entry" | "heat_review_overdue" | "heat_calibration_expiry" | "heat_coverage_gap" | "emergency_event" | "emergency_unaccounted" | "emergency_coverage_short" | "emergency_drill_due" | "emergency_evaluation_overdue" | "emergency_asset_failed" | "emergency_asset_due" | "emergency_team_not_current" | "emergency_erp_review" | "stop_work_order" | "critical_item_failure" | "inspection_coverage_gap" | "audit_due" | "audit_report_overdue" | "briefing_campaign" | "offline_submission_rejected" | "field_library_review" | "env_exceedance" | "airside_dust_alert" | "env_spill_reportable" | "env_permit_expiry" | "env_instrument_calibration" | "consignment_overdue" | "consignment_rejected" | "haz_storage_deadline" | "post_storm_check" | "discharge_permit_invalid" | "env_complaint" | "aspect_review" | "followup_requirement" | "followup_pack_approval" | "lesson_publish_due" | "lesson_published" | "lesson_ack_due" | "lesson_effectiveness_due" | "scorecard_issued" | "scorecard_comment_window" | "scorecard_dispute" | "scorecard_finalise_due" | "scorecard_month_not_locked" | "scorecard_sources" | "scorecard_revised" | "watch_list" | "pip_due" | "report_pack_due" | "report_pack_issued" | "delivery_bounced" | "export_ready" | "vehicle_docs_not_valid" | "accident_report_missing" | "site_vehicle_doc_expiry" | "driver_auth_expiry" | "vehicle_defect_hold";
         /** NotificationPage */
         NotificationPage: {
             /** Items */
@@ -43234,7 +43660,7 @@ export interface components {
          * ResponseOwnerType
          * @enum {string}
          */
-        ResponseOwnerType: "inspection" | "audit";
+        ResponseOwnerType: "inspection" | "audit" | "vehicle_check";
         /** ResponseRead */
         ResponseRead: {
             /**
@@ -46968,6 +47394,1211 @@ export interface components {
             gps_lat?: number | null;
             /** Gps Lng */
             gps_lng?: number | null;
+        };
+        /**
+         * SiteVehAuthCreate
+         * @description Draft (235; a Contractor HSE Rep proposes for his engagement tree). Licence fields left
+         *     empty are prefilled from the worker's ADP when one exists.
+         */
+        SiteVehAuthCreate: {
+            /** Groups */
+            groups: components["schemas"]["SiteVehDriverGroup"][];
+            licence_issuer?: components["schemas"]["LicenceIssuer"] | null;
+            /** @description Must cover every road group (LCV; LICENCE_CLASS_NOT_COVERING). */
+            licence_class?: components["schemas"]["LicenceClass"] | null;
+            /** Licence Expiry */
+            licence_expiry?: string | null;
+            /**
+             * Assessment Date
+             * Format: date
+             * @description ≤ 12 months before issued_on (ASSESSMENT_TOO_OLD).
+             */
+            assessment_date: string;
+            /** Assessor */
+            assessor: string;
+            /**
+             * Issued On
+             * Format: date
+             */
+            issued_on: string;
+            /**
+             * Own Valid Until
+             * @description Default issued_on + driver_auth_validity_months − 1 day.
+             */
+            own_valid_until?: string | null;
+            /**
+             * Plant Vehicle Ids
+             * @description Group plant: site plant operated; a Phase 4-linked item adds its EQC operator-certificate hook (DA-2).
+             */
+            plant_vehicle_ids?: string[];
+            /**
+             * Worker Id
+             * Format: uuid
+             */
+            worker_id: string;
+        };
+        /** SiteVehAuthPage */
+        SiteVehAuthPage: {
+            /** Items */
+            items: components["schemas"]["SiteVehAuthRead"][];
+            /**
+             * Total
+             * @description Total number of matching items across all pages.
+             */
+            total: number;
+            /**
+             * Page
+             * @description 1-based page number.
+             */
+            page: number;
+            /**
+             * Page Size
+             * @description Items per page (max 200).
+             */
+            page_size: number;
+        };
+        /** SiteVehAuthPrefill */
+        SiteVehAuthPrefill: {
+            /**
+             * Worker Id
+             * Format: uuid
+             */
+            worker_id: string;
+            /** Adp No */
+            adp_no: string | null;
+            licence_issuer: components["schemas"]["LicenceIssuer"] | null;
+            licence_class: components["schemas"]["LicenceClass"] | null;
+            /** Licence Expiry */
+            licence_expiry: string | null;
+            /**
+             * Live Authorisation No
+             * @description One live authorisation per worker.
+             */
+            live_authorisation_no: string | null;
+        };
+        /** SiteVehAuthRead */
+        SiteVehAuthRead: {
+            /**
+             * Created At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            updated_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Auth No
+             * @example DA-ANIA-EXP-0042
+             */
+            auth_no: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            worker: components["schemas"]["WorkerRef"];
+            engagement: components["schemas"]["EngagementRef"] | null;
+            /** Groups */
+            groups: components["schemas"]["SiteVehDriverGroup"][];
+            status: components["schemas"]["SiteVehAuthStatus"];
+            /**
+             * Redacted
+             * @description Site engineer: status only (P7b-1, AC 12).
+             */
+            redacted: boolean;
+            licence_issuer: components["schemas"]["LicenceIssuer"] | null;
+            licence_class: components["schemas"]["LicenceClass"] | null;
+            /** Licence Expiry */
+            licence_expiry: string | null;
+            /** Licence Prefilled From Adp */
+            licence_prefilled_from_adp: boolean;
+            /** Assessment Date */
+            assessment_date: string | null;
+            /** Assessor */
+            assessor: string | null;
+            /**
+             * Issued On
+             * Format: date
+             */
+            issued_on: string;
+            /** Own Valid Until */
+            own_valid_until: string | null;
+            /** Effective Valid Until */
+            effective_valid_until: string | null;
+            limiting_factor: components["schemas"]["SiteVehLimitingFactor"] | null;
+            /** Hook Results */
+            hook_results: components["schemas"]["SiteVehHookResultRead"][];
+            /** Hooks Evaluated At */
+            hooks_evaluated_at: string | null;
+            /** Plant Vehicle Ids */
+            plant_vehicle_ids: string[];
+            /** Status Reason */
+            status_reason: string | null;
+            /** Status Changed At */
+            status_changed_at: string | null;
+            /** Activated At */
+            activated_at: string | null;
+            /** Warnings */
+            warnings?: components["schemas"]["ApiWarning"][];
+        };
+        /**
+         * SiteVehAuthStatus
+         * @description §4.2 driver / operator authorisation.
+         * @enum {string}
+         */
+        SiteVehAuthStatus: "draft" | "active" | "suspended" | "expired" | "revoked";
+        /**
+         * SiteVehAuthTransition
+         * @description §4.2: activate (draft / suspended → active; DA-1), suspend (reason ≥ 20), revoke (final).
+         *     Capability 235 (not reps).
+         */
+        SiteVehAuthTransition: {
+            to_status: components["schemas"]["SiteVehAuthStatus"];
+            /** Reason */
+            reason?: string | null;
+        };
+        /**
+         * SiteVehAuthUpdate
+         * @description Draft only.
+         */
+        SiteVehAuthUpdate: {
+            /** Groups */
+            groups?: components["schemas"]["SiteVehDriverGroup"][] | null;
+            licence_issuer?: components["schemas"]["LicenceIssuer"] | null;
+            licence_class?: components["schemas"]["LicenceClass"] | null;
+            /** Licence Expiry */
+            licence_expiry?: string | null;
+            /** Assessment Date */
+            assessment_date?: string | null;
+            /** Assessor */
+            assessor?: string | null;
+            /** Issued On */
+            issued_on?: string | null;
+            /** Own Valid Until */
+            own_valid_until?: string | null;
+            /** Plant Vehicle Ids */
+            plant_vehicle_ids?: string[] | null;
+        };
+        /** SiteVehBreakdown */
+        SiteVehBreakdown: {
+            /** Metric */
+            metric: string;
+            group_by: components["schemas"]["SiteVehKpiGroupBy"];
+            /** Rows */
+            rows: components["schemas"]["SiteVehBreakdownRow"][];
+        };
+        /** SiteVehBreakdownRow */
+        SiteVehBreakdownRow: {
+            /** Key */
+            key: string;
+            /** Label En */
+            label_en: string;
+            /** Label Ar */
+            label_ar: string;
+            /** Value */
+            value: string | null;
+            /** Display */
+            display: string;
+            /** Numerator */
+            numerator?: string | null;
+            /** Denominator */
+            denominator?: string | null;
+        };
+        /**
+         * SiteVehCheckCreate
+         * @description Capability 236. Template by driver group (VPU-L light, VPU-B bus, VPU-H heavy / plant),
+         *     pinned at start; 6d answer rules (EXE-2). One Completed check per vehicle per date (422
+         *     PRE_USE_CHECK_EXISTS; a re-check is allowed while the vehicle is on defect hold). PU-6
+         *     under block → 422 DRIVER_NOT_AUTHORISED; under warn the warning is returned.
+         */
+        SiteVehCheckCreate: {
+            /**
+             * Vehicle Id
+             * Format: uuid
+             */
+            vehicle_id: string;
+            /**
+             * Driver Worker Id
+             * Format: uuid
+             */
+            driver_worker_id: string;
+            /**
+             * Check Date
+             * @description Default today (local).
+             */
+            check_date?: string | null;
+            /** Answers */
+            answers: components["schemas"]["AnswerInput"][];
+            /** @default app */
+            source: components["schemas"]["SiteVehCheckSource"];
+            /** @description Required when source = paper (PU-5). */
+            paper_photo?: components["schemas"]["PhotoInput"] | null;
+            /** Completed At */
+            completed_at?: string | null;
+        };
+        /**
+         * SiteVehCheckForm
+         * @description What the check screen needs for one vehicle: the published template and today's state.
+         */
+        SiteVehCheckForm: {
+            vehicle: components["schemas"]["SiteVehVehicleRef"];
+            template: components["schemas"]["TemplateRead"];
+            /**
+             * Check Date
+             * Format: date
+             */
+            check_date: string;
+            /** Existing Check No */
+            existing_check_no: string | null;
+            /** On Defect Hold */
+            on_defect_hold: boolean;
+            readiness: components["schemas"]["SiteVehReadiness"];
+        };
+        /** SiteVehCheckPage */
+        SiteVehCheckPage: {
+            /** Items */
+            items: components["schemas"]["SiteVehCheckRead"][];
+            /**
+             * Total
+             * @description Total number of matching items across all pages.
+             */
+            total: number;
+            /**
+             * Page
+             * @description 1-based page number.
+             */
+            page: number;
+            /**
+             * Page Size
+             * @description Items per page (max 200).
+             */
+            page_size: number;
+        };
+        /** SiteVehCheckRead */
+        SiteVehCheckRead: {
+            /**
+             * Created At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            updated_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Check No
+             * @example VPC-ANIA-EXP-20261011-0031
+             */
+            check_no: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            vehicle: components["schemas"]["SiteVehVehicleRef"];
+            engagement: components["schemas"]["EngagementRef"] | null;
+            driver: components["schemas"]["WorkerRef"];
+            driver_group: components["schemas"]["SiteVehDriverGroup"] | null;
+            /** Driver Authorised */
+            driver_authorised: boolean;
+            /** Authorisation No */
+            authorisation_no: string | null;
+            /**
+             * Check Date
+             * Format: date
+             */
+            check_date: string;
+            /** Template Code */
+            template_code: string;
+            /** Response Id */
+            response_id: string | null;
+            /** Passed */
+            passed: boolean;
+            /** Critical Fail Count */
+            critical_fail_count: number;
+            /** Failed Items */
+            failed_items: string[];
+            source: components["schemas"]["SiteVehCheckSource"];
+            /** Paper Photo Id */
+            paper_photo_id: string | null;
+            recorded_by: components["schemas"]["UserRef"] | null;
+            /**
+             * Completed At
+             * Format: date-time
+             */
+            completed_at: string;
+            /** Findings */
+            findings: components["schemas"]["SiteVehFindingRead"][];
+            /** Phase4 Defect Id */
+            phase4_defect_id: string | null;
+            /** Phase4 Defect No */
+            phase4_defect_no: string | null;
+            /** Hold Set */
+            hold_set: boolean;
+            /** Hold Cleared At */
+            hold_cleared_at: string | null;
+            /** Hold Repair Note */
+            hold_repair_note: string | null;
+            /** Warnings */
+            warnings?: components["schemas"]["ApiWarning"][];
+        };
+        /**
+         * SiteVehCheckSource
+         * @description PU-5: `paper` = answers transcribed from a signed paper card (photo attached).
+         * @enum {string}
+         */
+        SiteVehCheckSource: "app" | "paper";
+        /**
+         * SiteVehClearHold
+         * @description PU-3 / §4.1: needs a passing check completed after the hold (else 409
+         *     VEHICLE_DEFECT_HOLD).
+         */
+        SiteVehClearHold: {
+            /** Repair Note */
+            repair_note: string;
+        };
+        /**
+         * SiteVehCreate
+         * @description Capability 234 (reps: own engagement). Creates the Phase 2 vehicle (VEH-nnnn) with the
+         *     7b fields; Phase 2 plate / VIN / document rules apply (Istimara and MVPI required when
+         *     plated). 422 OPERATING_CARD_REQUIRED for crew_bus / tipper / goods_heavy with a plate.
+         */
+        SiteVehCreate: {
+            /**
+             * Engagement Id
+             * Format: uuid
+             */
+            engagement_id: string;
+            owner_type: components["schemas"]["VehicleOwnerType"];
+            category: components["schemas"]["VehicleCategory"];
+            plate_type: components["schemas"]["PlateType"];
+            /** Plate Letters Ar */
+            plate_letters_ar?: string | null;
+            /** Plate Letters En */
+            plate_letters_en?: string | null;
+            /** Plate Digits */
+            plate_digits?: string | null;
+            /** Fleet No */
+            fleet_no: string;
+            /** Serial Or Vin */
+            serial_or_vin: string;
+            /** Make Model */
+            make_model: string;
+            /** Year */
+            year: number;
+            /**
+             * Colour
+             * @default White
+             */
+            colour: string;
+            /**
+             * Travel Height M
+             * @description Default 2.00 m.
+             */
+            travel_height_m?: number | string | null;
+            /**
+             * Max Working Height M Agl
+             * @description Default travel.
+             */
+            max_working_height_m_agl?: number | string | null;
+            /** Istimara Expiry */
+            istimara_expiry?: string | null;
+            /** Insurance Policy No */
+            insurance_policy_no: string;
+            /**
+             * Insurance Expiry
+             * Format: date
+             */
+            insurance_expiry: string;
+            /** Mvpi Expiry */
+            mvpi_expiry?: string | null;
+            /** @description site or both (airside_only is Phase 2 only). */
+            site_scope: components["schemas"]["SiteVehScope"];
+            use_class: components["schemas"]["SiteVehUseClass"];
+            /**
+             * Seats
+             * @description crew_bus / crew_pickup: 2–60.
+             */
+            seats?: number | null;
+            /** Operating Card No */
+            operating_card_no?: string | null;
+            /** Operating Card Expiry */
+            operating_card_expiry?: string | null;
+            /** Idle From */
+            idle_from?: string | null;
+            /** Idle To */
+            idle_to?: string | null;
+        };
+        /** SiteVehDocRead */
+        SiteVehDocRead: {
+            /**
+             * Kind
+             * @description istimara · insurance · mvpi · operating_card
+             */
+            kind: string;
+            /**
+             * Expiry
+             * Format: date
+             */
+            expiry: string;
+            /** Days Left */
+            days_left: number;
+            /**
+             * State
+             * @description valid · expiring (≤ 30 days) · expired
+             */
+            state: string;
+        };
+        /**
+         * SiteVehDocsFilter
+         * @description Register filter on the vehicle documents.
+         * @enum {string}
+         */
+        SiteVehDocsFilter: "expired" | "expiring_30d" | "unverified";
+        /**
+         * SiteVehDriverGroup
+         * @description List DG (§3.6). light / bus / heavy are road groups (licence class per LCV); plant needs
+         *     no road licence (Phase 4 operator certificate or a practical assessment).
+         * @enum {string}
+         */
+        SiteVehDriverGroup: "light" | "bus" | "heavy" | "plant";
+        /** SiteVehFindingRead */
+        SiteVehFindingRead: {
+            /** Finding No */
+            finding_no: string;
+            /** Item Code */
+            item_code: string | null;
+            severity: components["schemas"]["app__core__field_enums__FindingSeverity"];
+            /** Critical Item */
+            critical_item: boolean;
+            /** Ca Id */
+            ca_id: string | null;
+            /** Ca Ref */
+            ca_ref: string | null;
+        };
+        /** SiteVehHoldRead */
+        SiteVehHoldRead: {
+            /**
+             * Check Id
+             * Format: uuid
+             */
+            check_id: string;
+            /** Check No */
+            check_no: string;
+            /**
+             * Set On
+             * Format: date
+             */
+            set_on: string;
+            /** Failed Items */
+            failed_items: string[];
+            /** Ca Id */
+            ca_id: string | null;
+            /** Ca Ref */
+            ca_ref: string | null;
+        };
+        /**
+         * SiteVehHookResult
+         * @description DA-2 result of one hook: met; warn (not met under policy warn); not_met.
+         * @enum {string}
+         */
+        SiteVehHookResult: "met" | "warn" | "not_met";
+        /** SiteVehHookResultRead */
+        SiteVehHookResultRead: {
+            kind: components["schemas"]["HookKind"];
+            /**
+             * Code
+             * @example DEF-DRV
+             * @example DRIVER-FIT
+             * @example PLANT-OPERATOR
+             */
+            code: string;
+            result: components["schemas"]["SiteVehHookResult"];
+            provider_status: components["schemas"]["HookProviderStatus"];
+            /** Valid Until */
+            valid_until: string | null;
+            /** Ref */
+            ref: string | null;
+            /** Reason Code */
+            reason_code: string | null;
+            /**
+             * Vehicle Id
+             * @description The plant whose Phase 4 EQC gave the operator code.
+             */
+            vehicle_id?: string | null;
+        };
+        /** SiteVehJourneyArrive */
+        SiteVehJourneyArrive: {
+            /**
+             * Arrived At
+             * @description Default now.
+             */
+            arrived_at?: string | null;
+        };
+        /** SiteVehJourneyCancel */
+        SiteVehJourneyCancel: {
+            /** Reason */
+            reason: string;
+        };
+        /**
+         * SiteVehJourneyCreate
+         * @description Capability 236. JM-2: 409 VEHICLE_NOT_READY (defect_hold / not_certified / withdrawn);
+         *     PU-6 policy; 422 PASSENGERS_EXCEED_SEATS, JOURNEY_TIMES_INVALID, JOURNEY_CONTACT_IS_DRIVER.
+         */
+        SiteVehJourneyCreate: {
+            /**
+             * Vehicle Id
+             * Format: uuid
+             */
+            vehicle_id: string;
+            /**
+             * Driver Worker Id
+             * Format: uuid
+             */
+            driver_worker_id: string;
+            /** Passengers */
+            passengers: number;
+            /** Origin */
+            origin: string;
+            /** Destination */
+            destination: string;
+            /** Distance Km */
+            distance_km: number;
+            /**
+             * Planned Depart
+             * Format: date-time
+             */
+            planned_depart: string;
+            /**
+             * Planned Arrive
+             * Format: date-time
+             */
+            planned_arrive: string;
+            /**
+             * Contact User Id
+             * Format: uuid
+             */
+            contact_user_id: string;
+            /** Notes */
+            notes?: string | null;
+        };
+        /**
+         * SiteVehJourneyHint
+         * @description JM-1: a hint only; the platform never requires a plan.
+         */
+        SiteVehJourneyHint: {
+            /** Recommended */
+            recommended: boolean;
+            /**
+             * Reasons
+             * @description distance · night
+             */
+            reasons: string[];
+            /** Message En */
+            message_en: string | null;
+            /** Message Ar */
+            message_ar: string | null;
+        };
+        /** SiteVehJourneyHintInput */
+        SiteVehJourneyHintInput: {
+            /** Distance Km */
+            distance_km: number;
+            /**
+             * Planned Depart
+             * Format: date-time
+             */
+            planned_depart: string;
+            /**
+             * Planned Arrive
+             * Format: date-time
+             */
+            planned_arrive: string;
+        };
+        /** SiteVehJourneyPage */
+        SiteVehJourneyPage: {
+            /** Items */
+            items: components["schemas"]["SiteVehJourneyRead"][];
+            /**
+             * Total
+             * @description Total number of matching items across all pages.
+             */
+            total: number;
+            /**
+             * Page
+             * @description 1-based page number.
+             */
+            page: number;
+            /**
+             * Page Size
+             * @description Items per page (max 200).
+             */
+            page_size: number;
+        };
+        /** SiteVehJourneyRead */
+        SiteVehJourneyRead: {
+            /**
+             * Created At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            updated_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Plan No
+             * @example JP-ANIA-EXP-2026-0118
+             */
+            plan_no: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            vehicle: components["schemas"]["SiteVehVehicleRef"];
+            engagement: components["schemas"]["EngagementRef"] | null;
+            driver: components["schemas"]["WorkerRef"];
+            driver_group: components["schemas"]["SiteVehDriverGroup"] | null;
+            /** Driver Authorised */
+            driver_authorised: boolean;
+            /** Passengers */
+            passengers: number;
+            /** Origin */
+            origin: string;
+            /** Destination */
+            destination: string;
+            /** Distance Km */
+            distance_km: number;
+            /**
+             * Planned Depart
+             * Format: date-time
+             */
+            planned_depart: string;
+            /**
+             * Planned Arrive
+             * Format: date-time
+             */
+            planned_arrive: string;
+            contact: components["schemas"]["UserRef"] | null;
+            /** Notes */
+            notes: string | null;
+            /** Hint Recommended */
+            hint_recommended: boolean;
+            status: components["schemas"]["SiteVehJourneyStatus"];
+            /**
+             * Overdue
+             * @description Display flag only: Planned and now > planned_arrive + 60 min (no alert).
+             */
+            overdue: boolean;
+            /** Arrived At */
+            arrived_at: string | null;
+            /** Cancelled Reason */
+            cancelled_reason: string | null;
+            /** Warnings */
+            warnings?: components["schemas"]["ApiWarning"][];
+        };
+        /**
+         * SiteVehJourneyStatus
+         * @description §4.3 (prototype). Overdue is a display flag only.
+         * @enum {string}
+         */
+        SiteVehJourneyStatus: "planned" | "arrived" | "cancelled";
+        /**
+         * SiteVehKpiGroupBy
+         * @description GET /kpi/site-vehicles breakdowns.
+         * @enum {string}
+         */
+        SiteVehKpiGroupBy: "contractor" | "month";
+        /**
+         * SiteVehKpiResponse
+         * @description GET /kpi/site-vehicles: K-138…K-140 (aggregates only; SK-2).
+         */
+        SiteVehKpiResponse: {
+            context: components["schemas"]["KpiContext"];
+            /** Metrics */
+            metrics: components["schemas"]["KpiValue"][];
+            /** Breakdowns */
+            breakdowns: components["schemas"]["SiteVehBreakdown"][];
+            /** Notes */
+            notes: string[];
+        };
+        /** SiteVehLabel */
+        SiteVehLabel: {
+            /** Code */
+            code: string;
+            /** Label En */
+            label_en: string;
+            /** Label Ar */
+            label_ar: string;
+        };
+        /**
+         * SiteVehLimitingFactor
+         * @description §6.1: the term that gives effective_valid_until.
+         * @enum {string}
+         */
+        SiteVehLimitingFactor: "own_validity" | "licence" | "worker_id" | "deployment_end" | "training" | "medical" | "operator_certificate";
+        /** SiteVehMissingByContractor */
+        SiteVehMissingByContractor: {
+            engagement: components["schemas"]["EngagementRef"] | null;
+            /** Required */
+            required: number;
+            /** Completed */
+            completed: number;
+            /** Missing */
+            missing: number;
+        };
+        /**
+         * SiteVehMissingRead
+         * @description PU-1 for one day: required vehicles without a Completed check, per contractor.
+         */
+        SiteVehMissingRead: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Working Day */
+            working_day: boolean;
+            /** Required */
+            required: number;
+            /** Completed */
+            completed: number;
+            /** Items */
+            items: components["schemas"]["SiteVehMissingRow"][];
+            /** By Contractor */
+            by_contractor: components["schemas"]["SiteVehMissingByContractor"][];
+        };
+        /** SiteVehMissingRow */
+        SiteVehMissingRow: {
+            vehicle: components["schemas"]["SiteVehVehicleRef"];
+            engagement: components["schemas"]["EngagementRef"] | null;
+            readiness: components["schemas"]["SiteVehReadiness"];
+        };
+        /** SiteVehPage */
+        SiteVehPage: {
+            /** Items */
+            items: components["schemas"]["SiteVehRead"][];
+            /**
+             * Total
+             * @description Total number of matching items across all pages.
+             */
+            total: number;
+            /**
+             * Page
+             * @description 1-based page number.
+             */
+            page: number;
+            /**
+             * Page Size
+             * @description Items per page (max 200).
+             */
+            page_size: number;
+        };
+        /**
+         * SiteVehPhase4Read
+         * @description SV-3: the Phase 4 equipment item linked to this vehicle (read-only in 7b).
+         */
+        SiteVehPhase4Read: {
+            /**
+             * Equipment Id
+             * Format: uuid
+             */
+            equipment_id: string;
+            /**
+             * Equipment No
+             * @example EQP-000214
+             */
+            equipment_no: string;
+            service_status: components["schemas"]["ServiceStatus"];
+            /**
+             * Operator Code
+             * @description EQC operator certificate code (DA-2).
+             */
+            operator_code: string | null;
+        };
+        /**
+         * SiteVehPolicy
+         * @description §3.5 driver_hook_policy / driver_auth_policy.
+         * @enum {string}
+         */
+        SiteVehPolicy: "warn" | "block";
+        /** SiteVehRead */
+        SiteVehRead: {
+            /**
+             * Created At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             * @description UTC timestamp.
+             */
+            updated_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Vehicle No
+             * @example VEH-0107
+             */
+            vehicle_no: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            engagement: components["schemas"]["EngagementRef"];
+            owner_type: components["schemas"]["VehicleOwnerType"];
+            category: components["schemas"]["VehicleCategory"];
+            plate_type: components["schemas"]["PlateType"];
+            /** Plate Letters Ar */
+            plate_letters_ar: string | null;
+            /** Plate Letters En */
+            plate_letters_en: string | null;
+            /** Plate Digits */
+            plate_digits: string | null;
+            /** Fleet No */
+            fleet_no: string;
+            /** Serial Or Vin */
+            serial_or_vin: string;
+            /** Make Model */
+            make_model: string;
+            /** Year */
+            year: number;
+            site_scope: components["schemas"]["SiteVehScope"];
+            use_class: components["schemas"]["SiteVehUseClass"] | null;
+            driver_group: components["schemas"]["SiteVehDriverGroup"] | null;
+            /** Seats */
+            seats: number | null;
+            /** Operating Card No */
+            operating_card_no: string | null;
+            /** Operating Card Expiry */
+            operating_card_expiry: string | null;
+            /** Istimara Expiry */
+            istimara_expiry: string | null;
+            /** Insurance Policy No */
+            insurance_policy_no: string;
+            /**
+             * Insurance Expiry
+             * Format: date
+             */
+            insurance_expiry: string;
+            /** Mvpi Expiry */
+            mvpi_expiry: string | null;
+            /** Documents */
+            documents: components["schemas"]["SiteVehDocRead"][];
+            /** Docs Verified */
+            docs_verified: boolean;
+            docs_verified_by: components["schemas"]["UserRef"] | null;
+            /** Docs Verified At */
+            docs_verified_at: string | null;
+            /** Idle From */
+            idle_from: string | null;
+            /** Idle To */
+            idle_to: string | null;
+            status: components["schemas"]["VehicleStatus"];
+            /** Withdrawn On */
+            withdrawn_on: string | null;
+            /** @description §4.1 today (derived; first match wins). */
+            readiness: components["schemas"]["SiteVehReadiness"];
+            /**
+             * Readiness Reasons
+             * @description e.g. insurance:2026-10-19, defect_hold:VPC-…, phase4:out_of_service.
+             */
+            readiness_reasons: string[];
+            phase4: components["schemas"]["SiteVehPhase4Read"] | null;
+            hold: components["schemas"]["SiteVehHoldRead"] | null;
+            today_check: components["schemas"]["SiteVehTodayCheck"] | null;
+            /** Pre Use Required Today */
+            pre_use_required_today: boolean;
+            /**
+             * Warnings
+             * @description VEHICLE_DOCS_UNVERIFIED (readiness unchanged, SV-4).
+             */
+            warnings?: components["schemas"]["ApiWarning"][];
+        };
+        /**
+         * SiteVehReadiness
+         * @description §4.1, in precedence order (first matching state wins).
+         * @enum {string}
+         */
+        SiteVehReadiness: "withdrawn" | "idle" | "defect_hold" | "not_certified" | "docs_expired" | "ready";
+        /**
+         * SiteVehReference
+         * @description Lists SU and DG plus the EN/AR labels of every 7b state and code.
+         */
+        SiteVehReference: {
+            /** Use Classes */
+            use_classes: components["schemas"]["SiteVehUseClassRead"][];
+            /** Driver Groups */
+            driver_groups: components["schemas"]["SiteVehLabel"][];
+            /** Readiness */
+            readiness: components["schemas"]["SiteVehLabel"][];
+            /** Authorisation Statuses */
+            authorisation_statuses: components["schemas"]["SiteVehLabel"][];
+            /** Journey Statuses */
+            journey_statuses: components["schemas"]["SiteVehLabel"][];
+            /** Limiting Factors */
+            limiting_factors: components["schemas"]["SiteVehLabel"][];
+            /** Warnings */
+            warnings: components["schemas"]["SiteVehLabel"][];
+            prototype_badge: components["schemas"]["SiteVehLabel"];
+        };
+        /**
+         * SiteVehScope
+         * @description §3.1 site_scope. Existing Phase 2 rows default to `airside_only` (SV-1).
+         * @enum {string}
+         */
+        SiteVehScope: "airside_only" | "site" | "both";
+        /**
+         * SiteVehSettingsRead
+         * @description §3.5. `live` = site_vehicles_from is set (null = 7b off: other 7b endpoints answer 422
+         *     SITE_VEHICLES_NOT_LIVE).
+         */
+        SiteVehSettingsRead: {
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Live */
+            live: boolean;
+            /** Site Vehicles From */
+            site_vehicles_from: string | null;
+            /**
+             * Driver Auth Validity Months
+             * @description 12–36 (default 24 ASSUMPTION).
+             */
+            driver_auth_validity_months: number;
+            /**
+             * Defensive Driving Code
+             * @example DEF-DRV
+             */
+            defensive_driving_code: string;
+            /**
+             * Bus Driving Code
+             * @example BUS-DRV
+             */
+            bus_driving_code: string;
+            driver_hook_policy: components["schemas"]["SiteVehPolicy"];
+            driver_auth_policy: components["schemas"]["SiteVehPolicy"];
+            /** Pre Use Required Groups */
+            pre_use_required_groups: components["schemas"]["SiteVehDriverGroup"][];
+            rest_weekday: components["schemas"]["Weekday"];
+            /**
+             * Journey Hint Km
+             * @description 50–500 (prototype default 150).
+             */
+            journey_hint_km: number;
+            /**
+             * Journey Hint Night From
+             * @example 22:00
+             */
+            journey_hint_night_from: string;
+            /**
+             * Journey Hint Night To
+             * @example 05:00
+             */
+            journey_hint_night_to: string;
+            /** Updated At */
+            updated_at: string | null;
+            updated_by: components["schemas"]["UserRef"] | null;
+        };
+        /**
+         * SiteVehSettingsUpdate
+         * @description Capability 237 (HSE Manager); out of range → 422 SETTING_OUT_OF_RANGE. Course codes must
+         *     exist in the Phase 5 catalogue (DEF-DRV / BUS-DRV are created when 7b is first switched on).
+         */
+        SiteVehSettingsUpdate: {
+            /**
+             * Site Vehicles From
+             * @description ≤ today + 30; null = off.
+             */
+            site_vehicles_from?: string | null;
+            /** Driver Auth Validity Months */
+            driver_auth_validity_months?: number | null;
+            /** Defensive Driving Code */
+            defensive_driving_code?: string | null;
+            /** Bus Driving Code */
+            bus_driving_code?: string | null;
+            driver_hook_policy?: components["schemas"]["SiteVehPolicy"] | null;
+            driver_auth_policy?: components["schemas"]["SiteVehPolicy"] | null;
+            /** Pre Use Required Groups */
+            pre_use_required_groups?: components["schemas"]["SiteVehDriverGroup"][] | null;
+            rest_weekday?: components["schemas"]["Weekday"] | null;
+            /** Journey Hint Km */
+            journey_hint_km?: number | null;
+            /** Journey Hint Night From */
+            journey_hint_night_from?: string | null;
+            /** Journey Hint Night To */
+            journey_hint_night_to?: string | null;
+        };
+        /**
+         * SiteVehSummary
+         * @description Aggregates (Viewer / Client allowed): counts only, no plates or names.
+         */
+        SiteVehSummary: {
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /** Live */
+            live: boolean;
+            /** Site Vehicles */
+            site_vehicles: number;
+            /** By Readiness */
+            by_readiness: {
+                [key: string]: number;
+            };
+            /** Docs Expired */
+            docs_expired: number;
+            /** Docs Expiring 30D */
+            docs_expiring_30d: number;
+            /** Docs Unverified */
+            docs_unverified: number;
+            /** Pre Use Required Today */
+            pre_use_required_today: number;
+            /** Pre Use Done Today */
+            pre_use_done_today: number;
+            /** Active Authorisations */
+            active_authorisations: number;
+            /** Authorisations Expiring 30D */
+            authorisations_expiring_30d: number;
+            /** Journeys Planned */
+            journeys_planned: number;
+            /** Journeys Overdue */
+            journeys_overdue: number;
+        };
+        /** SiteVehTodayCheck */
+        SiteVehTodayCheck: {
+            /**
+             * Check Id
+             * Format: uuid
+             */
+            check_id: string;
+            /** Check No */
+            check_no: string;
+            /** Passed */
+            passed: boolean;
+        };
+        /**
+         * SiteVehUpdate
+         * @description Capability 234. Also enrols an existing Phase 2 (airside_only) vehicle by setting
+         *     site_scope = site / both with a use_class (SV-1). Changing a document date clears the
+         *     document verification (SV-4).
+         */
+        SiteVehUpdate: {
+            site_scope?: components["schemas"]["SiteVehScope"] | null;
+            use_class?: components["schemas"]["SiteVehUseClass"] | null;
+            /** Seats */
+            seats?: number | null;
+            /** Operating Card No */
+            operating_card_no?: string | null;
+            /** Operating Card Expiry */
+            operating_card_expiry?: string | null;
+            /** Istimara Expiry */
+            istimara_expiry?: string | null;
+            /** Insurance Policy No */
+            insurance_policy_no?: string | null;
+            /** Insurance Expiry */
+            insurance_expiry?: string | null;
+            /** Mvpi Expiry */
+            mvpi_expiry?: string | null;
+            /** Idle From */
+            idle_from?: string | null;
+            /** Idle To */
+            idle_to?: string | null;
+            /** Fleet No */
+            fleet_no?: string | null;
+            /** Make Model */
+            make_model?: string | null;
+        };
+        /**
+         * SiteVehUseClass
+         * @description List SU (§3.6): site use class → driver group.
+         * @enum {string}
+         */
+        SiteVehUseClass: "pool_car" | "crew_pickup" | "crew_bus" | "tipper" | "goods_heavy" | "water_tanker" | "earthmoving_plant" | "other_plant";
+        /** SiteVehUseClassRead */
+        SiteVehUseClassRead: {
+            /** Code */
+            code: string;
+            /** Label En */
+            label_en: string;
+            /** Label Ar */
+            label_ar: string;
+            driver_group: components["schemas"]["SiteVehDriverGroup"];
+            /**
+             * Seats Required
+             * @description crew_bus, crew_pickup: seats 2–60.
+             */
+            seats_required: boolean;
+            /**
+             * Operating Card Required
+             * @description crew_bus, tipper, goods_heavy when plated (R2 VERIFY).
+             */
+            operating_card_required: boolean;
+        };
+        /** SiteVehVehicleRef */
+        SiteVehVehicleRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Vehicle No */
+            vehicle_no: string;
+            /** Fleet No */
+            fleet_no: string;
+            /** Make Model */
+            make_model: string;
+            use_class: components["schemas"]["SiteVehUseClass"] | null;
+            driver_group: components["schemas"]["SiteVehDriverGroup"] | null;
+        };
+        /** SiteVehWithdraw */
+        SiteVehWithdraw: {
+            /** Reason */
+            reason: string;
+            /**
+             * Withdrawn On
+             * @description Default today.
+             */
+            withdrawn_on?: string | null;
         };
         /**
          * SoilType
@@ -51203,6 +52834,16 @@ export interface components {
              */
             adp_offence_id?: string | null;
             /**
+             * Pre Use Check Id
+             * @description 7a v1.2 (7b §11.8): the day's 7b pre-use check of the linked register vehicle (optional).
+             */
+            pre_use_check_id?: string | null;
+            /**
+             * Journey Plan Id
+             * @description 7a v1.2 (7b §11.8): the 7b journey plan of the trip (optional).
+             */
+            journey_plan_id?: string | null;
+            /**
              * Reason
              * @description Required (≥ 20 characters) once the investigation is approved (Phase 1 rule, 7a §4).
              */
@@ -51291,6 +52932,20 @@ export interface components {
             /** Adp Offence Id */
             adp_offence_id: string | null;
             /**
+             * Pre Use Check Id
+             * @description 7b link (§11.8): pre-use check of the vehicle.
+             */
+            pre_use_check_id?: string | null;
+            /** Pre Use Check No */
+            pre_use_check_no?: string | null;
+            /**
+             * Journey Plan Id
+             * @description 7b link (§11.8): journey plan of the trip.
+             */
+            journey_plan_id?: string | null;
+            /** Journey Plan No */
+            journey_plan_no?: string | null;
+            /**
              * Driver Summary En
              * @example Driver: worker of GULFPAVE · licence valid
              */
@@ -51370,6 +53025,10 @@ export interface components {
             driver_case_no?: number | null;
             /** Adp Offence Id */
             adp_offence_id?: string | null;
+            /** Pre Use Check Id */
+            pre_use_check_id?: string | null;
+            /** Journey Plan Id */
+            journey_plan_id?: string | null;
             /**
              * Reason
              * @description Required (≥ 20 characters) once the investigation is approved (Phase 1 rule, 7a §4).
@@ -51813,6 +53472,14 @@ export interface components {
             status: components["schemas"]["VehicleStatus"];
             /** Active Avp Id */
             active_avp_id: string | null;
+            /**
+             * @description 7b §3.1 (v1.8): airside_only (default for existing rows) · site · both. Site fields and readiness are on GET /site-vehicles/{id}.
+             * @default airside_only
+             */
+            site_scope: components["schemas"]["SiteVehScope"];
+            use_class?: components["schemas"]["SiteVehUseClass"] | null;
+            /** @description 7b stored readiness (refreshed daily and on change). */
+            readiness?: components["schemas"]["SiteVehReadiness"] | null;
             /** Warnings */
             warnings?: components["schemas"]["ApiWarning"][];
         };
@@ -65493,6 +67160,108 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ScKpiResponse"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_site_vehicle_kpis: {
+        parameters: {
+            query?: {
+                /** @description Default: K-138…K-140. */
+                metric?: components["schemas"]["KpiMetric"][] | null;
+                group_by?: components["schemas"]["SiteVehKpiGroupBy"][] | null;
+                /** @description Project(s). Repeat for several. Required unless all_projects=true. Out-of-scope ids → 404. */
+                project_id?: string[] | null;
+                /** @description HSE Manager only: every project (K-R12 bases banner). */
+                all_projects?: boolean;
+                /** @description Sites (multi). */
+                site_id?: string[] | null;
+                /** @description Zones (multi). */
+                zone_id?: string[] | null;
+                /** @description airside / landside / other. */
+                zone_type?: components["schemas"]["ZoneType"] | null;
+                /** @description Contractor engagement(s); roll-up per include_subcontractors. */
+                engagement_id?: string[] | null;
+                /** @description K-R5: engagement + descendants (default) or this only. */
+                include_subcontractors?: boolean;
+                /** @description Tier 1/2/3. */
+                tier?: number[] | null;
+                /** @description K-R10 preset. */
+                period?: components["schemas"]["PeriodPreset"];
+                /** @description A date inside the wanted day/week/month/quarter/year (default as_of). mtd/qtd/ytd/r12/itd end at as_of. */
+                anchor?: string | null;
+                /** @description period=custom: first day. */
+                start?: string | null;
+                /** @description period=custom: last day (inclusive). */
+                end?: string | null;
+                /** @description Evaluation date; default today (project timezone). */
+                as_of?: string | null;
+                /** @description Comparisons to compute (K-R11). Default: previous. */
+                compare?: components["schemas"]["ComparisonKind"][] | null;
+                /** @description Gate(s): filters gate KPIs (K-52, K-53, K-53b) only. */
+                gate_id?: string[] | null;
+                /** @description Phase 3: filters PTW KPIs (K-46, K-46b, K-61…K-71) only. */
+                permit_type?: components["schemas"]["PermitType"][] | null;
+                /** @description Phase 4: filters equipment / scaffold KPIs (K-72…K-75, K-78, K-80). */
+                equipment_category?: components["schemas"]["EquipmentCertCategory"][] | null;
+                /** @description Phase 4: personnel certificate type code(s) (PCT); filters K-76, K-77, K-78 persons, K-79. */
+                cert_type?: string[] | null;
+                /** @description Phase 5: deployment trade(s); filters training KPIs (K-82…K-88) only. */
+                trade?: components["schemas"]["Trade"][] | null;
+                /** @description Phase 5: course code(s); filters training KPIs (K-82…K-88) only. */
+                course_code?: string[] | null;
+                /** @description Phase 5: course category (CAT-C); filters training KPIs only. */
+                course_category?: components["schemas"]["CourseCategory"][] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteVehKpiResponse"];
                 };
             };
             /** @description Not authenticated, session expired, or login rejected. */
@@ -118091,6 +119860,1802 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VehAccidentReportRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_site_vehicle_settings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteVehSettingsRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_site_vehicle_settings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SiteVehSettingsUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteVehSettingsRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_site_vehicle_reference: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteVehReference"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_site_vehicles: {
+        parameters: {
+            query?: {
+                readiness?: components["schemas"]["SiteVehReadiness"][] | null;
+                engagement_id?: string[] | null;
+                use_class?: components["schemas"]["SiteVehUseClass"][] | null;
+                driver_group?: components["schemas"]["SiteVehDriverGroup"][] | null;
+                documents?: components["schemas"]["SiteVehDocsFilter"] | null;
+                phase4_linked?: boolean | null;
+                q?: string | null;
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteVehPage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_site_vehicle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SiteVehCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteVehRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    site_vehicle_summary: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteVehSummary"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_site_vehicle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vehicle_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteVehRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_site_vehicle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vehicle_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SiteVehUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteVehRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    verify_site_vehicle_documents: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vehicle_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteVehRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    clear_site_vehicle_hold: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vehicle_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SiteVehClearHold"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteVehRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    withdraw_site_vehicle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vehicle_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SiteVehWithdraw"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteVehRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_driver_authorisations: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["SiteVehAuthStatus"][] | null;
+                group?: components["schemas"]["SiteVehDriverGroup"][] | null;
+                engagement_id?: string[] | null;
+                worker_id?: string | null;
+                expiring_within_days?: number | null;
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteVehAuthPage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_driver_authorisation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SiteVehAuthCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteVehAuthRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    prefill_driver_authorisation: {
+        parameters: {
+            query: {
+                worker_id: string;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteVehAuthPrefill"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_driver_authorisation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                auth_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteVehAuthRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_driver_authorisation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                auth_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SiteVehAuthUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteVehAuthRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    transition_driver_authorisation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                auth_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SiteVehAuthTransition"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteVehAuthRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_pre_use_checks: {
+        parameters: {
+            query?: {
+                date_from?: string | null;
+                date_to?: string | null;
+                vehicle_id?: string | null;
+                engagement_id?: string[] | null;
+                passed?: boolean | null;
+                source?: components["schemas"]["SiteVehCheckSource"] | null;
+                driver_authorised?: boolean | null;
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteVehCheckPage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_pre_use_check: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SiteVehCheckCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteVehCheckRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    pre_use_check_form: {
+        parameters: {
+            query: {
+                vehicle_id: string;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteVehCheckForm"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    missing_pre_use_checks: {
+        parameters: {
+            query?: {
+                day?: string | null;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteVehMissingRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_pre_use_check: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                check_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteVehCheckRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    journey_plan_hint: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SiteVehJourneyHintInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteVehJourneyHint"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_journey_plans: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["SiteVehJourneyStatus"][] | null;
+                overdue?: boolean | null;
+                date_from?: string | null;
+                date_to?: string | null;
+                vehicle_id?: string | null;
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteVehJourneyPage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_journey_plan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SiteVehJourneyCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteVehJourneyRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_journey_plan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteVehJourneyRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    arrive_journey_plan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SiteVehJourneyArrive"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteVehJourneyRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    cancel_journey_plan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SiteVehJourneyCancel"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteVehJourneyRead"];
                 };
             };
             /** @description Not authenticated, session expired, or login rejected. */
