@@ -20,6 +20,7 @@ from zoneinfo import ZoneInfo
 
 from sqlalchemy import case, event, func, or_, select, text
 from sqlalchemy import inspect as sa_inspect
+from sqlalchemy.dialects.postgresql import aggregate_order_by
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import ORMExecuteState, Session
 from sqlalchemy.sql.elements import TextClause
@@ -491,7 +492,9 @@ def _load(
             func.sum(W.inductions),
             func.sum(W.training_hours),
             func.bool_or(or_(W.no_work.is_(True), W.headcount > 0)),
-            func.array_agg(W.id),
+            # ordered: the ids feed the AI snapshot digest, and an unordered aggregate follows
+            # the plan (hash vs sort), so the same facts hashed differently after a re-plan
+            func.array_agg(aggregate_order_by(W.id, W.id)),
         )
         .where(W.project_id.in_(pids), W.status.in_(COUNTED_RETURN))
         .group_by(W.project_id, W.work_date, W.engagement_id, W.site_id, W.zone_id, W.shift)
@@ -680,7 +683,7 @@ def _load(
             O.category,
             O.risk_rating,
             func.count(),
-            func.array_agg(O.id),
+            func.array_agg(aggregate_order_by(O.id, O.id)),  # ordered: see the wf ids
         )
         .where(O.project_id.in_(pids))
         .group_by(

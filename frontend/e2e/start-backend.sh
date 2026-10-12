@@ -42,4 +42,9 @@ if [ -n "${E2E_CLOCK_OFFSET_MS:-}" ]; then
   export HSE_CLOCK_AT
 fi
 # A keep-alive longer than the Next proxy's socket reuse avoids sporadic ECONNRESET on reused connections.
-exec uv run uvicorn app.main:app --host 127.0.0.1 --port "${E2E_BACKEND_PORT:-8000}" --timeout-keep-alive 75
+# Several worker processes, as the API container runs them (backend/Dockerfile WEB_CONCURRENCY): with a single
+# interpreter every login's dashboard burst (~25 CPU-bound KPI requests) and the KPI warm thread's rebuilds after
+# each write queued behind one GIL, and short requests (login, settings, saves) waited 5-10 s. The KPI cache is
+# invalidated across processes through the database sequence (D-42), so the workers agree on every write.
+exec uv run uvicorn app.main:app --host 127.0.0.1 --port "${E2E_BACKEND_PORT:-8000}" --timeout-keep-alive 75 \
+  --workers "${E2E_API_WORKERS:-2}"

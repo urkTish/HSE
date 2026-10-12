@@ -206,3 +206,30 @@ def test_snapshot_ignores_row_order(db: Session) -> None:
         rows.reverse()
     sc.facts.memo.clear()
     assert service.snapshot(sc) == first
+
+
+@pytest.mark.usefixtures("hse_seed")
+def test_snapshot_ignores_a_parallel_plan(db: Session) -> None:
+    """CI run 38189559728 (AC65 again): the return / observation ids are array aggregates, whose
+    element order follows the plan; a parallel plan (bigger tables, fresh statistics) shuffled
+    them between two asks. The aggregates are ordered, so any plan gives the same snapshot."""
+    from datetime import date
+
+    from app.hse_jobs import project_scope
+    from app.kpi import service
+
+    for s in (
+        "max_parallel_workers_per_gather = 4",
+        "parallel_setup_cost = 0",
+        "parallel_tuple_cost = 0",
+        "min_parallel_table_scan_size = 0",
+        "enable_hashagg = off",
+    ):
+        db.execute(text(f"SET {s}"))
+    p = db.scalars(select(Project).where(Project.code == "ANIA-EXP")).one()
+    snaps = set()
+    for _ in range(3):
+        sc = project_scope(db, p, date(2026, 10, 2))
+        snaps.add(service.snapshot(sc))
+        assert all(list(r.ids) == sorted(r.ids) for r in (*sc.engine.wf, *sc.engine.obs))
+    assert len(snaps) == 1
