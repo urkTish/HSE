@@ -1,13 +1,13 @@
 # Module Spec — Option 7a: Vehicle Accident Details (a vehicle-accident section on Phase 1 incidents: vehicles, drivers and licences at the time, road type, Najm / police report, third parties, seat belt and speed, commuting link (recorded, not counted), police / Najm notifications and report archive, vehicle-incident KPIs)
 
-**Version:** v1.1 · **Date:** 2026-10-11 · **Author:** HSE Consultant Agent · **Status:** **Planned, not started.** The HSE Manager asked for this option to be planned only. Do not build until he says go.
+**Version:** v1.2 · **Date:** 2026-10-12 · **Author:** HSE Consultant Agent · **Status:** **Planned, not started.** The HSE Manager asked for this option to be planned only. Do not build until he says go.
 **Builds on:**
 - `1-dashboard.md` v1.10: incident (§3.3: zone, location_detail, incident_types, airside_flags `airside_vehicle_incident`, pd_asset_type `vehicle`, do_category `vehicle_overturn`, notifications), injury case (§3.4: person_type incl. `third_party_public`, mechanism, agency, commuting, worker_id), I-4 (commuting excluded from rates), I-20, P1-1…P1-8, capabilities 25, 26, 29, 31, lists M (mechanism `vehicle_plant_collision`, `vehicle_overturn`), G (agency `light_vehicle`, `heavy_vehicle`, `airside_gse`), O (`traffic_plant`, `airside_driving`), I (`plant_vehicle`), T3–T5, KPI catalogue K-01…K-47.
 - `2-access-permits.md` v1.7: vehicle register §3.12 (plate, category list VC, owner_type, Istimara, insurance, MVPI / Fahas expiry), ADP §3.10 (licence_issuer, licence_class, licence_expiry_date; **KSA licence number not stored**), airside driving offence §3.11 (`incident_ref`), workers §3.1.
 - `6f-incident-followup.md` v1.0: notification rules §3.1, triggers list NT, bodies, NR-1…NR-10, waiver list WV.
 - `6g-scorecard-reports.md` v1.0: dataset registry (EX-1), numbering ends at capability 232, K-135, E25, T25, C40.
 
-**Numbering taken by 7a:** KPIs **K-136…K-137**; chart **C41**; no new capability, warning or AI tool. Option 7b (`7b-fleet-driver.md` v2.0, prototype) continues from capability 233 and K-138; it takes no warning, AI tool or chart, so E26, T26 and C42 stay free.
+**Numbering taken by 7a:** KPIs **K-136…K-137**; chart **C41**; no new capability, warning or AI tool. Option 7b (`7b-fleet-driver.md` v2.0, prototype) continues from capability 233 and K-138; it takes no warning, AI tool or chart, so E26, T26 and C42 stay free. v1.2: incident vehicle rows may link a 7b pre-use check (`pre_use_check_id`) and journey plan (`journey_plan_id`).
 
 **Not in 7a:** site vehicle readiness, driver / operator authorisation, pre-use checks and journey plans (7b); kilometre-based rates, mileage and telematics (out of scope: logistics, HSE Manager 2026-10-11); sending Najm / police reports to the client (HSE Manager 2026-10-11: no client copy); insurance claim handling and money recovery; traffic fines (Saher).
 
@@ -241,3 +241,4 @@ No change; 7a reads the vehicle register, ADPs and offences.
 |---|---|---|---|
 | v1.0 | 2026-10-10 | HSE Consultant Agent | First issue, planned only (awaiting the HSE Manager's go). |
 | v1.1 | 2026-10-11 | HSE Consultant Agent | HSE Manager answers: Najm / police reports recorded and archived with the incident, no client copy or client notification (VA-14, VA-15, report_files, `ACCIDENT_REPORT_LOCKED`); commuting not work-related per OSHA, always recorded as "Recorded, not counted" and excluded from K-137 regardless of `include_commuting_in_rates` (VA-13, R4a); VW1 adds 0215 (company-bus commuting), K-136 = 5; no km rate (logistics, out of scope); ACs 28 → 32 regrouped. Numbers K-136…K-137, C41 unchanged. Still planned only. |
+| v1.2 | 2026-10-12 | HSE Consultant Agent | Change required by Option 7b (`7b-fleet-driver.md` v2.0 §11.8, prototype): the incident vehicle row (§3.2) gains optional `pre_use_check_id` and `journey_plan_id` (links to the 7b pre-use check and journey plan of that vehicle; same project, same vehicle; 7b must be live). No 7a rule, KPI or VW1 value changes. |

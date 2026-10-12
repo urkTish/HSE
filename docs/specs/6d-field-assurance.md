@@ -1,6 +1,6 @@
 # Module Spec — Phase 6d: Field Assurance (inspection and audit checklist library, inspection and audit programme, phone execution with findings and stop rules, audit scoring and trends, toolbox talks with attendance and briefing campaigns, K-34/K-35/K-36 register switch)
 
-**Version:** v1.3 · **Date:** 2026-10-10 · **Author:** HSE Consultant Agent · **Status:** Draft. The HSE Manager asked to proceed without waiting for approval and will review the choices later (§10).
+**Version:** v1.4 · **Date:** 2026-10-12 · **Author:** HSE Consultant Agent · **Status:** Draft. The HSE Manager asked to proceed without waiting for approval and will review the choices later (§10).
 **Builds on:**
 - `0-foundation.md` v1.1: projects, sites, zones (zone_type, airside attributes), engagement tree, roles, scoping legend, `week_start`, rules 28, 35 and 48, PDPL P1–P13, the capability matrix (6c ends at 190).
 - `1-dashboard.md` v1.6: daily returns (§3.1, `toolbox_talks` / `toolbox_attendees`, import warnings W01–W07), inspection plans and inspections (§3.7, §4.4, N-1…N-5), CAs (§3.8, CA-1…CA-8, `ca_due_days`), K-34, K-35, K-35b, K-36, K-R2/K-R4/K-R8, warnings E1–E19, AI tools T1–T20 (T8 `list_inspections_summary`, T13), AI-19, charts up to C30, the action panel and the expiring-items endpoint, P1-8, list I (inspection types), list O (observation categories), seed A.3 and W1.
@@ -122,6 +122,8 @@ PDPL column: **none / personal / sensitive** (Phase 0 P1–P2). Every entity car
 | rotation_list | قائمة التدوير | FK[] | cond. | 2–20 zones of the plan site, or engagements on the site | [Z-PIERB, Z-MSCP, Z-LAY1] | none |
 
 ### 3.4 Checklist response (one per inspection or audit) — إجابات قائمة التحقق
+
+v1.4: owner type `vehicle_check` = a 7b pre-use check (`7b-fleet-driver.md` §3.3; templates VPU-L / VPU-H / VPU-B).
 
 | Field | AR label | Type | Req | Validation | Example | PDPL |
 |---|---|---|---|---|---|---|
@@ -740,3 +742,4 @@ No rule changes. Notes only: Phase 4 — 6d reads scaffold tag colour and `EQ` s
 | v1.1 | 2026-10-09 | HSE Consultant Agent | Change required by Phase 6e (`6e-environmental.md` v1.0 §11.5); no rule changes: §3.15 seeded templates — ENV v2 supersedes ENV v1; WSA and DSN added (inspection_type `environmental`). |
 | v1.2 | 2026-10-09 | HSE Consultant Agent | Changes required by Phase 6f (`6f-incident-followup.md` v1.0 §11.3); the 6d worked examples and seed values are unchanged: (1) §3.10 linked_refs kind `lesson` is validated against Published 6f lessons; CMP-1 reason `lesson` requires a Published lesson the issuer can see (`LESSON_NOT_PUBLISHED`, 6f LK-2); (2) §3.1 the library shows open 6f template change requests on a template to 192 / 193 holders; publishing a version whose change_note names the lesson no. adopts them with that version (6f LK-3); (3) TBT-9 gains step (1b): topics linked to lessons published to the project in the last 30 days, newest first (6f LK-4). |
 | v1.3 | 2026-10-10 | HSE Consultant Agent | Changes required by Phase 6g (`6g-scorecard-reports.md` v1.0 §11.3); no rule, KPI or worked-example value changes: AUD-4 audit report PDF uses the 6g renderer (RP-5) and the D-177 HTML fallback is retired; the 6d registers (200) are exported through the 6g dataset registry with their existing column rules. |
+| v1.4 | 2026-10-12 | HSE Consultant Agent | Changes required by Option 7b (`7b-fleet-driver.md` v2.0 §11.7, prototype); no rule, KPI or worked-example value changes: §3.4 response owner type `vehicle_check` (a 7b pre-use check; inspection_type plant_vehicle); seeded templates VPU-L (12 items, 6 critical), VPU-H (16 / 8) and VPU-B (18 / 9). Vehicle-check responses are not field inspections: they are excluded from K-34…K-36 and the `field_inspections` export. |

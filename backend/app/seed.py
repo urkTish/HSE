@@ -657,6 +657,10 @@ def main() -> int:
 
         seed_vehicle_data(db)  # Option 7a Appendix A (additive)
         db.commit()
+        from app.seed_site_vehicle import seed_site_vehicle_data  # noqa: PLC0415
+
+        seed_site_vehicle_data(db)  # Option 7b Appendix A (additive, prototype)
+        db.commit()
     print("Seed data loaded.")
     return 0
 

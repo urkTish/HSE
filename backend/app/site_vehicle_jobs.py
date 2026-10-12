@@ -87,7 +87,8 @@ def site_vehicle_daily(db: Session, day: date | None = None) -> dict[str, Any]:
                 if t in OFFICER_THRESHOLDS:
                     users |= officers
                 en, ar = DOC_LABEL[kind]
-                when = "expires today" if t == 0 and exp >= d else f"expires on {exp}"
+                left = (exp - d).days
+                when = f"expires in {left} days ({exp})" if left > 0 else "expires today"
                 if exp < d:
                     when = f"expired on {exp}"
                 out["doc_alerts"] += (
@@ -96,7 +97,8 @@ def site_vehicle_daily(db: Session, day: date | None = None) -> dict[str, Any]:
                         users,
                         NotificationKind.site_vehicle_doc_expiry,
                         f"{v.vehicle_no} ({v.fleet_no}): {en} {when}.",
-                        f"{v.vehicle_no}: تنتهي {ar} في {exp}.",
+                        f"{v.vehicle_no}: تنتهي {ar} في {exp}"
+                        + (f" (بعد {left} يوم)." if left > 0 else "."),
                         pid,
                         EntityType.vehicle,
                         v.id,
