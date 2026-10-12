@@ -29,6 +29,7 @@ from app.models import (
     BanPatrol,
     ChecklistResponse,
     Drill,
+    DriverAuthorisation,
     EmergencyAsset,
     EmergencyEvent,
     EnvComplaint,
@@ -44,6 +45,7 @@ from app.models import (
     HeatIllnessEntry,
     HeatWelfareCheck,
     IncidentVehicle,
+    JourneyPlan,
     MedicalExaminer,
     MedicalImportBatch,
     MedicalPlanLine,
@@ -53,6 +55,8 @@ from app.models import (
     Spill,
     ToolboxTalk,
     User,
+    Vehicle,
+    VehicleCheck,
     WasteConsignment,
     Worker,
     Zone,
@@ -92,6 +96,7 @@ class Dataset:
     date_attr: str | None = None
     names_cap: Capability | None = None
     special: list[Col] = field(default_factory=list)  # declared columns (legacy and overrides)
+    where: Any = None  # optional row filter: model → SQL clause (7b site_vehicles)
 
 
 # ---- labels ------------------------------------------------------------------------------------
@@ -267,7 +272,8 @@ NATIVE: list[Dataset] = [
     # 6d (200)
     Dataset("field_inspections", "6d", C.field_view, C.field_view, "Inspections (6d)",
             "التفتيش الميداني", model=ChecklistResponse, date_attr="completed_date",
-            names_cap=C.field_view),
+            names_cap=C.field_view,
+            where=lambda m: m.owner_type != "vehicle_check"),  # 7b checks: pre_use_checks
     Dataset("field_audits", "6d", C.field_view, C.field_view, "HSE audits", "تدقيقات السلامة",
             model=FieldAudit, date_attr="planned_start", names_cap=C.field_view),
     Dataset("toolbox_talks", "6d", C.field_view, C.field_view, "Toolbox talks",
@@ -312,6 +318,28 @@ NATIVE: list[Dataset] = [
                      Col("recorded_not_counted", "Recorded, not counted", "مسجل، غير محتسب"),
                      *[Col(k, en, ar, P.personal, C.injury_identity_view, MM.omit, False)
                        for k, en, ar in VEH_PERSONAL]]),
+    # Option 7b §8 (prototype; P7b-1: driver identity and licence columns are personal; the
+    # Viewer / Client gets aggregates only)
+    Dataset("site_vehicles", "7b", C.site_vehicle_view, C.site_vehicle_view, "Site vehicles",
+            "مركبات الموقع", model=Vehicle, aggregate=True,
+            where=lambda m: m.site_scope.in_(["site", "both"]),
+            special=[*[Col(k, en, ar, P.personal, C.worker_view, MM.omit, False)
+                       for k, en, ar in VEH_PERSONAL[:3]]]),
+    Dataset("driver_authorisations", "7b", C.site_vehicle_view, C.site_vehicle_view,
+            "Driver / operator authorisations", "تفويضات القيادة والتشغيل",
+            model=DriverAuthorisation, date_attr="issued_on", aggregate=True,
+            special=[Col("groups", "Groups", "الفئات"),
+                     *[Col(k, en, ar, P.personal, C.driver_auth_manage, MM.omit, False)
+                       for k, en, ar in VEH_PERSONAL[4:7]],
+                     Col("assessor", "Assessor", "المقيّم", P.personal, C.driver_auth_manage,
+                         MM.omit, False)]),
+    Dataset("pre_use_checks", "7b", C.site_vehicle_view, C.site_vehicle_view, "Pre-use checks",
+            "الفحوص اليومية", model=VehicleCheck, date_attr="check_date", aggregate=True,
+            special=[Col("driver", "Driver", "السائق", P.personal, C.worker_view, MM.person_n),
+                     Col("failed_items", "Failed items", "البنود الفاشلة")]),
+    Dataset("journey_plans", "7b", C.site_vehicle_view, C.site_vehicle_view, "Journey plans",
+            "خطط الرحلات", model=JourneyPlan, date_attr="depart_date", aggregate=True,
+            special=[Col("driver", "Driver", "السائق", P.personal, C.worker_view, MM.person_n)]),
 ]  # fmt: skip
 NATIVE_BY_CODE = {d.code: d for d in NATIVE}
 
@@ -505,6 +533,8 @@ def native_rows(
         stmt = stmt.order_by(col)
     if filters.get("status") and hasattr(m, "status"):
         stmt = stmt.where(m.status == filters["status"])
+    if ds.where is not None:
+        stmt = stmt.where(ds.where(m))
     return list(db.scalars(stmt))
 
 
@@ -579,6 +609,9 @@ def native_value(r: Resolver, obj: Any, col: Col) -> tuple[Any, Any]:
     k = col.code
     if k == "worker":
         wid = getattr(obj, "worker_id", None)
+        return r.worker(wid), wid
+    if k == "driver" and hasattr(obj, "driver_worker_id"):
+        wid = obj.driver_worker_id
         return r.worker(wid), wid
     if hasattr(obj, k + "_user_id"):
         uid = getattr(obj, k + "_user_id")

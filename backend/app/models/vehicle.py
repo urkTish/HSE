@@ -76,6 +76,9 @@ class IncidentVehicle(UUIDPk, TimestampMixin, Base):
     driver_case_no: Mapped[int | None] = mapped_column(Integer)
     adp_offence_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("airside_offences.id"))
     prompt_alerted: Mapped[bool] = mapped_column(Boolean, default=False)
+    # 7a v1.2 (7b §11.8): optional links to the day's pre-use check and the journey plan
+    pre_use_check_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("vehicle_checks.id"))
+    journey_plan_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("journey_plans.id"))
     created_by_user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))
     seed_fake: Mapped[bool] = mapped_column(Boolean, default=False)
 

@@ -205,6 +205,11 @@ def _source_ref(db: Session, ca: CorrectiveAction) -> CaSourceRef:
 
         dfx = db.get(EquipmentDefect, ca.source_id)
         ref = dfx.defect_no if dfx else None
+    elif ca.source_type == CaSourceType.site_vehicle and ca.source_id:
+        from app.models import VehicleCheck  # noqa: PLC0415
+
+        vc = db.get(VehicleCheck, ca.source_id)
+        ref = vc.check_no if vc else None
     return CaSourceRef(type=ca.source_type, id=ca.source_id, ref=ref)
 
 

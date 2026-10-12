@@ -89,6 +89,8 @@ def main() -> None:
     sched.add_job(_job, "interval", minutes=1, args=["export_jobs"])
     sched.add_job(_job, "cron", hour=5, minute=30, args=["export_subscriptions"])
     sched.add_job(_job, "cron", hour=3, minute=0, args=["export_purge"])
+    # Option 7b (spec 7b-fleet-driver §4, §7, DA-3; prototype)
+    sched.add_job(_job, "cron", hour=0, minute=30, args=["site_vehicle_daily"])
     sched.start()
 
 

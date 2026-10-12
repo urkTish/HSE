@@ -548,6 +548,9 @@ def _apply_row(db: Session, inc: Incident, row: IncidentVehicle, data: dict[str,
             setattr(row, k, (v.upper() if k == "plate_letters_en" else v) or None)
     if "engagement_id" in data:
         row.engagement_id = data["engagement_id"]
+    for k in ("pre_use_check_id", "journey_plan_id"):  # 7b §11.8 links
+        if k in data:
+            setattr(row, k, data[k])
     if "vehicle_id" in data:
         row.vehicle_id = data["vehicle_id"]
         if row.vehicle_id is not None:
@@ -634,6 +637,7 @@ def _validate_row(db: Session, inc: Incident, row: IncidentVehicle) -> None:
         o = db.get(Offence, row.adp_offence_id)
         if o is None or o.project_id != inc.project_id:
             raise validation_error("adp_offence_id", "The offence is not on this project.")
+    _check_7b_links(db, inc, row)
     if row.ownership == VehOwnership.third_party and row.plate_digits:
         hit = register_match(db, row.plate_letters_ar, row.plate_letters_en, row.plate_digits)
         if hit is not None:
@@ -645,6 +649,28 @@ def _validate_row(db: Session, inc: Incident, row: IncidentVehicle) -> None:
                 "هذه اللوحة مسجلة في سجل المركبات؛ سجّلها كمركبة الشركة أو المقاول أو مستأجرة.",
             )
     _compute(db, inc, row)
+
+
+def _check_7b_links(db: Session, inc: Incident, row: IncidentVehicle) -> None:
+    """7a v1.2 (7b §11.8): optional links to a 7b pre-use check / journey plan of the same
+    project and, when the row links a register vehicle, of that vehicle."""
+    from app.models import JourneyPlan, VehicleCheck  # noqa: PLC0415
+
+    recs: list[tuple[str, VehicleCheck | JourneyPlan | None, bool]] = [
+        ("pre_use_check_id", db.get(VehicleCheck, row.pre_use_check_id), False)
+        if row.pre_use_check_id
+        else ("pre_use_check_id", None, True),
+        ("journey_plan_id", db.get(JourneyPlan, row.journey_plan_id), False)
+        if row.journey_plan_id
+        else ("journey_plan_id", None, True),
+    ]
+    for fld, rec, unset in recs:
+        if unset:
+            continue
+        if rec is None or rec.project_id != inc.project_id:
+            raise validation_error(fld, "Unknown record on this project.")
+        if row.vehicle_id is None or rec.vehicle_id != row.vehicle_id:
+            raise validation_error(fld, "The record is for another vehicle (link the vehicle).")
 
 
 def _compute(db: Session, inc: Incident, row: IncidentVehicle) -> None:
@@ -1012,6 +1038,10 @@ def _row(
         hours_on_duty=row.hours_on_duty if ident else None,
         driver_case_no=row.driver_case_no,
         adp_offence_id=row.adp_offence_id if ident else None,
+        pre_use_check_id=row.pre_use_check_id,
+        pre_use_check_no=_link_no(db, "check", row.pre_use_check_id),
+        journey_plan_id=row.journey_plan_id,
+        journey_plan_no=_link_no(db, "plan", row.journey_plan_id),
         driver_summary_en=en,
         driver_summary_ar=ar,
         redacted_groups=redacted,
@@ -1020,6 +1050,18 @@ def _row(
         updated_at=row.updated_at,
     )
     return out, read_fields
+
+
+def _link_no(db: Session, kind: str, rid: uuid.UUID | None) -> str | None:
+    from app.models import JourneyPlan, VehicleCheck  # noqa: PLC0415
+
+    if rid is None:
+        return None
+    if kind == "check":
+        c = db.get(VehicleCheck, rid)
+        return c.check_no if c else None
+    j = db.get(JourneyPlan, rid)
+    return j.plan_no if j else None
 
 
 def reads(

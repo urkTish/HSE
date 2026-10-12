@@ -716,6 +716,30 @@ PHASE6G_MATRIX: dict[Role, dict[Capability, CapabilityScope]] = {
 for _role, _caps in PHASE6G_MATRIX.items():
     MATRIX[_role].update(_caps)
 
+# Option 7b 7b-fleet-driver §5.7 (capabilities 233-237, Prototype). 237 is HSE Manager only.
+# Viewer / Client: 233 aggregates only (KPIs and the readiness summary), enforced in the services;
+# site engineers see authorisation status only (P7b-1); reps propose authorisations only (235) and
+# register / edit their own engagement's vehicles (234, SV-4, no document verification).
+PHASE7B_MATRIX: dict[Role, dict[Capability, CapabilityScope]] = {
+    Role.hse_officer: dict.fromkeys(
+        [C.site_vehicle_view, C.site_vehicle_manage, C.driver_auth_manage, C.pre_use_record],
+        S.project,
+    ),
+    Role.site_engineer: dict.fromkeys([C.site_vehicle_view, C.pre_use_record], S.sites),
+    Role.permit_receiver: dict.fromkeys(
+        [C.site_vehicle_view, C.pre_use_record], S.own_engagement
+    ),
+    Role.contractor_hse_rep: {
+        **dict.fromkeys(
+            [C.site_vehicle_view, C.driver_auth_manage, C.pre_use_record], S.contractor_tree
+        ),
+        C.site_vehicle_manage: S.own_engagement,
+    },
+    Role.viewer_client: {C.site_vehicle_view: S.project},
+}  # fmt: skip
+for _role, _caps in PHASE7B_MATRIX.items():
+    MATRIX[_role].update(_caps)
+
 SCOPE_RANK = {S.own_engagement: 1, S.contractor_tree: 2, S.sites: 3, S.project: 4, S.all: 5}
 ROLE_RANK = {r: i for i, r in enumerate(Role)}  # lower index = more senior
 OFFICER_ASSIGNABLE = frozenset(

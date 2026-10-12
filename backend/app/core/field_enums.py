@@ -105,6 +105,7 @@ class ResponseResult(StrEnum):
 class ResponseOwnerType(StrEnum):
     inspection = "inspection"
     audit = "audit"
+    vehicle_check = "vehicle_check"  # 6d v1.1 (7b §11.7): pre-use check on a site vehicle
 
 
 class Rotation(StrEnum):

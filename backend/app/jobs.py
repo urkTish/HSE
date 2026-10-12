@@ -38,6 +38,7 @@ from app.scorecard_jobs import PHASE6G_JOBS
 from app.services import audit, notify
 from app.services.audit import SYSTEM
 from app.services.users import _active_manager_ids, deactivate
+from app.site_vehicle_jobs import PHASE7B_JOBS
 from app.train_jobs import PHASE5_JOBS
 
 CR_THRESHOLDS = (30, 14, 7, 0)
@@ -314,6 +315,7 @@ JOBS: dict[str, Callable[[Session], dict[str, Any]]] = {
     **PHASE6E_JOBS,
     **PHASE6F_JOBS,
     **PHASE6G_JOBS,
+    **PHASE7B_JOBS,
 }
 
 

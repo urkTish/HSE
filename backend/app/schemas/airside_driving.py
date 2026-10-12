@@ -22,6 +22,7 @@ from app.core.access_enums import (
     VehicleOwnerType,
     VehicleStatus,
 )
+from app.core.site_vehicle_enums import SiteVehReadiness, SiteVehScope, SiteVehUseClass
 from app.schemas.access_common import (
     QR_PAYLOAD_DOC,
     Metres,
@@ -283,6 +284,15 @@ class VehicleRead(Timestamps):
     earliest_document_expiry: date | None
     status: VehicleStatus
     active_avp_id: uuid.UUID | None
+    site_scope: SiteVehScope = Field(
+        default=SiteVehScope.airside_only,
+        description="7b §3.1 (v1.8): airside_only (default for existing rows) · site · both. "
+        "Site fields and readiness are on GET /site-vehicles/{id}.",
+    )
+    use_class: SiteVehUseClass | None = None
+    readiness: SiteVehReadiness | None = Field(
+        default=None, description="7b stored readiness (refreshed daily and on change)."
+    )
     warnings: list[ApiWarning] = Field(default_factory=list)
 
 

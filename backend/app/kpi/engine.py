@@ -44,6 +44,7 @@ from app.kpi.catalogue import (
     PHASE6F_METRICS,
     PHASE6G_METRICS,
     PHASE7A_METRICS,
+    PHASE7B_METRICS,
 )
 from app.kpi.facts import (
     CaseFact,
@@ -950,6 +951,7 @@ _DISPATCH: dict[KpiMetric, Callable[[Engine, Agg], Result]] = {
     **{m: _not_yet(m) for m in PHASE6F_METRICS},  # replaced by app.kpi.followup
     **{m: _not_yet(m) for m in PHASE6G_METRICS},  # replaced by app.kpi.scorecard
     **{m: _not_yet(m) for m in PHASE7A_METRICS},  # replaced by app.kpi.vehicle
+    **{m: _not_yet(m) for m in PHASE7B_METRICS},  # replaced by app.kpi.site_vehicle
 }
 import app.kpi.access  # noqa: E402  (registers K-48…K-60 into _DISPATCH)
 import app.kpi.cert  # noqa: E402  (registers K-72…K-81 into _DISPATCH)
@@ -961,6 +963,7 @@ import app.kpi.heat  # noqa: E402  (registers K-97…K-103 into _DISPATCH)
 import app.kpi.medical  # noqa: E402  (registers K-89…K-96 into _DISPATCH)
 import app.kpi.ptw  # noqa: E402  (registers K-46, K-46b, K-61…K-71 into _DISPATCH)
 import app.kpi.scorecard  # noqa: E402  (registers K-132…K-135 into _DISPATCH)
+import app.kpi.site_vehicle  # noqa: E402  (registers K-138…K-140 into _DISPATCH)
 import app.kpi.training  # noqa: E402  (registers K-37 (rev.), K-82…K-88 into _DISPATCH)
 import app.kpi.vehicle  # noqa: E402, F401  (registers K-136, K-137 into _DISPATCH)
 

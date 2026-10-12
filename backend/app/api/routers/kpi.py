@@ -29,6 +29,7 @@ from app.core.hse_enums import (
 from app.core.med_enums import FitnessCategory, MedicalKpiGroupBy
 from app.core.ptw_enums import PtwKpiGroupBy
 from app.core.scorecard_enums import ScKpiGroupBy
+from app.core.site_vehicle_enums import SiteVehKpiGroupBy
 from app.core.train_enums import TrainingKpiGroupBy
 from app.kpi import (
     access_views,
@@ -44,6 +45,7 @@ from app.kpi import (
     scope,
     scorecard_views,
     service,
+    site_vehicle_views,
     train_views,
     views,
 )
@@ -73,6 +75,7 @@ from app.schemas.kpi import (
 from app.schemas.medical import MedicalKpiResponse
 from app.schemas.ptw_kpi import PtwKpiResponse
 from app.schemas.scorecard import ScKpiResponse
+from app.schemas.site_vehicle import SiteVehKpiResponse
 from app.schemas.training_kpi import TrainingKpiResponse
 
 router = APIRouter(prefix="/kpi", tags=["kpi"])
@@ -598,3 +601,23 @@ def get_scorecard_kpis(
 ) -> ScKpiResponse:
     sc = scope.build(db, user, q, Capability.scorecard_view)
     return scorecard_views.sc_kpis(db, sc, metric, group_by)
+
+
+@router.get(
+    "/site-vehicles",
+    response_model=SiteVehKpiResponse,
+    summary="Site vehicle & plant readiness KPIs K-138…K-140 (7b §6.4, prototype)",
+    description=FILTERS + " Capability 233 (the Viewer / Client included: aggregates only, SK-2). "
+    "Only projects with site_vehicles_from set count. Contractor filter = the engagement operating "
+    'the vehicle or (K-139) employing the driver (SK-1). K-140 for a rest day is "—".',
+    responses=KPI_ERRORS,
+)
+def get_site_vehicle_kpis(
+    user: CurrentUser,
+    db: DB,
+    q: KpiParams,
+    metric: Annotated[list[KpiMetric] | None, Query(description="Default: K-138…K-140.")] = None,
+    group_by: Annotated[list[SiteVehKpiGroupBy] | None, Query()] = None,
+) -> SiteVehKpiResponse:
+    sc = scope.build(db, user, q, Capability.site_vehicle_view)
+    return site_vehicle_views.sv_kpis(db, sc, metric, group_by)

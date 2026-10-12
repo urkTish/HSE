@@ -69,6 +69,7 @@ known-third-party = ["alembic"]
 "app/seed_ptw*.py" = ["S311", "S101", "S107", "PLC0415"]  # deterministic demo data; plan invariants asserted
 "app/seed_cert.py" = ["S311", "E501", "N806"]  # deterministic demo data; table-like rows
 "app/seed_field.py" = ["S311", "S101", "PLC0415", "E501"]  # deterministic demo data; table-like rows
+"app/seed_site_vehicle.py" = ["E501"]  # table-like rows
 "tests/test_ptw*.py" = ["E501"]  # one-line fixture bodies mirror the spec tables
 "tests/ptw_helpers.py" = ["E501"]
 "tests/test_cert*.py" = ["E501"]  # one-line fixture bodies mirror the spec tables
