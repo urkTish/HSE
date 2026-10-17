@@ -16189,7 +16189,7 @@ export interface components {
          * AttachmentOwner
          * @enum {string}
          */
-        AttachmentOwner: "incident" | "injury_case_medical" | "observation" | "corrective_action_evidence" | "hse_meeting_minutes" | "worker_photo" | "pass_application_id_copy" | "induction_signature" | "offence_evidence" | "permit_document" | "permit_attachment" | "ptw_audit_photo" | "gas_test_signature" | "crew_briefing_signature" | "tpi_accreditation_certificate" | "equipment_document" | "equipment_certificate_scan" | "personnel_cert_scan" | "verification_evidence" | "defect_photo" | "defect_evidence" | "scaffold_inspection_photo" | "training_record_scan" | "training_accreditation_certificate" | "trainer_authorisation_evidence" | "training_attendance_sheet" | "training_verification_evidence" | "training_attendance_signature" | "fitness_scan" | "field_photo" | "stop_work_photo" | "toolbox_signature" | "toolbox_sheet" | "field_audit_report" | "env_permit_document" | "consignment_ticket" | "env_photo" | "fu_pack_file" | "fu_pack_identity_file" | "fu_evidence" | "fu_lesson_photo" | "rp_pack_file" | "xp_export_file" | "sc_remark_file" | "incident_accident_report";
+        AttachmentOwner: "incident" | "injury_case_medical" | "observation" | "corrective_action_evidence" | "hse_meeting_minutes" | "worker_photo" | "worker_id_copy" | "vehicle_registration" | "pass_application_id_copy" | "induction_signature" | "offence_evidence" | "permit_document" | "permit_attachment" | "ptw_audit_photo" | "gas_test_signature" | "crew_briefing_signature" | "tpi_accreditation_certificate" | "equipment_document" | "equipment_certificate_scan" | "personnel_cert_scan" | "verification_evidence" | "defect_photo" | "defect_evidence" | "scaffold_inspection_photo" | "training_record_scan" | "training_accreditation_certificate" | "trainer_authorisation_evidence" | "training_attendance_sheet" | "training_verification_evidence" | "training_attendance_signature" | "fitness_scan" | "field_photo" | "stop_work_photo" | "toolbox_signature" | "toolbox_sheet" | "field_audit_report" | "env_permit_document" | "consignment_ticket" | "env_photo" | "fu_pack_file" | "fu_pack_identity_file" | "fu_evidence" | "fu_lesson_photo" | "rp_pack_file" | "xp_export_file" | "sc_remark_file" | "incident_accident_report";
         /** AttachmentRead */
         AttachmentRead: {
             /**
@@ -53817,6 +53817,11 @@ export interface components {
             documents_valid: boolean;
             /** Earliest Document Expiry */
             earliest_document_expiry: string | null;
+            /**
+             * Istimara Attachment Id
+             * @description D-272 photo of the registration (Istimara).
+             */
+            istimara_attachment_id?: string | null;
             status: components["schemas"]["VehicleStatus"];
             /** Active Avp Id */
             active_avp_id: string | null;
@@ -55433,6 +55438,11 @@ export interface components {
              * @description Open via POST /attachments/{id}/signed-url (≤ 5 min).
              */
             photo_attachment_id: string | null;
+            /**
+             * Id Copy Attachment Id
+             * @description D-272 Iqama / ID photo; opening it needs the unmask capability.
+             */
+            id_copy_attachment_id?: string | null;
             status: components["schemas"]["WorkerStatus"];
             /** Ban Reason */
             ban_reason: string | null;

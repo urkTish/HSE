@@ -56,6 +56,8 @@ UNKNOWN = UserRef(id=uuid.UUID(int=0), full_name_en="—")
 PERSONAL = frozenset(
     {
         AttachmentOwner.worker_photo,
+        AttachmentOwner.worker_id_copy,  # D-272
+        AttachmentOwner.vehicle_registration,  # D-272 (owner name on the Istimara)
         AttachmentOwner.pass_application_id_copy,
         AttachmentOwner.induction_signature,
         AttachmentOwner.offence_evidence,
@@ -198,6 +200,14 @@ def _owner(
         from app.services import incident_vehicles as veh  # noqa: PLC0415
 
         return veh.file_owner(db, p, owner_id, write)
+    if owner_type == AttachmentOwner.vehicle_registration:
+        from app.services.access import common as acc  # noqa: PLC0415
+        from app.services.access import vehicles  # noqa: PLC0415
+
+        v = vehicles.get_vehicle_row(db, p, owner_id)
+        if write:
+            acc.require_cap(p, v.project_id, Capability.vehicle_edit, None, v.engagement_id)
+        return v.project_id, True
     if owner_type in PERSONAL:
         return _access_owner(db, p, owner_type, owner_id, write)
     m = db.get(HseMeeting, owner_id)
@@ -265,6 +275,27 @@ def _access_owner(
     from app.services.access import driving, inductions, passes, workers  # noqa: PLC0415
 
     c = Capability
+    if owner_type == AttachmentOwner.worker_id_copy:
+        # D-272: the Iqama / ID photo is an ID document: viewing needs the unmask capability.
+        w = workers.get_worker(db, p, owner_id)
+        dep = db.scalars(
+            select(Deployment)
+            .where(Deployment.worker_id == w.id)
+            .order_by(Deployment.mobilised_on.desc())
+            .limit(1)
+        ).first()
+        if dep is None:
+            raise ApiError(
+                422,
+                ErrorCode.VALIDATION_ERROR,
+                "Deploy the worker on a project before adding the ID copy.",
+                "يجب تعيين العامل في مشروع قبل إضافة صورة الهوية.",
+            )
+        if write:
+            workers._can_edit(db, p, w)
+        else:
+            acc.require_cap(p, dep.project_id, c.worker_unmask_id, dep.site_ids, dep.engagement_id)
+        return dep.project_id, w.status != WorkerStatus.anonymised
     if owner_type == AttachmentOwner.worker_photo:
         w = workers.get_worker(db, p, owner_id)
         if write:

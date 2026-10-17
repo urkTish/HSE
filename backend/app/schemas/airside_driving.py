@@ -282,6 +282,9 @@ class VehicleRead(Timestamps):
     mvpi_expiry: date | None
     documents_valid: bool
     earliest_document_expiry: date | None
+    istimara_attachment_id: uuid.UUID | None = Field(
+        default=None, description="D-272 photo of the registration (Istimara)."
+    )
     status: VehicleStatus
     active_avp_id: uuid.UUID | None
     site_scope: SiteVehScope = Field(

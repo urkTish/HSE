@@ -2132,7 +2132,9 @@
       "rp_pack_file": "Report pack file",
       "xp_export_file": "Export file",
       "sc_remark_file": "Scorecard comment file",
-      "incident_accident_report": "Accident report (Najm / police)"
+      "incident_accident_report": "Accident report (Najm / police)",
+      "worker_id_copy": "Iqama / ID photo",
+      "vehicle_registration": "Istimara photo"
     },
     "workerIdType": {
       "iqama": "Iqama",
@@ -6359,7 +6361,8 @@
       "status": "Status",
       "user": "Linked user",
       "engagement": "Contractor",
-      "photo": "Photo"
+      "photo": "Photo",
+      "id_copy": "Iqama / ID photo"
     },
     "iso2": "Two-letter code (e.g. IN)",
     "iso2Hint": "Use the two-letter ISO country code.",
@@ -6429,7 +6432,11 @@
     "min10": "At least 10 characters.",
     "revealConfirm": "Show number",
     "noPhoto": "No photo",
-    "editTitle": "Edit worker"
+    "editTitle": "Edit worker",
+    "idCopyHint": "Photo or scan of the Iqama or ID card (JPEG, PNG or PDF).",
+    "idCopyMissing": "No Iqama / ID photo on file yet. Upload it here.",
+    "idCopyRestricted": "Only people allowed to see full ID numbers can open this photo.",
+    "idCopyUploadFailed": "The worker was saved, but the Iqama photo did not upload. Add it on the worker's page."
   },
   "inductions": {
     "records": "Induction records",
@@ -6971,8 +6978,12 @@
       "inspector": "Inspector",
       "inspection_result": "Inspection result",
       "issued_on": "Issued on",
-      "own_valid_until": "Valid until (permit)"
-    }
+      "own_valid_until": "Valid until (permit)",
+      "istimara_photo": "Istimara (registration) photo"
+    },
+    "istimaraHint": "Photo or scan of the vehicle registration card (JPEG, PNG or PDF).",
+    "istimaraMissing": "No Istimara photo on file yet. Upload it here.",
+    "istimaraUploadFailed": "The vehicle was saved, but the Istimara photo did not upload. Add it on the vehicle's page."
   },
   "notams": {
     "title": "NOTAM works requests",

@@ -30,9 +30,10 @@ from app.core.access_enums import (
 from app.core.clock import now, today
 from app.core.enums import AuditAction, Capability, ContractorStatus, EntityType, ZoneType
 from app.core.errors import ApiError, ErrorCode, not_found, validation_error
+from app.core.hse_enums import AttachmentOwner
 from app.core.text import like_pattern
 from app.kpi.periods import add_months
-from app.models import Avp, ProjectEngagement, Vehicle, Zone
+from app.models import Attachment, Avp, ProjectEngagement, Vehicle, Zone
 from app.schemas.airside_driving import (
     AvpCreate,
     AvpIssueRequest,
@@ -126,6 +127,15 @@ def vehicle_read(
         mvpi_expiry=v.mvpi_expiry,
         documents_valid=all(d >= day for d in docs),
         earliest_document_expiry=min(docs) if docs else None,
+        istimara_attachment_id=db.scalar(
+            select(Attachment.id)
+            .where(
+                Attachment.owner_type == AttachmentOwner.vehicle_registration,
+                Attachment.owner_id == v.id,
+            )
+            .order_by(Attachment.created_at.desc())
+            .limit(1)
+        ),
         status=v.status,
         active_avp_id=active,
         site_scope=v.site_scope,

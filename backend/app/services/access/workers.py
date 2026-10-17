@@ -167,6 +167,19 @@ def photo_id(db: Session, worker_id: uuid.UUID) -> uuid.UUID | None:
     )
 
 
+def id_copy_id(db: Session, worker_id: uuid.UUID) -> uuid.UUID | None:
+    """D-272: the current Iqama / ID photo."""
+    return db.scalar(
+        select(Attachment.id)
+        .where(
+            Attachment.owner_type == AttachmentOwner.worker_id_copy,
+            Attachment.owner_id == worker_id,
+        )
+        .order_by(Attachment.created_at.desc())
+        .limit(1)
+    )
+
+
 def _badges(db: Session, d: Deployment) -> tuple[list[InductionBadge], list[CredentialBadge]]:
     inds: dict[str, InductionBadge] = {}
     for r, code in db.execute(
@@ -293,6 +306,7 @@ def worker_read(
         primary_language=w.primary_language,
         user=refs.user(w.user_id),
         photo_attachment_id=None if anonymised else photo_id(db, w.id),
+        id_copy_attachment_id=None if anonymised else id_copy_id(db, w.id),
         status=w.status,
         ban_reason=w.ban_reason,
         deployments=[_summary(db, d, refs) for d in deps],

@@ -874,7 +874,10 @@ def anonymise_workers(db: Session, day: date | None = None) -> int:
             continue
         for f in db.scalars(
             select(Attachment).where(
-                Attachment.owner_type == AttachmentOwner.worker_photo, Attachment.owner_id == w.id
+                Attachment.owner_type.in_(
+                    [AttachmentOwner.worker_photo, AttachmentOwner.worker_id_copy]  # D-272
+                ),
+                Attachment.owner_id == w.id,
             )
         ):
             attachments.erase(db, f)
