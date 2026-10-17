@@ -11,7 +11,7 @@ from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
 from app.core.clock import now
-from app.core.config import get_settings
+from app.core.config import get_settings, project_deleters
 from app.core.context import get_request_context
 from app.core.enums import (
     AuditAction,
@@ -610,6 +610,7 @@ def build_me(db: Session, p: Principal) -> Me:
         privacy_notice_ack_at=u.privacy_notice_ack_at,
         privacy_ack_required=u.privacy_notice_version != current_version,
         is_hse_manager=p.is_manager,
+        can_delete_projects=u.email.lower() in project_deleters(),
         org_capabilities=list(MANAGER_CAPABILITIES) if p.is_manager else [],
         projects=projects,
         role_assignments=assignments,

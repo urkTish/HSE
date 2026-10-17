@@ -8,6 +8,7 @@ import { FieldItem, FieldList, YesNo } from "@/components/common/field-list";
 import { HistoryPanel } from "@/components/common/history-panel";
 import { TransitionActions } from "@/components/common/transition-actions";
 import { LoadingState } from "@/components/common/states";
+import { DeleteProject } from "@/components/projects/delete-project";
 import { useMeData } from "@/components/shell/me-context";
 import { Link } from "@/i18n/navigation";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
@@ -91,6 +92,7 @@ export function ProjectOverview({ projectId }: { projectId: string }) {
             </CardContent>
           </Card>
         ) : null}
+        {me.can_delete_projects ? <DeleteProject projectId={p.id} code={p.code} /> : null}
         {can(me, "history.view", p.id) ? <HistoryPanel entityType="project" entityId={p.id} projectId={p.id} /> : null}
       </div>
     </div>

@@ -7,6 +7,7 @@ from sqlalchemy import Select, func, select
 from sqlalchemy.orm import Session
 
 from app.core.clock import now
+from app.core.config import project_deleters
 from app.core.enums import (
     AuditAction,
     Capability,
@@ -24,6 +25,8 @@ from app.core.text import like_pattern, search_blob
 from app.models import Project, ProjectSettings, Site, Zone
 from app.schemas.projects import (
     ProjectCreate,
+    ProjectDeleteRequest,
+    ProjectDeleteResult,
     ProjectRead,
     ProjectSettingsRead,
     ProjectSettingsUpdate,
@@ -39,6 +42,7 @@ from app.services.common import (
     require_reason,
 )
 from app.services.permissions import Principal, deny, forbidden_error
+from app.services.project_purge import purge_project
 
 FIELDS = (
     "code",
@@ -248,6 +252,31 @@ def transition(
         details={"reason": reason},
     )
     return project
+
+
+def delete(
+    db: Session, p: Principal, project_id: uuid.UUID, body: ProjectDeleteRequest
+) -> ProjectDeleteResult:
+    """Permanent delete of the project and all its data (D-265); named admins only."""
+    if p.user.email.lower() not in project_deleters():
+        raise forbidden_error("Only the platform administrator can delete projects.")
+    project = get_visible(db, p, project_id)
+    if body.confirm_code.strip() != project.code:
+        raise validation_error("confirm_code", "Type the project code exactly to confirm.")
+    before = {**_dict(project), "status": project.status}
+    deleted = purge_project(db, project.id)
+    audit.record(
+        db,
+        AuditAction.archive,
+        p.actor(None),
+        entity_type=EntityType.project,
+        entity_id=project_id,
+        before=before,
+        details={"deleted": True, "rows_deleted": deleted},
+    )
+    return ProjectDeleteResult(
+        id=project_id, code=before["code"], rows_deleted=sum(deleted.values())
+    )
 
 
 # ---- settings ------------------------------------------------------------------------------------

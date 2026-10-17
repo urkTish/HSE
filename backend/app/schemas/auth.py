@@ -96,6 +96,9 @@ class Me(ApiModel):
         "API except privacy-notice ack and logout returns 403 PRIVACY_ACK_REQUIRED."
     )
     is_hse_manager: bool
+    can_delete_projects: bool = Field(
+        description="True when this user may permanently delete projects (PROJECT_DELETE_EMAILS)."
+    )
     org_capabilities: list[Capability] = Field(
         description="Organisation-wide capabilities (from hse_manager); empty for other roles."
     )

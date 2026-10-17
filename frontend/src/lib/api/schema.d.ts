@@ -260,6 +260,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/{project_id}/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Permanently delete a project and all its data (platform administrator only) */
+        post: operations["delete_project"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/projects/{project_id}/settings": {
         parameters: {
             query?: never;
@@ -35448,6 +35465,11 @@ export interface components {
             /** Is Hse Manager */
             is_hse_manager: boolean;
             /**
+             * Can Delete Projects
+             * @description True when this user may permanently delete projects (PROJECT_DELETE_EMAILS).
+             */
+            can_delete_projects: boolean;
+            /**
              * Org Capabilities
              * @description Organisation-wide capabilities (from hse_manager); empty for other roles.
              */
@@ -41414,7 +41436,7 @@ export interface components {
         ProjectCreate: {
             /**
              * Code
-             * @description Unique, e.g. ANIA-EXP. Immutable.
+             * @description Unique, free text (it prefixes reference numbers), e.g. ANIA-EXP. Immutable.
              */
             code: string;
             /** Name En */
@@ -41443,6 +41465,29 @@ export interface components {
              * @description Required iff project_type = airport; Saudi codes start with OE.
              */
             airport_icao?: string | null;
+        };
+        /**
+         * ProjectDeleteRequest
+         * @description Permanent delete (D-265): the caller retypes the project code to confirm.
+         */
+        ProjectDeleteRequest: {
+            /** Confirm Code */
+            confirm_code: string;
+        };
+        /** ProjectDeleteResult */
+        ProjectDeleteResult: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Code */
+            code: string;
+            /**
+             * Rows Deleted
+             * @description Rows removed across all tables, the project included.
+             */
+            rows_deleted: number;
         };
         /** ProjectPage */
         ProjectPage: {
@@ -57431,6 +57476,68 @@ export interface operations {
             };
             /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    delete_project: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectDeleteRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectDeleteResult"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

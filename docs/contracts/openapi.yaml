@@ -46,7 +46,7 @@ info:
     \ 157.\n  No diagnosis, test result or clinical note is ever stored (P6-1). Medical hooks use the\
     \ shared\n  hook policy (kind `medical_fitness`; enable with `POST /projects/{id}/medical-hooks/enable`);\n\
     \  gate texts never say \"medical\". Site-clinic sign-off needs step-up re-auth.\n"
-  version: 0.15.1
+  version: 0.15.2
 paths:
   /api/v1/health:
     get:
@@ -757,6 +757,61 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '409':
           description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/delete:
+    post:
+      tags:
+      - projects
+      summary: Permanently delete a project and all its data (platform administrator only)
+      operationId: delete_project
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectDeleteRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectDeleteResult'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
           content:
             application/json:
               schema:
@@ -112845,6 +112900,10 @@ components:
         is_hse_manager:
           type: boolean
           title: Is Hse Manager
+        can_delete_projects:
+          type: boolean
+          title: Can Delete Projects
+          description: True when this user may permanently delete projects (PROJECT_DELETE_EMAILS).
         org_capabilities:
           items:
             $ref: '#/components/schemas/Capability'
@@ -112896,6 +112955,7 @@ components:
       - privacy_notice_ack_at
       - privacy_ack_required
       - is_hse_manager
+      - can_delete_projects
       - org_capabilities
       - projects
       - role_assignments
@@ -124075,9 +124135,10 @@ components:
       properties:
         code:
           type: string
-          pattern: ^[A-Z0-9-]{3,12}$
+          maxLength: 12
+          minLength: 1
           title: Code
-          description: Unique, e.g. ANIA-EXP. Immutable.
+          description: Unique, free text (it prefixes reference numbers), e.g. ANIA-EXP. Immutable.
         name_en:
           type: string
           maxLength: 150
@@ -124135,6 +124196,38 @@ components:
       - city
       - start_date
       title: ProjectCreate
+    ProjectDeleteRequest:
+      properties:
+        confirm_code:
+          type: string
+          maxLength: 12
+          minLength: 1
+          title: Confirm Code
+      additionalProperties: false
+      type: object
+      required:
+      - confirm_code
+      title: ProjectDeleteRequest
+      description: 'Permanent delete (D-265): the caller retypes the project code to confirm.'
+    ProjectDeleteResult:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        code:
+          type: string
+          title: Code
+        rows_deleted:
+          type: integer
+          title: Rows Deleted
+          description: Rows removed across all tables, the project included.
+      type: object
+      required:
+      - id
+      - code
+      - rows_deleted
+      title: ProjectDeleteResult
     ProjectPage:
       properties:
         items:

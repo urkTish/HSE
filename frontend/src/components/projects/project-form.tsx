@@ -32,7 +32,7 @@ export function ProjectForm({ project }: { project?: Schemas["ProjectRead"] }) {
     () =>
       z
         .object({
-          code: z.string().trim().regex(/^[A-Z0-9-]{3,12}$/, tv("projectCode")),
+          code: z.string().trim().min(1, tv("projectCode")).max(12, tv("projectCode")),
           name_en: z.string().trim().min(1, tv("required")).max(150, tv("maxLength", { max: 150 })),
           name_ar: z.string().trim().min(1, tv("required")).max(150, tv("maxLength", { max: 150 })).regex(ARABIC_SCRIPT, tv("arabicRequired")),
           project_type: z.enum(PROJECT_TYPES, { message: tv("required") }),
@@ -106,7 +106,7 @@ export function ProjectForm({ project }: { project?: Schemas["ProjectRead"] }) {
     <form onSubmit={form.handleSubmit(onSubmit)} noValidate className="flex max-w-4xl flex-col gap-6" data-testid="project-form">
       <FormSection title={t("fields.name")}>
         <FormField id="code" label={t("fields.code")} error={errors.code?.message} hint={t("codeHint")} required>
-          <Input className="ltr uppercase" disabled={editing} {...form.register("code")} />
+          <Input className="ltr" maxLength={12} disabled={editing} {...form.register("code")} />
         </FormField>
         <FormField id="project_type" label={t("fields.project_type")} error={errors.project_type?.message} required>
           <Select {...form.register("project_type")}>

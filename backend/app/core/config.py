@@ -5,7 +5,7 @@ from functools import lru_cache
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-CONTRACT_VERSION = "0.15.1"
+CONTRACT_VERSION = "0.15.2"
 API_PREFIX = "/api/v1"
 SESSION_COOKIE_NAME = "hse_session"
 GATE_SESSION_COOKIE = "hse_gate_session"
@@ -58,6 +58,8 @@ class Settings(BaseSettings):
     # facts. A committed fact write in any process clears it (kpi_generation_seq); this bounds
     # how long one snapshot is reused. 0 disables (the test suite runs with 0).
     kpi_cache_seconds: int = 300
+    # Comma-separated emails allowed to permanently delete a project (D-265). Empty = nobody.
+    project_delete_emails: str = ""
     # Rebuild dropped KPI cache scopes in the background once writes settle (app.kpi.warm).
     kpi_warm: bool = True
     # Heavy KPI / dashboard reads computing at once per process (app.api.deps.cpu_slot); the GIL
@@ -94,3 +96,8 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+def project_deleters() -> frozenset[str]:
+    raw = get_settings().project_delete_emails
+    return frozenset(e.strip().lower() for e in raw.split(",") if e.strip())

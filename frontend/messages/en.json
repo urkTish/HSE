@@ -384,7 +384,19 @@
       "start_date": "Start date (oldest)",
       "-start_date": "Start date (newest)"
     },
-    "codeHint": "3–12 upper-case letters, digits or hyphens, e.g. ANIA-EXP.",
+    "codeHint": "Up to 12 characters, e.g. ANIA-EXP. It starts every reference number and cannot be changed later.",
+    "delete": {
+      "title": "Delete project",
+      "body": "Permanently removes this project and everything recorded under it. Only you can see this.",
+      "button": "Delete project",
+      "dialogTitle": "Delete {code} permanently?",
+      "dialogBody": "Its sites, zones, permits, incidents, inspections, workers, training and every other record in it are removed for good.",
+      "warning": "This cannot be undone. To keep the records, close the project instead.",
+      "typeCode": "Type {code} to confirm",
+      "confirm": "Delete permanently",
+      "deleting": "Deleting…",
+      "done": "Project {code} deleted."
+    },
     "icaoHint": "4 upper-case letters; Saudi airports start with OE."
   },
   "settings": {
@@ -986,7 +998,7 @@
     "required": "This field is required.",
     "email": "Enter a valid email address.",
     "maxLength": "Use at most {max} characters.",
-    "projectCode": "Use 3–12 upper-case letters, digits or hyphens.",
+    "projectCode": "Use 1–12 characters.",
     "siteCode": "Use 1–12 letters, digits or hyphens.",
     "zoneCode": "Use 1–16 letters, digits or hyphens.",
     "shortCode": "Use 2–10 upper-case letters or digits.",

@@ -18,7 +18,6 @@ from app.core.enums import (
 )
 from app.schemas.common import ApiModel, Page, PatchInput, StrictInput, Timestamps, has_arabic
 
-PROJECT_CODE = r"^[A-Z0-9-]{3,12}$"
 ICAO = r"^[A-Z]{4}$"
 
 
@@ -29,7 +28,20 @@ def _check_ar(v: str | None) -> str | None:
 
 
 class ProjectCreate(StrictInput):
-    code: str = Field(pattern=PROJECT_CODE, description="Unique, e.g. ANIA-EXP. Immutable.")
+    code: str = Field(
+        min_length=1,
+        max_length=12,
+        description="Unique, free text (it prefixes reference numbers), e.g. ANIA-EXP. Immutable.",
+    )
+
+    @field_validator("code")
+    @classmethod
+    def _strip_code(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("must not be blank")
+        return v
+
     name_en: str = Field(min_length=1, max_length=150)
     name_ar: str = Field(min_length=1, max_length=150, description="Must contain Arabic script.")
     project_type: ProjectType
@@ -112,6 +124,18 @@ class ProjectTransitionRequest(StrictInput):
 
     to_status: ProjectStatus
     reason: str | None = Field(default=None, max_length=500)
+
+
+class ProjectDeleteRequest(StrictInput):
+    """Permanent delete (D-265): the caller retypes the project code to confirm."""
+
+    confirm_code: str = Field(min_length=1, max_length=12)
+
+
+class ProjectDeleteResult(ApiModel):
+    id: uuid.UUID
+    code: str
+    rows_deleted: int = Field(description="Rows removed across all tables, the project included.")
 
 
 class ProjectSettingsRead(ApiModel):
