@@ -32407,7 +32407,7 @@ export interface components {
          * InductionDelivererRole
          * @enum {string}
          */
-        InductionDelivererRole: "hse_manager" | "hse_officer" | "contractor_hse_rep";
+        InductionDelivererRole: "hse_manager" | "hse_officer" | "contractor_hse_rep" | "hse_engineer" | "hse_supervisor";
         /**
          * InductionLink
          * @description CC-7: required iff category = induction_link. `project_course_codes` maps a project id

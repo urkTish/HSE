@@ -2225,7 +2225,9 @@
     "delivererRole": {
       "hse_manager": "مدير السلامة",
       "hse_officer": "مسؤول السلامة",
-      "contractor_hse_rep": "ممثل سلامة المقاول"
+      "contractor_hse_rep": "ممثل سلامة المقاول",
+      "hse_engineer": "مهندس الصحة والسلامة",
+      "hse_supervisor": "مشرف الصحة والسلامة"
     },
     "areaCategory": {
       "apron": "الساحات",

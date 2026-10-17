@@ -107170,6 +107170,8 @@ components:
       - hse_manager
       - hse_officer
       - contractor_hse_rep
+      - hse_engineer
+      - hse_supervisor
       title: InductionDelivererRole
     InductionLink:
       properties:

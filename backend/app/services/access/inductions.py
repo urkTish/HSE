@@ -31,6 +31,7 @@ from app.models import (
     InductionRecord,
     InductionRetrainingNote,
     Project,
+    User,
     Worker,
     Zone,
     ZoneAccessProfile,
@@ -512,8 +513,18 @@ def list_records(
     )
 
 
+POSITION_ROLES = frozenset(
+    {InductionDelivererRole.hse_engineer.value, InductionDelivererRole.hse_supervisor.value}
+)
+
+
 def _deliverer_roles(db: Session, user_id: uuid.UUID, project_id: uuid.UUID) -> set[str]:
-    return {ROLE_OF[r].value for r in user_roles(db, user_id, project_id) if r in ROLE_OF}
+    roles = {ROLE_OF[r].value for r in user_roles(db, user_id, project_id) if r in ROLE_OF}
+    # D-273: HSE Engineers and Supervisors (HSE team positions) deliver the courses that allow them.
+    u = db.get(User, user_id)
+    if roles and u is not None and u.hse_position in POSITION_ROLES:
+        roles.add(str(u.hse_position))
+    return roles
 
 
 def _deliverer_error(msg: str) -> ApiError:
@@ -795,7 +806,7 @@ def _prepare(
         raise validation_error("delivered_at", "delivered_at cannot be in the future (IN-12).")
     allowed = set(course.delivered_by_roles or [])
     caller_roles = (
-        {InductionDelivererRole.hse_manager.value}
+        {InductionDelivererRole.hse_manager.value} | _deliverer_roles(db, p.user.id, project.id)
         if p.is_manager
         else _deliverer_roles(db, p.user.id, project.id)
     )

@@ -2225,7 +2225,9 @@
     "delivererRole": {
       "hse_manager": "HSE Manager",
       "hse_officer": "HSE Officer",
-      "contractor_hse_rep": "Contractor HSE Rep"
+      "contractor_hse_rep": "Contractor HSE Rep",
+      "hse_engineer": "HSE Engineer",
+      "hse_supervisor": "HSE Supervisor"
     },
     "areaCategory": {
       "apron": "Apron",
