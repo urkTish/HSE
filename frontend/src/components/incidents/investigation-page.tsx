@@ -1,5 +1,5 @@
 "use client";
-import { CalendarPlus, Plus, Trash2 } from "lucide-react";
+import { CalendarPlus, Plus, Printer, Trash2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Attachments } from "@/components/common/attachments";
 import { Breadcrumbs } from "@/components/common/breadcrumbs";
 import { FieldItem, FieldList, YesNo } from "@/components/common/field-list";
 import { CheckboxField, FormField, FormSection } from "@/components/common/form-field";
@@ -31,6 +32,7 @@ import { useFieldErrorTranslator, useLocalizedName } from "@/lib/i18n-helpers";
 import { canWrite } from "@/lib/permissions";
 import { useRefLists } from "@/lib/reference";
 import { useFormatters } from "@/lib/use-formatters";
+import { IncidentTransitionDialog } from "./incident-detail";
 
 const RANK: Record<Schemas["InvestigationLevel"], number> = { L1: 1, L2: 2, L3: 3 };
 
@@ -50,6 +52,7 @@ interface Values {
 
 export function InvestigationPage({ id }: { id: string }) {
   const t = useTranslations("investigation");
+  const ti = useTranslations("incidents");
   const tn = useTranslations("nav");
   const te = useTranslations("enums");
   const tc = useTranslations("common");
@@ -62,6 +65,8 @@ export function InvestigationPage({ id }: { id: string }) {
   const { date, dateTime } = useFormatters(pid);
   const [editing, setEditing] = useState(false);
   const [extending, setExtending] = useState(false);
+  const [transitionTo, setTransitionTo] = useState<Schemas["IncidentStatus"] | null>(null);
+  const qc = useQueryClient();
   if (inc.isError) return <ErrorState error={inc.error} onRetry={() => inc.refetch()} />;
   if (q.isError) return <ErrorState error={q.error} onRetry={() => q.refetch()} />;
   if (inc.data && !inc.data.investigation) return <Alert tone="info">{te(`investigationLevel.${inc.data.minimum_investigation_level}`)}</Alert>;
@@ -71,6 +76,18 @@ export function InvestigationPage({ id }: { id: string }) {
   const canEdit = canWrite(me, "investigation.edit", incident.project_id) && ["under_investigation", "reported"].includes(incident.status);
   const canExtend = canWrite(me, "investigation.approve", incident.project_id) && !["closed", "voided"].includes(incident.status);
   const caById = new Map(incident.corrective_actions.map((c) => [c.id, c]));
+  // D-269: submit, approve and return straight from the report.
+  const reportMoves = incident.allowed_transitions.filter(
+    (to) => (incident.status === "under_investigation" && to === "pending_review") || (incident.status === "pending_review" && ["actions_pending", "closed", "under_investigation"].includes(to)),
+  );
+  async function refresh(next?: Schemas["IncidentRead"]) {
+    if (next) qc.setQueryData(hk.incident(incident.id), next);
+    await qc.invalidateQueries({ queryKey: ["incidents"] });
+    await qc.invalidateQueries({ queryKey: ["history"] });
+    await q.refetch();
+  }
+  const missingLabel = (m: string) =>
+    m.startsWith("cases[") ? t("missingId") : m === "photos" ? t("missingPhotos") : t.has(`fields.${m as "level"}`) ? t(`fields.${m as "level"}`) : m;
 
   return (
     <div>
@@ -87,7 +104,11 @@ export function InvestigationPage({ id }: { id: string }) {
                   <span className="ltr text-sm font-normal text-muted-foreground">{incident.ref}</span>
                   {v.overdue ? <StatusBadge status="overdue" label={t("overdue")} /> : null}
                 </CardTitle>
-                <div className="flex gap-2">
+                <div className="flex gap-2 print:hidden">
+                  <Button size="sm" variant="outline" onClick={() => window.print()} data-testid="print-investigation">
+                    <Printer aria-hidden />
+                    {t("print")}
+                  </Button>
                   {canEdit ? (
                     <Button size="sm" variant="outline" onClick={() => setEditing(true)} data-testid="edit-investigation">
                       {t("edit")}
@@ -112,7 +133,7 @@ export function InvestigationPage({ id }: { id: string }) {
                     <p className="font-medium">{t("missing")}</p>
                     <ul className="ms-4 list-disc">
                       {v.missing_for_submit.map((m) => (
-                        <li key={m}>{t.has(`fields.${m as "level"}`) ? t(`fields.${m as "level"}`) : m}</li>
+                        <li key={m}>{missingLabel(m)}</li>
                       ))}
                     </ul>
                   </Alert>
@@ -151,6 +172,77 @@ export function InvestigationPage({ id }: { id: string }) {
                 </FieldList>
               </CardContent>
             </Card>
+            <Card data-testid="report-incident">
+              <CardHeader>
+                <CardTitle>{t("incidentDetails")}</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-4">
+                <FieldList>
+                  <FieldItem label={ti("fields.occurred_at")}>{dateTime(incident.occurred_at)}</FieldItem>
+                  <FieldItem label={ti("fields.reported_at")}>{dateTime(incident.reported_at)}</FieldItem>
+                  <FieldItem label={ti("fields.site")}>
+                    <span className="ltr">{incident.site.code}</span> — {name(incident.site.name_en, incident.site.name_ar)}
+                  </FieldItem>
+                  <FieldItem label={ti("fields.zone")}>{incident.zone ? `${incident.zone.code} — ${name(incident.zone.name_en, incident.zone.name_ar)}` : "—"}</FieldItem>
+                  <FieldItem label={ti("fields.responsible_engagement")}>
+                    {incident.responsible_engagement ? name(incident.responsible_engagement.name_en, incident.responsible_engagement.name_ar) : "—"}
+                  </FieldItem>
+                  <FieldItem label={ti("fields.incident_types")}>{incident.incident_types.map((x) => te(`incidentType.${x}`)).join(" · ")}</FieldItem>
+                  <FieldItem label={ti("fields.title")} wide>
+                    {incident.title}
+                  </FieldItem>
+                  <FieldItem label={ti("fields.description")} wide>
+                    <span className="whitespace-pre-wrap">{incident.description ?? "—"}</span>
+                  </FieldItem>
+                  <FieldItem label={ti("fields.immediate_actions")} wide>
+                    <span className="whitespace-pre-wrap">{incident.immediate_actions ?? "—"}</span>
+                  </FieldItem>
+                </FieldList>
+                <div>
+                  <p className="mb-2 text-sm font-medium">{t("peopleInvolved")}</p>
+                  {incident.cases.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">—</p>
+                  ) : (
+                    <ul className="flex flex-col gap-1 text-sm">
+                      {incident.cases.map((c) => (
+                        <li key={c.id}>
+                          <Link href={`/injury-cases/${c.id}`} className="ltr text-primary hover:underline">
+                            {c.case_no}
+                          </Link>{" "}
+                          · {c.display_label} · {c.case_category ? te(`caseCategory.${c.case_category}`) : "—"}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <p className="mt-1 text-xs text-muted-foreground">{t("idHint")}</p>
+                </div>
+                <div>
+                  <p className="mb-2 text-sm font-medium">{t("photos")}</p>
+                  <Attachments ownerType="incident" ownerId={incident.id} canUpload={canEdit} canDelete={canEdit} hint={t("photosHint")} />
+                </div>
+              </CardContent>
+            </Card>
+            <Card data-testid="corrective-actions">
+              <CardHeader>
+                <CardTitle>{t("capa")}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {incident.corrective_actions.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">—</p>
+                ) : (
+                  <ul className="flex flex-col gap-1 text-sm">
+                    {incident.corrective_actions.map((c) => (
+                      <li key={c.id}>
+                        <Link href={`/actions/${c.id}`} className="ltr text-primary hover:underline">
+                          {c.ref}
+                        </Link>{" "}
+                        — {c.title} · {te(`caStatus.${c.status}`)}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
             <Card data-testid="root-causes">
               <CardHeader>
                 <CardTitle>{t("rootCauses")}</CardTitle>
@@ -187,6 +279,23 @@ export function InvestigationPage({ id }: { id: string }) {
             </Card>
           </div>
           <div className="flex flex-col gap-6">
+            {reportMoves.length > 0 ? (
+              <Card className="print:hidden" data-testid="report-approval">
+                <CardHeader>
+                  <CardTitle>{incident.status === "pending_review" ? t("approvalTitle") : t("submitTitle")}</CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-3">
+                  <p className="text-sm text-muted-foreground">{incident.status === "pending_review" ? t("approvalBody") : t("submitBody")}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {reportMoves.map((to) => (
+                      <Button key={to} size="sm" variant={to === "under_investigation" ? "outline" : "default"} onClick={() => setTransitionTo(to)} data-testid={`report-${to}`}>
+                        {to === "pending_review" ? t("submitForApproval") : to === "under_investigation" ? t("returnForChanges") : t("approve", { status: te(`incidentStatus.${to}`) })}
+                      </Button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ) : null}
             <Card>
               <CardHeader>
                 <CardTitle>{t("extensions")}</CardTitle>
@@ -210,6 +319,7 @@ export function InvestigationPage({ id }: { id: string }) {
         </div>
       )}
       {extending ? <ExtendDialog incidentId={incident.id} onClose={() => setExtending(false)} /> : null}
+      {transitionTo ? <IncidentTransitionDialog incident={incident} to={transitionTo} onClose={() => setTransitionTo(null)} onDone={refresh} /> : null}
     </div>
   );
 }

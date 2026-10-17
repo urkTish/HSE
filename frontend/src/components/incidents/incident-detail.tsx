@@ -410,7 +410,7 @@ export function IncidentDetail({ id }: { id: string }) {
   );
 }
 
-function IncidentTransitionDialog({
+export function IncidentTransitionDialog({
   incident: r,
   to,
   onClose,

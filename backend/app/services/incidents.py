@@ -957,11 +957,9 @@ def delete(db: Session, p: Principal, incident_id: uuid.UUID) -> None:
 
 
 def _approver_ok(p: Principal, b: Bundle) -> bool:
+    # D-269: the HSE Manager checks and approves every investigation report, at every level.
     g = p.grant(b.inc.project_id, Capability.investigation_approve)
-    if not covers(g, b.inc.site_id, None):
-        return False
-    level = b.inv.level if b.inv else InvestigationLevel.L1
-    return level != InvestigationLevel.L3 or p.is_manager
+    return covers(g, b.inc.site_id, None) and p.is_manager
 
 
 def _authorise(p: Principal, b: Bundle, to: IncidentStatus) -> None:

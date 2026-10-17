@@ -169,6 +169,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
     ? [
         ...(g("workforce.view", pid) ? [{ href: "/workforce", label: t("workforce"), Icon: Timer, testId: "nav-workforce" }] : []),
         ...(g("incident.view", pid) ? [{ href: "/incidents", label: t("incidents"), Icon: ShieldAlert, testId: "nav-incidents" }] : []),
+        ...(g("incident.view", pid) ? [{ href: "/investigations", label: t("investigations"), Icon: FileSearch, testId: "nav-investigations" }] : []),
         ...(g("observation.create", pid) || dash ? [{ href: "/observations", label: t("observations"), Icon: Eye, testId: "nav-observations" }] : []),
         ...(g("inspection.record", pid) || g("inspection.plan_manage", pid) || dash
           ? [{ href: "/inspections", label: t("inspections"), Icon: ClipboardCheck, testId: "nav-inspections" }]

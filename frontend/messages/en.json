@@ -244,7 +244,8 @@
     "reportsExports": "Reports and exports",
     "rpPacks": "Report packs",
     "xpExports": "Exports",
-    "siteVehicles": "Site vehicles"
+    "siteVehicles": "Site vehicles",
+    "investigations": "Investigation reports"
   },
   "shell": {
     "projectSwitcher": "Project",
@@ -5711,7 +5712,23 @@
       "approved": "Approved",
       "code": "Code",
       "text": "Description"
-    }
+    },
+    "print": "Print report",
+    "incidentDetails": "Incident details",
+    "peopleInvolved": "People involved",
+    "idHint": "Open a person to see their ID / Iqama number. Each injured worker's ID is needed before the report can be submitted.",
+    "photos": "Pictures",
+    "photosHint": "At least one picture is needed before the report can be submitted.",
+    "capa": "Corrective and preventive actions (CAPA)",
+    "missingId": "ID / Iqama number of each injured worker",
+    "missingPhotos": "At least one picture",
+    "submitTitle": "Submit the report",
+    "submitBody": "When the report is complete, send it to the HSE Manager for approval.",
+    "submitForApproval": "Submit for approval",
+    "approvalTitle": "Approve the report",
+    "approvalBody": "Check the report. Approve it, or return it with a comment for changes.",
+    "approve": "Approve → {status}",
+    "returnForChanges": "Return for changes"
   },
   "observations": {
     "title": "Safety observations",
@@ -15131,5 +15148,30 @@
       "answered": "{done} of {total} items answered",
       "defects": "defects: {n}"
     }
+  },
+  "investigations": {
+    "title": "Investigation reports",
+    "subtitle": "Every registered incident gets an investigation report. Officers complete and submit it; the HSE Manager approves it before it counts.",
+    "bucket": {
+      "pending": "To complete",
+      "approval": "Waiting for approval",
+      "approved": "Approved"
+    },
+    "empty": {
+      "pending": "No reports to complete.",
+      "approval": "Nothing is waiting for approval.",
+      "approved": "No approved reports yet."
+    },
+    "cols": {
+      "ref": "Incident",
+      "occurred": "Date",
+      "title": "Title",
+      "contractor": "Contractor",
+      "level": "Level",
+      "due": "Due",
+      "status": "Status"
+    },
+    "overdue": "Overdue",
+    "notStarted": "Not started"
   }
 }
