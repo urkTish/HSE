@@ -70494,6 +70494,83 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/hse-team:
+    get:
+      tags:
+      - hse-team
+      summary: HSE team and reporting lines
+      operationId: get_hse_team
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HseTeam'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+  /api/v1/hse-team/{user_id}:
+    patch:
+      tags:
+      - hse-team
+      summary: Set a person's HSE position and who they report to (HSE Manager)
+      operationId: update_hse_team_member
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: User Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HseTeamUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HseTeamMember'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/v1/privacy-notice:
     get:
       tags:
@@ -104711,6 +104788,17 @@ components:
       additionalProperties: false
       type: object
       title: HseMeetingUpdate
+    HsePosition:
+      type: string
+      enum:
+      - hse_manager
+      - hse_engineer
+      - hse_supervisor
+      - hse_officer
+      - hse_inspector
+      - other
+      title: HsePosition
+      description: 'D-270: position in the HSE department, for the team hierarchy.'
     HseReviewInput:
       properties:
         decision:
@@ -105070,6 +105158,82 @@ components:
       description: 'Partial update (capability 44). `ai_enabled = true` without a recorded approval →
 
         409 AI_TRANSFER_APPROVAL_REQUIRED.'
+    HseTeam:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/HseTeamMember'
+          type: array
+          title: Items
+          description: Active users with an HSE role or an HSE position; build the tree from reports_to_user_id
+            (null = top).
+      type: object
+      required:
+      - items
+      title: HseTeam
+    HseTeamMember:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        full_name_en:
+          type: string
+          title: Full Name En
+        full_name_ar:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Full Name Ar
+        email:
+          type: string
+          title: Email
+        job_title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Job Title
+        hse_position:
+          anyOf:
+          - $ref: '#/components/schemas/HsePosition'
+          - type: 'null'
+        reports_to_user_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Reports To User Id
+        roles:
+          items:
+            $ref: '#/components/schemas/Role'
+          type: array
+          title: Roles
+      type: object
+      required:
+      - id
+      - full_name_en
+      - full_name_ar
+      - email
+      - job_title
+      - hse_position
+      - reports_to_user_id
+      - roles
+      title: HseTeamMember
+    HseTeamUpdate:
+      properties:
+        hse_position:
+          anyOf:
+          - $ref: '#/components/schemas/HsePosition'
+          - type: 'null'
+        reports_to_user_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Reports To User Id
+      additionalProperties: false
+      type: object
+      title: HseTeamUpdate
     IcamLevel:
       type: string
       enum:

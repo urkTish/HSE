@@ -317,6 +317,17 @@ class ProjectType(StrEnum):
     other = "other"
 
 
+class HsePosition(StrEnum):
+    """D-270: position in the HSE department, for the team hierarchy."""
+
+    hse_manager = "hse_manager"
+    hse_engineer = "hse_engineer"
+    hse_supervisor = "hse_supervisor"
+    hse_officer = "hse_officer"
+    hse_inspector = "hse_inspector"
+    other = "other"
+
+
 class ProjectStatus(StrEnum):
     """Project lifecycle (§4.1)."""
 

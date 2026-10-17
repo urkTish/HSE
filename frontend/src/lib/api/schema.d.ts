@@ -13548,6 +13548,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/hse-team": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** HSE team and reporting lines */
+        get: operations["get_hse_team"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/hse-team/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Set a person's HSE position and who they report to (HSE Manager) */
+        patch: operations["update_hse_team_member"];
+        trace?: never;
+    };
     "/api/v1/privacy-notice": {
         parameters: {
             query?: never;
@@ -31156,6 +31190,12 @@ export interface components {
             title?: string | null;
         };
         /**
+         * HsePosition
+         * @description D-270: position in the HSE department, for the team hierarchy.
+         * @enum {string}
+         */
+        HsePosition: "hse_manager" | "hse_engineer" | "hse_supervisor" | "hse_officer" | "hse_inspector" | "other";
+        /**
          * HseReviewInput
          * @description HSE review of a high-risk permit (capability 86, the named HSE reviewer; PR-5 d).
          */
@@ -31346,6 +31386,41 @@ export interface components {
             training_register_from?: string | null;
             /** Ai Enabled */
             ai_enabled?: boolean | null;
+        };
+        /** HseTeam */
+        HseTeam: {
+            /**
+             * Items
+             * @description Active users with an HSE role or an HSE position; build the tree from reports_to_user_id (null = top).
+             */
+            items: components["schemas"]["HseTeamMember"][];
+        };
+        /** HseTeamMember */
+        HseTeamMember: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Full Name En */
+            full_name_en: string;
+            /** Full Name Ar */
+            full_name_ar: string | null;
+            /** Email */
+            email: string;
+            /** Job Title */
+            job_title: string | null;
+            hse_position: components["schemas"]["HsePosition"] | null;
+            /** Reports To User Id */
+            reports_to_user_id: string | null;
+            /** Roles */
+            roles: components["schemas"]["Role"][];
+        };
+        /** HseTeamUpdate */
+        HseTeamUpdate: {
+            hse_position?: components["schemas"]["HsePosition"] | null;
+            /** Reports To User Id */
+            reports_to_user_id?: string | null;
         };
         /**
          * IcamLevel
@@ -121955,6 +122030,97 @@ export interface operations {
             };
             /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_hse_team: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HseTeam"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_hse_team_member: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HseTeamUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HseTeamMember"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

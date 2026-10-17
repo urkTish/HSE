@@ -58,7 +58,7 @@ def test_manual_rows_win_and_auto_rows_take_absence_and_overtime(
     project: Project, db: Session, api: Api
 ) -> None:
     counts = workforce_auto.headcounts(db, project, DAY)
-    (eng_id, site_id), n = next(iter(counts.items()))
+    (eng_id, site_id), _n = next(iter(counts.items()))
     db.add(
         WorkforceReturn(
             project_id=project.id,

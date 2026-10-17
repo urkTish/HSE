@@ -245,7 +245,8 @@
     "rpPacks": "Report packs",
     "xpExports": "Exports",
     "siteVehicles": "Site vehicles",
-    "investigations": "Investigation reports"
+    "investigations": "Investigation reports",
+    "hseTeam": "HSE team"
   },
   "shell": {
     "projectSwitcher": "Project",
@@ -15173,5 +15174,25 @@
     },
     "overdue": "Overdue",
     "notStarted": "Not started"
+  },
+  "hseTeam": {
+    "title": "HSE team",
+    "subtitle": "Who is in the HSE department and who reports to whom. Reports from your team come to you for approval.",
+    "empty": "No HSE staff yet. Give people an HSE role in Users & roles first.",
+    "edit": "Edit",
+    "noPosition": "No position set",
+    "top": "Nobody (top of the team)",
+    "fields": {
+      "position": "HSE position",
+      "reportsTo": "Reports to"
+    },
+    "position": {
+      "hse_manager": "HSE Manager",
+      "hse_engineer": "HSE Engineer",
+      "hse_supervisor": "HSE Supervisor",
+      "hse_officer": "HSE Officer",
+      "hse_inspector": "HSE Inspector",
+      "other": "Other"
+    }
   }
 }
