@@ -10,14 +10,19 @@ import { useHistory } from "@/lib/api/queries";
 import { ApiError, type Schemas } from "@/lib/api/client";
 import { useFormatters } from "@/lib/use-formatters";
 
-function show(v: unknown): string {
+// D-275: stored instants are UTC; show them in Riyadh time like the rest of the app.
+const ISO_INSTANT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})$/;
+
+function show(v: unknown, dateTime: (iso: string) => string): string {
   if (v === null || v === undefined) return "—";
+  if (typeof v === "string" && ISO_INSTANT.test(v)) return dateTime(v);
   if (typeof v === "object") return JSON.stringify(v);
   return String(v);
 }
 
 export function ChangeDiff({ before, after }: { before: Record<string, unknown> | null; after: Record<string, unknown> | null }) {
   const t = useTranslations("history");
+  const { dateTime } = useFormatters();
   const fields = Array.from(new Set([...Object.keys(before ?? {}), ...Object.keys(after ?? {})]));
   if (fields.length === 0) return <p className="text-xs text-muted-foreground">{t("noFieldChanges")}</p>;
   return (
@@ -33,8 +38,8 @@ export function ChangeDiff({ before, after }: { before: Record<string, unknown> 
         {fields.map((f) => (
           <tr key={f} className="border-t align-top">
             <td className="py-1 pe-2 font-mono ltr">{f}</td>
-            <td className="py-1 pe-2 break-all ltr">{show(before?.[f])}</td>
-            <td className="py-1 break-all ltr">{show(after?.[f])}</td>
+            <td className="py-1 pe-2 break-all ltr">{show(before?.[f], dateTime)}</td>
+            <td className="py-1 break-all ltr">{show(after?.[f], dateTime)}</td>
           </tr>
         ))}
       </tbody>

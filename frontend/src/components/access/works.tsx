@@ -30,7 +30,7 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { CLEARANCE_REASONS, NOTAM_STATUSES, NOTAM_TYPES, OBSTACLE_CONDITIONS, OBSTACLE_DECISIONS, OBSTACLE_EQUIPMENT_TYPES, OBSTACLE_STATUSES, OLS_SURFACES, WORKS_IMPACTS } from "@/lib/access-enums";
 import { ak, useNotam, useNotams, useObstacle, useObstacles } from "@/lib/api/access";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
-import { todayInZone } from "@/lib/datetime";
+import { DEFAULT_TIME_ZONE, todayInZone, utcToZonedInput, zonedInputToUtc } from "@/lib/datetime";
 import { joinList, useLocalizedName } from "@/lib/i18n-helpers";
 import { can, canWrite } from "@/lib/permissions";
 import { useDebounced } from "@/lib/use-debounced";
@@ -42,14 +42,16 @@ const PAGE_SIZE = 50;
 type Ntm = Schemas["NotamRequestRead"];
 type Obs = Schemas["ObstacleRead"];
 
-/* ───────────────────────────── UTC helpers (NT-3) ───────────────────────────── */
+/* ───────────────────────────── Time helpers (NT-3, D-275) ───────────────────────────── */
 
-/** "2026-10-01T20:00" (UTC wall clock in a datetime-local input) → ISO UTC. */
+// D-275: people type and read NOTAM times in Riyadh time (GMT+3); the UTC NOTAM code the airport
+// needs (item B/C) is derived and shown underneath. The API keeps storing UTC instants.
+/** "2026-10-01T23:00" (Riyadh wall clock in a datetime-local input) → ISO UTC. */
 export function utcInputToIso(v: string): string {
-  return v ? new Date(`${v}:00Z`).toISOString() : "";
+  return v ? zonedInputToUtc(v, DEFAULT_TIME_ZONE) : "";
 }
 export function isoToUtcInput(iso: string | null | undefined): string {
-  return iso ? iso.slice(0, 16) : "";
+  return iso ? utcToZonedInput(iso, DEFAULT_TIME_ZONE) : "";
 }
 /** NOTAM item B/C format YYMMDDHHMM (UTC). */
 export function notamFormat(iso: string | null | undefined): string {
@@ -59,19 +61,16 @@ export function notamFormat(iso: string | null | undefined): string {
   return `${p(d.getUTCFullYear() % 100)}${p(d.getUTCMonth() + 1)}${p(d.getUTCDate())}${p(d.getUTCHours())}${p(d.getUTCMinutes())}`;
 }
 
-/** UTC time with NOTAM format and Riyadh local time underneath. */
+/** Riyadh time, with the UTC NOTAM code (item B/C) underneath. */
 export function UtcTime({ iso, projectId }: { iso: string | null | undefined; projectId: string }) {
   const { dateTime } = useFormatters(projectId);
-  const t = useTranslations("notams");
   if (!iso) return <>—</>;
   return (
     <span className="inline-flex flex-col">
-      <bdi className="ltr font-mono text-sm" data-testid="notam-utc">
-        {notamFormat(iso)} UTC
+      <span className="text-sm">{dateTime(iso)}</span>
+      <bdi className="ltr font-mono text-xs text-muted-foreground" data-testid="notam-utc">
+        NOTAM {notamFormat(iso)} UTC
       </bdi>
-      <span className="text-xs text-muted-foreground">
-        {t("local")}: {dateTime(iso)}
-      </span>
     </span>
   );
 }
