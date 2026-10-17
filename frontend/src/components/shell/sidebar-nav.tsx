@@ -66,6 +66,7 @@ import {
   ListChecks,
   ListTree,
   ShieldAlert,
+  Trash2,
   SlidersHorizontal,
   Timer,
   HardHat,
@@ -143,6 +144,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
     ...(g("user.view_directory") ? [{ href: "/users", label: t("users"), Icon: Users, testId: "nav-users" }] : []),
     ...(g("user.view_directory") ? [{ href: "/hse-team", label: t("hseTeam"), Icon: Network, testId: "nav-hse-team" }] : []),
     ...(g("audit_log.read") ? [{ href: "/audit-log", label: t("auditLog"), Icon: ScrollText, testId: "nav-audit" }] : []),
+    ...(me.can_delete_projects ? [{ href: "/deleted-items", label: t("deletedItems"), Icon: Trash2, testId: "nav-deleted-items" }] : []),
     ...(me.is_hse_manager ? [{ href: "/ai-logs", label: t("aiLogs"), Icon: Bot, testId: "nav-ai-logs" }] : []),
     ...(g("hse_settings.edit") ? [{ href: "/reference-lists", label: t("referenceLists"), Icon: ListTree, testId: "nav-reference-lists" }] : []),
   ];

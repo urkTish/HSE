@@ -70571,6 +70571,188 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/admin/deletable-types:
+    get:
+      tags:
+      - admin
+      summary: Record types the administrator can delete
+      operationId: deletable_types
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeletableTypes'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+  /api/v1/admin/records/delete:
+    post:
+      tags:
+      - admin
+      summary: Delete a record and what belongs to it; kept in the deleted-items register
+      operationId: delete_record
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecordDeleteRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeletedRecordRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+  /api/v1/admin/deleted-records:
+    get:
+      tags:
+      - admin
+      summary: Deleted-items register (newest first)
+      operationId: list_deleted_records
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          description: 1-based page number.
+          default: 1
+          title: Page
+        description: 1-based page number.
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          description: Items per page.
+          default: 50
+          title: Page Size
+        description: Items per page.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeletedRecordPage'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/admin/deleted-records/{record_id}:
+    get:
+      tags:
+      - admin
+      summary: One deleted item with copies of the deleted rows
+      operationId: get_deleted_record
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: record_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Record Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeletedRecordDetail'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/v1/privacy-notice:
     get:
       tags:
@@ -86530,6 +86712,161 @@ components:
       - closed
       - cancelled
       title: DefectStatus
+    DeletableTypes:
+      properties:
+        entity_types:
+          items:
+            type: string
+          type: array
+          title: Entity Types
+      type: object
+      required:
+      - entity_types
+      title: DeletableTypes
+    DeletedRecordDetail:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        deleted_at:
+          type: string
+          format: date-time
+          title: Deleted At
+        deleted_by_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Deleted By Name
+        entity_type:
+          type: string
+          title: Entity Type
+        entity_id:
+          type: string
+          format: uuid
+          title: Entity Id
+        project_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Project Id
+        label:
+          type: string
+          title: Label
+        reason:
+          type: string
+          title: Reason
+        row_counts:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Row Counts
+        rows_deleted:
+          type: integer
+          title: Rows Deleted
+        rows:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Rows
+          description: Copies of the deleted rows per table.
+      type: object
+      required:
+      - id
+      - deleted_at
+      - deleted_by_name
+      - entity_type
+      - entity_id
+      - project_id
+      - label
+      - reason
+      - row_counts
+      - rows_deleted
+      - rows
+      title: DeletedRecordDetail
+    DeletedRecordPage:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/DeletedRecordRead'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+          description: Total number of matching items across all pages.
+        page:
+          type: integer
+          title: Page
+          description: 1-based page number.
+        page_size:
+          type: integer
+          title: Page Size
+          description: Items per page (max 200).
+      type: object
+      required:
+      - items
+      - total
+      - page
+      - page_size
+      title: DeletedRecordPage
+    DeletedRecordRead:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        deleted_at:
+          type: string
+          format: date-time
+          title: Deleted At
+        deleted_by_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Deleted By Name
+        entity_type:
+          type: string
+          title: Entity Type
+        entity_id:
+          type: string
+          format: uuid
+          title: Entity Id
+        project_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Project Id
+        label:
+          type: string
+          title: Label
+        reason:
+          type: string
+          title: Reason
+        row_counts:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Row Counts
+        rows_deleted:
+          type: integer
+          title: Rows Deleted
+      type: object
+      required:
+      - id
+      - deleted_at
+      - deleted_by_name
+      - entity_type
+      - entity_id
+      - project_id
+      - label
+      - reason
+      - row_counts
+      - rows_deleted
+      title: DeletedRecordRead
     DeliveryMode:
       type: string
       enum:
@@ -113166,7 +113503,8 @@ components:
         can_delete_projects:
           type: boolean
           title: Can Delete Projects
-          description: True when this user may permanently delete projects (PROJECT_DELETE_EMAILS).
+          description: 'True for the platform administrator (PROJECT_DELETE_EMAILS): may delete projects
+            and any other record (D-265, D-271).'
         org_capabilities:
           items:
             $ref: '#/components/schemas/Capability'
@@ -124466,6 +124804,12 @@ components:
           maxLength: 12
           minLength: 1
           title: Confirm Code
+        reason:
+          anyOf:
+          - type: string
+            maxLength: 500
+          - type: 'null'
+          title: Reason
       additionalProperties: false
       type: object
       required:
@@ -127689,6 +128033,31 @@ components:
       - signed_at
       - valid_until
       title: ReceiverAcceptanceRead
+    RecordDeleteRequest:
+      properties:
+        entity_type:
+          type: string
+          maxLength: 60
+          minLength: 1
+          title: Entity Type
+          examples:
+          - training_course
+        entity_id:
+          type: string
+          format: uuid
+          title: Entity Id
+        reason:
+          type: string
+          maxLength: 500
+          minLength: 1
+          title: Reason
+      additionalProperties: false
+      type: object
+      required:
+      - entity_type
+      - entity_id
+      - reason
+      title: RecordDeleteRequest
     RecordState:
       type: string
       enum:

@@ -128,6 +128,7 @@ class ProjectDeleteRequest(StrictInput):
     """Permanent delete (D-265): the caller retypes the project code to confirm."""
 
     confirm_code: str = Field(min_length=1, max_length=12)
+    reason: str | None = Field(default=None, max_length=500)
 
 
 class ProjectDeleteResult(ApiModel):

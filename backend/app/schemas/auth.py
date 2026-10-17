@@ -97,7 +97,8 @@ class Me(ApiModel):
     )
     is_hse_manager: bool
     can_delete_projects: bool = Field(
-        description="True when this user may permanently delete projects (PROJECT_DELETE_EMAILS)."
+        description="True for the platform administrator (PROJECT_DELETE_EMAILS): may delete "
+        "projects and any other record (D-265, D-271)."
     )
     org_capabilities: list[Capability] = Field(
         description="Organisation-wide capabilities (from hse_manager); empty for other roles."

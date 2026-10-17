@@ -246,7 +246,8 @@
     "xpExports": "Exports",
     "siteVehicles": "Site vehicles",
     "investigations": "Investigation reports",
-    "hseTeam": "HSE team"
+    "hseTeam": "HSE team",
+    "deletedItems": "Deleted items"
   },
   "shell": {
     "projectSwitcher": "Project",
@@ -15193,6 +15194,31 @@
       "hse_officer": "HSE Officer",
       "hse_inspector": "HSE Inspector",
       "other": "Other"
+    }
+  },
+  "deleteRecord": {
+    "button": "Delete",
+    "title": "Delete this record?",
+    "body": "The record and everything that belongs to it are removed. A copy is kept under Deleted items so the delete stays traceable.",
+    "warning": "Other screens will no longer show it. This cannot be undone from the app.",
+    "confirm": "Delete",
+    "deleting": "Deleting…",
+    "done": "Deleted. A copy is kept under Deleted items."
+  },
+  "deletedItems": {
+    "title": "Deleted items",
+    "subtitle": "Everything you deleted as administrator: what, when, why, and a copy of the removed data.",
+    "empty": "Nothing has been deleted.",
+    "show": "Show",
+    "hide": "Hide",
+    "byTable": "Rows removed per table",
+    "copies": "Copy of the removed data",
+    "cols": {
+      "when": "Deleted",
+      "what": "Record",
+      "by": "By",
+      "reason": "Reason",
+      "rows": "Rows"
     }
   }
 }

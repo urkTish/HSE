@@ -32,7 +32,7 @@ from app.models.access import (
     WorkerIdHistory,
     ZoneAccessProfile,
 )
-from app.models.audit import AuditEntry, EmailMessage, Notification
+from app.models.audit import AuditEntry, DeletedRecord, EmailMessage, Notification
 from app.models.cert import (
     CertificationBan,
     CertImportBatch,
@@ -268,6 +268,7 @@ __all__ = [
     "CredentialEvent",
     "CredentialSuspension",
     "DashboardPreference",
+    "DeletedRecord",
     "Deployment",
     "DischargeDay",
     "Drill",

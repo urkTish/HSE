@@ -22,7 +22,7 @@ from app.core.enums import (
 )
 from app.core.errors import validation_error
 from app.core.text import like_pattern, search_blob
-from app.models import Project, ProjectSettings, Site, Zone
+from app.models import DeletedRecord, Project, ProjectSettings, Site, Zone
 from app.schemas.projects import (
     ProjectCreate,
     ProjectDeleteRequest,
@@ -262,6 +262,18 @@ def delete(
         raise validation_error("confirm_code", "Type the project code exactly to confirm.")
     before = {**_dict(project), "status": project.status}
     deleted = purge_project(db, project.id)
+    db.add(
+        DeletedRecord(
+            deleted_by_user_id=p.user.id,
+            entity_type=EntityType.project.value,
+            entity_id=project_id,
+            project_id=project_id,
+            label=f"project {before['code']}",
+            reason=(body.reason or "").strip()[:500] or "—",
+            row_counts=deleted,
+            rows={"projects": [audit.jsonable(before)]},
+        )
+    )
     audit.record(
         db,
         AuditAction.archive,

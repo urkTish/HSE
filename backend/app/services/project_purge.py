@@ -17,7 +17,8 @@ key to project data and is append-only, so the project's audit history stays.
 
 import uuid
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Any
 
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -69,8 +70,20 @@ def _q(name: str) -> str:
     return '"' + name.replace('"', '""') + '"'
 
 
+@dataclass
+class Purge:
+    deleted: dict[str, int] = field(default_factory=dict)
+    # Copies of the deleted rows per table (D-271), None when over the snapshot limit.
+    rows: dict[str, list[dict[str, Any]]] | None = None
+
+
 def purge_project(db: Session, project_id: uuid.UUID) -> dict[str, int]:
     """Delete the project and its data; returns rows deleted per table (non-zero only)."""
+    return purge(db, "projects", project_id).deleted
+
+
+def purge(db: Session, root: str, row_id: object, snapshot_limit: int = 0) -> Purge:
+    """Delete one row of ``root`` (by ``id``) and everything that belongs to it."""
     fks = _foreign_keys(db)
     doomed: dict[str, set[str]] = defaultdict(set)
     # (table, column) -> referenced values to null out. Values, not ctids: an UPDATE moves a
@@ -78,10 +91,10 @@ def purge_project(db: Session, project_id: uuid.UUID) -> dict[str, int]:
     unlink: dict[tuple[str, str], set[object]] = defaultdict(set)
 
     start = db.scalars(
-        text("SELECT ctid::text FROM projects WHERE id = :id"), {"id": project_id}
+        text(f"SELECT ctid::text FROM {_q(root)} WHERE id = :id"), {"id": row_id}
     ).all()
-    doomed["projects"].update(start)
-    queue: list[tuple[str, set[str]]] = [("projects", set(start))]
+    doomed[root].update(start)
+    queue: list[tuple[str, set[str]]] = [(root, set(start))]
     while queue:
         table, ctids = queue.pop()
         for fk in fks.get(table, []):
@@ -94,7 +107,8 @@ def purge_project(db: Session, project_id: uuid.UUID) -> dict[str, int]:
             ).all()
             if not values:
                 continue
-            if fk.nullable and (fk.child, fk.child_col) not in FORCE_DELETE:
+            forced = root == "projects" and (fk.child, fk.child_col) in FORCE_DELETE
+            if fk.nullable and not forced:
                 unlink[(fk.child, fk.child_col)].update(values)
                 continue
             found = set(
@@ -109,6 +123,23 @@ def purge_project(db: Session, project_id: uuid.UUID) -> dict[str, int]:
             if new:
                 doomed[fk.child].update(new)
                 queue.append((fk.child, new))
+
+    out = Purge()
+    total = sum(len(c) for c in doomed.values())
+    if snapshot_limit and total <= snapshot_limit:
+        out.rows = {
+            t: list(
+                db.scalars(
+                    text(
+                        f"SELECT row_to_json(x)::jsonb FROM {_q(t)} x "
+                        "WHERE x.ctid = ANY(CAST(:t AS tid[]))"
+                    ),
+                    {"t": list(c)},
+                ).all()
+            )
+            for t, c in doomed.items()
+            if c
+        }
 
     # Unlink the rows that stay (doomed rows are not updated here, so their ctids hold).
     for (table, col), refs in unlink.items():
@@ -125,7 +156,7 @@ def purge_project(db: Session, project_id: uuid.UUID) -> dict[str, int]:
     # nullable reference on the doomed rows (RETURNING keeps their new ctids).
     pending = {t for t, c in doomed.items() if c}
     edges = {fk for fk_list in fks.values() for fk in fk_list}
-    deleted: dict[str, int] = {}
+    deleted = out.deleted
     while pending:
         live = [fk for fk in edges if fk.child in pending and fk.parent in pending]
         ready = [t for t in pending if not any(fk.parent == t and fk.child != t for fk in live)]
@@ -152,4 +183,4 @@ def purge_project(db: Session, project_id: uuid.UUID) -> dict[str, int]:
             )
             deleted[t] = result.rowcount  # type: ignore[attr-defined]
             pending.discard(t)
-    return deleted
+    return out

@@ -3,6 +3,7 @@ import { History, Info } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DeleteRecordButton } from "@/components/common/delete-record";
 import { Pagination } from "@/components/common/pagination";
 import { ErrorState, LoadingState } from "@/components/common/states";
 import { useHistory } from "@/lib/api/queries";
@@ -61,11 +62,13 @@ export function HistoryPanel({
 
   return (
     <Card data-testid="history-panel">
-      <CardHeader>
+      <CardHeader className="flex-row flex-wrap items-center justify-between gap-2">
         <CardTitle className="flex items-center gap-2">
           <History aria-hidden className="size-4" />
           {t("title")}
         </CardTitle>
+        {/* D-271: every record page with a history panel offers the administrator's delete. */}
+        {entityType !== "project" ? <DeleteRecordButton entityType={entityType} entityId={entityId} /> : null}
       </CardHeader>
       <CardContent>
         {q.isLoading ? (
