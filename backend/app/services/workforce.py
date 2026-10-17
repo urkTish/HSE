@@ -24,6 +24,8 @@ from app.schemas.hse_common import ApiWarning
 from app.schemas.workforce import (
     BulkItemError,
     BulkVerifyResult,
+    WorkforceAutoFillRequest,
+    WorkforceAutoFillResult,
     WorkforceMonthList,
     WorkforceMonthRead,
     WorkforceReturnCreate,
@@ -31,7 +33,7 @@ from app.schemas.workforce import (
     WorkforceReturnRead,
     WorkforceReturnUpdate,
 )
-from app.services import audit, hse_settings, notify, projects
+from app.services import audit, hse_settings, notify, projects, workforce_auto
 from app.services.common import ensure_open, invalid_transition, paginate, require_reason
 from app.services.hse_common import (
     Refs,
@@ -61,8 +63,22 @@ SNAPSHOT_FIELDS = (
     "toolbox_attendees",
     "inductions",
     "training_hours",
+    "absent_count",
+    "overtime_hours",
     "remarks",
     "status",
+)
+# D-268: on automatic rows people and hours come from the platform; only these are typed.
+AUTO_EDITABLE = frozenset(
+    {
+        "absent_count",
+        "overtime_hours",
+        "remarks",
+        "toolbox_talks",
+        "toolbox_attendees",
+        "inductions",
+        "training_hours",
+    }
 )
 
 
@@ -88,6 +104,8 @@ def to_read(r: WorkforceReturn, refs: Refs) -> WorkforceReturnRead:
         toolbox_attendees=r.toolbox_attendees,
         inductions=r.inductions,
         training_hours=r.training_hours,
+        absent_count=r.absent_count,
+        overtime_hours=r.overtime_hours,
         remarks=r.remarks,
         source=r.source,
         import_batch_id=r.import_batch_id,
@@ -292,10 +310,26 @@ def update(
     ensure_unlocked(db, project.id, r.work_date)
     before = snapshot(r)
     data = body.changes()
+    if r.source == WorkforceSource.auto:
+        fixed = sorted(set(data) - AUTO_EDITABLE)
+        if fixed:
+            raise validation_error(
+                fixed[0],
+                "Automatic returns take people and hours from the platform; "
+                "enter absence or overtime instead.",
+            )
+    elif {"absent_count", "overtime_hours"} & set(data):
+        raise validation_error("absent_count", "Absence and overtime apply to automatic returns.")
     if "zone_id" in data:
         check_site_zone(db, project, r.site_id, data["zone_id"])
     for k, v in data.items():
         setattr(r, k, v)
+    if r.source == WorkforceSource.auto:
+        if r.absent_count > r.headcount:
+            raise validation_error("absent_count", "absent_count cannot exceed headcount.")
+        r.man_hours = workforce_auto.man_hours(
+            r.headcount, r.absent_count, r.overtime_hours, hse_settings.get(db, project.id)
+        )
     eng = check_engagement(db, project, r.engagement_id)
     warnings = validate_values(
         db, project, eng, r.site_id, r.work_date, r.headcount, r.man_hours, r.no_work
@@ -325,6 +359,19 @@ def update(
     out = read(db, r)
     out.warnings = warnings + id_warnings(remarks=r.remarks)
     return out
+
+
+def auto_fill(
+    db: Session, p: Principal, project_id: uuid.UUID, body: WorkforceAutoFillRequest
+) -> WorkforceAutoFillResult:
+    """Fill or refresh automatic rows for a date range (D-268); officers and the manager."""
+    project = projects.get_visible(db, p, project_id)
+    ensure_open(project)
+    p.require(project.id, Capability.workforce_verify)
+    end = min(body.to_date, project_today(project))
+    if not hse_settings.get(db, project.id).auto_man_hours:
+        raise validation_error("from_date", "Automatic man-hours are switched off in HSE settings.")
+    return WorkforceAutoFillResult(**workforce_auto.fill_range(db, p, project, body.from_date, end))
 
 
 def delete(db: Session, p: Principal, return_id: uuid.UUID) -> None:

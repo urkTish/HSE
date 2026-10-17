@@ -687,6 +687,21 @@ def near_miss_error() -> ApiError:
     )
 
 
+# Main type derived when the client does not send one (D-267): most serious selected type first.
+PRIMARY_RANK = (
+    IncidentType.injury_illness,
+    IncidentType.dangerous_occurrence,
+    IncidentType.environmental,
+    IncidentType.property_damage,
+    IncidentType.near_miss,
+)
+
+
+def derive_primary(types: list[IncidentType] | list[str]) -> IncidentType:
+    chosen = {IncidentType(t) for t in types}
+    return next(t for t in PRIMARY_RANK if t in chosen)
+
+
 def _validate_shape(db: Session, project: Project, inc: Incident) -> None:
     """Rules that hold for drafts too (I-3, I-18, hierarchy, ≤ now)."""
     types = set(inc.incident_types)
@@ -809,7 +824,7 @@ def create(db: Session, p: Principal, project_id: uuid.UUID, body: IncidentCreat
         site_id=body.site_id,
         occurred_at=body.occurred_at,
         occurred_date=local_date(project, body.occurred_at),
-        primary_type=body.primary_type,
+        primary_type=body.primary_type or derive_primary(body.incident_types),
         title=body.title,
         status=ST.draft,
         created_by_user_id=p.user.id,
@@ -877,6 +892,10 @@ def update(db: Session, p: Principal, incident_id: uuid.UUID, body: IncidentUpda
     before = snapshot(inc)
     old_day = inc.occurred_date
     _apply_fields(db, b.project, inc, changes)
+    if "primary_type" not in changes and (
+        "incident_types" in changes or inc.primary_type.value not in set(inc.incident_types)
+    ):
+        inc.primary_type = derive_primary(inc.incident_types)
     _validate_shape(db, b.project, inc)
     vdata = {k: changes[k] for k in veh.INCIDENT_FIELDS if k in changes}
     vwarn = veh.apply_incident(db, inc, vdata, b.cases)

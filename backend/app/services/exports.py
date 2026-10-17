@@ -82,7 +82,7 @@ def _rows(
             "client_name_ar",
             "start_date",
             "planned_end_date",
-            "airport_icao",
+            "airport_iata",
         ]
         return cols, [
             [_cell(getattr(r, c)) for c in cols] for r in db.scalars(stmt.limit(MAX_ROWS))

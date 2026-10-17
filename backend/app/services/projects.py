@@ -54,7 +54,7 @@ FIELDS = (
     "city",
     "start_date",
     "planned_end_date",
-    "airport_icao",
+    "airport_iata",
 )
 SETTINGS_FIELDS = (
     "ltifr_base_hours",
@@ -153,13 +153,10 @@ def update(db: Session, p: Principal, project_id: uuid.UUID, body: ProjectUpdate
     ensure_open(project)
     changes = body.changes()
     new_type = changes.get("project_type", project.project_type)
-    icao = changes.get("airport_icao", project.airport_icao)
-    if new_type == ProjectType.airport and not icao:
-        raise validation_error("airport_icao", "airport_icao is required for airport projects.")
     if new_type != ProjectType.airport:
-        if changes.get("airport_icao"):
-            raise validation_error("airport_icao", "Only airport projects have an ICAO code.")
-        changes["airport_icao"] = None
+        if changes.get("airport_iata"):
+            raise validation_error("airport_iata", "Only airport projects have an IATA code.")
+        changes["airport_iata"] = None
         airside_sites = db.scalar(
             select(func.count())
             .select_from(Site)

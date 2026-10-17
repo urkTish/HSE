@@ -932,6 +932,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/{project_id}/workforce-returns/auto-fill": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Fill daily returns automatically from gate entries / deployments (D-268) */
+        post: operations["auto_fill_workforce_returns"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/projects/{project_id}/workforce-months": {
         parameters: {
             query?: never;
@@ -31180,6 +31197,21 @@ export interface components {
             /** Warn Hours Per Person Day */
             warn_hours_per_person_day: number;
             /**
+             * Auto Man Hours
+             * @description Fill daily returns from gate entries / deployments (D-268).
+             */
+            auto_man_hours: boolean;
+            /**
+             * Standard Hours Per Person Day
+             * @description Hours per person on automatic rows.
+             */
+            standard_hours_per_person_day: number;
+            /**
+             * Rest Days
+             * @description Weekdays without automatic rows.
+             */
+            rest_days: components["schemas"]["Weekday"][];
+            /**
              * Daily Return Deadline
              * Format: time
              * @description Local time on the next day.
@@ -31264,6 +31296,12 @@ export interface components {
             max_hours_per_person_day?: number | null;
             /** Warn Hours Per Person Day */
             warn_hours_per_person_day?: number | null;
+            /** Auto Man Hours */
+            auto_man_hours?: boolean | null;
+            /** Standard Hours Per Person Day */
+            standard_hours_per_person_day?: number | null;
+            /** Rest Days */
+            rest_days?: components["schemas"]["Weekday"][] | null;
             /** Daily Return Deadline */
             daily_return_deadline?: string | null;
             /** Completeness Threshold Pct */
@@ -31465,8 +31503,8 @@ export interface components {
              * @description near_miss cannot be combined with any other type → 422 NEAR_MISS_EXCLUSIVE.
              */
             incident_types: components["schemas"]["IncidentType"][];
-            /** @description One of incident_types. */
-            primary_type: components["schemas"]["IncidentType"];
+            /** @description One of incident_types; derived from incident_types when omitted (D-267). */
+            primary_type?: components["schemas"]["IncidentType"] | null;
             /**
              * Title
              * @description Do not enter person names, ID numbers or medical details here (P3).
@@ -41461,10 +41499,10 @@ export interface components {
             /** Planned End Date */
             planned_end_date?: string | null;
             /**
-             * Airport Icao
-             * @description Required iff project_type = airport; Saudi codes start with OE.
+             * Airport Iata
+             * @description Optional 3-letter IATA airport code; airport projects only (e.g. RUH).
              */
-            airport_icao?: string | null;
+            airport_iata?: string | null;
         };
         /**
          * ProjectDeleteRequest
@@ -41559,8 +41597,8 @@ export interface components {
              * @description Reason of the last status change, if any.
              */
             status_reason: string | null;
-            /** Airport Icao */
-            airport_icao: string | null;
+            /** Airport Iata */
+            airport_iata: string | null;
         };
         /** ProjectSettingsRead */
         ProjectSettingsRead: {
@@ -41681,8 +41719,8 @@ export interface components {
             start_date?: string | null;
             /** Planned End Date */
             planned_end_date?: string | null;
-            /** Airport Icao */
-            airport_icao?: string | null;
+            /** Airport Iata */
+            airport_iata?: string | null;
         };
         /** PropertyDamageInput */
         PropertyDamageInput: {
@@ -55211,6 +55249,36 @@ export interface components {
             /** User Id */
             user_id?: string | null;
         };
+        /**
+         * WorkforceAutoFillRequest
+         * @description Fill or refresh automatic rows for a date range (≤ 62 days, not in the future).
+         */
+        WorkforceAutoFillRequest: {
+            /**
+             * From Date
+             * Format: date
+             */
+            from_date: string;
+            /**
+             * To Date
+             * Format: date
+             */
+            to_date: string;
+        };
+        /** WorkforceAutoFillResult */
+        WorkforceAutoFillResult: {
+            /** Days */
+            days: number;
+            /** Created */
+            created: number;
+            /** Updated */
+            updated: number;
+            /**
+             * Skipped
+             * @description Keys that already have a manual, imported or verified row.
+             */
+            skipped: number;
+        };
         /** WorkforceImportPage */
         WorkforceImportPage: {
             /** Items */
@@ -55496,6 +55564,13 @@ export interface components {
              * @description Decimal number serialised as a string (exact, no float rounding).
              */
             training_hours: string;
+            /** Absent Count */
+            absent_count: number;
+            /**
+             * Overtime Hours
+             * @description Decimal number serialised as a string (exact, no float rounding).
+             */
+            overtime_hours: string;
             /** Remarks */
             remarks: string | null;
             source: components["schemas"]["WorkforceSource"];
@@ -55537,6 +55612,16 @@ export interface components {
             /** Training Hours */
             training_hours?: number | string | null;
             /**
+             * Absent Count
+             * @description Automatic rows: people absent (D-268).
+             */
+            absent_count?: number | null;
+            /**
+             * Overtime Hours
+             * @description Automatic rows: overtime hours on top of standard hours.
+             */
+            overtime_hours?: number | string | null;
+            /**
              * Remarks
              * @description Do not enter names, ID or medical details (P3).
              */
@@ -55546,7 +55631,7 @@ export interface components {
          * WorkforceSource
          * @enum {string}
          */
-        WorkforceSource: "manual" | "import";
+        WorkforceSource: "manual" | "import" | "auto";
         /**
          * WorkforceStatus
          * @description §4.1. KPIs use submitted, verified and locked rows; drafts are excluded.
@@ -60869,6 +60954,77 @@ export interface operations {
             };
             /** @description Not found or outside the caller's project/contractor scope. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    auto_fill_workforce_returns: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkforceAutoFillRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkforceAutoFillResult"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

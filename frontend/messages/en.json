@@ -361,7 +361,7 @@
       "planned_end_date": "Planned end date",
       "status": "Status",
       "status_reason": "Status reason",
-      "airport_icao": "Airport code (ICAO)"
+      "airport_iata": "Airport code (IATA)"
     },
     "status": {
       "planning": "Planning",
@@ -397,7 +397,7 @@
       "deleting": "Deleting…",
       "done": "Project {code} deleted."
     },
-    "icaoHint": "4 upper-case letters; Saudi airports start with OE."
+    "iataHint": "Optional. 3 letters, e.g. RUH or JED."
   },
   "settings": {
     "title": "Project settings",
@@ -1004,8 +1004,7 @@
     "shortCode": "Use 2–10 upper-case letters or digits.",
     "arabicRequired": "Must contain Arabic text.",
     "endBeforeStart": "Must be on or after the start date.",
-    "icao": "Use 4 upper-case letters (e.g. OEXX).",
-    "icaoRequired": "Required for airport projects.",
+    "iata": "Use 3 letters (e.g. RUH).",
     "crNumber": "Enter 10 digits starting with 1, 2, 4, 5 or 7.",
     "vatNumber": "Enter 15 digits starting and ending with 3.",
     "mobile": "Use international format, e.g. +966500000000.",
@@ -1582,7 +1581,8 @@
     },
     "workforceSource": {
       "manual": "Manual",
-      "import": "Import"
+      "import": "Import",
+      "auto": "Automatic"
     },
     "tierClass": {
       "direct": "Direct",
@@ -5412,7 +5412,9 @@
       "tier_class": "Direct / sub",
       "created_by": "Entered by",
       "verified_by": "Verified by",
-      "verified_at": "Verified at"
+      "verified_at": "Verified at",
+      "absent_count": "Absent (people)",
+      "overtime_hours": "Overtime (hours)"
     },
     "actions": {
       "submit": "Submit",
@@ -5440,7 +5442,15 @@
     "unlockBody": "Changes after unlocking mark this month as restated in every KPI.",
     "locked": "Month locked",
     "unlocked": "Month unlocked",
-    "restatedBadge": "Restated"
+    "restatedBadge": "Restated",
+    "autoHoursHint": "Automatic: people at work × standard hours − absence + overtime.",
+    "autoFill": "Fill automatically",
+    "autoFillTitle": "Fill daily returns automatically",
+    "autoFillBody": "People come from gate entries when the gates were used that day, otherwise from the deployment roster. Each person counts the standard hours from HSE settings. Rows you typed or imported are never overwritten. Afterwards, open a row to add absence or overtime.",
+    "autoFillFrom": "From",
+    "autoFillTo": "To",
+    "autoFillRun": "Fill",
+    "autoFillDone": "{created} added, {updated} refreshed, {skipped} left as typed"
   },
   "imports": {
     "title": "Import workforce returns",
@@ -5931,7 +5941,10 @@
       "approver_organisation": "Organisation",
       "reference": "Reference",
       "notes": "Notes",
-      "training_register_from": "Training register from"
+      "training_register_from": "Training register from",
+      "auto_man_hours": "Fill daily returns automatically",
+      "standard_hours_per_person_day": "Standard hours per person per day",
+      "rest_days": "Rest days (no automatic returns unless gates are used)"
     },
     "lower": "Lower",
     "higher": "Higher",

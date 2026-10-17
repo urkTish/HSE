@@ -650,7 +650,22 @@ def vehicle_report_reminders(db: Session, day: date | None = None) -> dict[str, 
     return {"notified": veh.report_reminders(db, d0)}
 
 
+def workforce_auto_fill(db: Session, day: date | None = None) -> dict[str, Any]:
+    """D-268: refresh automatic daily returns for yesterday and today (gate entries arrive
+    through the day)."""
+    from app.services import workforce_auto  # noqa: PLC0415
+
+    total = {"created": 0, "updated": 0, "skipped": 0}
+    for project in _projects(db):
+        d0 = day or project_today(project)
+        res = workforce_auto.fill_range(db, None, project, d0 - timedelta(days=1), d0)
+        for k in total:
+            total[k] += res[k]
+    return total
+
+
 PHASE1_JOBS = {
+    "workforce_auto_fill": workforce_auto_fill,
     "ca_alerts": ca_alerts,
     "inspections_generate": inspections_generate,
     "inspections_missed": inspections_missed,

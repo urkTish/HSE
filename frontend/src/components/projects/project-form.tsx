@@ -41,15 +41,14 @@ export function ProjectForm({ project }: { project?: Schemas["ProjectRead"] }) {
           city: z.string().trim().min(1, tv("required")).max(80, tv("maxLength", { max: 80 })),
           start_date: z.string().min(1, tv("required")),
           planned_end_date: z.string(),
-          airport_icao: z.string().trim(),
+          airport_iata: z.string().trim().toUpperCase(),
         })
         .superRefine((v, ctx) => {
           if (v.planned_end_date && v.start_date && v.planned_end_date < v.start_date) {
             ctx.addIssue({ code: "custom", path: ["planned_end_date"], message: tv("endBeforeStart") });
           }
-          if (v.project_type === "airport") {
-            if (!v.airport_icao) ctx.addIssue({ code: "custom", path: ["airport_icao"], message: tv("icaoRequired") });
-            else if (!/^[A-Z]{4}$/.test(v.airport_icao)) ctx.addIssue({ code: "custom", path: ["airport_icao"], message: tv("icao") });
+          if (v.project_type === "airport" && v.airport_iata && !/^[A-Z]{3}$/.test(v.airport_iata)) {
+            ctx.addIssue({ code: "custom", path: ["airport_iata"], message: tv("iata") });
           }
         }),
     [tv],
@@ -68,7 +67,7 @@ export function ProjectForm({ project }: { project?: Schemas["ProjectRead"] }) {
       city: project?.city ?? "",
       start_date: project?.start_date ?? "",
       planned_end_date: project?.planned_end_date ?? "",
-      airport_icao: project?.airport_icao ?? "",
+      airport_iata: project?.airport_iata ?? "",
     },
   });
   const { errors, isSubmitting } = form.formState;
@@ -85,7 +84,7 @@ export function ProjectForm({ project }: { project?: Schemas["ProjectRead"] }) {
       city: v.city,
       start_date: v.start_date,
       planned_end_date: emptyToNull(v.planned_end_date),
-      airport_icao: v.project_type === "airport" ? emptyToNull(v.airport_icao) : null,
+      airport_iata: v.project_type === "airport" ? emptyToNull(v.airport_iata) : null,
     };
     try {
       const saved = project
@@ -133,8 +132,8 @@ export function ProjectForm({ project }: { project?: Schemas["ProjectRead"] }) {
           <Input {...form.register("city")} />
         </FormField>
         {isAirport ? (
-          <FormField id="airport_icao" label={t("fields.airport_icao")} error={errors.airport_icao?.message} hint={t("icaoHint")} required>
-            <Input className="ltr uppercase" maxLength={4} {...form.register("airport_icao")} />
+          <FormField id="airport_iata" label={t("fields.airport_iata")} error={errors.airport_iata?.message} hint={t("iataHint")}>
+            <Input className="ltr uppercase" maxLength={3} {...form.register("airport_iata")} />
           </FormField>
         ) : null}
         <FormField id="start_date" label={t("fields.start_date")} error={errors.start_date?.message} required>

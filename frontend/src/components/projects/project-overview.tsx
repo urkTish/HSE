@@ -67,7 +67,7 @@ export function ProjectOverview({ projectId }: { projectId: string }) {
             <FieldItem label={t("fields.client_name_ar")}>
               <span lang="ar">{p.client_name_ar}</span>
             </FieldItem>
-            {p.is_airport ? <FieldItem label={t("fields.airport_icao")} ltr>{p.airport_icao ?? "—"}</FieldItem> : null}
+            {p.is_airport ? <FieldItem label={t("fields.airport_iata")} ltr>{p.airport_iata ?? "—"}</FieldItem> : null}
             <FieldItem label={t("fields.start_date")}>{date(p.start_date)}</FieldItem>
             <FieldItem label={t("fields.planned_end_date")}>{date(p.planned_end_date)}</FieldItem>
             {p.status_reason ? <FieldItem label={t("fields.status_reason")}>{p.status_reason}</FieldItem> : null}

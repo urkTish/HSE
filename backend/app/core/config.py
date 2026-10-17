@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     trust_proxy_headers: bool = False
 
     # Lockout (§5.1 rule 3)
-    lockout_threshold: int = 5
+    lockout_threshold: int = 10
     lockout_window_minutes: int = 15
     lockout_minutes: int = 15
 

@@ -25,6 +25,7 @@ class IncidentShift(StrEnum):
 class WorkforceSource(StrEnum):
     manual = "manual"
     import_ = "import"
+    auto = "auto"  # D-268: filled from deployments / gate entries
 
 
 class WorkforceStatus(StrEnum):

@@ -87,6 +87,9 @@ def to_read(db: Session, s: HseSettings) -> HseSettingsRead:
         include_non_contractor_cases_in_rates=s.include_non_contractor_cases_in_rates,
         max_hours_per_person_day=s.max_hours_per_person_day,
         warn_hours_per_person_day=s.warn_hours_per_person_day,
+        auto_man_hours=s.auto_man_hours,
+        standard_hours_per_person_day=s.standard_hours_per_person_day,
+        rest_days=list(s.rest_days or []),
         daily_return_deadline=s.daily_return_deadline,
         completeness_threshold_pct=s.completeness_threshold_pct,
         inspection_grace_days=s.inspection_grace_days,
@@ -182,6 +185,10 @@ def update(
     if s.warn_hours_per_person_day > s.max_hours_per_person_day:
         raise validation_error(
             "warn_hours_per_person_day", "Warning threshold cannot exceed the maximum."
+        )
+    if s.standard_hours_per_person_day > s.max_hours_per_person_day:
+        raise validation_error(
+            "standard_hours_per_person_day", "Standard hours cannot exceed the maximum."
         )
     s.updated_at = now()
     s.updated_by_user_id = p.user.id

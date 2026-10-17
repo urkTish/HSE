@@ -107,6 +107,10 @@ class HseSettings(Base):
     include_non_contractor_cases_in_rates: Mapped[bool] = mapped_column(Boolean, default=False)
     max_hours_per_person_day: Mapped[int] = mapped_column(Integer, default=16)
     warn_hours_per_person_day: Mapped[int] = mapped_column(Integer, default=12)
+    # D-268 automatic daily returns
+    auto_man_hours: Mapped[bool] = mapped_column(Boolean, default=True)
+    standard_hours_per_person_day: Mapped[int] = mapped_column(Integer, default=10)
+    rest_days: Mapped[list[str]] = mapped_column(STRS, default=lambda: ["friday"])
     daily_return_deadline: Mapped[time] = mapped_column(Time, default=time(10, 0))
     completeness_threshold_pct: Mapped[int] = mapped_column(Integer, default=95)
     inspection_grace_days: Mapped[int] = mapped_column(Integer, default=2)
@@ -231,6 +235,9 @@ class WorkforceReturn(UUIDPk, TimestampMixin, Base):
     toolbox_attendees: Mapped[int] = mapped_column(Integer, default=0)
     inductions: Mapped[int] = mapped_column(Integer, default=0)
     training_hours: Mapped[Decimal] = mapped_column(Numeric(8, 2), default=Decimal(0))
+    # D-268: entered by hand on automatic rows; man_hours = (headcount − absent) × std + overtime
+    absent_count: Mapped[int] = mapped_column(Integer, default=0)
+    overtime_hours: Mapped[Decimal] = mapped_column(Numeric(10, 2), default=Decimal(0))
     remarks: Mapped[str | None] = mapped_column(String(500))
     source: Mapped[WorkforceSource] = enum_col(WorkforceSource, default=WorkforceSource.manual)
     import_batch_id: Mapped[uuid.UUID | None] = mapped_column(

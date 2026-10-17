@@ -61,7 +61,6 @@ export function IncidentForm({ project, incident }: { project: Schemas["ProjectR
           occurred_at: z.string().min(1, tv("required")),
           shift: z.string(),
           incident_types: z.array(z.enum(INCIDENT_TYPES)).min(1, tv("required")),
-          primary_type: z.string().min(1, tv("required")),
           title: z.string().trim().min(1, tv("required")).max(150, tv("maxLength", { max: 150 })),
           description: z.string().max(4000, tv("maxLength", { max: 4000 })),
           immediate_actions: z.string().max(2000, tv("maxLength", { max: 2000 })),
@@ -96,7 +95,6 @@ export function IncidentForm({ project, incident }: { project: Schemas["ProjectR
         })
         .superRefine((v, ctx) => {
           if (v.incident_types.includes("near_miss") && v.incident_types.length > 1) ctx.addIssue({ code: "custom", path: ["incident_types"], message: t("nearMissExclusive") });
-          if (v.primary_type && !v.incident_types.includes(v.primary_type as IncType)) ctx.addIssue({ code: "custom", path: ["primary_type"], message: t("primaryMustBeSelected") });
           if (!v.work_related && !v.not_work_related_reason) ctx.addIssue({ code: "custom", path: ["not_work_related_reason"], message: tv("required") });
           if (v.actual_severity && v.potential_severity && Number(v.potential_severity) < Number(v.actual_severity))
             ctx.addIssue({ code: "custom", path: ["potential_severity"], message: t("potentialBelowActual") });
@@ -124,7 +122,6 @@ export function IncidentForm({ project, incident }: { project: Schemas["ProjectR
       occurred_at: incident ? utcToZonedInput(incident.occurred_at, tz) : "",
       shift: incident?.shift ?? "day",
       incident_types: incident?.incident_types ?? [],
-      primary_type: incident?.primary_type ?? "",
       title: incident?.title ?? "",
       description: incident?.description ?? "",
       immediate_actions: incident?.immediate_actions ?? "",
@@ -185,7 +182,6 @@ export function IncidentForm({ project, incident }: { project: Schemas["ProjectR
       occurred_at: zonedInputToUtc(v.occurred_at, tz),
       shift: (v.shift || null) as Schemas["IncidentShift"] | null,
       incident_types: v.incident_types,
-      primary_type: v.primary_type as IncType,
       title: v.title.trim(),
       description: v.description.trim() || null,
       immediate_actions: v.immediate_actions.trim() || null,
@@ -322,27 +318,12 @@ export function IncidentForm({ project, incident }: { project: Schemas["ProjectR
               className="sm:col-span-2"
               options={INCIDENT_TYPES.map((x) => ({ value: x, label: te(`incidentType.${x}`) }))}
               value={field.value}
-              onChange={(v) => {
-                field.onChange(v);
-                const p = form.getValues("primary_type");
-                if (v.length === 1) form.setValue("primary_type", v[0] ?? "");
-                else if (p && !v.includes(p as IncType)) form.setValue("primary_type", "");
-              }}
+              onChange={field.onChange}
               error={errors.incident_types?.message}
               hint={t("nearMissExclusive")}
             />
           )}
         />
-        <FormField id="primary_type" label={t("fields.primary_type")} error={errors.primary_type?.message} required>
-          <Select {...form.register("primary_type")}>
-            <option value="">{tc("select")}</option>
-            {types.map((x) => (
-              <option key={x} value={x}>
-                {te(`incidentType.${x}`)}
-              </option>
-            ))}
-          </Select>
-        </FormField>
         <FormField id="activity" label={t("fields.activity")} error={errors.activity?.message} required>
           <Select {...form.register("activity")}>
             <option value="">{tc("select")}</option>

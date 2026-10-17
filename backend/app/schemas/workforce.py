@@ -89,7 +89,35 @@ class WorkforceReturnUpdate(PatchInput):
     toolbox_attendees: int | None = Field(default=None, ge=0)
     inductions: int | None = Field(default=None, ge=0)
     training_hours: Hours8 | None = None
+    absent_count: int | None = Field(
+        default=None, ge=0, le=20_000, description="Automatic rows: people absent (D-268)."
+    )
+    overtime_hours: ManHours | None = Field(
+        default=None, description="Automatic rows: overtime hours on top of standard hours."
+    )
     remarks: str | None = Field(default=None, max_length=500, description=REMARKS_HINT)
+
+
+class WorkforceAutoFillRequest(StrictInput):
+    """Fill or refresh automatic rows for a date range (≤ 62 days, not in the future)."""
+
+    from_date: date
+    to_date: date
+
+    @model_validator(mode="after")
+    def _range(self) -> "WorkforceAutoFillRequest":
+        if self.to_date < self.from_date:
+            raise ValueError("to_date must be on or after from_date")
+        if (self.to_date - self.from_date).days > 61:
+            raise ValueError("at most 62 days at a time")
+        return self
+
+
+class WorkforceAutoFillResult(ApiModel):
+    days: int
+    created: int
+    updated: int
+    skipped: int = Field(description="Keys that already have a manual, imported or verified row.")
 
 
 class WorkforceReturnRead(Timestamps):
@@ -108,6 +136,8 @@ class WorkforceReturnRead(Timestamps):
     toolbox_attendees: int
     inductions: int
     training_hours: Hours8
+    absent_count: int
+    overtime_hours: ManHours
     remarks: str | None
     source: WorkforceSource
     import_batch_id: uuid.UUID | None

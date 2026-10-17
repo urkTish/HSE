@@ -30,12 +30,13 @@ test.describe.serial("Projects, sites, zones and settings", () => {
     await page.locator("#city").fill("Jeddah");
     await page.locator("#start_date").fill("2026-01-01");
     await page.locator("#planned_end_date").fill("2025-01-01");
+    await page.locator("#airport_iata").fill("R1");
     await page.getByTestId("save").click();
     await expect(page.locator("#name_ar-error")).toHaveText(en.validation.arabicRequired);
-    await expect(page.locator("#airport_icao-error")).toHaveText(en.validation.icaoRequired);
+    await expect(page.locator("#airport_iata-error")).toHaveText(en.validation.iata);
     await expect(page.locator("#planned_end_date-error")).toHaveText(en.validation.endBeforeStart);
     await page.locator("#name_ar").fill("مطار الاختبار");
-    await page.locator("#airport_icao").fill("OEYY");
+    await page.locator("#airport_iata").fill("JED");
     await page.locator("#planned_end_date").fill("2027-12-31");
     await page.getByTestId("save").click();
     await expect(page.getByTestId("project-title")).toHaveText(`E2E Airport ${code}`);

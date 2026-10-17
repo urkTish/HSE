@@ -137,7 +137,7 @@ export function IncidentDetail({ id }: { id: string }) {
               <ApiWarnings warnings={r.warnings} />
               <FieldList>
                 <FieldItem label={t("fields.incident_types")}>
-                  {r.incident_types.map((x) => te(`incidentType.${x}`)).join(" · ")} ({t("fields.primary_type")}: {te(`incidentType.${r.primary_type}`)})
+                  {r.incident_types.map((x) => te(`incidentType.${x}`)).join(" · ")}
                 </FieldItem>
                 <FieldItem label={t("fields.occurred_at")}>{dateTime(r.occurred_at)}</FieldItem>
                 <FieldItem label={t("fields.reported_at")}>

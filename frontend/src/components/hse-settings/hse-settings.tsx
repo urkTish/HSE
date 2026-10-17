@@ -19,7 +19,7 @@ import { useMeData } from "@/components/shell/me-context";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
 import { hk, useHseSettings } from "@/lib/api/hse";
 import { useKpiCatalogue } from "@/lib/api/kpi";
-import { CA_PRIORITIES } from "@/lib/enums";
+import { CA_PRIORITIES, WEEKDAYS } from "@/lib/enums";
 import { useLocalizedName } from "@/lib/i18n-helpers";
 import { canWrite } from "@/lib/permissions";
 import { todayInZone } from "@/lib/datetime";
@@ -29,6 +29,7 @@ type Settings = Schemas["HseSettingsRead"];
 type NumKey =
   | "max_hours_per_person_day"
   | "warn_hours_per_person_day"
+  | "standard_hours_per_person_day"
   | "completeness_threshold_pct"
   | "inspection_grace_days"
   | "ca_max_extensions"
@@ -42,6 +43,7 @@ type NumKey =
 const RANGES: Record<NumKey, [number, number]> = {
   max_hours_per_person_day: [12, 24],
   warn_hours_per_person_day: [8, 16],
+  standard_hours_per_person_day: [1, 16],
   completeness_threshold_pct: [50, 100],
   inspection_grace_days: [0, 7],
   ca_max_extensions: [0, 5],
@@ -81,6 +83,7 @@ export function HseSettingsPage({ project }: { project: Schemas["ProjectRead"] }
       if (!Number.isInteger(v) || v < min || v > max) e[k] = tv("range", { min, max });
     }
     if (d.warn_hours_per_person_day > d.max_hours_per_person_day) e.warn_hours_per_person_day = tv("invalid");
+    if (d.standard_hours_per_person_day > d.max_hours_per_person_day) e.standard_hours_per_person_day = tv("invalid");
     if (!MMDD.test(d.heat_season.start)) e.heat_start = tv("invalid");
     if (!MMDD.test(d.heat_season.end)) e.heat_end = tv("invalid");
     for (const p of CA_PRIORITIES) {
@@ -104,6 +107,9 @@ export function HseSettingsPage({ project }: { project: Schemas["ProjectRead"] }
             include_non_contractor_cases_in_rates: d.include_non_contractor_cases_in_rates,
             max_hours_per_person_day: d.max_hours_per_person_day,
             warn_hours_per_person_day: d.warn_hours_per_person_day,
+            auto_man_hours: d.auto_man_hours,
+            standard_hours_per_person_day: d.standard_hours_per_person_day,
+            rest_days: d.rest_days,
             daily_return_deadline: d.daily_return_deadline,
             completeness_threshold_pct: d.completeness_threshold_pct,
             inspection_grace_days: d.inspection_grace_days,
@@ -137,7 +143,7 @@ export function HseSettingsPage({ project }: { project: Schemas["ProjectRead"] }
       <Input inputMode="numeric" className="ltr" disabled={!editable} value={String(d[k])} onChange={(e) => set(k, Number(e.target.value.replace(/\D/g, "") || 0))} />
     </FormField>
   );
-  const bool = (k: "include_commuting_in_rates" | "include_non_contractor_cases_in_rates") => (
+  const bool = (k: "include_commuting_in_rates" | "include_non_contractor_cases_in_rates" | "auto_man_hours") => (
     <label className="flex min-h-touch items-center gap-3 text-sm">
       <Checkbox disabled={!editable} checked={d[k]} onChange={(e) => set(k, e.target.checked)} />
       {t(`fields.${k}`)}
@@ -170,6 +176,21 @@ export function HseSettingsPage({ project }: { project: Schemas["ProjectRead"] }
       <FormSection title={t("workforce")}>
         {num("max_hours_per_person_day")}
         {num("warn_hours_per_person_day")}
+        {bool("auto_man_hours")}
+        {num("standard_hours_per_person_day")}
+        <fieldset className="flex flex-wrap gap-x-4 gap-y-2 sm:col-span-2" data-testid="hs-rest-days">
+          <legend className="mb-1 text-sm font-medium">{t("fields.rest_days")}</legend>
+          {WEEKDAYS.map((w) => (
+            <label key={w} className="flex min-h-touch items-center gap-2 text-sm">
+              <Checkbox
+                disabled={!editable}
+                checked={d.rest_days.includes(w)}
+                onChange={(e) => set("rest_days", e.target.checked ? [...d.rest_days, w] : d.rest_days.filter((x) => x !== w))}
+              />
+              {te(`weekday.${w}`)}
+            </label>
+          ))}
+        </fieldset>
         <FormField id="hs-deadline" label={t("fields.daily_return_deadline")}>
           <Input type="time" disabled={!editable} value={d.daily_return_deadline.slice(0, 5)} onChange={(e) => set("daily_return_deadline", e.target.value)} />
         </FormField>

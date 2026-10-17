@@ -4279,6 +4279,67 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/workforce-returns/auto-fill:
+    post:
+      tags:
+      - workforce
+      summary: Fill daily returns automatically from gate entries / deployments (D-268)
+      operationId: auto_fill_workforce_returns
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkforceAutoFillRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkforceAutoFillResult'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/v1/projects/{project_id}/workforce-months:
     get:
       tags:
@@ -104696,6 +104757,20 @@ components:
         warn_hours_per_person_day:
           type: integer
           title: Warn Hours Per Person Day
+        auto_man_hours:
+          type: boolean
+          title: Auto Man Hours
+          description: Fill daily returns from gate entries / deployments (D-268).
+        standard_hours_per_person_day:
+          type: integer
+          title: Standard Hours Per Person Day
+          description: Hours per person on automatic rows.
+        rest_days:
+          items:
+            $ref: '#/components/schemas/Weekday'
+          type: array
+          title: Rest Days
+          description: Weekdays without automatic rows.
         daily_return_deadline:
           type: string
           format: time
@@ -104794,6 +104869,9 @@ components:
       - include_non_contractor_cases_in_rates
       - max_hours_per_person_day
       - warn_hours_per_person_day
+      - auto_man_hours
+      - standard_hours_per_person_day
+      - rest_days
       - daily_return_deadline
       - completeness_threshold_pct
       - inspection_grace_days
@@ -104852,6 +104930,26 @@ components:
             minimum: 8.0
           - type: 'null'
           title: Warn Hours Per Person Day
+        auto_man_hours:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Auto Man Hours
+        standard_hours_per_person_day:
+          anyOf:
+          - type: integer
+            maximum: 16.0
+            minimum: 1.0
+          - type: 'null'
+          title: Standard Hours Per Person Day
+        rest_days:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/Weekday'
+            type: array
+            maxItems: 6
+          - type: 'null'
+          title: Rest Days
         daily_return_deadline:
           anyOf:
           - type: string
@@ -105246,8 +105344,10 @@ components:
           title: Incident Types
           description: near_miss cannot be combined with any other type → 422 NEAR_MISS_EXCLUSIVE.
         primary_type:
-          $ref: '#/components/schemas/IncidentType'
-          description: One of incident_types.
+          anyOf:
+          - $ref: '#/components/schemas/IncidentType'
+          - type: 'null'
+          description: One of incident_types; derived from incident_types when omitted (D-267).
         title:
           type: string
           maxLength: 150
@@ -105409,7 +105509,6 @@ components:
       - site_id
       - occurred_at
       - incident_types
-      - primary_type
       - title
       title: IncidentCreate
       description: 'Creates a Draft. Fields marked ''required at Draft → Reported'' may be left empty
@@ -124177,13 +124276,13 @@ components:
             format: date
           - type: 'null'
           title: Planned End Date
-        airport_icao:
+        airport_iata:
           anyOf:
           - type: string
-            pattern: ^[A-Z]{4}$
+            pattern: ^[A-Z]{3}$
           - type: 'null'
-          title: Airport Icao
-          description: Required iff project_type = airport; Saudi codes start with OE.
+          title: Airport Iata
+          description: Optional 3-letter IATA airport code; airport projects only (e.g. RUH).
       additionalProperties: false
       type: object
       required:
@@ -124312,11 +124411,11 @@ components:
           - type: 'null'
           title: Status Reason
           description: Reason of the last status change, if any.
-        airport_icao:
+        airport_iata:
           anyOf:
           - type: string
           - type: 'null'
-          title: Airport Icao
+          title: Airport Iata
       type: object
       required:
       - created_at
@@ -124334,7 +124433,7 @@ components:
       - planned_end_date
       - status
       - status_reason
-      - airport_icao
+      - airport_iata
       title: ProjectRead
     ProjectSettingsRead:
       properties:
@@ -124581,12 +124680,12 @@ components:
             format: date
           - type: 'null'
           title: Planned End Date
-        airport_icao:
+        airport_iata:
           anyOf:
           - type: string
-            pattern: ^[A-Z]{4}$
+            pattern: ^[A-Z]{3}$
           - type: 'null'
-          title: Airport Icao
+          title: Airport Iata
       additionalProperties: false
       type: object
       title: ProjectUpdate
@@ -149822,6 +149921,45 @@ components:
       description: 'Changing id_type/id_number needs capability 47; the old value is kept encrypted in
 
         history and audits show masked values only (WK-9).'
+    WorkforceAutoFillRequest:
+      properties:
+        from_date:
+          type: string
+          format: date
+          title: From Date
+        to_date:
+          type: string
+          format: date
+          title: To Date
+      additionalProperties: false
+      type: object
+      required:
+      - from_date
+      - to_date
+      title: WorkforceAutoFillRequest
+      description: Fill or refresh automatic rows for a date range (≤ 62 days, not in the future).
+    WorkforceAutoFillResult:
+      properties:
+        days:
+          type: integer
+          title: Days
+        created:
+          type: integer
+          title: Created
+        updated:
+          type: integer
+          title: Updated
+        skipped:
+          type: integer
+          title: Skipped
+          description: Keys that already have a manual, imported or verified row.
+      type: object
+      required:
+      - days
+      - created
+      - updated
+      - skipped
+      title: WorkforceAutoFillResult
     WorkforceImportPage:
       properties:
         items:
@@ -150219,6 +150357,14 @@ components:
           pattern: ^-?\d+(\.\d+)?$
           title: Training Hours
           description: Decimal number serialised as a string (exact, no float rounding).
+        absent_count:
+          type: integer
+          title: Absent Count
+        overtime_hours:
+          type: string
+          pattern: ^-?\d+(\.\d+)?$
+          title: Overtime Hours
+          description: Decimal number serialised as a string (exact, no float rounding).
         remarks:
           anyOf:
           - type: string
@@ -150273,6 +150419,8 @@ components:
       - toolbox_attendees
       - inductions
       - training_hours
+      - absent_count
+      - overtime_hours
       - remarks
       - source
       - import_batch_id
@@ -150339,6 +150487,23 @@ components:
             pattern: ^(?!^[-+.]*$)[+-]?0*(?:\d{0,6}|(?=[\d.]{1,9}0*$)\d{0,6}\.\d{0,2}0*$)
           - type: 'null'
           title: Training Hours
+        absent_count:
+          anyOf:
+          - type: integer
+            maximum: 20000.0
+            minimum: 0.0
+          - type: 'null'
+          title: Absent Count
+          description: 'Automatic rows: people absent (D-268).'
+        overtime_hours:
+          anyOf:
+          - type: number
+            minimum: 0.0
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*(?:\d{0,8}|(?=[\d.]{1,11}0*$)\d{0,8}\.\d{0,2}0*$)
+          - type: 'null'
+          title: Overtime Hours
+          description: 'Automatic rows: overtime hours on top of standard hours.'
         remarks:
           anyOf:
           - type: string
@@ -150359,6 +150524,7 @@ components:
       enum:
       - manual
       - import
+      - auto
       title: WorkforceSource
     WorkforceStatus:
       type: string
