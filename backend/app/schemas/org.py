@@ -116,6 +116,9 @@ class ZoneCreate(StrictInput):
     zone_type: ZoneType = Field(
         description="airside/landside only on airport projects and consistent with site_side."
     )
+    category: str | None = Field(
+        default=None, max_length=60, description="D-274: a code of the zone_category list."
+    )
     airside: AirsideAttributesInput | None = Field(
         default=None, description="Required iff zone_type = airside; must be null otherwise."
     )
@@ -141,6 +144,7 @@ class ZoneUpdate(PatchInput):
     name_en: str | None = Field(default=None, min_length=1, max_length=150)
     name_ar: str | None = Field(default=None, min_length=1, max_length=150)
     zone_type: ZoneType | None = None
+    category: str | None = Field(default=None, max_length=60)
     airside: AirsideAttributesInput | None = None
 
     _ar = field_validator("name_ar")(_check_ar)
@@ -154,6 +158,7 @@ class ZoneRead(Timestamps):
     name_en: str
     name_ar: str
     zone_type: ZoneType
+    category: str | None = None
     status: ZoneStatus
     status_reason: str | None
     airside: AirsideAttributes | None = Field(description="Present iff zone_type = airside.")

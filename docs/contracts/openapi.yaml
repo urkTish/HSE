@@ -3760,6 +3760,107 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags:
+      - hse settings
+      summary: Remove an unused item from an extensible list (zone categories, D-274)
+      operationId: remove_reference_item
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: list_name
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/ReferenceList'
+      - name: code
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Code
+      responses:
+        '204':
+          description: Successful Response
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/reference-lists/{list_name}:
+    post:
+      tags:
+      - hse settings
+      summary: Add an item to an extensible list (zone categories, D-274)
+      operationId: add_reference_item
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: list_name
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/ReferenceList'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReferenceItemCreate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferenceItemRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/v1/projects/{project_id}/workforce-returns:
     get:
       tags:
@@ -128139,6 +128240,24 @@ components:
       - recorded_by
       - evidence_attachment_ids
       title: RectificationRead
+    ReferenceItemCreate:
+      properties:
+        label_en:
+          type: string
+          maxLength: 120
+          minLength: 1
+          title: Label En
+        label_ar:
+          type: string
+          maxLength: 120
+          minLength: 1
+          title: Label Ar
+      additionalProperties: false
+      type: object
+      required:
+      - label_en
+      - label_ar
+      title: ReferenceItemCreate
     ReferenceItemRead:
       properties:
         code:
@@ -128268,6 +128387,7 @@ components:
     ReferenceList:
       type: string
       enum:
+      - zone_category
       - severity
       - activity
       - trade
@@ -151810,6 +151930,13 @@ components:
         zone_type:
           $ref: '#/components/schemas/ZoneType'
           description: airside/landside only on airport projects and consistent with site_side.
+        category:
+          anyOf:
+          - type: string
+            maxLength: 60
+          - type: 'null'
+          title: Category
+          description: 'D-274: a code of the zone_category list.'
         airside:
           anyOf:
           - $ref: '#/components/schemas/AirsideAttributesInput'
@@ -152185,6 +152312,11 @@ components:
           title: Name Ar
         zone_type:
           $ref: '#/components/schemas/ZoneType'
+        category:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Category
         status:
           $ref: '#/components/schemas/ZoneStatus'
         status_reason:
@@ -152295,6 +152427,12 @@ components:
           anyOf:
           - $ref: '#/components/schemas/ZoneType'
           - type: 'null'
+        category:
+          anyOf:
+          - type: string
+            maxLength: 60
+          - type: 'null'
+          title: Category
         airside:
           anyOf:
           - $ref: '#/components/schemas/AirsideAttributesInput'

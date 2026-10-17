@@ -486,7 +486,8 @@
       "zone_type": "نوع المنطقة",
       "status": "الحالة",
       "status_reason": "سبب الحالة",
-      "airside_area": "نوع المنطقة الجوية"
+      "airside_area": "نوع المنطقة الجوية",
+      "category": "فئة المنطقة"
     },
     "type": {
       "airside": "جوي",
@@ -527,7 +528,8 @@
       "other_airside": "منطقة جوية أخرى"
     },
     "typeHintNonAirport": "تستخدم المشاريع غير المطارات نوع المنطقة «أخرى».",
-    "archivedNote": "لا يمكن إضافة سجلات جديدة إلى المناطق المؤرشفة."
+    "archivedNote": "لا يمكن إضافة سجلات جديدة إلى المناطق المؤرشفة.",
+    "categoryHint": "يمكنك إضافة الفئات أو إعادة تسميتها من القوائم المرجعية ← فئات المناطق."
   },
   "contractor": {
     "title": "المقاولون",
@@ -6014,8 +6016,10 @@
       "training_course_category": "فئات الدورات",
       "training_accreditation_body": "جهات الاعتماد والمنح",
       "training_matrix_role": "أدوار المصفوفة",
-      "training_session_void_reason": "أسباب إلغاء الجلسات"
-    }
+      "training_session_void_reason": "أسباب إلغاء الجلسات",
+      "zone_category": "فئات المناطق"
+    },
+    "addItem": "إضافة عنصر"
   },
   "aiLogs": {
     "title": "سجل المساعد الذكي",

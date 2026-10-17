@@ -1,5 +1,5 @@
 "use client";
-import { Check, Pencil, X } from "lucide-react";
+import { Check, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
@@ -47,6 +47,42 @@ export function ReferenceListsPage() {
   const list = lists.find((l) => l.name === current);
   const [editing, setEditing] = useState<{ code: string; en: string; ar: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  // D-274: zone categories can be added and removed, not only relabelled.
+  const extensible = current === "zone_category";
+  const [adding, setAdding] = useState<{ en: string; ar: string } | null>(null);
+
+  async function add() {
+    if (!adding) return;
+    if (!adding.en.trim() || !ARABIC_SCRIPT.test(adding.ar)) {
+      toast.error(tv("arabicRequired"));
+      return;
+    }
+    setBusy(true);
+    try {
+      await unwrap(api.POST("/api/v1/reference-lists/{list_name}", { params: { path: { list_name: current } }, body: { label_en: adding.en.trim(), label_ar: adding.ar.trim() } }));
+      await qc.invalidateQueries({ queryKey: hk.refLists });
+      toast.success(tc("created"));
+      setAdding(null);
+    } catch (e) {
+      toast.error(msg(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function remove(code: string) {
+    if (!window.confirm(tc("confirmDelete"))) return;
+    setBusy(true);
+    try {
+      await unwrap(api.DELETE("/api/v1/reference-lists/{list_name}/{code}", { params: { path: { list_name: current, code } } }));
+      await qc.invalidateQueries({ queryKey: hk.refLists });
+      toast.success(tc("deleted"));
+    } catch (e) {
+      toast.error(msg(e));
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function save() {
     if (!editing) return;
@@ -86,7 +122,31 @@ export function ReferenceListsPage() {
             ))}
           </Select>
         </div>
+        {editable && extensible ? (
+          <Button size="sm" onClick={() => setAdding({ en: "", ar: "" })} data-testid="ref-add">
+            <Plus aria-hidden />
+            {t("addItem")}
+          </Button>
+        ) : null}
       </ListToolbar>
+      {adding ? (
+        <div className="mb-4 flex flex-wrap items-end gap-2" data-testid="ref-add-form">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="ref-add-en">{t("labelEn")}</Label>
+            <Input id="ref-add-en" value={adding.en} onChange={(e) => setAdding({ ...adding, en: e.target.value })} maxLength={120} />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="ref-add-ar">{t("labelAr")}</Label>
+            <Input id="ref-add-ar" dir="rtl" value={adding.ar} onChange={(e) => setAdding({ ...adding, ar: e.target.value })} maxLength={120} />
+          </div>
+          <Button size="sm" onClick={() => void add()} disabled={busy}>
+            {tc("save")}
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setAdding(null)}>
+            {tc("cancel")}
+          </Button>
+        </div>
+      ) : null}
       {q.isLoading ? (
         <LoadingState />
       ) : q.isError ? (
@@ -135,9 +195,16 @@ export function ReferenceListsPage() {
                           </Button>
                         </span>
                       ) : (
-                        <Button size="sm" variant="ghost" onClick={() => setEditing({ code: i.code, en: i.label_en, ar: i.label_ar })} aria-label={`${tc("edit")} ${i.code}`}>
-                          <Pencil aria-hidden />
-                        </Button>
+                        <span className="inline-flex gap-1">
+                          <Button size="sm" variant="ghost" onClick={() => setEditing({ code: i.code, en: i.label_en, ar: i.label_ar })} aria-label={`${tc("edit")} ${i.code}`}>
+                            <Pencil aria-hidden />
+                          </Button>
+                          {extensible ? (
+                            <Button size="sm" variant="ghost" onClick={() => void remove(i.code)} disabled={busy} aria-label={`${tc("delete")} ${i.code}`}>
+                              <Trash2 aria-hidden />
+                            </Button>
+                          ) : null}
+                        </span>
                       )}
                     </TD>
                   ) : null}

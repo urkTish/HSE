@@ -158,6 +158,8 @@ class ReferenceItem(Base):
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
     points: Mapped[int | None] = mapped_column(Integer)  # Phase 2 OFF list
     immediate_suspension: Mapped[bool] = mapped_column(Boolean, default=False)
+    # D-274: a removed item of an extensible list stays as a tombstone so seeding skips it
+    retired: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class DashboardPreference(Base):

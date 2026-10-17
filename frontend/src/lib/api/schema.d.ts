@@ -851,11 +851,29 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete?: never;
+        /** Remove an unused item from an extensible list (zone categories, D-274) */
+        delete: operations["remove_reference_item"];
         options?: never;
         head?: never;
         /** Edit a reference-list label (HSE Manager; codes immutable) */
         patch: operations["update_reference_item"];
+        trace?: never;
+    };
+    "/api/v1/reference-lists/{list_name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add an item to an extensible list (zone categories, D-274) */
+        post: operations["add_reference_item"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/projects/{project_id}/workforce-returns": {
@@ -43598,6 +43616,13 @@ export interface components {
             /** Evidence Attachment Ids */
             evidence_attachment_ids: string[];
         };
+        /** ReferenceItemCreate */
+        ReferenceItemCreate: {
+            /** Label En */
+            label_en: string;
+            /** Label Ar */
+            label_ar: string;
+        };
         /** ReferenceItemRead */
         ReferenceItemRead: {
             /** Code */
@@ -43675,7 +43700,7 @@ export interface components {
          * @description §3.11 reference lists exposed at GET /reference-lists.
          * @enum {string}
          */
-        ReferenceList: "severity" | "activity" | "trade" | "body_part" | "nature" | "mechanism" | "agency" | "treatment" | "observation_category" | "inspection_type" | "root_cause" | "airside_offence" | "vehicle_category" | "credential_reason" | "ptw_crew_role" | "ptw_hazard" | "ptw_status_reason" | "ptw_equipment_category" | "ptw_pre_issue_checklist" | "ptw_closure_checklist" | "ptw_audit_item" | "ptw_blocker" | "cert_limitation" | "cert_personnel_limitation" | "cert_arrival_checklist" | "cert_scaffold_checklist" | "cert_service_status_reason" | "cert_ban_reason" | "cert_equipment_blacklist_reason" | "training_course_category" | "training_accreditation_body" | "training_matrix_role" | "training_session_void_reason";
+        ReferenceList: "zone_category" | "severity" | "activity" | "trade" | "body_part" | "nature" | "mechanism" | "agency" | "treatment" | "observation_category" | "inspection_type" | "root_cause" | "airside_offence" | "vehicle_category" | "credential_reason" | "ptw_crew_role" | "ptw_hazard" | "ptw_status_reason" | "ptw_equipment_category" | "ptw_pre_issue_checklist" | "ptw_closure_checklist" | "ptw_audit_item" | "ptw_blocker" | "cert_limitation" | "cert_personnel_limitation" | "cert_arrival_checklist" | "cert_scaffold_checklist" | "cert_service_status_reason" | "cert_ban_reason" | "cert_equipment_blacklist_reason" | "training_course_category" | "training_accreditation_body" | "training_matrix_role" | "training_session_void_reason";
         /** ReferenceListRead */
         ReferenceListRead: {
             name: components["schemas"]["ReferenceList"];
@@ -56294,6 +56319,11 @@ export interface components {
             name_ar: string;
             /** @description airside/landside only on airport projects and consistent with site_side. */
             zone_type: components["schemas"]["ZoneType"];
+            /**
+             * Category
+             * @description D-274: a code of the zone_category list.
+             */
+            category?: string | null;
             /** @description Required iff zone_type = airside; must be null otherwise. */
             airside?: components["schemas"]["AirsideAttributesInput"] | null;
         };
@@ -56506,6 +56536,8 @@ export interface components {
             /** Name Ar */
             name_ar: string;
             zone_type: components["schemas"]["ZoneType"];
+            /** Category */
+            category?: string | null;
             status: components["schemas"]["ZoneStatus"];
             /** Status Reason */
             status_reason: string | null;
@@ -56561,6 +56593,8 @@ export interface components {
             /** Name Ar */
             name_ar?: string | null;
             zone_type?: components["schemas"]["ZoneType"] | null;
+            /** Category */
+            category?: string | null;
             airside?: components["schemas"]["AirsideAttributesInput"] | null;
         };
         /**
@@ -60706,6 +60740,72 @@ export interface operations {
             };
         };
     };
+    remove_reference_item: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                list_name: components["schemas"]["ReferenceList"];
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     update_reference_item: {
         parameters: {
             query?: never;
@@ -60751,6 +60851,59 @@ export interface operations {
             };
             /** @description Not found or outside the caller's project/contractor scope. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    add_reference_item: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                list_name: components["schemas"]["ReferenceList"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReferenceItemCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReferenceItemRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

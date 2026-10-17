@@ -127,6 +127,7 @@ class Zone(UUIDPk, TimestampMixin, Base):
     name_en: Mapped[str] = mapped_column(String(150))
     name_ar: Mapped[str] = mapped_column(String(150))
     zone_type: Mapped[ZoneType] = enum_col(ZoneType)
+    category: Mapped[str | None] = mapped_column(String(60))  # D-274 zone_category code
     status: Mapped[ZoneStatus] = enum_col(ZoneStatus, default=ZoneStatus.active)
     status_reason: Mapped[str | None] = mapped_column(String(500))
     search_text: Mapped[str] = mapped_column(Text, default="")

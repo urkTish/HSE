@@ -1537,6 +1537,8 @@ class MonthlyReportSection(StrEnum):
 class ReferenceList(StrEnum):
     """§3.11 reference lists exposed at GET /reference-lists."""
 
+    # D-274: zone categories the administrator adds, renames and removes (EXTENSIBLE_LISTS)
+    zone_category = "zone_category"
     severity = "severity"
     activity = "activity"
     trade = "trade"

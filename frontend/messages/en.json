@@ -486,7 +486,8 @@
       "zone_type": "Zone type",
       "status": "Status",
       "status_reason": "Status reason",
-      "airside_area": "Airside area type"
+      "airside_area": "Airside area type",
+      "category": "Zone category"
     },
     "type": {
       "airside": "Airside",
@@ -527,7 +528,8 @@
       "other_airside": "Other airside"
     },
     "typeHintNonAirport": "Non-airport projects use zone type “Other”.",
-    "archivedNote": "Archived zones cannot receive new records."
+    "archivedNote": "Archived zones cannot receive new records.",
+    "categoryHint": "You can add or rename categories under Reference lists → Zone categories."
   },
   "contractor": {
     "title": "Contractors",
@@ -6014,8 +6016,10 @@
       "training_course_category": "Course categories",
       "training_accreditation_body": "Accreditation / awarding bodies",
       "training_matrix_role": "Matrix roles",
-      "training_session_void_reason": "Session void reasons"
-    }
+      "training_session_void_reason": "Session void reasons",
+      "zone_category": "Zone categories"
+    },
+    "addItem": "Add item"
   },
   "aiLogs": {
     "title": "AI assistant log",

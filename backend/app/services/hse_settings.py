@@ -293,11 +293,17 @@ def seed_reference(db: Session) -> None:
     db.flush()
 
 
+EXTENSIBLE_LISTS = frozenset({ReferenceList.zone_category})
+
+
 def labels(db: Session, lst: ReferenceList) -> dict[str, tuple[str, str]]:
     """Current labels (edited ones win over the seeded defaults)."""
     out = {code: (en, ar) for code, en, ar, *_ in REFERENCE.get(lst, [])}
     for r in db.scalars(select(ReferenceItem).where(ReferenceItem.list_name == lst.value)):
-        out[r.code] = (r.label_en, r.label_ar)
+        if r.retired:
+            out.pop(r.code, None)
+        else:
+            out[r.code] = (r.label_en, r.label_ar)
     return out
 
 
@@ -328,7 +334,8 @@ def list_reference(db: Session) -> ReferenceListsRead:
         rows = db.scalars(select(ReferenceItem)).all()
     by: dict[str, list[ReferenceItem]] = {}
     for r in rows:
-        by.setdefault(r.list_name, []).append(r)
+        if not r.retired:
+            by.setdefault(r.list_name, []).append(r)
     return ReferenceListsRead(
         lists=[
             ReferenceListRead(
@@ -374,3 +381,88 @@ def update_reference(
         details={"list": lst.value, "code": code},
     )
     return _item_read(r)
+
+
+# ---- D-274: extensible lists (zone categories) -------------------------------------------------
+
+
+def _require_extensible(p: Principal, lst: ReferenceList) -> None:
+    if not p.is_manager:
+        p.require(None, Capability.hse_settings_edit)
+    if lst not in EXTENSIBLE_LISTS:
+        raise validation_error(
+            "list_name", "Items can only be added to or removed from zone categories."
+        )
+
+
+def _slug(text: str) -> str:
+    out = "".join(ch.lower() if ch.isalnum() else "_" for ch in text.strip())
+    return "_".join(x for x in out.split("_") if x)[:60] or "item"
+
+
+def add_reference(
+    db: Session, p: Principal, lst: ReferenceList, label_en: str, label_ar: str
+) -> ReferenceItemRead:
+    _require_extensible(p, lst)
+    seed_reference(db)
+    base = _slug(label_en)
+    code, n = base, 2
+    while (r := db.get(ReferenceItem, (lst.value, code))) is not None and not r.retired:
+        code, n = f"{base[:56]}_{n}", n + 1
+    order = max(
+        (
+            x.sort_order
+            for x in db.scalars(select(ReferenceItem).where(ReferenceItem.list_name == lst.value))
+        ),
+        default=0,
+    )
+    if r is not None:  # re-use a retired code
+        r.retired, r.label_en, r.label_ar, r.sort_order = False, label_en, label_ar, order + 1
+    else:
+        r = ReferenceItem(
+            list_name=lst.value,
+            code=code,
+            label_en=label_en,
+            label_ar=label_ar,
+            sort_order=order + 1,
+        )
+        db.add(r)
+    db.flush()
+    audit.record(
+        db,
+        AuditAction.create,
+        p.actor(None),
+        entity_type=EntityType.reference_list_item,
+        entity_id=None,
+        after={"label_en": label_en, "label_ar": label_ar},
+        details={"list": lst.value, "code": code},
+    )
+    return _item_read(r)
+
+
+def remove_reference(db: Session, p: Principal, lst: ReferenceList, code: str) -> None:
+    from app.models import Zone  # noqa: PLC0415
+
+    _require_extensible(p, lst)
+    seed_reference(db)
+    r = db.get(ReferenceItem, (lst.value, code))
+    if r is None or r.retired:
+        raise not_found("Reference item")
+    if db.scalar(select(Zone.id).where(Zone.category == code).limit(1)):
+        raise ApiError(
+            409,
+            ErrorCode.TRANSITION_CONDITION_NOT_MET,
+            "Zones still use this category. Change them first.",
+            "ما زالت مناطق تستخدم هذه الفئة. غيّرها أولًا.",
+        )
+    r.retired = True
+    db.flush()
+    audit.record(
+        db,
+        AuditAction.archive,
+        p.actor(None),
+        entity_type=EntityType.reference_list_item,
+        entity_id=None,
+        before={"label_en": r.label_en, "label_ar": r.label_ar},
+        details={"list": lst.value, "code": code},
+    )
