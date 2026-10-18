@@ -8,7 +8,14 @@ from sqlalchemy.orm import Session
 from app.core.enums import AuditAction
 from app.models import AuditEntry, Notification, PeriodLock, Project
 from tests.conftest import Api, Ids
-from tests.hse_helpers import API, add_case, create_incident, reported_incident, transition
+from tests.hse_helpers import (
+    API,
+    add_case,
+    add_photo,
+    create_incident,
+    reported_incident,
+    transition,
+)
 
 
 def test_AC13_first_aid_then_sutures_is_mtc(api: Api, ids: Ids) -> None:
@@ -268,6 +275,7 @@ def test_investigation_flow_l2(api: Api, ids: Ids) -> None:
     inv = n.get(f"{API}/incidents/{inc['id']}/investigation").json()
     assert inv["due_date"] == "2026-09-15"
     assert "root_causes" in inv["missing_for_submit"]
+    add_photo(n, inc["id"])
     omar = api.as_("omar.siddiqui")
     res = omar.patch(
         f"{API}/incidents/{inc['id']}/investigation",
@@ -286,10 +294,12 @@ def test_investigation_flow_l2(api: Api, ids: Ids) -> None:
     assert res.status_code == 200, res.text
     assert res.json()["missing_for_submit"] == []
     assert transition(omar, inc["id"], "pending_review").status_code == 200
-    # approver != lead; cases must be confirmed
-    assert transition(n, inc["id"], "closed").json()["detail"]["code"] == "CASES_NOT_CONFIRMED"
+    # D-269: only the HSE Manager approves; cases must be confirmed
+    assert transition(n, inc["id"], "closed").status_code == 403
+    mgr = api.as_("faisal.harbi")
+    assert transition(mgr, inc["id"], "closed").json()["detail"]["code"] == "CASES_NOT_CONFIRMED"
     n.post(f"{API}/injury-cases/{case_id}/classification", json={"case_category": "MTC"})
-    res = transition(n, inc["id"], "closed")
+    res = transition(mgr, inc["id"], "closed")
     assert res.status_code == 200, res.text
     assert res.json()["status"] == "closed"
 

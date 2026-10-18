@@ -36,9 +36,9 @@ export function HseTeamPage() {
   }
 
   const branch = (parent: string | null, depth: number) => (
-    <ul className={depth ? "ms-4 border-s ps-4" : ""} role={depth ? "group" : "tree"} aria-label={depth ? undefined : t("title")}>
+    <ul className={depth ? "ms-4 border-s ps-4" : ""} aria-label={depth ? undefined : t("title")}>
       {(children.get(parent) ?? []).map((m) => (
-        <li key={m.id} role="treeitem" aria-expanded={children.has(m.id) || undefined} className="py-1">
+        <li key={m.id} className="py-1">
           <Row member={m} canEdit={me.is_hse_manager} onEdit={() => setEditing(m)} />
           {children.has(m.id) ? branch(m.id, depth + 1) : null}
         </li>
