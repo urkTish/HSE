@@ -29,7 +29,7 @@ export function ListToolbar({ children, actions }: { children: ReactNode; action
   const collapsible = count > 2;
   const desktopFold = count > DESKTOP_VISIBLE + 1;
   return (
-    <div className="mb-4 flex flex-col gap-3 rounded-xl border bg-surface p-3 shadow-xs sm:p-4 lg:flex-row lg:items-end lg:justify-between">
+    <div className="glass mb-4 flex flex-col gap-3 rounded-xl border p-3 sm:p-4 lg:flex-row lg:items-end lg:justify-between">
       <div
         id={id}
         className={cn(

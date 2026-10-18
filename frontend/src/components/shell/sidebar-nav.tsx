@@ -116,10 +116,10 @@ function NavLink({ item, onNavigate }: { item: Item; onNavigate?: () => void }) 
       aria-current={active ? "page" : undefined}
       data-testid={item.testId}
       className={cn(
-        "relative flex min-h-touch items-center gap-3 rounded-md px-3 text-sm text-sidebar-foreground/85 transition-colors hover:bg-sidebar-active hover:text-sidebar-foreground",
+        "relative flex min-h-touch items-center gap-3 rounded-md px-3 text-sm text-sidebar-foreground/85 transition-colors hover:bg-sidebar-hover hover:text-sidebar-foreground",
         "focus-visible:outline-sidebar-indicator",
         active &&
-          "bg-sidebar-active font-semibold text-sidebar-foreground shadow-[inset_0_1px_0_rgb(255_255_255/0.05)] before:absolute before:inset-y-2 before:start-0 before:w-1 before:rounded-full before:bg-sidebar-indicator",
+          "bg-sidebar-hover font-semibold text-sidebar-foreground shadow-sidebar-active before:absolute before:inset-y-2 before:start-0 before:w-1 before:rounded-full before:bg-sidebar-indicator",
       )}
     >
       {/* Icons are not directional, so they are not mirrored in RTL. */}

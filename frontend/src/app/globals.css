@@ -74,6 +74,11 @@
   --color-sidebar-active: var(--sidebar-active);
   --color-sidebar-indicator: var(--sidebar-indicator);
   --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-hover: var(--sidebar-hover);
+  --color-glass: var(--glass-bg);
+  --color-glass-strong: var(--glass-bg-strong);
+  --color-glass-border: var(--glass-border);
+  --color-row-glass: var(--row-glass);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -85,6 +90,8 @@
   --shadow-btn: var(--shadow-btn);
   --shadow-btn-pressed: var(--shadow-btn-pressed);
   --shadow-control: var(--shadow-control);
+  --shadow-glass: var(--shadow-glass);
+  --shadow-sidebar-active: var(--sidebar-active-highlight);
   --spacing-touch: var(--touch-target);
   --spacing-control: var(--control-h);
   --spacing-control-sm: var(--control-h-sm);
@@ -128,6 +135,54 @@
       animation-duration: 0.01ms !important;
       transition-duration: 0.01ms !important;
     }
+  }
+}
+
+/*
+ * Glass surfaces (D-265). Components say `glass` / `glass-strong` plus their own radius and `border`; the
+ * tokens decide whether that is frosted or flat (see the "Solid surface" block in styles/tokens.css).
+ * One glass layer per stacking context: a table or list inside a glass card stays `bg-surface` or
+ * `bg-row-glass`, never glass-in-glass.
+ */
+@layer components {
+  .glass {
+    background-color: var(--glass-bg);
+    border-color: var(--glass-border);
+    box-shadow: var(--glass-highlight), var(--shadow-glass);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  }
+  .glass-strong {
+    background-color: var(--glass-bg-strong);
+    border-color: var(--glass-border);
+    box-shadow: var(--glass-highlight), var(--shadow-glass);
+    backdrop-filter: blur(var(--glass-blur-strong)) saturate(var(--glass-saturate));
+  }
+  /* Top bar and sticky bars: glass without the lift shadow, so they read as part of the frame. */
+  .glass-bar {
+    background-color: var(--glass-bg-strong);
+    border-color: var(--glass-border);
+    box-shadow: var(--glass-highlight);
+    backdrop-filter: blur(var(--glass-blur-strong)) saturate(var(--glass-saturate));
+  }
+  .sidebar-glass {
+    background-color: var(--sidebar-glass);
+    border-color: var(--sidebar-glass-border);
+    backdrop-filter: blur(var(--glass-blur-sidebar)) saturate(150%);
+  }
+  /* The emerald mesh behind everything: a fixed layer under the frame, blurred through every glass above it.
+     `isolation` gives the frame its own stacking context, so the layer paints above the body background
+     (html carries one too, so body paints its own) and below the frame's content. */
+  .app-mesh {
+    position: relative;
+    isolation: isolate;
+  }
+  .app-mesh::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: var(--page-glow);
   }
 }
 
@@ -304,6 +359,17 @@
     --status-warning: #8a4600;
     --status-danger: #b42318;
     --status-info: #1d4f91;
+    /* Print is always flat paper: no mesh, no blur, no translucent fills. */
+    --page-glow: none;
+    --glass-blur: 0px;
+    --glass-blur-strong: 0px;
+    --glass-blur-sidebar: 0px;
+    --glass-bg: #ffffff;
+    --glass-bg-strong: #ffffff;
+    --glass-border: #d9dfe1;
+    --glass-highlight: 0 0 #0000;
+    --shadow-glass: 0 0 #0000;
+    --row-glass: #ffffff;
   }
   html,
   body {

@@ -111,7 +111,7 @@ export function KpiTile({ tile, show, extra }: { tile: Tile; show: (v: string) =
   const full = ar ? tile.label_ar : tile.label_en;
   const cmp = tile.comparisons[0];
   return (
-    <div className="flex min-w-0 flex-col gap-1.5 rounded-xl border bg-surface p-3 shadow-xs" data-testid="kpi-tile" data-metric={tile.metric}>
+    <div className="glass flex min-w-0 flex-col gap-1.5 rounded-xl border p-3" data-testid="kpi-tile" data-metric={tile.metric}>
       <div className="flex items-start justify-between gap-2">
         <p className="text-xs font-medium text-muted-foreground" title={full}>
           {label}

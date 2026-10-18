@@ -58,7 +58,7 @@ function Tile({ v, projectId, show }: { v: Schemas["KpiValue"]; projectId: strin
     </span>
   );
   return (
-    <div className="flex flex-col gap-1.5 rounded-xl border bg-surface p-4 shadow-xs" data-testid="sv-tile" data-metric={v.metric} data-value={v.value ?? ""}>
+    <div className="glass flex flex-col gap-1.5 rounded-xl border p-4" data-testid="sv-tile" data-metric={v.metric} data-value={v.value ?? ""}>
       <span className="flex items-center justify-between gap-2 text-xs font-medium text-muted-foreground">
         <span>{ar ? v.short_label_ar : v.short_label_en}</span>
         <span className="ltr font-mono">{v.metric}</span>

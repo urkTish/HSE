@@ -23,7 +23,7 @@ export function NotFoundState() {
   const t = useTranslations("common");
   return (
     <div
-      className="flex flex-col items-center gap-2 rounded-xl border bg-surface p-10 text-center"
+      className="glass flex flex-col items-center gap-2 rounded-xl border p-10 text-center"
       data-testid="not-found"
     >
       <SearchX aria-hidden className="size-8 text-muted-foreground" />

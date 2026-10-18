@@ -9,9 +9,9 @@ export default async function AuthLayout({ children, params }: { children: React
   await initRequestLocale(params);
   const t = await getTranslations("meta");
   return (
-    <div className="flex min-h-dvh flex-col bg-background">
+    <div className="app-mesh flex min-h-dvh flex-col bg-background">
       {/* Brand band: anchors the page in the product colours without competing with the form. */}
-      <div aria-hidden className="pointer-events-none fixed inset-x-0 top-0 -z-0 h-64 bg-sidebar sm:h-72" />
+      <div aria-hidden className="sidebar-glass pointer-events-none fixed inset-x-0 top-0 -z-0 h-64 border-b sm:h-72" />
       <header className="relative flex items-center justify-between gap-2 px-4 py-3 sm:px-8">
         <div className="flex items-center gap-2.5 font-semibold text-sidebar-foreground">
           <span className="flex size-9 items-center justify-center rounded-lg bg-sidebar-active">
@@ -19,7 +19,7 @@ export default async function AuthLayout({ children, params }: { children: React
           </span>
           <span>{t("appName")}</span>
         </div>
-        <div className="flex items-center gap-1 rounded-lg bg-surface/95 p-0.5 text-foreground shadow-xs">
+        <div className="glass-strong flex items-center gap-1 rounded-lg border p-0.5 text-foreground">
           <LanguageSwitch />
           <ThemeToggle />
         </div>
