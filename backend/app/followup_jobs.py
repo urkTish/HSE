@@ -20,6 +20,7 @@ from sqlalchemy.orm import Session
 from app.core.clock import now
 from app.core.enums import ProjectStatus
 from app.models import Project
+from app.services.cert.alerts import step
 
 
 def _projects(db: Session) -> list[uuid.UUID]:
@@ -48,11 +49,12 @@ def followup_daily(db: Session) -> dict[str, Any]:
 
     fc.clear_cache(db)
     today = fc.local_day()
-    lessons.daily(db, today)
-    effectiveness.daily(db, today)
-    purged = packs.purge_identity(db)
+    out: dict[str, Any] = {}
+    step(db, out, "lessons", lambda: lessons.daily(db, today))
+    step(db, out, "effectiveness", lambda: effectiveness.daily(db, today))
+    step(db, out, "purged", lambda: packs.purge_identity(db))
     db.flush()
-    return {"purged": purged}
+    return {"purged": out["purged"]}
 
 
 def followup_alerts(db: Session) -> dict[str, Any]:

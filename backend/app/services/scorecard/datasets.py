@@ -19,7 +19,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.sqltypes import ARRAY, JSON, Boolean, Date, DateTime, Integer, Numeric, String
 
@@ -223,6 +223,16 @@ VEH_PERSONAL = [
     ("insurer", "Insurer", "شركة التأمين"),
     ("policy_no", "Policy no.", "رقم الوثيقة"),
 ]
+_T3 = C.fitness_clinical_view
+# 6a tier-3 columns (OH-2, P6-10): the automatic classifier cannot tell a hold reason from a
+# status, so the reason / type / verification columns are declared sensitive with the clinical
+# right; printed names, match results and licences are never exported (§8.4, cap 146).
+HOLD_T3 = [
+    Col("reason", "Reason", "السبب", P.sensitive, _T3, MM.omit, False),
+    Col("source_type", "Source type", "نوع المصدر", P.sensitive, _T3, MM.omit, False),
+    Col("source_ref", "Source ref", "مرجع المصدر", P.sensitive, _T3, MM.omit, False),
+    Col("cancel_code", "Cancel code", "رمز الإلغاء", P.sensitive, _T3, MM.omit, False),
+]
 NATIVE: list[Dataset] = [
     # 6a (163; tier columns: reasons and scans never; names need 46)
     Dataset("fitness_codes", "6a", C.fitness_catalogue_view, C.export_medical, "Fitness codes",
@@ -232,21 +242,36 @@ NATIVE: list[Dataset] = [
             project_required=False),
     Dataset("medical_examiners", "6a", C.fitness_catalogue_view, C.export_medical,
             "Medical examiners", "الأطباء الفاحصون", model=MedicalExaminer,
-            project_required=False, names_cap=C.fitness_catalogue_view),
+            project_required=False, names_cap=C.fitness_catalogue_view,
+            special=[Col("scfhs_licence_no", "SCFHS licence", "رخصة الهيئة", P.never)]),
     Dataset("medical_plan", "6a", C.fitness_catalogue_view, C.export_medical, "Medical plan",
             "الخطة الطبية", model=MedicalPlanLine),
     Dataset("fitness_status", "6a", C.fitness_status_view, C.export_medical,
             "Fitness assessments", "تقييمات اللياقة", model=FitnessAssessment,
-            date_attr="examined_on", names_cap=C.worker_view, aggregate=True),
+            date_attr="examined_on", names_cap=C.worker_view, aggregate=True,
+            special=[Col("assessment_type", "Type", "النوع", P.sensitive, _T3, MM.omit, False),
+                     Col("verification_status", "Verification", "التحقق", P.sensitive, _T3,
+                         MM.omit, False),
+                     Col("certificate_no", "Certificate no.", "رقم الشهادة", P.sensitive, _T3,
+                         MM.omit, False),
+                     Col("revoke_code", "Revoke code", "رمز الإلغاء", P.sensitive, _T3, MM.omit,
+                         False),
+                     Col("name_as_printed", "Printed name", "الاسم المطبوع", P.never),
+                     Col("name_match", "Name match", "تطابق الاسم", P.never),
+                     Col("id_match_result", "ID match", "تطابق الهوية", P.never),
+                     Col("clinical_data_present", "Clinical data", "بيانات سريرية", P.never)]),
     Dataset("fitness_gaps", "6a", C.fitness_status_view, C.export_medical, "Fitness gaps",
             "فجوات اللياقة", model=FitnessHold, date_attr="started_at", names_cap=C.worker_view,
-            aggregate=True),
+            aggregate=True, special=list(HOLD_T3)),
     Dataset("fitness_holds", "6a", C.fitness_status_view, C.export_medical, "Fitness holds",
             "إيقافات اللياقة", model=FitnessHold, date_attr="started_at",
-            names_cap=C.worker_view, aggregate=True),
+            names_cap=C.worker_view, aggregate=True, special=list(HOLD_T3)),
     Dataset("fitness_referrals", "6a", C.fitness_status_view, C.export_medical,
             "Fitness referrals", "إحالات اللياقة", model=FitnessReferral, date_attr="raised_at",
-            names_cap=C.worker_view, aggregate=True),
+            names_cap=C.worker_view, aggregate=True,
+            special=[Col("reason", "Reason", "السبب", P.sensitive, _T3, MM.omit, False),
+                     Col("remove_from_work", "Removed from work", "مُبعد عن العمل", P.sensitive,
+                         C.fitness_functional_view, MM.omit, False)]),
     Dataset("fitness_verifications", "6a", C.fitness_review, C.export_medical,
             "Fitness verifications", "التحقق من اللياقة", model=FitnessVerification,
             date_attr="performed_at"),
@@ -512,6 +537,24 @@ def native_rows(
     project_id: uuid.UUID | None,
     filters: dict[str, Any],
 ) -> list[Any]:
+    return list(db.scalars(_native_stmt(ds, g, project_id, filters)))
+
+
+def native_count(
+    db: Session,
+    ds: Dataset,
+    g: Grant | None,
+    project_id: uuid.UUID | None,
+    filters: dict[str, Any],
+) -> int:
+    """Row count of `native_rows` without loading the rows (EX-7 sync / job decision)."""
+    stmt = _native_stmt(ds, g, project_id, filters).order_by(None)
+    return db.scalar(select(func.count()).select_from(stmt.subquery())) or 0
+
+
+def _native_stmt(
+    ds: Dataset, g: Grant | None, project_id: uuid.UUID | None, filters: dict[str, Any]
+) -> Any:
     m = ds.model
     stmt = select(m)
     if project_id is not None:
@@ -535,7 +578,7 @@ def native_rows(
         stmt = stmt.where(m.status == filters["status"])
     if ds.where is not None:
         stmt = stmt.where(ds.where(m))
-    return list(db.scalars(stmt))
+    return stmt
 
 
 class Resolver:

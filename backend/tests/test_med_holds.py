@@ -6,7 +6,7 @@ from datetime import timedelta
 from typing import Any
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.clock import set_now
@@ -282,3 +282,87 @@ def test_AC76_rf7_card_restriction_referral(db: Session) -> None:
     r = db.scalar(select(FitnessReferral).where(FitnessReferral.source_cert_id == pc.id))
     assert r is not None and r.reason.value == "certificate_restriction"
     assert r.remove_from_work is False and r.hold_id is None
+
+
+# ---- review fixes (phases 4-7 backend review) ----------------------------------------------------
+
+
+def test_review5_subject_report_is_per_project(db: Session) -> None:
+    """Capability 165 is per project: the data-subject report leaves out the records of a
+    project where the caller has no role, and audits each covered project."""
+    import uuid as _uuid
+
+    from app.core.hse_enums import ExportPurpose
+    from app.core.med_enums import HoldReason, HoldSourceType, HoldStatus
+    from app.models import AuditEntry, RoleAssignment
+    from app.services.med import status_view
+    from tests.cert_helpers import P
+
+    w = worker(db, "WKR-000009")
+    ania, rbt = project(db, "ANIA-EXP"), project(db, "RBT-52")
+    foreign = "MFH-RBT-52-2026-09001"
+    db.add(
+        FitnessHold(
+            id=_uuid.uuid4(),
+            year=2026,
+            seq=9001,
+            hold_no=foreign,
+            worker_id=w.id,
+            project_id=rbt.id,
+            engagement_id=None,
+            reason=HoldReason.manual,
+            source_type=HoldSourceType.manual,
+            started_at=CLOCK - timedelta(days=3),
+            status=HoldStatus.active,
+            work_during_hold=[],
+            alerts_sent=[],
+        )
+    )
+    huda = _user(db, "huda.mansour")
+    for ra in db.scalars(
+        select(RoleAssignment).where(
+            RoleAssignment.user_id == huda.id, RoleAssignment.project_id == rbt.id
+        )
+    ):
+        db.delete(ra)
+    db.flush()
+    rep = status_view.subject_report(
+        db, P(db, "huda.mansour"), w.id, ExportPurpose.data_subject_request
+    )
+    assert rep.assessments and all(a.project_id == ania.id for a in rep.assessments)
+    assert all(h.hold_no != foreign for h in rep.holds)
+    audits = list(db.scalars(select(AuditEntry).where(
+        AuditEntry.action == "export", AuditEntry.entity_id == w.id)))  # fmt: skip
+    assert audits and all(x.project_id == ania.id for x in audits)
+
+
+def test_review6_site_scope_lists_paginate_in_sql(api: Api, db: Session) -> None:
+    """A Site Engineer (156 at S.sites) gets full pages and a `total` that counts only the
+    workers of their sites."""
+    omar = api.as_("omar.siddiqui")
+    pid = project(db, "ANIA-EXP").id
+    for path in ("fitness-holds", "fitness-assessments", "fitness-referrals"):
+        res = omar.get(f"{API}/projects/{pid}/{path}", params={"page_size": 50})
+        assert res.status_code == 200, res.text
+        b = res.json()
+        assert len(b["items"]) == min(50, b["total"]), (path, b["total"], len(b["items"]))
+
+
+def test_review15_referral_list_read_is_audited(api: Api, db: Session) -> None:
+    from app.models import AuditEntry
+
+    q = (
+        select(func.count())
+        .select_from(AuditEntry)
+        .where(
+            AuditEntry.action == "sensitive_field_read",
+            AuditEntry.entity_type == "fitness_referral",
+        )
+    )
+    before = db.scalar(q) or 0
+    res = api.as_("huda.mansour").get(
+        f"{API}/projects/{project(db, 'ANIA-EXP').id}/fitness-referrals"
+    )
+    assert res.status_code == 200, res.text
+    db.expire_all()
+    assert db.scalar(q) == before + 1

@@ -57,7 +57,7 @@ from app.schemas.field import (
 from app.schemas.hse_common import ApiWarning
 from app.schemas.inspections import InspectionRead
 from app.services import hse_settings
-from app.services.common import ensure_open, invalid_transition, paginate
+from app.services.common import duplicate, ensure_open, invalid_transition, paginate
 from app.services.field import common as fc
 from app.services.field import library, scoring
 from app.services.field.reference import grade_for
@@ -224,6 +224,8 @@ def submit(
     db: Session, p: Principal, project_id: uuid.UUID, body: SubmissionCreate
 ) -> ResponseRead:
     proj = fc.project(db, p, project_id)
+    ensure_open(proj)
+    g = p.require(project_id, C.inspection_record)
     prior = db.scalar(
         select(ChecklistResponse).where(
             ChecklistResponse.project_id == project_id,
@@ -231,9 +233,11 @@ def submit(
         )
     )
     if prior is not None:  # EXE-6 idempotency: nothing is created twice
+        if prior.inspector_id != p.user.id:  # a replayed client_uuid of another user
+            raise duplicate(
+                "client_uuid", "This client_uuid was already submitted by another user."
+            )
         return response_read(db, p, prior)
-    ensure_open(proj)
-    g = p.require(project_id, C.inspection_record)
     received = now()
     check_times(db, p, proj, body.completed_at, received, "completed_at")
     if body.started_at > body.completed_at:

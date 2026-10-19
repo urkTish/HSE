@@ -9,7 +9,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.core.cert_enums import (
@@ -285,13 +285,20 @@ def current_line(
 def active_ban(
     db: Session, worker_id: uuid.UUID, cert_type: str | None, d: date
 ) -> CertificationBan | None:
-    for b in db.scalars(select(CertificationBan).where(CertificationBan.worker_id == worker_id)):
-        if b.from_date > d:
-            continue
-        if (
-            b.status == BanStatus.lifted
-            and b.lifted_at is not None
-            and acommon.local_day(b.lifted_at) <= d
+    for b in db.scalars(
+        select(CertificationBan).where(
+            CertificationBan.worker_id == worker_id,
+            CertificationBan.from_date <= d,
+            or_(
+                CertificationBan.status == BanStatus.active,
+                CertificationBan.lifted_at >= acommon.local_midnight_utc(d + timedelta(days=1)),
+            ),
+        )
+    ):
+        # a lifted ban never counts (an empty lifted_at means lifted now); one lifted later
+        # than `d` still applies on `d`
+        if b.status == BanStatus.lifted and (
+            b.lifted_at is None or acommon.local_day(b.lifted_at) <= d
         ):
             continue
         if b.scope_all or cert_type is None or cert_type in (b.cert_types or []):

@@ -82,6 +82,15 @@ PTW_OWNERS = frozenset(
     }
 )
 ENCRYPTED = frozenset({"medical", "personal"})
+# Scans of identity-bearing documents open only through their own reason-gated endpoints
+# (P6-5, P4-3, P5-3): the generic signed URL refuses them.
+REASON_GATED = frozenset(
+    {
+        AttachmentOwner.fitness_scan,
+        AttachmentOwner.personnel_cert_scan,
+        AttachmentOwner.training_record_scan,
+    }
+)
 
 
 def _bucket(owner: AttachmentOwner) -> str:
@@ -495,8 +504,8 @@ def _get(db: Session, p: Principal, attachment_id: uuid.UUID) -> Attachment:
 
 def signed_url(db: Session, p: Principal, attachment_id: uuid.UUID) -> SignedUrlRead:
     a = _get(db, p, attachment_id)
-    if a.owner_type == AttachmentOwner.fitness_scan:
-        raise forbidden_error("Open fitness scans through scan-url with a reason (P6-5).")
+    if a.owner_type in REASON_GATED:
+        raise forbidden_error("Open this scan through its scan-url endpoint with a reason.")
     medical = a.owner_type == AttachmentOwner.injury_case_medical
     short = medical or a.owner_type in PERSONAL  # P1-3 / P2-2: ≤ 5 min
     expires = int(time.time()) + (MEDICAL_TTL if short else DEFAULT_TTL)

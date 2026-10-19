@@ -273,6 +273,8 @@ def list_holds(
     )
     if g.engagement_ids is not None:
         stmt = stmt.where(FitnessHold.engagement_id.in_(g.engagement_ids or {uuid.UUID(int=0)}))
+    if g.site_ids is not None:
+        stmt = stmt.where(FitnessHold.worker_id.in_(common.site_workers(project_id, g.site_ids)))
     if status:
         stmt = stmt.where(FitnessHold.status.in_(status))
     if worker_id is not None:
@@ -799,6 +801,13 @@ def list_referrals(
                 FitnessReferral.raised_by_user_id == p.user.id,
             )
         )
+    elif g.site_ids is not None:
+        stmt = stmt.where(
+            or_(
+                FitnessReferral.worker_id.in_(common.site_workers(project_id, g.site_ids)),
+                FitnessReferral.raised_by_user_id == p.user.id,
+            )
+        )
     if status:
         stmt = stmt.where(FitnessReferral.status.in_(status))
     if overdue is not None:
@@ -808,9 +817,14 @@ def list_referrals(
         stmt = stmt.where(FitnessReferral.worker_id == worker_id)
     rows, total = paginate(db, stmt, page, page_size)
     items = []
+    tiers: set[int] = set()
     for r in rows:
         t = common.tier(p, project_id, common.deployment(db, r.worker_id, project_id))
+        tiers.add(t)
         items.append(referral_read(db, p, r, max(1, t)))
+    if g is not None and any(t >= 2 for t in tiers):  # P6-4: tier-2 / 3 reads are audited
+        fields = ["referral"] + (["referral_reason", "referral_note"] if max(tiers) >= 3 else [])
+        common.sensitive_read(db, p, EntityType.fitness_referral, None, project_id, fields)
     return FitnessReferralPage(items=items, total=total, page=page, page_size=page_size)
 
 

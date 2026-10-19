@@ -912,8 +912,12 @@ def anonymise_workers(db: Session, day: date | None = None) -> int:
         for h in db.scalars(select(WorkerIdHistory).where(WorkerIdHistory.worker_id == w.id)):
             db.delete(h)
         from app.services.cert import personnel as pcerts  # noqa: PLC0415 (P4-7)
+        from app.services.med import assessments as massess  # noqa: PLC0415 (P6-8)
+        from app.services.train import records as trecords  # noqa: PLC0415 (P5-7)
 
         pcerts.anonymise_worker(db, w.id)
+        massess.anonymise_worker(db, w.id)
+        trecords.anonymise_worker(db, w.id)
         w.full_name_en = f"Anonymised worker {w.worker_no}"
         w.full_name_ar = f"عامل مجهول الهوية {w.worker_no}"
         w.id_type = None

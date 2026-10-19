@@ -20,6 +20,7 @@ from app.core.access_enums import (
     InductionResult,
     InductionStatus,
     InductionType,
+    RequirementStatus,
 )
 from app.core.clock import now, today
 from app.core.enums import AuditAction, Capability, EntityType, NotificationKind, Role
@@ -1053,6 +1054,22 @@ def worker_eligibility(
     if p.grant(zone.project_id, C.worker_view) is None:
         raise forbidden_error()
     ev = eligibility.evaluate(db, w, zone, at or now(), context)
+    # 6a §8.4: the medical hook's reason, reference and conditions are tiered like the PTW views.
+    from app.services.med import common as mcommon  # noqa: PLC0415
+    from app.services.med import reference as mref  # noqa: PLC0415
+
+    t = mcommon.tier(p, zone.project_id, mcommon.deployment(db, w.id, zone.project_id))
+    for it in ev.items:
+        if it.hook_kind != HookKind.medical_fitness:
+            continue
+        if t < 3:
+            it.hook_reason = None
+            it.ref = None
+        if t < 2:
+            it.conditions = ()
+            it.valid_until = None
+            if it.status in (RequirementStatus.not_met, RequirementStatus.not_evaluated):
+                it.message = mref.NOT_ELIGIBLE
     return eligibility.to_result(db, ev, True)
 
 
