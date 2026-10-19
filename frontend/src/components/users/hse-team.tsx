@@ -66,7 +66,7 @@ function Row({ member: m, canEdit, onEdit }: { member: Member; canEdit: boolean;
       <span className="text-sm text-muted-foreground">{m.hse_position ? t(`position.${m.hse_position}`) : t("noPosition")}</span>
       {m.job_title ? <span className="text-xs text-muted-foreground">· {m.job_title}</span> : null}
       {canEdit ? (
-        <Button size="sm" variant="ghost" className="ms-auto" onClick={onEdit} aria-label={`${t("edit")} ${m.full_name_en}`} data-testid="edit-member">
+        <Button size="sm" variant="ghost" className="ms-auto" onClick={onEdit} aria-label={`${t("edit")} ${name(m.full_name_en, m.full_name_ar)}`} data-testid="edit-member">
           <Pencil aria-hidden />
           {t("edit")}
         </Button>

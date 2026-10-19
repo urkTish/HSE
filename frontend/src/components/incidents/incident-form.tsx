@@ -24,7 +24,7 @@ import { useProjectSettings } from "@/lib/api/queries";
 import { DEFAULT_TIME_ZONE, utcToZonedInput, zonedInputToUtc } from "@/lib/datetime";
 import { AIRSIDE_FLAGS, ASSET_TYPES, DO_CATEGORIES, ENV_CATEGORIES, ENV_REACHED, INCIDENT_SHIFTS, INCIDENT_TYPES, NOT_WORK_RELATED_REASONS } from "@/lib/enums";
 import { applyServerErrors } from "@/lib/forms";
-import { useFieldErrorTranslator } from "@/lib/i18n-helpers";
+import { useErrorMessage, useFieldErrorTranslator } from "@/lib/i18n-helpers";
 import { useLocalDraft, useOnline } from "@/lib/local-draft";
 import { useRefLists } from "@/lib/reference";
 import { VEH_AUTHORITIES, VEH_COMMUTING, VEH_JOURNEY_PURPOSES, VEH_LIABILITY, VEH_LIGHTS, VEH_ROAD_TYPES, VEH_SURFACES } from "@/lib/vehicle-enums";
@@ -40,6 +40,7 @@ export function IncidentForm({ project, incident }: { project: Schemas["ProjectR
   const tv = useTranslations("validation");
   const tc = useTranslations("common");
   const fe = useFieldErrorTranslator();
+  const msg = useErrorMessage();
   const router = useRouter();
   const qc = useQueryClient();
   const warn = useWarningToasts();
@@ -235,7 +236,12 @@ export function IncidentForm({ project, incident }: { project: Schemas["ProjectR
       draft.clear();
       warn(saved.warnings);
       if (report && saved.status === "draft" && !has("injury_illness")) {
-        saved = await unwrap(api.POST("/api/v1/incidents/{incident_id}/transitions", { params: { path: { incident_id: saved.id } }, body: { to_status: "reported" } }));
+        try {
+          saved = await unwrap(api.POST("/api/v1/incidents/{incident_id}/transitions", { params: { path: { incident_id: saved.id } }, body: { to_status: "reported" } }));
+        } catch (e) {
+          // The draft exists: go to it rather than leave the form open for a duplicate.
+          toast.error(msg(e));
+        }
       }
       qc.setQueryData(hk.incident(saved.id), saved);
       await qc.invalidateQueries({ queryKey: ["incidents"] });

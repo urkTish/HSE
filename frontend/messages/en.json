@@ -5736,7 +5736,9 @@
     "approvalTitle": "Approve the report",
     "approvalBody": "Check the report. Approve it, or return it with a comment for changes.",
     "approve": "Approve → {status}",
-    "returnForChanges": "Return for changes"
+    "returnForChanges": "Return for changes",
+    "levelWithMin": "{level} (minimum {min})",
+    "notStartedBody": "The investigation has not started yet (minimum level {level}). Assign it from the incident:"
   },
   "observations": {
     "title": "Safety observations",
@@ -5776,7 +5778,8 @@
       "ref": "Ref",
       "closure_comment": "Closure comment",
       "closed_at": "Closed at"
-    }
+    },
+    "photosFailed": "The observation was saved, but a photo did not upload. Add it from the observation page."
   },
   "inspections": {
     "title": "Inspections",

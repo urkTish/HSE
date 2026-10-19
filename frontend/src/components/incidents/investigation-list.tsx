@@ -11,6 +11,7 @@ import type { Schemas } from "@/lib/api/client";
 import { useIncidents } from "@/lib/api/hse";
 import { useLocalizedName } from "@/lib/i18n-helpers";
 import { useFormatters } from "@/lib/use-formatters";
+import { todayInZone } from "@/lib/datetime";
 import { useSearchState } from "@/lib/url-state";
 
 const PAGE_SIZE = 50;
@@ -81,7 +82,7 @@ export function InvestigationList({ project }: { project: Schemas["ProjectRead"]
             <TBody>
               {items.map((r) => {
                 const b = bucketOf(r.status);
-                const overdue = b === "pending" && r.investigation_due_date !== null && r.investigation_due_date < new Date().toISOString().slice(0, 10);
+                const overdue = b === "pending" && r.investigation_due_date !== null && r.investigation_due_date < todayInZone();
                 return (
                   <TR key={r.id} data-testid="investigation-row">
                     <TD label={t("cols.ref")}>

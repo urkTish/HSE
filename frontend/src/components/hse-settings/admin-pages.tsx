@@ -29,7 +29,8 @@ import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
 
 export function HseSettingsRoute() {
-  return <ProjectGate>{(p) => <HseSettingsPage project={p} />}</ProjectGate>;
+  // Keyed by project: unsaved edits never carry over to another project's settings.
+  return <ProjectGate>{(p) => <HseSettingsPage key={p.id} project={p} />}</ProjectGate>;
 }
 
 export function ReferenceListsPage() {

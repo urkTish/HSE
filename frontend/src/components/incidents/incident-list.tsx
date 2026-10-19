@@ -24,6 +24,7 @@ import { useDisplay } from "@/lib/digits";
 import { CASE_CATEGORIES, INCIDENT_STATUSES, INCIDENT_TYPES } from "@/lib/enums";
 import { can, canWrite } from "@/lib/permissions";
 import { useSearchState } from "@/lib/url-state";
+import { useFormatters } from "@/lib/use-formatters";
 import { StackedDate } from "@/components/medical/common";
 import { VEH_LICENCE_CHECKS, VEH_OWNERSHIPS, VEH_ROAD_TYPES } from "@/lib/vehicle-enums";
 import { RecordedNotCountedBadge } from "./vehicle-section";
@@ -38,6 +39,7 @@ export function IncidentList({ project }: { project: Schemas["ProjectRead"] }) {
   const tc = useTranslations("common");
   const me = useMeData();
   const show = useDisplay(project.id);
+  const { date } = useFormatters(project.id);
   const opts = useProjectOptions(project.id);
   const s = useSearchState();
   const page = s.getInt("page", 1) ?? 1;
@@ -278,7 +280,7 @@ export function IncidentList({ project }: { project: Schemas["ProjectRead"] }) {
                     {r.investigation_level ? (
                       <span className="text-xs">
                         <span className="ltr">{r.investigation_level}</span>
-                        {r.investigation_due_date ? ` · ${r.investigation_due_date}` : ""}
+                        {r.investigation_due_date ? ` · ${date(r.investigation_due_date)}` : ""}
                       </span>
                     ) : (
                       "—"

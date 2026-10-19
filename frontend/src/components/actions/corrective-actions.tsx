@@ -677,6 +677,7 @@ function CaTransitionDialog({ ca: c, to, onClose, onDone }: { ca: Schemas["CaRea
 function ExtensionRequestDialog({ ca: c, onClose, onDone }: { ca: Schemas["CaRead"]; onClose: () => void; onDone: (n: Schemas["CaRead"]) => Promise<void> }) {
   const t = useTranslations("ca");
   const tc = useTranslations("common");
+  const { date } = useFormatters(c.project_id);
   const [due, setDue] = useState("");
   const [reason, setReason] = useState("");
   const [error, setError] = useState<unknown>(null);
@@ -701,7 +702,7 @@ function ExtensionRequestDialog({ ca: c, onClose, onDone }: { ca: Schemas["CaRea
         <DialogHeader>
           <DialogTitle>{t("requestExtension")}</DialogTitle>
           <DialogDescription>
-            {t("fields.due_date")}: {c.due_date}
+            {t("fields.due_date")}: {date(c.due_date)}
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4">
@@ -741,6 +742,7 @@ function ExtensionDecisionDialog({
 }) {
   const t = useTranslations("ca");
   const tc = useTranslations("common");
+  const { date } = useFormatters(c.project_id);
   const [comment, setComment] = useState("");
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
@@ -769,7 +771,7 @@ function ExtensionDecisionDialog({
         <DialogHeader>
           <DialogTitle>{approve ? t("approve") : t("rejectExt")}</DialogTitle>
           <DialogDescription>
-            {ext.previous_due_date} → {ext.new_due_date}
+            {date(ext.previous_due_date)} → {date(ext.new_due_date)}
           </DialogDescription>
         </DialogHeader>
         <FormField id="ext-comment" label={t("decisionComment")}>

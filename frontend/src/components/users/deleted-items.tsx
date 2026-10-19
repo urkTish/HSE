@@ -12,6 +12,17 @@ import { api, unwrap } from "@/lib/api/client";
 import { useFormatters } from "@/lib/use-formatters";
 
 const PAGE_SIZE = 25;
+// Columns never shown even if an older copy still carries them (the server scrubs new ones).
+const SENSITIVE = /(id_number|_enc$|_hash$|blind|token|secret|password|person_name|medical|notes$|date_of_birth|mobile|email|nationality|signature|gosi|employee_no|body_part|nature|illness|_reason$|conditions|licence|passport|iqama)/i;
+
+function scrub(rows: Record<string, unknown> | null | undefined): Record<string, unknown> | null {
+  if (!rows) return null;
+  const out: Record<string, unknown> = {};
+  for (const [table, list] of Object.entries(rows)) {
+    out[table] = Array.isArray(list) ? list.map((r) => Object.fromEntries(Object.entries(r as Record<string, unknown>).filter(([k]) => !SENSITIVE.test(k)))) : list;
+  }
+  return out;
+}
 
 /** D-271: what the administrator deleted, when, why, and copies of the removed rows. */
 export function DeletedItemsPage() {
@@ -55,7 +66,7 @@ export function DeletedItemsPage() {
                   <TD label={t("cols.by")}>{r.deleted_by_name ?? "—"}</TD>
                   <TD label={t("cols.reason")}>{r.reason}</TD>
                   <TD label={t("cols.rows")}>{r.rows_deleted}</TD>
-                  <TD label="">
+                  <TD>
                     <Button size="sm" variant="outline" onClick={() => setOpenId(openId === r.id ? null : r.id)} aria-expanded={openId === r.id}>
                       {openId === r.id ? t("hide") : t("show")}
                     </Button>
@@ -93,7 +104,7 @@ function Detail({ id }: { id: string }) {
           ))}
         </ul>
         <p className="font-medium">{t("copies")}</p>
-        <pre className="ltr max-h-96 overflow-auto rounded-md bg-muted p-3 text-xs">{JSON.stringify(d.rows, null, 2)}</pre>
+        <pre className="ltr max-h-96 overflow-auto rounded-md bg-muted p-3 text-xs">{JSON.stringify(scrub(d.rows), null, 2)}</pre>
       </CardContent>
     </Card>
   );

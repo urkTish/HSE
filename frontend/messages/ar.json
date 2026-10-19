@@ -5736,7 +5736,9 @@
     "approvalTitle": "اعتماد التقرير",
     "approvalBody": "راجع التقرير ثم اعتمده أو أعده مع ملاحظة لتعديله.",
     "approve": "اعتماد ← {status}",
-    "returnForChanges": "إعادة للتعديل"
+    "returnForChanges": "إعادة للتعديل",
+    "levelWithMin": "{level} (الحد الأدنى {min})",
+    "notStartedBody": "لم يبدأ التحقيق بعد (المستوى الأدنى {level}). عيّنه من الحادث:"
   },
   "observations": {
     "title": "ملاحظات السلامة",
@@ -5776,7 +5778,8 @@
       "ref": "المرجع",
       "closure_comment": "تعليق الإغلاق",
       "closed_at": "تاريخ الإغلاق"
-    }
+    },
+    "photosFailed": "حُفظت الملاحظة، لكن إحدى الصور لم تُرفع. أضفها من صفحة الملاحظة."
   },
   "inspections": {
     "title": "عمليات التفتيش",

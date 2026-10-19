@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { FormField } from "@/components/common/form-field";
 import { MutationError } from "@/components/common/states";
 import { useRouter } from "@/i18n/navigation";
+import { useSigned } from "@/components/ptw/signing";
 import { api, unwrap } from "@/lib/api/client";
 
 /** Permanent delete (D-265), shown only to the named platform administrator. */
@@ -20,6 +21,7 @@ export function DeleteProject({ projectId, code }: { projectId: string; code: st
   const tc = useTranslations("common");
   const qc = useQueryClient();
   const router = useRouter();
+  const signed = useSigned();
   const [open, setOpen] = useState(false);
   const [typed, setTyped] = useState("");
   const [busy, setBusy] = useState(false);
@@ -31,12 +33,13 @@ export function DeleteProject({ projectId, code }: { projectId: string; code: st
     setBusy(true);
     setError(null);
     try {
-      await unwrap(
-        api.POST("/api/v1/projects/{project_id}/delete", { params: { path: { project_id: projectId } }, body: { confirm_code: typed.trim() } }),
+      await signed(() =>
+        unwrap(api.POST("/api/v1/projects/{project_id}/delete", { params: { path: { project_id: projectId } }, body: { confirm_code: typed.trim() } })),
       );
       toast.success(t("done", { code }));
       setOpen(false);
-      qc.removeQueries();
+      // Keep "me" (the shell would remount on a full wipe); drop everything about this project.
+      qc.removeQueries({ predicate: (q) => q.queryKey[0] !== "me" });
       router.push("/projects");
     } catch (e) {
       setError(e);

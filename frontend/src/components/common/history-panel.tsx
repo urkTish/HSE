@@ -47,6 +47,9 @@ export function ChangeDiff({ before, after }: { before: Record<string, unknown> 
   );
 }
 
+// D-271: the server refuses these; the button would only fail after a reason was typed.
+const NOT_DELETABLE = new Set<string>(["project", "project_settings", "user", "role_assignment", "audit_log"]);
+
 /** Who changed what and when on a record the user can see (capability 17). */
 export function HistoryPanel({
   entityType,
@@ -73,7 +76,7 @@ export function HistoryPanel({
           {t("title")}
         </CardTitle>
         {/* D-271: every record page with a history panel offers the administrator's delete. */}
-        {entityType !== "project" ? <DeleteRecordButton entityType={entityType} entityId={entityId} /> : null}
+        {!NOT_DELETABLE.has(entityType) ? <DeleteRecordButton entityType={entityType} entityId={entityId} /> : null}
       </CardHeader>
       <CardContent>
         {q.isLoading ? (

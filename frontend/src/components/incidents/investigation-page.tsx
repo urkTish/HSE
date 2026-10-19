@@ -69,7 +69,18 @@ export function InvestigationPage({ id }: { id: string }) {
   const qc = useQueryClient();
   if (inc.isError) return <ErrorState error={inc.error} onRetry={() => inc.refetch()} />;
   if (q.isError) return <ErrorState error={q.error} onRetry={() => q.refetch()} />;
-  if (inc.data && !inc.data.investigation) return <Alert tone="info">{te(`investigationLevel.${inc.data.minimum_investigation_level}`)}</Alert>;
+  if (inc.data && !inc.data.investigation)
+    return (
+      <div>
+        <Breadcrumbs items={[{ label: tn("incidents"), href: "/incidents" }, { label: inc.data.ref, href: `/incidents/${inc.data.id}` }, { label: t("title") }]} />
+        <Alert tone="info">
+          {t("notStartedBody", { level: te(`investigationLevel.${inc.data.minimum_investigation_level}`) })}{" "}
+          <Link href={`/incidents/${inc.data.id}`} className="text-primary underline">
+            {inc.data.ref}
+          </Link>
+        </Alert>
+      </div>
+    );
   if (!inc.data || !q.data) return <LoadingState />;
   const incident = inc.data;
   const v = q.data;
@@ -140,7 +151,7 @@ export function InvestigationPage({ id }: { id: string }) {
                 ) : null}
                 <FieldList>
                   <FieldItem label={t("fields.level")}>
-                    {te(`investigationLevel.${v.level}`)} (min {v.minimum_level})
+                    {t("levelWithMin", { level: te(`investigationLevel.${v.level}`), min: v.minimum_level })}
                   </FieldItem>
                   <FieldItem label={t("fields.lead")}>{v.lead_investigator ? name(v.lead_investigator.full_name_en, v.lead_investigator.full_name_ar) : "—"}</FieldItem>
                   <FieldItem label={t("fields.team")}>{v.team_members.map((u) => name(u.full_name_en, u.full_name_ar)).join(", ") || "—"}</FieldItem>

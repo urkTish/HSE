@@ -34,6 +34,7 @@ export function WorkforceAutoFill({ projectId }: { projectId: string }) {
       toast.success(t("autoFillDone", { created: res.created, updated: res.updated, skipped: res.skipped }));
       setOpen(false);
       await qc.invalidateQueries({ queryKey: ["workforce-returns"] });
+      await qc.invalidateQueries({ queryKey: ["workforce-months"] });
       await qc.invalidateQueries({ queryKey: ["kpi"] });
     } catch (e) {
       setError(e);

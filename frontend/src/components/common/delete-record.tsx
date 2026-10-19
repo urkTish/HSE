@@ -12,7 +12,9 @@ import { FormField } from "@/components/common/form-field";
 import { MutationError } from "@/components/common/states";
 import { useMeData } from "@/components/shell/me-context";
 import { useRouter } from "@/i18n/navigation";
+import { useSigned } from "@/components/ptw/signing";
 import { api, unwrap } from "@/lib/api/client";
+import { entityRoute } from "@/lib/routes";
 
 /** D-271: the platform administrator deletes any record; it stays traceable under Deleted items. */
 export function DeleteRecordButton({
@@ -32,6 +34,7 @@ export function DeleteRecordButton({
   const me = useMeData();
   const qc = useQueryClient();
   const router = useRouter();
+  const signed = useSigned(); // deletes need a recent password (REAUTH_REQUIRED)
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
@@ -42,12 +45,18 @@ export function DeleteRecordButton({
     setBusy(true);
     setError(null);
     try {
-      await unwrap(api.POST("/api/v1/admin/records/delete", { body: { entity_type: entityType, entity_id: entityId, reason: reason.trim() } }));
+      await signed(() => unwrap(api.POST("/api/v1/admin/records/delete", { body: { entity_type: entityType, entity_id: entityId, reason: reason.trim() } })));
       toast.success(t("done"));
       setOpen(false);
-      await qc.invalidateQueries();
+      // Drop the deleted record's own queries (a refetch would 404), refresh the rest.
+      qc.removeQueries({ predicate: (q) => JSON.stringify(q.queryKey).includes(entityId) });
+      await qc.invalidateQueries({ predicate: (q) => !JSON.stringify(q.queryKey).includes(entityId) });
       if (onDeleted) onDeleted();
-      else router.back();
+      else {
+        const detail = entityRoute(entityType, entityId);
+        const list = detail && detail.endsWith(`/${entityId}`) ? detail.slice(0, -entityId.length - 1) : null;
+        router.replace(list || "/deleted-items");
+      }
     } catch (e) {
       setError(e);
     } finally {
