@@ -3,6 +3,12 @@ import { expect, request as pwRequest, type APIRequestContext, type Page } from 
 
 export const PASSWORD = process.env.SEED_PASSWORD ?? "Demo-Passw0rd!2026";
 export const BASE_URL = process.env.E2E_BASE_URL ?? "http://localhost:3000";
+/** A 1×1 PNG for file inputs that require a photo (Iqama / Istimara copies, incident pictures). */
+export const PNG_1PX = {
+  name: "photo.png",
+  mimeType: "image/png",
+  buffer: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64"),
+};
 
 export const USERS = {
   faisal: "faisal.harbi@example.com",

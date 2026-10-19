@@ -175,7 +175,7 @@ def test_deactivate_revokes_sessions_and_unlock(api: Api, ids: Ids) -> None:
 
 
 def test_manager_unlocks_locked_user(api: Api, ids: Ids) -> None:
-    for _ in range(5):
+    for _ in range(10):
         api.login("omar.siddiqui@example.com", "Wrong-Password-1!")
     mgr = api.as_("faisal.harbi")
     res = mgr.post(

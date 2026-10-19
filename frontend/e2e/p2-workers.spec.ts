@@ -1,5 +1,5 @@
 import { expect, test } from "./fixtures/test";
-import { apiAs, getJson, login, uid, USERS } from "./helpers";
+import { apiAs, getJson, login, PNG_1PX, uid, USERS } from "./helpers";
 import { createWorker, ensureGenCourse, iqama, pickMulti, projectIds, recordInduction, selectContaining, sign } from "./p2-helpers";
 
 // Committed demo screenshots are only rewritten on demand (SCREENSHOTS=1).
@@ -23,6 +23,7 @@ test.describe.serial("Phase 2 — workers, inductions, zone profiles", () => {
     await f.locator("#id_type").selectOption("iqama");
     await f.locator("#id_number").fill(idNumber);
     await f.locator("#id_expiry_date").fill("2029-03-01");
+    await page.getByTestId("id-copy-input").setInputFiles(PNG_1PX);
     await f.locator("#adult_attestation").check();
     await selectContaining(f.locator("[id='dep.engagement_id']"), "RAWABI");
     await f.locator("[id='dep.trade']").selectOption("labourer");

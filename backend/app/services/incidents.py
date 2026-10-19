@@ -833,6 +833,8 @@ def create(db: Session, p: Principal, project_id: uuid.UUID, body: IncidentCreat
         alerts_sent=[],
         vehicle_involved=False,
     )
+    if data.get("primary_type") is None:
+        data["primary_type"] = inc.primary_type  # D-267: derived, not sent by the client
     _apply_fields(db, project, inc, data)
     _validate_shape(db, project, inc)
     vdata = {k: data[k] for k in veh.INCIDENT_FIELDS if k in body.model_fields_set}
