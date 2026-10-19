@@ -2,7 +2,7 @@
 
 from functools import lru_cache
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 CONTRACT_VERSION = "0.15.2"
@@ -91,6 +91,18 @@ class Settings(BaseSettings):
 
     # Seed (only used by app.seed)
     seed_password: str | None = None
+
+    @model_validator(mode="after")
+    def _production_secrets(self) -> "Settings":
+        """A production process never starts on the dev-only defaults or a plain-HTTP cookie."""
+        if self.environment != "production":
+            return self
+        for name in ("jwt_secret", "field_encryption_key", "blind_index_key"):
+            if str(getattr(self, name, "")).startswith("dev-only"):
+                raise RuntimeError(f"{name.upper()} must be set in production")
+        if not self.cookie_secure:
+            raise RuntimeError("COOKIE_SECURE must be true in production")
+        return self
 
 
 @lru_cache

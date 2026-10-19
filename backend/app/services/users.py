@@ -482,6 +482,12 @@ def update_user(db: Session, p: Principal, user_id: uuid.UUID, body: UserUpdate)
         changes["employer_contractor_id"] = None
     elif new_contractor is None:
         raise validation_error("employer_contractor_id", "Required when employer is a contractor.")
+    if new_contractor is not None and new_contractor != target.employer_contractor_id:
+        c = db.get(Contractor, new_contractor)
+        if c is None:
+            raise validation_error("employer_contractor_id", "Contractor not found.")
+        if c.status == ContractorStatus.blacklisted:
+            raise validation_error("employer_contractor_id", "The contractor is blacklisted.")
     if new_contractor != target.employer_contractor_id:
         for a in target.assignments:
             if a.role in CONTRACTOR_ROLES and a.is_active_on(p.today):

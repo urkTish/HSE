@@ -53,6 +53,11 @@ def _cell(v: Any) -> Any:
     if hasattr(v, "tzinfo") and getattr(v, "tzinfo", None) is not None:
         # D-275: exported times are Riyadh time (GMT+3), with the offset written out.
         return v.astimezone(RIYADH).isoformat(timespec="minutes")
+    if isinstance(v, str):
+        # Spreadsheets run a cell starting with = + - @ or a tab as a formula: neutralise it.
+        v = "".join(ch for ch in v if ch >= " " or ch in "\n\t")
+        if v[:1] in ("=", "+", "-", "@", "\t", "\r"):
+            return "'" + v
     return v
 
 

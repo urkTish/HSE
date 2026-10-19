@@ -5,13 +5,15 @@ import uuid
 from fastapi import APIRouter
 from pydantic import Field
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from app.api.deps import DB, CurrentUser
-from app.core.enums import AuditAction, EntityType, HsePosition, Role, UserStatus
+from app.core.enums import AuditAction, Capability, EntityType, HsePosition, Role, UserStatus
 from app.core.errors import error_responses, not_found, validation_error
 from app.models import RoleAssignment, User
 from app.schemas.common import ApiModel, PatchInput
 from app.services import audit
+from app.services import users as users_svc
 from app.services.permissions import forbidden_error
 
 router = APIRouter(prefix="/hse-team", tags=["hse-team"])
@@ -23,7 +25,7 @@ class HseTeamMember(ApiModel):
     id: uuid.UUID
     full_name_en: str
     full_name_ar: str | None
-    email: str
+    email: str | None = Field(description="Only with the contact-details capability (12).")
     job_title: str | None
     hse_position: HsePosition | None
     reports_to_user_id: uuid.UUID | None
@@ -49,6 +51,7 @@ def _members(db: DB) -> list[User]:
     return list(
         db.scalars(
             select(User)
+            .options(selectinload(User.assignments))
             .where(
                 User.status != UserStatus.deactivated,
                 (User.id.in_(with_role)) | (User.hse_position.is_not(None)),
@@ -58,13 +61,13 @@ def _members(db: DB) -> list[User]:
     )
 
 
-def _read(u: User) -> HseTeamMember:
+def _read(u: User, with_email: bool = True) -> HseTeamMember:
     roles = sorted({a.role for a in u.assignments if a.revoked_at is None})
     return HseTeamMember(
         id=u.id,
         full_name_en=u.full_name_en,
         full_name_ar=u.full_name_ar,
-        email=u.email,
+        email=u.email if with_email else None,
         job_title=u.job_title,
         hse_position=u.hse_position,
         reports_to_user_id=u.reports_to_user_id,
@@ -79,7 +82,20 @@ def _read(u: User) -> HseTeamMember:
     responses=error_responses(401),
 )
 def get_hse_team(user: CurrentUser, db: DB) -> HseTeam:
-    return HseTeam(items=[_read(u) for u in _members(db)])
+    # Same fences as the user directory (capabilities 11 and 12, project scope).
+    if not user.has_any(Capability.user_view_directory):
+        raise forbidden_error()
+    members = _members(db)
+    if not user.is_manager:
+        members = [
+            u for u in members if users_svc._can(db, user, Capability.user_view_directory, u)
+        ]
+    contacts = {
+        u.id
+        for u in members
+        if user.is_manager or users_svc._can(db, user, Capability.user_view_contacts, u)
+    }
+    return HseTeam(items=[_read(u, with_email=u.id in contacts) for u in members])
 
 
 @router.patch(
@@ -93,6 +109,7 @@ def update_hse_team_member(
 ) -> HseTeamMember:
     if not user.is_manager:
         raise forbidden_error("Only the HSE Manager can change the HSE team.")
+    user.ensure_writer()
     target = db.get(User, user_id)
     if target is None:
         raise not_found("User")

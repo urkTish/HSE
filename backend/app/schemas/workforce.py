@@ -77,7 +77,18 @@ class WorkforceReturnUpdate(PatchInput):
     PERIOD_LOCKED (HSE Manager unlocks the row first)."""
 
     non_nullable = frozenset(
-        {"headcount", "man_hours", "no_work", "shift", "toolbox_talks", "inductions"}
+        {
+            "headcount",
+            "man_hours",
+            "no_work",
+            "shift",
+            "toolbox_talks",
+            "toolbox_attendees",
+            "inductions",
+            "training_hours",
+            "absent_count",
+            "overtime_hours",
+        }
     )
 
     zone_id: uuid.UUID | None = None
@@ -117,6 +128,7 @@ class WorkforceAutoFillResult(ApiModel):
     days: int
     created: int
     updated: int
+    removed: int = Field(default=0, description="Automatic rows retired (nobody at work any more).")
     skipped: int = Field(description="Keys that already have a manual, imported or verified row.")
 
 

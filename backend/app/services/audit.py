@@ -38,6 +38,22 @@ SENSITIVE_KEYS: frozenset[str] = frozenset(
         "treatments",
         "privacy_reason",
         "date_of_death",
+        # injured-person identity and absence details (P1-1), masked in before/after diffs
+        "employee_no",
+        "gosi_case_ref",
+        "nationality",
+        "illness",
+        "body_part",
+        "nature",
+        "treated_at",
+        "loss_of_consciousness",
+        "away_start_date",
+        "rtw_date",
+        "restricted_start",
+        "restricted_end",
+        "transfer_start",
+        "transfer_end",
+        "permanent_disability",
     }
 )
 MASK = "***"
@@ -289,6 +305,16 @@ def purge_expired(db: Session) -> AuditEntry:
         ).all()
     ]
     targets.append((None, get_settings().org_audit_retention_years))
+    # Projects deleted under D-265 keep their history but have no settings row: org retention.
+    orphans = db.scalars(
+        select(AuditEntry.project_id)
+        .distinct()
+        .where(
+            AuditEntry.project_id.is_not(None),
+            AuditEntry.project_id.not_in(select(ProjectSettings.project_id)),
+        )
+    ).all()
+    targets.extend((pid, get_settings().org_audit_retention_years) for pid in orphans)
     db.execute(text("SELECT pg_advisory_xact_lock(:k)"), {"k": AUDIT_LOCK_KEY})
     total = 0
     all_seqs: list[int] = []

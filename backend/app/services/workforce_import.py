@@ -54,7 +54,7 @@ from app.schemas.workforce import (
     WorkforceImportRead,
     WorkforceImportSummary,
 )
-from app.services import audit, hse_settings, notify, projects
+from app.services import audit, hse_settings, notify, projects, workforce_auto
 from app.services import exports as export_svc
 from app.services import workforce as wf
 from app.services.common import ensure_open, paginate
@@ -762,6 +762,14 @@ def commit(db: Session, p: Principal, batch_id: uuid.UUID) -> WorkforceImportRea
                 details={"import_batch_id": str(b.id)},
             )
         else:
+            workforce_auto.retire_for_manual_row(
+                db,
+                p,
+                project.id,
+                uuid.UUID(str(values["engagement_id"])),
+                uuid.UUID(str(values["site_id"])),
+                date.fromisoformat(str(values["work_date"])),
+            )
             db.add(
                 WorkforceReturn(
                     project_id=project.id,

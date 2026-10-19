@@ -904,11 +904,9 @@ def _incident_rows(
                         "employer": engs.get(c.employer_engagement_id)
                         if c.employer_engagement_id
                         else None,
-                        "trade": c.trade.value if c.trade else None,
+                        # §3.4: body part, nature and trade are sensitive; counts come via T3
                         "mechanism": c.mechanism.value if c.mechanism else None,
                         "agency": c.agency.value if c.agency else None,
-                        "body_part": c.body_part.value if c.body_part else None,
-                        "nature": c.nature.value if c.nature else None,
                     }
                     for c in cs
                 ],

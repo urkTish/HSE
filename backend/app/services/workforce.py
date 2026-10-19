@@ -243,6 +243,8 @@ def create(
     ensure_unlocked(db, project.id, body.work_date)
     if _duplicate(db, project.id, body.work_date, body.site_id, body.zone_id, eng.id, body.shift):
         raise duplicate_error()
+    # D-268: a typed return replaces the automatic row of the same engagement × site × day.
+    workforce_auto.retire_for_manual_row(db, p, project.id, eng.id, body.site_id, body.work_date)
     r = WorkforceReturn(
         project_id=project.id,
         site_id=body.site_id,

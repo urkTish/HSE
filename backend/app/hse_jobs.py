@@ -615,7 +615,7 @@ def anonymise_injury_identity(db: Session, at: datetime | None = None) -> dict[s
     ).all()
     for c, i in rows:
         years = hse_settings.get(db, i.project_id).injury_identity_retention_years
-        if i.closed_at is None or i.closed_at.replace(year=i.closed_at.year + years) > t:
+        if i.closed_at is None or _plus_years(i.closed_at, years) > t:
             continue
         c.person_name = "Anonymised / مجهّل"
         c.id_number_enc = None
@@ -650,12 +650,19 @@ def vehicle_report_reminders(db: Session, day: date | None = None) -> dict[str, 
     return {"notified": veh.report_reminders(db, d0)}
 
 
+def _plus_years(ts: datetime, years: int) -> datetime:
+    try:
+        return ts.replace(year=ts.year + years)
+    except ValueError:  # 29 Feb
+        return ts.replace(year=ts.year + years, day=28)
+
+
 def workforce_auto_fill(db: Session, day: date | None = None) -> dict[str, Any]:
     """D-268: refresh automatic daily returns for yesterday and today (gate entries arrive
     through the day)."""
     from app.services import workforce_auto  # noqa: PLC0415
 
-    total = {"created": 0, "updated": 0, "skipped": 0}
+    total = {"created": 0, "updated": 0, "removed": 0, "skipped": 0}
     for project in _projects(db):
         d0 = day or project_today(project)
         res = workforce_auto.fill_range(db, None, project, d0 - timedelta(days=1), d0)

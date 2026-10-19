@@ -42,6 +42,7 @@ def test_fill_day_counts_people_once_and_applies_standard_hours(
     assert workforce_auto.fill_day(db, None, project, DAY) == {
         "created": 0,
         "updated": 0,
+        "removed": 0,
         "skipped": 0,
     }
 
@@ -115,3 +116,88 @@ def test_auto_fill_endpoint(project: Project, api: Api, ids: Ids, db: Session) -
         json={"from_date": "2026-01-01", "to_date": "2026-10-05"},
     )
     assert too_long.status_code == 422
+
+
+def test_manual_all_shift_row_blocks_the_auto_row_and_a_new_manual_row_retires_it(
+    project: Project, db: Session, api: Api
+) -> None:
+    counts = workforce_auto.headcounts(db, project, DAY)
+    (eng_id, site_id), _n = next(iter(counts.items()))
+    # A typed "all"-shift return for the engagement × site × day: no auto row may join it.
+    db.add(
+        WorkforceReturn(
+            project_id=project.id,
+            site_id=site_id,
+            engagement_id=eng_id,
+            work_date=DAY,
+            shift=Shift.all,
+            headcount=5,
+            man_hours=Decimal(50),
+            source=WorkforceSource.manual,
+            status=WorkforceStatus.submitted,
+            warnings=[],
+        )
+    )
+    db.commit()
+    res = workforce_auto.fill_day(db, None, project, DAY)
+    db.commit()
+    assert res["skipped"] == 1
+    n = db.scalar(
+        select(func.count())
+        .select_from(WorkforceReturn)
+        .where(
+            WorkforceReturn.engagement_id == eng_id,
+            WorkforceReturn.site_id == site_id,
+            WorkforceReturn.work_date == DAY,
+        )
+    )
+    assert n == 1
+    # The reverse: typing a return on top of an auto row retires the auto row.
+    (eng2, site2), _n2 = next(k for k in counts.items() if k[0] != (eng_id, site_id))
+    auto = db.scalar(
+        select(WorkforceReturn).where(
+            WorkforceReturn.engagement_id == eng2,
+            WorkforceReturn.site_id == site2,
+            WorkforceReturn.work_date == DAY,
+        )
+    )
+    assert auto is not None and auto.source == WorkforceSource.auto
+    auto_id = auto.id
+    mgr = api.as_("faisal.harbi")
+    res2 = mgr.post(
+        f"/api/v1/projects/{project.id}/workforce-returns",
+        json={
+            "site_id": str(site2),
+            "engagement_id": str(eng2),
+            "work_date": DAY.isoformat(),
+            "shift": "all",
+            "headcount": 3,
+            "man_hours": "30.00",
+            "submit": True,
+        },
+    )
+    assert res2.status_code == 201, res2.text
+    db.expire_all()
+    assert db.get(WorkforceReturn, auto_id) is None
+
+
+def test_auto_rows_are_retired_when_nobody_is_at_work_any_more(
+    project: Project, db: Session
+) -> None:
+    res = workforce_auto.fill_day(db, None, project, DAY)
+    db.commit()
+    assert res["created"] > 0
+    s = hse_settings.get(db, project.id)
+    s.auto_man_hours = False
+    db.commit()
+    res2 = workforce_auto.fill_day(db, None, project, DAY)
+    db.commit()
+    assert res2["removed"] == res["created"] and res2["created"] == 0
+    assert (
+        db.scalar(
+            select(func.count())
+            .select_from(WorkforceReturn)
+            .where(WorkforceReturn.source == WorkforceSource.auto)
+        )
+        == 0
+    )

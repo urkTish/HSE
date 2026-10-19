@@ -57,6 +57,7 @@ def _foreign_keys(db: Session) -> dict[str, list[_Fk]]:
             JOIN pg_attribute ca ON ca.attrelid = c.conrelid AND ca.attnum = c.conkey[1]
             JOIN pg_attribute pa ON pa.attrelid = c.confrelid AND pa.attnum = c.confkey[1]
             WHERE c.contype = 'f' AND c.connamespace = 'public'::regnamespace
+              AND array_length(c.conkey, 1) = 1
             """
         )
     ).all()
@@ -82,8 +83,43 @@ def purge_project(db: Session, project_id: uuid.UUID) -> dict[str, int]:
     return purge(db, "projects", project_id).deleted
 
 
+PURGE_LOCK_KEY = 7_265_271  # one purge at a time (D-265 / D-271)
+
+
+def _composite_fk_parents(db: Session) -> set[str]:
+    return set(
+        db.scalars(
+            text(
+                "SELECT DISTINCT confrelid::regclass::text FROM pg_constraint "
+                "WHERE contype = 'f' AND connamespace = 'public'::regnamespace "
+                "AND array_length(conkey, 1) > 1"
+            )
+        ).all()
+    )
+
+
+def _drop_site_ids(db: Session, site_ids: list[object]) -> None:
+    """ARRAY columns carry no foreign key: strip deleted sites from every ``site_ids`` array."""
+    tables = db.scalars(
+        text(
+            "SELECT table_name FROM information_schema.columns WHERE table_schema = 'public' "
+            "AND column_name = 'site_ids' AND data_type = 'ARRAY'"
+        )
+    ).all()
+    for t in tables:
+        db.execute(
+            text(
+                f"UPDATE {_q(t)} SET site_ids = COALESCE("
+                "(SELECT array_agg(x) FROM unnest(site_ids) AS x WHERE NOT x = ANY(:ids)), "
+                "'{}') WHERE site_ids && :ids"
+            ),
+            {"ids": list(site_ids)},
+        )
+
+
 def purge(db: Session, root: str, row_id: object, snapshot_limit: int = 0) -> Purge:
     """Delete one row of ``root`` (by ``id``) and everything that belongs to it."""
+    db.execute(text("SELECT pg_advisory_xact_lock(:k)"), {"k": PURGE_LOCK_KEY})
     fks = _foreign_keys(db)
     doomed: dict[str, set[str]] = defaultdict(set)
     # (table, column) -> referenced values to null out. Values, not ctids: an UPDATE moves a
@@ -124,6 +160,17 @@ def purge(db: Session, root: str, row_id: object, snapshot_limit: int = 0) -> Pu
                 doomed[fk.child].update(new)
                 queue.append((fk.child, new))
 
+    composite = _composite_fk_parents(db) & {t for t, c in doomed.items() if c}
+    if composite:
+        raise RuntimeError(f"Composite foreign keys reference {sorted(composite)}; not supported")
+    doomed_sites: list[object] = []
+    if doomed.get("sites"):
+        doomed_sites = list(
+            db.scalars(
+                text("SELECT id FROM sites WHERE ctid = ANY(CAST(:t AS tid[]))"),
+                {"t": list(doomed["sites"])},
+            ).all()
+        )
     out = Purge()
     total = sum(len(c) for c in doomed.values())
     if snapshot_limit and total <= snapshot_limit:
@@ -183,4 +230,6 @@ def purge(db: Session, root: str, row_id: object, snapshot_limit: int = 0) -> Pu
             )
             deleted[t] = result.rowcount  # type: ignore[attr-defined]
             pending.discard(t)
+    if doomed_sites:
+        _drop_site_ids(db, doomed_sites)
     return out

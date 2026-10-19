@@ -62,7 +62,12 @@ def _home_site(dep: Deployment, eng: ProjectEngagement) -> uuid.UUID:
 
 
 def headcounts(db: Session, project: Project, day: date) -> dict[tuple[uuid.UUID, uuid.UUID], int]:
-    """(engagement_id, site_id) → people at work on ``day``; empty on a rest day without entries."""
+    """(engagement_id, site_id) → people at work on ``day``.
+
+    Gate check-ins decide per site: a site with at least one granted person check-in that day
+    counts only the people who came through its gates; every other site counts its mobilised
+    roster, except on a rest day, when ungated sites get nothing.
+    """
     engs = _engagements(db, project, day)
     if not engs:
         return {}
@@ -78,8 +83,7 @@ def headcounts(db: Session, project: Project, day: date) -> dict[tuple[uuid.UUID
         )
     ).all()
     s = hse_settings.get(db, project.id)
-    if not gate and WEEKDAYS[day.weekday()] in (s.rest_days or []):
-        return {}
+    rest_day = WEEKDAYS[day.weekday()] in (s.rest_days or [])
     deps = db.scalars(
         select(Deployment).where(
             Deployment.project_id == project.id,
@@ -90,19 +94,24 @@ def headcounts(db: Session, project: Project, day: date) -> dict[tuple[uuid.UUID
         )
     ).all()
     by_id = {d.id: d for d in deps}
+    gated_sites = {site_id for _, site_id in gate if site_id is not None}
     people: dict[uuid.UUID, uuid.UUID] = {}  # deployment → site
-    if gate:
-        for dep_id, site_id in gate:
-            dep = by_id.get(dep_id) if dep_id else None
-            if dep is None or dep.id in people or dep.engagement_id is None:
-                continue
-            eng = engs[dep.engagement_id]
-            people[dep.id] = site_id if site_id in eng.site_ids else _home_site(dep, eng)
-    else:
+    for dep_id, site_id in gate:
+        dep = by_id.get(dep_id) if dep_id else None
+        if dep is None or dep.id in people or dep.engagement_id is None:
+            continue
+        eng = engs[dep.engagement_id]
+        people[dep.id] = site_id if site_id in eng.site_ids else _home_site(dep, eng)
+    if not rest_day:
         for dep in deps:
-            if dep.engagement_id is None or (dep.inducted_on and dep.inducted_on > day):
+            if dep.id in people or dep.engagement_id is None:
                 continue
-            people[dep.id] = _home_site(dep, engs[dep.engagement_id])
+            if dep.inducted_on and dep.inducted_on > day:
+                continue
+            home = _home_site(dep, engs[dep.engagement_id])
+            if home in gated_sites:
+                continue  # that site is counted through its gate
+            people[dep.id] = home
     counts: dict[tuple[uuid.UUID, uuid.UUID], int] = defaultdict(int)
     for dep_id, site_id in people.items():
         eng_id = by_id[dep_id].engagement_id
@@ -111,30 +120,36 @@ def headcounts(db: Session, project: Project, day: date) -> dict[tuple[uuid.UUID
     return dict(counts)
 
 
+def _has_manual_figures(r: W) -> bool:
+    return bool(
+        r.absent_count
+        or r.overtime_hours
+        or r.toolbox_talks
+        or r.toolbox_attendees
+        or r.inductions
+        or r.training_hours
+        or r.remarks
+    )
+
+
 def fill_day(db: Session, p: Principal | None, project: Project, day: date) -> dict[str, int]:
-    """Create or refresh the automatic rows of one day. Returns counts by outcome."""
-    out = {"created": 0, "updated": 0, "skipped": 0}
+    """Create, refresh or retire the automatic rows of one day. Returns counts by outcome."""
+    out = {"created": 0, "updated": 0, "removed": 0, "skipped": 0}
     s = hse_settings.get(db, project.id)
-    if not s.auto_man_hours or day > project_today(project) or day < project.start_date:
+    if day > project_today(project) or day < project.start_date:
         return out
     if is_locked(db, project.id, day):
         return out
-    counts = headcounts(db, project, day)
-    existing = {
-        (r.engagement_id, r.site_id): r
-        for r in db.scalars(
-            select(W).where(
-                W.project_id == project.id,
-                W.work_date == day,
-                W.zone_id.is_(None),
-                W.shift == Shift.day,
-            )
-        )
-    }
+    # Switched off: no new rows, and the automatic rows that are still open are retired.
+    counts = headcounts(db, project, day) if s.auto_man_hours else {}
+    rows = db.scalars(select(W).where(W.project_id == project.id, W.work_date == day)).all()
+    # A typed or imported return for the engagement × site × day, any shift or zone, wins.
+    taken = {(r.engagement_id, r.site_id) for r in rows if r.source != WorkforceSource.auto}
+    existing = {(r.engagement_id, r.site_id): r for r in rows if r.source == WorkforceSource.auto}
     actor = p.actor(project.id) if p else audit.SYSTEM
     for (eng_id, site_id), n in sorted(counts.items(), key=lambda kv: str(kv[0])):
         r = existing.get((eng_id, site_id))
-        if r is not None and (r.source != WorkforceSource.auto or r.status not in EDITABLE):
+        if (eng_id, site_id) in taken or (r is not None and r.status not in EDITABLE):
             out["skipped"] += 1
             continue
         if r is None:
@@ -169,10 +184,10 @@ def fill_day(db: Session, p: Principal | None, project: Project, day: date) -> d
             out["created"] += 1
             continue
         new_hours = man_hours(n, r.absent_count, r.overtime_hours, s)
-        if r.headcount == n and r.man_hours == new_hours:
+        if r.headcount == n and r.man_hours == new_hours and not r.no_work:
             continue
         before = {"headcount": r.headcount, "man_hours": r.man_hours}
-        r.headcount, r.man_hours = n, new_hours
+        r.headcount, r.man_hours, r.no_work = n, new_hours, False
         audit.record(
             db,
             AuditAction.update,
@@ -184,15 +199,85 @@ def fill_day(db: Session, p: Principal | None, project: Project, day: date) -> d
             after={"headcount": n, "man_hours": new_hours},
         )
         out["updated"] += 1
-    if out["created"] or out["updated"]:
+    # Keys that no longer apply (people demobilised, a manual row typed, rest day, switched off).
+    for key, r in existing.items():
+        if key in counts or r.status not in EDITABLE:
+            continue
+        if _has_manual_figures(r):
+            if r.headcount == 0 and r.man_hours == 0:
+                continue
+            before = {"headcount": r.headcount, "man_hours": r.man_hours}
+            r.headcount, r.absent_count, r.man_hours = 0, 0, Decimal(0)
+            r.overtime_hours = Decimal(0)
+            audit.record(
+                db,
+                AuditAction.update,
+                actor,
+                entity_type=EntityType.workforce_return,
+                entity_id=r.id,
+                project_id=project.id,
+                before=before,
+                after={"headcount": 0, "man_hours": Decimal(0)},
+            )
+        else:
+            audit.record(
+                db,
+                AuditAction.archive,
+                actor,
+                entity_type=EntityType.workforce_return,
+                entity_id=r.id,
+                project_id=project.id,
+                before={"headcount": r.headcount, "man_hours": r.man_hours, "source": "auto"},
+            )
+            db.delete(r)
+        out["removed"] += 1
+    if out["created"] or out["updated"] or out["removed"]:
+        db.flush()
         mark_restated(db, p, project.id, day, "automatic workforce returns refreshed")
     return out
+
+
+def retire_for_manual_row(
+    db: Session,
+    p: Principal | None,
+    project_id: uuid.UUID,
+    eng_id: uuid.UUID,
+    site_id: uuid.UUID,
+    day: date,
+) -> int:
+    """A typed or imported return replaces the automatic row of its engagement × site × day."""
+    n = 0
+    for r in db.scalars(
+        select(W).where(
+            W.project_id == project_id,
+            W.work_date == day,
+            W.engagement_id == eng_id,
+            W.site_id == site_id,
+            W.source == WorkforceSource.auto,
+            W.status.in_(EDITABLE),
+        )
+    ):
+        audit.record(
+            db,
+            AuditAction.archive,
+            p.actor(project_id) if p else audit.SYSTEM,
+            entity_type=EntityType.workforce_return,
+            entity_id=r.id,
+            project_id=project_id,
+            before={"headcount": r.headcount, "man_hours": r.man_hours, "source": "auto"},
+            details={"replaced_by": "manual return"},
+        )
+        db.delete(r)
+        n += 1
+    if n:
+        db.flush()
+    return n
 
 
 def fill_range(
     db: Session, p: Principal | None, project: Project, start: date, end: date
 ) -> dict[str, int]:
-    total = {"created": 0, "updated": 0, "skipped": 0, "days": 0}
+    total = {"created": 0, "updated": 0, "removed": 0, "skipped": 0, "days": 0}
     d = start
     while d <= end:
         for k, v in fill_day(db, p, project, d).items():

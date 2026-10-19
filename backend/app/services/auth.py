@@ -289,6 +289,7 @@ def login(db: Session, email: str, password: str) -> tuple[IssuedSession, User]:
     user.failed_login_count = 0
     user.failed_window_started_at = None
     user.last_login_at = current
+    user.inactivity_warned_at = None  # §7: warn again on the next idle period
     issued = create_session(db, user)
     if had_sessions and not known:
         notify.send_email(db, user, "new_login", ip=ctx.ip_address or "unknown")
@@ -549,6 +550,11 @@ def confirm_reset(db: Session, raw: str, new_password: str) -> None:
     check_password(new_password, user.email, "new_password")
     tok.used_at = now()
     user.password_hash = hash_password(new_password)
+    if user.status == UserStatus.locked:  # a verified e-mail link outranks the lockout
+        user.status = UserStatus.active
+        user.locked_until = None
+        user.failed_login_count = 0
+        user.failed_window_started_at = None
     revoke_sessions(db, user.id, "password_reset")
     audit.record(
         db,

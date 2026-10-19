@@ -7,7 +7,6 @@ from sqlalchemy import Select, func, select
 from sqlalchemy.orm import Session
 
 from app.core.clock import now
-from app.core.config import project_deleters
 from app.core.enums import (
     AuditAction,
     Capability,
@@ -42,7 +41,6 @@ from app.services.common import (
     require_reason,
 )
 from app.services.permissions import Principal, deny, forbidden_error
-from app.services.project_purge import purge_project
 
 FIELDS = (
     "code",
@@ -255,13 +253,16 @@ def delete(
     db: Session, p: Principal, project_id: uuid.UUID, body: ProjectDeleteRequest
 ) -> ProjectDeleteResult:
     """Permanent delete of the project and all its data (D-265); named admins only."""
-    if p.user.email.lower() not in project_deleters():
-        raise forbidden_error("Only the platform administrator can delete projects.")
+    from app.services import admin_records  # noqa: PLC0415 (it imports this module's models)
+
+    admin_records.require_admin(p)
     project = get_visible(db, p, project_id)
     if body.confirm_code.strip() != project.code:
         raise validation_error("confirm_code", "Type the project code exactly to confirm.")
+    admin_records.require_recent_auth(p)
     before = {**_dict(project), "status": project.status}
-    deleted = purge_project(db, project.id)
+    result = admin_records.run_purge(db, "projects", project.id, admin_records.SNAPSHOT_LIMIT)
+    deleted = result.deleted
     db.add(
         DeletedRecord(
             deleted_by_user_id=p.user.id,
@@ -271,15 +272,16 @@ def delete(
             label=f"project {before['code']}",
             reason=(body.reason or "").strip()[:500] or "—",
             row_counts=deleted,
-            rows={"projects": [audit.jsonable(before)]},
+            rows=admin_records.scrub_rows(result.rows) or {"projects": [audit.jsonable(before)]},
         )
     )
     audit.record(
         db,
         AuditAction.archive,
-        p.actor(None),
+        p.actor(project_id),
         entity_type=EntityType.project,
         entity_id=project_id,
+        project_id=project_id,
         before=before,
         details={"deleted": True, "rows_deleted": deleted},
     )
