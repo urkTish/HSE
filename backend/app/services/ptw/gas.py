@@ -980,11 +980,14 @@ def record(db: Session, p: Principal, permit_id: uuid.UUID, body: GasTestCreate)
     fails = rules.evaluate_readings(readings, f.limits)
     s = f.settings
     seq, no = next_test_no(db, permit)
+    from app.services.ptw import lifecycle  # noqa: PLC0415
+
+    shift = lifecycle.current_shift(db, permit)  # a Suspended permit has no open shift
     t = GasTest(
         id=uuid.uuid4(),
         project_id=permit.project_id,
         permit_id=permit.id,
-        shift_id=permit.current_shift_id,
+        shift_id=shift.id if shift else None,
         seq=seq,
         test_no=no,
         test_type=body.test_type,

@@ -341,3 +341,21 @@ def test_AC16_id_expiry_warning_then_block(n: Any) -> None:
     assert "KEY_ROLE_INELIGIBLE" in codes
     p_bl = str(lifecycle.evaluation.evaluate(n.db, p).blockers)
     assert "ID_EXPIRED" in p_bl, p_bl
+
+
+def test_review_key_crew_change_on_active_is_read_only(n: Any) -> None:
+    """Review F2 (PT-13): a key-role line is not removed from an Active permit; the permit
+    stays Active with its crew (stop the work first)."""
+    p = fx(n)
+    activate(n, p)
+    assert p.status == S.active
+    sup = next(x for x in evaluation.crew_lines(n.db, p.id) if x.crew_role.value == "supervisor")
+    expect(
+        "PERMIT_READ_ONLY",
+        lambda: permits.delete_crew(n.db, n.p("ramesh.kumar"), p.id, sup.id),
+        409,
+    )
+    n.db.refresh(p)
+    assert p.status == S.active
+    lines = evaluation.crew_lines(n.db, p.id)
+    assert any(x.id == sup.id and x.status.value == "listed" for x in lines)

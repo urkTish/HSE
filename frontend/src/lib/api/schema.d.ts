@@ -32,7 +32,7 @@ export interface paths {
         put?: never;
         /**
          * Log in with email and password
-         * @description Sets the httpOnly `hse_session` cookie and returns the same JWT. Unknown email and wrong password give an identical 401 INVALID_CREDENTIALS. After 5 failures in 15 min the account is locked for 15 min (401 ACCOUNT_LOCKED).
+         * @description Sets the httpOnly `hse_session` cookie and returns the same JWT. Unknown email and wrong password give an identical 401 INVALID_CREDENTIALS. After 10 failures in 15 min the account is locked for 15 min (401 ACCOUNT_LOCKED).
          */
         post: operations["login"];
         delete?: never;
@@ -31592,8 +31592,11 @@ export interface components {
             full_name_en: string;
             /** Full Name Ar */
             full_name_ar: string | null;
-            /** Email */
-            email: string;
+            /**
+             * Email
+             * @description Only with the contact-details capability (12).
+             */
+            email: string | null;
             /** Job Title */
             job_title: string | null;
             hse_position: components["schemas"]["HsePosition"] | null;
@@ -41381,11 +41384,16 @@ export interface components {
         PointVerifyInput: {
             /**
              * Verified By User Id
-             * @description Default: caller.
+             * @description Default: caller. Another user verifies only with their co-signature.
              */
             verified_by_user_id?: string | null;
-            /** Verified By Worker Id */
+            /**
+             * Verified By Worker Id
+             * @description A crew member of a permit linked to the certificate.
+             */
             verified_by_worker_id?: string | null;
+            /** @description Required when verified_by_user_id is not the caller. */
+            cosign?: components["schemas"]["CoSignature"] | null;
             /**
              * Verified At
              * Format: date-time
@@ -55568,6 +55576,12 @@ export interface components {
             created: number;
             /** Updated */
             updated: number;
+            /**
+             * Removed
+             * @description Automatic rows retired (nobody at work any more).
+             * @default 0
+             */
+            removed: number;
             /**
              * Skipped
              * @description Keys that already have a manual, imported or verified row.

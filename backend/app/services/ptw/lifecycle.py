@@ -1673,8 +1673,18 @@ def post_expiry_check(
             "تم تسجيل الفحص بالفعل.",
             status=409,
         )
-    if not common.appointments_of(
-        db, permit.project_id, AppointmentFunction.issuer, user_id=p.user.id
+    if (
+        common.find_appointment(
+            db,
+            permit.project_id,
+            AppointmentFunction.issuer,
+            [],
+            permit.site_id,
+            [],
+            [acommon.local_day(now())],
+            user_id=p.user.id,
+        )
+        is None
     ):
         raise common.err(
             ErrorCode.APPOINTMENT_INVALID,

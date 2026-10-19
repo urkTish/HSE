@@ -1,18 +1,21 @@
 """Spec 2-access-permits §9 AC10-AC18 (site induction) and X1."""
 
 import base64
+import os
+import uuid
 from datetime import date
+from pathlib import Path
 from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
 from app import access_jobs
 from app.core.access_enums import DeploymentStatus, InductionStatus, QrTokenStatus
 from app.core.clock import frozen
-from app.models import Deployment, HseSettings, InductionCourse, QrToken
+from app.models import Attachment, Deployment, HseSettings, InductionCourse, QrToken
 from app.services.access import common
 from tests.access_helpers import API, deployment, induction, project_id, riyadh, worker
 from tests.conftest import Api, Ids
@@ -254,3 +257,32 @@ def test_P2AC18_k38_source_switch(api: Api, ids: Ids, db: Session) -> None:
     v2 = k38(c, ids)
     value2 = v2["kpi"]["value"]
     assert int(float(value2)) == returns
+
+
+def test_review_session_rollback_leaves_no_signature_files(api: Api, db: Session) -> None:
+    """Review F22: a rejected session leaves no signature PNG of the valid attendees on disk."""
+    root = Path(os.environ["STORAGE_DIR"])
+    files_before = sum(1 for _ in root.rglob("*") if _.is_file())
+    rows_before = db.scalar(select(func.count(Attachment.id)))
+    attendee = {
+        "delivery_language": "ar",
+        "interpreter_used": False,
+        "privacy_notice_version": "WPN-1.0",
+        "signature_png_base64": PNG,
+    }
+    res = api.as_("noura.qahtani").post(
+        f"{API}/projects/{project_id(db, 'ANIA-EXP')}/induction-sessions",
+        json={
+            "course_id": course_id(db, "ANIA-EXP", "GEN"),
+            "delivered_at": "2026-10-06T06:00:00Z",
+            "duration_minutes": 95,
+            "attendees": [
+                {**attendee, "worker_id": str(worker(db, "Rajesh Nair").id)},
+                {**attendee, "worker_id": str(uuid.uuid4())},
+            ],
+        },
+    )
+    assert res.status_code == 422, res.text
+    db.expire_all()
+    assert db.scalar(select(func.count(Attachment.id))) == rows_before
+    assert sum(1 for _ in root.rglob("*") if _.is_file()) == files_before

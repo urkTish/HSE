@@ -167,11 +167,26 @@ def _view(db: Session, p: Principal, project_id: uuid.UUID) -> Any:
     return g
 
 
-def _visible_row(p: Principal, project_id: uuid.UUID, eng: uuid.UUID | None) -> bool:
+def _visible_row(
+    p: Principal,
+    project_id: uuid.UUID,
+    eng: uuid.UUID | None,
+    site_ids: list[uuid.UUID] | None = None,
+) -> bool:
     g = p.grant(project_id, C.access_works_view)
-    if g is None:
-        return False
-    return g.engagement_ids is None or (eng is not None and eng in g.engagement_ids)
+    return common.grant_covers(g, site_ids, eng)
+
+
+def _sites(db: Session, zone_ids: list[uuid.UUID] | None) -> list[uuid.UUID]:
+    """The sites of a NOTAM's zones: a site-limited grant covers the row through them."""
+    if not zone_ids:
+        return []
+    return list(db.scalars(select(Zone.site_id).where(Zone.id.in_(list(zone_ids)))))
+
+
+def _obs_sites(db: Session, o: ObstacleClearance) -> list[uuid.UUID]:
+    z = db.get(Zone, o.zone_id) if o.zone_id else None
+    return [z.site_id] if z else []
 
 
 def get_notam_row(db: Session, p: Principal, ntm_id: uuid.UUID) -> NotamRequest:
@@ -179,7 +194,7 @@ def get_notam_row(db: Session, p: Principal, ntm_id: uuid.UUID) -> NotamRequest:
     if n is None:
         raise not_found("NOTAM request")
     _view(db, p, n.project_id)
-    if not _visible_row(p, n.project_id, n.engagement_id):
+    if not _visible_row(p, n.project_id, n.engagement_id, _sites(db, n.zone_ids)):
         raise forbidden_error("This record is outside your scope.")
     return n
 
@@ -321,7 +336,7 @@ def update_notam(
     db: Session, p: Principal, ntm_id: uuid.UUID, body: NotamRequestUpdate
 ) -> NotamRequestRead:
     n = get_notam_row(db, p, ntm_id)
-    common.require_cap(p, n.project_id, C.notam_edit, None, n.engagement_id)
+    common.require_cap(p, n.project_id, C.notam_edit, _sites(db, n.zone_ids), n.engagement_id)
     if n.status != NS.draft:
         raise invalid_transition("NOTAM request", n.status, "edited")
     before = _notam_snapshot(n)
@@ -384,7 +399,7 @@ def transition_notam(
     warnings: list[ApiWarning] = []
 
     def need(cap: Capability) -> None:
-        common.require_cap(p, n.project_id, cap, None, n.engagement_id)
+        common.require_cap(p, n.project_id, cap, _sites(db, n.zone_ids), n.engagement_id)
 
     if frm == NS.draft and to == NS.submitted_to_ops:
         need(C.notam_edit)
@@ -490,7 +505,9 @@ def replace_notam(
 ) -> NotamRequestRead:
     """NOTAMR: new Issued record replacing an Issued one; auto-linked to its WAPs (NT-5)."""
     old = get_notam_row(db, p, ntm_id)
-    common.require_cap(p, old.project_id, C.notam_process, None, old.engagement_id)
+    common.require_cap(
+        p, old.project_id, C.notam_process, _sites(db, old.zone_ids), old.engagement_id
+    )
     if old.status != NS.issued:
         raise invalid_transition("NOTAM request", old.status, NS.replaced)
     project = db.get(Project, old.project_id)
@@ -715,7 +732,7 @@ def get_obstacle_row(db: Session, p: Principal, obs_id: uuid.UUID) -> ObstacleCl
     if o is None:
         raise not_found("Obstacle clearance")
     _view(db, p, o.project_id)
-    if not _visible_row(p, o.project_id, o.engagement_id):
+    if not _visible_row(p, o.project_id, o.engagement_id, _obs_sites(db, o)):
         raise forbidden_error("This record is outside your scope.")
     return o
 
@@ -909,7 +926,7 @@ def update_obstacle(
     db: Session, p: Principal, obs_id: uuid.UUID, body: ObstacleUpdate
 ) -> ObstacleRead:
     o = get_obstacle_row(db, p, obs_id)
-    common.require_cap(p, o.project_id, C.obstacle_edit, None, o.engagement_id)
+    common.require_cap(p, o.project_id, C.obstacle_edit, _obs_sites(db, o), o.engagement_id)
     if o.status != OS.draft:
         raise invalid_transition("Obstacle clearance", o.status, "edited")
     project = db.get(Project, o.project_id)
@@ -963,7 +980,7 @@ def transition_obstacle(
     before = _obs_snapshot(o)
     at = now()
     if frm == OS.draft and to == OS.submitted:
-        common.require_cap(p, o.project_id, C.obstacle_edit, None, o.engagement_id)
+        common.require_cap(p, o.project_id, C.obstacle_edit, _obs_sites(db, o), o.engagement_id)
         s = common.settings(db, o.project_id)
         late = today() > o.requested_from - timedelta(days=s.obstacle_clearance_lead_days)
         if late and not body.late_justification:
@@ -979,20 +996,22 @@ def transition_obstacle(
         o.submitted_at = at
         o.authority_ref = body.authority_ref or o.authority_ref
     elif frm in APPROVED and to == OS.suspended:
-        common.require_cap(p, o.project_id, C.obstacle_decide, None, o.engagement_id)
+        common.require_cap(p, o.project_id, C.obstacle_decide, _obs_sites(db, o), o.engagement_id)
         o.status_reason = common.reason_text(body.reason)
         o.system_suspended = False
     elif frm == OS.suspended and to in APPROVED:
-        common.require_cap(p, o.project_id, C.obstacle_decide, None, o.engagement_id)
+        common.require_cap(p, o.project_id, C.obstacle_decide, _obs_sites(db, o), o.engagement_id)
         o.status_reason = common.reason_text(body.reason)
         o.system_suspended = False
         to = _approved_status(o)
     elif frm in (*APPROVED, OS.suspended) and to == OS.withdrawn:
         own = o.requested_by_user_id == p.user.id
         if own:
-            common.require_cap(p, o.project_id, C.obstacle_edit, None, o.engagement_id)
+            common.require_cap(p, o.project_id, C.obstacle_edit, _obs_sites(db, o), o.engagement_id)
         else:
-            common.require_cap(p, o.project_id, C.obstacle_decide, None, o.engagement_id)
+            common.require_cap(
+                p, o.project_id, C.obstacle_decide, _obs_sites(db, o), o.engagement_id
+            )
         o.status_reason = common.reason_text(body.reason)
     elif to in (OS.approved, OS.approved_with_conditions, OS.rejected):
         raise ApiError(
@@ -1025,7 +1044,7 @@ def decide(
     db: Session, p: Principal, obs_id: uuid.UUID, body: ObstacleDecisionRequest
 ) -> ObstacleRead:
     o = get_obstacle_row(db, p, obs_id)
-    common.require_cap(p, o.project_id, C.obstacle_decide, None, o.engagement_id)
+    common.require_cap(p, o.project_id, C.obstacle_decide, _obs_sites(db, o), o.engagement_id)
     if o.status != OS.submitted:
         raise invalid_transition("Obstacle clearance", o.status, body.decision.value)
     before = _obs_snapshot(o)

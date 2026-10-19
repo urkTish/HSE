@@ -349,3 +349,103 @@ def test_P2AC66_gate_device_cannot_list_workers(api: Api, ids: Ids, db: Session)
     other = gate(db, "G-ANIA-01")
     res = dev.post(f"{API}/gate-checks", json={"gate_id": str(other.id), "payload": "x"})
     assert res.status_code == 403, res.text
+
+
+def gulfpave_rep(db: Session, ids: Ids) -> str:
+    """A Contractor HSE Rep scoped to the GULFPAVE engagement (a sub-tree of RAWABI, so NAJD
+    workers are outside their scope while Abdul Karim / Tariq are inside)."""
+    from app.core.clock import now
+    from app.core.config import get_settings
+    from app.core.enums import EmployerType, UserStatus
+    from app.core.security import hash_password
+    from app.models import User
+    from tests.conftest import PASSWORD
+
+    u = User(
+        id=uuid.uuid4(),
+        email="gulfpave.rep@example.com",
+        full_name_en="Gulfpave Rep TEST",
+        full_name_ar="ممثل سلامة",
+        employer_type=EmployerType.contractor,
+        employer_contractor_id=uuid.UUID(ids.contractor("GULFPAVE")),
+        preferred_language="en",
+        status=UserStatus.active,
+        password_hash=hash_password(PASSWORD),
+        privacy_notice_version=get_settings().privacy_notice_version,
+        search_text="gulfpave rep",
+        activated_at=now(),
+    )
+    db.add(u)
+    db.flush()
+    db.add(
+        RoleAssignment(
+            id=uuid.uuid4(),
+            user_id=u.id,
+            role=Role.contractor_hse_rep,
+            project_id=uuid.UUID(ids.project("ANIA-EXP")),
+            site_ids=[],
+            contractor_engagement_id=uuid.UUID(ids.engagement("GULFPAVE")),
+            valid_from=now().date(),
+        )
+    )
+    db.commit()
+    return "gulfpave.rep"
+
+
+def test_review_dead_card_and_escort_scan_respect_scope(api: Api, db: Session) -> None:
+    """Review F3 (GC-13): a lost card or an escort card of another contractor's worker gives
+    OUT_OF_SCOPE with no personal data, no verdict detail and no lost-credential alert."""
+    rep = api.as_(gulfpave_rep(db, Ids(db)))
+    osman = deployment(db, "Osman Idris")  # NAJD: outside the GULFPAVE scope
+    old = common.active_qr(db, osman.id)
+    assert old is not None
+    lost = common.payload(old)
+    common.end_qr(db, osman.id, QrTokenStatus.rotated, lost=True)
+    common.issue_qr(db, old.kind, old.project_id, osman.id, old.printed_ref)
+    db.commit()
+    alerts = len(notifications(db, NotificationKind.revoked_token_scanned))
+    r = scan(rep, db, "G-AAP3", "Z-APR-21", payload=lost)
+    assert r["result"] == "DENIED" and codes(r) == ["OUT_OF_SCOPE"], r
+    assert r.get("person") is None and "Osman" not in str(r)
+    assert len(notifications(db, NotificationKind.revoked_token_scanned)) == alerts
+    r = scan(api.as_("noura.qahtani"), db, "G-AAP3", "Z-APR-21", payload=lost)
+    assert codes(r) == ["CREDENTIAL_LOST"], r
+    # escort pairing: Abdul Karim (GULFPAVE, in scope) needs an escort; Osman's card is not
+    set_now(riyadh(2026, 10, 6, 23, 30))
+    rep = api.as_("gulfpave.rep")  # the noon session has idled out at 23:30
+    r = scan(rep, db, "G-AAP3", "Z-TWB", payload=card(db, "Abdul Karim Mia"))
+    assert r["result"] == "PENDING_ESCORT", r
+    pid = r["pairing"]["pairing_id"]
+    r = scan(rep, db, "G-AAP3", "Z-TWB", payload=card(db, "Osman Idris"), pairing_id=pid)
+    assert r["result"] == "DENIED" and "OUT_OF_SCOPE" in codes(r), r
+    assert r.get("person") is None and "Osman" not in str(r)
+
+
+def test_review_printed_ref_wildcard_is_not_a_prefix_search(api: Api, db: Session) -> None:
+    """Review F12: `%`/`_` typed at a scanner must not match every token of the project."""
+    for ref in ("%/ANIA-EXP", "_/ANIA-EXP", "WKR-%/ANIA-EXP"):
+        r = scan(api.as_("noura.qahtani"), db, "G-AAP3", "Z-APR-21", printed_ref=ref)
+        assert r["result"] == "DENIED" and codes(r) == ["TOKEN_UNKNOWN"], (ref, r)
+        assert r.get("person") is None
+
+
+def test_review_site_gate_vehicle_grant_has_no_avp_area_code(api: Api, db: Session) -> None:
+    """Review F14: a vehicle granted at a site gate is not logged with reason AVP_AREA."""
+    set_now(riyadh(2026, 10, 6, 10, 0))
+    r = scan(api.as_("noura.qahtani"), db, "G-ANIA-01", payload=sticker(db, "VEH-0006"))
+    assert r["result"] in ("GRANTED", "GRANTED_WITH_WARNING"), r
+    assert "AVP_AREA" not in codes(r), r
+    row = db.get(GateCheck, uuid.UUID(r["check_id"]))
+    assert row is not None and "AVP_AREA" not in (row.reason_codes or [])
+
+
+def test_review_admitted_despite_denial_needs_subject_scope(api: Api, db: Session) -> None:
+    """Review F27c: a rep cannot mark another contractor's DENIED row as admitted."""
+    rep = api.as_(gulfpave_rep(db, Ids(db)))
+    r = scan(api.as_("noura.qahtani"), db, "G-AAP3", "Z-APR-21", payload=card(db, "Osman Idris"))
+    assert r["result"] == "DENIED", r
+    res = rep.post(
+        f"{API}/gate-checks/{r['check_id']}/admitted-despite-denial",
+        json={"reason": "Supervisor insisted, escorted by guard TEST"},
+    )
+    assert res.status_code == 403, res.text

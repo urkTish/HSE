@@ -44,6 +44,7 @@ from app.models import (
     AirportPass,
     CredentialSuspension,
     Deployment,
+    Incident,
     Offence,
     PassArea,
     PassCategory,
@@ -601,9 +602,14 @@ def get_offence_row(db: Session, p: Principal, offence_id: uuid.UUID) -> Offence
         raise not_found("Offence")
     projects.get_visible(db, p, o.project_id)
     g = p.grant(o.project_id, C.worker_view)
-    if not common.grant_covers(g, None, o.engagement_id):
+    if not common.grant_covers(g, _offence_sites(db, o), o.engagement_id):
         raise forbidden_error("This offence is outside your scope.")
     return o
+
+
+def _offence_sites(db: Session, o: Offence) -> list[uuid.UUID]:
+    z = db.get(Zone, o.zone_id) if o.zone_id else None
+    return [z.site_id] if z else []
 
 
 def read_offence(db: Session, p: Principal, offence_id: uuid.UUID) -> OffenceRead:
@@ -762,6 +768,10 @@ def create_offence(
         raise forbidden_error()
     if body.offence_at > now():
         raise validation_error("offence_at", "offence_at cannot be in the future.")
+    if body.incident_id is not None:
+        inc = db.get(Incident, body.incident_id)
+        if inc is None or inc.project_id != project.id:
+            raise validation_error("incident_id", "Choose an incident of this project.")
     if body.vehicle_id is not None:
         v = db.get(Vehicle, body.vehicle_id)
         if v is None or v.project_id != project.id:
@@ -842,7 +852,7 @@ def transition_offence(
         if body.to_status == OffenceStatus.disputed
         else (C.credential_suspend_confirm)
     )
-    common.require_cap(p, o.project_id, cap, None, o.engagement_id)
+    common.require_cap(p, o.project_id, cap, _offence_sites(db, o), o.engagement_id)
     before = o.status
     o.status = body.to_status
     o.updated_at = now()

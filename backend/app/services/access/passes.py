@@ -494,12 +494,27 @@ def application_read(
     )
 
 
-def _bg_read_audit(db: Session, p: Principal, apps: list[PassApplication]) -> None:
+def _bg_read_audit(
+    db: Session, p: Principal, apps: list[PassApplication], batch: bool = False
+) -> None:
     if not apps or not _can_bg(p, apps[0].project_id):
         return
-    for a in apps:
-        if a.background_enc is None and not a.outcome_note:
-            continue
+    rows = [a for a in apps if a.background_enc is not None or a.outcome_note]
+    if batch:
+        # one entry per list page rather than one hash-chained row per application
+        if rows:
+            audit.record(
+                db,
+                AuditAction.sensitive_field_read,
+                p.actor(apps[0].project_id),
+                entity_type=EntityType.project,
+                entity_id=apps[0].project_id,
+                project_id=apps[0].project_id,
+                fields_read=["background_check", "outcome_note"],
+                details={"application_ids": [str(a.id) for a in rows]},
+            )
+        return
+    for a in rows:
         audit.record(
             db,
             AuditAction.sensitive_field_read,
@@ -584,7 +599,7 @@ def list_applications(
     stmt = stmt.where(*conds).order_by(PassApplication.created_at.desc())
     rows, total = paginate(db, stmt, page, page_size)
     rows = list(rows)
-    _bg_read_audit(db, p, rows)
+    _bg_read_audit(db, p, rows, batch=True)
     refs = Refs(db).load(
         engs=[a.sponsor_engagement_id for a in rows],
         users=[u for a in rows for u in (a.client_sponsor_user_id, a.submitted_by_user_id)],
@@ -976,8 +991,8 @@ def transition(
         g = p.grant(a.project_id, C.pass_application_endorse)
         if g is None:
             need(C.pass_application_create)
-            if not own and not p.grant(a.project_id, C.pass_application_create):
-                raise forbidden_error()
+            if not own:
+                raise forbidden_error("Only the applicant withdraws their own application (53).")
         details["reason"] = reason()
         a.closed_at = at
     elif frm == PS.approved and to == PS.cancelled:

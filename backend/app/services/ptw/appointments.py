@@ -19,7 +19,7 @@ from app.core.ptw_enums import (
     PermitType,
 )
 from app.kpi.periods import add_months
-from app.models import Permit, PermitCrew, PtwAppointment, Site, Worker, Zone
+from app.models import Permit, PermitCrew, PtwAppointment, Site, User, Worker, Zone
 from app.schemas.hse_common import ApiWarning
 from app.schemas.ptw_appointments import (
     AppointmentCreate,
@@ -287,6 +287,13 @@ def create(
             )
     if body.holder_worker_id and db.get(Worker, body.holder_worker_id) is None:
         raise validation_error("holder_worker_id", "Unknown worker.")
+    if body.holder_user_id and (
+        db.get(User, body.holder_user_id) is None
+        or not user_roles(db, body.holder_user_id, project.id)
+    ):
+        raise validation_error(
+            "holder_user_id", "The holder must be a user with a role on the project."
+        )
     _check_scope(db, project.id, body.site_ids, body.zone_ids)
     _check_validity(db, project.id, body.valid_from, body.valid_to)
     seq = (

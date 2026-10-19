@@ -127,14 +127,18 @@ def vehicle_read(
         mvpi_expiry=v.mvpi_expiry,
         documents_valid=all(d >= day for d in docs),
         earliest_document_expiry=min(docs) if docs else None,
-        istimara_attachment_id=db.scalar(
-            select(Attachment.id)
-            .where(
-                Attachment.owner_type == AttachmentOwner.vehicle_registration,
-                Attachment.owner_id == v.id,
+        istimara_attachment_id=(
+            db.scalar(
+                select(Attachment.id)
+                .where(
+                    Attachment.owner_type == AttachmentOwner.vehicle_registration,
+                    Attachment.owner_id == v.id,
+                )
+                .order_by(Attachment.created_at.desc())
+                .limit(1)
             )
-            .order_by(Attachment.created_at.desc())
-            .limit(1)
+            if show_plate  # D-272: the Istimara is personal data, like the plate
+            else None
         ),
         status=v.status,
         active_avp_id=active,

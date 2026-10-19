@@ -133,6 +133,11 @@ def erase(db: Session, a: Attachment) -> None:
     db.delete(a)
 
 
+def unlink(storage_key: str) -> None:
+    """Remove a stored file whose row was rolled back (no orphans on disk)."""
+    (Path(get_settings().storage_dir) / storage_key).unlink(missing_ok=True)
+
+
 # ---- owner resolution and permissions ------------------------------------------------------------
 
 
@@ -207,6 +212,11 @@ def _owner(
         v = vehicles.get_vehicle_row(db, p, owner_id)
         if write:
             acc.require_cap(p, v.project_id, Capability.vehicle_edit, None, v.engagement_id)
+        elif not acc.grant_covers(
+            p.grant(v.project_id, Capability.worker_view), None, v.engagement_id
+        ):
+            # D-272: the Istimara names its owner; a Viewer/Client (73) reads no personal data
+            raise forbidden_error("The registration document needs capability 46.")
         return v.project_id, True
     if owner_type in PERSONAL:
         return _access_owner(db, p, owner_type, owner_id, write)
@@ -294,7 +304,9 @@ def _access_owner(
         if write:
             workers._can_edit(db, p, w)
         else:
-            acc.require_cap(p, dep.project_id, c.worker_unmask_id, dep.site_ids, dep.engagement_id)
+            acc.require_cap(
+                p, dep.project_id, c.worker_unmask_id, dep.site_ids, dep.engagement_id, write=False
+            )
         return dep.project_id, w.status != WorkerStatus.anonymised
     if owner_type == AttachmentOwner.worker_photo:
         w = workers.get_worker(db, p, owner_id)
@@ -488,12 +500,17 @@ def signed_url(db: Session, p: Principal, attachment_id: uuid.UUID) -> SignedUrl
     medical = a.owner_type == AttachmentOwner.injury_case_medical
     short = medical or a.owner_type in PERSONAL  # P1-3 / P2-2: ≤ 5 min
     expires = int(time.time()) + (MEDICAL_TTL if short else DEFAULT_TTL)
-    if a.owner_type == AttachmentOwner.pass_application_id_copy:
+    if a.owner_type in (AttachmentOwner.pass_application_id_copy, AttachmentOwner.worker_id_copy):
+        # WK-5 / D-272: opening an ID document is an unmask
         audit.record(
             db,
             AuditAction.sensitive_field_read,
             p.actor(a.project_id),
-            entity_type=EntityType.pass_application,
+            entity_type=(
+                EntityType.worker
+                if a.owner_type == AttachmentOwner.worker_id_copy
+                else EntityType.pass_application
+            ),
             entity_id=a.owner_id,
             project_id=a.project_id,
             fields_read=["id_copy"],

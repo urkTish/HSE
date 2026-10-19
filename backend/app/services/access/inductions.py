@@ -26,6 +26,7 @@ from app.core.enums import AuditAction, Capability, EntityType, NotificationKind
 from app.core.errors import ApiError, ErrorCode, field_error, not_found, validation_error
 from app.core.hse_enums import AttachmentOwner
 from app.models import (
+    Attachment,
     Deployment,
     InductionCourse,
     InductionRecord,
@@ -852,6 +853,7 @@ def create_session(
         raise validation_error("attendees", "A worker is listed twice.")
     out: list[InductionRecordRead] = []
     errors = []
+    stored: list[str] = []  # signature files of the attendees saved so far (unlinked on rollback)
     sp = db.begin_nested()
     for i, a in enumerate(body.attendees):
         try:
@@ -867,10 +869,15 @@ def create_session(
                 body.session_ref,
                 f"attendees.{i}.",
             )
+            sig = db.get(Attachment, r.signature_attachment_id)
+            if sig is not None:
+                stored.append(sig.storage_key)
             out.append(record_read(db, p, r, warnings=warns))
         except ApiError as e:
             if e.status_code == 403:
                 sp.rollback()
+                for key in stored:
+                    attachments.unlink(key)
                 raise
             for fe in e.errors or []:
                 errors.append(fe)
@@ -878,6 +885,8 @@ def create_session(
                 errors.append(field_error(f"attendees.{i}", f"{e.code.value}: {e.message}"))
     if errors:
         sp.rollback()
+        for key in stored:
+            attachments.unlink(key)
         raise ApiError(
             422,
             ErrorCode.VALIDATION_ERROR,

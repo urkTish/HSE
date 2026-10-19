@@ -11,8 +11,9 @@ from app import ptw_jobs
 from app.core.clock import set_now
 from app.core.enums import NotificationKind
 from app.core.ptw_enums import PermitStatus, StatusReason
-from app.models import Notification
+from app.models import GasTest, Notification
 from app.schemas.jsa import JsaInstanceCreate, JsaTransition, ResidualAcceptanceInput
+from app.schemas.permits import SuspendInput
 from app.services.ptw import gas, jsa, lifecycle
 from tests.ptw_helpers import (
     SEED_AT,
@@ -347,3 +348,32 @@ def test_AC37_backdated_test(n: Any) -> None:
         ),
         422,
     )
+
+
+def test_review_gas_test_on_suspended_permit_has_no_shift(n: Any) -> None:
+    """Review F27a: a test recorded while Suspended is not attributed to the ended shift."""
+    p = permit(n.db, P413)
+    lifecycle.suspend(
+        n.db,
+        n.p("noura.qahtani"),
+        p.id,
+        SuspendInput(reason=StatusReason.stop_work, detail="Stop work for the review test"),
+    )
+    n.db.refresh(p)
+    assert p.status == S.suspended
+    t = gas_test(n, p, SEED_AT, "periodic", [rd("at_work_point", "20.9", "0", "0", "0")])
+    row = n.db.get(GasTest, t.id)
+    assert row is not None and row.shift_id is None
+
+
+def test_review_jsa_return_needs_named_area_authority(n: Any) -> None:
+    """Review F27d: on a permit JSA, 85 returns it only as the named area authority."""
+    p = fx(n)  # area authority fahad.mutairi
+    j = jsa.current_for_permit(n.db, p)
+    assert j is not None
+    expect(
+        "FORBIDDEN",
+        lambda: jsa._require_approver(n.db, n.p("omar.siddiqui"), j, p, returning=True),
+        403,
+    )
+    jsa._require_approver(n.db, n.p("fahad.mutairi"), j, p, returning=True)

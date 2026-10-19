@@ -790,11 +790,15 @@ def _require_approver(
                 "Templates are approved or returned by an HSE Officer or the HSE Manager."
             )
         return
-    if returning and (
-        p.grant(permit.project_id, C.permit_area_review)
-        or p.grant(permit.project_id, C.permit_hse_review)
-    ):
-        return
+    if returning:
+        # the named area authority (85) or an HSE reviewer (86) covering the permit's site
+        if p.grant(permit.project_id, C.permit_area_review) is not None and (
+            p.user.id == permit.area_authority_user_id
+        ):
+            return
+        if p.grant(permit.project_id, C.permit_hse_review) is not None:
+            acommon.require_cap(p, permit.project_id, C.permit_hse_review, [permit.site_id], None)
+            return
     if not _issuer_ok(db, p, permit):
         raise forbidden_error("Only an appointed issuer of this permit can approve its JSA.")
 

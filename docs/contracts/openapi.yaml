@@ -46,7 +46,7 @@ info:
     \ 157.\n  No diagnosis, test result or clinical note is ever stored (P6-1). Medical hooks use the\
     \ shared\n  hook policy (kind `medical_fitness`; enable with `POST /projects/{id}/medical-hooks/enable`);\n\
     \  gate texts never say \"medical\". Site-clinic sign-off needs step-up re-auth.\n"
-  version: 0.15.2
+  version: 0.15.3
 paths:
   /api/v1/health:
     get:
@@ -67,7 +67,7 @@ paths:
       - auth
       summary: Log in with email and password
       description: Sets the httpOnly `hse_session` cookie and returns the same JWT. Unknown email and
-        wrong password give an identical 401 INVALID_CREDENTIALS. After 5 failures in 15 min the account
+        wrong password give an identical 401 INVALID_CREDENTIALS. After 10 failures in 15 min the account
         is locked for 15 min (401 ACCOUNT_LOCKED).
       operationId: login
       requestBody:
@@ -90420,6 +90420,7 @@ components:
           title: File Name
         content_base64:
           type: string
+          maxLength: 7000000
           title: Content Base64
           description: jpg / png ≤ 5 MB; EXIF stripped on receipt.
       additionalProperties: false
@@ -105626,8 +105627,11 @@ components:
           - type: 'null'
           title: Full Name Ar
         email:
-          type: string
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Email
+          description: Only with the contact-details capability (12).
         job_title:
           anyOf:
           - type: string
@@ -123693,6 +123697,7 @@ components:
           - edge.jpg
         content_base64:
           type: string
+          maxLength: 7000000
           title: Content Base64
           description: jpg / png, ≤ 5 MB decoded; EXIF stripped on receipt.
       additionalProperties: false
@@ -124157,13 +124162,19 @@ components:
             format: uuid
           - type: 'null'
           title: Verified By User Id
-          description: 'Default: caller.'
+          description: 'Default: caller. Another user verifies only with their co-signature.'
         verified_by_worker_id:
           anyOf:
           - type: string
             format: uuid
           - type: 'null'
           title: Verified By Worker Id
+          description: A crew member of a permit linked to the certificate.
+        cosign:
+          anyOf:
+          - $ref: '#/components/schemas/CoSignature'
+          - type: 'null'
+          description: Required when verified_by_user_id is not the caller.
         verified_at:
           type: string
           format: date-time
@@ -150620,6 +150631,11 @@ components:
         updated:
           type: integer
           title: Updated
+        removed:
+          type: integer
+          title: Removed
+          description: Automatic rows retired (nobody at work any more).
+          default: 0
         skipped:
           type: integer
           title: Skipped
