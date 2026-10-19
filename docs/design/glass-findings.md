@@ -1,4 +1,4 @@
-# Glass restyle, proof of concept (D-265)
+# Glass restyle (D-265 proof of concept, D-266 second pass)
 
 **Request (HSE Manager, 2026-10-17/18):** a glassmorphic redesign of the platform; plan in the project notes
 (`glassmorphic-redesign-plan.md`), four full renders reviewed, variation **A** chosen with the recommended set:
@@ -22,11 +22,16 @@ Screenshots (EN / AR, light / dark, desktop / phone, solid and glass on the phon
 |---|---|
 | Page plane | `--page-glow`: a deep emerald bleed from the sidebar edge (fades out at 36% of the width, so it sits under the sidebar and the first gutter, not under the cards), a jade glow at the top end, a faint emerald glow at the bottom. Painted by `.app-mesh::before` (fixed, behind the frame). Mirrored for RTL. Below 1024 px (no sidebar) only the two soft glows remain. |
 | Sidebar, mobile drawer, login band | `.sidebar-glass`: `rgb(8 30 26 / 0.55)` + 24 px blur in light (dark: `rgb(5 14 12 / 0.5)`); hover / active pill `--sidebar-hover` (white 12%, dark: jade 16%) with an inset highlight (dark: a jade ring glow). |
-| Top bar | `.glass-bar`: strong glass, highlight only, no lift shadow. |
-| Cards, KPI tiles, dashboard bands, chart cards, toolbar, empty state | `.glass`: white 72% + 16 px blur, hairline border `rgb(16 32 29 / 0.09)`, inset top highlight, soft graphite shadow (dark: white 6.5%, border white 12%). |
-| Dialog, popover, dropdown / theme menu | `.glass-strong`: white 80% + 20 px blur (dark: white 9%). The dialog overlay keeps its dim and gets a 3 px blur. |
-| Tables, inputs, selects, buttons, badges, status pills | Unchanged: opaque `bg-surface` / tints inside the glass. One glass layer per stacking context, never glass in glass. |
-| Gate verdict panels, scaffold tags, `.paper`, print | Unchanged solids; the print block pins every glass token to flat white. |
+| Top bar, the ten sticky action bars (page-level and card footers) | `.glass-bar`: strong glass, highlight only, no lift shadow. The responsive bars (`sm:static`) drop fill, shadow and blur once they stop being sticky. |
+| Cards, KPI tiles, dashboard bands, chart cards, toolbar, tables, form sections (`FormSection`, legend floated inside the box), module cards (imports, user invite, site vehicles, permits, incidents, muster) | `.glass`: white 72% + 16 px blur, hairline border `rgb(16 32 29 / 0.09)`, inset top highlight, soft graphite shadow (dark: white 6.5%, border white 12%). |
+| Dialog, popover, dropdown / theme menu, AI panel, chart tooltip, the neutral toast | `.glass-strong`: white 80% + 20 px blur (dark: white 9%). The dialog overlay keeps its dim and gets a 3 px blur. |
+| Inputs, selects, textareas, multi-select trigger, outline / secondary / destructive-outline buttons | `bg-control` (`--control-glass`): white 60% in light; in dark the surface colour at 60%, so the `--input` border keeps >= 3.3:1 under the emerald bleed (white at 5% dropped it to 2.3:1). Borders, focus ring and the solid emerald primary button unchanged. |
+| Table header band | `bg-table-head` (`--table-head-glass`): graphite 4.5% (dark: white 5%) over the table's glass. Rows stay transparent with the accent hover. |
+| Nested panels: a card inside a card, import count tiles, notes inside a form, the empty state | `.glass-soft` / `bg-glass-soft`: white 45% (dark: white 4%), hairline border, **no blur, no lift**. Any `.glass` placed inside `.glass`, `.glass-strong` or `.glass-bar` flattens to this by a descendant rule, so one glass layer per stacking context is enforced by CSS, not by review. `.glass-strong` is exempt from the rule (floating layers keep their blur wherever they mount). |
+| Badges, status pills, danger / warning / success alerts, chips | Unchanged solid tints. The info alert and the skeleton soften to 85% / 70%. |
+| Toasts (sonner) | Neutral toast: strong glass through sonner's `--normal-*` variables plus unlayered `backdrop-filter` / shadow rules (sonner's stylesheet is unlayered, so a layered utility would lose). Success / error / warning / info keep sonner's solid rich colours and get `backdrop-filter: none`. |
+| Charts | Series colours unchanged; `--chart-grid` / `--chart-axis` are alpha tokens (graphite 10% / 26%, dark white 10% / 22%) so they sit on glass and on solid alike; tooltip `.glass-strong`. |
+| Gate check (`gate/gate-check.tsx`), certificate check (`cert/check.tsx`), scaffold tags, `.paper`, print | Unchanged solids (read in direct sun on gate devices and by third parties); the print block pins every glass token to flat white. |
 
 ### Solid surface (automatic fallbacks and the user's switch)
 
@@ -62,6 +67,14 @@ Text is measured on the glass fill composited over the strongest backdrop it can
 | Success / warning / danger text on `.glass` | 9.4 / 10.0 / 7.3 | 6.7 / 7.2 / 5.2 | 6.5 / 6.9 / 5.0 |
 | Dark sidebar text / muted over the bleed | 12.6 / 6.0 | | |
 
+| Pair (second pass) | Light, under the bleed | Light, plain | Dark, under the bleed | Dark, plain |
+|---|---|---|---|---|
+| `--input` border on the control fill (needs 3:1) | 3.3:1 | 3.6:1 | 3.5:1 | 3.9:1 |
+| Body text on the control fill | 16.3:1 | 17.6:1 | 12.9:1 | 14.5:1 |
+| Secondary text / placeholder base on the control fill | 6.8:1 | 7.3:1 | 7.2:1 | 8.1:1 |
+| Secondary text on the table header band | 5.5:1 | 6.6:1 | 4.7:1 | 6.7:1 |
+| Secondary / body text on `.glass-soft` | 6.6 / 15.8 | 7.3 / 17.5 | 4.9 / 8.8 | 6.9 / 12.4 |
+
 Every pair stays above AA (4.5:1); body text stays above AAA everywhere. The restyle targets (secondary ≥ 6.5:1)
 hold on the plain page and under the jade glow; directly under the bleed the first column of cards sits at 5.4–5.9:1,
 which is why the bleed now ends at 36% of the width. Form-control borders and the status tints are measured against
@@ -75,10 +88,15 @@ their own opaque fills and are unchanged from the restyle.
 - Phone: Solid by default; the same screens with Glass switched on.
 - Login: the glass band and frosted card over the mesh.
 
-## Left for the next pass
+## Second pass (D-266, 2026-10-19)
 
-- Buttons (outline / secondary as translucent platinum), inputs, table header, badges, alerts, skeleton, toasts.
-- The six sticky action bars (field run, PTW config and permits, training sessions, site-vehicle checks; the gate bar stays solid).
-- The ad-hoc `rounded-xl border bg-surface` cards in the modules → `<Card>` or `.glass`; nested ones solid.
-- Chart grid / axis alpha tokens and glass chart tooltips.
-- Performance trace on a throttled mid-range Android profile; then flip nothing: the touch default already protects phones.
+Done in one pass on the HSE Manager's "yes to everything": controls, tables, form sections, the ten sticky bars, the
+module cards, nested panels, toasts, chart tokens and tooltip, as the layer table above records. Still solid on purpose:
+gate check, certificate check, scaffold tags, badges, status alerts, print, repeated list rows (training session
+list items, register rows) and the sidebar project switcher.
+
+## Left
+
+- Performance trace on a throttled mid-range Android profile (phones default to Solid, so this only matters for
+  users who switch Glass on by hand).
+- Sonner's own light / dark theme follows the OS, not the app's theme (pre-existing).

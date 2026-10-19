@@ -60,7 +60,7 @@ export function ErrorState({
 export function EmptyState({ message }: { message?: string }) {
   const t = useTranslations("common");
   return (
-    <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-input/60 bg-surface p-8 text-center text-sm text-muted-foreground">
+    <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-input/60 bg-glass-soft p-8 text-center text-sm text-muted-foreground">
       <Inbox aria-hidden className="size-7" />
       <p>{message ?? t("noResults")}</p>
     </div>

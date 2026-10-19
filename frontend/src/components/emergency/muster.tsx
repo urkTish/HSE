@@ -150,7 +150,7 @@ function Counters({ m, outstanding }: { m: Muster; outstanding: number }) {
   const pct = expected > 0 ? Math.min(100, Math.round((done / expected) * 100)) : 0;
   const missing = outstanding > 0;
   const cell = (key: "expected" | "accounted" | "resolved", n: number, icon: ReactNode, tone?: "success") => (
-    <div className={cn("flex flex-col gap-1 rounded-lg border bg-surface p-3", tone === "success" && "border-success/60")} data-testid={`mc-${key}`} data-n={n}>
+    <div className={cn("glass flex flex-col gap-1 rounded-lg border p-3", tone === "success" && "border-success/60")} data-testid={`mc-${key}`} data-n={n}>
       <p className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
         {icon}
         {t(`c_${key}`)}

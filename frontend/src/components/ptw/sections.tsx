@@ -324,7 +324,7 @@ export function SectionView({ permit, type, actions }: { permit: Permit; type: S
               ))}
             </FieldList>
             {COMPUTED[type]?.length ? (
-              <div className="rounded-md border bg-surface p-3" data-testid="section-computed">
+              <div className="glass-soft rounded-md border p-3" data-testid="section-computed">
                 <p className="mb-2 text-xs font-medium text-muted-foreground">{t("computed")}</p>
                 <FieldList>
                   {COMPUTED[type]!.map((c) => {

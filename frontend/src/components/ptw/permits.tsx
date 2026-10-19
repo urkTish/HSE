@@ -660,7 +660,7 @@ function PermitForm({ project, permit }: { project: S["ProjectRead"]; permit?: P
         <MultiSelect id="pf-isos" label={t("isolationCerts")} options={(isoQ.data?.items ?? []).map((i) => ({ value: i.id, label: `${i.iso_no} · ${i.equipment_desc}` }))} value={isos} onChange={setIsos} />
       </FormSection>
 
-      <section className="flex flex-col gap-3 rounded-xl border bg-surface p-4" data-testid="simops-preview">
+      <section className="glass flex flex-col gap-3 rounded-xl border p-4" data-testid="simops-preview">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h2 className="text-base font-semibold">{t("simopsTitle")}</h2>
@@ -677,7 +677,7 @@ function PermitForm({ project, permit }: { project: S["ProjectRead"]; permit?: P
 
       {Object.keys(errors).length ? <Alert tone="danger">{t("fixErrors")}</Alert> : null}
       <MutationError error={error} />
-      <div className="sticky bottom-0 -mx-4 flex gap-2 border-t bg-background/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0">
+      <div className="glass-bar sticky bottom-0 -mx-4 flex gap-2 border-t px-4 py-3 sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none">
         <Button type="submit" disabled={busy} data-testid="save-permit">
           {busy ? tc("saving") : permit ? tc("save") : t("createDraft")}
         </Button>

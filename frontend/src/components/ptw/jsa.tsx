@@ -380,7 +380,7 @@ function LineEditor({ id, line, onChange, onRemove }: { id: string; line: Line; 
   const issues = lineIssues(line, band);
   const setCtl = (k: number, p: Partial<S["JsaControlInput"]>) => onChange({ controls: line.controls.map((c, i) => (i === k ? { ...c, ...p } : c)) });
   return (
-    <div className="flex flex-col gap-3 rounded-md border bg-surface p-3" data-testid="jsa-line-editor">
+    <div className="glass-soft flex flex-col gap-3 rounded-md border p-3" data-testid="jsa-line-editor">
       <div className="grid gap-3 sm:grid-cols-[14rem_1fr_auto]">
         <FormField id={`${id}-hz`} label={t("hazard")} required>
           <Select id={`${id}-hz`} value={line.hazard_code} onChange={(e) => onChange({ hazard_code: e.target.value as S["Hazard"] })} data-testid="line-hazard">

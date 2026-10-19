@@ -661,7 +661,7 @@ function Conduct({ a, onClose }: { a: Audit; onClose: () => void }) {
           <ManualFindings value={manual} onChange={setManual} audit />
         </div>
         <MutationError error={error} />
-        <div className="sticky bottom-0 flex flex-wrap gap-2 border-t bg-background py-3">
+        <div className="glass-bar sticky bottom-0 flex flex-wrap gap-2 border-t py-3">
           <Button className="min-h-11" disabled={busy} onClick={() => void save()} data-testid="audit-save-answers">
             <Save aria-hidden />
             {busy ? t("saving") : t("saveAnswers")}

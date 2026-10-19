@@ -107,11 +107,11 @@ function Summary({ project }: { project: S["ProjectRead"] }) {
     return (
       <li key={key} data-testid="sv-sum" data-key={key} data-value={value}>
         {link && filter ? (
-          <button type="button" onClick={() => s.set(filter)} className="flex min-h-touch w-full flex-col items-start rounded-lg border bg-surface p-3 text-start hover:bg-accent/60">
+          <button type="button" onClick={() => s.set(filter)} className="glass flex min-h-touch w-full flex-col items-start rounded-lg border p-3 text-start hover:bg-accent/60">
             {body}
           </button>
         ) : (
-          <div className="flex flex-col rounded-lg border bg-surface p-3">{body}</div>
+          <div className="glass flex flex-col rounded-lg border p-3">{body}</div>
         )}
       </li>
     );

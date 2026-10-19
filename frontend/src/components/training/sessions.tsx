@@ -967,7 +967,7 @@ function AttendanceRegister({ session, project, course }: { session: S["SessionR
             })}
           </ul>
           {canRecord ? (
-            <div className="sticky bottom-2 z-10 flex flex-col gap-2 rounded-xl border bg-surface/95 p-2 shadow-md backdrop-blur sm:static sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none">
+            <div className="glass-bar sticky bottom-2 z-10 flex flex-col gap-2 rounded-xl border p-2 sm:static sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none">
               <MutationError error={error} />
               <Button onClick={() => void saveAttendance()} disabled={!dirty.size || busy} className="w-full sm:w-auto" data-testid="save-attendance">
                 <Save aria-hidden />

@@ -253,7 +253,7 @@ export function WaterAdvice({ en, ar }: { en: string; ar: string }) {
 export function SensitiveNote({ children }: { children?: ReactNode }) {
   const t = useTranslations("heat.common");
   return (
-    <p className="mb-3 flex w-fit max-w-full items-start gap-2 rounded-md border border-input/70 bg-surface px-3 py-1.5 text-xs" data-testid="heat-sensitive-note">
+    <p className="mb-3 flex w-fit max-w-full items-start gap-2 rounded-md border border-input/70 bg-glass-soft px-3 py-1.5 text-xs" data-testid="heat-sensitive-note">
       <Lock aria-hidden className="mt-px size-3.5 shrink-0 text-muted-foreground" />
       <span>
         <span className="font-medium">{t("sensitive")}</span> {children}

@@ -946,7 +946,7 @@ function AccessSettingsView({ project }: { project: Schemas["ProjectRead"] }) {
       </FormSection>
       <MutationError error={error} />
       {editable ? (
-        <div className="sticky bottom-0 flex justify-end gap-2 border-t bg-background py-3">
+        <div className="glass-bar sticky bottom-0 flex justify-end gap-2 border-t py-3">
           <Button
             variant="outline"
             disabled={!dirty || busy}

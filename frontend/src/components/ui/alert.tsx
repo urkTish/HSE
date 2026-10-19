@@ -6,7 +6,7 @@ const tones = {
   danger: { cls: "border-danger/40 bg-danger-bg text-foreground [&>svg]:text-danger", Icon: AlertCircle },
   warning: { cls: "border-warning/40 bg-warning-bg text-foreground [&>svg]:text-warning", Icon: TriangleAlert },
   success: { cls: "border-success/40 bg-success-bg text-foreground [&>svg]:text-success", Icon: CheckCircle2 },
-  info: { cls: "border-info/40 bg-info-bg text-foreground [&>svg]:text-info", Icon: Info },
+  info: { cls: "border-info/40 bg-info-bg/85 text-foreground [&>svg]:text-info", Icon: Info },
 } as const;
 
 export function Alert({

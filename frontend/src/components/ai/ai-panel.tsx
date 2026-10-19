@@ -61,7 +61,7 @@ export function AiAssistant({ projectId, filters }: { projectId: string; filters
         <D.Portal>
           <D.Overlay className="fixed inset-0 z-50 bg-overlay sm:bg-transparent" />
           <D.Content
-            className="fixed inset-y-0 end-0 z-50 flex w-full flex-col border-s bg-surface shadow-xl outline-none sm:max-w-lg"
+            className="fixed inset-y-0 end-0 z-50 glass-strong flex w-full flex-col border-s outline-none sm:max-w-lg"
             data-testid="ai-panel"
             aria-describedby={undefined}
           >

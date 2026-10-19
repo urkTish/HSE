@@ -79,6 +79,9 @@
   --color-glass-strong: var(--glass-bg-strong);
   --color-glass-border: var(--glass-border);
   --color-row-glass: var(--row-glass);
+  --color-glass-soft: var(--glass-bg-soft);
+  --color-control: var(--control-glass);
+  --color-table-head: var(--table-head-glass);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -163,6 +166,20 @@
     border-color: var(--glass-border);
     box-shadow: var(--glass-highlight);
     backdrop-filter: blur(var(--glass-blur-strong)) saturate(var(--glass-saturate));
+  }
+  /* Nested panels (a card inside a card, a note inside a form section): translucent fill, no blur, no lift.
+     One glass layer per stacking context. */
+  .glass-soft {
+    background-color: var(--glass-bg-soft);
+    border-color: var(--glass-border);
+  }
+  /* A `.glass` inside any glass surface flattens to the soft fill automatically, so a Card or Table placed
+     inside a Card never blurs twice. `.glass-strong` is for floating layers (dialog, popover, tooltip) and
+     keeps its blur wherever it sits. */
+  :is(.glass, .glass-strong, .glass-bar) .glass {
+    background-color: var(--glass-bg-soft);
+    box-shadow: var(--glass-highlight);
+    backdrop-filter: none;
   }
   .sidebar-glass {
     background-color: var(--sidebar-glass);
@@ -310,6 +327,21 @@
  * Print (monthly report and later permits): A4, always light tokens, page numbers in the margin,
  * a bilingual footer repeated on every page, sections that do not split their title from the body.
  */
+/* Toasts (sonner): the neutral toast is strong glass; success / error / warning / info keep sonner's solid
+   rich-colour tints (status never goes translucent). Unlayered on purpose: sonner's stylesheet is unlayered too. */
+[data-sonner-toaster] {
+  --normal-bg: var(--glass-bg-strong);
+  --normal-border: var(--glass-border);
+  --normal-text: var(--foreground);
+}
+[data-sonner-toast][data-styled="true"] {
+  box-shadow: var(--glass-highlight), var(--shadow-glass);
+  backdrop-filter: blur(var(--glass-blur-strong)) saturate(var(--glass-saturate));
+}
+[data-sonner-toast][data-rich-colors="true"]:is([data-type="success"], [data-type="error"], [data-type="warning"], [data-type="info"]) {
+  backdrop-filter: none;
+}
+
 @media print {
   @page {
     size: A4;
@@ -370,6 +402,9 @@
     --glass-highlight: 0 0 #0000;
     --shadow-glass: 0 0 #0000;
     --row-glass: #ffffff;
+    --glass-bg-soft: #ffffff;
+    --control-glass: #ffffff;
+    --table-head-glass: #eef1f2;
   }
   html,
   body {

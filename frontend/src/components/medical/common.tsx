@@ -388,7 +388,7 @@ export function TierNote({ tier }: { tier: S["FitnessTier"] | null | undefined }
   const td = useTranslations("medDesign");
   if (!tier) return null;
   return (
-    <p className="mb-3 flex w-fit max-w-full items-start gap-2 rounded-md border border-input/70 bg-surface px-3 py-1.5 text-xs" data-testid="fitness-tier" data-tier={tier}>
+    <p className="mb-3 flex w-fit max-w-full items-start gap-2 rounded-md border border-input/70 bg-glass-soft px-3 py-1.5 text-xs" data-testid="fitness-tier" data-tier={tier}>
       <Lock aria-hidden className="mt-px size-3.5 shrink-0 text-muted-foreground" />
       <span>
         <span className="font-medium">{t(`tier.${tier}`)}</span>

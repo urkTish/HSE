@@ -384,7 +384,7 @@ function SettingsForm({ project, s, catalogue, editable }: { project: Project; s
       </p>
       <MutationError error={error} />
       {editable ? (
-        <div className="sticky bottom-0 flex justify-end gap-2 border-t bg-background py-3">
+        <div className="glass-bar sticky bottom-0 flex justify-end gap-2 border-t py-3">
           <Button onClick={() => void save()} disabled={!dirty || busy} data-testid="save-cert-settings">
             {busy ? tc("saving") : tc("save")}
           </Button>

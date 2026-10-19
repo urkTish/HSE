@@ -408,7 +408,7 @@ function ChartTooltip({
   const row = payload[0]?.payload as Row | undefined;
   if (!row) return null;
   return (
-    <div className="rounded-md border bg-surface px-3 py-2 text-xs shadow-md" dir={ar ? "rtl" : "ltr"}>
+    <div className="glass-strong rounded-md border px-3 py-2 text-xs" dir={ar ? "rtl" : "ltr"}>
       <p className="mb-1 font-medium">{String(label ?? row.label)}</p>
       <ul className="flex flex-col gap-0.5">
         {series.map((s) => (
