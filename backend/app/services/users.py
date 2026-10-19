@@ -106,7 +106,9 @@ def _scope_condition(db: Session, p: Principal, cap: Capability) -> Any:
     conds: list[Any] = [User.id == p.user.id]
     for pid, g in grants.items():
         on_project = exists().where(
-            RoleAssignment.user_id == User.id, RoleAssignment.project_id == pid
+            RoleAssignment.user_id == User.id,
+            RoleAssignment.project_id == pid,
+            RoleAssignment.revoked_at.is_(None),
         )
         if g.engagement_ids is None:
             conds.append(on_project)
@@ -200,6 +202,8 @@ def list_query(
     if not p.has_any(Capability.user_view_directory):
         raise forbidden_error()
     stmt = select(User).where(_scope_condition(db, p, Capability.user_view_directory))
+    if project_id and not p.can_see_project(project_id):
+        raise deny(db, p, EntityType.project, project_id, project_id, "Project")
     if project_id:
         stmt = stmt.where(
             exists().where(

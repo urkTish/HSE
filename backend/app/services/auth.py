@@ -282,8 +282,8 @@ def login(db: Session, email: str, password: str) -> tuple[IssuedSession, User]:
         .select_from(UserSession)
         .where(
             UserSession.user_id == user.id,
-            UserSession.ip_address == ctx.ip_address,
-            UserSession.user_agent == ctx.user_agent,
+            UserSession.ip_address.is_not_distinct_from(ctx.ip_address),
+            UserSession.user_agent.is_not_distinct_from(ctx.user_agent),
         )
     )
     user.failed_login_count = 0

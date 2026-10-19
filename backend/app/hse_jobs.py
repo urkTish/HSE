@@ -312,11 +312,14 @@ def incident_alerts(db: Session, at: datetime | None = None) -> dict[str, Any]:
             db.scalars(
                 select(Incident).where(
                     Incident.project_id == pid,
-                    Incident.status.not_in([IncidentStatus.draft, IncidentStatus.voided]),
+                    Incident.status.not_in(
+                        [IncidentStatus.draft, IncidentStatus.voided, IncidentStatus.closed]
+                    ),
                 )
             )
         )
         ids = [i.id for i in incs]
+        reps_by_eng: dict[uuid.UUID | None, list[uuid.UUID]] = {}
         cases = inc_svc.load_cases(db, ids)
         invs = {
             v.incident_id: v
@@ -333,7 +336,11 @@ def incident_alerts(db: Session, at: datetime | None = None) -> dict[str, Any]:
             ):
                 recorded.setdefault(n.incident_id, set()).add(str(n.body))
         for i in incs:
-            reps = contractor_reps(db, pid, i.responsible_engagement_id)
+            if i.responsible_engagement_id not in reps_by_eng:
+                reps_by_eng[i.responsible_engagement_id] = contractor_reps(
+                    db, pid, i.responsible_engagement_id
+                )
+            reps = reps_by_eng[i.responsible_engagement_id]
             # unclassified
             if i.status == IncidentStatus.reported and i.reported_at:
                 age = t - i.reported_at

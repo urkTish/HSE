@@ -56,7 +56,7 @@ def _login_response(
     response_model=LoginResponse,
     summary="Log in with email and password",
     description="Sets the httpOnly `hse_session` cookie and returns the same JWT. Unknown email "
-    "and wrong password give an identical 401 INVALID_CREDENTIALS. After 5 failures in 15 min "
+    "and wrong password give an identical 401 INVALID_CREDENTIALS. After 10 failures in 15 min "
     "the account is locked for 15 min (401 ACCOUNT_LOCKED).",
     responses=error_responses(401, 422),
 )

@@ -598,6 +598,9 @@ def seed(db: Session, password: str) -> None:
 
 
 def main() -> int:
+    if get_settings().environment == "production":
+        print("The demo seed is not allowed in production (P12).", file=sys.stderr)
+        return 2
     password = get_settings().seed_password
     if not password:
         print("Set SEED_PASSWORD (see .env.example).", file=sys.stderr)

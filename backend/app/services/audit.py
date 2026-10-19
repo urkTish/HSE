@@ -107,16 +107,27 @@ def jsonable(value: Any) -> Any:
     return json.loads(json.dumps(value, default=_default, ensure_ascii=False))
 
 
+def _sensitive_key(k: str) -> bool:
+    return k in SENSITIVE_KEYS or k.endswith(("_enc", "_hash", "_blind_index"))
+
+
+def _scrub_value(v: Any) -> Any:
+    if isinstance(v, dict):
+        return {
+            k: (MASK if _sensitive_key(k) and val is not None else _scrub_value(val))
+            for k, val in v.items()
+            if k not in SECRET_KEYS
+        }
+    if isinstance(v, list):
+        return [_scrub_value(x) for x in v]
+    return v
+
+
 def scrub(values: dict[str, Any] | None) -> dict[str, Any] | None:
-    """Drop secrets, mask sensitive values (rule 35 'before/after')."""
+    """Drop secrets, mask sensitive values (rule 35 'before/after'), at every nesting level."""
     if values is None:
         return None
-    out: dict[str, Any] = {}
-    for k, v in values.items():
-        if k in SECRET_KEYS:
-            continue
-        out[k] = MASK if k in SENSITIVE_KEYS and v is not None else v
-    result: dict[str, Any] = jsonable(out)
+    result: dict[str, Any] = jsonable(_scrub_value(values))
     return result
 
 
