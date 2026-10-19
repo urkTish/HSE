@@ -146,13 +146,12 @@ function DrillDialog({ metric, label, query, projectId, onClose }: { metric: Met
             ) : null}
             {k.one_case_changes_rate_by ? <Alert tone="info">{t("oneCase", { value: show(k.one_case_changes_rate_by) })}</Alert> : null}
             {hasDenominator ? (
-              <div className="flex gap-2" role="tablist">
+              <div className="flex gap-2" role="group">
                 {(["numerator", "denominator"] as const).map((p) => (
                   <Button
                     key={p}
                     size="sm"
-                    role="tab"
-                    aria-selected={part === p}
+                    aria-pressed={part === p}
                     variant={part === p ? "default" : "outline"}
                     onClick={() => {
                       setPart(p);

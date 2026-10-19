@@ -54,6 +54,7 @@ export function ReportList({ project }: { project: Schemas["ProjectRead"] }) {
   const locale = useLocale();
   const me = useMeData();
   const { date } = useFormatters(project.id);
+  const show = useDisplay(project.id);
   const s = useSearchState();
   const page = s.getInt("page", 1) ?? 1;
   const ai = useAiStatus(project.id, can(me, "monthly_report.generate", project.id));
@@ -116,7 +117,7 @@ export function ReportList({ project }: { project: Schemas["ProjectRead"] }) {
                 <TR key={r.id} data-testid="report-row">
                   <TD label={t("month")}>
                     <Link href={`/reports/${r.id}`} className="font-medium text-primary hover:underline">
-                      {monthLabel(locale, r.month)}
+                      {show(monthLabel(locale, r.month))}
                     </Link>
                     {r.revised_since_publication ? <span className="inline-flex items-center gap-1 ms-2 text-xs text-warning font-medium"><TriangleAlert aria-hidden className="size-3.5 shrink-0" />{t("revised")}</span> : null}
                   </TD>
@@ -219,6 +220,7 @@ export function ReportDetail({ id }: { id: string }) {
   const [editing, setEditing] = useState(false);
   const [transition, setTransition] = useState<Schemas["MonthlyReportStatus"] | null>(null);
   const { dateTime } = useFormatters(r?.project_id);
+  const show = useDisplay(r?.project_id);
 
   if (q.isError) return <ErrorState error={q.error} onRetry={() => q.refetch()} />;
   if (!r) return <LoadingState />;
@@ -243,14 +245,14 @@ export function ReportDetail({ id }: { id: string }) {
   return (
     <div data-testid="report-detail" data-status={r.status}>
       <div className="print:hidden">
-        <Breadcrumbs items={[{ label: tn("reports"), href: "/reports" }, { label: monthLabel(locale, r.month) }]} />
+        <Breadcrumbs items={[{ label: tn("reports"), href: "/reports" }, { label: show(monthLabel(locale, r.month)) }]} />
       </div>
       <PrintHeader report={r} />
       <div className="print:hidden">
       <PageHeader
         title={t("reportTitle", {
           project: r.project_code,
-          month: monthLabel(lang, r.month),
+          month: show(monthLabel(lang, r.month)),
         })}
         badge={<StatusBadge status={r.status} label={locale === "ar" ? r.status_label_ar : r.status_label_en} />}
         description={
@@ -265,7 +267,7 @@ export function ReportDetail({ id }: { id: string }) {
             <div className="flex rounded-md border" role="group" aria-label={t("language")}>
               {(["en", "ar"] as const).map((l) => (
                 <Button key={l} size="sm" variant={lang === l ? "default" : "ghost"} aria-pressed={lang === l} onClick={() => setLang(l)} data-testid={`report-lang-${l}`}>
-                  {l === "en" ? "English" : "العربية"}
+                  {tc(l === "en" ? "english" : "arabic")}
                 </Button>
               ))}
             </div>
@@ -443,7 +445,7 @@ function NarrativeEditor({ report, onDone }: { report: Report; onDone: () => voi
           </CardHeader>
           <CardContent className="grid gap-3 md:grid-cols-2">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor={`n-${s.section}-en`}>English</Label>
+              <Label htmlFor={`n-${s.section}-en`}>{tc("english")}</Label>
               <Textarea
                 id={`n-${s.section}-en`}
                 dir="ltr"
@@ -462,7 +464,7 @@ function NarrativeEditor({ report, onDone }: { report: Report; onDone: () => voi
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor={`n-${s.section}-ar`}>العربية</Label>
+              <Label htmlFor={`n-${s.section}-ar`}>{tc("arabic")}</Label>
               <Textarea
                 id={`n-${s.section}-ar`}
                 dir="rtl"

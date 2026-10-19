@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import { api, ApiError, unwrap, type Schemas } from "@/lib/api/client";
 
 /**
@@ -244,8 +244,13 @@ export function discardOutbox(id: string): Promise<void> {
   return saveOutbox((items) => items.filter((i) => i.id !== id));
 }
 
+/**
+ * Errors that are not the submission's fault: no signal, server down, session expired or blocked (401/403),
+ * timeout, rate limit. The item stays in the outbox and is sent again (after re-login for 401/403).
+ */
 function isTransient(e: unknown): boolean {
-  return !(e instanceof ApiError) || e.status === 0 || e.status >= 500 || e.code === "NETWORK_ERROR";
+  if (!(e instanceof ApiError)) return true;
+  return e.status === 0 || e.status >= 500 || e.status === 401 || e.status === 403 || e.status === 408 || e.status === 429 || e.code === "NETWORK_ERROR";
 }
 
 async function post(item: OutboxItem): Promise<{ id: string }> {
@@ -322,8 +327,16 @@ export async function flushOutbox(): Promise<{ sent: number; failed: number }> {
   return { sent, failed };
 }
 
-/** Mounted once in the shell: owner check, purge on load and every minute, send on reconnect. */
+/**
+ * Mounted once in the shell: owner check, purge on load and every minute, send on reconnect and after
+ * (re-)login, since the shell mounts again with the user. `onSent` is read through a ref so a new callback
+ * on every shell render does not re-run the IndexedDB load.
+ */
 export function useFieldOfflineSync(userId: string | null | undefined, onSent?: (n: number) => void) {
+  const cb = useRef(onSent);
+  useEffect(() => {
+    cb.current = onSent;
+  }, [onSent]);
   useEffect(() => {
     if (!userId || !available()) return;
     let alive = true;
@@ -331,7 +344,7 @@ export function useFieldOfflineSync(userId: string | null | undefined, onSent?: 
       await purgeExpired().catch(() => 0);
       if (navigator.onLine && snap.outbox.some((i) => !i.error)) {
         const r = await flushOutbox();
-        if (alive && r.sent) onSent?.(r.sent);
+        if (alive && r.sent) cb.current?.(r.sent);
       }
     };
     void initFieldOffline(userId).then(() => tick());
@@ -343,7 +356,7 @@ export function useFieldOfflineSync(userId: string | null | undefined, onSent?: 
       window.clearInterval(timer);
       window.removeEventListener("online", online);
     };
-  }, [userId, onSent]);
+  }, [userId]);
 }
 
 /* ───────────── photos and signatures ───────────── */

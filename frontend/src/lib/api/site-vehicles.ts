@@ -1,4 +1,5 @@
 "use client";
+import { useCallback } from "react";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, unwrap } from "./client";
 import type { QueryOf } from "./queries";
@@ -29,9 +30,12 @@ export const SV_PREFIXES = ["sv-settings", "sv-summary", "sv-vehicles", "sv-vehi
 
 export function useSvRefresh() {
   const qc = useQueryClient();
-  return async () => {
-    await Promise.all(SV_PREFIXES.map((k) => qc.invalidateQueries({ queryKey: [k] })));
-  };
+  return useCallback(
+    async () => {
+      await Promise.all(SV_PREFIXES.map((k) => qc.invalidateQueries({ queryKey: [k] })));
+    },
+    [qc],
+  );
 }
 
 const list = { placeholderData: keepPreviousData };

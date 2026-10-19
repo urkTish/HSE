@@ -44,12 +44,11 @@ export function InvestigationList({ project }: { project: Schemas["ProjectRead"]
   return (
     <div data-testid="investigations">
       <PageHeader title={t("title")} description={t("subtitle")} />
-      <div className="mb-4 flex flex-wrap gap-2" role="tablist" aria-label={t("title")}>
+      <div className="mb-4 flex flex-wrap gap-2" role="group" aria-label={t("title")}>
         {(Object.keys(BUCKETS) as Bucket[]).map((b) => (
           <Button
             key={b}
-            role="tab"
-            aria-selected={bucket === b}
+            aria-pressed={bucket === b}
             size="sm"
             variant={bucket === b ? "default" : "outline"}
             onClick={() => s.set({ bucket: b, page: null })}

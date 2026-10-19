@@ -36,7 +36,7 @@ import { todayInZone } from "@/lib/datetime";
 import { can, canWrite } from "@/lib/permissions";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
-import { AccessPrintHeader, AirportOnly, BiLabel, Code, DaysLeft, Plate, QrImage, StepDialog, SubNav, ValidityBadge, ValidityLine } from "./common";
+import { AccessPrintHeader, AirportOnly, BiLabel, Code, DaysLeft, PLATE_DIGITS, PLATE_LETTERS_MAX, Plate, QrImage, StepDialog, SubNav, ValidityBadge, ValidityLine } from "./common";
 import { CredentialPanel } from "./credential-actions";
 import { RecordActions } from "@/components/common/record-actions";
 import { PrototypeBadge, ReadinessBadge, useSvLabels } from "@/components/site-vehicles/common";
@@ -312,7 +312,7 @@ function VehicleForm({ project, vehicle }: { project: Schemas["ProjectRead"]; ve
     (["fleet_no", "serial_or_vin", "make_model", "colour", "travel_height_m", "max_working_height_m_agl", "insurance_policy_no", "insurance_expiry"] as const).forEach(req);
     if (plated) (["plate_letters_ar", "plate_digits", "istimara_expiry", "mvpi_expiry"] as const).forEach(req);
     if (plated && !vehicle && !istimara) e.istimara_photo = tv("required");
-    if (plated && f.plate_digits && !/^\d{1,4}$/.test(f.plate_digits)) e.plate_digits = t("plateDigitsHint");
+    if (plated && f.plate_digits && !PLATE_DIGITS.test(f.plate_digits)) e.plate_digits = t("plateDigitsHint");
     if (roadVehicle && f.serial_or_vin && !VIN.test(f.serial_or_vin.toUpperCase())) e.serial_or_vin = t("vinHint");
     if (Number(f.max_working_height_m_agl) < Number(f.travel_height_m)) e.max_working_height_m_agl = t("workingBelowTravel");
     setErrors(e);
@@ -434,10 +434,10 @@ function VehicleForm({ project, vehicle }: { project: Schemas["ProjectRead"]; ve
         {plated ? (
           <>
             <FormField id="vf-plate-ar" label={t("fields.plate_letters_ar")} required error={errors.plate_letters_ar}>
-              <Input dir="rtl" lang="ar" maxLength={5} value={f.plate_letters_ar} onChange={set("plate_letters_ar")} />
+              <Input dir="rtl" lang="ar" maxLength={PLATE_LETTERS_MAX} value={f.plate_letters_ar} onChange={set("plate_letters_ar")} />
             </FormField>
             <FormField id="vf-plate-en" label={t("fields.plate_letters_en")}>
-              <Input className="ltr uppercase" maxLength={5} value={f.plate_letters_en} onChange={set("plate_letters_en")} />
+              <Input className="ltr uppercase" maxLength={PLATE_LETTERS_MAX} value={f.plate_letters_en} onChange={set("plate_letters_en")} />
             </FormField>
             <FormField id="vf-plate-digits" label={t("fields.plate_digits")} required error={errors.plate_digits}>
               <Input className="ltr" inputMode="numeric" maxLength={4} value={f.plate_digits} onChange={set("plate_digits")} />

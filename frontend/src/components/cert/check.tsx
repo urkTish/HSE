@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { FormField } from "@/components/common/form-field";
 import { PageHeader } from "@/components/common/page-header";
 import { MutationError } from "@/components/common/states";
-import { CameraScanner } from "@/components/gate/gate-check";
+import { CameraScanner, e2eHooksEnabled } from "@/components/gate/gate-check";
 import { useCurrentProject } from "@/lib/current-project";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
 import { DEFAULT_TIME_ZONE, formatDate } from "@/lib/datetime";
@@ -18,6 +18,7 @@ import { RequirementStateBadge } from "@/components/training/common";
 import { EquipmentLimitations, PersonnelLimitations, ServiceStatusBadge, TAG_BORDER, TAG_TONE, TagStatusBadge, useReasonLabel } from "./common";
 
 type S = Schemas;
+const CLEAR_AFTER_MS = 30_000;
 
 const VERDICT: Record<S["CertCheckResult"], string> = {
   in_service: "bg-verdict-granted text-verdict-granted-fg",
@@ -57,10 +58,16 @@ export function CertCheckPage() {
   useEffect(() => {
     submitRef.current = submit;
   });
+  // A shared phone: the name, worker number and photo leave the screen after 30 s, as the gate result does (GC-7).
+  useEffect(() => {
+    if (!res) return;
+    const h = window.setTimeout(() => setRes(null), CLEAR_AFTER_MS);
+    return () => window.clearTimeout(h);
+  }, [res]);
   // Test hook: e2e feeds a QR payload as if the camera had read it (the camera itself is never driven in tests).
   // Installed only once the project is known, so a scan is never sent without project_id.
   useEffect(() => {
-    if (!projectId) return;
+    if (!projectId || !e2eHooksEnabled()) return;
     const w = window as unknown as { __hseCertScan?: (payload: string) => Promise<void> };
     w.__hseCertScan = (payload: string) => submitRef.current({ payload });
     return () => {

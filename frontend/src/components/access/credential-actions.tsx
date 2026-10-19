@@ -17,7 +17,7 @@ import { useMeData } from "@/components/shell/me-context";
 import { MANUAL_REASONS } from "@/lib/access-enums";
 import { ACCESS_PREFIXES, ak, useCredential } from "@/lib/api/access";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
-import { DEFAULT_TIME_ZONE, utcToZonedInput, zonedInputToUtc } from "@/lib/datetime";
+import { DEFAULT_TIME_ZONE, todayInZone, utcToZonedInput, zonedInputToUtc } from "@/lib/datetime";
 import { useLocalizedName } from "@/lib/i18n-helpers";
 import { canWrite } from "@/lib/permissions";
 import { useFormatters } from "@/lib/use-formatters";
@@ -72,7 +72,7 @@ export function CredentialPanel({ kind, id, projectId, onChanged }: { kind: Kind
         : s.validity_status
           ? te(`validityStatus.${s.validity_status}`)
           : "—";
-  const days = s.effective_valid_until ? Math.round((Date.parse(`${s.effective_valid_until}T00:00:00Z`) - Date.parse(`${new Date().toISOString().slice(0, 10)}T00:00:00Z`)) / 86_400_000) : null;
+  const days = s.effective_valid_until ? Math.round((Date.parse(`${s.effective_valid_until}T00:00:00Z`) - Date.parse(`${todayInZone()}T00:00:00Z`)) / 86_400_000) : null;
   return (
     <Card data-testid="credential-panel" data-kind={kind} data-status={status ?? ""}>
       <CardHeader className="flex-row flex-wrap items-center justify-between gap-2">

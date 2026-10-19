@@ -25,10 +25,10 @@ import { StatusBadge } from "@/components/common/status-badge";
 import { useMeData } from "@/components/shell/me-context";
 import { Link } from "@/i18n/navigation";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
-import { hk, useIncident, useInvestigation } from "@/lib/api/hse";
+import { hk, useIncident, useIncidentPermitSuggestions, useInvestigation } from "@/lib/api/hse";
 import { INVESTIGATION_LEVELS, INVESTIGATION_METHODS } from "@/lib/enums";
 import { applyServerErrors } from "@/lib/forms";
-import { useFieldErrorTranslator, useLocalizedName } from "@/lib/i18n-helpers";
+import { joinList, useFieldErrorTranslator, useLocalizedName } from "@/lib/i18n-helpers";
 import { canWrite } from "@/lib/permissions";
 import { useRefLists } from "@/lib/reference";
 import { useFormatters } from "@/lib/use-formatters";
@@ -47,6 +47,7 @@ interface Values {
   lessons_learned: string;
   ptw_involved: boolean;
   ptw_ref: string;
+  ptw_ids: string[];
   root_causes: { code: string; text: string; linked_ca_ids: string[]; no_action_justification: string }[];
 }
 
@@ -154,7 +155,7 @@ export function InvestigationPage({ id }: { id: string }) {
                     {t("levelWithMin", { level: te(`investigationLevel.${v.level}`), min: v.minimum_level })}
                   </FieldItem>
                   <FieldItem label={t("fields.lead")}>{v.lead_investigator ? name(v.lead_investigator.full_name_en, v.lead_investigator.full_name_ar) : "—"}</FieldItem>
-                  <FieldItem label={t("fields.team")}>{v.team_members.map((u) => name(u.full_name_en, u.full_name_ar)).join(", ") || "—"}</FieldItem>
+                  <FieldItem label={t("fields.team")}>{joinList(v.team_members.map((u) => name(u.full_name_en, u.full_name_ar))) || "—"}</FieldItem>
                   <FieldItem label={t("fields.method")}>{v.method ? te(`investigationMethod.${v.method}`) : "—"}</FieldItem>
                   <FieldItem label={t("fields.due_date")}>{date(v.due_date)}</FieldItem>
                   {v.preliminary_report_due_at ? <FieldItem label={t("fields.preliminary_due")}>{dateTime(v.preliminary_report_due_at)}</FieldItem> : null}
@@ -162,6 +163,17 @@ export function InvestigationPage({ id }: { id: string }) {
                     <YesNo value={v.ptw_involved} yes={tc("yes")} no={tc("no")} />
                     {v.ptw_ref ? <span className="ltr"> · {v.ptw_ref}</span> : null}
                   </FieldItem>
+                  {(v.ptws ?? []).length > 0 ? (
+                    <FieldItem label={t("fields.ptws")}>
+                      <span className="flex flex-wrap gap-x-3 gap-y-1" data-testid="inv-ptws">
+                        {(v.ptws ?? []).map((p) => (
+                          <Link key={p.id} href={`/permits/${p.id}`} className="ltr text-primary hover:underline">
+                            {p.display_no}
+                          </Link>
+                        ))}
+                      </span>
+                    </FieldItem>
+                  ) : null}
                   <FieldItem label={t("fields.submitted_at")}>{dateTime(v.submitted_at)}</FieldItem>
                   <FieldItem label={t("fields.approved")}>{v.approved_by ? `${name(v.approved_by.full_name_en, v.approved_by.full_name_ar)} · ${dateTime(v.approved_at)}` : "—"}</FieldItem>
                 </FieldList>
@@ -343,6 +355,10 @@ function InvestigationForm({ incident, inv, onDone }: { incident: Schemas["Incid
   const qc = useQueryClient();
   const ref = useRefLists();
   const users = useUserOptions(incident.project_id);
+  const suggestions = useIncidentPermitSuggestions(incident.id);
+  const linked = inv.ptws ?? [];
+  // D-69: the legacy free-text ref is read-only once permits are linked.
+  const refLocked = linked.length > 0;
   const [error, setError] = useState<unknown>(null);
   const form = useForm<Values>({
     defaultValues: {
@@ -356,12 +372,18 @@ function InvestigationForm({ incident, inv, onDone }: { incident: Schemas["Incid
       lessons_learned: inv.lessons_learned ?? "",
       ptw_involved: inv.ptw_involved ?? false,
       ptw_ref: inv.ptw_ref ?? "",
+      ptw_ids: linked.map((p) => p.id),
       root_causes: inv.root_causes.map((r) => ({ code: r.code, text: r.text, linked_ca_ids: r.linked_ca_ids, no_action_justification: r.no_action_justification ?? "" })),
     },
   });
   const rcs = useFieldArray({ control: form.control, name: "root_causes" });
   const { isSubmitting, errors } = form.formState;
   const caOptions = incident.corrective_actions.map((c) => ({ value: c.id, label: `${c.ref} — ${c.title}` }));
+  // Candidates: permits live in the zone at the time (suggestions) plus whatever is already linked.
+  const ptwOptions = [
+    ...linked.map((p) => ({ value: p.id, label: p.display_no })),
+    ...(suggestions.data?.items ?? []).filter((x) => !linked.some((p) => p.id === x.permit.id)).map((x) => ({ value: x.permit.id, label: `${x.permit.display_no} · ${te(`permitStatus.${x.status_at_occurrence}`)}` })),
+  ];
   const watched = useWatch({ control: form.control });
   const watchedLevel = watched.level;
   const watchedRcs = watched.root_causes ?? [];
@@ -382,8 +404,9 @@ function InvestigationForm({ incident, inv, onDone }: { incident: Schemas["Incid
             sequence_of_events: v.sequence_of_events.trim() || null,
             immediate_causes: v.immediate_causes.trim() || null,
             lessons_learned: v.lessons_learned.trim() || null,
-            ptw_involved: v.ptw_involved,
-            ptw_ref: v.ptw_ref.trim() || null,
+            ptw_involved: v.ptw_involved || v.ptw_ids.length > 0,
+            ptw_ids: v.ptw_ids,
+            ...(refLocked ? {} : { ptw_ref: v.ptw_ref.trim() || null }),
             root_causes: v.root_causes
               .filter((r) => r.code)
               .map((r) => ({
@@ -452,9 +475,17 @@ function InvestigationForm({ incident, inv, onDone }: { incident: Schemas["Incid
         <CheckboxField id="inv-ptw" label={t("fields.ptw_involved")}>
           <Checkbox {...form.register("ptw_involved")} />
         </CheckboxField>
-        <FormField id="inv-ptw-ref" label={t("fields.ptw_ref")}>
-          <Input className="ltr" maxLength={40} {...form.register("ptw_ref")} />
+        <FormField id="inv-ptw-ref" label={t("fields.ptw_ref")} hint={refLocked ? t("ptwRefLocked") : undefined}>
+          <Input className="ltr" maxLength={40} disabled={refLocked} {...form.register("ptw_ref")} />
         </FormField>
+        <div className="flex flex-col gap-1.5 sm:col-span-2">
+          <Controller
+            control={form.control}
+            name="ptw_ids"
+            render={({ field }) => <MultiSelect id="inv-ptw-ids" label={t("fields.ptws")} options={ptwOptions} value={field.value} onChange={field.onChange} allLabel={tc("none")} className="lg:w-auto" testId="inv-ptw-ids" />}
+          />
+          <p className="text-xs text-muted-foreground">{suggestions.data && ptwOptions.length === 0 ? t("noPermitSuggestions") : t("ptwIdsHint")}</p>
+        </div>
         <div className="sm:col-span-2">
           <PossibleIdHint text={allText} />
         </div>

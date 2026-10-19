@@ -19,7 +19,7 @@ import { EmptyState, ErrorState, LoadingState, MutationError } from "@/component
 import { useMeData } from "@/components/shell/me-context";
 import { Choices } from "@/components/followup/common";
 import { Link } from "@/i18n/navigation";
-import { api, downloadFile, unwrap, type Schemas } from "@/lib/api/client";
+import { api, downloadFile, openSignedUrl, unwrap, type Schemas } from "@/lib/api/client";
 import type { KpiQuery } from "@/lib/api/kpi";
 import { useExportDatasets, useExportJobs, useExportSubscriptions, useScRefresh } from "@/lib/api/scorecard";
 import { useCurrentProject } from "@/lib/current-project";
@@ -247,8 +247,7 @@ function JobDownload({ job }: { job: S["XpJobRead"] }) {
         onClick={async () => {
           setError(null);
           try {
-            const u = await unwrap(api.GET("/api/v1/export-jobs/{job_id}/file-url", { params: { path: { job_id: job.id } } }));
-            window.open(u.url, "_blank", "noopener");
+            await openSignedUrl(() => unwrap(api.GET("/api/v1/export-jobs/{job_id}/file-url", { params: { path: { job_id: job.id } } })));
           } catch (e) {
             setError(e);
           }

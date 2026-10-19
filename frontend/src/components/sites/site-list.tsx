@@ -1,7 +1,6 @@
 "use client";
 import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
 import { ListToolbar, SearchFilter, SelectFilter } from "@/components/common/list-toolbar";
@@ -17,6 +16,7 @@ import { SITE_SIDES, SITE_STATUSES } from "@/lib/enums";
 import { can, canWrite } from "@/lib/permissions";
 import { useLocalizedName } from "@/lib/i18n-helpers";
 import { useDebounced } from "@/lib/use-debounced";
+import { useSearchState } from "@/lib/url-state";
 
 const PAGE_SIZE = 50;
 
@@ -25,10 +25,11 @@ export function SiteList({ projectId }: { projectId: string }) {
   const me = useMeData();
   const name = useLocalizedName();
   const project = useProject(projectId);
-  const [q, setQ] = useState("");
-  const [side, setSide] = useState<Schemas["SiteSide"] | "">("");
-  const [status, setStatus] = useState<Schemas["SiteStatus"] | "">("");
-  const [page, setPage] = useState(1);
+  const s = useSearchState();
+  const q = s.get("q") ?? "";
+  const side = (s.get("site_side") as Schemas["SiteSide"] | null) ?? "";
+  const status = (s.get("status") as Schemas["SiteStatus"] | null) ?? "";
+  const page = s.getInt("page", 1) ?? 1;
   const dq = useDebounced(q);
   const query = useSites(projectId, { q: dq || undefined, site_side: side || undefined, status: status || undefined, page, page_size: PAGE_SIZE, sort: "code" });
   const manage = canWrite(me, "site_zone.manage", projectId) && project.data?.status !== "closed";
@@ -47,9 +48,9 @@ export function SiteList({ projectId }: { projectId: string }) {
         ) : null}
       </div>
       <ListToolbar actions={can(me, "export.lists", projectId) ? <ExportButtons dataset="sites" params={{ project_id: projectId, q: dq, status }} /> : null}>
-        <SearchFilter id="site-q" value={q} onChange={(v) => { setQ(v); setPage(1); }} />
-        <SelectFilter id="site-side" label={t("fields.site_side")} value={side} onChange={(v) => { setSide(v); setPage(1); }} options={SITE_SIDES.map((s) => ({ value: s, label: t(`side.${s}`) }))} />
-        <SelectFilter id="site-status" label={t("fields.status")} value={status} onChange={(v) => { setStatus(v); setPage(1); }} options={SITE_STATUSES.map((s) => ({ value: s, label: t(`status.${s}`) }))} />
+        <SearchFilter id="site-q" value={q} onChange={(v) => s.set({ q: v })} />
+        <SelectFilter id="site-side" label={t("fields.site_side")} value={side} onChange={(v) => s.set({ site_side: v })} options={SITE_SIDES.map((s) => ({ value: s, label: t(`side.${s}`) }))} />
+        <SelectFilter id="site-status" label={t("fields.status")} value={status} onChange={(v) => s.set({ status: v })} options={SITE_STATUSES.map((s) => ({ value: s, label: t(`status.${s}`) }))} />
       </ListToolbar>
       {query.isLoading ? (
         <LoadingState />
@@ -83,7 +84,7 @@ export function SiteList({ projectId }: { projectId: string }) {
               ))}
             </TBody>
           </Table>
-          <Pagination page={page} pageSize={PAGE_SIZE} total={query.data.total} onPage={setPage} />
+          <Pagination page={page} pageSize={PAGE_SIZE} total={query.data.total} onPage={(p) => s.set({ page: p })} />
         </>
       ) : (
         <EmptyState />

@@ -104,7 +104,8 @@
     "year": "Year",
     "notAllowed": "Not available to your role",
     "aiLabel": "AI-generated — to be reviewed by a competent person",
-    "add": "Add"
+    "add": "Add",
+    "downloadRestricted": "Opening this file needs the ID-reveal permission."
   },
   "export": {
     "label": "Export",
@@ -5719,7 +5720,8 @@
       "submitted_at": "Submitted",
       "approved": "Approved",
       "code": "Code",
-      "text": "Description"
+      "text": "Description",
+      "ptws": "Linked permits"
     },
     "print": "Print report",
     "incidentDetails": "Incident details",
@@ -5738,7 +5740,10 @@
     "approve": "Approve → {status}",
     "returnForChanges": "Return for changes",
     "levelWithMin": "{level} (minimum {min})",
-    "notStartedBody": "The investigation has not started yet (minimum level {level}). Assign it from the incident:"
+    "notStartedBody": "The investigation has not started yet (minimum level {level}). Assign it from the incident:",
+    "ptwIdsHint": "Permits that were issued, active or suspended in the incident's zone when it occurred. Linking one marks the permit to work as involved.",
+    "ptwRefLocked": "Read-only while permits are linked.",
+    "noPermitSuggestions": "No permit was live in this zone at the time of the incident."
   },
   "observations": {
     "title": "Safety observations",
@@ -11678,7 +11683,9 @@
       "revoke": "Revoke",
       "revokeTitle": "Revoke {device}",
       "revokeHint": "The reader stops working at once.",
-      "revoked": "Revoked"
+      "revoked": "Revoked",
+      "tokenTitle": "Reader {device} registered",
+      "tokenDone": "I have copied the token"
     },
     "settings": {
       "title": "Emergency settings",
@@ -14923,7 +14930,8 @@
       "idleFrom": "Off-hire from",
       "idleTo": "Off-hire to",
       "idleHint": "Idle days need no pre-use check.",
-      "docsResetHint": "Changing a document date resets the HSE Officer's verification."
+      "docsResetHint": "Changing a document date resets the HSE Officer's verification.",
+      "plateDigitsHint": "1 to 4 digits."
     },
     "auth": {
       "title": "Driver & operator authorisations",

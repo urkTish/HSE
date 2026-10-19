@@ -21,7 +21,7 @@ import { PERMIT_TYPES, STATUS_REASONS } from "@/lib/ptw-enums";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
 import { cn } from "@/lib/utils";
-import { Countdown, GasStatusBadge, HighRiskBadge, PermitNo, PermitStatusBadge, PermitsSubNav, TypeChips, userLabel } from "./common";
+import { Countdown, GasStatusBadge, HighRiskBadge, PermitNo, PermitStatusBadge, PermitsSubNav, TypeChips, useNow, userLabel } from "./common";
 
 type S = Schemas;
 const PAGE_SIZE = 50;
@@ -38,6 +38,8 @@ function PtwBoard({ project }: { project: S["ProjectRead"] }) {
   const tc = useTranslations("common");
   const name = useLocalizedName();
   const opts = useProjectOptions(project.id);
+  // One ticker for every countdown on the board (three per card otherwise).
+  const now = useNow();
   const s = useSearchState();
   const types = s.getAll("work_type") as S["PermitType"][];
   const zones = s.getAll("zone_id");
@@ -86,7 +88,7 @@ function PtwBoard({ project }: { project: S["ProjectRead"] }) {
               </CardHeader>
               <CardContent className="flex flex-col gap-2">
                 {z.permits.map((p) => (
-                  <BoardCard key={p.id} p={p} />
+                  <BoardCard key={p.id} p={p} now={now} />
                 ))}
               </CardContent>
             </Card>
@@ -99,7 +101,7 @@ function PtwBoard({ project }: { project: S["ProjectRead"] }) {
 
 const ROUTINE: string[] = ["shift_end", "shift_lapsed", "midday_ban"];
 
-function BoardCard({ p }: { p: S["BoardPermit"] }) {
+function BoardCard({ p, now }: { p: S["BoardPermit"]; now: number }) {
   const t = useTranslations("ptwBoard");
   const te = useTranslations("enums");
   return (
@@ -138,9 +140,9 @@ function BoardCard({ p }: { p: S["BoardPermit"] }) {
       </span>
       <span className="flex flex-wrap items-center gap-2">
         {p.gas_status !== "not_required" ? <GasStatusBadge status={p.gas_status} /> : null}
-        {p.gas_next_due_at ? <Countdown to={p.gas_next_due_at} label={t("gasDue")} warnMinutes={15} testId="board-gas-due" /> : null}
-        {p.shift_planned_end_at ? <Countdown to={p.shift_planned_end_at} label={t("shiftEnds", { n: p.shift_no ?? 1 })} warnMinutes={30} testId="board-shift-end" /> : null}
-        {p.fire_watch_until ? <Countdown to={p.fire_watch_until} label={t("fireWatch")} icon="fire" testId="board-fire-watch" /> : null}
+        {p.gas_next_due_at ? <Countdown to={p.gas_next_due_at} label={t("gasDue")} warnMinutes={15} testId="board-gas-due" now={now} /> : null}
+        {p.shift_planned_end_at ? <Countdown to={p.shift_planned_end_at} label={t("shiftEnds", { n: p.shift_no ?? 1 })} warnMinutes={30} testId="board-shift-end" now={now} /> : null}
+        {p.fire_watch_until ? <Countdown to={p.fire_watch_until} label={t("fireWatch")} icon="fire" testId="board-fire-watch" now={now} /> : null}
       </span>
       {p.simops_chips.length || p.wap_chip || p.notam_chip ? (
         <span className="flex flex-wrap gap-1">

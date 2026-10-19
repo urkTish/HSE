@@ -1,16 +1,19 @@
 "use client";
 import { Ban, CalendarClock, CheckCircle2, CircleDashed, Clock, FlaskConical, OctagonAlert, PauseCircle, ShieldAlert, TriangleAlert, Wrench, XCircle } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import type { ComponentType, ReactNode, SVGProps } from "react";
+import { useMemo, useState, type ComponentType, type ReactNode, type SVGProps } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { SubNav } from "@/components/access/common";
 import { ProjectGate } from "@/components/common/project-gate";
 import { ErrorState, LoadingState } from "@/components/common/states";
 import { useMeData } from "@/components/shell/me-context";
 import { Link } from "@/i18n/navigation";
 import type { Schemas } from "@/lib/api/client";
-import { useSvReference, useSvSettings } from "@/lib/api/site-vehicles";
+import { useSiteVehicle, useSiteVehicles, useSvReference, useSvSettings } from "@/lib/api/site-vehicles";
+import { useDebounced } from "@/lib/use-debounced";
 import { can, canWrite, isReadOnly } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 
@@ -259,6 +262,58 @@ export function VehicleRefText({ v }: { v: S["SiteVehVehicleRef"] }) {
 }
 
 /** A worker as the 7b API returns it (names may be withheld). */
+/**
+ * Search the project's site vehicles (vehicle no., fleet no. or plate) and pick one. Fetches a page of 25 as
+ * the user types instead of the whole register, and keeps the chosen vehicle listed (also when it came from
+ * the URL). `filter` drops vehicles that cannot be picked (e.g. withdrawn).
+ */
+export function SiteVehiclePicker({
+  id,
+  projectId,
+  value,
+  onChange,
+  filter,
+  "data-testid": testId,
+  "aria-invalid": invalid,
+  "aria-describedby": describedBy,
+}: {
+  id?: string;
+  projectId: string;
+  value: string;
+  onChange: (id: string, v: S["SiteVehRead"] | null) => void;
+  filter?: (v: S["SiteVehRead"]) => boolean;
+  "data-testid"?: string;
+  "aria-invalid"?: boolean;
+  "aria-describedby"?: string;
+}) {
+  const t = useTranslations("sv.vehicle");
+  const tc = useTranslations("common");
+  const l = useSvLabels();
+  const [q, setQ] = useState("");
+  const dq = useDebounced(q, 300);
+  const res = useSiteVehicles(projectId, { q: dq || null, page_size: 25 });
+  const picked = useSiteVehicle(value, { enabled: Boolean(value) });
+  const items = useMemo(() => {
+    const list = (res.data?.items ?? []).filter((v) => (filter ? filter(v) : true));
+    const sel = picked.data && picked.data.id === value ? picked.data : null;
+    return sel && !list.some((v) => v.id === sel.id) ? [sel, ...list] : list;
+  }, [res.data, picked.data, value, filter]);
+  return (
+    <div className="grid gap-2 sm:grid-cols-2">
+      <Input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("searchHint")} aria-label={t("searchHint")} autoComplete="off" data-testid={testId ? `${testId}-search` : undefined} />
+      <Select id={id} aria-invalid={invalid} aria-describedby={describedBy} value={value} onChange={(e) => onChange(e.target.value, items.find((v) => v.id === e.target.value) ?? null)} data-testid={testId}>
+        <option value="">{tc("select")}</option>
+        {items.map((v) => (
+          <option key={v.id} value={v.id}>
+            {v.vehicle_no} · {v.fleet_no} · {l.useClass(v.use_class)}
+            {v.readiness !== "ready" ? ` (${l.readiness(v.readiness)})` : ""}
+          </option>
+        ))}
+      </Select>
+    </div>
+  );
+}
+
 export function DriverText({ w }: { w: S["WorkerRef"] }) {
   const ar = useLocale() === "ar";
   const n = ar ? w.full_name_ar || w.full_name_en : w.full_name_en || w.full_name_ar;

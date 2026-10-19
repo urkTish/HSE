@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import { expect, request as pwRequest, type APIRequestContext, type Page } from "@playwright/test";
 
 export const PASSWORD = process.env.SEED_PASSWORD ?? "Demo-Passw0rd!2026";
@@ -79,9 +80,9 @@ export function sql(query: string): string {
   ).trim();
 }
 
-/** Unique suffix for records created by a test run. */
+/** Unique suffix for records created by a test run (random, so two calls in the same millisecond differ). */
 export function uid(): string {
-  return Date.now().toString(36).toUpperCase().slice(-5);
+  return randomUUID().replace(/-/g, "").slice(0, 5).toUpperCase();
 }
 
 /** Select the first <option> whose text starts with `prefix`. */

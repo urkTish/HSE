@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { Code, Plate, StepDialog } from "@/components/access/common";
+import { Code, PLATE_DIGITS, PLATE_LETTERS_MAX, Plate, StepDialog } from "@/components/access/common";
 import { ApiWarnings, useWarningToasts } from "@/components/common/api-warnings";
 import { Breadcrumbs } from "@/components/common/breadcrumbs";
 import { FieldItem, FieldList } from "@/components/common/field-list";
@@ -336,6 +336,7 @@ function VehicleForm({ project }: { project: S["ProjectRead"] }) {
     if (!engagement) e.engagement_id = tv("required");
     (["use_class", "fleet_no", "serial_or_vin", "make_model", "insurance_policy_no", "insurance_expiry"] as const).forEach(req);
     if (plated) (["plate_letters_ar", "plate_digits", "istimara_expiry", "mvpi_expiry"] as const).forEach(req);
+    if (plated && f.plate_digits && !PLATE_DIGITS.test(f.plate_digits)) e.plate_digits = tf("plateDigitsHint");
     if (rule?.seats_required && !(Number(f.seats) >= 2 && Number(f.seats) <= 60)) e.seats = tf("seatsRange");
     setErrors(e);
     if (Object.keys(e).length) return;
@@ -460,10 +461,10 @@ function VehicleForm({ project }: { project: S["ProjectRead"] }) {
         {plated ? (
           <>
             <FormField id="sv-f-pla" label={tf("plateLettersAr")} required error={errors.plate_letters_ar}>
-              <Input dir="rtl" lang="ar" maxLength={5} value={f.plate_letters_ar} onChange={set("plate_letters_ar")} data-testid="sv-f-pla" />
+              <Input dir="rtl" lang="ar" maxLength={PLATE_LETTERS_MAX} value={f.plate_letters_ar} onChange={set("plate_letters_ar")} data-testid="sv-f-pla" />
             </FormField>
             <FormField id="sv-f-ple" label={tf("plateLettersEn")}>
-              <Input className="ltr" maxLength={3} value={f.plate_letters_en} onChange={set("plate_letters_en")} data-testid="sv-f-ple" />
+              <Input className="ltr uppercase" maxLength={PLATE_LETTERS_MAX} value={f.plate_letters_en} onChange={set("plate_letters_en")} data-testid="sv-f-ple" />
             </FormField>
             <FormField id="sv-f-pld" label={tf("plateDigits")} required error={errors.plate_digits}>
               <Input className="ltr" inputMode="numeric" maxLength={4} value={f.plate_digits} onChange={set("plate_digits")} data-testid="sv-f-pld" />

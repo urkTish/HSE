@@ -32,7 +32,7 @@ import { useProjectSettings } from "@/lib/api/queries";
 import { DEFAULT_TIME_ZONE, utcToZonedInput, zonedInputToUtc } from "@/lib/datetime";
 import { groupDecimal, useDisplay } from "@/lib/digits";
 import { INVESTIGATION_LEVELS, INVESTIGATION_METHODS } from "@/lib/enums";
-import { useErrorMessage, useLocalizedName } from "@/lib/i18n-helpers";
+import { joinList, useErrorMessage, useLocalizedName } from "@/lib/i18n-helpers";
 import { can, canWrite } from "@/lib/permissions";
 import { useRefLists } from "@/lib/reference";
 import { useFormatters } from "@/lib/use-formatters";
@@ -248,8 +248,8 @@ export function IncidentDetail({ id }: { id: string }) {
                             <span className="inline-flex flex-wrap gap-1">
                               <StatusBadge status={c.classification_status} label={te(`classificationStatus.${c.classification_status}`)} />
                               {c.excluded_from_rates ? (
-                                <span className="text-xs text-muted-foreground" title={c.exclusion_reasons.map((x) => te(`rateExclusion.${x}`)).join(", ")}>
-                                  {t("excludedFromRates")}: {c.exclusion_reasons.map((x) => te(`rateExclusion.${x}`)).join(", ")}
+                                <span className="text-xs text-muted-foreground" title={joinList(c.exclusion_reasons.map((x) => te(`rateExclusion.${x}`)))}>
+                                  {t("excludedFromRates")}: {joinList(c.exclusion_reasons.map((x) => te(`rateExclusion.${x}`)))}
                                 </span>
                               ) : null}
                             </span>

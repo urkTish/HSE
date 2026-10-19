@@ -19,7 +19,7 @@ import { useRouter } from "@/i18n/navigation";
 import { api, unwrap } from "@/lib/api/client";
 import { keys } from "@/lib/api/queries";
 import { formatDateTime } from "@/lib/datetime";
-import { useErrorMessage } from "@/lib/i18n-helpers";
+import { useErrorMessage, useLocalizedName } from "@/lib/i18n-helpers";
 import { useLocale } from "next-intl";
 
 export function AcceptInvite() {
@@ -29,6 +29,7 @@ export function AcceptInvite() {
   const ta = useTranslations("auth");
   const locale = useLocale() === "ar" ? "ar" : "en";
   const msg = useErrorMessage();
+  const name = useLocalizedName();
   const token = useSearchParams().get("token") ?? "";
   const router = useRouter();
   const qc = useQueryClient();
@@ -73,7 +74,7 @@ export function AcceptInvite() {
           <span className="text-xl">{t("title")}</span>
         </CardTitle>
         {info.data ? (
-          <CardDescription>{t("welcome", { name: info.data.full_name_en, email: info.data.email })}</CardDescription>
+          <CardDescription>{t("welcome", { name: name(info.data.full_name_en, info.data.full_name_ar), email: info.data.email })}</CardDescription>
         ) : null}
       </CardHeader>
       <CardContent>

@@ -1,7 +1,6 @@
 "use client";
 import { UserPlus } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
 import { PageHeader } from "@/components/common/page-header";
@@ -20,6 +19,7 @@ import { can } from "@/lib/permissions";
 import { useLocalizedName } from "@/lib/i18n-helpers";
 import { useDebounced } from "@/lib/use-debounced";
 import { useFormatters } from "@/lib/use-formatters";
+import { useSearchState } from "@/lib/url-state";
 
 type Sort = NonNullable<QueryOf<"list_users">["sort"]>;
 const SORTS: Sort[] = ["name", "-name", "email", "-email", "last_login_at", "-last_login_at"];
@@ -35,13 +35,14 @@ export function UserList() {
   const { dateTime } = useFormatters();
   const { projects } = useCurrentProject();
   const projectCode = new Map(projects.map((p) => [p.id, p.code]));
-  const [q, setQ] = useState("");
-  const [status, setStatus] = useState<Schemas["UserStatus"] | "">("");
-  const [role, setRole] = useState<Schemas["Role"] | "">("");
-  const [projectId, setProjectId] = useState("");
-  const [employer, setEmployer] = useState<Schemas["EmployerType"] | "">("");
-  const [sort, setSort] = useState<Sort>("name");
-  const [page, setPage] = useState(1);
+  const s = useSearchState();
+  const q = s.get("q") ?? "";
+  const status = (s.get("status") as Schemas["UserStatus"] | null) ?? "";
+  const role = (s.get("role") as Schemas["Role"] | null) ?? "";
+  const projectId = s.get("project_id") ?? "";
+  const employer = (s.get("employer_type") as Schemas["EmployerType"] | null) ?? "";
+  const sort = (s.get("sort") as Sort | null) ?? "name";
+  const page = s.getInt("page", 1) ?? 1;
   const dq = useDebounced(q);
   const query = useUsers({
     q: dq || undefined,
@@ -53,7 +54,6 @@ export function UserList() {
     page,
     page_size: PAGE_SIZE,
   });
-  const reset = () => setPage(1);
 
   return (
     <div>
@@ -72,12 +72,12 @@ export function UserList() {
         }
       />
       <ListToolbar actions={can(me, "export.lists") ? <ExportButtons dataset="users" params={{ q: dq, status, project_id: projectId }} /> : null}>
-        <SearchFilter id="user-q" value={q} onChange={(v) => { setQ(v); reset(); }} />
-        <SelectFilter id="user-status" label={t("fields.status")} value={status} onChange={(v) => { setStatus(v); reset(); }} options={USER_STATUSES.map((s) => ({ value: s, label: t(`status.${s}`) }))} />
-        <SelectFilter id="user-role" label={t("fields.roles")} value={role} onChange={(v) => { setRole(v); reset(); }} options={ROLES.map((r) => ({ value: r, label: tr(r) }))} allLabel={t("anyRole")} />
-        <SelectFilter id="user-project" label={ts("projectSwitcher")} value={projectId} onChange={(v) => { setProjectId(v); reset(); }} options={projects.map((p) => ({ value: p.id, label: p.code }))} />
-        <SelectFilter id="user-employer" label={t("fields.employer_type")} value={employer} onChange={(v) => { setEmployer(v); reset(); }} options={EMPLOYER_TYPES.map((e) => ({ value: e, label: t(`employerType.${e}`) }))} />
-        <SelectFilter id="user-sort" label={tc("sortBy")} value={sort} onChange={(v) => setSort(v || "name")} options={SORTS.map((s) => ({ value: s, label: t(`sort.${s}`) }))} allLabel={t("sort.name")} />
+        <SearchFilter id="user-q" value={q} onChange={(v) => s.set({ q: v })} />
+        <SelectFilter id="user-status" label={t("fields.status")} value={status} onChange={(v) => s.set({ status: v })} options={USER_STATUSES.map((s) => ({ value: s, label: t(`status.${s}`) }))} />
+        <SelectFilter id="user-role" label={t("fields.roles")} value={role} onChange={(v) => s.set({ role: v })} options={ROLES.map((r) => ({ value: r, label: tr(r) }))} allLabel={t("anyRole")} />
+        <SelectFilter id="user-project" label={ts("projectSwitcher")} value={projectId} onChange={(v) => s.set({ project_id: v })} options={projects.map((p) => ({ value: p.id, label: p.code }))} />
+        <SelectFilter id="user-employer" label={t("fields.employer_type")} value={employer} onChange={(v) => s.set({ employer_type: v })} options={EMPLOYER_TYPES.map((e) => ({ value: e, label: t(`employerType.${e}`) }))} />
+        <SelectFilter id="user-sort" label={tc("sortBy")} value={sort} onChange={(v) => s.set({ sort: v || null })} options={SORTS.map((s) => ({ value: s, label: t(`sort.${s}`) }))} allLabel={t("sort.name")} />
       </ListToolbar>
       {query.isLoading ? (
         <LoadingState />
@@ -126,7 +126,7 @@ export function UserList() {
               ))}
             </TBody>
           </Table>
-          <Pagination page={page} pageSize={PAGE_SIZE} total={query.data.total} onPage={setPage} />
+          <Pagination page={page} pageSize={PAGE_SIZE} total={query.data.total} onPage={(p) => s.set({ page: p })} />
         </>
       ) : (
         <EmptyState />

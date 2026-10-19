@@ -29,7 +29,7 @@ import { Code, DaysLeft, DeploymentPicker, StepDialog, WorkerLabel } from "@/com
 import { DecimalInput } from "@/components/ptw/common";
 import { useMeData } from "@/components/shell/me-context";
 import { Link, useRouter } from "@/i18n/navigation";
-import { api, unwrap, type Schemas } from "@/lib/api/client";
+import { api, openSignedUrl, unwrap, type Schemas } from "@/lib/api/client";
 import { ck, useCertRefresh, usePersonnelCertificate, usePersonnelCertificates, usePersonnelCertVerifications, useWorkerCertificates } from "@/lib/api/cert";
 import { WORKER_ID_TYPES } from "@/lib/access-enums";
 import { CERT_SOURCES, CERTIFICATE_STATUSES, PERSONNEL_LIMITATION_CODES, SCAN_REASONS, VERIFICATION_STATUSES } from "@/lib/cert-enums";
@@ -807,8 +807,7 @@ function ScanDialog({ id, side, onClose }: { id: string; side: S["ScanSide"]; on
   const [reason, setReason] = useState<S["ScanReason"]>("verification");
   const [text, setText] = useState("");
   async function open() {
-    const r = await unwrap(api.POST("/api/v1/personnel-certificates/{certificate_id}/scan-url", { params: { path: { certificate_id: id } }, body: { side, reason, reason_text: text.trim() || null } }));
-    window.open(r.url, "_blank", "noopener");
+    await openSignedUrl(() => unwrap(api.POST("/api/v1/personnel-certificates/{certificate_id}/scan-url", { params: { path: { certificate_id: id } }, body: { side, reason, reason_text: text.trim() || null } })));
   }
   return (
     <StepDialog title={t("openScanTitle")} description={t("openScanHint")} confirmLabel={t("openScan")} onConfirm={open} onClose={onClose} disabled={reason === "other" && text.trim().length < 5} testId="scan-confirm">

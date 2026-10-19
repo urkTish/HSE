@@ -15,6 +15,7 @@ import { FormField } from "@/components/common/form-field";
 import { ListToolbar, SelectFilter } from "@/components/common/list-toolbar";
 import { PageHeader } from "@/components/common/page-header";
 import { ProjectGate } from "@/components/common/project-gate";
+import { Pagination } from "@/components/common/pagination";
 import { EmptyState, ErrorState, LoadingState } from "@/components/common/states";
 import { Link } from "@/i18n/navigation";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
@@ -25,6 +26,7 @@ import { useSearchState } from "@/lib/url-state";
 import { cn } from "@/lib/utils";
 import { CapExplain, CapList, CommentWindow, Commended, GradeBadge, LineStatusBadge, MedianPosition, Num, RankText, ScBadge, ScSubNav, TrendMark, WatchLevelBadge, previousMonth, recentMonths, useMonthName, useScCaps, useScRef } from "./common";
 import { RemarkList, NewRemarkButton } from "./remarks";
+const PAGE_SIZE = 50;
 
 type S = Schemas;
 type Project = S["ProjectRead"];
@@ -52,7 +54,8 @@ function Register({ project }: { project: Project }) {
   const status = (s.get("status") as S["ScCardStatus"] | null) ?? "";
   const scope = (s.get("scope") as S["ScScope"] | null) ?? "";
   const ranking = useScRanking(project.id, month, { enabled: caps.view });
-  const cards = useScCards(project.id, { month, grade: grade || null, status: status || null, scope: scope || null, page_size: 200 }, { enabled: caps.view });
+  const page = s.getInt("page", 1) ?? 1;
+  const cards = useScCards(project.id, { month, grade: grade || null, status: status || null, scope: scope || null, page, page_size: PAGE_SIZE }, { enabled: caps.view });
   const [finalise, setFinalise] = useState(false);
   if (!caps.view) return <Alert tone="info">{tc("notAllowed")}</Alert>;
   const r = ranking.data;
@@ -186,6 +189,7 @@ function Register({ project }: { project: Project }) {
         ) : (
           <EmptyState message={t("noCards")} />
         )}
+        {cards.data ? <Pagination page={page} pageSize={PAGE_SIZE} total={cards.data.total} onPage={(p) => s.set({ page: p })} /> : null}
       </section>
       {finalise ? <FinaliseDialog projectId={project.id} month={month} onClose={() => setFinalise(false)} /> : null}
     </div>

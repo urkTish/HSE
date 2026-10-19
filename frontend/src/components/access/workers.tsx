@@ -686,7 +686,7 @@ export function WorkerDetail({ id }: { id: string }) {
               {w.id_expired ? <Alert tone="danger">{t("idExpired")}</Alert> : null}
               <FieldList>
                 <FieldItem label={t("fields.id_number")}>
-                  <MaskedIdNumber worker={w} />
+                  <MaskedIdNumber worker={w} projectId={pid} />
                 </FieldItem>
                 <FieldItem label={t("fields.id_expiry_date")}>
                   <StackedDate v={w.id_expiry_date} projectId={pid} />
@@ -746,7 +746,7 @@ export function WorkerDetail({ id }: { id: string }) {
               <CardContent className="flex flex-col gap-3">
                 {!w.id_copy_attachment_id ? <Alert tone="warning">{t("idCopyMissing")}</Alert> : null}
                 {can(me, "worker.unmask_id", pid) || canEdit ? (
-                  <Attachments ownerType="worker_id_copy" ownerId={w.id} canUpload={canEdit} canDelete={canEdit} max={1} hint={t("idCopyHint")} />
+                  <Attachments ownerType="worker_id_copy" ownerId={w.id} canUpload={canEdit} canDelete={canEdit} canOpen={can(me, "worker.unmask_id", pid)} max={1} hint={t("idCopyHint")} />
                 ) : (
                   <p className="text-sm text-muted-foreground">{t("idCopyRestricted")}</p>
                 )}
