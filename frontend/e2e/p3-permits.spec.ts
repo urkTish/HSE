@@ -1,7 +1,7 @@
 import { type Page } from "@playwright/test";
 import { expect, test } from "./fixtures/test";
 import { login, uid, USERS } from "./helpers";
-import { pickMulti, selectContaining } from "./p2-helpers";
+import { multiOption, pickMulti, selectContaining } from "./p2-helpers";
 
 /** Permit form and core rules: duration limit per type (AC10), zones on one site (AC11), draft → request. */
 
@@ -39,8 +39,8 @@ test("AC11 zones from two sites cannot share a permit", async ({ page }) => {
   const f = page.getByTestId("permit-form");
   await selectContaining(f.getByTestId("pf-site"), "S-LAND");
   await page.locator("button#pf-zones").click();
-  await expect(page.getByRole("listbox").getByRole("option", { name: /Z-PIERB/ })).toBeVisible();
-  await expect(page.getByRole("listbox").getByRole("option", { name: /Z-APR-21/ })).toHaveCount(0);
+  await expect(multiOption(page, /Z-PIERB/)).toBeVisible();
+  await expect(multiOption(page, /Z-APR-21/)).toHaveCount(0);
 });
 
 test("a receiver drafts a general permit and sees every readiness blocker", async ({ page }) => {

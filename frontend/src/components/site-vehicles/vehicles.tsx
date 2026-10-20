@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { Code, PLATE_DIGITS, PLATE_LETTERS_MAX, Plate, StepDialog } from "@/components/access/common";
+import { Code, PLATE_DIGITS, PLATE_LETTERS_AR_MAX, PLATE_LETTERS_EN_MAX, Plate, StepDialog } from "@/components/access/common";
 import { ApiWarnings, useWarningToasts } from "@/components/common/api-warnings";
 import { Breadcrumbs } from "@/components/common/breadcrumbs";
 import { FieldItem, FieldList } from "@/components/common/field-list";
@@ -461,10 +461,10 @@ function VehicleForm({ project }: { project: S["ProjectRead"] }) {
         {plated ? (
           <>
             <FormField id="sv-f-pla" label={tf("plateLettersAr")} required error={errors.plate_letters_ar}>
-              <Input dir="rtl" lang="ar" maxLength={PLATE_LETTERS_MAX} value={f.plate_letters_ar} onChange={set("plate_letters_ar")} data-testid="sv-f-pla" />
+              <Input dir="rtl" lang="ar" maxLength={PLATE_LETTERS_AR_MAX} value={f.plate_letters_ar} onChange={set("plate_letters_ar")} data-testid="sv-f-pla" />
             </FormField>
             <FormField id="sv-f-ple" label={tf("plateLettersEn")}>
-              <Input className="ltr uppercase" maxLength={PLATE_LETTERS_MAX} value={f.plate_letters_en} onChange={set("plate_letters_en")} data-testid="sv-f-ple" />
+              <Input className="ltr uppercase" maxLength={PLATE_LETTERS_EN_MAX} value={f.plate_letters_en} onChange={set("plate_letters_en")} data-testid="sv-f-ple" />
             </FormField>
             <FormField id="sv-f-pld" label={tf("plateDigits")} required error={errors.plate_digits}>
               <Input className="ltr" inputMode="numeric" maxLength={4} value={f.plate_digits} onChange={set("plate_digits")} data-testid="sv-f-pld" />

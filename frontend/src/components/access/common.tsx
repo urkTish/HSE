@@ -478,7 +478,10 @@ export function DeploymentPicker({
 
 /** Saudi plate: 1–4 digits (checked in both vehicle forms so the user gets a field error, not a 422). */
 export const PLATE_DIGITS = /^\d{1,4}$/;
-export const PLATE_LETTERS_MAX = 3;
+/** Arabic plate letters are 3 letters, often typed with spaces ("ح ط ر"), so the box takes 5 (the API limit). */
+export const PLATE_LETTERS_AR_MAX = 5;
+/** Latin plate letters: 3 (the API limit). */
+export const PLATE_LETTERS_EN_MAX = 3;
 
 /** Pick a vehicle of the project (vehicle_no / fleet_no search). */
 export function VehicleSelect({

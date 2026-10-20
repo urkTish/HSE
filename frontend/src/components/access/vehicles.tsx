@@ -36,7 +36,7 @@ import { todayInZone } from "@/lib/datetime";
 import { can, canWrite } from "@/lib/permissions";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
-import { AccessPrintHeader, AirportOnly, BiLabel, Code, DaysLeft, PLATE_DIGITS, PLATE_LETTERS_MAX, Plate, QrImage, StepDialog, SubNav, ValidityBadge, ValidityLine } from "./common";
+import { AccessPrintHeader, AirportOnly, BiLabel, Code, DaysLeft, PLATE_DIGITS, PLATE_LETTERS_AR_MAX, PLATE_LETTERS_EN_MAX, Plate, QrImage, StepDialog, SubNav, ValidityBadge, ValidityLine } from "./common";
 import { CredentialPanel } from "./credential-actions";
 import { RecordActions } from "@/components/common/record-actions";
 import { PrototypeBadge, ReadinessBadge, useSvLabels } from "@/components/site-vehicles/common";
@@ -434,10 +434,10 @@ function VehicleForm({ project, vehicle }: { project: Schemas["ProjectRead"]; ve
         {plated ? (
           <>
             <FormField id="vf-plate-ar" label={t("fields.plate_letters_ar")} required error={errors.plate_letters_ar}>
-              <Input dir="rtl" lang="ar" maxLength={PLATE_LETTERS_MAX} value={f.plate_letters_ar} onChange={set("plate_letters_ar")} />
+              <Input dir="rtl" lang="ar" maxLength={PLATE_LETTERS_AR_MAX} value={f.plate_letters_ar} onChange={set("plate_letters_ar")} />
             </FormField>
             <FormField id="vf-plate-en" label={t("fields.plate_letters_en")}>
-              <Input className="ltr uppercase" maxLength={PLATE_LETTERS_MAX} value={f.plate_letters_en} onChange={set("plate_letters_en")} />
+              <Input className="ltr uppercase" maxLength={PLATE_LETTERS_EN_MAX} value={f.plate_letters_en} onChange={set("plate_letters_en")} />
             </FormField>
             <FormField id="vf-plate-digits" label={t("fields.plate_digits")} required error={errors.plate_digits}>
               <Input className="ltr" inputMode="numeric" maxLength={4} value={f.plate_digits} onChange={set("plate_digits")} />
