@@ -57,31 +57,28 @@ export function MultiSelect<V extends string>({
           </button>
         </PopoverTrigger>
         <PopoverContent className="max-h-80 w-[min(18rem,calc(100vw-2rem))] overflow-y-auto p-1" align="start">
-          <ul role="listbox" aria-multiselectable="true" aria-label={label}>
+          <div role="group" aria-label={label}>
             {value.length > 0 ? (
-              <li>
-                <button type="button" className="flex min-h-touch w-full items-center rounded px-2 text-sm text-primary hover:bg-accent" onClick={() => onChange([])}>
-                  {allLabel ?? t("all")}
-                </button>
-              </li>
+              <button type="button" className="flex min-h-touch w-full items-center rounded px-2 text-sm text-primary hover:bg-accent" onClick={() => onChange([])}>
+                {allLabel ?? t("all")}
+              </button>
             ) : null}
             {options.map((o) => {
               const on = value.includes(o.value);
               return (
-                <li key={o.value} role="option" aria-selected={on}>
-                  <button type="button" onClick={() => toggle(o.value)} className="flex min-h-touch w-full items-center gap-2 rounded px-2 text-start text-sm hover:bg-accent">
-                    <span className={cn("flex size-4 shrink-0 items-center justify-center rounded border border-input", on && "border-primary bg-primary text-primary-foreground")}>
-                      {on ? <Check aria-hidden className="size-3" /> : null}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      {o.label}
-                      {o.hint ? <span className="block text-xs text-muted-foreground">{o.hint}</span> : null}
-                    </span>
-                  </button>
-                </li>
+                <label key={o.value} className="flex min-h-touch w-full cursor-pointer items-center gap-2 rounded px-2 text-start text-sm hover:bg-accent">
+                  <input type="checkbox" className="sr-only" checked={on} onChange={() => toggle(o.value)} />
+                  <span aria-hidden className={cn("flex size-4 shrink-0 items-center justify-center rounded border border-input", on && "border-primary bg-primary text-primary-foreground")}>
+                    {on ? <Check className="size-3" /> : null}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    {o.label}
+                    {o.hint ? <span className="block text-xs text-muted-foreground">{o.hint}</span> : null}
+                  </span>
+                </label>
               );
             })}
-          </ul>
+          </div>
         </PopoverContent>
       </Popover>
     </div>

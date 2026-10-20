@@ -82,6 +82,9 @@ class InductionDelivererRole(StrEnum):
     hse_manager = "hse_manager"
     hse_officer = "hse_officer"
     contractor_hse_rep = "contractor_hse_rep"
+    # D-273: matched from the person's position in the HSE team (users.hse_position)
+    hse_engineer = "hse_engineer"
+    hse_supervisor = "hse_supervisor"
 
 
 class InductionResult(StrEnum):

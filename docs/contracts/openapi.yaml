@@ -46,7 +46,7 @@ info:
     \ 157.\n  No diagnosis, test result or clinical note is ever stored (P6-1). Medical hooks use the\
     \ shared\n  hook policy (kind `medical_fitness`; enable with `POST /projects/{id}/medical-hooks/enable`);\n\
     \  gate texts never say \"medical\". Site-clinic sign-off needs step-up re-auth.\n"
-  version: 0.15.1
+  version: 0.15.3
 paths:
   /api/v1/health:
     get:
@@ -67,7 +67,7 @@ paths:
       - auth
       summary: Log in with email and password
       description: Sets the httpOnly `hse_session` cookie and returns the same JWT. Unknown email and
-        wrong password give an identical 401 INVALID_CREDENTIALS. After 5 failures in 15 min the account
+        wrong password give an identical 401 INVALID_CREDENTIALS. After 10 failures in 15 min the account
         is locked for 15 min (401 ACCOUNT_LOCKED).
       operationId: login
       requestBody:
@@ -757,6 +757,61 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '409':
           description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/delete:
+    post:
+      tags:
+      - projects
+      summary: Permanently delete a project and all its data (platform administrator only)
+      operationId: delete_project
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectDeleteRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectDeleteResult'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
           content:
             application/json:
               schema:
@@ -3705,6 +3760,107 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags:
+      - hse settings
+      summary: Remove an unused item from an extensible list (zone categories, D-274)
+      operationId: remove_reference_item
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: list_name
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/ReferenceList'
+      - name: code
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Code
+      responses:
+        '204':
+          description: Successful Response
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/reference-lists/{list_name}:
+    post:
+      tags:
+      - hse settings
+      summary: Add an item to an extensible list (zone categories, D-274)
+      operationId: add_reference_item
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: list_name
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/ReferenceList'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReferenceItemCreate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferenceItemRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/v1/projects/{project_id}/workforce-returns:
     get:
       tags:
@@ -4214,6 +4370,67 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/workforce-returns/auto-fill:
+    post:
+      tags:
+      - workforce
+      summary: Fill daily returns automatically from gate entries / deployments (D-268)
+      operationId: auto_fill_workforce_returns
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkforceAutoFillRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkforceAutoFillResult'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
           content:
             application/json:
               schema:
@@ -70378,6 +70595,265 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/hse-team:
+    get:
+      tags:
+      - hse-team
+      summary: HSE team and reporting lines
+      operationId: get_hse_team
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HseTeam'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+  /api/v1/hse-team/{user_id}:
+    patch:
+      tags:
+      - hse-team
+      summary: Set a person's HSE position and who they report to (HSE Manager)
+      operationId: update_hse_team_member
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: User Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HseTeamUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HseTeamMember'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/admin/deletable-types:
+    get:
+      tags:
+      - admin
+      summary: Record types the administrator can delete
+      operationId: deletable_types
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeletableTypes'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+  /api/v1/admin/records/delete:
+    post:
+      tags:
+      - admin
+      summary: Delete a record and what belongs to it; kept in the deleted-items register
+      operationId: delete_record
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecordDeleteRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeletedRecordRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+  /api/v1/admin/deleted-records:
+    get:
+      tags:
+      - admin
+      summary: Deleted-items register (newest first)
+      operationId: list_deleted_records
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          description: 1-based page number.
+          default: 1
+          title: Page
+        description: 1-based page number.
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          description: Items per page.
+          default: 50
+          title: Page Size
+        description: Items per page.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeletedRecordPage'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/admin/deleted-records/{record_id}:
+    get:
+      tags:
+      - admin
+      summary: One deleted item with copies of the deleted rows
+      operationId: get_deleted_record
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: record_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Record Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeletedRecordDetail'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/v1/privacy-notice:
     get:
       tags:
@@ -75271,6 +75747,8 @@ components:
       - corrective_action_evidence
       - hse_meeting_minutes
       - worker_photo
+      - worker_id_copy
+      - vehicle_registration
       - pass_application_id_copy
       - induction_signature
       - offence_evidence
@@ -86337,6 +86815,161 @@ components:
       - closed
       - cancelled
       title: DefectStatus
+    DeletableTypes:
+      properties:
+        entity_types:
+          items:
+            type: string
+          type: array
+          title: Entity Types
+      type: object
+      required:
+      - entity_types
+      title: DeletableTypes
+    DeletedRecordDetail:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        deleted_at:
+          type: string
+          format: date-time
+          title: Deleted At
+        deleted_by_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Deleted By Name
+        entity_type:
+          type: string
+          title: Entity Type
+        entity_id:
+          type: string
+          format: uuid
+          title: Entity Id
+        project_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Project Id
+        label:
+          type: string
+          title: Label
+        reason:
+          type: string
+          title: Reason
+        row_counts:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Row Counts
+        rows_deleted:
+          type: integer
+          title: Rows Deleted
+        rows:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Rows
+          description: Copies of the deleted rows per table.
+      type: object
+      required:
+      - id
+      - deleted_at
+      - deleted_by_name
+      - entity_type
+      - entity_id
+      - project_id
+      - label
+      - reason
+      - row_counts
+      - rows_deleted
+      - rows
+      title: DeletedRecordDetail
+    DeletedRecordPage:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/DeletedRecordRead'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+          description: Total number of matching items across all pages.
+        page:
+          type: integer
+          title: Page
+          description: 1-based page number.
+        page_size:
+          type: integer
+          title: Page Size
+          description: Items per page (max 200).
+      type: object
+      required:
+      - items
+      - total
+      - page
+      - page_size
+      title: DeletedRecordPage
+    DeletedRecordRead:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        deleted_at:
+          type: string
+          format: date-time
+          title: Deleted At
+        deleted_by_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Deleted By Name
+        entity_type:
+          type: string
+          title: Entity Type
+        entity_id:
+          type: string
+          format: uuid
+          title: Entity Id
+        project_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Project Id
+        label:
+          type: string
+          title: Label
+        reason:
+          type: string
+          title: Reason
+        row_counts:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Row Counts
+        rows_deleted:
+          type: integer
+          title: Rows Deleted
+      type: object
+      required:
+      - id
+      - deleted_at
+      - deleted_by_name
+      - entity_type
+      - entity_id
+      - project_id
+      - label
+      - reason
+      - row_counts
+      - rows_deleted
+      title: DeletedRecordRead
     DeliveryMode:
       type: string
       enum:
@@ -89787,6 +90420,7 @@ components:
           title: File Name
         content_base64:
           type: string
+          maxLength: 7000000
           title: Content Base64
           description: jpg / png ≤ 5 MB; EXIF stripped on receipt.
       additionalProperties: false
@@ -104595,6 +105229,17 @@ components:
       additionalProperties: false
       type: object
       title: HseMeetingUpdate
+    HsePosition:
+      type: string
+      enum:
+      - hse_manager
+      - hse_engineer
+      - hse_supervisor
+      - hse_officer
+      - hse_inspector
+      - other
+      title: HsePosition
+      description: 'D-270: position in the HSE department, for the team hierarchy.'
     HseReviewInput:
       properties:
         decision:
@@ -104641,6 +105286,20 @@ components:
         warn_hours_per_person_day:
           type: integer
           title: Warn Hours Per Person Day
+        auto_man_hours:
+          type: boolean
+          title: Auto Man Hours
+          description: Fill daily returns from gate entries / deployments (D-268).
+        standard_hours_per_person_day:
+          type: integer
+          title: Standard Hours Per Person Day
+          description: Hours per person on automatic rows.
+        rest_days:
+          items:
+            $ref: '#/components/schemas/Weekday'
+          type: array
+          title: Rest Days
+          description: Weekdays without automatic rows.
         daily_return_deadline:
           type: string
           format: time
@@ -104739,6 +105398,9 @@ components:
       - include_non_contractor_cases_in_rates
       - max_hours_per_person_day
       - warn_hours_per_person_day
+      - auto_man_hours
+      - standard_hours_per_person_day
+      - rest_days
       - daily_return_deadline
       - completeness_threshold_pct
       - inspection_grace_days
@@ -104797,6 +105459,26 @@ components:
             minimum: 8.0
           - type: 'null'
           title: Warn Hours Per Person Day
+        auto_man_hours:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Auto Man Hours
+        standard_hours_per_person_day:
+          anyOf:
+          - type: integer
+            maximum: 16.0
+            minimum: 1.0
+          - type: 'null'
+          title: Standard Hours Per Person Day
+        rest_days:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/Weekday'
+            type: array
+            maxItems: 6
+          - type: 'null'
+          title: Rest Days
         daily_return_deadline:
           anyOf:
           - type: string
@@ -104917,6 +105599,85 @@ components:
       description: 'Partial update (capability 44). `ai_enabled = true` without a recorded approval →
 
         409 AI_TRANSFER_APPROVAL_REQUIRED.'
+    HseTeam:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/HseTeamMember'
+          type: array
+          title: Items
+          description: Active users with an HSE role or an HSE position; build the tree from reports_to_user_id
+            (null = top).
+      type: object
+      required:
+      - items
+      title: HseTeam
+    HseTeamMember:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        full_name_en:
+          type: string
+          title: Full Name En
+        full_name_ar:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Full Name Ar
+        email:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Email
+          description: Only with the contact-details capability (12).
+        job_title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Job Title
+        hse_position:
+          anyOf:
+          - $ref: '#/components/schemas/HsePosition'
+          - type: 'null'
+        reports_to_user_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Reports To User Id
+        roles:
+          items:
+            $ref: '#/components/schemas/Role'
+          type: array
+          title: Roles
+      type: object
+      required:
+      - id
+      - full_name_en
+      - full_name_ar
+      - email
+      - job_title
+      - hse_position
+      - reports_to_user_id
+      - roles
+      title: HseTeamMember
+    HseTeamUpdate:
+      properties:
+        hse_position:
+          anyOf:
+          - $ref: '#/components/schemas/HsePosition'
+          - type: 'null'
+        reports_to_user_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Reports To User Id
+      additionalProperties: false
+      type: object
+      title: HseTeamUpdate
     IcamLevel:
       type: string
       enum:
@@ -105191,8 +105952,10 @@ components:
           title: Incident Types
           description: near_miss cannot be combined with any other type → 422 NEAR_MISS_EXCLUSIVE.
         primary_type:
-          $ref: '#/components/schemas/IncidentType'
-          description: One of incident_types.
+          anyOf:
+          - $ref: '#/components/schemas/IncidentType'
+          - type: 'null'
+          description: One of incident_types; derived from incident_types when omitted (D-267).
         title:
           type: string
           maxLength: 150
@@ -105354,7 +106117,6 @@ components:
       - site_id
       - occurred_at
       - incident_types
-      - primary_type
       - title
       title: IncidentCreate
       description: 'Creates a Draft. Fields marked ''required at Draft → Reported'' may be left empty
@@ -106513,6 +107275,8 @@ components:
       - hse_manager
       - hse_officer
       - contractor_hse_rep
+      - hse_engineer
+      - hse_supervisor
       title: InductionDelivererRole
     InductionLink:
       properties:
@@ -112845,6 +113609,11 @@ components:
         is_hse_manager:
           type: boolean
           title: Is Hse Manager
+        can_delete_projects:
+          type: boolean
+          title: Can Delete Projects
+          description: 'True for the platform administrator (PROJECT_DELETE_EMAILS): may delete projects
+            and any other record (D-265, D-271).'
         org_capabilities:
           items:
             $ref: '#/components/schemas/Capability'
@@ -112896,6 +113665,7 @@ components:
       - privacy_notice_ack_at
       - privacy_ack_required
       - is_hse_manager
+      - can_delete_projects
       - org_capabilities
       - projects
       - role_assignments
@@ -122927,6 +123697,7 @@ components:
           - edge.jpg
         content_base64:
           type: string
+          maxLength: 7000000
           title: Content Base64
           description: jpg / png, ≤ 5 MB decoded; EXIF stripped on receipt.
       additionalProperties: false
@@ -123391,13 +124162,19 @@ components:
             format: uuid
           - type: 'null'
           title: Verified By User Id
-          description: 'Default: caller.'
+          description: 'Default: caller. Another user verifies only with their co-signature.'
         verified_by_worker_id:
           anyOf:
           - type: string
             format: uuid
           - type: 'null'
           title: Verified By Worker Id
+          description: A crew member of a permit linked to the certificate.
+        cosign:
+          anyOf:
+          - $ref: '#/components/schemas/CoSignature'
+          - type: 'null'
+          description: Required when verified_by_user_id is not the caller.
         verified_at:
           type: string
           format: date-time
@@ -124075,9 +124852,10 @@ components:
       properties:
         code:
           type: string
-          pattern: ^[A-Z0-9-]{3,12}$
+          maxLength: 12
+          minLength: 1
           title: Code
-          description: Unique, e.g. ANIA-EXP. Immutable.
+          description: Unique, free text (it prefixes reference numbers), e.g. ANIA-EXP. Immutable.
         name_en:
           type: string
           maxLength: 150
@@ -124116,13 +124894,13 @@ components:
             format: date
           - type: 'null'
           title: Planned End Date
-        airport_icao:
+        airport_iata:
           anyOf:
           - type: string
-            pattern: ^[A-Z]{4}$
+            pattern: ^[A-Z]{3}$
           - type: 'null'
-          title: Airport Icao
-          description: Required iff project_type = airport; Saudi codes start with OE.
+          title: Airport Iata
+          description: Optional 3-letter IATA airport code; airport projects only (e.g. RUH).
       additionalProperties: false
       type: object
       required:
@@ -124135,6 +124913,44 @@ components:
       - city
       - start_date
       title: ProjectCreate
+    ProjectDeleteRequest:
+      properties:
+        confirm_code:
+          type: string
+          maxLength: 12
+          minLength: 1
+          title: Confirm Code
+        reason:
+          anyOf:
+          - type: string
+            maxLength: 500
+          - type: 'null'
+          title: Reason
+      additionalProperties: false
+      type: object
+      required:
+      - confirm_code
+      title: ProjectDeleteRequest
+      description: 'Permanent delete (D-265): the caller retypes the project code to confirm.'
+    ProjectDeleteResult:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        code:
+          type: string
+          title: Code
+        rows_deleted:
+          type: integer
+          title: Rows Deleted
+          description: Rows removed across all tables, the project included.
+      type: object
+      required:
+      - id
+      - code
+      - rows_deleted
+      title: ProjectDeleteResult
     ProjectPage:
       properties:
         items:
@@ -124219,11 +125035,11 @@ components:
           - type: 'null'
           title: Status Reason
           description: Reason of the last status change, if any.
-        airport_icao:
+        airport_iata:
           anyOf:
           - type: string
           - type: 'null'
-          title: Airport Icao
+          title: Airport Iata
       type: object
       required:
       - created_at
@@ -124241,7 +125057,7 @@ components:
       - planned_end_date
       - status
       - status_reason
-      - airport_icao
+      - airport_iata
       title: ProjectRead
     ProjectSettingsRead:
       properties:
@@ -124488,12 +125304,12 @@ components:
             format: date
           - type: 'null'
           title: Planned End Date
-        airport_icao:
+        airport_iata:
           anyOf:
           - type: string
-            pattern: ^[A-Z]{4}$
+            pattern: ^[A-Z]{3}$
           - type: 'null'
-          title: Airport Icao
+          title: Airport Iata
       additionalProperties: false
       type: object
       title: ProjectUpdate
@@ -127333,6 +128149,31 @@ components:
       - signed_at
       - valid_until
       title: ReceiverAcceptanceRead
+    RecordDeleteRequest:
+      properties:
+        entity_type:
+          type: string
+          maxLength: 60
+          minLength: 1
+          title: Entity Type
+          examples:
+          - training_course
+        entity_id:
+          type: string
+          format: uuid
+          title: Entity Id
+        reason:
+          type: string
+          maxLength: 500
+          minLength: 1
+          title: Reason
+      additionalProperties: false
+      type: object
+      required:
+      - entity_type
+      - entity_id
+      - reason
+      title: RecordDeleteRequest
     RecordState:
       type: string
       enum:
@@ -127410,6 +128251,24 @@ components:
       - recorded_by
       - evidence_attachment_ids
       title: RectificationRead
+    ReferenceItemCreate:
+      properties:
+        label_en:
+          type: string
+          maxLength: 120
+          minLength: 1
+          title: Label En
+        label_ar:
+          type: string
+          maxLength: 120
+          minLength: 1
+          title: Label Ar
+      additionalProperties: false
+      type: object
+      required:
+      - label_en
+      - label_ar
+      title: ReferenceItemCreate
     ReferenceItemRead:
       properties:
         code:
@@ -127539,6 +128398,7 @@ components:
     ReferenceList:
       type: string
       enum:
+      - zone_category
       - severity
       - activity
       - trade
@@ -146622,6 +147482,13 @@ components:
             format: date
           - type: 'null'
           title: Earliest Document Expiry
+        istimara_attachment_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Istimara Attachment Id
+          description: D-272 photo of the registration (Istimara).
         status:
           $ref: '#/components/schemas/VehicleStatus'
         active_avp_id:
@@ -149559,6 +150426,13 @@ components:
           - type: 'null'
           title: Photo Attachment Id
           description: Open via POST /attachments/{id}/signed-url (≤ 5 min).
+        id_copy_attachment_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Id Copy Attachment Id
+          description: D-272 Iqama / ID photo; opening it needs the unmask capability.
         status:
           $ref: '#/components/schemas/WorkerStatus'
         ban_reason:
@@ -149729,6 +150603,50 @@ components:
       description: 'Changing id_type/id_number needs capability 47; the old value is kept encrypted in
 
         history and audits show masked values only (WK-9).'
+    WorkforceAutoFillRequest:
+      properties:
+        from_date:
+          type: string
+          format: date
+          title: From Date
+        to_date:
+          type: string
+          format: date
+          title: To Date
+      additionalProperties: false
+      type: object
+      required:
+      - from_date
+      - to_date
+      title: WorkforceAutoFillRequest
+      description: Fill or refresh automatic rows for a date range (≤ 62 days, not in the future).
+    WorkforceAutoFillResult:
+      properties:
+        days:
+          type: integer
+          title: Days
+        created:
+          type: integer
+          title: Created
+        updated:
+          type: integer
+          title: Updated
+        removed:
+          type: integer
+          title: Removed
+          description: Automatic rows retired (nobody at work any more).
+          default: 0
+        skipped:
+          type: integer
+          title: Skipped
+          description: Keys that already have a manual, imported or verified row.
+      type: object
+      required:
+      - days
+      - created
+      - updated
+      - skipped
+      title: WorkforceAutoFillResult
     WorkforceImportPage:
       properties:
         items:
@@ -150126,6 +151044,14 @@ components:
           pattern: ^-?\d+(\.\d+)?$
           title: Training Hours
           description: Decimal number serialised as a string (exact, no float rounding).
+        absent_count:
+          type: integer
+          title: Absent Count
+        overtime_hours:
+          type: string
+          pattern: ^-?\d+(\.\d+)?$
+          title: Overtime Hours
+          description: Decimal number serialised as a string (exact, no float rounding).
         remarks:
           anyOf:
           - type: string
@@ -150180,6 +151106,8 @@ components:
       - toolbox_attendees
       - inductions
       - training_hours
+      - absent_count
+      - overtime_hours
       - remarks
       - source
       - import_batch_id
@@ -150246,6 +151174,23 @@ components:
             pattern: ^(?!^[-+.]*$)[+-]?0*(?:\d{0,6}|(?=[\d.]{1,9}0*$)\d{0,6}\.\d{0,2}0*$)
           - type: 'null'
           title: Training Hours
+        absent_count:
+          anyOf:
+          - type: integer
+            maximum: 20000.0
+            minimum: 0.0
+          - type: 'null'
+          title: Absent Count
+          description: 'Automatic rows: people absent (D-268).'
+        overtime_hours:
+          anyOf:
+          - type: number
+            minimum: 0.0
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*(?:\d{0,8}|(?=[\d.]{1,11}0*$)\d{0,8}\.\d{0,2}0*$)
+          - type: 'null'
+          title: Overtime Hours
+          description: 'Automatic rows: overtime hours on top of standard hours.'
         remarks:
           anyOf:
           - type: string
@@ -150266,6 +151211,7 @@ components:
       enum:
       - manual
       - import
+      - auto
       title: WorkforceSource
     WorkforceStatus:
       type: string
@@ -151000,6 +151946,13 @@ components:
         zone_type:
           $ref: '#/components/schemas/ZoneType'
           description: airside/landside only on airport projects and consistent with site_side.
+        category:
+          anyOf:
+          - type: string
+            maxLength: 60
+          - type: 'null'
+          title: Category
+          description: 'D-274: a code of the zone_category list.'
         airside:
           anyOf:
           - $ref: '#/components/schemas/AirsideAttributesInput'
@@ -151375,6 +152328,11 @@ components:
           title: Name Ar
         zone_type:
           $ref: '#/components/schemas/ZoneType'
+        category:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Category
         status:
           $ref: '#/components/schemas/ZoneStatus'
         status_reason:
@@ -151485,6 +152443,12 @@ components:
           anyOf:
           - $ref: '#/components/schemas/ZoneType'
           - type: 'null'
+        category:
+          anyOf:
+          - type: string
+            maxLength: 60
+          - type: 'null'
+          title: Category
         airside:
           anyOf:
           - $ref: '#/components/schemas/AirsideAttributesInput'

@@ -17,6 +17,7 @@ import { FormField } from "@/components/common/form-field";
 import { ListToolbar, SelectFilter } from "@/components/common/list-toolbar";
 import { PageHeader } from "@/components/common/page-header";
 import { ProjectGate } from "@/components/common/project-gate";
+import { Pagination } from "@/components/common/pagination";
 import { EmptyState, ErrorState, LoadingState } from "@/components/common/states";
 import { Choices, DayDue } from "@/components/followup/common";
 import { Link } from "@/i18n/navigation";
@@ -29,6 +30,7 @@ import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
 import { CapList, GradeBadge, ScBadge, ScSubNav, WatchLevelBadge, useMonthName, useScCaps } from "./common";
 import { cn } from "@/lib/utils";
+const PAGE_SIZE = 50;
 
 type S = Schemas;
 type Entry = S["ScWatchRead"];
@@ -48,7 +50,8 @@ function Register({ project }: { project: S["ProjectRead"] }) {
   const { date } = useFormatters(project.id);
   const s = useSearchState();
   const status = (s.get("status") as S["ScWatchStatus"] | null) ?? "";
-  const q = useWatchList(project.id, { status: status || null, page_size: 200 }, { enabled: caps.view });
+  const page = s.getInt("page", 1) ?? 1;
+  const q = useWatchList(project.id, { status: status || null, page, page_size: PAGE_SIZE }, { enabled: caps.view });
   const [open, setOpen] = useState(false);
   if (!caps.view) return <Alert tone="info">{tc("notAllowed")}</Alert>;
   const items = q.data?.items ?? [];
@@ -125,6 +128,7 @@ function Register({ project }: { project: S["ProjectRead"] }) {
       ) : (
         <EmptyState message={t("empty")} />
       )}
+      {q.data ? <Pagination page={page} pageSize={PAGE_SIZE} total={q.data.total} onPage={(p) => s.set({ page: p })} /> : null}
       {open ? <OpenDialog projectId={project.id} onClose={() => setOpen(false)} /> : null}
     </div>
   );

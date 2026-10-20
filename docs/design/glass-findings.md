@@ -1,4 +1,4 @@
-# Glass restyle (D-265 proof of concept, D-266 second pass)
+# Glass restyle (D-277 proof of concept, D-278 second pass)
 
 **Request (HSE Manager, 2026-10-17/18):** a glassmorphic redesign of the platform; plan in the project notes
 (`glassmorphic-redesign-plan.md`), four full renders reviewed, variation **A** chosen with the recommended set:
@@ -88,7 +88,7 @@ their own opaque fills and are unchanged from the restyle.
 - Phone: Solid by default; the same screens with Glass switched on.
 - Login: the glass band and frosted card over the mesh.
 
-## Second pass (D-266, 2026-10-19)
+## Second pass (D-278, 2026-10-19)
 
 Done in one pass on the HSE Manager's "yes to everything": controls, tables, form sections, the ten sticky bars, the
 module cards, nested panels, toasts, chart tokens and tooltip, as the layer table above records. Still solid on purpose:

@@ -39,7 +39,7 @@ from app.services.common import duplicate, ensure_open, invalid_transition
 from app.services.permissions import Grant, Principal, deny, forbidden_error
 
 SITE_FIELDS = ("code", "name_en", "name_ar", "site_side", "gps_lat", "gps_lng")
-ZONE_FIELDS = ("code", "name_en", "name_ar", "zone_type", *AIRSIDE_FIELDS)
+ZONE_FIELDS = ("code", "name_en", "name_ar", "zone_type", "category", *AIRSIDE_FIELDS)
 
 
 def site_read(s: Site) -> SiteRead:
@@ -58,6 +58,7 @@ def zone_read(z: Zone) -> ZoneRead:
         name_en=z.name_en,
         name_ar=z.name_ar,
         zone_type=z.zone_type,
+        category=z.category,
         status=z.status,
         status_reason=z.status_reason,
         airside=airside,
@@ -303,12 +304,23 @@ def _apply_type(
     return dict.fromkeys(AIRSIDE_FIELDS)
 
 
+def _check_category(db: Session, code: str | None) -> None:
+    if code is None:
+        return
+    from app.core.hse_enums import ReferenceList  # noqa: PLC0415
+    from app.services import hse_settings  # noqa: PLC0415
+
+    if code not in hse_settings.labels(db, ReferenceList.zone_category):
+        raise validation_error("category", "Pick a zone category from the list.")
+
+
 def create_zone(db: Session, p: Principal, site_id: uuid.UUID, body: ZoneCreate) -> Zone:
     site = get_site(db, p, site_id)
     project = _manage_site(db, p, site)
     if site.status != SiteStatus.active:
         raise ApiError(409, ErrorCode.SITE_INACTIVE, "The site is inactive.", "الموقع غير نشط.")
     attrs = _apply_type(project, site, body.zone_type, body.airside)
+    _check_category(db, body.category)
     if db.scalar(select(Zone.id).where(Zone.site_id == site_id, Zone.code == body.code)):
         raise duplicate("code", "A zone with this code already exists in the site.")
     zone = Zone(
@@ -319,6 +331,7 @@ def create_zone(db: Session, p: Principal, site_id: uuid.UUID, body: ZoneCreate)
         name_en=body.name_en,
         name_ar=body.name_ar,
         zone_type=body.zone_type,
+        category=body.category,
         status=ZoneStatus.active,
         **attrs,
     )
@@ -350,6 +363,8 @@ def update_zone(db: Session, p: Principal, zone_id: uuid.UUID, body: ZoneUpdate)
     if zone.status == ZoneStatus.archived:
         raise ApiError(409, ErrorCode.ZONE_ARCHIVED, "The zone is archived.", "المنطقة مؤرشفة.")
     changes = body.changes()
+    if "category" in changes:
+        _check_category(db, changes["category"])
     new_type = changes.pop("zone_type", zone.zone_type)
     airside_sent = "airside" in changes
     changes.pop("airside", None)

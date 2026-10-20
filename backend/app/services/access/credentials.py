@@ -119,8 +119,13 @@ def _load(db: Session, p: Principal, kind: CredentialKind, cid: uuid.UUID) -> Su
     if s is None:
         raise not_found("Credential")
     projects.get_visible(db, p, s.project_id)
-    view = C.worker_view if s.vehicle is None else C.access_works_view
-    g = p.grant(s.project_id, view) or p.grant(s.project_id, C.worker_view)
+    # the state carries events with actor names: vehicle credentials need 63/64, not 73
+    view = C.worker_view if s.vehicle is None else C.vehicle_edit
+    g = (
+        p.grant(s.project_id, view)
+        or (p.grant(s.project_id, C.avp_issue) if s.vehicle is not None else None)
+        or p.grant(s.project_id, C.worker_view)
+    )
     if not common.grant_covers(g, s.site_ids, s.engagement_id):
         raise forbidden_error("This credential is outside your scope.")
     return s

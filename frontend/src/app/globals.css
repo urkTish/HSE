@@ -142,7 +142,7 @@
 }
 
 /*
- * Glass surfaces (D-265). Components say `glass` / `glass-strong` plus their own radius and `border`; the
+ * Glass surfaces (D-277). Components say `glass` / `glass-strong` plus their own radius and `border`; the
  * tokens decide whether that is frosted or flat (see the "Solid surface" block in styles/tokens.css).
  * One glass layer per stacking context: a table or list inside a glass card stays `bg-surface` or
  * `bg-row-glass`, never glass-in-glass.

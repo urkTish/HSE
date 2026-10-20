@@ -119,37 +119,48 @@ def subject_report(
         db.scalars(select(Deployment.project_id).where(Deployment.worker_id == worker_id))
     )
     pids = projects | dep_projects
-    if not any(p.grant(pid, common.C.fitness_subject_report) is not None for pid in pids):
+    # Capability 165 is per project: the report holds the records of the projects where the
+    # caller has it, never those of a project the caller has no role on.
+    allowed = sorted(
+        (pid for pid in pids if p.grant(pid, common.C.fitness_subject_report) is not None),
+        key=str,
+    )
+    if not allowed:
         raise forbidden_error()
     rows = list(
         db.scalars(
             select(FitnessAssessment)
-            .where(FitnessAssessment.worker_id == worker_id)
+            .where(
+                FitnessAssessment.worker_id == worker_id,
+                FitnessAssessment.project_id.in_(allowed),
+            )
             .order_by(FitnessAssessment.examined_on)
         )
     )
     holds = list(
         db.scalars(
             select(FitnessHold)
-            .where(FitnessHold.worker_id == worker_id)
+            .where(FitnessHold.worker_id == worker_id, FitnessHold.project_id.in_(allowed))
             .order_by(FitnessHold.started_at)
         )
     )
     refs = list(
         db.scalars(
             select(FitnessReferral)
-            .where(FitnessReferral.worker_id == worker_id)
+            .where(FitnessReferral.worker_id == worker_id, FitnessReferral.project_id.in_(allowed))
             .order_by(FitnessReferral.raised_at)
         )
     )
-    audit.record(
-        db,
-        AuditAction.export,
-        p.actor(next(iter(pids), None)),
-        entity_type=EntityType.worker,
-        entity_id=worker_id,
-        details={"dataset": "fitness_subject_report", "purpose": purpose.value},
-    )
+    for pid in allowed:
+        audit.record(
+            db,
+            AuditAction.export,
+            p.actor(pid),
+            entity_type=EntityType.worker,
+            entity_id=worker_id,
+            project_id=pid,
+            details={"dataset": "fitness_subject_report", "purpose": purpose.value},
+        )
     return FitnessDataSubjectReport(
         worker=common.worker_ref(w, True),
         generated_at=now(),

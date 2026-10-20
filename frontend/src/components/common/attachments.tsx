@@ -2,11 +2,11 @@
 import { Camera, Download, Paperclip, Trash2, Upload } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { api, postForm, unwrap, type Schemas } from "@/lib/api/client";
+import { api, openSignedUrl, postForm, unwrap, type Schemas } from "@/lib/api/client";
 import { hk, useAttachments } from "@/lib/api/hse";
 import { useErrorMessage } from "@/lib/i18n-helpers";
 import { useFormatters } from "@/lib/use-formatters";
@@ -17,12 +17,30 @@ function size(n: number): string {
   return `${(n / 1024 / 1024).toFixed(1)} MB`;
 }
 
-/** Files on a record: list, upload (incl. phone camera), short-lived signed-URL download. */
+/** True on phones and tablets (coarse pointer), whatever the viewport width: they have a camera to offer. */
+function useCoarsePointer(): boolean {
+  const [coarse, setCoarse] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(pointer: coarse)");
+    const update = () => setCoarse(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+  return coarse;
+}
+
+/**
+ * Files on a record: list, upload (incl. phone camera), short-lived signed-URL download.
+ * `canOpen={false}` lists the files but hides Download: for ID copies, reading needs the unmask capability
+ * (D-41, D-272) even when the user may upload them.
+ */
 export function Attachments({
   ownerType,
   ownerId,
   canUpload,
   canDelete,
+  canOpen = true,
   hint,
   max,
   onChange,
@@ -31,6 +49,7 @@ export function Attachments({
   ownerId: string;
   canUpload: boolean;
   canDelete?: boolean;
+  canOpen?: boolean;
   hint?: string;
   max?: number;
   onChange?: () => void;
@@ -43,6 +62,7 @@ export function Attachments({
   const fileRef = useRef<HTMLInputElement>(null);
   const camRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  const coarse = useCoarsePointer();
   const items = q.data?.items ?? [];
   const full = max !== undefined && items.length >= max;
 
@@ -70,8 +90,7 @@ export function Attachments({
 
   async function open(a: Schemas["AttachmentRead"]) {
     try {
-      const s = await unwrap(api.POST("/api/v1/attachments/{attachment_id}/signed-url", { params: { path: { attachment_id: a.id } } }));
-      window.open(s.url, "_blank", "noopener");
+      await openSignedUrl(() => unwrap(api.POST("/api/v1/attachments/{attachment_id}/signed-url", { params: { path: { attachment_id: a.id } } })));
     } catch (e) {
       toast.error(msg(e));
     }
@@ -102,10 +121,16 @@ export function Attachments({
                 {size(a.size_bytes)} · {dateTime(a.created_at)}
               </span>
               {a.scan_status === "pending" ? <Badge tone="info">{t("scanPending")}</Badge> : null}
-              <Button variant="ghost" size="sm" onClick={() => void open(a)} disabled={a.scan_status === "infected"}>
-                <Download aria-hidden />
-                {t("download")}
-              </Button>
+              {canOpen ? (
+                <Button variant="ghost" size="sm" onClick={() => void open(a)} disabled={a.scan_status === "infected"}>
+                  <Download aria-hidden />
+                  {t("download")}
+                </Button>
+              ) : (
+                <span className="text-xs text-muted-foreground" data-testid="download-restricted">
+                  {t("downloadRestricted")}
+                </span>
+              )}
               {canDelete ? (
                 <Button variant="ghost" size="icon" aria-label={t("delete")} onClick={() => void remove(a)}>
                   <Trash2 aria-hidden />
@@ -123,10 +148,12 @@ export function Attachments({
             <Upload aria-hidden />
             {busy ? t("uploading") : t("upload")}
           </Button>
-          <Button variant="outline" size="sm" onClick={() => camRef.current?.click()} disabled={busy} className="md:hidden">
-            <Camera aria-hidden />
-            {t("takePhoto")}
-          </Button>
+          {coarse ? (
+            <Button variant="outline" size="sm" onClick={() => camRef.current?.click()} disabled={busy}>
+              <Camera aria-hidden />
+              {t("takePhoto")}
+            </Button>
+          ) : null}
         </div>
       ) : null}
     </div>

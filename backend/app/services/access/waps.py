@@ -791,18 +791,14 @@ def list_waps(
         stmt = stmt.where(
             or_(Wap.wap_no.ilike(like), Wap.scope_en.ilike(like), Wap.scope_ar.ilike(like))
         )
-    stmt = stmt.order_by(Wap.valid_from.desc(), Wap.wap_no.desc())
-    rows: list[Wap] | Any
     if blocker is not None:
-        rows = [
-            w
-            for w in db.scalars(stmt)
-            if w.status in OPEN and any(b["code"] == blocker.value for b in compute_blockers(db, w))
-        ]
-        total = len(rows)
-        rows = rows[(page - 1) * page_size : page * page_size]
-    else:
-        rows, total = paginate(db, stmt, page, page_size)
+        # stored blockers (refreshed on every write, credential event and job run), not a
+        # recomputation of every WAP of the project
+        stmt = stmt.where(
+            Wap.status.in_(list(OPEN)), Wap.blockers.contains([{"code": blocker.value}])
+        )
+    stmt = stmt.order_by(Wap.valid_from.desc(), Wap.wap_no.desc())
+    rows, total = paginate(db, stmt, page, page_size)
     refs = Refs(db).load(
         sites=[w.site_id for w in rows],
         zones=[z for w in rows for z in w.zone_ids or []],
@@ -810,7 +806,10 @@ def list_waps(
         users=[u for w in rows for u in (w.requested_by_user_id, w.approved_by_user_id)],
     )
     return WapPage(
-        items=[wap_read(db, p, w, refs) for w in rows], total=total, page=page, page_size=page_size
+        items=[wap_read(db, p, w, refs, live=False) for w in rows],
+        total=total,
+        page=page,
+        page_size=page_size,
     )
 
 
@@ -1520,6 +1519,9 @@ def remove_vehicle(db: Session, p: Principal, wap_id: uuid.UUID, vehicle_id: uui
 
 def print_wap(db: Session, p: Principal, wap_id: uuid.UUID) -> WapPrintRead:
     w = get_wap_row(db, p, wap_id)
+    if p.grant(w.project_id, C.wap_edit) is None and p.grant(w.project_id, C.wap_approve) is None:
+        # the card names the crew at gates and the GET mints a token: not for Viewer/Client (73)
+        raise forbidden_error("Printing the WAP card needs capability 65 or 66.")
     if w.revision_of_id is not None or w.status not in LIVE:
         raise invalid_transition("WAP", w.status, "printed")
     t = common.active_qr(db, w.id) or common.issue_qr(db, QrKind.WP, w.project_id, w.id, w.wap_no)

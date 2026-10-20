@@ -4,7 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  // Glass (D-266): the primary stays solid emerald (the main action is the most opaque thing on screen);
+  // Glass (D-278): the primary stays solid emerald (the main action is the most opaque thing on screen);
   // outline / secondary / destructive-outline sit on the translucent control fill, ghost hovers with a wash.
   // Restyle (D-238): crisp emerald primary with a top sheen, platinum outline/secondary, pressed states,
   // one radius (md) and a 2px focus ring offset from the button on every variant.

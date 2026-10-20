@@ -248,7 +248,7 @@ const REVEAL_SECONDS = 30;
  * Masked ID with an audited, reason-bound reveal (WK-5). The full number lives only in component
  * state for 30 s: it is never written to the query cache, storage or a form.
  */
-export function MaskedIdNumber({ worker }: { worker: Pick<Schemas["WorkerRead"], "id" | "id_number_masked" | "id_type"> }) {
+export function MaskedIdNumber({ worker, projectId }: { worker: Pick<Schemas["WorkerRead"], "id" | "id_number_masked" | "id_type">; projectId?: string | null }) {
   const t = useTranslations("workers");
   const te = useTranslations("enums");
   const tc = useTranslations("common");
@@ -294,7 +294,7 @@ export function MaskedIdNumber({ worker }: { worker: Pick<Schemas["WorkerRead"],
     };
   }, [shown, reset]);
   useEffect(() => () => setShown(null), []);
-  const canReveal = can(me, "worker.unmask_id");
+  const canReveal = can(me, "worker.unmask_id", projectId ?? undefined);
   const valid = reason !== "" && (reason !== "other" || text.trim().length >= 10);
   return (
     <span className="inline-flex flex-wrap items-center gap-2">
@@ -475,6 +475,10 @@ export function DeploymentPicker({
     </div>
   );
 }
+
+/** Saudi plate: 1–4 digits (checked in both vehicle forms so the user gets a field error, not a 422). */
+export const PLATE_DIGITS = /^\d{1,4}$/;
+export const PLATE_LETTERS_MAX = 3;
 
 /** Pick a vehicle of the project (vehicle_no / fleet_no search). */
 export function VehicleSelect({
@@ -700,7 +704,7 @@ export function StepDialog({
     }
   }
   return (
-    <Dialog open onOpenChange={(v) => !v && onClose()}>
+    <Dialog open onOpenChange={(v) => !v && !busy && onClose()}>
       <DialogContent closeLabel={tc("close")} className={wide ? "max-w-2xl" : undefined}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
@@ -710,7 +714,7 @@ export function StepDialog({
         {children ? <div className="flex flex-col gap-3">{children}</div> : null}
         {renderError && error ? renderError(error) : <MutationError error={error} />}
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={busy}>
             {dismissLabel ?? tc("cancel")}
           </Button>
           <Button variant={destructive ? "destructive" : "default"} onClick={() => void go()} disabled={busy || disabled} data-testid={testId}>

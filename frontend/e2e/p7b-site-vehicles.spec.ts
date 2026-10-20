@@ -372,6 +372,7 @@ test.describe("7b site vehicles & drivers (Prototype)", () => {
     await page.getByTestId("jp-save").click();
     await expectError(page, "VEHICLE_NOT_READY");
 
+    await page.getByTestId("jp-vehicle-search").fill("VEH-0120");
     await selectByPrefix(page.getByTestId("jp-vehicle"), "VEH-0120");
     await page.getByTestId("jp-pax").fill("5");
     await page.getByTestId("jp-save").click();

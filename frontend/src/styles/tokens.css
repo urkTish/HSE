@@ -14,7 +14,7 @@
  * different, yellower signal green (#1b7a2b solid, #216a1a text) so a GRANTED / Green-tag / Active state is
  * never confused with a brand button or the navigation (ΔE2000 ≥ 19 between them); it always keeps its icon.
  *
- * Glass (D-265, HSE Manager "DO IT" on the glassmorphic plan, 2026-10-18; variation A of docs/design/glass-renders):
+ * Glass (D-277, HSE Manager "DO IT" on the glassmorphic plan, 2026-10-18; variation A of docs/design/glass-renders):
  * frosted surfaces over an emerald mesh. Glass is a surface treatment only: brand, safety, status and chart
  * colours are untouched. The `--glass-*`, `--sidebar-glass*`, `--row-glass` and `--page-glow` tokens below
  * resolve to the flat theme tokens (surface, border, sidebar, no glow, no blur) when the surface is solid:

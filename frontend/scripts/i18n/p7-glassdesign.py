@@ -1,4 +1,4 @@
-# Glass restyle (D-265, UI/UX designer): the surface choice in the theme menu. Presentation-only strings.
+# Glass restyle (D-277, UI/UX designer): the surface choice in the theme menu. Presentation-only strings.
 P = {
   "theme": {
     "surface": ["Surface", "السطح"],

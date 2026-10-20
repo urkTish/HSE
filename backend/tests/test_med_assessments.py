@@ -502,3 +502,85 @@ def test_AC58_already_expired_and_historic(api: Api, db: Session) -> None:
         )
     )
     assert a["historic"] is True
+
+
+# ---- review fixes (phases 4-7 backend review) ----------------------------------------------------
+
+
+def test_review14_verification_time_is_clamped(api: Api, db: Session) -> None:
+    """FV-4: performed_at cannot be in the future nor before the submission / the previous step,
+    so two typed timestamps cannot force `unable_to_verify` in one minute."""
+    ahmed, aid = _external(api, db)
+    upload_pdf(ahmed, "fitness_scan", aid)
+    ok(act(ahmed, aid, "submit"))
+    huda = api.as_("huda.mansour")
+    ok(act(huda, aid, "accept", clinical_data_present=False))
+    v = {
+        "method": "clinic_email",
+        "channel_used": "fitness@salama-test.example",
+        "outcome": "no_response",
+        "reference": "email sent",
+    }
+    url = f"{API}/fitness-assessments/{aid}/verifications"
+    ok(huda.post(url, json=v))
+    future = huda.post(url, json={**v, "performed_at": riyadh(2026, 10, 7, 12).isoformat()})
+    assert future.status_code == 422, future.text
+    early = huda.post(url, json={**v, "performed_at": riyadh(2026, 10, 1, 12).isoformat()})
+    assert early.status_code == 422, early.text
+    db.expire_all()
+    a = db.get(FitnessAssessment, uuid.UUID(aid))
+    assert a is not None and a.verification_status.value != "unable_to_verify"
+
+
+def test_review4_scan_retention_and_anonymisation(api: Api, db: Session) -> None:
+    """P6-8: the scan goes `fitness_scan_retention_months` after acceptance (audited); the
+    worker anonymisation clears the printed name, certificate number and scans."""
+    from app.services.med import assessments as asvc
+
+    ahmed, aid = _external(api, db)
+    upload_pdf(ahmed, "fitness_scan", aid)
+    ok(act(ahmed, aid, "submit"))
+    ok(act(api.as_("huda.mansour"), aid, "accept", clinical_data_present=False))
+    db.expire_all()
+    a = db.get(FitnessAssessment, uuid.UUID(aid))
+    assert a is not None and a.status.value == "accepted" and a.scan_deleted_at is None
+    asvc.scan_retention_job(db, riyadh(2027, 9, 6))  # 11 months: kept
+    db.expire_all()
+    a = db.get(FitnessAssessment, uuid.UUID(aid))
+    assert a is not None and a.scan_deleted_at is None
+    asvc.scan_retention_job(db, riyadh(2027, 10, 7))  # 12 months after acceptance
+    db.expire_all()
+    a = db.get(FitnessAssessment, uuid.UUID(aid))
+    assert a is not None and a.scan_deleted_at is not None
+    purged = select(AuditEntry).where(AuditEntry.action == "retention_purge")
+    assert db.scalar(purged.where(AuditEntry.entity_id == a.id)) is not None
+    w = db.get(Worker, a.worker_id)
+    assert w is not None
+    asvc.anonymise_worker(db, w.id)
+    rows = list(db.scalars(select(FitnessAssessment).where(FitnessAssessment.worker_id == w.id)))
+    assert rows and all(x.name_as_printed is None and x.certificate_no == "" for x in rows)
+    assert all(
+        ln.anonymised for ln in db.scalars(select(FitnessLine).where(FitnessLine.worker_id == w.id))
+    )
+
+
+def test_review4_text_retention_and_daily_job(db: Session) -> None:
+    """P6-8: hold reason / referral note texts are erased two years after closure; the daily
+    job reports the retention passes."""
+    from app import med_jobs
+    from app.core.med_enums import HoldStatus, ReferralStatus
+    from app.models import FitnessHold, FitnessReferral
+    from app.services.med import assessments as asvc
+
+    h = db.scalar(select(FitnessHold).where(FitnessHold.project_id == project(db, "ANIA-EXP").id))
+    r = db.scalar(select(FitnessReferral).limit(1))
+    assert h is not None and r is not None
+    h.status, h.released_at, h.reason_text_enc = HoldStatus.released, riyadh(2024, 1, 10), b"x"
+    r.status, r.assessed_at, r.note_enc = ReferralStatus.assessed, riyadh(2024, 1, 10), b"x"
+    db.flush()
+    assert asvc.text_retention_job(db) >= 2
+    assert h.reason_text_enc is None and r.note_enc is None
+    purged = select(AuditEntry).where(AuditEntry.action == "retention_purge")
+    assert db.scalar(purged.where(AuditEntry.entity_id == h.id)) is not None
+    out = med_jobs.medical_daily(db)
+    assert {"fitness_scans_deleted", "medical_texts_purged", "providers_suspended"} <= set(out)

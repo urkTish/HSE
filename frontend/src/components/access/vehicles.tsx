@@ -16,6 +16,7 @@ import { Breadcrumbs } from "@/components/common/breadcrumbs";
 import { ExportButtons } from "@/components/common/export-buttons";
 import { FieldItem, FieldList } from "@/components/common/field-list";
 import { FormField, FormSection } from "@/components/common/form-field";
+import { Attachments } from "@/components/common/attachments";
 import { HistoryPanel } from "@/components/common/history-panel";
 import { ListToolbar, SearchFilter, SelectFilter } from "@/components/common/list-toolbar";
 import { MultiSelect } from "@/components/common/multi-select";
@@ -29,13 +30,13 @@ import { useMeData } from "@/components/shell/me-context";
 import { Link, useRouter } from "@/i18n/navigation";
 import { AREA_CATEGORIES, AVP_CHECKLIST_ITEMS, AVP_NO_NA, CHECKLIST_OUTCOMES, PLATE_TYPES, VALIDITY_STATUSES, VEHICLE_CATEGORIES, VEHICLE_OWNER_TYPES, VEHICLE_STATUSES } from "@/lib/access-enums";
 import { ak, useAvp, useAvpSticker, useAvps, useVehicle, useVehicles } from "@/lib/api/access";
-import { api, unwrap, type Schemas } from "@/lib/api/client";
+import { api, postForm, unwrap, type Schemas } from "@/lib/api/client";
 import { joinList } from "@/lib/i18n-helpers";
 import { todayInZone } from "@/lib/datetime";
 import { can, canWrite } from "@/lib/permissions";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
-import { AccessPrintHeader, AirportOnly, BiLabel, Code, DaysLeft, Plate, QrImage, StepDialog, SubNav, ValidityBadge, ValidityLine } from "./common";
+import { AccessPrintHeader, AirportOnly, BiLabel, Code, DaysLeft, PLATE_DIGITS, PLATE_LETTERS_MAX, Plate, QrImage, StepDialog, SubNav, ValidityBadge, ValidityLine } from "./common";
 import { CredentialPanel } from "./credential-actions";
 import { RecordActions } from "@/components/common/record-actions";
 import { PrototypeBadge, ReadinessBadge, useSvLabels } from "@/components/site-vehicles/common";
@@ -293,6 +294,8 @@ function VehicleForm({ project, vehicle }: { project: Schemas["ProjectRead"]; ve
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState<unknown>(null);
+  // D-272: a plated vehicle needs a photo of its Istimara; uploaded right after creation.
+  const [istimara, setIstimara] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF((x) => ({ ...x, [k]: e.target.value }));
   const plated = f.plate_type !== "none";
@@ -308,7 +311,8 @@ function VehicleForm({ project, vehicle }: { project: Schemas["ProjectRead"]; ve
     if (!vehicle && !engagement) e.engagement_id = tv("required");
     (["fleet_no", "serial_or_vin", "make_model", "colour", "travel_height_m", "max_working_height_m_agl", "insurance_policy_no", "insurance_expiry"] as const).forEach(req);
     if (plated) (["plate_letters_ar", "plate_digits", "istimara_expiry", "mvpi_expiry"] as const).forEach(req);
-    if (plated && f.plate_digits && !/^\d{1,4}$/.test(f.plate_digits)) e.plate_digits = t("plateDigitsHint");
+    if (plated && !vehicle && !istimara) e.istimara_photo = tv("required");
+    if (plated && f.plate_digits && !PLATE_DIGITS.test(f.plate_digits)) e.plate_digits = t("plateDigitsHint");
     if (roadVehicle && f.serial_or_vin && !VIN.test(f.serial_or_vin.toUpperCase())) e.serial_or_vin = t("vinHint");
     if (Number(f.max_working_height_m_agl) < Number(f.travel_height_m)) e.max_working_height_m_agl = t("workingBelowTravel");
     setErrors(e);
@@ -338,6 +342,17 @@ function VehicleForm({ project, vehicle }: { project: Schemas["ProjectRead"]; ve
       const v = vehicle
         ? await unwrap(api.PATCH("/api/v1/vehicles/{vehicle_id}", { params: { path: { vehicle_id: vehicle.id } }, body }))
         : await unwrap(api.POST("/api/v1/projects/{project_id}/vehicles", { params: { path: { project_id: project.id } }, body: { ...body, engagement_id: engagement } }));
+      if (!vehicle && plated && istimara) {
+        try {
+          const fd = new FormData();
+          fd.set("owner_type", "vehicle_registration");
+          fd.set("owner_id", v.id);
+          fd.set("file", istimara);
+          await postForm<Schemas["AttachmentRead"]>("/api/v1/attachments", fd);
+        } catch {
+          toast.error(t("istimaraUploadFailed"));
+        }
+      }
       qc.setQueryData(ak.vehicle(v.id), v);
       await qc.invalidateQueries({ queryKey: ["vehicles"] });
       await qc.invalidateQueries({ queryKey: ["avps"] });
@@ -419,10 +434,10 @@ function VehicleForm({ project, vehicle }: { project: Schemas["ProjectRead"]; ve
         {plated ? (
           <>
             <FormField id="vf-plate-ar" label={t("fields.plate_letters_ar")} required error={errors.plate_letters_ar}>
-              <Input dir="rtl" lang="ar" maxLength={5} value={f.plate_letters_ar} onChange={set("plate_letters_ar")} />
+              <Input dir="rtl" lang="ar" maxLength={PLATE_LETTERS_MAX} value={f.plate_letters_ar} onChange={set("plate_letters_ar")} />
             </FormField>
             <FormField id="vf-plate-en" label={t("fields.plate_letters_en")}>
-              <Input className="ltr uppercase" maxLength={5} value={f.plate_letters_en} onChange={set("plate_letters_en")} />
+              <Input className="ltr uppercase" maxLength={PLATE_LETTERS_MAX} value={f.plate_letters_en} onChange={set("plate_letters_en")} />
             </FormField>
             <FormField id="vf-plate-digits" label={t("fields.plate_digits")} required error={errors.plate_digits}>
               <Input className="ltr" inputMode="numeric" maxLength={4} value={f.plate_digits} onChange={set("plate_digits")} />
@@ -449,6 +464,11 @@ function VehicleForm({ project, vehicle }: { project: Schemas["ProjectRead"]; ve
             <FormField id="vf-istimara" label={t("fields.istimara_expiry")} required error={errors.istimara_expiry}>
               <Input type="date" value={f.istimara_expiry} onChange={set("istimara_expiry")} />
             </FormField>
+            {!vehicle ? (
+              <FormField id="vf-istimara-photo" label={t("fields.istimara_photo")} hint={t("istimaraHint")} required error={errors.istimara_photo}>
+                <Input type="file" accept="image/jpeg,image/png,application/pdf" capture="environment" onChange={(e) => setIstimara(e.target.files?.[0] ?? null)} data-testid="istimara-input" />
+              </FormField>
+            ) : null}
             <FormField id="vf-mvpi" label={t("fields.mvpi_expiry")} required error={errors.mvpi_expiry}>
               <Input type="date" value={f.mvpi_expiry} onChange={set("mvpi_expiry")} />
             </FormField>
@@ -595,6 +615,17 @@ export function VehicleDetail({ id }: { id: string }) {
           )}
         </CardContent>
       </Card>
+      {v.plate_type !== "none" ? (
+        <Card data-testid="istimara-card">
+          <CardHeader>
+            <CardTitle>{t("fields.istimara_photo")}</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            {!v.istimara_attachment_id ? <Alert tone="warning">{t("istimaraMissing")}</Alert> : null}
+            <Attachments ownerType="vehicle_registration" ownerId={v.id} canUpload={canWrite(me, "vehicle.edit", v.project_id)} canDelete={canWrite(me, "vehicle.edit", v.project_id)} max={1} hint={t("istimaraHint")} />
+          </CardContent>
+        </Card>
+      ) : null}
       <HistoryPanel entityType="vehicle" entityId={v.id} />
       {to ? (
         <StepDialog

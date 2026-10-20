@@ -1,8 +1,15 @@
 import { execFileSync } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import { expect, request as pwRequest, type APIRequestContext, type Page } from "@playwright/test";
 
 export const PASSWORD = process.env.SEED_PASSWORD ?? "Demo-Passw0rd!2026";
 export const BASE_URL = process.env.E2E_BASE_URL ?? "http://localhost:3000";
+/** A 1×1 PNG for file inputs that require a photo (Iqama / Istimara copies, incident pictures). */
+export const PNG_1PX = {
+  name: "photo.png",
+  mimeType: "image/png",
+  buffer: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64"),
+};
 
 export const USERS = {
   faisal: "faisal.harbi@example.com",
@@ -73,9 +80,9 @@ export function sql(query: string): string {
   ).trim();
 }
 
-/** Unique suffix for records created by a test run. */
+/** Unique suffix for records created by a test run (random, so two calls in the same millisecond differ). */
 export function uid(): string {
-  return Date.now().toString(36).toUpperCase().slice(-5);
+  return randomUUID().replace(/-/g, "").slice(0, 5).toUpperCase();
 }
 
 /** Select the first <option> whose text starts with `prefix`. */

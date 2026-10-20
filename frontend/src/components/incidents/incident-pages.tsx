@@ -7,10 +7,15 @@ import { ErrorState, LoadingState } from "@/components/common/states";
 import { CaseForm } from "@/components/incidents/case-form";
 import { IncidentForm } from "@/components/incidents/incident-form";
 import { ExcludedCases, IncidentList } from "@/components/incidents/incident-list";
+import { InvestigationList } from "@/components/incidents/investigation-list";
 import { useIncident, useInjuryCase } from "@/lib/api/hse";
 
 export function IncidentListPage() {
   return <ProjectGate>{(p) => <IncidentList project={p} />}</ProjectGate>;
+}
+
+export function InvestigationListPage() {
+  return <ProjectGate>{(p) => <InvestigationList project={p} />}</ProjectGate>;
 }
 
 export function ExcludedCasesPage() {

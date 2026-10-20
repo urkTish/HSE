@@ -13,6 +13,7 @@ import { ErrorState, LoadingState } from "@/components/common/states";
 import { useMeData } from "@/components/shell/me-context";
 import { Link } from "@/i18n/navigation";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
+import { useRefLists } from "@/lib/reference";
 import { keys, useProject, useSite, useZone } from "@/lib/api/queries";
 import { useLocalizedName } from "@/lib/i18n-helpers";
 import { can, canWrite } from "@/lib/permissions";
@@ -21,6 +22,7 @@ import { useFormatters } from "@/lib/use-formatters";
 
 export function ZoneDetail({ projectId, zoneId }: { projectId: string; zoneId: string }) {
   const t = useTranslations("zone");
+  const refs = useRefLists();
   const ta = useTranslations("zone.airside");
   const tc = useTranslations("common");
   const me = useMeData();
@@ -76,6 +78,7 @@ export function ZoneDetail({ projectId, zoneId }: { projectId: string; zoneId: s
                 )}
               </FieldItem>
               <FieldItem label={t("fields.zone_type")}>{t(`type.${z.zone_type}`)}</FieldItem>
+              <FieldItem label={t("fields.category")}>{refs.label("zone_category", z.category)}</FieldItem>
               <FieldItem label={t("fields.name_en")}>{z.name_en}</FieldItem>
               <FieldItem label={t("fields.name_ar")}>
                 <span lang="ar">{z.name_ar}</span>

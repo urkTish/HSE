@@ -320,6 +320,8 @@ def _alerts(db: Session, at: datetime) -> int:
 
 def _recompute(db: Session, at: datetime) -> int:
     n = 0
+    # Crew and equipment hooks are re-evaluated here too: a provider answer that changes to
+    # not-met must suspend the permit within a minute (AC18), not at the daily refresh.
     for permit in _permits(db, S.issued, S.active, S.suspended):
         if evaluation.refresh(db, permit, run_simops=False, at=at) is not None:
             n += 1

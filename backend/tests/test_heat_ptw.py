@@ -77,3 +77,38 @@ def test_AC23_AC24_AC27_outside_controls(db: Session) -> None:
     assert "HEAT_STOP" in codes
     indoor = db.scalar(select(Permit).where(Permit.exposure == Exposure.indoor))
     assert indoor is not None and not heat_ptw.applies(db, indoor, now())
+
+
+# ---- review fixes (phases 4-7 backend review) ----------------------------------------------------
+
+
+def test_review10_minute_job_refreshes_only_changed_permits(db: Session) -> None:
+    """heat_minute re-evaluates a permit only when its heat outcome changed (or on the 5-minute
+    backstop); a new R4 reading still suspends it within the minute."""
+    pid = project(db, "ANIA-EXP").id
+    row = hc.settings_row(db, pid)
+    row.values = {**(row.values or {}), "heat_controls_period": {"start_mmdd": "05-01",
+                                                                 "end_mmdd": "10-31"}}  # fmt: skip
+    db.commit()
+    hc.clear_cache(db)
+    tick(2026, 10, 7, 7)
+    n = world(db)
+    p = lay1(n, windows=win("06:00", "12:00"), vt=local(2026, 10, 7, 12))
+    approve(n, p)
+    manual(db, local(2026, 10, 7, 7, 0), "27.0")
+    n.issue(p, "khalid.otaibi", "ramesh.kumar", now())
+    n.start(p, "ramesh.kumar", now(), ambient="30.0")
+    db.refresh(p)
+    assert p.status == PermitStatus.active
+    tick(2026, 10, 7, 7, 1)
+    heat_ptw.refresh_outdoor(db, pid, now())  # first pass stores every permit's heat outcome
+    tick(2026, 10, 7, 7, 2)
+    assert heat_ptw.refresh_outdoor(db, pid, now()) == 0  # nothing changed
+    tick(2026, 10, 7, 7, 5)
+    assert heat_ptw.refresh_outdoor(db, pid, now()) >= 1  # backstop minute
+    manual(db, local(2026, 10, 7, 7, 6), "32.5")  # R4 for moderate workload
+    tick(2026, 10, 7, 7, 7)
+    assert heat_ptw.refresh_outdoor(db, pid, now()) >= 1
+    db.commit()
+    db.refresh(p)
+    assert p.status == PermitStatus.suspended

@@ -107,6 +107,12 @@ export function WorkforceDetail({ id }: { id: string }) {
                 </FieldItem>
                 <FieldItem label={t("fields.headcount")}>{show(r.headcount)}</FieldItem>
                 <FieldItem label={t("fields.man_hours")}>{show(groupDecimal(r.man_hours))}</FieldItem>
+                {r.source === "auto" ? (
+                  <>
+                    <FieldItem label={t("fields.absent_count")}>{show(r.absent_count)}</FieldItem>
+                    <FieldItem label={t("fields.overtime_hours")}>{show(groupDecimal(r.overtime_hours))}</FieldItem>
+                  </>
+                ) : null}
                 <FieldItem label={t("fields.toolbox_talks")}>{show(r.toolbox_talks)}</FieldItem>
                 <FieldItem label={t("fields.toolbox_attendees")}>{show(r.toolbox_attendees)}</FieldItem>
                 <FieldItem label={t("fields.inductions")}>{show(r.inductions)}</FieldItem>

@@ -35,7 +35,7 @@ export const ACCESS_CARD_REISSUE_REASONS = ["lost", "damaged", "other"] as const
 
 export const INDUCTION_TYPES = ["general_site", "airside", "zone_specific", "visitor"] as const satisfies readonly S["InductionType"][];
 export const INDUCTION_STATUSES = ["valid", "failed", "suspended", "revoked", "superseded", "expired"] as const satisfies readonly S["InductionStatus"][];
-export const INDUCTION_DELIVERER_ROLES = ["hse_manager", "hse_officer", "contractor_hse_rep"] as const satisfies readonly S["InductionDelivererRole"][];
+export const INDUCTION_DELIVERER_ROLES = ["hse_manager", "hse_engineer", "hse_supervisor", "hse_officer", "contractor_hse_rep"] as const satisfies readonly S["InductionDelivererRole"][];
 
 export const AREA_CATEGORIES = ["apron", "manoeuvring", "airside_roads"] as const satisfies readonly S["AreaCategory"][];
 export const HOOK_KINDS = ["training_course", "personnel_certificate", "equipment_certificate", "medical_fitness"] as const satisfies readonly S["HookKind"][];

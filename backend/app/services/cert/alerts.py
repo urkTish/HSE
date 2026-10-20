@@ -1,9 +1,11 @@
 """Phase 4 alert helpers (spec 4-third-party-cert §7): de-duplication per (subject, step),
 recipients, and in-app + email delivery (email via the outbox, DECISIONS #12)."""
 
+import logging
 import uuid
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from datetime import date
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -13,6 +15,20 @@ from app.core.enums import EntityType, NotificationKind, Role
 from app.models import JobMark, User
 from app.services import notify
 from app.services.hse_common import contractor_reps, project_role_users
+
+log = logging.getLogger(__name__)
+
+
+def step(db: Session, out: dict[str, Any], key: str, fn: Callable[[], Any]) -> None:
+    """Run one sub-job of a scheduled job inside a savepoint: a failure is logged and reported
+    as `None` under `key`, and the other sub-jobs of the run still commit (one bad row must not
+    stop a whole daily job)."""
+    try:
+        with db.begin_nested():
+            out[key] = fn()
+    except Exception:
+        log.exception("job step %s failed", key)
+        out[key] = None
 
 
 def once(db: Session, key: str) -> bool:

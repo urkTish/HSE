@@ -278,3 +278,49 @@ def test_P4AC113_mutations_audited_without_id_numbers(api: Api, db: Session) -> 
         assert rows and any(r.after for r in rows), eid
     blob: list[Any] = [(r.before, r.after, r.details) for r in db.scalars(select(AuditEntry))]
     assert "2000001019" not in str(blob)
+
+
+# ---- review fixes (phases 4-7 backend review) ----------------------------------------------------
+
+
+def test_review3_scan_attachment_owner_is_scoped(db: Session) -> None:
+    """The attachment owner check of personnel_cert_scan applies the reader's grant scope (a
+    Contractor HSE Rep reads only their tree), not just the existence of capability 119."""
+    from datetime import date as _date
+
+    from app.core.errors import ApiError
+    from app.core.hse_enums import AttachmentOwner
+    from app.models import Deployment, ProjectEngagement
+    from app.services.cert import files
+    from tests.cert_helpers import P, contractor
+
+    pid = project(db, "ANIA-EXP").id
+    pc = db.scalar(
+        select(PersonnelCertificate)
+        .join(Deployment, (Deployment.worker_id == PersonnelCertificate.worker_id)
+              & (Deployment.project_id == PersonnelCertificate.project_id))
+        .join(ProjectEngagement, ProjectEngagement.id == Deployment.engagement_id)
+        .where(PersonnelCertificate.project_id == pid,
+               ProjectEngagement.contractor_id == contractor(db, "SAHARA").id)
+        .limit(1)
+    )  # fmt: skip
+    assert pc is not None
+    ahmed = P(db, "ahmed.zahrani")  # RAWABI rep: 119 on the contractor tree
+    assert files.owner(db, ahmed, AttachmentOwner.personnel_cert_scan, pc.id, False)[0] == pid
+    # the seed puts every ANIA-EXP contractor under RAWABI: move the holder to a new root
+    # engagement of another contractor, outside Ahmed's tree
+    other = ProjectEngagement(
+        id=uuid.uuid4(), project_id=pid, contractor_id=contractor(db, "QIMMA").id, tier=1,
+        parent_engagement_id=None, scope_of_work_en="test", scope_of_work_ar="test",
+        site_ids=[], mobilisation_date=_date(2026, 1, 1), parent_blacklisted=False,
+    )  # fmt: skip
+    other.root_engagement_id = other.id
+    db.add(other)
+    db.flush()
+    for dep in db.scalars(select(Deployment).where(
+            Deployment.worker_id == pc.worker_id, Deployment.project_id == pid)):  # fmt: skip
+        dep.engagement_id = other.id
+    db.flush()
+    with pytest.raises(ApiError) as ei:
+        files.owner(db, ahmed, AttachmentOwner.personnel_cert_scan, pc.id, False)
+    assert ei.value.status_code == 404

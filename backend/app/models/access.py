@@ -204,6 +204,16 @@ class Worker(Audited, Base):
     index (separate key) used for exact-match lookup and uniqueness (WK-2, WK-3)."""
 
     __tablename__ = "workers"
+    __table_args__ = (
+        # One worker per platform user: the link is the identity bridge for PTW self-signature,
+        # appointment identity and training hooks.
+        Index(
+            "uq_workers_user",
+            "user_id",
+            unique=True,
+            postgresql_where=text("user_id IS NOT NULL"),
+        ),
+    )
 
     seq: Mapped[int] = mapped_column(Integer, unique=True)
     worker_no: Mapped[str] = mapped_column(String(12), unique=True)

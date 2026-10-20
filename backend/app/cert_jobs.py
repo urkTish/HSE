@@ -81,15 +81,18 @@ def cert_daily(db: Session, at: datetime | None = None) -> dict[str, Any]:
     )
 
     at = at or now()
-    out = {
-        "equipment_certs_expired": equipment_certs.expiry_job(db, at),
-        "personnel_certs_expired": personnel.expiry_job(db, at),
-        "scaffold_tags_expired": scaffolds.tag_expiry_job(db, at),
-        "b_defects_overdue": defects.overdue_job(db, at),
-        "contractor_blacklist_demobilised": deployments.blacklisted_contractor_job(db),
-        "ban_reviews_due": bans.review_job(db, acommon.local_day(at)),
-        "cert_scans_deleted": personnel.scan_retention_job(db, acommon.local_day(at)),
-    }
+    d = acommon.local_day(at)
+    out: dict[str, Any] = {}
+    for key, fn in (
+        ("equipment_certs_expired", lambda: equipment_certs.expiry_job(db, at)),
+        ("personnel_certs_expired", lambda: personnel.expiry_job(db, at)),
+        ("scaffold_tags_expired", lambda: scaffolds.tag_expiry_job(db, at)),
+        ("b_defects_overdue", lambda: defects.overdue_job(db, at)),
+        ("contractor_blacklist_demobilised", lambda: deployments.blacklisted_contractor_job(db)),
+        ("ban_reviews_due", lambda: bans.review_job(db, d)),
+        ("cert_scans_deleted", lambda: personnel.scan_retention_job(db, d)),
+    ):
+        alerts.step(db, out, key, fn)
     db.flush()
     return out
 
@@ -321,25 +324,25 @@ def _trade_missing(db: Session, d: date) -> int:
     """PC-12 weekly reminder (Sunday)."""
     if d.weekday() != 6:
         return 0
-    from app.services.cert import personnel  # noqa: PLC0415
-
     n = 0
+    # one pass: the valid certificate types per worker, then the trade map per project
+    held: dict[Any, set[str]] = {}
+    for wid, ct in db.execute(
+        select(PersonnelCertificate.worker_id, PersonnelCertificate.cert_type).where(
+            PersonnelCertificate.status == CS.accepted, PersonnelCertificate.valid_until >= d
+        )
+    ):
+        held.setdefault(wid, set()).add(ct)
+    trade_codes: dict[Any, dict[str, str]] = {}
     for dep in db.scalars(
         select(Deployment).where(Deployment.status == DeploymentStatus.mobilised)
     ):
-        code = personnel.trade_requirement(db, dep.project_id, dep.worker_id)
-        if not code:
-            continue
-        if any(
-            pc.cert_type == code
-            for pc in db.scalars(
-                select(PersonnelCertificate).where(
-                    PersonnelCertificate.worker_id == dep.worker_id,
-                    PersonnelCertificate.status == CS.accepted,
-                    PersonnelCertificate.valid_until >= d,
-                )
+        if dep.project_id not in trade_codes:
+            trade_codes[dep.project_id] = dict(
+                cset.get(db, dep.project_id).trade_cert_requirements or {}
             )
-        ):
+        code = trade_codes[dep.project_id].get(dep.trade.value)
+        if not code or code in held.get(dep.worker_id, ()):
             continue
         if not alerts.once(db, f"trade-missing:{dep.id}:{d.isoformat()}"):
             continue

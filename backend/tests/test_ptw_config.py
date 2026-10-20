@@ -1,5 +1,6 @@
 """3-ptw §9 AC1-AC9 (configuration, appointments, segregation of duties)."""
 
+import uuid
 from collections.abc import Iterator
 from datetime import timedelta
 from typing import Any
@@ -231,3 +232,18 @@ def test_clock_pin_from_env() -> None:
     finally:
         clock._offset.clear()
         set_now(None)
+
+
+def test_review_appointment_holder_user_must_be_on_the_project(n: Any, api: Api, ids: Ids) -> None:
+    """Review F18: an unknown or off-project holder_user_id is a 422, not an FK failure."""
+    n.db.commit()
+    url = f"{API}/projects/{ids.project('ANIA-EXP')}/ptw-appointments"
+    body = {
+        "function": "gas_tester", "permit_types": ["confined_space"], "site_ids": [ids.site("S-AIR")],
+        "basis": "Gas tester course TEST-GT-1", "valid_from": "2026-10-06", "valid_to": "2026-12-31",
+    }  # fmt: skip
+    m = api.as_("faisal.harbi")
+    res = m.post(url, json={**body, "holder_user_id": str(uuid.uuid4())})
+    assert res.status_code == 422, res.text
+    res = m.post(url, json={**body, "holder_user_id": ids.user("yousef.ghamdi")})  # RBT-52 only
+    assert res.status_code == 422, res.text

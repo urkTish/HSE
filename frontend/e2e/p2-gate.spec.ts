@@ -1,5 +1,5 @@
 import { type Page } from "@playwright/test";
-import { expect, test } from "./fixtures/test";
+import { expect, newClockContext, test } from "./fixtures/test";
 import { apiAs, login, uid, USERS } from "./helpers";
 import {
   accessCard,
@@ -82,7 +82,7 @@ test.describe
     test(`GC-5/GC-7: device session on a phone (${locale}) — GRANTED and DENIED with reasons`, async ({
       browser,
     }) => {
-      const ctx = await browser.newContext({
+      const ctx = await newClockContext(browser, {
         viewport: { width: 390, height: 844 },
         isMobile: true,
         hasTouch: true,
@@ -154,7 +154,7 @@ test.describe
     await page.getByTestId("admit-confirm").click();
     await expect(page.getByTestId("admitted-recorded")).toBeVisible();
 
-    const ctx = await browser.newContext();
+    const ctx = await newClockContext(browser);
     const hse = await ctx.newPage();
     await login(hse, USERS.faisal);
     await hse.goto("/en/gate-log?admitted_despite_denial=true");
@@ -178,7 +178,7 @@ test.describe
     browser,
   }) => {
     await deviceScreen(page, "en");
-    const ctx = await browser.newContext();
+    const ctx = await newClockContext(browser);
     const hse = await ctx.newPage();
     await login(hse, USERS.faisal);
     await hse.goto("/en/gates");

@@ -1,4 +1,5 @@
 "use client";
+import { useCallback } from "react";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, unwrap } from "./client";
 import type { QueryOf } from "./queries";
@@ -46,9 +47,12 @@ export const FIELD_PREFIXES = [
 
 export function useFieldRefresh() {
   const qc = useQueryClient();
-  return async () => {
-    await Promise.all(FIELD_PREFIXES.map((k) => qc.invalidateQueries({ queryKey: [k] })));
-  };
+  return useCallback(
+    async () => {
+      await Promise.all(FIELD_PREFIXES.map((k) => qc.invalidateQueries({ queryKey: [k] })));
+    },
+    [qc],
+  );
 }
 
 const list = { placeholderData: keepPreviousData };

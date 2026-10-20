@@ -520,7 +520,7 @@ export function PassApplicationDetail({ id }: { id: string }) {
                 <CardTitle className="text-base">{t("idCopy")}</CardTitle>
               </CardHeader>
               <CardContent>
-                <Attachments ownerType="pass_application_id_copy" ownerId={a.id} canUpload={s === "draft" && create} canDelete={s === "draft" && create} max={1} hint={t("idCopyHint")} onChange={() => void q.refetch()} />
+                <Attachments ownerType="pass_application_id_copy" ownerId={a.id} canUpload={s === "draft" && create} canDelete={s === "draft" && create} canOpen={can(me, "worker.unmask_id", pid)} max={1} hint={t("idCopyHint")} onChange={() => void q.refetch()} />
               </CardContent>
             </Card>
           ) : null}

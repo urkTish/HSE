@@ -31,7 +31,7 @@ export function applyTheme(pref: ThemePreference): void {
 }
 
 /**
- * Surface preference (D-265): "glass" = frosted surfaces over the emerald mesh, "solid" = flat surfaces,
+ * Surface preference (D-277): "glass" = frosted surfaces over the emerald mesh, "solid" = flat surfaces,
  * "auto" = glass on a fine pointer and solid on a coarse one (phones and gate tablets in sunlight), decided
  * in CSS (`@media (pointer: coarse)` in styles/tokens.css). Stored per device like the theme.
  */

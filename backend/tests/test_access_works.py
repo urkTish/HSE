@@ -1,9 +1,10 @@
 """Spec 2-access-permits §9 AC41-AC53 (NOTAM, obstacle clearances, WAPs, ops suspension), X4."""
 
+import uuid
 from typing import Any
 
 import pytest
-from sqlalchemy import update
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from app import access_jobs
@@ -15,7 +16,7 @@ from app.core.access_enums import (
 )
 from app.core.clock import frozen, set_now
 from app.core.enums import EmployerType, NotificationKind, Role, UserStatus
-from app.models import RoleAssignment, User, Wap, WapCrew
+from app.models import NotamRequest, RoleAssignment, User, Wap, WapCrew, Zone
 from tests.access_helpers import (
     API,
     notam,
@@ -323,3 +324,38 @@ def test_P2AC53_viewer_sees_crew_count_not_names(api: Api, db: Session) -> None:
     assert body["crew_count"] == 9
     for name in ("Tariq", "Rajesh", "Abdul Karim", "WKR-0000"):
         assert name not in res.text
+
+
+def test_review_site_limited_engineer_cannot_read_other_site_notam(
+    api: Api, ids: Ids, db: Session
+) -> None:
+    """Review F19: a Site Engineer limited to S-AIR reads NOTAM rows of S-AIR zones only."""
+    n = notam(db, "2026-0011")
+    o = api.as_("omar.siddiqui")
+    assert o.get(f"{API}/notam-requests/{n.id}").status_code == 200
+    land = db.scalar(
+        select(Zone.id).where(
+            Zone.project_id == uuid.UUID(ids.project("ANIA-EXP")),
+            Zone.site_id == uuid.UUID(ids.site("S-LAND")),
+        )
+    )
+    assert land is not None
+    db.execute(update(NotamRequest).where(NotamRequest.id == n.id).values(zone_ids=[land]))
+    db.commit()
+    assert o.get(f"{API}/notam-requests/{n.id}").status_code == 403
+    assert api.as_("noura.qahtani").get(f"{API}/notam-requests/{n.id}").status_code == 200
+
+
+def test_review_offence_incident_must_belong_to_the_project(
+    api: Api, ids: Ids, db: Session
+) -> None:
+    """Review F19: `incident_id` is checked against the project before it is stored."""
+    w = worker(db, "Saad Al-Dosari")
+    res = api.as_("noura.qahtani").post(
+        f"{API}/projects/{ids.project('ANIA-EXP')}/airside-offences",
+        json={
+            "worker_id": str(w.id), "offence_code": "OFF-01", "offence_at": "2026-10-05T08:00:00Z",
+            "zone_id": ids.zone("Z-APR-21"), "incident_id": str(uuid.uuid4()),
+        },
+    )  # fmt: skip
+    assert res.status_code == 422, res.text

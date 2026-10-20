@@ -2,10 +2,10 @@
 
 from functools import lru_cache
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-CONTRACT_VERSION = "0.15.1"
+CONTRACT_VERSION = "0.15.3"
 API_PREFIX = "/api/v1"
 SESSION_COOKIE_NAME = "hse_session"
 GATE_SESSION_COOKIE = "hse_gate_session"
@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     trust_proxy_headers: bool = False
 
     # Lockout (§5.1 rule 3)
-    lockout_threshold: int = 5
+    lockout_threshold: int = 10
     lockout_window_minutes: int = 15
     lockout_minutes: int = 15
 
@@ -58,6 +58,8 @@ class Settings(BaseSettings):
     # facts. A committed fact write in any process clears it (kpi_generation_seq); this bounds
     # how long one snapshot is reused. 0 disables (the test suite runs with 0).
     kpi_cache_seconds: int = 300
+    # Comma-separated emails allowed to permanently delete a project (D-265). Empty = nobody.
+    project_delete_emails: str = ""
     # Rebuild dropped KPI cache scopes in the background once writes settle (app.kpi.warm).
     kpi_warm: bool = True
     # Heavy KPI / dashboard reads computing at once per process (app.api.deps.cpu_slot); the GIL
@@ -90,7 +92,24 @@ class Settings(BaseSettings):
     # Seed (only used by app.seed)
     seed_password: str | None = None
 
+    @model_validator(mode="after")
+    def _production_secrets(self) -> "Settings":
+        """A production process never starts on the dev-only defaults or a plain-HTTP cookie."""
+        if self.environment != "production":
+            return self
+        for name in ("jwt_secret", "field_encryption_key", "blind_index_key"):
+            if str(getattr(self, name, "")).startswith("dev-only"):
+                raise RuntimeError(f"{name.upper()} must be set in production")
+        if not self.cookie_secure:
+            raise RuntimeError("COOKIE_SECURE must be true in production")
+        return self
+
 
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+def project_deleters() -> frozenset[str]:
+    raw = get_settings().project_delete_emails
+    return frozenset(e.strip().lower() for e in raw.split(",") if e.strip())

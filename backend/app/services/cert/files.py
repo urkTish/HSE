@@ -16,7 +16,6 @@ from app.models import (
     EquipmentDefect,
     PersonnelCertificate,
     Project,
-    Scaffold,
     Tpi,
     TpiAccreditation,
 )
@@ -89,21 +88,25 @@ def owner(
         )
         return pid, True
     if owner_type == A.equipment_certificate_scan:
-        c = db.get(EquipmentCertificate, owner_id)
-        if c is None:
-            raise not_found("Certificate")
-        _need(p, c.project_id, C.equipment_edit if write else C.cert_register_view, write)
+        from app.services.cert import equipment_certs  # noqa: PLC0415
+
+        if write:
+            c = equipment_certs.get_row(db, owner_id)
+            _need(p, c.project_id, C.equipment_edit, True)
+        else:
+            c = equipment_certs.get_visible(db, p, owner_id)  # grant scope: 404 outside it
         return c.project_id, c.status in EDITABLE
     if owner_type == A.personnel_cert_scan:
-        pc = db.get(PersonnelCertificate, owner_id)
-        if pc is None:
-            raise not_found("Certificate")
-        _need(
-            p,
-            pc.project_id,
-            C.personnel_cert_submit if write else C.personnel_cert_scan_view,
-            write,
-        )
+        from app.services.cert import personnel  # noqa: PLC0415
+
+        if write:
+            pc = personnel.get_row(db, owner_id)
+            _need(p, pc.project_id, C.personnel_cert_submit, True)
+        else:
+            # PC-1 / P4-3: the reader's grant must cover the holder's deployment (a Contractor
+            # HSE Rep sees only their tree); 119 is needed on top of the register view.
+            pc = personnel.get_visible(db, p, owner_id)
+            _need(p, pc.project_id, C.personnel_cert_scan_view, False)
         return pc.project_id, pc.status in EDITABLE
     if owner_type == A.verification_evidence:
         ec = db.get(EquipmentCertificate, owner_id)
@@ -114,16 +117,24 @@ def owner(
         _need(p, cert.project_id, C.cert_verify, write)
         return cert.project_id, True
     if owner_type in (A.defect_photo, A.defect_evidence):
-        d = db.get(EquipmentDefect, owner_id)
-        if d is None:
-            raise not_found("Defect")
-        cap = C.defect_raise if owner_type == A.defect_photo else C.defect_rectify
-        _need(p, d.project_id, cap if write else C.cert_register_view, write)
+        from app.services.cert import defects  # noqa: PLC0415
+
+        if write:
+            d = db.get(EquipmentDefect, owner_id)
+            if d is None:
+                raise not_found("Defect")
+            _need(p, d.project_id, C.defect_raise if owner_type == A.defect_photo
+                  else C.defect_rectify, True)  # fmt: skip
+        else:
+            d = defects.get_visible(db, p, owner_id)
         return d.project_id, d.status in (DefectStatus.open, DefectStatus.rectified)
     if owner_type == A.scaffold_inspection_photo:
-        sc = db.get(Scaffold, owner_id)
-        if sc is None:
-            raise not_found("Scaffold")
-        _need(p, sc.project_id, C.scaffold_inspect if write else C.cert_register_view, write)
+        from app.services.cert import scaffolds  # noqa: PLC0415
+
+        if write:
+            sc = scaffolds.get_row(db, owner_id)
+            _need(p, sc.project_id, C.scaffold_inspect, True)
+        else:
+            sc = scaffolds.get_visible(db, p, owner_id)
         return sc.project_id, sc.status != ScaffoldStatus.dismantled
     raise not_found("Attachment owner")

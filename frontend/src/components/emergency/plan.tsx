@@ -4,6 +4,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Alert } from "@/components/ui/alert";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -1057,7 +1058,9 @@ function Devices({ project }: { project: Project }) {
   const [label, setLabel] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
-  const [made, setMade] = useState<S["MusterDeviceRegistered"][]>([]);
+  const [made, setMade] = useState<S["MusterDeviceRead"][]>([]);
+  // The one-time token is shown in a dialog until "Done", never kept on the page (as the gate-device flow).
+  const [token, setToken] = useState<S["MusterDeviceRegistered"] | null>(null);
   const [revoke, setRevoke] = useState<S["MusterDeviceRead"] | null>(null);
   if (!caps.view) return <Alert tone="info">{tc("notAllowed")}</Alert>;
   const apCode = (id: string) => aps.data?.items.find((a) => a.id === id)?.ap_code ?? "";
@@ -1066,7 +1069,8 @@ function Devices({ project }: { project: Project }) {
     setError(null);
     try {
       const r = await unwrap(api.POST("/api/v1/projects/{project_id}/muster-devices", { params: { path: { project_id: project.id } }, body: { ap_id: ap, device_id: deviceId.trim(), label: label.trim() } }));
-      setMade((m) => [r, ...m]);
+      setMade((m) => [r.device, ...m]);
+      setToken(r);
       setDeviceId("");
       setLabel("");
     } catch (e) {
@@ -1120,27 +1124,39 @@ function Devices({ project }: { project: Project }) {
       ) : null}
       {made.length ? (
         <ul className="flex flex-col gap-3" data-testid="md-list">
-          {made.map((r) => (
-            <li key={r.device.id} className="rounded-md border p-3 text-sm" data-testid="md-row" data-revoked={r.device.revoked_at ? "yes" : "no"}>
+          {made.map((d) => (
+            <li key={d.id} className="rounded-md border p-3 text-sm" data-testid="md-row" data-revoked={d.revoked_at ? "yes" : "no"}>
               <p className="flex flex-wrap items-center gap-2">
-                <Code className="font-semibold">{r.device.device_id}</Code> · {r.device.label} · <Code>{apCode(r.device.ap_id)}</Code>
-                <span className="text-xs text-muted-foreground">{dateTime(r.device.registered_at)}</span>
-                {r.device.revoked_at ? <Badge tone="neutral">{t("revoked")}</Badge> : null}
+                <Code className="font-semibold">{d.device_id}</Code> · {d.label} · <Code>{apCode(d.ap_id)}</Code>
+                <span className="text-xs text-muted-foreground">{dateTime(d.registered_at)}</span>
+                {d.revoked_at ? <Badge tone="neutral">{t("revoked")}</Badge> : null}
               </p>
-              {!r.device.revoked_at ? (
-                <>
-                  <p className="mt-2 text-xs text-muted-foreground">{t("tokenOnce")}</p>
-                  <Code className="block rounded bg-surface p-2 text-xs break-all" data-testid="md-token">
-                    {r.device_token}
-                  </Code>
-                  <Button size="sm" variant="destructive-outline" className="mt-2" onClick={() => setRevoke(r.device)} data-testid="md-revoke">
-                    {t("revoke")}
-                  </Button>
-                </>
+              {!d.revoked_at ? (
+                <Button size="sm" variant="destructive-outline" className="mt-2" onClick={() => setRevoke(d)} data-testid="md-revoke">
+                  {t("revoke")}
+                </Button>
               ) : null}
             </li>
           ))}
         </ul>
+      ) : null}
+      {token ? (
+        <Dialog open onOpenChange={(v) => !v && setToken(null)}>
+          <DialogContent closeLabel={tc("close")} className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>{t("tokenTitle", { device: token.device.device_id })}</DialogTitle>
+              <DialogDescription>{t("tokenOnce")}</DialogDescription>
+            </DialogHeader>
+            <Code className="block rounded bg-surface p-2 text-xs break-all" data-testid="md-token">
+              {token.device_token}
+            </Code>
+            <DialogFooter>
+              <Button onClick={() => setToken(null)} data-testid="md-token-done">
+                {t("tokenDone")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       ) : null}
       {revoke ? (
         <StepDialog
@@ -1151,7 +1167,7 @@ function Devices({ project }: { project: Project }) {
           testId="md-revoke-confirm"
           onConfirm={async () => {
             const d = await unwrap(api.POST("/api/v1/muster-devices/{device_pk}/revoke", { params: { path: { device_pk: revoke.id } } }));
-            setMade((m) => m.map((x) => (x.device.id === d.id ? { ...x, device: d } : x)));
+            setMade((m) => m.map((x) => (x.id === d.id ? d : x)));
           }}
           onClose={() => setRevoke(null)}
         />

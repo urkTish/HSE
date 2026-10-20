@@ -238,3 +238,38 @@ def test_P4AC84_lifting_tpi_blacklist_suspends(api: Api, db: Session) -> None:
     assert res.json()["status"] == "suspended"
     db.expire_all()
     assert ecert(db, "QC-EQ-TEST-26-0042").status.value == "revoked"
+
+
+# ---- review fixes (phases 4-7 backend review) ----------------------------------------------------
+
+
+def test_review13_lifted_ban_without_timestamp_is_not_active(db: Session) -> None:
+    from app.core.cert_enums import BanStatus
+    from app.models import CertificationBan
+    from app.services.cert import validity
+
+    w = worker(db, "WKR-000022")
+    b = db.scalar(select(CertificationBan).where(CertificationBan.worker_id == w.id))
+    assert b is not None
+    assert validity.active_ban(db, w.id, "SCAFFOLDER", date(2026, 10, 6)) is not None
+    b.status, b.lifted_at = BanStatus.lifted, None
+    db.flush()
+    assert validity.active_ban(db, w.id, "SCAFFOLDER", date(2026, 10, 6)) is None
+    b.lifted_at = riyadh(2026, 10, 8)  # lifted later: still banned on the 6th, not on the 8th
+    db.flush()
+    assert validity.active_ban(db, w.id, "SCAFFOLDER", date(2026, 10, 6)) is not None
+    assert validity.active_ban(db, w.id, "SCAFFOLDER", date(2026, 10, 8)) is None
+
+
+def test_review8_daily_job_steps_are_isolated(db: Session, monkeypatch: pytest.MonkeyPatch) -> None:
+    """One failing sub-job of cert_daily is reported as None; the others still run."""
+    from app.cert_jobs import cert_daily
+    from app.services.cert import equipment_certs
+
+    def boom(db_: Session, at: datetime) -> int:
+        raise RuntimeError("bad row")
+
+    monkeypatch.setattr(equipment_certs, "expiry_job", boom)
+    out = cert_daily(db)
+    assert out["equipment_certs_expired"] is None
+    assert all(isinstance(v, int) for k, v in out.items() if k != "equipment_certs_expired")

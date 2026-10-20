@@ -1,4 +1,5 @@
 "use client";
+import { clearAllDrafts } from "@/lib/local-draft";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState, type ReactNode } from "react";
 import { Toaster } from "sonner";
@@ -36,7 +37,9 @@ function AuthEventBridge({ client }: { client: QueryClient }) {
         }
         if (onPublic) return;
         client.clear();
-        const next = pathname && pathname !== "/" ? pathname : undefined;
+        clearAllDrafts(); // a draft typed by the previous user never greets the next one
+        const search = typeof window !== "undefined" ? window.location.search : "";
+        const next = pathname && pathname !== "/" ? `${pathname}${search}` : undefined;
         router.replace({
           pathname: "/login",
           query: { ...(e === "expired" ? { reason: "expired" } : {}), ...(next ? { next } : {}) },

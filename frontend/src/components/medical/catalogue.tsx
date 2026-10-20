@@ -24,6 +24,7 @@ import { PageHeader } from "@/components/common/page-header";
 import { Pagination } from "@/components/common/pagination";
 import { EmptyState, ErrorState, LoadingState } from "@/components/common/states";
 import { Code, StepDialog, WorkerLabel } from "@/components/access/common";
+import { fromLocalInput, nowLocal, toLocalInput } from "@/components/emergency/common";
 import { Tick, UserName } from "@/components/cert/common";
 import { useUserOptions } from "@/components/common/pickers";
 import { Link, useRouter } from "@/i18n/navigation";
@@ -31,6 +32,7 @@ import { api, unwrap, type Schemas } from "@/lib/api/client";
 import { useContractors, useProjects } from "@/lib/api/queries";
 import { mk, useFitnessCodes, useMedicalExaminers, useMedicalProvider, useMedicalProviderAffected, useMedicalProviders, useMedicalRefresh } from "@/lib/api/medical";
 import { useCurrentProject } from "@/lib/current-project";
+import { zonedInputToUtc } from "@/lib/datetime";
 import { EXAMINER_STATUSES, FITNESS_CATEGORIES, MED_BLACKLIST_SCOPES, MED_PROVIDER_KINDS, MED_PROVIDER_STATUSES, SIGNING_CLASSES, EXAMINER_CLASSES, TYPICAL_TESTS, RESTRICTION_CODES } from "@/lib/med-enums";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
@@ -318,13 +320,6 @@ export function MedicalProvidersPage() {
   );
 }
 
-/** datetime-local value of "now" for "licence checked at" defaults. */
-function nowLocal(): string {
-  const d = new Date();
-  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-  return d.toISOString().slice(0, 16);
-}
-
 function ProviderDialog({ provider, onClose }: { provider?: S["MedicalProviderRead"]; onClose: () => void }) {
   const t = useTranslations("medical.providers");
   const te = useTranslations("enums");
@@ -342,7 +337,7 @@ function ProviderDialog({ provider, onClose }: { provider?: S["MedicalProviderRe
   const [licence, setLicence] = useState(provider?.moh_licence_no ?? "");
   const [validTo, setValidTo] = useState(provider?.licence_valid_until ?? "");
   const [checked, setChecked] = useState(Boolean(provider?.licence_checked_at));
-  const [checkedAt, setCheckedAt] = useState(provider?.licence_checked_at ? provider.licence_checked_at.slice(0, 16) : nowLocal());
+  const [checkedAt, setCheckedAt] = useState(provider?.licence_checked_at ? toLocalInput(provider.licence_checked_at) : nowLocal());
   const [domains, setDomains] = useState((provider?.verification_domains ?? []).join(", "));
   const [email, setEmail] = useState(provider?.verification_email ?? "");
   const [phone, setPhone] = useState(provider?.verification_phone ?? "");
@@ -366,7 +361,7 @@ function ProviderDialog({ provider, onClose }: { provider?: S["MedicalProviderRe
       legal_name_ar: nameAr.trim(),
       moh_licence_no: licence.trim(),
       licence_valid_until: validTo,
-      licence_checked_at: checked ? new Date(checkedAt).toISOString() : null,
+      licence_checked_at: checked ? fromLocalInput(checkedAt) : null,
       verification_domains: domainList,
       verification_email: email.trim() || null,
       verification_phone: phone.trim() || null,
@@ -808,7 +803,7 @@ function ExaminerDialog({ examiner, onClose }: { examiner?: S["ExaminerRead"]; o
         } else {
           await unwrap(
             api.POST("/api/v1/medical-examiners", {
-              body: { full_name_en: nameEn.trim(), full_name_ar: nameAr.trim(), scfhs_licence_no: licence.trim(), classification: cls, licence_valid_until: validTo, licence_checked_at: new Date(checkedAt).toISOString(), provider_ids: providerIds, user_id: user || null },
+              body: { full_name_en: nameEn.trim(), full_name_ar: nameAr.trim(), scfhs_licence_no: licence.trim(), classification: cls, licence_valid_until: validTo, licence_checked_at: zonedInputToUtc(checkedAt), provider_ids: providerIds, user_id: user || null },
             }),
           );
         }

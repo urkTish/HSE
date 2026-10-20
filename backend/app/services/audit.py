@@ -38,6 +38,22 @@ SENSITIVE_KEYS: frozenset[str] = frozenset(
         "treatments",
         "privacy_reason",
         "date_of_death",
+        # injured-person identity and absence details (P1-1), masked in before/after diffs
+        "employee_no",
+        "gosi_case_ref",
+        "nationality",
+        "illness",
+        "body_part",
+        "nature",
+        "treated_at",
+        "loss_of_consciousness",
+        "away_start_date",
+        "rtw_date",
+        "restricted_start",
+        "restricted_end",
+        "transfer_start",
+        "transfer_end",
+        "permanent_disability",
     }
 )
 MASK = "***"
@@ -91,16 +107,27 @@ def jsonable(value: Any) -> Any:
     return json.loads(json.dumps(value, default=_default, ensure_ascii=False))
 
 
+def _sensitive_key(k: str) -> bool:
+    return k in SENSITIVE_KEYS or k.endswith(("_enc", "_hash", "_blind_index"))
+
+
+def _scrub_value(v: Any) -> Any:
+    if isinstance(v, dict):
+        return {
+            k: (MASK if _sensitive_key(k) and val is not None else _scrub_value(val))
+            for k, val in v.items()
+            if k not in SECRET_KEYS
+        }
+    if isinstance(v, list):
+        return [_scrub_value(x) for x in v]
+    return v
+
+
 def scrub(values: dict[str, Any] | None) -> dict[str, Any] | None:
-    """Drop secrets, mask sensitive values (rule 35 'before/after')."""
+    """Drop secrets, mask sensitive values (rule 35 'before/after'), at every nesting level."""
     if values is None:
         return None
-    out: dict[str, Any] = {}
-    for k, v in values.items():
-        if k in SECRET_KEYS:
-            continue
-        out[k] = MASK if k in SENSITIVE_KEYS and v is not None else v
-    result: dict[str, Any] = jsonable(out)
+    result: dict[str, Any] = jsonable(_scrub_value(values))
     return result
 
 
@@ -289,6 +316,16 @@ def purge_expired(db: Session) -> AuditEntry:
         ).all()
     ]
     targets.append((None, get_settings().org_audit_retention_years))
+    # Projects deleted under D-265 keep their history but have no settings row: org retention.
+    orphans = db.scalars(
+        select(AuditEntry.project_id)
+        .distinct()
+        .where(
+            AuditEntry.project_id.is_not(None),
+            AuditEntry.project_id.not_in(select(ProjectSettings.project_id)),
+        )
+    ).all()
+    targets.extend((pid, get_settings().org_audit_retention_years) for pid in orphans)
     db.execute(text("SELECT pg_advisory_xact_lock(:k)"), {"k": AUDIT_LOCK_KEY})
     total = 0
     all_seqs: list[int] = []

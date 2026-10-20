@@ -4,10 +4,12 @@
 import uuid
 
 from fastapi import APIRouter, status
+from pydantic import Field
 
 from app.api.deps import DB, CurrentUser
 from app.core.errors import error_responses
 from app.core.hse_enums import ReferenceList
+from app.schemas.common import StrictInput
 from app.schemas.hse_settings import (
     AiTransferApprovalCreate,
     HseSettingsRead,
@@ -88,3 +90,30 @@ def update_reference_item(
     list_name: ReferenceList, code: str, body: ReferenceItemUpdate, user: CurrentUser, db: DB
 ) -> ReferenceItemRead:
     return svc.update_reference(db, user, list_name, code, body)
+
+
+class ReferenceItemCreate(StrictInput):
+    label_en: str = Field(min_length=1, max_length=120)
+    label_ar: str = Field(min_length=1, max_length=120)
+
+
+@router.post(
+    "/reference-lists/{list_name}",
+    response_model=ReferenceItemRead,
+    summary="Add an item to an extensible list (zone categories, D-274)",
+    responses=error_responses(401, 403, 422),
+)
+def add_reference_item(
+    list_name: ReferenceList, body: ReferenceItemCreate, user: CurrentUser, db: DB
+) -> ReferenceItemRead:
+    return svc.add_reference(db, user, list_name, body.label_en.strip(), body.label_ar.strip())
+
+
+@router.delete(
+    "/reference-lists/{list_name}/{code}",
+    status_code=204,
+    summary="Remove an unused item from an extensible list (zone categories, D-274)",
+    responses=error_responses(401, 403, 404, 409, 422),
+)
+def remove_reference_item(list_name: ReferenceList, code: str, user: CurrentUser, db: DB) -> None:
+    svc.remove_reference(db, user, list_name, code)

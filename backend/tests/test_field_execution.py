@@ -246,3 +246,27 @@ def ins_by_id(db: Session, iid: Any) -> Inspection:
 def ca_open(db: Session, ca_id: Any) -> bool:
     ca = db.get(CorrectiveAction, ca_id)
     return ca is not None and ca.status.value not in ("closed", "cancelled")
+
+
+# ---- review fixes (phases 4-7 backend review) ----------------------------------------------------
+
+
+def test_review12_replayed_client_uuid_of_another_user(db: Session) -> None:
+    """EXE-6 idempotency returns the prior response only to its own recorder; another user
+    replaying the client_uuid gets 409."""
+    b = fd1(db, set())
+    r1 = submit(db, "noura.qahtani", b)
+    expect("DUPLICATE_VALUE", lambda: submit(db, "ahmed.zahrani", b), 409)
+    assert submit(db, "noura.qahtani", b).id == r1.id
+
+
+def test_review11_photo_payload_is_capped_before_decoding() -> None:
+    from pydantic import ValidationError
+
+    from app.schemas.env import EnvPhotoInput
+    from app.schemas.field import MAX_PHOTO_B64, PhotoInput
+
+    with pytest.raises(ValidationError):
+        PhotoInput(file_name="big.jpg", content_base64="A" * (MAX_PHOTO_B64 + 1))
+    with pytest.raises(ValidationError):
+        EnvPhotoInput(file_name="big.jpg", content_base64="A" * (MAX_PHOTO_B64 + 1))

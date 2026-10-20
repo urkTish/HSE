@@ -1,7 +1,6 @@
 "use client";
 import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
 import { PageHeader } from "@/components/common/page-header";
@@ -20,6 +19,7 @@ import { can } from "@/lib/permissions";
 import { useLocalizedName } from "@/lib/i18n-helpers";
 import { useDebounced } from "@/lib/use-debounced";
 import { useFormatters } from "@/lib/use-formatters";
+import { useSearchState } from "@/lib/url-state";
 
 type Sort = NonNullable<QueryOf<"list_contractors">["sort"]>;
 const SORTS: Sort[] = ["short_code", "-short_code", "name", "-name", "cr_expiry_date"];
@@ -33,12 +33,13 @@ export function ContractorList() {
   const name = useLocalizedName();
   const { date } = useFormatters();
   const { projects } = useCurrentProject();
-  const [q, setQ] = useState("");
-  const [status, setStatus] = useState<Schemas["ContractorStatus"] | "">("");
-  const [category, setCategory] = useState<Schemas["ContractorCategory"] | "">("");
-  const [projectId, setProjectId] = useState("");
-  const [sort, setSort] = useState<Sort>("short_code");
-  const [page, setPage] = useState(1);
+  const s = useSearchState();
+  const q = s.get("q") ?? "";
+  const status = (s.get("status") as Schemas["ContractorStatus"] | null) ?? "";
+  const category = (s.get("category") as Schemas["ContractorCategory"] | null) ?? "";
+  const projectId = s.get("project_id") ?? "";
+  const sort = (s.get("sort") as Sort | null) ?? "short_code";
+  const page = s.getInt("page", 1) ?? 1;
   const dq = useDebounced(q);
   const query = useContractors({
     q: dq || undefined,
@@ -51,7 +52,6 @@ export function ContractorList() {
   });
   const items = query.data?.items ?? [];
   const showContact = items.some((c) => c.primary_contact_name || c.primary_contact_email);
-  const reset = () => setPage(1);
 
   return (
     <div>
@@ -70,11 +70,11 @@ export function ContractorList() {
         }
       />
       <ListToolbar actions={can(me, "export.lists") ? <ExportButtons dataset="contractors" params={{ q: dq, status, project_id: projectId }} /> : null}>
-        <SearchFilter id="contractor-q" value={q} onChange={(v) => { setQ(v); reset(); }} placeholder={t("searchHint")} />
-        <SelectFilter id="contractor-status" label={t("fields.status")} value={status} onChange={(v) => { setStatus(v); reset(); }} options={CONTRACTOR_STATUSES.map((s) => ({ value: s, label: t(`status.${s}`) }))} />
-        <SelectFilter id="contractor-category" label={t("fields.contractor_category")} value={category} onChange={(v) => { setCategory(v); reset(); }} options={CONTRACTOR_CATEGORIES.map((s) => ({ value: s, label: t(`category.${s}`) }))} />
-        <SelectFilter id="contractor-project" label={ts("projectSwitcher")} value={projectId} onChange={(v) => { setProjectId(v); reset(); }} options={projects.map((p) => ({ value: p.id, label: p.code }))} allLabel={t("anyProject")} />
-        <SelectFilter id="contractor-sort" label={tc("sortBy")} value={sort} onChange={(v) => setSort(v || "short_code")} options={SORTS.map((s) => ({ value: s, label: t(`sort.${s}`) }))} allLabel={t("sort.short_code")} />
+        <SearchFilter id="contractor-q" value={q} onChange={(v) => s.set({ q: v })} placeholder={t("searchHint")} />
+        <SelectFilter id="contractor-status" label={t("fields.status")} value={status} onChange={(v) => s.set({ status: v })} options={CONTRACTOR_STATUSES.map((s) => ({ value: s, label: t(`status.${s}`) }))} />
+        <SelectFilter id="contractor-category" label={t("fields.contractor_category")} value={category} onChange={(v) => s.set({ category: v })} options={CONTRACTOR_CATEGORIES.map((s) => ({ value: s, label: t(`category.${s}`) }))} />
+        <SelectFilter id="contractor-project" label={ts("projectSwitcher")} value={projectId} onChange={(v) => s.set({ project_id: v })} options={projects.map((p) => ({ value: p.id, label: p.code }))} allLabel={t("anyProject")} />
+        <SelectFilter id="contractor-sort" label={tc("sortBy")} value={sort} onChange={(v) => s.set({ sort: v || null })} options={SORTS.map((s) => ({ value: s, label: t(`sort.${s}`) }))} allLabel={t("sort.short_code")} />
       </ListToolbar>
       {query.isLoading ? (
         <LoadingState />
@@ -119,7 +119,7 @@ export function ContractorList() {
               ))}
             </TBody>
           </Table>
-          <Pagination page={page} pageSize={PAGE_SIZE} total={query.data.total} onPage={setPage} />
+          <Pagination page={page} pageSize={PAGE_SIZE} total={query.data.total} onPage={(p) => s.set({ page: p })} />
         </>
       ) : (
         <EmptyState />

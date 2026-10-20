@@ -10,6 +10,8 @@ from app.core.enums import ProjectStatus, ProjectType
 from app.core.errors import error_responses
 from app.schemas.projects import (
     ProjectCreate,
+    ProjectDeleteRequest,
+    ProjectDeleteResult,
     ProjectPage,
     ProjectRead,
     ProjectSettingsRead,
@@ -90,6 +92,18 @@ def transition_project(
     project_id: uuid.UUID, body: ProjectTransitionRequest, user: CurrentUser, db: DB
 ) -> ProjectRead:
     return svc.to_read(svc.transition(db, user, project_id, body))
+
+
+@router.post(
+    "/{project_id}/delete",
+    response_model=ProjectDeleteResult,
+    summary="Permanently delete a project and all its data (platform administrator only)",
+    responses=error_responses(401, 403, 404, 422),
+)
+def delete_project(
+    project_id: uuid.UUID, body: ProjectDeleteRequest, user: CurrentUser, db: DB
+) -> ProjectDeleteResult:
+    return svc.delete(db, user, project_id, body)
 
 
 @router.get(

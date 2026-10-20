@@ -81,8 +81,11 @@ def test_AC2_identical_failure_responses(api: Api) -> None:
     assert unknown.json()["detail"]["code"] == "INVALID_CREDENTIALS"
 
 
-def test_AC3_lockout_after_five_failures(api: Api, db: Session) -> None:
-    for _ in range(5):
+def test_AC3_lockout_after_ten_failures(api: Api, db: Session) -> None:
+    for _ in range(9):
+        assert api.login("noura.qahtani@example.com", "Wrong-Password-1!").status_code == 401
+    assert api.login("noura.qahtani@example.com").status_code == 200  # 9 failures do not lock
+    for _ in range(10):
         assert api.login("noura.qahtani@example.com", "Wrong-Password-1!").status_code == 401
     res = api.login("noura.qahtani@example.com")
     assert res.status_code == 401
@@ -93,7 +96,7 @@ def test_AC3_lockout_after_five_failures(api: Api, db: Session) -> None:
 
 
 def test_AC3_failures_outside_window_do_not_lock(api: Api, db: Session) -> None:
-    for _ in range(4):
+    for _ in range(9):
         api.login("noura.qahtani@example.com", "Wrong-Password-1!")
     db.execute(
         update(User)
@@ -106,7 +109,7 @@ def test_AC3_failures_outside_window_do_not_lock(api: Api, db: Session) -> None:
 
 
 def test_AC3_lock_lifts_after_15_minutes(api: Api, db: Session) -> None:
-    for _ in range(5):
+    for _ in range(10):
         api.login("noura.qahtani@example.com", "Wrong-Password-1!")
     db.execute(
         update(User)

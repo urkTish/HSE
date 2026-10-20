@@ -23,7 +23,7 @@ import { SubmissionDialog } from "@/components/followup/actions";
 import { useFuCaps } from "@/components/followup/common";
 import { useMeData } from "@/components/shell/me-context";
 import { Link } from "@/i18n/navigation";
-import { api, postForm, unwrap, type Schemas } from "@/lib/api/client";
+import { api, openSignedUrl, postForm, unwrap, type Schemas } from "@/lib/api/client";
 import { useFuRequirements } from "@/lib/api/followup";
 import { hk } from "@/lib/api/hse";
 import { useProjectSettings } from "@/lib/api/queries";
@@ -1022,8 +1022,7 @@ export function AccidentReportCard({ incident: r }: { incident: Incident }) {
   }
   async function open(id: string) {
     try {
-      const sUrl = await unwrap(api.POST("/api/v1/attachments/{attachment_id}/signed-url", { params: { path: { attachment_id: id } } }));
-      window.open(sUrl.url, "_blank", "noopener");
+      await openSignedUrl(() => unwrap(api.POST("/api/v1/attachments/{attachment_id}/signed-url", { params: { path: { attachment_id: id } } })));
     } catch (e) {
       toast.error(msg(e));
     }

@@ -8,6 +8,7 @@ import { FieldItem, FieldList, YesNo } from "@/components/common/field-list";
 import { HistoryPanel } from "@/components/common/history-panel";
 import { TransitionActions } from "@/components/common/transition-actions";
 import { LoadingState } from "@/components/common/states";
+import { DeleteProject } from "@/components/projects/delete-project";
 import { useMeData } from "@/components/shell/me-context";
 import { Link } from "@/i18n/navigation";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
@@ -66,7 +67,7 @@ export function ProjectOverview({ projectId }: { projectId: string }) {
             <FieldItem label={t("fields.client_name_ar")}>
               <span lang="ar">{p.client_name_ar}</span>
             </FieldItem>
-            {p.is_airport ? <FieldItem label={t("fields.airport_icao")} ltr>{p.airport_icao ?? "—"}</FieldItem> : null}
+            {p.is_airport ? <FieldItem label={t("fields.airport_iata")} ltr>{p.airport_iata ?? "—"}</FieldItem> : null}
             <FieldItem label={t("fields.start_date")}>{date(p.start_date)}</FieldItem>
             <FieldItem label={t("fields.planned_end_date")}>{date(p.planned_end_date)}</FieldItem>
             {p.status_reason ? <FieldItem label={t("fields.status_reason")}>{p.status_reason}</FieldItem> : null}
@@ -91,6 +92,7 @@ export function ProjectOverview({ projectId }: { projectId: string }) {
             </CardContent>
           </Card>
         ) : null}
+        {me.can_delete_projects ? <DeleteProject projectId={p.id} code={p.code} /> : null}
         {can(me, "history.view", p.id) ? <HistoryPanel entityType="project" entityId={p.id} projectId={p.id} /> : null}
       </div>
     </div>

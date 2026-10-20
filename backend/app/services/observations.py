@@ -239,7 +239,8 @@ def create(
     audit.record(
         db,
         AuditAction.create,
-        p.actor(project.id),
+        # O-5: an anonymous observer is hidden from the audit trail too (the row keeps the id).
+        audit.SYSTEM if o.anonymous else p.actor(project.id),
         entity_type=EntityType.observation,
         entity_id=o.id,
         project_id=project.id,

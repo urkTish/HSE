@@ -18,6 +18,7 @@ import { Select } from "@/components/ui/select";
 import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { ApiWarnings, useWarningToasts } from "@/components/common/api-warnings";
+import { Attachments } from "@/components/common/attachments";
 import { Breadcrumbs } from "@/components/common/breadcrumbs";
 import { ExportButtons } from "@/components/common/export-buttons";
 import { FieldItem, FieldList } from "@/components/common/field-list";
@@ -369,10 +370,17 @@ export function WorkerForm({ project, worker }: { project: Schemas["ProjectRead"
   const siteIds = useWatch({ control: form.control, name: "dep.site_ids" });
   const eng = opts.engagements.find((e) => e.value === engId);
   const siteOptions = opts.sites.filter((s) => !eng || eng.siteIds.includes(s.value));
+  // D-272: a new worker needs a photo of their Iqama / ID; it is uploaded right after creation.
+  const [idCopy, setIdCopy] = useState<File | null>(null);
+  const [idCopyError, setIdCopyError] = useState<string | undefined>();
 
   async function save(v: Values) {
     setError(null);
     setExisting(null);
+    if (!worker && !idCopy) {
+      setIdCopyError(tv("required"));
+      return;
+    }
     try {
       let saved: Schemas["WorkerRead"];
       if (worker) {
@@ -417,6 +425,17 @@ export function WorkerForm({ project, worker }: { project: Schemas["ProjectRead"
             },
           }),
         );
+      }
+      if (!worker && idCopy) {
+        try {
+          const fd = new FormData();
+          fd.set("owner_type", "worker_id_copy");
+          fd.set("owner_id", saved.id);
+          fd.set("file", idCopy);
+          await postForm<Schemas["AttachmentRead"]>("/api/v1/attachments", fd);
+        } catch {
+          toast.error(t("idCopyUploadFailed"));
+        }
       }
       // The ID number typed here is not kept anywhere after saving.
       form.setValue("id_number", "");
@@ -487,6 +506,20 @@ export function WorkerForm({ project, worker }: { project: Schemas["ProjectRead"
         <FormField id="id_expiry_date" label={t("fields.id_expiry_date")} required error={errors.id_expiry_date?.message}>
           <Input type="date" {...form.register("id_expiry_date")} />
         </FormField>
+        {!worker ? (
+          <FormField id="id_copy" label={t("fields.id_copy")} hint={t("idCopyHint")} required error={idCopyError}>
+            <Input
+              type="file"
+              accept="image/jpeg,image/png,application/pdf"
+              capture="environment"
+              onChange={(e) => {
+                setIdCopy(e.target.files?.[0] ?? null);
+                setIdCopyError(undefined);
+              }}
+              data-testid="id-copy-input"
+            />
+          </FormField>
+        ) : null}
         {!editing ? (
           <div className="sm:col-span-2">
             <CheckboxField id="adult_attestation" label={t("fields.adult_attestation")} error={errors.adult_attestation?.message}>
@@ -653,7 +686,7 @@ export function WorkerDetail({ id }: { id: string }) {
               {w.id_expired ? <Alert tone="danger">{t("idExpired")}</Alert> : null}
               <FieldList>
                 <FieldItem label={t("fields.id_number")}>
-                  <MaskedIdNumber worker={w} />
+                  <MaskedIdNumber worker={w} projectId={pid} />
                 </FieldItem>
                 <FieldItem label={t("fields.id_expiry_date")}>
                   <StackedDate v={w.id_expiry_date} projectId={pid} />
@@ -705,6 +738,21 @@ export function WorkerDetail({ id }: { id: string }) {
         </div>
         <div className="flex flex-col gap-6">
           {pid && can(me, "export.access_identity", pid) ? <DataReport worker={w} /> : null}
+          {w.status !== "anonymised" ? (
+            <Card data-testid="id-copy-card">
+              <CardHeader>
+                <CardTitle>{t("fields.id_copy")}</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-3">
+                {!w.id_copy_attachment_id ? <Alert tone="warning">{t("idCopyMissing")}</Alert> : null}
+                {can(me, "worker.unmask_id", pid) || canEdit ? (
+                  <Attachments ownerType="worker_id_copy" ownerId={w.id} canUpload={canEdit} canDelete={canEdit} canOpen={can(me, "worker.unmask_id", pid)} max={1} hint={t("idCopyHint")} />
+                ) : (
+                  <p className="text-sm text-muted-foreground">{t("idCopyRestricted")}</p>
+                )}
+              </CardContent>
+            </Card>
+          ) : null}
           {can(me, "history.view", pid) ? <HistoryPanel entityType="worker" entityId={w.id} projectId={pid} /> : null}
         </div>
       </div>

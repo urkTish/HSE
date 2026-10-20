@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from app.core import crypto
 from app.core.enums import AuditAction, Capability, ExportDataset, ExportFormat
 from app.core.errors import ApiError, ErrorCode, validation_error
-from app.core.hse_enums import ExportPurpose
+from app.core.hse_enums import ExportPurpose, IncidentStatus
 from app.models import HseMeeting, Incident
 from app.services import audit, hse_settings, projects
 from app.services import corrective_actions as ca_svc
@@ -20,6 +20,7 @@ from app.services import incidents as inc_svc
 from app.services import inspections as ins_svc
 from app.services import observations as obs_svc
 from app.services import workforce as wf_svc
+from app.services.exports import _status
 from app.services.hse_common import Refs, project_today
 from app.services.injury_cases import PRIVACY_EN
 from app.services.permissions import Principal, forbidden_error
@@ -105,7 +106,7 @@ def export(
     elif dataset == ExportDataset.incidents:
         stmt = inc_svc.scoped_query(db, p, project)
         if status:
-            stmt = stmt.where(Incident.status == status)
+            stmt = stmt.where(Incident.status == _status(IncidentStatus, status))
         incs = list(db.scalars(stmt.order_by(Incident.occurred_at).limit(MAX_ROWS)))
         cases = inc_svc.load_cases(db, [i.id for i in incs])
         s = hse_settings.get(db, project.id)

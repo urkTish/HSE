@@ -43,6 +43,7 @@ from app.models import (
     ProjectEngagement,
     Site,
     User,
+    Wap,
     WapCrew,
     Worker,
     WorkerIdHistory,
@@ -161,6 +162,19 @@ def photo_id(db: Session, worker_id: uuid.UUID) -> uuid.UUID | None:
         select(Attachment.id)
         .where(
             Attachment.owner_type == AttachmentOwner.worker_photo, Attachment.owner_id == worker_id
+        )
+        .order_by(Attachment.created_at.desc())
+        .limit(1)
+    )
+
+
+def id_copy_id(db: Session, worker_id: uuid.UUID) -> uuid.UUID | None:
+    """D-272: the current Iqama / ID photo."""
+    return db.scalar(
+        select(Attachment.id)
+        .where(
+            Attachment.owner_type == AttachmentOwner.worker_id_copy,
+            Attachment.owner_id == worker_id,
         )
         .order_by(Attachment.created_at.desc())
         .limit(1)
@@ -293,6 +307,7 @@ def worker_read(
         primary_language=w.primary_language,
         user=refs.user(w.user_id),
         photo_attachment_id=None if anonymised else photo_id(db, w.id),
+        id_copy_attachment_id=None if anonymised else id_copy_id(db, w.id),
         status=w.status,
         ban_reason=w.ban_reason,
         deployments=[_summary(db, d, refs) for d in deps],
@@ -408,8 +423,30 @@ def _snapshot(w: Worker) -> dict[str, Any]:
         "id_expiry_date": w.id_expiry_date,
         "nationality": w.nationality,
         "primary_language": w.primary_language,
+        "user_id": str(w.user_id) if w.user_id else None,
         "status": w.status,
     }
+
+
+def _check_user_link(
+    db: Session, p: Principal, user_id: uuid.UUID | None, w: Worker | None
+) -> None:
+    """The worker ↔ platform-user link is the identity bridge for gas-test self-signature,
+    appointment identity and training hooks: only a project-wide holder of capability 47 sets
+    or clears it, to an existing user that is not linked to another worker."""
+    if not _project_wide(p, C.worker_edit):
+        raise forbidden_error("Only the HSE Officer or HSE Manager links a worker to a user.")
+    if user_id is None:
+        return
+    if db.get(User, user_id) is None:
+        raise validation_error("user_id", "Unknown user.")
+    other = db.scalar(
+        select(Worker.id).where(
+            Worker.user_id == user_id, Worker.id != (w.id if w else uuid.UUID(int=0))
+        )
+    )
+    if other is not None:
+        raise validation_error("user_id", "This user is already linked to another worker.")
 
 
 def _exists_error(db: Session, p: Principal, existing: Worker) -> ApiError:
@@ -462,6 +499,8 @@ def create_worker(db: Session, p: Principal, body: WorkerCreate) -> WorkerRead:
         raise validation_error("id_expiry_date", "The ID must not be expired.")
     if not has_arabic(body.full_name_ar):
         raise validation_error("full_name_ar", "Enter the Arabic name in Arabic script.")
+    if body.user_id is not None:
+        _check_user_link(db, p, body.user_id, None)
     number = common.check_id(body.id_type, body.id_number, body.passport_country)
     bidx = common.blind_index(body.id_type, number, body.passport_country)
     existing = db.scalar(select(Worker).where(Worker.id_number_bidx == bidx))
@@ -563,6 +602,8 @@ def update_worker(
                     )
                 )
             common.set_worker_id(w, id_type, n, country)
+    if "user_id" in ch and ch["user_id"] != w.user_id:
+        _check_user_link(db, p, ch["user_id"], w)
     for k in ("full_name_en", "full_name_ar", "nationality", "primary_language", "user_id"):
         if k in ch:
             setattr(w, k, ch[k])
@@ -1031,8 +1072,15 @@ def demobilise(
             a.return_due_on = on + timedelta(days=s.pass_return_days)
     if common.active_qr(db, d.id) is not None:
         lifecycle.revoke(db, d, reason, None, actor, s, at)
+    # LC-10: only the crew places on this project; a deployment elsewhere (WK-1) keeps its.
     for c in db.scalars(
-        select(WapCrew).where(WapCrew.worker_id == d.worker_id, WapCrew.removed_at.is_(None))
+        select(WapCrew)
+        .join(Wap, Wap.id == WapCrew.wap_id)
+        .where(
+            WapCrew.worker_id == d.worker_id,
+            WapCrew.removed_at.is_(None),
+            Wap.project_id == d.project_id,
+        )
     ):
         c.removed_at = at
     d.updated_at = at

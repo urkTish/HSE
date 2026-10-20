@@ -1,6 +1,7 @@
 """Spec 2-access-permits §9 AC1-AC8 (worker register & PDPL) and the seed CI checks (A.1, AC64)."""
 
 import re
+import uuid
 
 import pytest
 from sqlalchemy import select
@@ -170,3 +171,29 @@ def test_P2AC64_seed_qr_payloads_are_opaque(db: Session) -> None:
         assert QR_RE.match(p), p
         assert not any(ch.isdigit() for ch in p[8:]) or not re.search(r"\d{10}", p)
     assert all(t.token.lower() not in names for t in tokens[:50])
+
+
+def test_review_worker_user_link_is_validated_and_officer_only(
+    api: Api, ids: Ids, db: Session
+) -> None:
+    """Review F1: Worker.user_id underpins gas-test self-signature and appointment identity, so
+    only a project-wide 47 holder links, to an existing user not linked to another worker."""
+    rajesh = worker(db, "Rajesh Nair")
+    uid = ids.user("ahmed.zahrani")
+    res = api.as_("ahmed.zahrani").patch(f"{API}/workers/{rajesh.id}", json={"user_id": uid})
+    assert res.status_code == 403, res.text
+    n = api.as_("noura.qahtani")
+    res = n.patch(f"{API}/workers/{rajesh.id}", json={"user_id": str(uuid.uuid4())})
+    assert res.status_code == 422, res.text
+    res = n.patch(f"{API}/workers/{rajesh.id}", json={"user_id": uid})
+    assert res.status_code == 200, res.text
+    other = worker(db, "Suman Tamang")
+    res = n.patch(f"{API}/workers/{other.id}", json={"user_id": uid})
+    assert res.status_code == 422, res.text
+    db.expire_all()
+    rows = db.scalars(
+        select(AuditEntry)
+        .where(AuditEntry.entity_id == rajesh.id, AuditEntry.action == AuditAction.update)
+        .order_by(AuditEntry.occurred_at.desc())
+    ).all()
+    assert rows and rows[0].after is not None and rows[0].after.get("user_id") == uid

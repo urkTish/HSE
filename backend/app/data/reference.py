@@ -311,6 +311,19 @@ REFERENCE: dict[ReferenceList, list[RefItem]] = {
         ('fraud_misuse', 'Fraud misuse', 'تزوير/سوء استخدام', None, None, None),
         ('other', 'Other', 'أخرى', None, None, None),
     ],
+    # D-274: defaults; the administrator adds, renames and removes items
+    ReferenceList.zone_category: [
+        ('work_area', 'Work area', 'منطقة عمل', None, None, None),
+        ('laydown', 'Laydown / storage yard', 'ساحة تخزين', None, None, None),
+        ('site_office', 'Site office / welfare', 'مكاتب الموقع / الخدمات', None, None, None),
+        ('access_road', 'Access road', 'طريق وصول', None, None, None),
+        ('excavation', 'Excavation', 'حفريات', None, None, None),
+        ('structure', 'Structure / building', 'هيكل / مبنى', None, None, None),
+        ('roof', 'Roof', 'سطح', None, None, None),
+        ('basement', 'Basement', 'قبو', None, None, None),
+        ('hazardous_store', 'Hazardous materials store', 'مخزن مواد خطرة', None, None, None),
+        ('other', 'Other', 'أخرى', None, None, None),
+    ],
 }  # fmt: skip
 
 

@@ -23,6 +23,7 @@ from app.schemas.isolations import (
     IsolationCreate,
     IsolationTransition,
     LockCutInput,
+    LockLostInput,
     LongTermReviewInput,
     PersonalLockApply,
     PersonalLockRemove,
@@ -33,7 +34,7 @@ from app.schemas.permits import PermitUpdate
 from app.schemas.simops import CoordinationCreate, CoordinationSignInput
 from app.services.ptw import isolations, permits, simops
 from app.services.ptw.rules import q1
-from tests.conftest import Api, Ids
+from tests.conftest import PASSWORD, Api, Ids
 from tests.ptw_helpers import (
     SEED_AT,
     approve,
@@ -352,3 +353,75 @@ def test_AC50_default_rules_locked(n: Any, api: Api, ids: Ids, db: Session) -> N
     assert Decimal(str(res.json()["threshold_m"])) == Decimal("20.0")
     db.expire_all()
     assert db.scalar(select(AuditEntry).where(AuditEntry.entity_id == r02["id"])) is not None
+
+
+def _applied_cert(n: Any) -> tuple[Any, Any]:
+    iso = _new_cert(n)
+    cert = n.db.get(IsolationCertificate, iso.id)
+    cert.engagement_id = n.ctx.eng("ANIA-EXP", "RAWABI").id
+    pt = isolations.points(n.db, cert)[0]
+    isolations.apply_point(
+        n.db,
+        n.p("nasser.shahrani"),
+        cert.id,
+        pt.id,
+        PointApplyInput.model_validate(
+            {
+                "isolation_lock_id": str(n.ctx.locks["L-ANIA-0233"].id),
+                "tag_no": "DT-0233",
+                "applied_at": now().isoformat(),
+            }
+        ),
+    )
+    return cert, pt
+
+
+def test_review_verification_in_another_users_name_needs_cosign(n: Any) -> None:
+    """Review F4 (IS-4): the applier cannot record a verification attributed to a colleague
+    without that colleague's co-signature; with it the point is verified in their name."""
+    cert, pt = _applied_cert(n)
+    isolations.transition(
+        n.db, n.p("nasser.shahrani"), cert.id, IsolationTransition(to_status="isolated")
+    )
+    faris = str(n.ctx.uid("faris.anazi"))
+    base = {
+        "verified_at": now().isoformat(),
+        "verification_method": "test_for_dead",
+        "verified_by_user_id": faris,
+    }
+    expect(
+        "VALIDATION_ERROR",
+        lambda: isolations.verify_point(
+            n.db, n.p("nasser.shahrani"), cert.id, pt.id, PointVerifyInput.model_validate(base)
+        ),
+        422,
+    )
+    wrong = {**base, "cosign": {"user_id": str(n.ctx.uid("noura.qahtani")), "password": PASSWORD}}
+    expect(
+        "VALIDATION_ERROR",
+        lambda: isolations.verify_point(
+            n.db, n.p("nasser.shahrani"), cert.id, pt.id, PointVerifyInput.model_validate(wrong)
+        ),
+        422,
+    )
+    signed = {**base, "cosign": {"user_id": faris, "password": PASSWORD}}
+    isolations.verify_point(
+        n.db, n.p("nasser.shahrani"), cert.id, pt.id, PointVerifyInput.model_validate(signed)
+    )
+    n.db.refresh(pt)
+    assert str(pt.verified_by_user_id) == faris
+
+
+def test_review_lost_lock_report_is_scoped(n: Any) -> None:
+    """Review F11: a contractor-scoped 93 holder cannot mark another party's applied
+    isolation lock lost (it would suspend every linked permit); the authority can."""
+    _cert, _pt = _applied_cert(n)
+    lk = n.ctx.locks["L-ANIA-0233"]
+    body = LockLostInput(detail="Lock missing from the panel TEST")
+    expect(
+        "FORBIDDEN",
+        lambda: isolations.report_lost(n.db, n.p("ahmed.zahrani"), lk.id, body),
+        403,
+    )
+    out = isolations.report_lost(n.db, n.p("nasser.shahrani"), lk.id, body)
+    assert out.status.value == "lost"

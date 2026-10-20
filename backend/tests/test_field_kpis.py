@@ -283,6 +283,11 @@ def test_AC60_photo_retention(db: Session) -> None:
     out = field_daily(db)
     assert out["photos_deleted"] > 0
     assert db.scalar(q) < n0
+    from app.models import AuditEntry  # review finding 9: deletions are audited (P6d-3)
+
+    purges = list(db.scalars(select(AuditEntry).where(AuditEntry.action == "retention_purge")))
+    assert purges and any((x.details or {}).get("rule") == "P6d-3" for x in purges)
+    assert field_daily(db)["photos_deleted"] == 0  # purged responses are not visited again
     assert (
         dict(db.execute(select(ChecklistResponse.id, ChecklistResponse.score_pct)).all()) == scores
     )

@@ -27,14 +27,14 @@ import { CriticalMark, PhotoPicker, useBi } from "@/components/field/common";
 import { DateFilter } from "@/components/training/common";
 import { Link, useRouter } from "@/i18n/navigation";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
-import { useMissingChecks, usePreUseCheck, usePreUseChecks, usePreUseForm, useSiteVehicles, useSvRefresh } from "@/lib/api/site-vehicles";
+import { useMissingChecks, usePreUseCheck, usePreUseChecks, usePreUseForm, useSvRefresh } from "@/lib/api/site-vehicles";
 import { todayInZone } from "@/lib/datetime";
 import { useDisplay } from "@/lib/digits";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
 import { cn } from "@/lib/utils";
 import { ChoiceMark } from "@/components/heat/common";
-import { CheckResultBadge, DriverText, PrototypeBadge, ReadinessBadge, SvGate, SvSubNav, VehicleRefText, useSvCaps, useSvLabels } from "./common";
+import { CheckResultBadge, DriverText, PrototypeBadge, ReadinessBadge, SiteVehiclePicker, SvGate, SvSubNav, VehicleRefText, useSvCaps, useSvLabels } from "./common";
 
 type S = Schemas;
 type Item = S["TemplateItem-Output"];
@@ -311,7 +311,6 @@ function CheckForm({ project }: { project: S["ProjectRead"] }) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
-  const vehicles = useSiteVehicles(project.id, { page_size: 200 });
   const form = usePreUseForm(project.id, vehicleId);
   const tpl = form.data?.template;
   const items = useMemo(() => {
@@ -327,7 +326,6 @@ function CheckForm({ project }: { project: S["ProjectRead"] }) {
   const open = all.filter((i) => !a(i.item_code).answer);
   const failing = all.filter((i) => a(i.item_code).answer === "non_compliant");
   const criticalFail = failing.some((i) => i.critical);
-  const pick = (vehicles.data?.items ?? []).filter((v) => v.status !== "withdrawn");
 
   async function submit() {
     const e: Record<string, string> = {};
@@ -373,21 +371,16 @@ function CheckForm({ project }: { project: S["ProjectRead"] }) {
       <Card>
         <CardContent className="grid gap-4 pt-5 sm:grid-cols-2">
           <FormField id="pu-vehicle" label={t("vehicle")} required error={errors.vehicle}>
-            <Select
+            <SiteVehiclePicker
+              projectId={project.id}
               value={vehicleId}
-              onChange={(e) => {
-                setVehicleId(e.target.value);
+              onChange={(id) => {
+                setVehicleId(id);
                 setAnswers({});
               }}
+              filter={(v) => v.status !== "withdrawn"}
               data-testid="pu-vehicle"
-            >
-              <option value="">{tc("select")}</option>
-              {pick.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.vehicle_no} · {v.fleet_no} · {l.useClass(v.use_class)}
-                </option>
-              ))}
-            </Select>
+            />
           </FormField>
           <FormField id="pu-date" label={t("date")} required>
             <Input type="date" className="ltr" value={day} onChange={(e) => setDay(e.target.value)} data-testid="pu-date" />

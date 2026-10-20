@@ -12,6 +12,7 @@ from app.models import AuditEntry, CorrectiveAction, Inspection
 from tests.conftest import Api, Ids
 from tests.hse_helpers import (
     API,
+    add_photo,
     ca_to,
     create_ca,
     create_incident,
@@ -47,6 +48,7 @@ def _l3_pending_review(api: Api, ids: Ids) -> tuple[dict, str]:
         },
     )
     assert res.status_code == 200, res.text
+    add_photo(n, inc["id"])
     ca = create_ca(n, ids, "incident", inc["id"], control_level="administrative")
     res = n.patch(
         f"{API}/incidents/{inc['id']}/investigation",

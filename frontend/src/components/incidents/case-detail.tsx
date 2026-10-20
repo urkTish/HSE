@@ -24,7 +24,7 @@ import { api, unwrap, type Schemas } from "@/lib/api/client";
 import { hk, useIncident, useInjuryCase } from "@/lib/api/hse";
 import { useDisplay } from "@/lib/digits";
 import { CASE_CATEGORIES } from "@/lib/enums";
-import { useErrorMessage } from "@/lib/i18n-helpers";
+import { joinList, useErrorMessage } from "@/lib/i18n-helpers";
 import { can, canWrite } from "@/lib/permissions";
 import { useRefLists } from "@/lib/reference";
 import { useFormatters } from "@/lib/use-formatters";
@@ -110,7 +110,7 @@ export function CaseDetail({ id }: { id: string }) {
             <CardContent className="flex flex-col gap-4">
               {c.redacted_groups.length > 0 ? (
                 <Alert tone="info" data-testid="redaction-note">
-                  {t("redacted", { groups: c.redacted_groups.map((g) => t(`groups.${g as "identity"}`)).join(", ") })}
+                  {t("redacted", { groups: joinList(c.redacted_groups.map((g) => t(`groups.${g as "identity"}`))) })}
                 </Alert>
               ) : (
                 <Alert tone="warning">{t("sensitiveNote")}</Alert>

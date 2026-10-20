@@ -8,16 +8,24 @@ from __future__ import annotations
 import csv
 import hashlib
 import io
+import logging
 import uuid
 from datetime import datetime, timedelta
 from typing import Any
 
 from openpyxl import Workbook
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.clock import now
-from app.core.enums import AuditAction, EntityType, ExportDataset, ExportFormat, NotificationKind
+from app.core.enums import (
+    AuditAction,
+    EntityType,
+    ExportDataset,
+    ExportFormat,
+    NotificationKind,
+    UserStatus,
+)
 from app.core.errors import ApiError, ErrorCode, not_found, validation_error
 from app.core.hse_enums import AttachmentOwner, ExportPurpose
 from app.core.scorecard_enums import (
@@ -43,11 +51,13 @@ from app.schemas.scorecard import (
     XpSubscriptionRead,
 )
 from app.services import audit
+from app.services.common import paginate
 from app.services.permissions import Grant, Principal, build_principal, deny, forbidden_error
 from app.services.scorecard import common as cm
 from app.services.scorecard import datasets as reg
 from app.services.scorecard import render
 
+log = logging.getLogger(__name__)
 SYNC_MAX = 5_000
 JOB_MAX = 100_000
 PDF_MAX = 2_000
@@ -321,7 +331,7 @@ def _native(
             o.notes.append(f"Not in the de-identified default: {', '.join(dropped)}")
     objs = reg.native_rows(db, ds, g, project_id, filters)
     r = reg.Resolver(db)
-    if ds.aggregate and project_id is not None and cm.is_viewer(p, project_id):
+    if ds.aggregate and project_id is not None and _aggregate_only(p, ds, project_id):
         return _aggregate(db, p, ds, project_id, objs, r)
     explicit = set(requested)
     persons: dict[Any, int] = {}
@@ -337,6 +347,17 @@ def _native(
     o.personal = any(c.pdpl == XpPdpl.personal and c.code in explicit for c in sel)
     o.sensitive = [c.code for c in sel if c.pdpl == XpPdpl.sensitive]
     return o
+
+
+def _aggregate_only(p: Principal, ds: reg.Dataset, project_id: uuid.UUID) -> bool:
+    """EX-9 Viewer / Client; and, for the 6a datasets, any caller below tier 2 (OH-2)."""
+    if cm.is_viewer(p, project_id):
+        return True
+    if ds.module != "6a" or p.is_manager:
+        return False
+    from app.services.med import common as mcommon  # noqa: PLC0415
+
+    return mcommon.project_tier(p, project_id) < 2
 
 
 def _aggregate(db: Session, p: Principal, ds: reg.Dataset, project_id: uuid.UUID,
@@ -536,21 +557,32 @@ def _new_job(
         raise validation_error("format", "PDF is not offered for this dataset.")
     purpose = getattr(body, "purpose", None)
     ptext = getattr(body, "purpose_text", None)
-    o = produce(db, p, ds, body.project_id, dict(body.filters or {}), list(body.columns or []),
-                purpose, ptext)  # fmt: skip
-    if len(o.rows) > JOB_MAX:
+    filters, columns = dict(body.filters or {}), list(body.columns or [])
+    o: Out | None = None
+    if ds.legacy:
+        o = produce(db, p, ds, body.project_id, filters, columns, purpose, ptext)
+        n = len(o.rows)
+    else:
+        # EX-7: count first so a large request is queued without building its rows twice; the
+        # scope and column rules still fail synchronously.
+        g = _scope(db, p, ds, body.project_id)
+        check_columns(p, ds, body.project_id, columns, purpose, ptext)
+        n = reg.native_count(db, ds, g, body.project_id, filters)
+        if n <= SYNC_MAX:
+            o = produce(db, p, ds, body.project_id, filters, columns, purpose, ptext)
+    if n > JOB_MAX:
         raise cm.code_err(ErrorCode.EXPORT_TOO_LARGE,
                           f"More than {JOB_MAX:,} rows: narrow the filters (EX-7).",
                           "عدد الصفوف كبير جداً؛ ضيّق عوامل التصفية.")  # fmt: skip
     year, seq, no = _export_no(db, t)
     job = XpJob(id=uuid.uuid4(), year=year, seq=seq, export_no=no, dataset=ds.code, format=fmt,
-                project_id=body.project_id, filters=dict(body.filters or {}),
-                columns=list(body.columns or []), notes=list(o.notes), purpose=purpose,
+                project_id=body.project_id, filters=filters, columns=columns,
+                notes=list(o.notes) if o is not None else [], purpose=purpose,
                 purpose_text=ptext, status=XpJobStatus.queued, subscription_id=subscription_id,
                 requested_by_user_id=p.user.id, created_at=t)  # fmt: skip
     db.add(job)
     db.flush()
-    content = _store(db, p, job, ds, o, t) if len(o.rows) <= SYNC_MAX else None
+    content = _store(db, p, job, ds, o, t) if o is not None and len(o.rows) <= SYNC_MAX else None
     db.flush()
     return job, content
 
@@ -561,46 +593,67 @@ def request(db: Session, p: Principal, body: XpExportRequest) -> XpJobRead:
     return to_read(db, new_job(db, p, body, t))
 
 
+def _run_job(db: Session, job: XpJob, u: User, t: datetime) -> None:
+    p = build_principal(db, u, None)
+    ds = _dataset(job.dataset)
+    o = produce(db, p, ds, job.project_id, dict(job.filters or {}), list(job.columns or []),
+                job.purpose, job.purpose_text)  # fmt: skip
+    _store(db, p, job, ds, o, t)
+    cm.send(
+        db,
+        [u.id],
+        NotificationKind.export_ready,
+        f"Export {job.export_no} ({job.dataset}) is ready",
+        f"التصدير {job.export_no} جاهز",
+        job.project_id,
+        EntityType.export_job,
+        job.id,
+    )
+
+
+def _fail_job(db: Session, job: XpJob, u: User | None, error: str) -> None:
+    job.status, job.error = XpJobStatus.failed, error[:300]
+    if u is not None:
+        cm.send(db, [u.id], NotificationKind.export_ready,
+                f"Export {job.export_no} failed: {job.error}", f"فشل التصدير {job.export_no}",
+                job.project_id, EntityType.export_job, job.id)  # fmt: skip
+
+
 def run_queue(db: Session, t: datetime) -> int:
-    """`export_jobs`: queued jobs are produced again as the requester and stored (EX-7)."""
+    """`export_jobs`: queued jobs are produced again as the requester and stored (EX-7). Each
+    job runs in its own savepoint: one failure is logged and marked, the others still complete."""
     n = 0
-    for job in db.scalars(select(XpJob).where(XpJob.status == XpJobStatus.queued)):
+    for job in list(db.scalars(select(XpJob).where(XpJob.status == XpJobStatus.queued))):
         u = db.get(User, job.requested_by_user_id)
-        if u is None:
+        if u is None or u.status != UserStatus.active:
+            _fail_job(db, job, None, "The requester's account is no longer active.")
+            n += 1
             continue
-        p = build_principal(db, u, None)
-        ds = _dataset(job.dataset)
         try:
-            o = produce(db, p, ds, job.project_id, dict(job.filters or {}), list(job.columns or []),
-                        job.purpose, job.purpose_text)  # fmt: skip
-            _store(db, p, job, ds, o, t)
-            cm.send(
-                db,
-                [u.id],
-                NotificationKind.export_ready,
-                f"Export {job.export_no} ({job.dataset}) is ready",
-                f"التصدير {job.export_no} جاهز",
-                job.project_id,
-                EntityType.export_job,
-                job.id,
-            )
+            with db.begin_nested():
+                _run_job(db, job, u, t)
         except ApiError as e:
-            job.status, job.error = XpJobStatus.failed, e.message[:300]
-            cm.send(db, [u.id], NotificationKind.export_ready,
-                    f"Export {job.export_no} failed: {job.error}", f"فشل التصدير {job.export_no}",
-                    job.project_id, EntityType.export_job, job.id)  # fmt: skip
+            _fail_job(db, job, u, e.message)
+        except Exception:
+            log.exception("export job %s (%s) failed", job.export_no, job.dataset)
+            _fail_job(db, job, u, "The export could not be produced; the HSE team was informed.")
         n += 1
     db.flush()
     return n
 
 
 def purge(db: Session, t: datetime) -> int:
-    """`export_purge` 03:00: files past expires_at are deleted and the job becomes expired."""
+    """`export_purge` 03:00: files past expires_at are deleted and the job becomes expired;
+    failed and never-produced queued jobs age out after 7 days."""
     from app.services import attachments  # noqa: PLC0415
 
     n = 0
-    for job in db.scalars(select(XpJob).where(XpJob.status == XpJobStatus.ready,
-                                              XpJob.expires_at <= t)):  # fmt: skip
+    stale = t - timedelta(days=7)
+    cond = or_(
+        and_(XpJob.status == XpJobStatus.ready, XpJob.expires_at <= t),
+        and_(XpJob.status.in_([XpJobStatus.failed, XpJobStatus.queued]), XpJob.created_at <= stale),
+    )
+    for job in list(db.scalars(select(XpJob).where(cond))):
         a = db.get(Attachment, job.attachment_id) if job.attachment_id else None
         if a is not None:
             job.attachment_id = None
@@ -647,9 +700,12 @@ def list_jobs(
         stmt = stmt.where(XpJob.status == status)
     if mine:
         stmt = stmt.where(XpJob.requested_by_user_id == p.user.id)
-    rows = [j for j in db.scalars(stmt.order_by(XpJob.created_at.desc())) if _visible(db, p, j)]
-    return XpJobPage(items=[to_read(db, j) for j in rows[(page - 1) * size : page * size]],
-                     total=len(rows), page=page, page_size=size)  # fmt: skip
+    if not p.is_manager:  # EX-10 in SQL so that `total` and the pages agree
+        staff = [pid for pid in p.projects if cm.staff(db, p, pid)]
+        stmt = stmt.where(or_(XpJob.requested_by_user_id == p.user.id,
+                              XpJob.project_id.in_(staff or [uuid.UUID(int=0)])))  # fmt: skip
+    rows, total = paginate(db, stmt.order_by(XpJob.created_at.desc()), page, size)
+    return XpJobPage(items=[to_read(db, j) for j in rows], total=total, page=page, page_size=size)
 
 
 def read(db: Session, p: Principal, job_id: uuid.UUID) -> XpJobRead:
@@ -752,7 +808,8 @@ def run_subscriptions(db: Session, t: datetime) -> int:
         p = build_principal(db, u, None)
         try:
             job = new_job(db, p, s, t, s.id)
-        except ApiError:
+        except ApiError as e:
+            log.warning("subscription %s (%s, %s) skipped: %s", s.id, s.dataset, u.email, e.message)
             continue
         s.last_run_at = t
         cm.send(db, [u.id], NotificationKind.export_ready,

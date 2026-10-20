@@ -15,6 +15,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.routers import (
     access_settings,
+    admin_records,
     ai,
     airport_passes,
     airside_driving,
@@ -56,6 +57,7 @@ from app.api.routers import (
     heat_field,
     heat_readings,
     hse_settings,
+    hse_team,
     incident_vehicles,
     incidents,
     inductions,
@@ -324,6 +326,9 @@ def create_app() -> FastAPI:
         incident_vehicles,
         # Option 7b (prototype)
         site_vehicles,
+        # Owner feedback (D-270, D-271)
+        hse_team,
+        admin_records,
     ):
         app.include_router(module.router, prefix=API_PREFIX)
     app.include_router(auth.public_router, prefix=API_PREFIX)

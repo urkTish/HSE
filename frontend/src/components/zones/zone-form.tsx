@@ -14,6 +14,7 @@ import { CheckboxField, FormField, FormSection } from "@/components/common/form-
 import { MutationError } from "@/components/common/states";
 import { Link, useRouter } from "@/i18n/navigation";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
+import { useRefLists } from "@/lib/reference";
 import { keys } from "@/lib/api/queries";
 import { AIRSIDE_AREAS, MOVEMENT_AREAS, ZONE_TYPES } from "@/lib/enums";
 import { applyServerErrors, ARABIC_SCRIPT, emptyToNull, numberOrNull } from "@/lib/forms";
@@ -40,6 +41,7 @@ export function ZoneForm({
   zone?: Schemas["ZoneRead"];
 }) {
   const t = useTranslations("zone");
+  const refs = useRefLists();
   const ta = useTranslations("zone.airside");
   const tv = useTranslations("validation");
   const tc = useTranslations("common");
@@ -58,6 +60,7 @@ export function ZoneForm({
           name_en: z.string().trim().min(1, tv("required")).max(150, tv("maxLength", { max: 150 })),
           name_ar: z.string().trim().min(1, tv("required")).max(150, tv("maxLength", { max: 150 })).regex(ARABIC_SCRIPT, tv("arabicRequired")),
           zone_type: z.enum(ZONE_TYPES),
+          category: z.string(),
           airside: z.object({
             airside_area: z.union([z.enum(AIRSIDE_AREAS), z.literal("")]),
             in_movement_area: z.boolean(),
@@ -100,6 +103,7 @@ export function ZoneForm({
       name_en: zone?.name_en ?? "",
       name_ar: zone?.name_ar ?? "",
       zone_type: zone?.zone_type ?? types[0] ?? "other",
+      category: zone?.category ?? "",
       airside: {
         airside_area: a?.airside_area ?? "",
         in_movement_area: a?.in_movement_area ?? false,
@@ -137,7 +141,7 @@ export function ZoneForm({
             works_safety_plan_ref: emptyToNull(v.airside.works_safety_plan_ref),
           }
         : null;
-    const body = { code: v.code, name_en: v.name_en, name_ar: v.name_ar, zone_type: v.zone_type, airside };
+    const body = { code: v.code, name_en: v.name_en, name_ar: v.name_ar, zone_type: v.zone_type, category: v.category || null, airside };
     try {
       const saved = zone
         ? await unwrap(api.PATCH("/api/v1/zones/{zone_id}", { params: { path: { zone_id: zone.id } }, body }))
@@ -176,6 +180,16 @@ export function ZoneForm({
             {typeOptions.map((x) => (
               <option key={x} value={x}>
                 {t(`type.${x}`)}
+              </option>
+            ))}
+          </Select>
+        </FormField>
+        <FormField id="category" label={t("fields.category")} hint={t("categoryHint")}>
+          <Select {...form.register("category")} data-testid="zone-category">
+            <option value="">—</option>
+            {refs.options("zone_category").map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
               </option>
             ))}
           </Select>

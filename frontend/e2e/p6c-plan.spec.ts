@@ -58,8 +58,11 @@ test.describe("Emergency plan and setup", () => {
     await page.getByTestId("md-device").fill("MR-TEST-001");
     await page.getByTestId("md-label").fill("Reader at the contractor compound");
     await page.getByTestId("md-register").click();
+    // The token is shown once, in a dialog; the list never holds it.
+    await expect(page.getByTestId("md-token")).not.toBeEmpty();
+    await page.getByTestId("md-token-done").click();
+    await expect(page.getByTestId("md-token")).toHaveCount(0);
     const row = page.getByTestId("md-row").first();
-    await expect(row.getByTestId("md-token")).not.toBeEmpty();
     await row.getByTestId("md-revoke").click();
     await page.getByTestId("md-revoke-confirm").click();
     await expect(row).toHaveAttribute("data-revoked", "yes");

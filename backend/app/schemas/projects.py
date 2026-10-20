@@ -18,8 +18,7 @@ from app.core.enums import (
 )
 from app.schemas.common import ApiModel, Page, PatchInput, StrictInput, Timestamps, has_arabic
 
-PROJECT_CODE = r"^[A-Z0-9-]{3,12}$"
-ICAO = r"^[A-Z]{4}$"
+IATA = r"^[A-Z]{3}$"
 
 
 def _check_ar(v: str | None) -> str | None:
@@ -29,7 +28,20 @@ def _check_ar(v: str | None) -> str | None:
 
 
 class ProjectCreate(StrictInput):
-    code: str = Field(pattern=PROJECT_CODE, description="Unique, e.g. ANIA-EXP. Immutable.")
+    code: str = Field(
+        min_length=1,
+        max_length=12,
+        description="Unique, free text (it prefixes reference numbers), e.g. ANIA-EXP. Immutable.",
+    )
+
+    @field_validator("code")
+    @classmethod
+    def _strip_code(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("must not be blank")
+        return v
+
     name_en: str = Field(min_length=1, max_length=150)
     name_ar: str = Field(min_length=1, max_length=150, description="Must contain Arabic script.")
     project_type: ProjectType
@@ -38,10 +50,10 @@ class ProjectCreate(StrictInput):
     city: str = Field(min_length=1, max_length=80)
     start_date: date
     planned_end_date: date | None = None
-    airport_icao: str | None = Field(
+    airport_iata: str | None = Field(
         default=None,
-        pattern=ICAO,
-        description="Required iff project_type = airport; Saudi codes start with OE.",
+        pattern=IATA,
+        description="Optional 3-letter IATA airport code; airport projects only (e.g. RUH).",
     )
 
     _ar = field_validator("name_ar")(_check_ar)
@@ -50,10 +62,8 @@ class ProjectCreate(StrictInput):
     def _rules(self) -> "ProjectCreate":
         if self.planned_end_date and self.planned_end_date < self.start_date:
             raise ValueError("planned_end_date must be on or after start_date")
-        if self.project_type == ProjectType.airport and not self.airport_icao:
-            raise ValueError("airport_icao is required for airport projects")
-        if self.project_type != ProjectType.airport and self.airport_icao:
-            raise ValueError("airport_icao is only allowed for airport projects")
+        if self.project_type != ProjectType.airport and self.airport_iata:
+            raise ValueError("airport_iata is only allowed for airport projects")
         return self
 
 
@@ -80,7 +90,7 @@ class ProjectUpdate(PatchInput):
     city: str | None = Field(default=None, min_length=1, max_length=80)
     start_date: date | None = None
     planned_end_date: date | None = None
-    airport_icao: str | None = Field(default=None, pattern=ICAO)
+    airport_iata: str | None = Field(default=None, pattern=IATA)
 
     _ar = field_validator("name_ar")(_check_ar)
 
@@ -99,7 +109,7 @@ class ProjectRead(Timestamps):
     planned_end_date: date | None
     status: ProjectStatus
     status_reason: str | None = Field(description="Reason of the last status change, if any.")
-    airport_icao: str | None
+    airport_iata: str | None
 
 
 class ProjectPage(Page[ProjectRead]):
@@ -112,6 +122,19 @@ class ProjectTransitionRequest(StrictInput):
 
     to_status: ProjectStatus
     reason: str | None = Field(default=None, max_length=500)
+
+
+class ProjectDeleteRequest(StrictInput):
+    """Permanent delete (D-265): the caller retypes the project code to confirm."""
+
+    confirm_code: str = Field(min_length=1, max_length=12)
+    reason: str | None = Field(default=None, max_length=500)
+
+
+class ProjectDeleteResult(ApiModel):
+    id: uuid.UUID
+    code: str
+    rows_deleted: int = Field(description="Rows removed across all tables, the project included.")
 
 
 class ProjectSettingsRead(ApiModel):

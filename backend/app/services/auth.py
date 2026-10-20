@@ -11,7 +11,7 @@ from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
 from app.core.clock import now
-from app.core.config import get_settings
+from app.core.config import get_settings, project_deleters
 from app.core.context import get_request_context
 from app.core.enums import (
     AuditAction,
@@ -282,13 +282,14 @@ def login(db: Session, email: str, password: str) -> tuple[IssuedSession, User]:
         .select_from(UserSession)
         .where(
             UserSession.user_id == user.id,
-            UserSession.ip_address == ctx.ip_address,
-            UserSession.user_agent == ctx.user_agent,
+            UserSession.ip_address.is_not_distinct_from(ctx.ip_address),
+            UserSession.user_agent.is_not_distinct_from(ctx.user_agent),
         )
     )
     user.failed_login_count = 0
     user.failed_window_started_at = None
     user.last_login_at = current
+    user.inactivity_warned_at = None  # §7: warn again on the next idle period
     issued = create_session(db, user)
     if had_sessions and not known:
         notify.send_email(db, user, "new_login", ip=ctx.ip_address or "unknown")
@@ -549,6 +550,11 @@ def confirm_reset(db: Session, raw: str, new_password: str) -> None:
     check_password(new_password, user.email, "new_password")
     tok.used_at = now()
     user.password_hash = hash_password(new_password)
+    if user.status == UserStatus.locked:  # a verified e-mail link outranks the lockout
+        user.status = UserStatus.active
+        user.locked_until = None
+        user.failed_login_count = 0
+        user.failed_window_started_at = None
     revoke_sessions(db, user.id, "password_reset")
     audit.record(
         db,
@@ -610,6 +616,7 @@ def build_me(db: Session, p: Principal) -> Me:
         privacy_notice_ack_at=u.privacy_notice_ack_at,
         privacy_ack_required=u.privacy_notice_version != current_version,
         is_hse_manager=p.is_manager,
+        can_delete_projects=u.email.lower() in project_deleters(),
         org_capabilities=list(MANAGER_CAPABILITIES) if p.is_manager else [],
         projects=projects,
         role_assignments=assignments,

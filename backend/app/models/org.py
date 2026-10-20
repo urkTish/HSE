@@ -48,7 +48,7 @@ class Project(UUIDPk, TimestampMixin, Base):
     planned_end_date: Mapped[date | None] = mapped_column(Date)
     status: Mapped[ProjectStatus] = enum_col(ProjectStatus, default=ProjectStatus.planning)
     status_reason: Mapped[str | None] = mapped_column(String(500))
-    airport_icao: Mapped[str | None] = mapped_column(String(4))
+    airport_iata: Mapped[str | None] = mapped_column(String(3))
     search_text: Mapped[str] = mapped_column(Text, default="")
 
     settings: Mapped["ProjectSettings"] = relationship(back_populates="project", uselist=False)
@@ -127,6 +127,7 @@ class Zone(UUIDPk, TimestampMixin, Base):
     name_en: Mapped[str] = mapped_column(String(150))
     name_ar: Mapped[str] = mapped_column(String(150))
     zone_type: Mapped[ZoneType] = enum_col(ZoneType)
+    category: Mapped[str | None] = mapped_column(String(60))  # D-274 zone_category code
     status: Mapped[ZoneStatus] = enum_col(ZoneStatus, default=ZoneStatus.active)
     status_reason: Mapped[str | None] = mapped_column(String(500))
     search_text: Mapped[str] = mapped_column(Text, default="")

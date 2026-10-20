@@ -100,6 +100,24 @@ export async function downloadFile(url: string, fallbackName: string): Promise<v
   URL.revokeObjectURL(href);
 }
 
+/**
+ * Open a signed URL (attachment, scan, export file) in a new tab. The tab is opened synchronously, inside the
+ * user's click, because iOS Safari and Android Chrome block `window.open` once an `await` has passed; the URL
+ * is then fetched and the tab navigated. Pop-up blocked → same tab. Errors close the tab and are rethrown.
+ */
+export async function openSignedUrl(getUrl: () => Promise<{ url: string }>): Promise<void> {
+  const w = window.open("", "_blank");
+  if (w) w.opener = null;
+  try {
+    const { url } = await getUrl();
+    if (w) w.location.href = url;
+    else window.location.assign(url);
+  } catch (e) {
+    w?.close();
+    throw e;
+  }
+}
+
 /** POST a multipart form (file uploads, workforce import) and return the typed JSON body. */
 export async function postForm<T>(url: string, form: FormData): Promise<T> {
   let res: Response;

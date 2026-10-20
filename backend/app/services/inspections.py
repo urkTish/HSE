@@ -587,7 +587,12 @@ def _findings(
             )
         if ca_id is not None:
             ca = db.get(CorrectiveAction, ca_id)
-            if ca is None or ca.project_id != project.id:
+            if (
+                ca is None
+                or ca.project_id != project.id
+                or ca.source_type != CaSourceType.inspection
+                or ca.source_id != ins.id
+            ):
                 raise validation_error(f"findings[{i}].ca_id", "Unknown corrective action.")
         elif f.corrective_action is not None:
             g = p.require(project.id, Capability.ca_create)

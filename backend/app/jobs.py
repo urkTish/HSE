@@ -3,6 +3,7 @@
 Run one: ``uv run python -m app.jobs <name>``; ``app.scheduler`` runs them on a timetable.
 """
 
+import logging
 import sys
 from collections.abc import Callable
 from datetime import timedelta
@@ -321,8 +322,13 @@ JOBS: dict[str, Callable[[Session], dict[str, Any]]] = {
 
 def run(name: str) -> dict[str, Any]:
     with get_sessionmaker()() as db:
-        result = JOBS[name](db)
-        db.commit()
+        try:
+            result = JOBS[name](db)
+            db.commit()
+        except Exception:
+            db.rollback()
+            logging.getLogger("hse.jobs").exception("job %s failed", name)
+            raise
     return result
 
 

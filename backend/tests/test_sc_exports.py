@@ -198,3 +198,94 @@ def test_parked_datasets_and_dashboard_print_ac50(db: Session, api: Api) -> None
             AuditEntry.details["dataset"].astext == "dashboard_pdf",
         )
     )
+
+
+# ---- review fixes (phases 4-7 backend review) ----------------------------------------------------
+
+
+def test_review1_medical_tier_columns(db: Session) -> None:
+    """6a tier columns (OH-2, P6-10): hold / referral reasons, assessment types, printed names
+    and examiner licences are never in a tier-2 export, nor requestable without 157."""
+    from app.core.scorecard_enums import XpPdpl
+
+    hidden = {
+        "fitness_status": {"assessment_type", "verification_status", "certificate_no",
+                           "revoke_code", "name_as_printed", "name_match", "id_match_result",
+                           "clinical_data_present"},
+        "fitness_holds": {"reason", "source_type", "source_ref", "cancel_code"},
+        "fitness_gaps": {"reason", "source_type", "source_ref", "cancel_code"},
+        "fitness_referrals": {"reason", "remove_from_work"},
+        "medical_examiners": {"scfhs_licence_no"},
+    }  # fmt: skip
+    for code, cols in hidden.items():
+        ds = datasets.get(code)
+        assert ds is not None
+        by = {c.code: c for c in datasets.native_columns(ds)}
+        for col in cols:
+            assert by[col].pdpl != XpPdpl.none, (code, col)
+    # a Contractor HSE Rep (tier 2) exports holds without the clinical columns ...
+    job = _req(db, "ahmed.zahrani", "fitness_holds")
+    assert job.status == XpJobStatus.ready
+    _, rows = _csv(db, job)
+    heads = {h.lower() for h in rows[0]}
+    assert "hold_no" in heads
+    assert not {"reason", "source_ref", "source_type", "cancel_code"} & heads
+    # ... and cannot ask for them explicitly
+    expect(
+        "COLUMN_NOT_PERMITTED",
+        lambda: _req(db, "ahmed.zahrani", "fitness_holds", columns=["reason"],
+                     purpose=XpPurpose.gosi),
+    )  # fmt: skip
+
+
+def test_review7_queue_isolation_and_purge(db: Session, monkeypatch: pytest.MonkeyPatch) -> None:
+    """One crashing export job is marked failed and logged; the others in the same run still
+    complete; failed jobs age out after 7 days."""
+    j1 = _req(db, "noura.qahtani", "observations")
+    j2 = _req(db, "noura.qahtani", "observations")
+    assert j1.status == j2.status == XpJobStatus.queued
+    real = exports.produce
+    calls = {"n": 0}
+
+    def flaky(*a: object, **kw: object) -> object:
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise RuntimeError("resolver crashed")
+        return real(*a, **kw)  # type: ignore[arg-type]
+
+    monkeypatch.setattr(exports, "produce", flaky)
+    t = tick(2026, 10, 12, 10, 5)
+    assert exports.run_queue(db, t) == 2
+    assert sorted(j.status.value for j in (j1, j2)) == ["failed", "ready"]
+    failed = j1 if j1.status == XpJobStatus.failed else j2
+    assert failed.error and failed.attachment_id is None
+    assert exports.purge(db, t + timedelta(days=8)) >= 2
+    assert failed.status == XpJobStatus.expired
+
+
+def test_review18_deactivated_requester_gets_no_file(db: Session) -> None:
+    from app.core.enums import UserStatus
+    from app.models import User
+
+    j = _req(db, "noura.qahtani", "observations")
+    u = db.get(User, j.requested_by_user_id)
+    assert u is not None
+    u.status = UserStatus.deactivated
+    db.flush()
+    exports.run_queue(db, tick(2026, 10, 12, 10, 6))
+    assert j.status == XpJobStatus.failed and j.attachment_id is None
+
+
+def test_review7_list_jobs_paginates_in_sql(db: Session) -> None:
+    """EX-10 visibility is applied in SQL: `total` matches the pages a user can read."""
+    pid = project(db, "ANIA-EXP").id
+    _req(db, "noura.qahtani", "permits")
+    _req(db, "noura.qahtani", "permits")
+    mine = _req(db, "sarah.mitchell", "heat_patrols")
+    own = db.scalar(select(func.count()).select_from(XpJob)
+                    .where(XpJob.requested_by_user_id == mine.requested_by_user_id))  # fmt: skip
+    page = exports.list_jobs(db, P(db, "sarah.mitchell"), None, None, None, False, 1, 1)
+    assert page.total == own and len(page.items) == 1
+    staff = db.scalar(select(func.count()).select_from(XpJob).where(XpJob.project_id == pid))
+    page = exports.list_jobs(db, P(db, "noura.qahtani"), pid, None, None, False, 1, 2)
+    assert page.total == staff and len(page.items) == min(2, staff or 0)

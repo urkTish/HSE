@@ -20,7 +20,7 @@ import { useChart, useDashboard, useDashboardPrefs, type KpiQuery } from "@/lib/
 import { useCurrentProject } from "@/lib/current-project";
 import { fromPreferences, toKpiQuery, toPreferences, useDashFilters } from "@/lib/dashboard-filters";
 import { useArabicDigits, useDisplay } from "@/lib/digits";
-import { useErrorMessage, useLocalizedName } from "@/lib/i18n-helpers";
+import { joinList, useErrorMessage, useLocalizedName } from "@/lib/i18n-helpers";
 import { can } from "@/lib/permissions";
 import { useFormatters } from "@/lib/use-formatters";
 import { toQueryString } from "@/lib/url-state";
@@ -236,7 +236,7 @@ function ContextBar({ ctx, show, projectId }: { ctx: Schemas["KpiContext"]; show
         ) : null}
         {ctx.restated ? (
           <span className="rounded-full border border-warning/50 bg-warning-bg px-2.5 py-1" data-testid="chip-restated">
-            {t("restated", { months: show(ctx.restated_months.join(", ")) })}
+            {t("restated", { months: show(joinList(ctx.restated_months)) })}
           </span>
         ) : null}
         <span className="text-muted-foreground">{t("computedAt", { time: dateTime(ctx.computed_at) })}</span>

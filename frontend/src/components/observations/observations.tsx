@@ -290,14 +290,18 @@ export function ObservationForm({ project, obs }: { project: Schemas["ProjectRea
             },
           }),
         );
-        for (const f of photos.slice(0, 3)) {
-          const fd = new FormData();
-          fd.set("owner_type", "observation");
-          fd.set("owner_id", saved.id);
-          fd.set("file", f);
-          await postForm<Schemas["AttachmentRead"]>("/api/v1/attachments", fd);
+        draft.clear(); // the record exists now: a retry must never create a second one
+        try {
+          for (const f of photos.slice(0, 3)) {
+            const fd = new FormData();
+            fd.set("owner_type", "observation");
+            fd.set("owner_id", saved.id);
+            fd.set("file", f);
+            await postForm<Schemas["AttachmentRead"]>("/api/v1/attachments", fd);
+          }
+        } catch {
+          toast.error(t("photosFailed"));
         }
-        draft.clear();
       }
       qc.setQueryData(hk.observation(saved.id), saved);
       await qc.invalidateQueries({ queryKey: ["observations"] });

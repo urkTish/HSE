@@ -66,6 +66,7 @@ import {
   ListChecks,
   ListTree,
   ShieldAlert,
+  Trash2,
   SlidersHorizontal,
   Timer,
   HardHat,
@@ -141,7 +142,9 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
     ...(g("project.view") ? [{ href: "/projects", label: t("projects"), Icon: Building2, exact: true, testId: "nav-projects" }] : []),
     ...(g("contractor.view") ? [{ href: "/contractors", label: t("contractors"), Icon: HardHat, testId: "nav-contractors" }] : []),
     ...(g("user.view_directory") ? [{ href: "/users", label: t("users"), Icon: Users, testId: "nav-users" }] : []),
+    ...(g("user.view_directory") ? [{ href: "/hse-team", label: t("hseTeam"), Icon: Network, testId: "nav-hse-team" }] : []),
     ...(g("audit_log.read") ? [{ href: "/audit-log", label: t("auditLog"), Icon: ScrollText, testId: "nav-audit" }] : []),
+    ...(me.can_delete_projects ? [{ href: "/deleted-items", label: t("deletedItems"), Icon: Trash2, testId: "nav-deleted-items" }] : []),
     ...(me.is_hse_manager ? [{ href: "/ai-logs", label: t("aiLogs"), Icon: Bot, testId: "nav-ai-logs" }] : []),
     ...(g("hse_settings.edit") ? [{ href: "/reference-lists", label: t("referenceLists"), Icon: ListTree, testId: "nav-reference-lists" }] : []),
   ];
@@ -169,6 +172,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
     ? [
         ...(g("workforce.view", pid) ? [{ href: "/workforce", label: t("workforce"), Icon: Timer, testId: "nav-workforce" }] : []),
         ...(g("incident.view", pid) ? [{ href: "/incidents", label: t("incidents"), Icon: ShieldAlert, testId: "nav-incidents" }] : []),
+        ...(g("incident.view", pid) ? [{ href: "/investigations", label: t("investigations"), Icon: FileSearch, testId: "nav-investigations" }] : []),
         ...(g("observation.create", pid) || dash ? [{ href: "/observations", label: t("observations"), Icon: Eye, testId: "nav-observations" }] : []),
         ...(g("inspection.record", pid) || g("inspection.plan_manage", pid) || dash
           ? [{ href: "/inspections", label: t("inspections"), Icon: ClipboardCheck, testId: "nav-inspections" }]

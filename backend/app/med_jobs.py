@@ -1,9 +1,10 @@
 """Phase 6a scheduled jobs (6a-occupational-health §4, §7).
 
 `medical_daily` (00:06:30, after `training_daily`): provider licence expiry → Suspended
-`licence_expired` (MP-5), examiner licence expiry → Expired (§4.2), import batch expiry, and a
+`licence_expired` (MP-5), examiner licence expiry → Expired (§4.2), import batch expiry, a
 `medical.fitness_changed` event for every worker whose fitness line ended yesterday so that the
-gates and permits re-evaluate (HK6-8).
+gates and permits re-evaluate (HK6-8), and the P6-8 retention passes (scans after
+`fitness_scan_retention_months`, referral / hold texts two years after closure).
 `medical_alerts` (07:03): the long schedule 30 / 14 / 7 / 0 for fitness lines that satisfy a
 counted requirement of a Mobilised deployment, restriction / temporarily-unfit reviews (14 / 0),
 licence expiry (MP-5, EX-5) and referrals still overdue (daily while overdue).
@@ -39,7 +40,7 @@ from app.models import (
     MedicalProvider,
     Project,
 )
-from app.services.cert.alerts import long_step, once
+from app.services.cert.alerts import long_step, once, step
 
 NK = NotificationKind
 LONG = (30, 14, 7, 0)
@@ -50,10 +51,21 @@ REVIEW = (14, 0)
 
 
 def medical_daily(db: Session, at: datetime | None = None) -> dict[str, Any]:
+    from app.services.med import assessments  # noqa: PLC0415
+
+    at = at or now()
+    out: dict[str, Any] = {}
+    step(db, out, "registers", lambda: _registers(db, at))
+    step(db, out, "fitness_scans_deleted", lambda: assessments.scan_retention_job(db, at))
+    step(db, out, "medical_texts_purged", lambda: assessments.text_retention_job(db, at))
+    db.flush()
+    return {**(out.pop("registers") or {}), **out}
+
+
+def _registers(db: Session, at: datetime) -> dict[str, Any]:
     from app.services.cert import events  # noqa: PLC0415
     from app.services.med import common, imports, providers  # noqa: PLC0415
 
-    at = at or now()
     d = common.local_day(at)
     suspended = 0
     for pv in db.scalars(

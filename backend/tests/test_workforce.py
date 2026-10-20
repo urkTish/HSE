@@ -173,7 +173,8 @@ def test_AC6_insert_only_E10_and_upsert_replaces_verified(api: Api, ids: Ids, db
     assert v.status_code == 200, v.text
     same = csv([row("2026-09-14", "S-AIR", "GULFPAVE", "night", 12, 120)])
     b = upload(noura, pid, same)
-    assert [x for x in codes_of(b, 1) if x.startswith("E")] == ["E10"]
+    # W04 (work date older than 30 days) depends on the real clock: ignore it here.
+    assert [c for c in codes_of(b, 1) if c != "W04"] == ["E10"]
     b2 = upload(noura, pid, same, mode="upsert")
     assert b2["counts"]["rows_error"] == 0
     res = noura.post(f"{API}/workforce-imports/{b2['id']}/commit")

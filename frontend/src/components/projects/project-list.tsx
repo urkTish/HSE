@@ -1,7 +1,6 @@
 "use client";
 import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
 import { PageHeader } from "@/components/common/page-header";
@@ -19,6 +18,7 @@ import { can } from "@/lib/permissions";
 import { useLocalizedName } from "@/lib/i18n-helpers";
 import { useDebounced } from "@/lib/use-debounced";
 import { useFormatters } from "@/lib/use-formatters";
+import { useSearchState } from "@/lib/url-state";
 
 type Sort = NonNullable<QueryOf<"list_projects">["sort"]>;
 const SORTS: Sort[] = ["code", "-code", "name", "-name", "start_date", "-start_date"];
@@ -30,11 +30,12 @@ export function ProjectList() {
   const me = useMeData();
   const name = useLocalizedName();
   const { date } = useFormatters();
-  const [q, setQ] = useState("");
-  const [status, setStatus] = useState<Schemas["ProjectStatus"] | "">("");
-  const [type, setType] = useState<Schemas["ProjectType"] | "">("");
-  const [sort, setSort] = useState<Sort>("code");
-  const [page, setPage] = useState(1);
+  const s = useSearchState();
+  const q = s.get("q") ?? "";
+  const status = (s.get("status") as Schemas["ProjectStatus"] | null) ?? "";
+  const type = (s.get("project_type") as Schemas["ProjectType"] | null) ?? "";
+  const sort = (s.get("sort") as Sort | null) ?? "code";
+  const page = s.getInt("page", 1) ?? 1;
   const dq = useDebounced(q);
 
   const query = useProjects({
@@ -63,26 +64,26 @@ export function ProjectList() {
         }
       />
       <ListToolbar actions={can(me, "export.lists") ? <ExportButtons dataset="projects" params={{ q: dq, status }} /> : null}>
-        <SearchFilter id="project-q" value={q} onChange={(v) => { setQ(v); setPage(1); }} />
+        <SearchFilter id="project-q" value={q} onChange={(v) => s.set({ q: v })} />
         <SelectFilter
           id="project-status"
           label={t("fields.status")}
           value={status}
-          onChange={(v) => { setStatus(v); setPage(1); }}
+          onChange={(v) => s.set({ status: v })}
           options={PROJECT_STATUSES.map((s) => ({ value: s, label: t(`status.${s}`) }))}
         />
         <SelectFilter
           id="project-type"
           label={t("fields.project_type")}
           value={type}
-          onChange={(v) => { setType(v); setPage(1); }}
+          onChange={(v) => s.set({ project_type: v })}
           options={PROJECT_TYPES.map((s) => ({ value: s, label: t(`type.${s}`) }))}
         />
         <SelectFilter
           id="project-sort"
           label={tc("sortBy")}
           value={sort}
-          onChange={(v) => setSort(v || "code")}
+          onChange={(v) => s.set({ sort: v || null })}
           options={SORTS.map((s) => ({ value: s, label: t(`sort.${s}`) }))}
           allLabel={t("sort.code")}
         />
@@ -123,7 +124,7 @@ export function ProjectList() {
               ))}
             </TBody>
           </Table>
-          <Pagination page={page} pageSize={PAGE_SIZE} total={query.data.total} onPage={setPage} />
+          <Pagination page={page} pageSize={PAGE_SIZE} total={query.data.total} onPage={(p) => s.set({ page: p })} />
         </>
       ) : (
         <EmptyState />

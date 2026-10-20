@@ -5,7 +5,7 @@ import { expect, test } from "./fixtures/test";
 import { apiAs, getJson, login, projectId, USERS } from "./helpers";
 import { pinProject } from "./p6a-helpers";
 
-// Glass restyle proof of concept (D-265): the screens the HSE Manager reviews, EN and AR, light and dark,
+// Glass restyle proof of concept (D-277): the screens the HSE Manager reviews, EN and AR, light and dark,
 // desktop and phone, to docs/screenshots/glass/<name>-<locale>.png. Run with SCREENSHOTS=1 on a fresh seed.
 // The "before" set is docs/screenshots/restyle/*-after.png.
 const OUT = join(__dirname, "..", "..", "docs", "screenshots", "glass");

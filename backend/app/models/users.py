@@ -10,7 +10,7 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.clock import now
-from app.core.enums import EmployerType, Language, Role, UserStatus
+from app.core.enums import EmployerType, HsePosition, Language, Role, UserStatus
 from app.db.base import Base
 from app.models.base import TimestampMixin, UUIDPk, enum_col
 
@@ -43,6 +43,9 @@ class User(UUIDPk, TimestampMixin, Base):
     invited_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     inactivity_warned_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     search_text: Mapped[str] = mapped_column(Text, default="")
+    # D-270 HSE department hierarchy
+    hse_position: Mapped[HsePosition | None] = enum_col(HsePosition, nullable=True)
+    reports_to_user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))
 
     assignments: Mapped[list["RoleAssignment"]] = relationship(
         back_populates="user",

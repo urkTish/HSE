@@ -19,7 +19,7 @@ import { useMeData } from "@/components/shell/me-context";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
 import { hk, useHseSettings } from "@/lib/api/hse";
 import { useKpiCatalogue } from "@/lib/api/kpi";
-import { CA_PRIORITIES } from "@/lib/enums";
+import { CA_PRIORITIES, WEEKDAYS } from "@/lib/enums";
 import { useLocalizedName } from "@/lib/i18n-helpers";
 import { canWrite } from "@/lib/permissions";
 import { todayInZone } from "@/lib/datetime";
@@ -29,6 +29,7 @@ type Settings = Schemas["HseSettingsRead"];
 type NumKey =
   | "max_hours_per_person_day"
   | "warn_hours_per_person_day"
+  | "standard_hours_per_person_day"
   | "completeness_threshold_pct"
   | "inspection_grace_days"
   | "ca_max_extensions"
@@ -39,9 +40,11 @@ type NumKey =
   | "month_lock_day"
   | "injury_identity_retention_years";
 
+// UX pre-check only; mirrors the minimum/maximum of HseSettingsUpdate in the contract (the server is the authority).
 const RANGES: Record<NumKey, [number, number]> = {
   max_hours_per_person_day: [12, 24],
   warn_hours_per_person_day: [8, 16],
+  standard_hours_per_person_day: [1, 16],
   completeness_threshold_pct: [50, 100],
   inspection_grace_days: [0, 7],
   ca_max_extensions: [0, 5],
@@ -66,6 +69,8 @@ export function HseSettingsPage({ project }: { project: Schemas["ProjectRead"] }
   const cat = useKpiCatalogue();
   const editable = canWrite(me, "hse_settings.edit", project.id);
   const [edits, setEdits] = useState<Partial<Settings>>({});
+  // Raw text of the number fields while typing, so a cleared field stays empty (and fails validation) instead of showing 0.
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
@@ -77,14 +82,15 @@ export function HseSettingsPage({ project }: { project: Schemas["ProjectRead"] }
   async function save() {
     const e: Record<string, string> = {};
     for (const [k, [min, max]] of Object.entries(RANGES) as [NumKey, [number, number]][]) {
-      const v = d[k];
+      const v = drafts[k] === "" ? NaN : d[k];
       if (!Number.isInteger(v) || v < min || v > max) e[k] = tv("range", { min, max });
     }
     if (d.warn_hours_per_person_day > d.max_hours_per_person_day) e.warn_hours_per_person_day = tv("invalid");
+    if (d.standard_hours_per_person_day > d.max_hours_per_person_day) e.standard_hours_per_person_day = tv("invalid");
     if (!MMDD.test(d.heat_season.start)) e.heat_start = tv("invalid");
     if (!MMDD.test(d.heat_season.end)) e.heat_end = tv("invalid");
     for (const p of CA_PRIORITIES) {
-      const v = d.ca_due_days[p];
+      const v = drafts[`ca_${p}`] === "" ? undefined : d.ca_due_days[p];
       if (v === undefined || v < 1 || v > 90) e[`ca_${p}`] = tv("range", { min: 1, max: 90 });
     }
     for (const [m, v] of Object.entries(d.kpi_targets)) if (v !== undefined && v !== "" && !/^-?\d+(\.\d+)?$/.test(v)) e[`target_${m}`] = tv("number");
@@ -104,6 +110,9 @@ export function HseSettingsPage({ project }: { project: Schemas["ProjectRead"] }
             include_non_contractor_cases_in_rates: d.include_non_contractor_cases_in_rates,
             max_hours_per_person_day: d.max_hours_per_person_day,
             warn_hours_per_person_day: d.warn_hours_per_person_day,
+            auto_man_hours: d.auto_man_hours,
+            standard_hours_per_person_day: d.standard_hours_per_person_day,
+            rest_days: d.rest_days,
             daily_return_deadline: d.daily_return_deadline,
             completeness_threshold_pct: d.completeness_threshold_pct,
             inspection_grace_days: d.inspection_grace_days,
@@ -123,6 +132,7 @@ export function HseSettingsPage({ project }: { project: Schemas["ProjectRead"] }
       );
       qc.setQueryData(hk.hseSettings(project.id), next);
       setEdits({});
+      setDrafts({});
       await qc.invalidateQueries({ queryKey: ["kpi"] });
       toast.success(tc("saved"));
     } catch (err) {
@@ -134,10 +144,20 @@ export function HseSettingsPage({ project }: { project: Schemas["ProjectRead"] }
 
   const num = (k: NumKey) => (
     <FormField id={`hs-${k}`} label={t(`fields.${k}`)} error={errors[k]}>
-      <Input inputMode="numeric" className="ltr" disabled={!editable} value={String(d[k])} onChange={(e) => set(k, Number(e.target.value.replace(/\D/g, "") || 0))} />
+      <Input
+        inputMode="numeric"
+        className="ltr"
+        disabled={!editable}
+        value={drafts[k] ?? String(d[k])}
+        onChange={(e) => {
+          const raw = e.target.value.replace(/\D/g, "");
+          setDrafts({ ...drafts, [k]: raw });
+          if (raw !== "") set(k, Number(raw));
+        }}
+      />
     </FormField>
   );
-  const bool = (k: "include_commuting_in_rates" | "include_non_contractor_cases_in_rates") => (
+  const bool = (k: "include_commuting_in_rates" | "include_non_contractor_cases_in_rates" | "auto_man_hours") => (
     <label className="flex min-h-touch items-center gap-3 text-sm">
       <Checkbox disabled={!editable} checked={d[k]} onChange={(e) => set(k, e.target.checked)} />
       {t(`fields.${k}`)}
@@ -170,6 +190,21 @@ export function HseSettingsPage({ project }: { project: Schemas["ProjectRead"] }
       <FormSection title={t("workforce")}>
         {num("max_hours_per_person_day")}
         {num("warn_hours_per_person_day")}
+        {bool("auto_man_hours")}
+        {num("standard_hours_per_person_day")}
+        <fieldset className="flex flex-wrap gap-x-4 gap-y-2 sm:col-span-2" data-testid="hs-rest-days">
+          <legend className="mb-1 text-sm font-medium">{t("fields.rest_days")}</legend>
+          {WEEKDAYS.map((w) => (
+            <label key={w} className="flex min-h-touch items-center gap-2 text-sm">
+              <Checkbox
+                disabled={!editable}
+                checked={d.rest_days.includes(w)}
+                onChange={(e) => set("rest_days", e.target.checked ? [...d.rest_days, w] : d.rest_days.filter((x) => x !== w))}
+              />
+              {te(`weekday.${w}`)}
+            </label>
+          ))}
+        </fieldset>
         <FormField id="hs-deadline" label={t("fields.daily_return_deadline")}>
           <Input type="time" disabled={!editable} value={d.daily_return_deadline.slice(0, 5)} onChange={(e) => set("daily_return_deadline", e.target.value)} />
         </FormField>
@@ -193,7 +228,17 @@ export function HseSettingsPage({ project }: { project: Schemas["ProjectRead"] }
           <legend className="mb-1 text-sm font-medium">{t("fields.ca_due_days")}</legend>
           {CA_PRIORITIES.map((p) => (
             <FormField key={p} id={`hs-ca-${p}`} label={te(`caPriority.${p}`)} error={errors[`ca_${p}`]}>
-              <Input inputMode="numeric" className="ltr" disabled={!editable} value={String(d.ca_due_days[p] ?? "")} onChange={(e) => set("ca_due_days", { ...d.ca_due_days, [p]: Number(e.target.value.replace(/\D/g, "") || 0) })} />
+              <Input
+                inputMode="numeric"
+                className="ltr"
+                disabled={!editable}
+                value={drafts[`ca_${p}`] ?? String(d.ca_due_days[p] ?? "")}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/\D/g, "");
+                  setDrafts({ ...drafts, [`ca_${p}`]: raw });
+                  if (raw !== "") set("ca_due_days", { ...d.ca_due_days, [p]: Number(raw) });
+                }}
+              />
             </FormField>
           ))}
         </fieldset>

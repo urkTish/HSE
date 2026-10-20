@@ -27,7 +27,7 @@ const OPTIONS: { value: ThemePreference; Icon: typeof Sun }[] = [
   { value: "dark", Icon: Moon },
   { value: "system", Icon: Monitor },
 ];
-// Surface (D-265): glass, solid, or decided by the device (solid on touch screens, glass with a mouse).
+// Surface (D-277): glass, solid, or decided by the device (solid on touch screens, glass with a mouse).
 const SURFACES: { value: SurfacePreference; Icon: typeof Sun }[] = [
   { value: "glass", Icon: Layers2 },
   { value: "solid", Icon: Square },

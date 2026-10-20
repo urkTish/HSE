@@ -1,5 +1,6 @@
 """Shared FastAPI dependencies: DB session, authentication, pagination."""
 
+import logging
 import threading
 import uuid
 from collections.abc import Iterator
@@ -42,7 +43,10 @@ def get_db() -> Iterator[Session]:
         yield db
         from app.services.ptw import hooks as ptw_hooks  # noqa: PLC0415
 
-        ptw_hooks.process(db)
+        try:
+            ptw_hooks.process(db)
+        except Exception:
+            logging.getLogger("hse.api").exception("ptw hook refresh failed")
         audit.flush_deferred(db)
         db.commit()
     except Exception:

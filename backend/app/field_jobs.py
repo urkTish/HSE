@@ -14,13 +14,15 @@ from __future__ import annotations
 
 import uuid
 from datetime import date, timedelta
+from functools import partial
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import cast, func, select
+from sqlalchemy.dialects.postgresql import JSONPATH
 from sqlalchemy.orm import Session
 
 from app.core.clock import now
-from app.core.enums import EntityType, NotificationKind, ProjectStatus
+from app.core.enums import AuditAction, EntityType, NotificationKind, ProjectStatus
 from app.core.field_enums import AuditStatus, StopOrderStatus, VersionStatus
 from app.core.hse_enums import AttachmentOwner, CaStatus
 from app.models import (
@@ -34,6 +36,8 @@ from app.models import (
     StopWorkOrder,
     ToolboxTopic,
 )
+from app.services import audit
+from app.services.cert.alerts import step
 
 NK = NotificationKind
 
@@ -67,9 +71,17 @@ def _retention(db: Session, pid: uuid.UUID, today: date) -> int:
     months = int(fc.cfg(db, pid)["photo_retention_months"])
     cutoff = add_months(today, -months)
     n = 0
-    for r in db.scalars(
-        select(ChecklistResponse).where(
-            ChecklistResponse.project_id == pid, ChecklistResponse.completed_date < cutoff
+    # only responses that still hold a photo id (purged ones have empty lists), decided in SQL
+    # so the history is not loaded every night
+    for r in list(
+        db.scalars(
+            select(ChecklistResponse).where(
+                ChecklistResponse.project_id == pid,
+                ChecklistResponse.completed_date < cutoff,
+                func.jsonb_path_exists(
+                    ChecklistResponse.answers, cast("$[*].photo_ids[0]", JSONPATH)
+                ),
+            )
         )
     ):
         if not any(a.get("photo_ids") for a in r.answers or []):
@@ -94,14 +106,24 @@ def _retention(db: Session, pid: uuid.UUID, today: date) -> int:
             o = db.get(StopWorkOrder, r.stop_work_order_id)
             if o is not None and o.status == StopOrderStatus.active:
                 continue
+        files = 0
         for a in db.scalars(
             select(Attachment).where(
                 Attachment.owner_type == AttachmentOwner.field_photo, Attachment.owner_id == r.id
             )
         ):
             attachments.erase(db, a)
-            n += 1
+            files += 1
+        n += files
         r.answers = [{**a, "photo_ids": []} for a in r.answers or []]
+        audit.record(
+            db,
+            AuditAction.retention_purge,
+            entity_type=EntityType.inspection,
+            entity_id=r.inspection_id or r.id,
+            project_id=pid,
+            details={"photos": files, "retention_months": months, "rule": "P6d-3"},
+        )
     db.flush()
     return n
 
@@ -114,9 +136,12 @@ def field_daily(db: Session) -> dict[str, Any]:
     today = fc.local_day()
     out = {"locked": 0, "closed": 0, "photos_deleted": 0}
     for pid in _projects(db):
-        out["locked"] += talks.lock_due(db, pid)
-        out["closed"] += audits.close_issued(db, pid)
-        out["photos_deleted"] += _retention(db, pid, today)
+        per: dict[str, Any] = {}
+        step(db, per, "locked", partial(talks.lock_due, db, pid))
+        step(db, per, "closed", partial(audits.close_issued, db, pid))
+        step(db, per, "photos_deleted", partial(_retention, db, pid, today))
+        for k, v in per.items():
+            out[k] += v or 0
     return out
 
 

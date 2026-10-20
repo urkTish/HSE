@@ -43,6 +43,7 @@ from app.models import (
     CredentialEvent,
     CredentialSuspension,
     Deployment,
+    GasTest,
     GateCheck,
     Incident,
     InductionCourse,
@@ -52,6 +53,7 @@ from app.models import (
     ObstacleClearance,
     PassApplication,
     ProjectEngagement,
+    PtwAppointment,
     Vehicle,
     Wap,
     Worker,
@@ -840,6 +842,31 @@ def access_retention(db: Session, day: date | None = None) -> dict[str, Any]:
     }
 
 
+def _erase_signatures(db: Session, w: Worker) -> None:
+    """P3-5: the worker's induction signatures and gas-tester signatures go with the photo."""
+    for r in db.scalars(select(InductionRecord).where(InductionRecord.worker_id == w.id)):
+        for f in db.scalars(
+            select(Attachment).where(
+                Attachment.owner_type == AttachmentOwner.induction_signature,
+                Attachment.owner_id == r.id,
+            )
+        ):
+            attachments.erase(db, f)
+        r.signature_attachment_id = None
+    tests = (
+        select(GasTest.id)
+        .join(PtwAppointment, PtwAppointment.id == GasTest.tester_appointment_id)
+        .where(PtwAppointment.holder_worker_id == w.id)
+    )
+    for f in db.scalars(
+        select(Attachment).where(
+            Attachment.owner_type == AttachmentOwner.gas_test_signature,
+            Attachment.owner_id.in_(tests),
+        )
+    ):
+        attachments.erase(db, f)
+
+
 def anonymise_workers(db: Session, day: date | None = None) -> int:
     """P2-7: worker_retention_years after the last deployment's demobilised_on, with no open
     incident link and no injury-case link (those follow Phase 1 P1-5): names replaced, photo, ID
@@ -874,15 +901,23 @@ def anonymise_workers(db: Session, day: date | None = None) -> int:
             continue
         for f in db.scalars(
             select(Attachment).where(
-                Attachment.owner_type == AttachmentOwner.worker_photo, Attachment.owner_id == w.id
+                Attachment.owner_type.in_(
+                    [AttachmentOwner.worker_photo, AttachmentOwner.worker_id_copy]  # D-272
+                ),
+                Attachment.owner_id == w.id,
             )
         ):
             attachments.erase(db, f)
+        _erase_signatures(db, w)
         for h in db.scalars(select(WorkerIdHistory).where(WorkerIdHistory.worker_id == w.id)):
             db.delete(h)
         from app.services.cert import personnel as pcerts  # noqa: PLC0415 (P4-7)
+        from app.services.med import assessments as massess  # noqa: PLC0415 (P6-8)
+        from app.services.train import records as trecords  # noqa: PLC0415 (P5-7)
 
         pcerts.anonymise_worker(db, w.id)
+        massess.anonymise_worker(db, w.id)
+        trecords.anonymise_worker(db, w.id)
         w.full_name_en = f"Anonymised worker {w.worker_no}"
         w.full_name_ar = f"عامل مجهول الهوية {w.worker_no}"
         w.id_type = None
@@ -892,6 +927,8 @@ def anonymise_workers(db: Session, day: date | None = None) -> int:
         w.passport_country = None
         w.id_expiry_date = None
         w.nationality = None
+        w.user_id = None
+        w.ban_reason = None
         w.status = WorkerStatus.anonymised
         w.anonymised_at = now()
         w.search_text = w.worker_no.lower()

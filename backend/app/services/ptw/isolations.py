@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime, timedelta
 from typing import Any
 
-from sqlalchemy import any_, or_, select
+from sqlalchemy import any_, exists, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.clock import now
@@ -16,6 +16,7 @@ from app.core.ptw_enums import (
     PERMIT_LIVE,
     AppointmentDiscipline,
     AppointmentFunction,
+    CrewLineStatus,
     EnergyType,
     IsolationMethod,
     IsolationStatus,
@@ -32,6 +33,7 @@ from app.models import (
     IsolationPoint,
     Lock,
     Permit,
+    PermitCrew,
     PersonalLockEvent,
     Worker,
 )
@@ -62,7 +64,7 @@ from app.schemas.isolations import (
     PointVerifyInput,
     WorkerInformedInput,
 )
-from app.services import audit, notify, projects
+from app.services import audit, auth, notify, projects
 from app.services.access import common as acommon
 from app.services.common import duplicate, invalid_transition, paginate
 from app.services.hse_common import Refs, contractor_reps, make_ref, next_seq
@@ -334,6 +336,25 @@ def _visible(g: Any, db: Session, c: IsolationCertificate) -> bool:
     ) or (g.engagement_ids is None and not linked_permits(db, c))
 
 
+def _visible_clause(g: Any) -> Any:
+    """`_visible` as a SQL filter for the register (None = no restriction)."""
+    if g.engagement_ids is None and g.site_ids is None:
+        return None
+    linked = any_(Permit.isolation_cert_ids) == IsolationCertificate.id
+    conds: list[Any] = []
+    if g.site_ids is None and g.engagement_ids is not None:
+        conds.append(IsolationCertificate.engagement_id.in_(list(g.engagement_ids)))
+    covered = [linked]
+    if g.site_ids is not None:
+        covered.append(Permit.site_id.in_(list(g.site_ids)))
+    if g.engagement_ids is not None:
+        covered.append(Permit.engagement_id.in_(list(g.engagement_ids)))
+    conds.append(exists(select(Permit.id).where(*covered)))
+    if g.engagement_ids is None:
+        conds.append(~exists(select(Permit.id).where(linked)))
+    return or_(*conds)
+
+
 def get_cert(db: Session, p: Principal, isolation_id: uuid.UUID) -> IsolationCertificate:
     c = db.get(IsolationCertificate, isolation_id)
     if c is None:
@@ -439,11 +460,10 @@ def list_certs(
                 IsolationCertificate.equipment_desc.ilike(like),
             )
         )
-    rows = [
-        c
-        for c in db.scalars(stmt.order_by(IsolationCertificate.iso_no.desc()))
-        if _visible(g, db, c)
-    ]
+    scope = _visible_clause(g)
+    if scope is not None:
+        stmt = stmt.where(scope)
+    rows = list(db.scalars(stmt.order_by(IsolationCertificate.iso_no.desc())))
     if long_term_only is not None:
         rows = [c for c in rows if long_term(db, c) == long_term_only]
     if review_due is not None:
@@ -746,11 +766,33 @@ def verify_point(
     v_user = None if body.verified_by_worker_id else (body.verified_by_user_id or p.user.id)
     v_worker = body.verified_by_worker_id
     applier = pt.applied_by_user_id
+    if v_user is not None and v_user != p.user.id:
+        # IS-4: the verification is in the named user's name only with their own signature
+        if body.cosign is None or body.cosign.user_id != v_user:
+            raise validation_error(
+                "cosign", "Another user verifies with their own co-signature (IS-4)."
+            )
+        auth.check_cosigner(db, body.cosign.user_id, body.cosign.password)
     same = v_user is not None and v_user == applier
     if v_worker:
         w = db.get(Worker, v_worker)
         if w is None:
             raise validation_error("verified_by_worker_id", "Worker not found.")
+        linked = [x.id for x in linked_permits(db, c)]
+        on_crew = db.scalar(
+            select(PermitCrew.id)
+            .where(
+                PermitCrew.worker_id == w.id,
+                PermitCrew.permit_id.in_(linked or [uuid.UUID(int=0)]),
+                PermitCrew.status == CrewLineStatus.listed,
+            )
+            .limit(1)
+        )
+        if on_crew is None:
+            raise validation_error(
+                "verified_by_worker_id",
+                "The verifier must be on the crew of a permit linked to this certificate (IS-4).",
+            )
         same = w.user_id is not None and w.user_id == applier
     if same:
         raise common.err(
@@ -1447,15 +1489,40 @@ def update_lock(db: Session, p: Principal, lock_id: uuid.UUID, body: LockUpdate)
     return lock_read(db, p, lk)
 
 
+def _can_report_lost(db: Session, p: Principal, lk: Lock) -> None:
+    """A lost applied lock breaches every linked live permit, so a contractor-scoped caller may
+    only report locks of their own certificates (isolation authority) or lock events."""
+    if lk.lock_type == LockType.isolation_lock:
+        g = p.grant(lk.project_id, C.isolation_manage)
+        if g is None:
+            raise forbidden_error()
+        if g.engagement_ids is None:
+            return
+        pt = db.scalars(
+            select(IsolationPoint).where(
+                IsolationPoint.isolation_lock_id == lk.id, IsolationPoint.removed_at.is_(None)
+            )
+        ).first()
+        c = db.get(IsolationCertificate, pt.certificate_id) if pt else None
+        if c is not None and c.isolation_authority_user_id != p.user.id:
+            raise forbidden_error("Only the certificate's isolation authority reports this lock.")
+        return
+    if p.grant(lk.project_id, C.personal_lock_record) is None:
+        raise forbidden_error()
+    e = db.scalars(
+        select(PersonalLockEvent).where(
+            PersonalLockEvent.lock_id == lk.id, PersonalLockEvent.removed_at.is_(None)
+        )
+    ).first()
+    if e is not None:
+        _event_scope(db, p, e)
+
+
 def report_lost(db: Session, p: Principal, lock_id: uuid.UUID, body: LockLostInput) -> LockRead:
     """IS-11: lost → the point loses its lock (re-lock needed); linked permits isolation_breach."""
     lk = _lock(db, p, lock_id)
     p.ensure_writer()
-    if (
-        p.grant(lk.project_id, C.isolation_manage) is None
-        and p.grant(lk.project_id, C.personal_lock_record) is None
-    ):
-        raise forbidden_error()
+    _can_report_lost(db, p, lk)
     if lk.status in (LockStatus.lost, LockStatus.retired):
         raise validation_error("lock_id", f"The lock is already {lk.status.value}.")
     before = lk.status
