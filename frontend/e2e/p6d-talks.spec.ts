@@ -73,9 +73,7 @@ test.describe("Toolbox talks", () => {
     // 6f LK-2: reason `lesson` needs a Published lesson (LL-2026-007 in the seed)
     await page.getByTestId("cd-ref").fill("LL-2026-007");
     await page.getByTestId("cd-message").fill("Temporary electrical: check every lead and RCD before use this week.");
-    await page.locator("button#cd-sites").click();
-    await page.getByRole("listbox").getByRole("option", { name: "S-LAND" }).getByRole("button").click();
-    await page.getByRole("listbox").press("Escape");
+    await pickMulti(page, "cd-sites", ["S-LAND"]);
     await page.getByTestId("campaign-save").click();
     const detail = page.getByTestId("campaign-detail");
     await expect(detail).toHaveAttribute("data-status", "draft");
