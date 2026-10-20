@@ -18,7 +18,7 @@ from app.core.ptw_enums import (
 from app.schemas.access_common import WorkerRef
 from app.schemas.common import ApiModel, Page, PatchInput, StrictInput
 from app.schemas.hse_common import UserRef
-from app.schemas.ptw_common import PermitRef
+from app.schemas.ptw_common import CoSignature, PermitRef
 
 # ---- locks --------------------------------------------------------------------------------------
 
@@ -88,8 +88,16 @@ class PointApplyInput(StrictInput):
 class PointVerifyInput(StrictInput):
     """IS-4: verifier ≠ applier (VERIFIER_IS_APPLIER, AC38), method suited to the energy."""
 
-    verified_by_user_id: uuid.UUID | None = Field(default=None, description="Default: caller.")
-    verified_by_worker_id: uuid.UUID | None = None
+    verified_by_user_id: uuid.UUID | None = Field(
+        default=None,
+        description="Default: caller. Another user verifies only with their co-signature.",
+    )
+    verified_by_worker_id: uuid.UUID | None = Field(
+        default=None, description="A crew member of a permit linked to the certificate."
+    )
+    cosign: CoSignature | None = Field(
+        default=None, description="Required when verified_by_user_id is not the caller."
+    )
     verified_at: datetime
     verification_method: VerificationMethod
 

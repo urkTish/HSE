@@ -381,6 +381,7 @@ function GasTestForm({ permitId }: { permitId: string }) {
   const te = useTranslations("enums");
   const terr = useTranslations("errors");
   const tc = useTranslations("common");
+  const locale = useLocale();
   const me = useMeData();
   const router = useRouter();
   const refresh = usePtwRefresh();
@@ -418,17 +419,25 @@ function GasTestForm({ permitId }: { permitId: string }) {
     [rows, preview?.applicable_limits.other_toxics],
   );
   const bodyKey = JSON.stringify([testType, at, detector, body]);
+  // A response for older readings may arrive after a newer one: only the latest request may set the verdict.
   useEffect(() => {
     if (!p) return;
+    let live = true;
     const h = setTimeout(() => {
       unwrap(api.POST("/api/v1/permits/{permit_id}/gas-tests/preview", { params: { path: { permit_id: p.id } }, body: { test_type: testType, tested_at: at || null, detector_id: detector || null, readings: body } }))
         .then((r) => {
+          if (!live) return;
           setPreview(r);
           setPreviewError(null);
         })
-        .catch((e) => setPreviewError(e));
+        .catch((e) => {
+          if (live) setPreviewError(e);
+        });
     }, 400);
-    return () => clearTimeout(h);
+    return () => {
+      live = false;
+      clearTimeout(h);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bodyKey, p?.id]);
   if (pq.isError) return <ErrorState error={pq.error} onRetry={() => pq.refetch()} />;
@@ -482,7 +491,7 @@ function GasTestForm({ permitId }: { permitId: string }) {
                 <option value="">—</option>
                 {(testers.data?.items ?? []).map((a) => (
                   <option key={a.id} value={a.id}>
-                    {a.appointment_no} · {a.holder_user ? userLabel(a.holder_user, "en") : (a.holder_worker?.full_name_en ?? a.holder_worker?.worker_no ?? "")}
+                    {a.appointment_no} · {a.holder_user ? userLabel(a.holder_user, locale) : (a.holder_worker?.full_name_en ?? a.holder_worker?.worker_no ?? "")}
                   </option>
                 ))}
               </Select>

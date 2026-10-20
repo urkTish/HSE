@@ -170,9 +170,14 @@ class EnvVoid(StrictInput):
     reason: str = Field(min_length=1, max_length=500)
 
 
+MAX_PHOTO_B64 = 7_000_000  # ≈ 5 MB decoded: the cap is applied before the body is decoded
+
+
 class EnvPhotoInput(StrictInput):
     file_name: str = Field(max_length=120)
-    content_base64: str = Field(description="jpg / png ≤ 5 MB; EXIF stripped on receipt.")
+    content_base64: str = Field(
+        max_length=MAX_PHOTO_B64, description="jpg / png ≤ 5 MB; EXIF stripped on receipt."
+    )
 
 
 # ---- aspects (§3.1, §4.1, ASP) -------------------------------------------------------------------

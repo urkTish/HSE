@@ -8,7 +8,7 @@ import csv
 import io
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
@@ -372,6 +372,9 @@ def _station_point(db: Session, d: HeatStationDevice) -> MonitoringPoint | None:
     )
 
 
+STATION_BACKFILL = timedelta(hours=24)  # readings older than this are refused at ingest
+
+
 def station_session(db: Session, body: StationSessionInput) -> StationSessionRead:
     d = db.scalar(
         select(HeatStationDevice).where(
@@ -392,7 +395,8 @@ def station_session(db: Session, body: StationSessionInput) -> StationSessionRea
             "sid": str(uuid.uuid4()),
             "typ": "gate",
             "kind": "weather_station",
-            "exp": at + timedelta(days=30),
+            # the JWT library checks `exp` against the wall clock, not the demo clock (D-77)
+            "exp": datetime.now(UTC) + timedelta(days=30),
         },
         s.jwt_secret,
         algorithm=s.jwt_algorithm,
@@ -422,6 +426,9 @@ def ingest(db: Session, token: str | None, body: StationReadingCreate) -> Readin
         raise validation_error("measured_at", "The station is not linked to an active point.")
     if body.measured_at > now() + timedelta(minutes=2):
         raise validation_error("measured_at", "The reading time cannot be in the future.")
+    if body.measured_at < now() - STATION_BACKFILL:
+        # a station back-filling weeks of readings would rewrite the K-98 / K-101 history
+        raise validation_error("measured_at", "Station readings older than 24 h are not accepted.")
     d.last_seen_at = now()
     old = db.scalar(
         select(WbgtReading).where(

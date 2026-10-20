@@ -10,6 +10,7 @@ identities; free text is redacted server-side.
 import dataclasses
 import hashlib
 import json
+import logging
 import uuid
 from collections import Counter, defaultdict
 from collections.abc import Callable
@@ -633,12 +634,16 @@ def _query(
         return None, True
     pids = [x.id for x in projects]
     flt = params.get("filters") or {}
+    if not isinstance(flt, dict):
+        raise ToolError("filters must be an object")
     d = ctx.default_query
     use_default = not flt and d is not None and pids == [ctx.project.id]
     sites, n1 = _ids_by_code(ctx.db, Site, list(flt.get("site_codes") or []), pids)
     zones, n2 = _ids_by_code(ctx.db, Zone, list(flt.get("zone_codes") or []), pids)
     engs, n3 = _eng_ids(ctx.db, list(flt.get("contractor_codes") or []), pids)
     period = params.get("period") or {}
+    if not isinstance(period, dict):
+        raise ToolError("period must be an object")
     preset = PeriodPreset(period.get("preset") or PeriodPreset.month)
     zt = flt.get("zone_type")
     q = KpiQuery(
@@ -904,11 +909,9 @@ def _incident_rows(
                         "employer": engs.get(c.employer_engagement_id)
                         if c.employer_engagement_id
                         else None,
-                        "trade": c.trade.value if c.trade else None,
+                        # §3.4: body part, nature and trade are sensitive; counts come via T3
                         "mechanism": c.mechanism.value if c.mechanism else None,
                         "agency": c.agency.value if c.agency else None,
-                        "body_part": c.body_part.value if c.body_part else None,
-                        "nature": c.nature.value if c.nature else None,
                     }
                     for c in cs
                 ],
@@ -1895,6 +1898,8 @@ def t_propose_chart(ctx: ToolContext, params: dict[str, Any]) -> tuple[dict[str,
     }, narrowed or sc.narrowed
 
 
+log = logging.getLogger("hse.ai.tools")
+
 HANDLERS: dict[str, Callable[[ToolContext, dict[str, Any]], tuple[dict[str, Any], bool]]] = {
     AiTool.get_kpis.value: t_get_kpis,
     AiTool.get_kpi_timeseries.value: t_get_kpi_timeseries,
@@ -1934,8 +1939,11 @@ def run(ctx: ToolContext, name: str, params: dict[str, Any]) -> dict[str, Any]:
                 result, narrowed = handler(ctx, dict(params or {}))
         except ApiError as e:
             result = {"error": e.code.value, "message": str(e)}
-        except (ToolError, ValueError, KeyError) as e:
+        except (ToolError, ValueError, KeyError, TypeError, AttributeError) as e:
             result = {"error": "INVALID_PARAMETERS", "message": str(e)}
+        except Exception as e:
+            log.exception("tool %s failed", name)
+            result = {"error": "TOOL_FAILED", "message": type(e).__name__}
     if narrowed:
         result["scope_narrowed"] = True
         result.setdefault(

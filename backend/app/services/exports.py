@@ -5,6 +5,7 @@ import io
 import uuid
 from enum import Enum
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from openpyxl import Workbook
 from sqlalchemy.orm import Session
@@ -39,6 +40,9 @@ def _status(enum_cls: type[Enum], value: str | None) -> Any:
         raise validation_error("status", f"Unknown status {value!r} for this list.") from exc
 
 
+RIYADH = ZoneInfo("Asia/Riyadh")
+
+
 def _cell(v: Any) -> Any:
     if isinstance(v, Enum):
         return v.value
@@ -47,7 +51,13 @@ def _cell(v: Any) -> Any:
     if isinstance(v, list):
         return ", ".join(str(x) for x in v)
     if hasattr(v, "tzinfo") and getattr(v, "tzinfo", None) is not None:
-        return v.isoformat()
+        # D-275: exported times are Riyadh time (GMT+3), with the offset written out.
+        return v.astimezone(RIYADH).isoformat(timespec="minutes")
+    if isinstance(v, str):
+        # Spreadsheets run a cell starting with = + - @ or a tab as a formula: neutralise it.
+        v = "".join(ch for ch in v if ch >= " " or ch in "\n\t")
+        if v[:1] in ("=", "+", "-", "@", "\t", "\r"):
+            return "'" + v
     return v
 
 
@@ -82,7 +92,7 @@ def _rows(
             "client_name_ar",
             "start_date",
             "planned_end_date",
-            "airport_icao",
+            "airport_iata",
         ]
         return cols, [
             [_cell(getattr(r, c)) for c in cols] for r in db.scalars(stmt.limit(MAX_ROWS))

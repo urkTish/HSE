@@ -6,7 +6,7 @@ from datetime import date, datetime, time
 
 from pydantic import Field
 
-from app.core.hse_enums import CaPriority, KpiMetric, ReferenceList, TreatmentClass
+from app.core.hse_enums import CaPriority, KpiMetric, ReferenceList, TreatmentClass, Weekday
 from app.core.ptw_enums import AuditFindingSeverity, PermitType
 from app.schemas.common import ApiModel, PatchInput, StrictInput
 from app.schemas.hse_common import DecimalStr, UserRef
@@ -49,6 +49,11 @@ class HseSettingsRead(ApiModel):
     include_non_contractor_cases_in_rates: bool
     max_hours_per_person_day: int
     warn_hours_per_person_day: int
+    auto_man_hours: bool = Field(
+        description="Fill daily returns from gate entries / deployments (D-268)."
+    )
+    standard_hours_per_person_day: int = Field(description="Hours per person on automatic rows.")
+    rest_days: list[Weekday] = Field(description="Weekdays without automatic rows.")
     daily_return_deadline: time = Field(description="Local time on the next day.")
     completeness_threshold_pct: int
     inspection_grace_days: int
@@ -93,6 +98,9 @@ class HseSettingsUpdate(PatchInput):
             "include_non_contractor_cases_in_rates",
             "max_hours_per_person_day",
             "warn_hours_per_person_day",
+            "auto_man_hours",
+            "standard_hours_per_person_day",
+            "rest_days",
             "daily_return_deadline",
             "completeness_threshold_pct",
             "inspection_grace_days",
@@ -116,6 +124,9 @@ class HseSettingsUpdate(PatchInput):
     include_non_contractor_cases_in_rates: bool | None = None
     max_hours_per_person_day: int | None = Field(default=None, ge=12, le=24)
     warn_hours_per_person_day: int | None = Field(default=None, ge=8, le=16)
+    auto_man_hours: bool | None = None
+    standard_hours_per_person_day: int | None = Field(default=None, ge=1, le=16)
+    rest_days: list[Weekday] | None = Field(default=None, max_length=6)
     daily_return_deadline: time | None = None
     completeness_threshold_pct: int | None = Field(default=None, ge=50, le=100)
     inspection_grace_days: int | None = Field(default=None, ge=0, le=7)

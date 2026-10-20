@@ -54,7 +54,7 @@ PROJECTS: list[dict[str, Any]] = [
         "name_en": "Al-Noor International Airport — Terminal & Apron Expansion",
         "name_ar": "مشروع توسعة صالة وساحات مطار النور الدولي",
         "project_type": ProjectType.airport,
-        "airport_icao": "OEXX",
+        "airport_iata": None,
         "client_name_en": "Al-Noor Airport Company (fictional)",
         "client_name_ar": "شركة مطار النور (وهمية)",
         "city": "Riyadh",
@@ -72,7 +72,7 @@ PROJECTS: list[dict[str, Any]] = [
         "name_en": "Riyadh Business Tower — 52-Storey Mixed-Use",
         "name_ar": "برج الرياض للأعمال — 52 طابقاً",
         "project_type": ProjectType.building_highrise,
-        "airport_icao": None,
+        "airport_iata": None,
         "client_name_en": "Riyadh Business Tower Development Co. (fictional)",
         "client_name_ar": "شركة تطوير برج الرياض للأعمال (وهمية)",
         "city": "Riyadh",
@@ -598,6 +598,9 @@ def seed(db: Session, password: str) -> None:
 
 
 def main() -> int:
+    if get_settings().environment == "production":
+        print("The demo seed is not allowed in production (P12).", file=sys.stderr)
+        return 2
     password = get_settings().seed_password
     if not password:
         print("Set SEED_PASSWORD (see .env.example).", file=sys.stderr)

@@ -313,6 +313,14 @@ def _stakeholders(db: Session, c: Contractor) -> tuple[list[uuid.UUID], list[Pro
 def _blacklist_effects(db: Session, p: Principal, c: Contractor, reason: str) -> None:
     """Rule 27 (a) deactivate users, (b) end-date role assignments, (c) flag descendants."""
     users = db.scalars(select(User).where(User.employer_contractor_id == c.id)).all()
+    from app.services.users import _active_manager_ids  # noqa: PLC0415
+
+    managers = _active_manager_ids(db, p.today)
+    if managers and managers <= {u.id for u in users}:
+        raise condition_not_met(
+            "Blacklisting would deactivate the last HSE Manager.",
+            "الإدراج في القائمة السوداء سيعطّل آخر مدير للصحة والسلامة.",
+        )
     for u in users:
         for a in u.assignments:
             if a.revoked_at is None and (a.valid_to is None or a.valid_to >= p.today):

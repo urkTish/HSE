@@ -100,7 +100,10 @@ class _IncidentFields(StrictInput):
         min_length=1,
         description="near_miss cannot be combined with any other type → 422 NEAR_MISS_EXCLUSIVE.",
     )
-    primary_type: IncidentType = Field(description="One of incident_types.")
+    primary_type: IncidentType | None = Field(
+        default=None,
+        description="One of incident_types; derived from incident_types when omitted (D-267).",
+    )
     title: str = Field(min_length=1, max_length=150, description=P3_HINT)
     description: str | None = Field(default=None, max_length=4000, description=P3_HINT)
     immediate_actions: str | None = Field(default=None, max_length=2000)

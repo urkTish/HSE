@@ -4,6 +4,7 @@ import { useCallback } from "react";
 import { useRouter } from "@/i18n/navigation";
 import { api } from "@/lib/api/client";
 import { clearFieldCache } from "@/lib/field-offline";
+import { clearAllDrafts } from "@/lib/local-draft";
 
 export function useLogout() {
   const qc = useQueryClient();
@@ -14,6 +15,7 @@ export function useLogout() {
     } finally {
       // P6d-6 / AC59: the 6d offline pack and unsent drafts never outlive the session on this device.
       await clearFieldCache().catch(() => undefined);
+      clearAllDrafts();
       qc.clear();
       router.replace({ pathname: "/login", query: { reason: "signed-out" } });
     }

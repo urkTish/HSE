@@ -16,6 +16,8 @@ from app.schemas.workforce import (
     BulkVerifyResult,
     MonthLockRequest,
     MonthUnlockRequest,
+    WorkforceAutoFillRequest,
+    WorkforceAutoFillResult,
     WorkforceImportPage,
     WorkforceImportRead,
     WorkforceMonthList,
@@ -152,6 +154,18 @@ def bulk_verify_workforce_returns(
     project_id: uuid.UUID, body: BulkVerifyRequest, user: CurrentUser, db: DB
 ) -> BulkVerifyResult:
     return svc.bulk_verify(db, user, project_id, body.ids)
+
+
+@router.post(
+    "/projects/{project_id}/workforce-returns/auto-fill",
+    response_model=WorkforceAutoFillResult,
+    summary="Fill daily returns automatically from gate entries / deployments (D-268)",
+    responses=error_responses(401, 403, 404, 409, 422),
+)
+def auto_fill_workforce_returns(
+    project_id: uuid.UUID, body: WorkforceAutoFillRequest, user: CurrentUser, db: DB
+) -> WorkforceAutoFillResult:
+    return svc.auto_fill(db, user, project_id, body)
 
 
 @router.get(

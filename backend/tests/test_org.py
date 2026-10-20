@@ -144,12 +144,13 @@ def test_project_lifecycle(api: Api) -> None:
         "city": "Jeddah",
         "start_date": "2026-01-01",
     }
-    assert mgr.post("/api/v1/projects", json=body).status_code == 422  # ICAO required
-    res = mgr.post("/api/v1/projects", json={**body, "airport_icao": "OEJX"})
+    bad = {**body, "airport_iata": "OEJX"}
+    assert mgr.post("/api/v1/projects", json=bad).status_code == 422  # IATA is 3 letters
+    res = mgr.post("/api/v1/projects", json={**body, "airport_iata": "JED"})
     assert res.status_code == 201 and res.json()["status"] == "planning"
     assert res.json()["is_airport"] is True
     pid = res.json()["id"]
-    dup = mgr.post("/api/v1/projects", json={**body, "airport_icao": "OEJX"})
+    dup = mgr.post("/api/v1/projects", json=body)  # IATA is optional; the code still clashes
     assert dup.status_code == 409
     act = mgr.post(f"/api/v1/projects/{pid}/transitions", json={"to_status": "active"})
     assert act.status_code == 409 and act.json()["detail"]["code"] == "TRANSITION_CONDITION_NOT_MET"
@@ -176,7 +177,7 @@ def test_project_lifecycle(api: Api) -> None:
     res = mgr.patch(f"/api/v1/projects/{pid}", json={"project_type": "industrial"})
     assert res.status_code == 422
     # officers cannot create projects (capability 1)
-    other = {**body, "code": "JED-T3", "airport_icao": "OEJY"}
+    other = {**body, "code": "JED-T3"}
     assert api.as_("noura.qahtani").post("/api/v1/projects", json=other).status_code == 403
 
 

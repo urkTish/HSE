@@ -25,6 +25,7 @@ class IncidentShift(StrEnum):
 class WorkforceSource(StrEnum):
     manual = "manual"
     import_ = "import"
+    auto = "auto"  # D-268: filled from deployments / gate entries
 
 
 class WorkforceStatus(StrEnum):
@@ -771,6 +772,8 @@ class AttachmentOwner(StrEnum):
     hse_meeting_minutes = "hse_meeting_minutes"
     # Phase 2 (encrypted bucket, signed URL ≤ 5 min)
     worker_photo = "worker_photo"
+    worker_id_copy = "worker_id_copy"  # D-272 Iqama / ID photo, required on new workers
+    vehicle_registration = "vehicle_registration"  # D-272 Istimara photo, required on vehicles
     pass_application_id_copy = "pass_application_id_copy"
     induction_signature = "induction_signature"
     offence_evidence = "offence_evidence"
@@ -1534,6 +1537,8 @@ class MonthlyReportSection(StrEnum):
 class ReferenceList(StrEnum):
     """§3.11 reference lists exposed at GET /reference-lists."""
 
+    # D-274: zone categories the administrator adds, renames and removes (EXTENSIBLE_LISTS)
+    zone_category = "zone_category"
     severity = "severity"
     activity = "activity"
     trade = "trade"

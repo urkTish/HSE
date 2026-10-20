@@ -19,10 +19,11 @@ import { FormField } from "@/components/common/form-field";
 import { ListToolbar, SelectFilter } from "@/components/common/list-toolbar";
 import { PageHeader } from "@/components/common/page-header";
 import { ProjectGate } from "@/components/common/project-gate";
+import { Pagination } from "@/components/common/pagination";
 import { EmptyState, ErrorState, LoadingState, MutationError } from "@/components/common/states";
 import { Choices, DayDue } from "@/components/followup/common";
 import { Link, useRouter } from "@/i18n/navigation";
-import { api, unwrap, type Schemas } from "@/lib/api/client";
+import { api, openSignedUrl, unwrap, type Schemas } from "@/lib/api/client";
 import { useEngagements, useUsers } from "@/lib/api/queries";
 import { useDistributionList, usePackDeliveries, useReportPack, useReportPacks, useScRefresh } from "@/lib/api/scorecard";
 import { useDisplay } from "@/lib/digits";
@@ -30,6 +31,7 @@ import { useLocalizedName } from "@/lib/i18n-helpers";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
 import { ReportsSubNav, ScBadge, previousMonth, recentMonths, usePeriodLabel, useScCaps, useScRef } from "./common";
+const PAGE_SIZE = 50;
 
 type S = Schemas;
 type Project = S["ProjectRead"];
@@ -59,7 +61,8 @@ function Register({ project }: { project: Project }) {
   const s = useSearchState();
   const type = (s.get("type") as S["RpType"] | null) ?? "";
   const status = (s.get("status") as S["RpStatus"] | null) ?? "";
-  const q = useReportPacks(project.id, { report_type: type || null, status: status || null, page_size: 200 }, { enabled: caps.packs });
+  const page = s.getInt("page", 1) ?? 1;
+  const q = useReportPacks(project.id, { report_type: type || null, status: status || null, page, page_size: PAGE_SIZE }, { enabled: caps.packs });
   const [create, setCreate] = useState(false);
   if (!caps.packs) return <Alert tone="info">{tc("notAllowed")}</Alert>;
   const items = q.data?.items ?? [];
@@ -125,6 +128,7 @@ function Register({ project }: { project: Project }) {
       ) : (
         <EmptyState message={t("empty")} />
       )}
+      {q.data ? <Pagination page={page} pageSize={PAGE_SIZE} total={q.data.total} onPage={(p) => s.set({ page: p })} /> : null}
       {create ? <CreatePackDialog project={project} onClose={() => setCreate(false)} /> : null}
     </div>
   );
@@ -285,8 +289,7 @@ export function ReportPackPage({ id }: { id: string }) {
   async function download(kind: S["RpFileKind"]) {
     setError(null);
     try {
-      const u = await unwrap(api.GET("/api/v1/report-packs/{pack_id}/files/{kind}/url", { params: { path: { pack_id: pk!.id, kind } } }));
-      window.open(u.url, "_blank", "noopener");
+      await openSignedUrl(() => unwrap(api.GET("/api/v1/report-packs/{pack_id}/files/{kind}/url", { params: { path: { pack_id: pk!.id, kind } } })));
     } catch (e) {
       setError(e);
     }

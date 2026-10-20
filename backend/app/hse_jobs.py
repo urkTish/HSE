@@ -312,11 +312,14 @@ def incident_alerts(db: Session, at: datetime | None = None) -> dict[str, Any]:
             db.scalars(
                 select(Incident).where(
                     Incident.project_id == pid,
-                    Incident.status.not_in([IncidentStatus.draft, IncidentStatus.voided]),
+                    Incident.status.not_in(
+                        [IncidentStatus.draft, IncidentStatus.voided, IncidentStatus.closed]
+                    ),
                 )
             )
         )
         ids = [i.id for i in incs]
+        reps_by_eng: dict[uuid.UUID | None, list[uuid.UUID]] = {}
         cases = inc_svc.load_cases(db, ids)
         invs = {
             v.incident_id: v
@@ -333,7 +336,11 @@ def incident_alerts(db: Session, at: datetime | None = None) -> dict[str, Any]:
             ):
                 recorded.setdefault(n.incident_id, set()).add(str(n.body))
         for i in incs:
-            reps = contractor_reps(db, pid, i.responsible_engagement_id)
+            if i.responsible_engagement_id not in reps_by_eng:
+                reps_by_eng[i.responsible_engagement_id] = contractor_reps(
+                    db, pid, i.responsible_engagement_id
+                )
+            reps = reps_by_eng[i.responsible_engagement_id]
             # unclassified
             if i.status == IncidentStatus.reported and i.reported_at:
                 age = t - i.reported_at
@@ -615,7 +622,7 @@ def anonymise_injury_identity(db: Session, at: datetime | None = None) -> dict[s
     ).all()
     for c, i in rows:
         years = hse_settings.get(db, i.project_id).injury_identity_retention_years
-        if i.closed_at is None or i.closed_at.replace(year=i.closed_at.year + years) > t:
+        if i.closed_at is None or _plus_years(i.closed_at, years) > t:
             continue
         c.person_name = "Anonymised / مجهّل"
         c.id_number_enc = None
@@ -650,7 +657,29 @@ def vehicle_report_reminders(db: Session, day: date | None = None) -> dict[str, 
     return {"notified": veh.report_reminders(db, d0)}
 
 
+def _plus_years(ts: datetime, years: int) -> datetime:
+    try:
+        return ts.replace(year=ts.year + years)
+    except ValueError:  # 29 Feb
+        return ts.replace(year=ts.year + years, day=28)
+
+
+def workforce_auto_fill(db: Session, day: date | None = None) -> dict[str, Any]:
+    """D-268: refresh automatic daily returns for yesterday and today (gate entries arrive
+    through the day)."""
+    from app.services import workforce_auto  # noqa: PLC0415
+
+    total = {"created": 0, "updated": 0, "removed": 0, "skipped": 0}
+    for project in _projects(db):
+        d0 = day or project_today(project)
+        res = workforce_auto.fill_range(db, None, project, d0 - timedelta(days=1), d0)
+        for k in total:
+            total[k] += res[k]
+    return total
+
+
 PHASE1_JOBS = {
+    "workforce_auto_fill": workforce_auto_fill,
     "ca_alerts": ca_alerts,
     "inspections_generate": inspections_generate,
     "inspections_missed": inspections_missed,

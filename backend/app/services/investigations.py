@@ -11,14 +11,16 @@ from app.core.clock import now
 from app.core.enums import AuditAction, Capability, EntityType, Role
 from app.core.errors import ApiError, ErrorCode, not_found, validation_error
 from app.core.hse_enums import (
+    AttachmentOwner,
     CaSourceType,
     IcamLevel,
     IncidentStatus,
     InvestigationLevel,
     InvestigationMethod,
+    PersonType,
     RootCauseCode,
 )
-from app.models import CorrectiveAction, Investigation, ProjectEngagement, User
+from app.models import Attachment, CorrectiveAction, Investigation, ProjectEngagement, User
 from app.schemas.hse_common import UserRef
 from app.schemas.incidents import (
     InvestigationAssignment,
@@ -139,6 +141,9 @@ def assign(db: Session, b: Bundle, a: InvestigationAssignment) -> Investigation:
     return inv
 
 
+ID_REQUIRED = (PersonType.contractor_worker, PersonType.client_pmc_staff)
+
+
 def missing_for_submit(db: Session, b: Bundle) -> list[str]:
     inv = b.inv
     if inv is None:
@@ -150,8 +155,23 @@ def missing_for_submit(db: Session, b: Bundle) -> list[str]:
     for f in ("method", "sequence_of_events", "immediate_causes"):
         if not getattr(inv, f):
             out.append(f)
-    if inv.level != InvestigationLevel.L1 and not inv.root_causes:
+    # D-269: every report carries root causes, the IDs of the people hurt and photos.
+    if not inv.root_causes:
         out.append("root_causes")
+    for i, c in enumerate(b.cases):
+        if c.person_type in ID_REQUIRED and not c.id_number_enc:
+            out.append(f"cases[{i}].id_number")
+    if not db.scalar(
+        select(Attachment.id)
+        .where(
+            Attachment.owner_type == AttachmentOwner.incident,
+            Attachment.owner_id == b.inc.id,
+            Attachment.content_type.like("image/%"),
+            Attachment.superseded_at.is_(None),
+        )
+        .limit(1)
+    ):
+        out.append("photos")
     for i, rc in enumerate(inv.root_causes or []):
         if not rc.get("linked_ca_ids") and not (rc.get("no_action_justification") or "").strip():
             out.append(f"root_causes[{i}].linked_ca_ids")

@@ -100,3 +100,19 @@ def create_ca(c: TestClient, ids: Ids, source_type: str, source_id: str | None, 
 
 def ca_to(c: TestClient, ca_id: str, to: str, **extra: Any) -> Any:
     return c.post(f"{API}/corrective-actions/{ca_id}/transitions", json={"to_status": to, **extra})
+
+
+# 1×1 PNG; D-269 needs one incident picture before an investigation is submitted.
+PNG_1PX = bytes.fromhex(
+    "89504e470d0a1a0a0000000d4948445200000001000000010806000000"
+    "1f15c4890000000d49444154789c6360000002000154a24f5d0000000049454e44ae426082"
+)
+
+
+def add_photo(c: TestClient, incident_id: str) -> None:
+    res = c.post(
+        f"{API}/attachments",
+        data={"owner_type": "incident", "owner_id": incident_id},
+        files={"file": ("scene.png", PNG_1PX, "image/png")},
+    )
+    assert res.status_code == 201, res.text

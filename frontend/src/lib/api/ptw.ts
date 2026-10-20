@@ -1,4 +1,5 @@
 "use client";
+import { useCallback } from "react";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, unwrap, type Schemas } from "./client";
 import type { QueryOf } from "./queries";
@@ -83,10 +84,13 @@ export const PTW_PREFIXES = [
 /** Refresh one permit in place and invalidate every PTW list that may show it. */
 export function usePtwRefresh() {
   const qc = useQueryClient();
-  return async (permit?: Schemas["PermitRead"]) => {
-    if (permit) qc.setQueryData(pk.permit(permit.id), permit);
-    await Promise.all(PTW_PREFIXES.filter((k) => !(permit && k === "permit")).map((k) => qc.invalidateQueries({ queryKey: [k] })));
-  };
+  return useCallback(
+    async (permit?: Schemas["PermitRead"]) => {
+      if (permit) qc.setQueryData(pk.permit(permit.id), permit);
+      await Promise.all(PTW_PREFIXES.filter((k) => !(permit && k === "permit")).map((k) => qc.invalidateQueries({ queryKey: [k] })));
+    },
+    [qc],
+  );
 }
 
 const list = { placeholderData: keepPreviousData };

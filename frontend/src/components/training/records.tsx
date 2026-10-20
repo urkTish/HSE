@@ -31,7 +31,7 @@ import { Tick, UploadField, UserName } from "@/components/cert/common";
 import { StackedDate } from "@/components/medical/common";
 import { DateTimeInput } from "@/components/ptw/common";
 import { Link, useRouter } from "@/i18n/navigation";
-import { api, unwrap, type Schemas } from "@/lib/api/client";
+import { api, openSignedUrl, unwrap, type Schemas } from "@/lib/api/client";
 import { tk, useTrainingCertificate, useTrainingRecord, useTrainingRecords, useTrainingRefresh, useTrainingVerificationLog, useTrainingVerifications } from "@/lib/api/training";
 import { WORKER_ID_TYPES } from "@/lib/access-enums";
 import { SCAN_REASONS } from "@/lib/cert-enums";
@@ -830,8 +830,7 @@ function ScanDialog({ id, onClose }: { id: string; onClose: () => void }) {
   const [reason, setReason] = useState<S["ScanReason"]>("verification");
   const [text, setText] = useState("");
   async function open() {
-    const r = await unwrap(api.POST("/api/v1/training-records/{record_id}/scan-url", { params: { path: { record_id: id } }, body: { reason, reason_text: text.trim() || null } }));
-    window.open(r.url, "_blank", "noopener");
+    await openSignedUrl(() => unwrap(api.POST("/api/v1/training-records/{record_id}/scan-url", { params: { path: { record_id: id } }, body: { reason, reason_text: text.trim() || null } })));
   }
   return (
     <StepDialog title={t("openScanTitle")} description={t("openScanHint")} confirmLabel={t("openScan")} onConfirm={open} onClose={onClose} disabled={reason === "other" && text.trim().length < 5} testId="scan-confirm">

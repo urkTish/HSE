@@ -304,10 +304,15 @@ class TopicPage(Page[TopicRead]):
 
 # ---- execution (§3.4–§3.6, EXE, FND) -------------------------------------------------------------
 
+MAX_PHOTO_B64 = 7_000_000  # ≈ 5 MB decoded: the cap is applied before the body is decoded
+
 
 class PhotoInput(StrictInput):
     file_name: str = Field(max_length=120, examples=["edge.jpg"])
-    content_base64: str = Field(description="jpg / png, ≤ 5 MB decoded; EXIF stripped on receipt.")
+    content_base64: str = Field(
+        max_length=MAX_PHOTO_B64,
+        description="jpg / png, ≤ 5 MB decoded; EXIF stripped on receipt.",
+    )
 
 
 class AnswerInput(StrictInput):

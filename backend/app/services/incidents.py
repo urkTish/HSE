@@ -687,6 +687,21 @@ def near_miss_error() -> ApiError:
     )
 
 
+# Main type derived when the client does not send one (D-267): most serious selected type first.
+PRIMARY_RANK = (
+    IncidentType.injury_illness,
+    IncidentType.dangerous_occurrence,
+    IncidentType.environmental,
+    IncidentType.property_damage,
+    IncidentType.near_miss,
+)
+
+
+def derive_primary(types: list[IncidentType] | list[str]) -> IncidentType:
+    chosen = {IncidentType(t) for t in types}
+    return next(t for t in PRIMARY_RANK if t in chosen)
+
+
 def _validate_shape(db: Session, project: Project, inc: Incident) -> None:
     """Rules that hold for drafts too (I-3, I-18, hierarchy, ≤ now)."""
     types = set(inc.incident_types)
@@ -809,7 +824,7 @@ def create(db: Session, p: Principal, project_id: uuid.UUID, body: IncidentCreat
         site_id=body.site_id,
         occurred_at=body.occurred_at,
         occurred_date=local_date(project, body.occurred_at),
-        primary_type=body.primary_type,
+        primary_type=body.primary_type or derive_primary(body.incident_types),
         title=body.title,
         status=ST.draft,
         created_by_user_id=p.user.id,
@@ -818,6 +833,8 @@ def create(db: Session, p: Principal, project_id: uuid.UUID, body: IncidentCreat
         alerts_sent=[],
         vehicle_involved=False,
     )
+    if data.get("primary_type") is None:
+        data["primary_type"] = inc.primary_type  # D-267: derived, not sent by the client
     _apply_fields(db, project, inc, data)
     _validate_shape(db, project, inc)
     vdata = {k: data[k] for k in veh.INCIDENT_FIELDS if k in body.model_fields_set}
@@ -877,6 +894,10 @@ def update(db: Session, p: Principal, incident_id: uuid.UUID, body: IncidentUpda
     before = snapshot(inc)
     old_day = inc.occurred_date
     _apply_fields(db, b.project, inc, changes)
+    if "primary_type" not in changes and (
+        "incident_types" in changes or inc.primary_type.value not in set(inc.incident_types)
+    ):
+        inc.primary_type = derive_primary(inc.incident_types)
     _validate_shape(db, b.project, inc)
     vdata = {k: changes[k] for k in veh.INCIDENT_FIELDS if k in changes}
     vwarn = veh.apply_incident(db, inc, vdata, b.cases)
@@ -938,11 +959,9 @@ def delete(db: Session, p: Principal, incident_id: uuid.UUID) -> None:
 
 
 def _approver_ok(p: Principal, b: Bundle) -> bool:
+    # D-269: the HSE Manager checks and approves every investigation report, at every level.
     g = p.grant(b.inc.project_id, Capability.investigation_approve)
-    if not covers(g, b.inc.site_id, None):
-        return False
-    level = b.inv.level if b.inv else InvestigationLevel.L1
-    return level != InvestigationLevel.L3 or p.is_manager
+    return covers(g, b.inc.site_id, None) and p.is_manager
 
 
 def _authorise(p: Principal, b: Bundle, to: IncidentStatus) -> None:

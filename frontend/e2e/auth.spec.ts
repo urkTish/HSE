@@ -112,7 +112,7 @@ async function attempt(page: Page, password: string): Promise<void> {
 
 async function ac3(page: Page): Promise<void> {
   await page.goto("/en/login");
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 10; i++) {
     await attempt(page, `Wrong-Password-${i}!`);
     await expect(page.getByTestId("login-error")).toBeVisible();
   }

@@ -19,6 +19,7 @@ export const hk = {
   excluded: (pid: string, q: object) => ["excluded-cases", pid, q] as const,
   injuryCase: (id: string) => ["injury-case", id] as const,
   investigation: (id: string) => ["investigation", id] as const,
+  permitSuggestions: (id: string) => ["incident-permit-suggestions", id] as const,
   observations: (pid: string, q: object) => ["observations", pid, q] as const,
   observation: (id: string) => ["observation", id] as const,
   plans: (pid: string, q: object) => ["inspection-plans", pid, q] as const,
@@ -128,6 +129,15 @@ export function useInjuryCase(id: string) {
     queryKey: hk.injuryCase(id),
     queryFn: () => unwrap(api.GET("/api/v1/injury-cases/{case_id}", { params: { path: { case_id: id } } })),
     enabled: Boolean(id),
+  });
+}
+
+/** D-58: permits issued, active or suspended in the incident's zone at occurred_at (candidates for ptw_ids). */
+export function useIncidentPermitSuggestions(incidentId: string, enabled = true) {
+  return useQuery({
+    queryKey: hk.permitSuggestions(incidentId),
+    queryFn: () => unwrap(api.GET("/api/v1/incidents/{incident_id}/permit-suggestions", { params: { path: { incident_id: incidentId } } })),
+    enabled: Boolean(incidentId) && enabled,
   });
 }
 

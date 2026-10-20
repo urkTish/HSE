@@ -34,6 +34,7 @@ def main() -> None:
     sched.add_job(_job, "cron", hour=0, minute=5, args=["inspections_missed"])
     sched.add_job(_job, "cron", hour=0, minute=10, args=["inspections_generate"])
     sched.add_job(_job, "cron", hour=1, minute=0, args=["month_auto_lock"])
+    sched.add_job(_job, "cron", minute=50, args=["workforce_auto_fill"])
     sched.add_job(_job, "cron", hour=6, minute=0, args=["completeness_check"])
     sched.add_job(_job, "cron", hour=6, minute=10, args=["leading_warnings"])
     sched.add_job(_job, "cron", hour=6, minute=20, args=["lti_free_milestones"])

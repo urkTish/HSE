@@ -56,6 +56,8 @@ UNKNOWN = UserRef(id=uuid.UUID(int=0), full_name_en="—")
 PERSONAL = frozenset(
     {
         AttachmentOwner.worker_photo,
+        AttachmentOwner.worker_id_copy,  # D-272
+        AttachmentOwner.vehicle_registration,  # D-272 (owner name on the Istimara)
         AttachmentOwner.pass_application_id_copy,
         AttachmentOwner.induction_signature,
         AttachmentOwner.offence_evidence,
@@ -80,6 +82,15 @@ PTW_OWNERS = frozenset(
     }
 )
 ENCRYPTED = frozenset({"medical", "personal"})
+# Scans of identity-bearing documents open only through their own reason-gated endpoints
+# (P6-5, P4-3, P5-3): the generic signed URL refuses them.
+REASON_GATED = frozenset(
+    {
+        AttachmentOwner.fitness_scan,
+        AttachmentOwner.personnel_cert_scan,
+        AttachmentOwner.training_record_scan,
+    }
+)
 
 
 def _bucket(owner: AttachmentOwner) -> str:
@@ -129,6 +140,11 @@ def store(
 def erase(db: Session, a: Attachment) -> None:
     (Path(get_settings().storage_dir) / a.storage_key).unlink(missing_ok=True)
     db.delete(a)
+
+
+def unlink(storage_key: str) -> None:
+    """Remove a stored file whose row was rolled back (no orphans on disk)."""
+    (Path(get_settings().storage_dir) / storage_key).unlink(missing_ok=True)
 
 
 # ---- owner resolution and permissions ------------------------------------------------------------
@@ -198,6 +214,19 @@ def _owner(
         from app.services import incident_vehicles as veh  # noqa: PLC0415
 
         return veh.file_owner(db, p, owner_id, write)
+    if owner_type == AttachmentOwner.vehicle_registration:
+        from app.services.access import common as acc  # noqa: PLC0415
+        from app.services.access import vehicles  # noqa: PLC0415
+
+        v = vehicles.get_vehicle_row(db, p, owner_id)
+        if write:
+            acc.require_cap(p, v.project_id, Capability.vehicle_edit, None, v.engagement_id)
+        elif not acc.grant_covers(
+            p.grant(v.project_id, Capability.worker_view), None, v.engagement_id
+        ):
+            # D-272: the Istimara names its owner; a Viewer/Client (73) reads no personal data
+            raise forbidden_error("The registration document needs capability 46.")
+        return v.project_id, True
     if owner_type in PERSONAL:
         return _access_owner(db, p, owner_type, owner_id, write)
     m = db.get(HseMeeting, owner_id)
@@ -265,6 +294,29 @@ def _access_owner(
     from app.services.access import driving, inductions, passes, workers  # noqa: PLC0415
 
     c = Capability
+    if owner_type == AttachmentOwner.worker_id_copy:
+        # D-272: the Iqama / ID photo is an ID document: viewing needs the unmask capability.
+        w = workers.get_worker(db, p, owner_id)
+        dep = db.scalars(
+            select(Deployment)
+            .where(Deployment.worker_id == w.id)
+            .order_by(Deployment.mobilised_on.desc())
+            .limit(1)
+        ).first()
+        if dep is None:
+            raise ApiError(
+                422,
+                ErrorCode.VALIDATION_ERROR,
+                "Deploy the worker on a project before adding the ID copy.",
+                "يجب تعيين العامل في مشروع قبل إضافة صورة الهوية.",
+            )
+        if write:
+            workers._can_edit(db, p, w)
+        else:
+            acc.require_cap(
+                p, dep.project_id, c.worker_unmask_id, dep.site_ids, dep.engagement_id, write=False
+            )
+        return dep.project_id, w.status != WorkerStatus.anonymised
     if owner_type == AttachmentOwner.worker_photo:
         w = workers.get_worker(db, p, owner_id)
         if write:
@@ -452,17 +504,22 @@ def _get(db: Session, p: Principal, attachment_id: uuid.UUID) -> Attachment:
 
 def signed_url(db: Session, p: Principal, attachment_id: uuid.UUID) -> SignedUrlRead:
     a = _get(db, p, attachment_id)
-    if a.owner_type == AttachmentOwner.fitness_scan:
-        raise forbidden_error("Open fitness scans through scan-url with a reason (P6-5).")
+    if a.owner_type in REASON_GATED:
+        raise forbidden_error("Open this scan through its scan-url endpoint with a reason.")
     medical = a.owner_type == AttachmentOwner.injury_case_medical
     short = medical or a.owner_type in PERSONAL  # P1-3 / P2-2: ≤ 5 min
     expires = int(time.time()) + (MEDICAL_TTL if short else DEFAULT_TTL)
-    if a.owner_type == AttachmentOwner.pass_application_id_copy:
+    if a.owner_type in (AttachmentOwner.pass_application_id_copy, AttachmentOwner.worker_id_copy):
+        # WK-5 / D-272: opening an ID document is an unmask
         audit.record(
             db,
             AuditAction.sensitive_field_read,
             p.actor(a.project_id),
-            entity_type=EntityType.pass_application,
+            entity_type=(
+                EntityType.worker
+                if a.owner_type == AttachmentOwner.worker_id_copy
+                else EntityType.pass_application
+            ),
             entity_id=a.owner_id,
             project_id=a.project_id,
             fields_read=["id_copy"],

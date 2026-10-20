@@ -1,6 +1,6 @@
 import { type Page } from "@playwright/test";
 import { expect, test } from "./fixtures/test";
-import { login, uid, USERS } from "./helpers";
+import { login, PNG_1PX, uid, USERS } from "./helpers";
 import { pickMulti, selectContaining } from "./p2-helpers";
 
 const VIN_CHARS = "ABCDEFGHJKLMNPRSTUVWXYZ0123456789";
@@ -29,6 +29,7 @@ test.describe.serial("Phase 2 — vehicles, AVPs and the sticker", () => {
     await page.locator("#vf-travel").fill("2");
     await page.locator("#vf-working").fill("2");
     await page.locator("#vf-istimara").fill("2027-08-01");
+    await page.getByTestId("istimara-input").setInputFiles(PNG_1PX);
     await page.locator("#vf-mvpi").fill("2027-05-01");
     await page.locator("#vf-ins-no").fill(`POL-${uid()}`);
     await page.locator("#vf-ins-exp").fill("2027-07-01");

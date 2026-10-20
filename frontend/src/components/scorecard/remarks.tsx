@@ -14,6 +14,7 @@ import { FormField } from "@/components/common/form-field";
 import { ListToolbar, SelectFilter } from "@/components/common/list-toolbar";
 import { PageHeader } from "@/components/common/page-header";
 import { ProjectGate } from "@/components/common/project-gate";
+import { Pagination } from "@/components/common/pagination";
 import { EmptyState, ErrorState, LoadingState, MutationError } from "@/components/common/states";
 import { Choices, DeadlineRule, Countdown, FilePick, toFileInput } from "@/components/followup/common";
 import { Link } from "@/i18n/navigation";
@@ -24,6 +25,7 @@ import { useLocalizedName } from "@/lib/i18n-helpers";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
 import { ScBadge, ScSubNav, useScCaps, useScRef } from "./common";
+const PAGE_SIZE = 50;
 
 type S = Schemas;
 type Remark = S["ScRemarkRead"];
@@ -70,7 +72,9 @@ export function RemarkList({ projectId, cardId, kind, status, showCard }: { proj
   const show = useDisplay(projectId);
   const { dateTime } = useFormatters(projectId);
   const refresh = useScRefresh();
-  const q = useScRemarks(projectId, { card_id: cardId ?? null, kind: kind ?? null, status: status ?? null, page_size: 200 });
+  const s = useSearchState();
+  const page = s.getInt("page", 1) ?? 1;
+  const q = useScRemarks(projectId, { card_id: cardId ?? null, kind: kind ?? null, status: status ?? null, page, page_size: PAGE_SIZE });
   const [resolve, setResolve] = useState<Remark | null>(null);
   const [error, setError] = useState<unknown>(null);
   if (q.isLoading) return <LoadingState />;
@@ -171,6 +175,7 @@ export function RemarkList({ projectId, cardId, kind, status, showCard }: { proj
           );
         })}
       </ul>
+      {q.data ? <Pagination page={page} pageSize={PAGE_SIZE} total={q.data.total} onPage={(p) => s.set({ page: p })} /> : null}
       {resolve ? <ResolveDialog remark={resolve} canExclude={caps.manage} onClose={() => setResolve(null)} /> : null}
     </>
   );

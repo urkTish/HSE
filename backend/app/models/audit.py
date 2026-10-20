@@ -71,3 +71,21 @@ class EmailMessage(UUIDPk, Base):
     body: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class DeletedRecord(UUIDPk, Base):
+    """D-271: what an administrator deleted, kept so the deletion stays traceable. No foreign
+    keys to project data, so it survives the delete it describes."""
+
+    __tablename__ = "deleted_records"
+    __table_args__ = (Index("ix_deleted_records_at", "deleted_at"),)
+
+    deleted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    deleted_by_user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))
+    entity_type: Mapped[str] = mapped_column(String(60))
+    entity_id: Mapped[uuid.UUID] = mapped_column()
+    project_id: Mapped[uuid.UUID | None] = mapped_column()
+    label: Mapped[str] = mapped_column(String(300))
+    reason: Mapped[str] = mapped_column(String(500))
+    row_counts: Mapped[dict[str, int]] = mapped_column(JSONB, default=dict)
+    rows: Mapped[dict[str, Any] | None] = mapped_column(JSONB)

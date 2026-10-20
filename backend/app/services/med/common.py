@@ -181,6 +181,15 @@ def covers_dep(g: Grant | None, dep: Deployment | None) -> bool:
     return g.site_ids is None or bool(set(dep.site_ids or []) & set(g.site_ids))
 
 
+def site_workers(project_id: uuid.UUID, site_ids: Iterable[uuid.UUID]) -> Any:
+    """Sub-select of the workers deployed on any of `site_ids` (the S scope of `covers_dep`,
+    pushed into SQL so registers paginate correctly)."""
+    return select(Deployment.worker_id).where(
+        Deployment.project_id == project_id,
+        Deployment.site_ids.overlap(list(site_ids) or [uuid.UUID(int=0)]),
+    )
+
+
 def tier(p: Principal | None, project_id: uuid.UUID, dep: Deployment | None) -> int:
     """0 = none; 1 status (155); 2 functional (156); 3 clinical-administrative (157)."""
     if p is None:

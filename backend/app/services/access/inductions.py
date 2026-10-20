@@ -20,17 +20,20 @@ from app.core.access_enums import (
     InductionResult,
     InductionStatus,
     InductionType,
+    RequirementStatus,
 )
 from app.core.clock import now, today
 from app.core.enums import AuditAction, Capability, EntityType, NotificationKind, Role
 from app.core.errors import ApiError, ErrorCode, field_error, not_found, validation_error
 from app.core.hse_enums import AttachmentOwner
 from app.models import (
+    Attachment,
     Deployment,
     InductionCourse,
     InductionRecord,
     InductionRetrainingNote,
     Project,
+    User,
     Worker,
     Zone,
     ZoneAccessProfile,
@@ -512,8 +515,18 @@ def list_records(
     )
 
 
+POSITION_ROLES = frozenset(
+    {InductionDelivererRole.hse_engineer.value, InductionDelivererRole.hse_supervisor.value}
+)
+
+
 def _deliverer_roles(db: Session, user_id: uuid.UUID, project_id: uuid.UUID) -> set[str]:
-    return {ROLE_OF[r].value for r in user_roles(db, user_id, project_id) if r in ROLE_OF}
+    roles = {ROLE_OF[r].value for r in user_roles(db, user_id, project_id) if r in ROLE_OF}
+    # D-273: HSE Engineers and Supervisors (HSE team positions) deliver the courses that allow them.
+    u = db.get(User, user_id)
+    if roles and u is not None and u.hse_position in POSITION_ROLES:
+        roles.add(str(u.hse_position))
+    return roles
 
 
 def _deliverer_error(msg: str) -> ApiError:
@@ -795,7 +808,7 @@ def _prepare(
         raise validation_error("delivered_at", "delivered_at cannot be in the future (IN-12).")
     allowed = set(course.delivered_by_roles or [])
     caller_roles = (
-        {InductionDelivererRole.hse_manager.value}
+        {InductionDelivererRole.hse_manager.value} | _deliverer_roles(db, p.user.id, project.id)
         if p.is_manager
         else _deliverer_roles(db, p.user.id, project.id)
     )
@@ -841,6 +854,7 @@ def create_session(
         raise validation_error("attendees", "A worker is listed twice.")
     out: list[InductionRecordRead] = []
     errors = []
+    stored: list[str] = []  # signature files of the attendees saved so far (unlinked on rollback)
     sp = db.begin_nested()
     for i, a in enumerate(body.attendees):
         try:
@@ -856,10 +870,15 @@ def create_session(
                 body.session_ref,
                 f"attendees.{i}.",
             )
+            sig = db.get(Attachment, r.signature_attachment_id)
+            if sig is not None:
+                stored.append(sig.storage_key)
             out.append(record_read(db, p, r, warnings=warns))
         except ApiError as e:
             if e.status_code == 403:
                 sp.rollback()
+                for key in stored:
+                    attachments.unlink(key)
                 raise
             for fe in e.errors or []:
                 errors.append(fe)
@@ -867,6 +886,8 @@ def create_session(
                 errors.append(field_error(f"attendees.{i}", f"{e.code.value}: {e.message}"))
     if errors:
         sp.rollback()
+        for key in stored:
+            attachments.unlink(key)
         raise ApiError(
             422,
             ErrorCode.VALIDATION_ERROR,
@@ -1033,6 +1054,22 @@ def worker_eligibility(
     if p.grant(zone.project_id, C.worker_view) is None:
         raise forbidden_error()
     ev = eligibility.evaluate(db, w, zone, at or now(), context)
+    # 6a §8.4: the medical hook's reason, reference and conditions are tiered like the PTW views.
+    from app.services.med import common as mcommon  # noqa: PLC0415
+    from app.services.med import reference as mref  # noqa: PLC0415
+
+    t = mcommon.tier(p, zone.project_id, mcommon.deployment(db, w.id, zone.project_id))
+    for it in ev.items:
+        if it.hook_kind != HookKind.medical_fitness:
+            continue
+        if t < 3:
+            it.hook_reason = None
+            it.ref = None
+        if t < 2:
+            it.conditions = ()
+            it.valid_until = None
+            if it.status in (RequirementStatus.not_met, RequirementStatus.not_evaluated):
+                it.message = mref.NOT_ELIGIBLE
     return eligibility.to_result(db, ev, True)
 
 

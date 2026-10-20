@@ -51,6 +51,20 @@ export function useLocalDraft<T extends FieldValues>(key: string, form: UseFormR
   return { restored, clear };
 }
 
+/** Remove every field-form draft on this device (sign-out, session expiry: shared tablets). */
+export function clearAllDrafts(): void {
+  try {
+    const keys: string[] = [];
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const k = window.localStorage.key(i);
+      if (k && k.startsWith("hse.draft.")) keys.push(k);
+    }
+    for (const k of keys) window.localStorage.removeItem(k);
+  } catch {
+    // storage unavailable
+  }
+}
+
 function subscribeOnline(cb: () => void): () => void {
   window.addEventListener("online", cb);
   window.addEventListener("offline", cb);

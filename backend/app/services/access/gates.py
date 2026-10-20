@@ -117,6 +117,7 @@ RS = RequirementStatus
 GATE_COOKIE = "hse_gate_session"
 IDLE = timedelta(hours=12)
 RATE_LIMIT = 120
+RATE_KEYS_MAX = 1000  # callers tracked per process before idle ones are evicted
 CLEAR_AFTER = 30
 PHOTO_TTL = 60
 OBS_OK = ("approved", "approved_with_conditions")
@@ -149,6 +150,10 @@ def reset_rate_limits() -> None:
 
 def _rate(caller: Caller) -> None:
     t = now().timestamp()
+    if len(_RATE) > RATE_KEYS_MAX:
+        # evict callers idle for a minute so the table does not grow with every device ever seen
+        for k in [k for k, v in _RATE.items() if not v or v[-1] <= t - 60]:
+            del _RATE[k]
     q = _RATE[caller.key]
     while q and q[0] <= t - 60:
         q.popleft()
@@ -589,6 +594,9 @@ def _stand_in(g: Gate) -> Zone:
 
 
 NOT_GATE_KINDS = frozenset({QrKind.TR.value, QrKind.EA.value, QrKind.MP.value})
+# the part of a printed reference before "/": a record number such as WKR-000123 or
+# WAP-ANIA-EXP-2026-0001 (upper-cased); anything else is not looked up by prefix
+PRINTED_HEAD_RE = re.compile(r"^[A-Z]{2,4}-[A-Z0-9-]{3,}$")
 
 
 def _resolve(db: Session, g: Gate, body: GateCheckRequest) -> QrToken | None:
@@ -613,12 +621,15 @@ def _resolve(db: Session, g: Gate, body: GateCheckRequest) -> QrToken | None:
         )
         if not cands and "/" in ref:
             head = ref.split("/")[0].strip()
+            if not PRINTED_HEAD_RE.match(head):
+                return None  # a wildcard head would match every token of the project
+            pat = head.replace("\\", "\\\\").replace("%", r"\%").replace("_", r"\_")
             cands = list(
                 db.scalars(
                     select(QrToken)
                     .where(
                         QrToken.project_id == g.project_id,
-                        func.upper(QrToken.printed_ref).like(f"{head}%"),
+                        func.upper(QrToken.printed_ref).like(f"{pat}%", escape="\\"),
                     )
                     .order_by(QrToken.created_at.desc())
                 )
@@ -988,6 +999,18 @@ def gate_check(db: Session, caller: Caller, body: GateCheckRequest) -> GateCheck
             return _continue_pairing(db, caller, g, zone, pr, t, body, at)
     if t.status != QrTokenStatus.active:
         dep, veh, wap = _subject(db, t)
+        kind = (
+            GateSubjectKind.person
+            if t.kind == QrKind.AC
+            else GateSubjectKind.vehicle
+            if t.kind == QrKind.VS
+            else GateSubjectKind.permit
+            if t.kind == QrKind.PT
+            else GateSubjectKind.wap
+        )
+        # GC-13 before any verdict: a dead card of another contractor's subject reveals nothing
+        if not _scope_ok(caller, g.project_id, _dead_engagement(db, t, dep, veh, wap)):
+            return _out_of_scope(db, caller, g, zone, body, kind, t, at)
         code = G.CREDENTIAL_LOST if t.lost else G.CREDENTIAL_REVOKED
         banned = (
             dep is not None
@@ -1000,15 +1023,6 @@ def gate_check(db: Session, caller: Caller, body: GateCheckRequest) -> GateCheck
             code = G.WORKER_NOT_DEPLOYED  # AC59: the card died with the deployment
         else:
             _lost_alert(db, t, g)
-        kind = (
-            GateSubjectKind.person
-            if t.kind == QrKind.AC
-            else GateSubjectKind.vehicle
-            if t.kind == QrKind.VS
-            else GateSubjectKind.permit
-            if t.kind == QrKind.PT
-            else GateSubjectKind.wap
-        )
         row = _log(
             db,
             caller,
@@ -1033,6 +1047,21 @@ def gate_check(db: Session, caller: Caller, body: GateCheckRequest) -> GateCheck
     if t.kind == QrKind.VS:
         return _vehicle_check(db, caller, g, zone, t, body, at, d)
     return _person_check(db, caller, g, zone, t, body, at)
+
+
+def _dead_engagement(
+    db: Session, t: QrToken, dep: Deployment | None, veh: Vehicle | None, wap: Wap | None
+) -> uuid.UUID | None:
+    """The engagement a dead token's subject belongs to (None when the subject is gone)."""
+    if t.kind == QrKind.PT:
+        from app.models import Permit  # noqa: PLC0415
+
+        permit = db.get(Permit, t.subject_id)
+        return permit.engagement_id if permit else None
+    for s in (dep, veh, wap):
+        if s is not None:
+            return s.engagement_id
+    return None
 
 
 def _subject(db: Session, t: QrToken) -> tuple[Deployment | None, Vehicle | None, Wap | None]:
@@ -1383,7 +1412,7 @@ def _vehicle_check(
             body.direction,
             GateSubjectKind.vehicle,
             verdict.result() if not (needs_escort and not verdict.deny) else R.DENIED,
-            verdict.codes() or [G.AVP_AREA.value],
+            [G.AVP_AREA.value] if needs_escort and not verdict.deny else verdict.codes(),
             at,
             qr_kind=qk,
             vehicle=v,
@@ -1801,22 +1830,18 @@ def _continue_pairing(
     if pr.gate_id != g.id:
         raise validation_error("pairing_id", "The pairing was started at another gate.")
     d = common.local_day(at)
+    pair_scope = (
+        G.ESCORT_INVALID
+        if pr.waiting_for == PairingWaitingFor.escort
+        else TIMEOUT_REASON[pr.waiting_for]
+    )
     if t.status != QrTokenStatus.active:
+        s_dep, s_veh, s_wap = _subject(db, t)
+        if not _scope_ok(caller, g.project_id, _dead_engagement(db, t, s_dep, s_veh, s_wap)):
+            return _pair_fail(db, caller, g, zone, pr, t, at, [G.OUT_OF_SCOPE], pair_scope)
         code = G.CREDENTIAL_LOST if t.lost else G.CREDENTIAL_REVOKED
         _lost_alert(db, t, g)
-        return _pair_fail(
-            db,
-            caller,
-            g,
-            zone,
-            pr,
-            t,
-            at,
-            [code],
-            G.ESCORT_INVALID
-            if pr.waiting_for == PairingWaitingFor.escort
-            else TIMEOUT_REASON[pr.waiting_for],
-        )
+        return _pair_fail(db, caller, g, zone, pr, t, at, [code], pair_scope)
     if pr.waiting_for == PairingWaitingFor.escort:
         if t.kind != QrKind.AC:
             raise validation_error("payload", "Scan the escort's access card.")
@@ -1824,6 +1849,8 @@ def _continue_pairing(
         w = db.get(Worker, dep.worker_id) if dep else None
         if dep is None or w is None:
             return _pair_fail(db, caller, g, zone, pr, t, at, [G.TOKEN_UNKNOWN], G.ESCORT_INVALID)
+        if not _scope_ok(caller, g.project_id, dep.engagement_id):
+            return _pair_fail(db, caller, g, zone, pr, t, at, [G.OUT_OF_SCOPE], G.ESCORT_INVALID)
         if any(s["id"] == str(dep.id) for s in pr.subjects or []):
             raise validation_error("payload", "The escort must be another person.")
         ev = _evaluate_person(db, g, zone, w, at)
@@ -1906,6 +1933,8 @@ def _continue_pairing(
         ev_v = db.get(Vehicle, avp.vehicle_id) if avp else None
         if avp is None or ev_v is None or zone is None:
             return _pair_fail(db, caller, g, zone, pr, t, at, [G.TOKEN_UNKNOWN], G.AVP_AREA)
+        if not _scope_ok(caller, g.project_id, ev_v.engagement_id):
+            return _pair_fail(db, caller, g, zone, pr, t, at, [G.OUT_OF_SCOPE], G.AVP_AREA)
         verdict, needs = _vehicle_verdict(db, g, zone, ev_v, avp, at, d)
         if needs:
             verdict.add(G.AVP_AREA)
@@ -1979,6 +2008,8 @@ def _continue_pairing(
     w = db.get(Worker, dep.worker_id) if dep else None
     if dep is None or w is None or zone is None:
         return _pair_fail(db, caller, g, zone, pr, t, at, [G.TOKEN_UNKNOWN], G.ADP_MISSING)
+    if not _scope_ok(caller, g.project_id, dep.engagement_id):
+        return _pair_fail(db, caller, g, zone, pr, t, at, [G.OUT_OF_SCOPE], G.ADP_MISSING)
     ev = _evaluate_person(db, g, zone, w, at)
     v = Verdict()
     v.merge_items(ev.items)
@@ -2145,6 +2176,8 @@ def admitted_despite_denial(
     if row is None:
         raise not_found("Gate check")
     _authorise(db, caller, row.gate_id)
+    if not _scope_ok(caller, row.project_id, row.engagement_id):
+        raise forbidden_error("This gate check is outside your scope.")  # GC-13
     if row.result != R.DENIED or not row.final:
         raise invalid_transition("Gate check", row.result, "admitted_despite_denial")
     if row.admitted_despite_denial:

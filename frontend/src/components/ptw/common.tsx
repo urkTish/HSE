@@ -349,13 +349,14 @@ export function SignatureList({ items }: { items: S["SignatureRead"][] }) {
 
 /* ───────────── time ───────────── */
 
-/** Current time, re-rendered every `ms` (countdowns). */
-export function useNow(ms = 1000): number {
+/** Current time, re-rendered every `ms` (countdowns). `enabled={false}` keeps no timer (the parent ticks). */
+export function useNow(ms = 1000, enabled = true): number {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
+    if (!enabled) return;
     const id = window.setInterval(() => setNow(Date.now()), ms);
     return () => window.clearInterval(id);
-  }, [ms]);
+  }, [ms, enabled]);
   return now;
 }
 
@@ -376,11 +377,12 @@ function fmtDuration(ms: number, dayLabel?: (d: number) => string): string {
   return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
 }
 
-/** Live countdown to `to`: amber in the last `warnMinutes`, red once overdue. */
-export function Countdown({ to, label, warnMinutes = 10, icon = "clock", testId = "countdown", size }: { to: string; label: string; warnMinutes?: number; icon?: "clock" | "fire" | "wind"; testId?: string; size?: "lg" }) {
+/** Live countdown to `to`: amber in the last `warnMinutes`, red once overdue. Pass `now` from one shared ticker when many are on screen (the board). */
+export function Countdown({ to, label, warnMinutes = 10, icon = "clock", testId = "countdown", size, now: shared }: { to: string; label: string; warnMinutes?: number; icon?: "clock" | "fire" | "wind"; testId?: string; size?: "lg"; now?: number }) {
   const t = useTranslations("ptw");
   const td = useTranslations("ptwDesign");
-  const now = useNow();
+  const own = useNow(1000, shared === undefined);
+  const now = shared ?? own;
   const left = new Date(to).getTime() - now;
   const days = (d: number) => td("days", { d });
   const overdue = left <= 0;

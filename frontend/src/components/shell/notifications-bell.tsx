@@ -8,6 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useRouter } from "@/i18n/navigation";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
 import { useNotifications } from "@/lib/api/queries";
+import { useDisplay } from "@/lib/digits";
 import { useLocalizedName } from "@/lib/i18n-helpers";
 import { entityRoute } from "@/lib/routes";
 import { useFormatters } from "@/lib/use-formatters";
@@ -24,6 +25,7 @@ export function NotificationsBell() {
   const qc = useQueryClient();
   const router = useRouter();
   const name = useLocalizedName();
+  const show = useDisplay();
   const { dateTime } = useFormatters();
   const [open, setOpen] = useState(false);
   const unread = q.data?.unread_count ?? 0;
@@ -54,7 +56,7 @@ export function NotificationsBell() {
           <Bell aria-hidden />
           {unread > 0 ? (
             <span className="absolute end-1 top-1 min-w-4 rounded-full bg-destructive px-1 text-center text-[11px] leading-4 font-semibold text-destructive-foreground ring-2 ring-surface">
-              {unread > 99 ? "99+" : unread}
+              {show(unread > 99 ? "99+" : unread)}
             </span>
           ) : null}
         </Button>

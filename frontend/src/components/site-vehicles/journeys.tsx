@@ -9,7 +9,6 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
 import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { DeploymentPicker, StepDialog } from "@/components/access/common";
@@ -29,12 +28,12 @@ import { fromLocalInput } from "@/components/emergency/common";
 import { DateFilter } from "@/components/training/common";
 import { Link, useRouter } from "@/i18n/navigation";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
-import { useJourneyPlan, useJourneyPlans, useSiteVehicles, useSvRefresh } from "@/lib/api/site-vehicles";
+import { useJourneyPlan, useJourneyPlans, useSiteVehicle, useSvRefresh } from "@/lib/api/site-vehicles";
 import { useDebounced } from "@/lib/use-debounced";
 import { formatDateTime } from "@/lib/datetime";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
-import { DriverText, JOURNEY_STATUSES, JourneyStatusBadge, PrototypeBadge, SvGate, SvSubNav, VehicleRefText, useSvCaps, useSvLabels } from "./common";
+import { DriverText, JOURNEY_STATUSES, JourneyStatusBadge, PrototypeBadge, SiteVehiclePicker, SvGate, SvSubNav, VehicleRefText, useSvCaps, useSvLabels } from "./common";
 
 type S = Schemas;
 type Plan = S["SiteVehJourneyRead"];
@@ -176,13 +175,11 @@ function PlanForm({ project, settings }: { project: S["ProjectRead"]; settings: 
   const tn = useTranslations("sv.nav");
   const tc = useTranslations("common");
   const tv = useTranslations("validation");
-  const l = useSvLabels();
   const router = useRouter();
   const refresh = useSvRefresh();
   const warn = useWarningToasts();
   const caps = useSvCaps(project.id);
   const sp = useSearchParams();
-  const vehicles = useSiteVehicles(project.id, { page_size: 200 });
   const [vehicleId, setVehicleId] = useState(sp.get("vehicle") ?? "");
   const [dep, setDep] = useState<S["DeploymentRead"] | null>(null);
   const [f, setF] = useState({ passengers: "0", origin: project.code ? `${project.code} site` : "", destination: "", distance_km: "", depart: "", arrive: "", contact: "", notes: "" });
@@ -190,7 +187,7 @@ function PlanForm({ project, settings }: { project: S["ProjectRead"]; settings: 
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF((x) => ({ ...x, [k]: e.target.value }));
-  const vehicle = (vehicles.data?.items ?? []).find((v) => v.id === vehicleId);
+  const vehicle = useSiteVehicle(vehicleId, { enabled: Boolean(vehicleId) }).data;
   const hint = useJourneyHint(project.id, f.distance_km, f.depart, f.arrive);
 
   async function save() {
@@ -292,17 +289,7 @@ function PlanForm({ project, settings }: { project: S["ProjectRead"]; settings: 
       </FormSection>
       <FormSection title={t("people")}>
         <FormField id="jp-vehicle" label={t("vehicle")} required error={errors.vehicle}>
-          <Select value={vehicleId} onChange={(e) => setVehicleId(e.target.value)} data-testid="jp-vehicle">
-            <option value="">{tc("select")}</option>
-            {(vehicles.data?.items ?? [])
-              .filter((v) => v.status !== "withdrawn")
-              .map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.vehicle_no} · {v.fleet_no} · {l.useClass(v.use_class)}
-                  {v.readiness !== "ready" ? ` (${l.readiness(v.readiness)})` : ""}
-                </option>
-              ))}
-          </Select>
+          <SiteVehiclePicker projectId={project.id} value={vehicleId} onChange={setVehicleId} filter={(v) => v.status !== "withdrawn"} data-testid="jp-vehicle" />
         </FormField>
         <div className="sm:col-span-2">
           <DeploymentPicker id="jp-driver" projectId={project.id} value={dep} onChange={setDep} status={["mobilised"]} label={t("driver")} required error={errors.driver} />

@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import or_, select
+from sqlalchemy import exists, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.clock import now
@@ -39,6 +39,7 @@ from app.core.ptw_enums import (
     PermitType,
     PreIssueItem,
     PtwCrewRole,
+    SimopsConflictStatus,
     StatusReason,
     VoltageClass,
 )
@@ -54,6 +55,7 @@ from app.models import (
     PermitRecord,
     PermitShift,
     PermitSignature,
+    SimopsConflict,
     Site,
     Vehicle,
     Wap,
@@ -724,9 +726,9 @@ def create(db: Session, p: Principal, project_id: uuid.UUID, body: PermitCreate)
 
 
 def read(db: Session, p: Principal, permit_id: uuid.UUID) -> PermitRead:
+    # Stored blockers/warnings are served as-is: every write, the credential hooks (D-67) and
+    # the minute/daily jobs refresh them, so a GET neither evaluates nor mutates the row.
     permit = _get(db, p, permit_id)
-    if permit.status not in PERMIT_TERMINAL:
-        evaluation.refresh(db, permit, run_simops=False, evaluate_crew=False, auto_suspend=False)
     return views.permit_read(db, p, permit)
 
 
@@ -849,16 +851,19 @@ def list_permits(
         PermitRegisterSort.permit_no: [Permit.permit_no.desc()],
     }
     order = orders[sort]
+    if simops_open is not None:
+        open_conflict = exists().where(
+            or_(SimopsConflict.permit_a_id == Permit.id, SimopsConflict.permit_b_id == Permit.id),
+            SimopsConflict.status == SimopsConflictStatus.open,
+        )
+        stmt = stmt.where(open_conflict if simops_open else ~open_conflict)
     stmt = stmt.order_by(*order)
     at = now()
     refs = Refs(db)
-    if awaiting_me or simops_open is not None:
-        rows = list(db.scalars(stmt))
-        if awaiting_me:
-            rows = [x for x in rows if awaiting(db, p, x)]
+    if awaiting_me:
+        # "awaiting me" depends on the caller's appointments: the only filter left in Python
+        rows = [x for x in db.scalars(stmt) if awaiting(db, p, x)]
         items = [views.list_item(db, x, refs, at) for x in rows]
-        if simops_open is not None:
-            items = [i for i in items if (i.simops_open > 0) == simops_open]
         total = len(items)
         items = items[(page - 1) * page_size : page * page_size]
         return Page[PermitListItem](items=items, total=total, page=page, page_size=page_size)
@@ -1054,10 +1059,10 @@ def add_crew(
 ) -> PermitCrewRead:
     permit = _get(db, p, permit_id)
     _crew_writable(p, permit)
+    key = body.crew_role in KEY_CREW_ROLES
     line = _add_crew(db, p, permit, body)
     if body.crew_role == R.supervisor and permit.supervisor_worker_id is None:
         permit.supervisor_worker_id = body.worker_id
-    key = body.crew_role in KEY_CREW_ROLES
     _audit(
         db,
         p,
@@ -1143,6 +1148,10 @@ def delete_crew(db: Session, p: Principal, permit_id: uuid.UUID, line_id: uuid.U
     if any(r.worker_id == line.worker_id for r in lifecycle.persons_inside(db, permit.id)):
         lifecycle.entrants_inside_error(db, permit)
     key = line.crew_role in KEY_CREW_ROLES
+    if key and permit.status == S.active:
+        # PT-13: an Active permit keeps its key roles (fire watch, standby person, …); stop the
+        # work first. Adding a key role stays possible (the busy / SoD checks apply).
+        raise read_only(permit)
     if permit.status in (S.issued, S.active, S.suspended):
         line.status = CrewLineStatus.removed
         line.removed_at = now()

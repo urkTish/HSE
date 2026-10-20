@@ -119,7 +119,7 @@ export function WorkforceMonths({ project }: { project: Schemas["ProjectRead"] }
             {q.data?.items.map((m) => (
               <TR key={m.month} data-testid="month-row" data-month={m.month}>
                 <TD label={t("monthCols.month")}>
-                  <span className="font-medium">{monthLabel(m.month, locale)}</span>
+                  <span className="font-medium">{show(monthLabel(m.month, locale))}</span>
                 </TD>
                 <TD label={t("monthCols.status")}>
                   <span className="inline-flex flex-wrap gap-1">
@@ -162,7 +162,7 @@ export function WorkforceMonths({ project }: { project: Schemas["ProjectRead"] }
         {dialog ? (
           <DialogContent closeLabel={tc("close")}>
             <DialogHeader>
-              <DialogTitle>{dialog.kind === "lock" ? t("lockTitle", { month: monthLabel(dialog.month, locale) }) : t("unlockTitle", { month: monthLabel(dialog.month, locale) })}</DialogTitle>
+              <DialogTitle>{dialog.kind === "lock" ? t("lockTitle", { month: show(monthLabel(dialog.month, locale)) }) : t("unlockTitle", { month: show(monthLabel(dialog.month, locale)) })}</DialogTitle>
               <DialogDescription>{dialog.kind === "lock" ? t("lockBody") : t("unlockBody")}</DialogDescription>
             </DialogHeader>
             <FormField id="month-reason" label={tc("reason")} required={dialog.kind === "unlock"} error={reasonError}>

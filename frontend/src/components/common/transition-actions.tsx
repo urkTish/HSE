@@ -83,7 +83,7 @@ export function TransitionActions<S extends string>({
           </Button>
         ))}
       </div>
-      <Dialog open={open !== null} onOpenChange={(v) => !v && setOpen(null)}>
+      <Dialog open={open !== null} onOpenChange={(v) => !v && !busy && setOpen(null)}>
         {open ? (
           <DialogContent closeLabel={tc("close")}>
             <DialogHeader>
@@ -102,7 +102,7 @@ export function TransitionActions<S extends string>({
             </FormField>
             <MutationError error={error} />
             <DialogFooter>
-              <Button variant="outline" onClick={() => setOpen(null)}>
+              <Button variant="outline" onClick={() => setOpen(null)} disabled={busy}>
                 {tc("cancel")}
               </Button>
               <Button variant={open.destructive ? "destructive" : "default"} onClick={submit} disabled={busy} data-testid="transition-confirm">

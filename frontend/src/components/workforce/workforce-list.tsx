@@ -19,6 +19,7 @@ import { useProjectOptions } from "@/components/common/pickers";
 import { EmptyState, ErrorState, LoadingState } from "@/components/common/states";
 import { StatusBadge } from "@/components/common/status-badge";
 import { useMeData } from "@/components/shell/me-context";
+import { WorkforceAutoFill } from "@/components/workforce/workforce-auto-fill";
 import { Link } from "@/i18n/navigation";
 import { api, ApiError, unwrap, type Schemas } from "@/lib/api/client";
 import { useWorkforceReturns } from "@/lib/api/hse";
@@ -108,6 +109,7 @@ export function WorkforceList({ project }: { project: Schemas["ProjectRead"] }) 
                 </Link>
               </Button>
             ) : null}
+            {canVerify ? <WorkforceAutoFill projectId={project.id} /> : null}
             <Button variant="outline" asChild>
               <Link href="/workforce/months" data-testid="open-months">
                 <CalendarClock aria-hidden />

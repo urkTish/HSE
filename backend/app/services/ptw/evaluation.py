@@ -492,12 +492,17 @@ def evaluate_line(
     shift_end: datetime | None,
     hooks_by_role: dict[PtwCrewRole, list[tuple[HookKind, str]]],
     access: AccessSettings,
+    crew_ids: set[uuid.UUID] | None = None,
 ) -> None:
     w = db.get(Worker, line.worker_id)
     if w is None:
         return
     items: list[tuple[uuid.UUID | None, elig.Item]] = []
     seen: set[tuple[Any, ...]] = set()
+    # WA-11 analogue: the escort counts only when they are a listed member of this crew
+    escort_ok = line.escort_worker_id is not None and (
+        crew_ids is None or line.escort_worker_id in crew_ids
+    )
     for z in f.zones:
         ev = elig.evaluate(
             db,
@@ -505,7 +510,7 @@ def evaluate_line(
             z,
             at,
             EligibilityContext.ptw,
-            escort_ok=bool(line.escort_worker_id),
+            escort_ok=escort_ok,
             with_wap=False,
         )
         for it in ev.items:
@@ -788,8 +793,9 @@ def _crew_checks(
     access = acommon.settings(db, permit.project_id)
     if ctx.evaluate_crew:
         hooks = role_hooks(db, permit, f)
+        listed = {x.worker_id for x in lines if x.status == CrewLineStatus.listed}
         for line in lines:
-            evaluate_line(db, permit, f, line, ctx.at, ctx.shift_end, hooks, access)
+            evaluate_line(db, permit, f, line, ctx.at, ctx.shift_end, hooks, access, listed)
         eh = equipment_hooks(db, permit, f)
         conds: list[dict[str, Any]] = []
         for e in equipment_lines(db, permit.id):

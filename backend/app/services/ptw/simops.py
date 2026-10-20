@@ -10,8 +10,8 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import or_, select
-from sqlalchemy.orm import Session
+from sqlalchemy import and_, or_, select
+from sqlalchemy.orm import Session, aliased
 
 from app.core.clock import now
 from app.core.enums import AuditAction, Capability, EntityType, NotificationKind, ZoneType
@@ -813,6 +813,16 @@ def read(db: Session, p: Principal, conflict_id: uuid.UUID) -> SimopsConflictRea
     return conflict_read(db, _get(db, p, conflict_id))
 
 
+def _covered(g: Any, permit: Any) -> Any:
+    """`acommon.grant_covers(g, [permit.site_id], permit.engagement_id)` as SQL."""
+    conds: list[Any] = []
+    if g.site_ids is not None:
+        conds.append(permit.site_id.in_(list(g.site_ids)))
+    if g.engagement_ids is not None:
+        conds.append(permit.engagement_id.in_(list(g.engagement_ids)))
+    return and_(*conds)
+
+
 def list_conflicts(
     db: Session,
     p: Principal,
@@ -841,15 +851,19 @@ def list_conflicts(
         stmt = stmt.where(SimopsConflict.detected_at >= detected_from)
     if detected_to:
         stmt = stmt.where(SimopsConflict.detected_at < detected_to)
+    # scope and zone filters in SQL (either permit of the pair qualifies the conflict)
+    pa, pb = aliased(Permit), aliased(Permit)
+    stmt = stmt.join(pa, pa.id == SimopsConflict.permit_a_id).join(
+        pb, pb.id == SimopsConflict.permit_b_id
+    )
+    if g.site_ids is not None or g.engagement_ids is not None:
+        stmt = stmt.where(or_(_covered(g, pa), _covered(g, pb)))
+    if zone_ids:
+        stmt = stmt.where(or_(pa.zone_ids.overlap(zone_ids), pb.zone_ids.overlap(zone_ids)))
     rows = []
     for c in db.scalars(
         stmt.order_by(SimopsConflict.detected_at.desc(), SimopsConflict.conflict_no.desc())
     ):
-        a, b = db.get(Permit, c.permit_a_id), db.get(Permit, c.permit_b_id)
-        if not any(x and acommon.grant_covers(g, [x.site_id], x.engagement_id) for x in (a, b)):
-            continue
-        if zone_ids and not any(x and set(x.zone_ids) & set(zone_ids) for x in (a, b)):
-            continue
         if awaiting_me:
             if c.status != SimopsConflictStatus.open or c.result != SimopsResult.conditional:
                 continue

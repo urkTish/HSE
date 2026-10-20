@@ -254,6 +254,14 @@ function SignIn({ revoked, onDone }: { revoked: boolean; onDone: () => void }) {
 
 type Shown = { res: Res; clearAt: number | null };
 
+/**
+ * The e2e scan hooks (window.__hseGateScan / __hseCertScan) are installed only in dev builds or for an
+ * automation-driven browser (Playwright sets navigator.webdriver), never in a real user's production session.
+ */
+export function e2eHooksEnabled(): boolean {
+  return process.env.NODE_ENV !== "production" || (typeof navigator !== "undefined" && navigator.webdriver === true);
+}
+
 function Scanner({ ctx, onSessionLost }: { ctx: Ctx; onSessionLost: () => void }) {
   const t = useTranslations("gate");
   const te = useTranslations("enums");
@@ -336,7 +344,9 @@ function Scanner({ ctx, onSessionLost }: { ctx: Ctx; onSessionLost: () => void }
   useEffect(() => {
     submitRef.current = submit;
   }, [submit]);
+  // Not shipped in production builds (any page script could submit checks with the device session).
   useEffect(() => {
+    if (!e2eHooksEnabled()) return;
     const w = window as unknown as { __hseGateScan?: (payload: string) => Promise<void> };
     w.__hseGateScan = (payload: string) => submitRef.current({ payload });
     return () => {
@@ -517,7 +527,11 @@ function Scanner({ ctx, onSessionLost }: { ctx: Ctx; onSessionLost: () => void }
               setPairing(null);
               reset();
             }}
-            onHold={setHoldClear}
+            onHold={(v) => {
+              setHoldClear(v);
+              // Released after the admission dialog: restart the auto-clear from now, so "Admission recorded" is seen.
+              if (!v) setShown((s) => (s ? { ...s, clearAt: Date.now() + clearSeconds * 1000 } : s));
+            }}
             actionSlot={slot}
           />
         ) : (

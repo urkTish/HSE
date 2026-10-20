@@ -28,7 +28,7 @@ import { Code } from "@/components/access/common";
 import { DecimalInput } from "@/components/ptw/common";
 import { useMeData } from "@/components/shell/me-context";
 import { Link, useRouter } from "@/i18n/navigation";
-import { api, unwrap, type Schemas } from "@/lib/api/client";
+import { api, openSignedUrl, unwrap, type Schemas } from "@/lib/api/client";
 import {
   ck,
   useCertSettings,
@@ -661,10 +661,10 @@ function EqCertView({ project, c }: { project: S["ProjectRead"]; c: S["Equipment
     qc.setQueryData(ck.eqCert(c.id), r);
   }
   async function openScan() {
-    if (!c.scan_attachment_id) return;
+    const attachmentId = c.scan_attachment_id;
+    if (!attachmentId) return;
     try {
-      const u = await unwrap(api.POST("/api/v1/attachments/{attachment_id}/signed-url", { params: { path: { attachment_id: c.scan_attachment_id } } }));
-      window.open(u.url, "_blank", "noopener");
+      await openSignedUrl(() => unwrap(api.POST("/api/v1/attachments/{attachment_id}/signed-url", { params: { path: { attachment_id: attachmentId } } })));
     } catch (e) {
       toast.error(msg(e));
     }

@@ -23,7 +23,7 @@ from app.core.enums import (
     NotificationKind,
 )
 from app.core.errors import not_found
-from app.models import AuditEntry, RoleAssignment, User
+from app.models import AuditEntry, Observation, RoleAssignment, User
 from app.schemas.audit import AuditChainVerification, AuditEntryRead, ChangeHistoryEntry
 from app.services import audit, contractors, notify, org, projects, users
 from app.services.permissions import Principal, forbidden_error
@@ -94,14 +94,31 @@ def audit_query(
 
 def entry_reads(db: Session, p: Principal, entries: list[AuditEntry]) -> list[AuditEntryRead]:
     names = _names(db, {e.actor_user_id for e in entries})
+    # O-5: actors of entries on anonymous observations are hidden from every role but the manager.
+    hidden: set[uuid.UUID] = set()
+    if not p.is_manager:
+        obs_ids = [
+            e.entity_id for e in entries if e.entity_type == EntityType.observation and e.entity_id
+        ]
+        if obs_ids:
+            hidden = set(
+                db.scalars(
+                    select(Observation.id).where(
+                        Observation.id.in_(obs_ids), Observation.anonymous.is_(True)
+                    )
+                ).all()
+            )
     out = []
     for e in entries:
+        anon = e.entity_id in hidden
         data: dict[str, Any] = {
             "id": e.id,
             "seq": e.seq,
             "occurred_at": e.occurred_at,
-            "actor_user_id": e.actor_user_id,
-            "actor_name": names.get(e.actor_user_id) if e.actor_user_id else None,
+            "actor_user_id": None if anon else e.actor_user_id,
+            "actor_name": None
+            if anon
+            else (names.get(e.actor_user_id) if e.actor_user_id else None),
             "actor_role": e.actor_role,
             "on_behalf_project_id": e.on_behalf_project_id,
             "action": e.action,

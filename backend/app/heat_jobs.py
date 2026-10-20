@@ -14,6 +14,7 @@ Every step is de-duplicated per (subject, step) through JobMark."""
 from __future__ import annotations
 
 from datetime import datetime, timedelta
+from functools import partial
 from typing import Any
 
 from sqlalchemy import select
@@ -23,7 +24,7 @@ from app.core.clock import now
 from app.core.enums import EntityType, NotificationKind
 from app.core.heat_enums import InstrumentStatus
 from app.models import HeatInstrument, HeatSettings
-from app.services.cert.alerts import long_step
+from app.services.cert.alerts import long_step, step
 
 NK = NotificationKind
 LONG = (30, 14, 7, 0)
@@ -82,14 +83,18 @@ def heat_daily(db: Session, at: datetime | None = None) -> dict[str, Any]:
 
     at = at or now()
     d = hc.local_day(at)
-    out = {"quarantined": registers.quarantine_expired(db, d), "expired": 0, "gaps": 0}
+    out: dict[str, Any] = {"expired": 0, "gaps": 0}
+    step(db, out, "quarantined", lambda: registers.quarantine_expired(db, d))
     for pid in _projects(db):
         if not hc.cfg(db, pid).active_on(d):
             continue
-        plans.run_daily(db, pid, d)
-        out["expired"] += ban.expire(db, pid, d)
-        out["gaps"] += _coverage_gap_alert(db, pid, at)
-        heat_log.overdue_alerts(db, pid, at)
+        per: dict[str, Any] = {}
+        step(db, per, "plans", partial(plans.run_daily, db, pid, d))
+        step(db, per, "expired", partial(ban.expire, db, pid, d))
+        step(db, per, "gaps", partial(_coverage_gap_alert, db, pid, at))
+        step(db, per, "overdue", partial(heat_log.overdue_alerts, db, pid, at))
+        out["expired"] += per["expired"] or 0
+        out["gaps"] += per["gaps"] or 0
     db.flush()
     return out
 

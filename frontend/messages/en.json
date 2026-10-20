@@ -104,7 +104,8 @@
     "year": "Year",
     "notAllowed": "Not available to your role",
     "aiLabel": "AI-generated — to be reviewed by a competent person",
-    "add": "Add"
+    "add": "Add",
+    "downloadRestricted": "Opening this file needs the ID-reveal permission."
   },
   "export": {
     "label": "Export",
@@ -244,7 +245,10 @@
     "reportsExports": "Reports and exports",
     "rpPacks": "Report packs",
     "xpExports": "Exports",
-    "siteVehicles": "Site vehicles"
+    "siteVehicles": "Site vehicles",
+    "investigations": "Investigation reports",
+    "hseTeam": "HSE team",
+    "deletedItems": "Deleted items"
   },
   "shell": {
     "projectSwitcher": "Project",
@@ -361,7 +365,7 @@
       "planned_end_date": "Planned end date",
       "status": "Status",
       "status_reason": "Status reason",
-      "airport_icao": "Airport code (ICAO)"
+      "airport_iata": "Airport code (IATA)"
     },
     "status": {
       "planning": "Planning",
@@ -384,8 +388,20 @@
       "start_date": "Start date (oldest)",
       "-start_date": "Start date (newest)"
     },
-    "codeHint": "3–12 upper-case letters, digits or hyphens, e.g. ANIA-EXP.",
-    "icaoHint": "4 upper-case letters; Saudi airports start with OE."
+    "codeHint": "Up to 12 characters, e.g. ANIA-EXP. It starts every reference number and cannot be changed later.",
+    "delete": {
+      "title": "Delete project",
+      "body": "Permanently removes this project and everything recorded under it. Only you can see this.",
+      "button": "Delete project",
+      "dialogTitle": "Delete {code} permanently?",
+      "dialogBody": "Its sites, zones, permits, incidents, inspections, workers, training and every other record in it are removed for good.",
+      "warning": "This cannot be undone. To keep the records, close the project instead.",
+      "typeCode": "Type {code} to confirm",
+      "confirm": "Delete permanently",
+      "deleting": "Deleting…",
+      "done": "Project {code} deleted."
+    },
+    "iataHint": "Optional. 3 letters, e.g. RUH or JED."
   },
   "settings": {
     "title": "Project settings",
@@ -471,7 +487,8 @@
       "zone_type": "Zone type",
       "status": "Status",
       "status_reason": "Status reason",
-      "airside_area": "Airside area type"
+      "airside_area": "Airside area type",
+      "category": "Zone category"
     },
     "type": {
       "airside": "Airside",
@@ -512,7 +529,8 @@
       "other_airside": "Other airside"
     },
     "typeHintNonAirport": "Non-airport projects use zone type “Other”.",
-    "archivedNote": "Archived zones cannot receive new records."
+    "archivedNote": "Archived zones cannot receive new records.",
+    "categoryHint": "You can add or rename categories under Reference lists → Zone categories."
   },
   "contractor": {
     "title": "Contractors",
@@ -986,14 +1004,13 @@
     "required": "This field is required.",
     "email": "Enter a valid email address.",
     "maxLength": "Use at most {max} characters.",
-    "projectCode": "Use 3–12 upper-case letters, digits or hyphens.",
+    "projectCode": "Use 1–12 characters.",
     "siteCode": "Use 1–12 letters, digits or hyphens.",
     "zoneCode": "Use 1–16 letters, digits or hyphens.",
     "shortCode": "Use 2–10 upper-case letters or digits.",
     "arabicRequired": "Must contain Arabic text.",
     "endBeforeStart": "Must be on or after the start date.",
-    "icao": "Use 4 upper-case letters (e.g. OEXX).",
-    "icaoRequired": "Required for airport projects.",
+    "iata": "Use 3 letters (e.g. RUH).",
     "crNumber": "Enter 10 digits starting with 1, 2, 4, 5 or 7.",
     "vatNumber": "Enter 15 digits starting and ending with 3.",
     "mobile": "Use international format, e.g. +966500000000.",
@@ -1570,7 +1587,8 @@
     },
     "workforceSource": {
       "manual": "Manual",
-      "import": "Import"
+      "import": "Import",
+      "auto": "Automatic"
     },
     "tierClass": {
       "direct": "Direct",
@@ -2117,7 +2135,9 @@
       "rp_pack_file": "Report pack file",
       "xp_export_file": "Export file",
       "sc_remark_file": "Scorecard comment file",
-      "incident_accident_report": "Accident report (Najm / police)"
+      "incident_accident_report": "Accident report (Najm / police)",
+      "worker_id_copy": "Iqama / ID photo",
+      "vehicle_registration": "Istimara photo"
     },
     "workerIdType": {
       "iqama": "Iqama",
@@ -2208,7 +2228,9 @@
     "delivererRole": {
       "hse_manager": "HSE Manager",
       "hse_officer": "HSE Officer",
-      "contractor_hse_rep": "Contractor HSE Rep"
+      "contractor_hse_rep": "Contractor HSE Rep",
+      "hse_engineer": "HSE Engineer",
+      "hse_supervisor": "HSE Supervisor"
     },
     "areaCategory": {
       "apron": "Apron",
@@ -5400,7 +5422,9 @@
       "tier_class": "Direct / sub",
       "created_by": "Entered by",
       "verified_by": "Verified by",
-      "verified_at": "Verified at"
+      "verified_at": "Verified at",
+      "absent_count": "Absent (people)",
+      "overtime_hours": "Overtime (hours)"
     },
     "actions": {
       "submit": "Submit",
@@ -5428,7 +5452,15 @@
     "unlockBody": "Changes after unlocking mark this month as restated in every KPI.",
     "locked": "Month locked",
     "unlocked": "Month unlocked",
-    "restatedBadge": "Restated"
+    "restatedBadge": "Restated",
+    "autoHoursHint": "Automatic: people at work × standard hours − absence + overtime.",
+    "autoFill": "Fill automatically",
+    "autoFillTitle": "Fill daily returns automatically",
+    "autoFillBody": "People come from gate entries when the gates were used that day, otherwise from the deployment roster. Each person counts the standard hours from HSE settings. Rows you typed or imported are never overwritten. Afterwards, open a row to add absence or overtime.",
+    "autoFillFrom": "From",
+    "autoFillTo": "To",
+    "autoFillRun": "Fill",
+    "autoFillDone": "{created} added, {updated} refreshed, {skipped} left as typed"
   },
   "imports": {
     "title": "Import workforce returns",
@@ -5688,8 +5720,30 @@
       "submitted_at": "Submitted",
       "approved": "Approved",
       "code": "Code",
-      "text": "Description"
-    }
+      "text": "Description",
+      "ptws": "Linked permits"
+    },
+    "print": "Print report",
+    "incidentDetails": "Incident details",
+    "peopleInvolved": "People involved",
+    "idHint": "Open a person to see their ID / Iqama number. Each injured worker's ID is needed before the report can be submitted.",
+    "photos": "Pictures",
+    "photosHint": "At least one picture is needed before the report can be submitted.",
+    "capa": "Corrective and preventive actions (CAPA)",
+    "missingId": "ID / Iqama number of each injured worker",
+    "missingPhotos": "At least one picture",
+    "submitTitle": "Submit the report",
+    "submitBody": "When the report is complete, send it to the HSE Manager for approval.",
+    "submitForApproval": "Submit for approval",
+    "approvalTitle": "Approve the report",
+    "approvalBody": "Check the report. Approve it, or return it with a comment for changes.",
+    "approve": "Approve → {status}",
+    "returnForChanges": "Return for changes",
+    "levelWithMin": "{level} (minimum {min})",
+    "notStartedBody": "The investigation has not started yet (minimum level {level}). Assign it from the incident:",
+    "ptwIdsHint": "Permits that were issued, active or suspended in the incident's zone when it occurred. Linking one marks the permit to work as involved.",
+    "ptwRefLocked": "Read-only while permits are linked.",
+    "noPermitSuggestions": "No permit was live in this zone at the time of the incident."
   },
   "observations": {
     "title": "Safety observations",
@@ -5729,7 +5783,8 @@
       "ref": "Ref",
       "closure_comment": "Closure comment",
       "closed_at": "Closed at"
-    }
+    },
+    "photosFailed": "The observation was saved, but a photo did not upload. Add it from the observation page."
   },
   "inspections": {
     "title": "Inspections",
@@ -5919,7 +5974,10 @@
       "approver_organisation": "Organisation",
       "reference": "Reference",
       "notes": "Notes",
-      "training_register_from": "Training register from"
+      "training_register_from": "Training register from",
+      "auto_man_hours": "Fill daily returns automatically",
+      "standard_hours_per_person_day": "Standard hours per person per day",
+      "rest_days": "Rest days (no automatic returns unless gates are used)"
     },
     "lower": "Lower",
     "higher": "Higher",
@@ -5966,8 +6024,10 @@
       "training_course_category": "Course categories",
       "training_accreditation_body": "Accreditation / awarding bodies",
       "training_matrix_role": "Matrix roles",
-      "training_session_void_reason": "Session void reasons"
-    }
+      "training_session_void_reason": "Session void reasons",
+      "zone_category": "Zone categories"
+    },
+    "addItem": "Add item"
   },
   "aiLogs": {
     "title": "AI assistant log",
@@ -6315,7 +6375,8 @@
       "status": "Status",
       "user": "Linked user",
       "engagement": "Contractor",
-      "photo": "Photo"
+      "photo": "Photo",
+      "id_copy": "Iqama / ID photo"
     },
     "iso2": "Two-letter code (e.g. IN)",
     "iso2Hint": "Use the two-letter ISO country code.",
@@ -6385,7 +6446,11 @@
     "min10": "At least 10 characters.",
     "revealConfirm": "Show number",
     "noPhoto": "No photo",
-    "editTitle": "Edit worker"
+    "editTitle": "Edit worker",
+    "idCopyHint": "Photo or scan of the Iqama or ID card (JPEG, PNG or PDF).",
+    "idCopyMissing": "No Iqama / ID photo on file yet. Upload it here.",
+    "idCopyRestricted": "Only people allowed to see full ID numbers can open this photo.",
+    "idCopyUploadFailed": "The worker was saved, but the Iqama photo did not upload. Add it on the worker's page."
   },
   "inductions": {
     "records": "Induction records",
@@ -6927,8 +6992,12 @@
       "inspector": "Inspector",
       "inspection_result": "Inspection result",
       "issued_on": "Issued on",
-      "own_valid_until": "Valid until (permit)"
-    }
+      "own_valid_until": "Valid until (permit)",
+      "istimara_photo": "Istimara (registration) photo"
+    },
+    "istimaraHint": "Photo or scan of the vehicle registration card (JPEG, PNG or PDF).",
+    "istimaraMissing": "No Istimara photo on file yet. Upload it here.",
+    "istimaraUploadFailed": "The vehicle was saved, but the Istimara photo did not upload. Add it on the vehicle's page."
   },
   "notams": {
     "title": "NOTAM works requests",
@@ -6977,16 +7046,16 @@
       "works_impact": "Works impact",
       "description_en": "Description (English)",
       "description_ar": "Description (Arabic)",
-      "requested_start_utc": "Requested start (UTC)",
-      "requested_end_utc": "Requested end (UTC)",
+      "requested_start_utc": "Requested start (Riyadh time)",
+      "requested_end_utc": "Requested end (Riyadh time)",
       "schedule_text": "Schedule (item D)",
       "required_lead_days": "Lead time (days)",
       "submitted_to_ops_at": "Sent to Airport Ops",
       "late_justification": "Why late",
       "notam_number": "NOTAM no.",
       "notam_type": "NOTAM type",
-      "effective_from_utc": "Effective from (UTC)",
-      "effective_to_utc": "Effective to (UTC)",
+      "effective_from_utc": "Effective from (Riyadh time)",
+      "effective_to_utc": "Effective to (Riyadh time)",
       "item_e_text": "Item E text",
       "requested_by": "Requested by"
     }
@@ -11614,7 +11683,9 @@
       "revoke": "Revoke",
       "revokeTitle": "Revoke {device}",
       "revokeHint": "The reader stops working at once.",
-      "revoked": "Revoked"
+      "revoked": "Revoked",
+      "tokenTitle": "Reader {device} registered",
+      "tokenDone": "I have copied the token"
     },
     "settings": {
       "title": "Emergency settings",
@@ -14859,7 +14930,8 @@
       "idleFrom": "Off-hire from",
       "idleTo": "Off-hire to",
       "idleHint": "Idle days need no pre-use check.",
-      "docsResetHint": "Changing a document date resets the HSE Officer's verification."
+      "docsResetHint": "Changing a document date resets the HSE Officer's verification.",
+      "plateDigitsHint": "1 to 4 digits."
     },
     "auth": {
       "title": "Driver & operator authorisations",
@@ -15105,6 +15177,76 @@
     "form": {
       "answered": "{done} of {total} items answered",
       "defects": "defects: {n}"
+    }
+  },
+  "investigations": {
+    "title": "Investigation reports",
+    "subtitle": "Every registered incident gets an investigation report. Officers complete and submit it; the HSE Manager approves it before it counts.",
+    "bucket": {
+      "pending": "To complete",
+      "approval": "Waiting for approval",
+      "approved": "Approved"
+    },
+    "empty": {
+      "pending": "No reports to complete.",
+      "approval": "Nothing is waiting for approval.",
+      "approved": "No approved reports yet."
+    },
+    "cols": {
+      "ref": "Incident",
+      "occurred": "Date",
+      "title": "Title",
+      "contractor": "Contractor",
+      "level": "Level",
+      "due": "Due",
+      "status": "Status"
+    },
+    "overdue": "Overdue",
+    "notStarted": "Not started"
+  },
+  "hseTeam": {
+    "title": "HSE team",
+    "subtitle": "Who is in the HSE department and who reports to whom. Reports from your team come to you for approval.",
+    "empty": "No HSE staff yet. Give people an HSE role in Users & roles first.",
+    "edit": "Edit",
+    "noPosition": "No position set",
+    "top": "Nobody (top of the team)",
+    "fields": {
+      "position": "HSE position",
+      "reportsTo": "Reports to"
+    },
+    "position": {
+      "hse_manager": "HSE Manager",
+      "hse_engineer": "HSE Engineer",
+      "hse_supervisor": "HSE Supervisor",
+      "hse_officer": "HSE Officer",
+      "hse_inspector": "HSE Inspector",
+      "other": "Other"
+    }
+  },
+  "deleteRecord": {
+    "button": "Delete",
+    "title": "Delete this record?",
+    "body": "The record and everything that belongs to it are removed. A copy is kept under Deleted items so the delete stays traceable.",
+    "warning": "Other screens will no longer show it. This cannot be undone from the app.",
+    "confirm": "Delete",
+    "deleting": "Deleting…",
+    "done": "Deleted. A copy is kept under Deleted items."
+  },
+  "deletedItems": {
+    "title": "Deleted items",
+    "subtitle": "Everything you deleted as administrator: what, when, why, and a copy of the removed data.",
+    "empty": "Nothing has been deleted.",
+    "show": "Show",
+    "hide": "Hide",
+    "byTable": "Rows removed per table",
+    "copies": "Copy of the removed data",
+    "cols": {
+      "when": "Deleted",
+      "what": "Record",
+      "by": "By",
+      "reason": "Reason",
+      "rows": "Rows"
     }
   }
 }

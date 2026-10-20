@@ -2,6 +2,7 @@
 
 import uuid
 from typing import Annotated
+from urllib.parse import quote
 
 from fastapi import APIRouter, File, Form, Query, Response, UploadFile, status
 
@@ -92,10 +93,16 @@ def download_attachment(
     signature: Annotated[str, Query(max_length=128)],
 ) -> Response:
     content, media_type, name = svc.download(db, attachment_id, expires, signature)
+    # Headers are Latin-1: Arabic names go in the RFC 5987 parameter, with an ASCII fallback.
+    safe = "".join(ch for ch in name if 32 <= ord(ch) < 127 and ch not in '";\\') or "file"
     return Response(
         content=content,
         media_type=media_type,
-        headers={"Content-Disposition": f'attachment; filename="{name}"'},
+        headers={
+            "Content-Disposition": (
+                f'attachment; filename="{safe}"; ' + "filename*=UTF-8''" + quote(name)
+            )
+        },
     )
 
 

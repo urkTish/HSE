@@ -54,6 +54,8 @@ export function WorkforceForm({ project, ret }: { project: Schemas["ProjectRead"
           toolbox_attendees: z.string().regex(INT, tv("number")),
           inductions: z.string().regex(INT, tv("number")),
           training_hours: z.string().regex(DEC, tv("number")),
+          absent_count: z.string().regex(INT, tv("number")),
+          overtime_hours: z.string().regex(DEC, tv("number")),
           remarks: z.string().max(500, tv("maxLength", { max: 500 })),
         })
         .refine((v) => !v.no_work || (Number(v.headcount) === 0 && Number(v.man_hours) === 0), { message: t("noWorkHint"), path: ["no_work"] }),
@@ -75,6 +77,8 @@ export function WorkforceForm({ project, ret }: { project: Schemas["ProjectRead"
       toolbox_attendees: String(ret?.toolbox_attendees ?? 0),
       inductions: String(ret?.inductions ?? 0),
       training_hours: ret?.training_hours ?? "0",
+      absent_count: String(ret?.absent_count ?? 0),
+      overtime_hours: ret?.overtime_hours ?? "0",
       remarks: ret?.remarks ?? "",
     },
   });
@@ -83,6 +87,8 @@ export function WorkforceForm({ project, ret }: { project: Schemas["ProjectRead"
   const remarks = useWatch({ control: form.control, name: "remarks" });
   const zones = opts.zones.filter((z) => z.siteId === siteId);
   const engagements = opts.engagements.filter((e) => !siteId || e.siteIds.includes(siteId));
+  // D-268: automatic rows take people and hours from the platform; only absence and overtime are typed.
+  const auto = ret?.source === "auto";
 
   async function save(v: Values, submit: boolean) {
     setError(null);
@@ -98,9 +104,18 @@ export function WorkforceForm({ project, ret }: { project: Schemas["ProjectRead"
       training_hours: v.training_hours,
       remarks: v.remarks.trim() || null,
     };
+    const autoBody = {
+      absent_count: Number(v.absent_count),
+      overtime_hours: v.overtime_hours,
+      toolbox_talks: common.toolbox_talks,
+      toolbox_attendees: common.toolbox_attendees,
+      inductions: common.inductions,
+      training_hours: common.training_hours,
+      remarks: common.remarks,
+    };
     try {
       const saved = ret
-        ? await unwrap(api.PATCH("/api/v1/workforce-returns/{return_id}", { params: { path: { return_id: ret.id } }, body: common }))
+        ? await unwrap(api.PATCH("/api/v1/workforce-returns/{return_id}", { params: { path: { return_id: ret.id } }, body: auto ? autoBody : common }))
         : await unwrap(
             api.POST("/api/v1/projects/{project_id}/workforce-returns", {
               params: { path: { project_id: project.id } },
@@ -125,7 +140,7 @@ export function WorkforceForm({ project, ret }: { project: Schemas["ProjectRead"
           <Input type="date" max={todayInZone()} disabled={Boolean(ret)} {...form.register("work_date")} />
         </FormField>
         <FormField id="shift" label={t("fields.shift")} error={errors.shift?.message} required>
-          <Select {...form.register("shift")}>
+          <Select disabled={auto} {...form.register("shift")}>
             {SHIFTS.map((s) => (
               <option key={s} value={s}>
                 {te(`shift.${s}`)}
@@ -144,7 +159,7 @@ export function WorkforceForm({ project, ret }: { project: Schemas["ProjectRead"
           </Select>
         </FormField>
         <FormField id="zone_id" label={t("fields.zone")} error={errors.zone_id?.message}>
-          <Select {...form.register("zone_id")}>
+          <Select disabled={auto} {...form.register("zone_id")}>
             <option value="">{tc("noZone")}</option>
             {zones.map((z) => (
               <option key={z.value} value={z.value}>
@@ -164,14 +179,24 @@ export function WorkforceForm({ project, ret }: { project: Schemas["ProjectRead"
           </Select>
         </FormField>
         <CheckboxField id="no_work" label={`${t("fields.no_work")} — ${t("noWorkHint")}`} error={errors.no_work?.message}>
-          <Checkbox {...form.register("no_work")} />
+          <Checkbox disabled={auto} {...form.register("no_work")} />
         </CheckboxField>
         <FormField id="headcount" label={t("fields.headcount")} error={errors.headcount?.message} required>
-          <Input inputMode="numeric" className="ltr" {...form.register("headcount")} />
+          <Input inputMode="numeric" className="ltr" disabled={auto} {...form.register("headcount")} />
         </FormField>
-        <FormField id="man_hours" label={t("fields.man_hours")} error={errors.man_hours?.message} hint={t("manHoursHint")} required>
-          <Input inputMode="decimal" className="ltr" {...form.register("man_hours")} />
+        <FormField id="man_hours" label={t("fields.man_hours")} error={errors.man_hours?.message} hint={auto ? t("autoHoursHint") : t("manHoursHint")} required>
+          <Input inputMode="decimal" className="ltr" disabled={auto} {...form.register("man_hours")} />
         </FormField>
+        {auto ? (
+          <>
+            <FormField id="absent_count" label={t("fields.absent_count")} error={errors.absent_count?.message}>
+              <Input inputMode="numeric" className="ltr" {...form.register("absent_count")} data-testid="absent-count" />
+            </FormField>
+            <FormField id="overtime_hours" label={t("fields.overtime_hours")} error={errors.overtime_hours?.message}>
+              <Input inputMode="decimal" className="ltr" {...form.register("overtime_hours")} data-testid="overtime-hours" />
+            </FormField>
+          </>
+        ) : null}
         <FormField id="toolbox_talks" label={t("fields.toolbox_talks")} error={errors.toolbox_talks?.message}>
           <Input inputMode="numeric" className="ltr" {...form.register("toolbox_talks")} />
         </FormField>

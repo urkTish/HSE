@@ -83,11 +83,10 @@ def training_daily(db: Session, at: datetime | None = None) -> dict[str, Any]:
 
     at = at or now()
     d = acommon.local_day(at)
-    out = {
-        "training_records_expired": records.expiry_job(db, d),
-        "trainer_authorisations_expired": _ta_expiry(db, d),
-        "training_scans_deleted": records.scan_retention_job(db, d),
-    }
+    out: dict[str, Any] = {}
+    alerts.step(db, out, "training_records_expired", lambda: records.expiry_job(db, d))
+    alerts.step(db, out, "trainer_authorisations_expired", lambda: _ta_expiry(db, d))
+    alerts.step(db, out, "training_scans_deleted", lambda: records.scan_retention_job(db, d))
     db.flush()
     return out
 

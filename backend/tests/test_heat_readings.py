@@ -143,3 +143,33 @@ def test_AC9_AC10_manual_entry(api: Api, db: Session) -> None:
     assert res.status_code == 201, res.text
     assert res.json()["late_entry"] is True
     assert notified(db, "heat_regime_raised", since) == {}
+
+
+# ---- review fixes (phases 4-7 backend review) ----------------------------------------------------
+
+
+def test_review17_station_token_exp_and_backfill(api: Api, db: Session) -> None:
+    """The station JWT expires on the wall clock (not the demo clock); readings older than 24 h
+    are refused at ingest."""
+    from datetime import UTC, timedelta
+
+    import jwt
+
+    ins = instrument(db, "HSM-ANIA-EXP-01")
+    faisal = api.as_("faisal.harbi")
+    body = {"device_id": "DEV-WS-ANIA-03", "label": "Third station"}
+    res = faisal.post(f"{API}/heat-instruments/{ins.id}/devices", json=body)
+    assert res.status_code == 201, res.text
+    s = api.anon.post(
+        f"{API}/heat/station-session", json={"device_token": res.json()["device_token"]}
+    )
+    assert s.status_code in (200, 201), s.text
+    exp = jwt.decode(s.json()["access_token"], options={"verify_signature": False})["exp"]
+    assert exp > (datetime.now(UTC) + timedelta(days=29)).timestamp()
+    h = {"Authorization": f"Bearer {s.json()['access_token']}"}
+    old = {"measured_at": local(2026, 10, 4, 9, 0).isoformat(), "wbgt_entered_c": "27.7"}
+    r = api.anon.post(f"{API}/heat/station-readings", json=old, headers=h)
+    assert r.status_code == 422, r.text
+    fresh = {"measured_at": local(2026, 10, 6, 9, 50).isoformat(), "wbgt_entered_c": "27.7"}
+    assert api.anon.post(f"{API}/heat/station-readings", json=fresh, headers=h).status_code in (
+        200, 201)  # fmt: skip

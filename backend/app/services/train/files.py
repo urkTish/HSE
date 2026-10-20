@@ -120,8 +120,12 @@ def owner(
             raise not_found("Training session")
         if write:
             _session_writer(db, p, s)
-        elif p.grant(s.project_id, C.training_record_view) is None:
-            raise forbidden_error()
+        elif (
+            p.grant(s.project_id, C.training_record_view) is None
+            or p.grant(s.project_id, C.worker_view) is None
+        ):
+            # the sheet carries the workers' names and signatures (P5-3): 46 as for signatures
+            raise forbidden_error("Attendance sheets need capability 46.")
         return s.project_id, s.status in OPEN_SESSION
     if owner_type == A.training_attendance_signature:
         n = db.get(TrainingNomination, owner_id)

@@ -92,15 +92,27 @@ class PermitHeat:
         )
 
 
-def permit_heat(db: Session, permit: Permit, at: datetime) -> PermitHeat:
+def permit_heat(
+    db: Session,
+    permit: Permit,
+    at: datetime,
+    states: dict[uuid.UUID, state.ZState] | None = None,
+) -> PermitHeat:
+    """`states`: an optional per-tick zone-state cache shared across permits (heat_minute)."""
     cfg = hc.cfg(db, permit.project_id)
     t = hc.table(db)
     zmap = hc.zone_map(db, permit.project_id)
-    zones = [
-        (zmap[z], state.zone_state(db, permit.project_id, z, at))
-        for z in permit.zone_ids or []
-        if z in zmap
-    ]
+    zones = []
+    for z in permit.zone_ids or []:
+        if z not in zmap:
+            continue
+        if states is None:
+            zs = state.zone_state(db, permit.project_id, z, at)
+        elif z in states:
+            zs = states[z]
+        else:
+            zs = states[z] = state.zone_state(db, permit.project_id, z, at)
+        zones.append((zmap[z], zs))
     ph = PermitHeat(zones, Regime.unknown)
     ph.regime = ph.worst(
         AB.acclimatised, workload(permit), clothing(permit), permit.heat_hood, t, cfg.offset
@@ -305,8 +317,25 @@ def heat_resume(db: Session, p: Any, permit_id: uuid.UUID, body: Any) -> PermitR
 # ---- job: SH-2 within 60 s -----------------------------------------------------------------------
 
 
+BACKSTOP_MINUTES = 5  # every permit is re-evaluated at least this often regardless
+
+
+def _stored_heat(pm: Permit) -> tuple[bool, str]:
+    """(HEAT_STOP stored, regime of the stored HEAT_REGIME warning) from the last evaluation."""
+    stop = any(b.get("code") == B.HEAT_STOP.value for b in pm.blockers or [])
+    regime = next(
+        ((w.get("detail") or "").split(" ", 1)[0] for w in pm.warnings or []
+         if w.get("code") == W.HEAT_REGIME.value),
+        "",
+    )  # fmt: skip
+    return stop, regime
+
+
 def refresh_outdoor(db: Session, project_id: uuid.UUID, at: datetime) -> int:
-    """heat_minute: re-evaluate Active / Issued outdoor permits so HEAT_STOP suspends them."""
+    """heat_minute: re-evaluate Active outdoor permits so HEAT_STOP suspends them within 60 s
+    (SH-2). The zone state is computed once per zone per tick and a permit is only re-evaluated
+    when its heat outcome (stop / regime) differs from the stored one, or on the backstop
+    minute. Returns the number of permits re-evaluated."""
     from sqlalchemy import select  # noqa: PLC0415
 
     from app.services.ptw import evaluation  # noqa: PLC0415
@@ -314,14 +343,23 @@ def refresh_outdoor(db: Session, project_id: uuid.UUID, at: datetime) -> int:
     cfg = hc.cfg(db, project_id)
     if not cfg.enforced_on(hc.local_day(at)):
         return 0
+    states: dict[uuid.UUID, state.ZState] = {}
+    backstop = at.minute % BACKSTOP_MINUTES == 0  # Riyadh is a whole-hour offset
     n = 0
-    for pm in db.scalars(
-        select(Permit).where(
-            Permit.project_id == project_id,
-            Permit.status == PermitStatus.active,
-            Permit.exposure.in_(OUTDOOR),
+    for pm in list(
+        db.scalars(
+            select(Permit).where(
+                Permit.project_id == project_id,
+                Permit.status == PermitStatus.active,
+                Permit.exposure.in_(OUTDOOR),
+            )
         )
     ):
+        ph = permit_heat(db, pm, at, states)
+        stop = ph.regime == Regime.R4
+        regime = "" if ph.regime in (Regime.R4, Regime.unknown) else ph.regime.value
+        if not backstop and (stop, regime) == _stored_heat(pm):
+            continue
         evaluation.refresh(db, pm, run_simops=False, at=at, evaluate_crew=False)
         n += 1
     return n

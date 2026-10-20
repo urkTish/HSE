@@ -1,4 +1,5 @@
 "use client";
+import { useCallback } from "react";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, unwrap } from "./client";
 import type { QueryOf } from "./queries";
@@ -39,9 +40,12 @@ export const FU_PREFIXES = [
 
 export function useFuRefresh() {
   const qc = useQueryClient();
-  return async () => {
-    await Promise.all(FU_PREFIXES.map((k) => qc.invalidateQueries({ queryKey: [k] })));
-  };
+  return useCallback(
+    async () => {
+      await Promise.all(FU_PREFIXES.map((k) => qc.invalidateQueries({ queryKey: [k] })));
+    },
+    [qc],
+  );
 }
 
 const list = { placeholderData: keepPreviousData };

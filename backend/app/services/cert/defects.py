@@ -97,6 +97,11 @@ def _get(db: Session, p: Principal, defect_id: uuid.UUID) -> EquipmentDefect:
     return d
 
 
+def get_visible(db: Session, p: Principal, defect_id: uuid.UUID) -> EquipmentDefect:
+    """The defect when the caller's register grant covers its subject, else 404."""
+    return _get(db, p, defect_id)
+
+
 def _require(db: Session, p: Principal, d: EquipmentDefect, cap: Capability) -> None:
     eng, sites = _subject_scope(db, d)
     cc.require(p, d.project_id, cap, eng, sites)

@@ -17,7 +17,7 @@ import { RecordActions } from "@/components/common/record-actions";
 import { ErrorState, LoadingState, MutationError } from "@/components/common/states";
 import { StackedDate } from "@/components/medical/common";
 import { Link } from "@/i18n/navigation";
-import { api, unwrap, type Schemas } from "@/lib/api/client";
+import { api, openSignedUrl, unwrap, type Schemas } from "@/lib/api/client";
 import { useFuPack, useFuRefresh, useFuRequirements } from "@/lib/api/followup";
 import { useLocalizedName } from "@/lib/i18n-helpers";
 import { useRefLists } from "@/lib/reference";
@@ -91,8 +91,7 @@ export function PackPage({ id }: { id: string }) {
   }
   async function download() {
     try {
-      const u = await unwrap(api.GET("/api/v1/notification-packs/{pack_id}/file-url", { params: { path: { pack_id: pk!.id } } }));
-      window.open(u.url, "_blank", "noopener");
+      await openSignedUrl(() => unwrap(api.GET("/api/v1/notification-packs/{pack_id}/file-url", { params: { path: { pack_id: pk!.id } } })));
     } catch (e) {
       setError(e);
     }

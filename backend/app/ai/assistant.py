@@ -93,6 +93,7 @@ def questions_used_today(db: Session, user_id: uuid.UUID, project: Project) -> i
                 AiLog.user_id == user_id,
                 AiLog.kind == "ask",
                 AiLog.cached.is_(False),
+                AiLog.error_code.is_(None),
                 AiLog.created_at >= day_start_utc(project),
             )
         )

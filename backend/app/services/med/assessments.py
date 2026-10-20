@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Any
 
-from sqlalchemy import or_, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.access_enums import WorkerIdType
@@ -105,7 +105,9 @@ def _visible(db: Session, p: Principal, a: FitnessAssessment) -> int:
     dep = _dep(db, a)
     t = common.tier(p, a.project_id, dep)
     involved = p.user.id in (a.recorded_by_user_id, a.submitted_by_user_id, a.signed_by_user_id)
-    if t < 2 and not involved:
+    # Being the recorder / submitter / signer lifts tier 1 to 2 on the own record; it does not
+    # outlive a revoked or moved role (tier 0).
+    if t < 2 and not (involved and t >= 1):
         raise deny(db, p, EntityType.fitness_assessment, a.id, a.project_id, "Fitness assessment")
     return max(t, 2)
 
@@ -280,6 +282,10 @@ def list_assessments(
         stmt = stmt.where(
             FitnessAssessment.engagement_id.in_(g.engagement_ids or {uuid.UUID(int=0)})
         )
+    if g.site_ids is not None:  # S scope in SQL so that `total` and the pages agree
+        stmt = stmt.where(
+            FitnessAssessment.worker_id.in_(common.site_workers(project_id, g.site_ids))
+        )
     if q:
         sub = select(Worker.id).where(Worker.worker_no.ilike(f"%{q}%"))
         stmt = stmt.where(
@@ -309,9 +315,10 @@ def list_assessments(
     items = []
     for a in rows:
         dep = _dep(db, a)
-        if g.site_ids is not None and not common.covers_dep(g, dep):
+        t = common.tier(p, project_id, dep)
+        if t < 2:  # the current deployment moved out of the sites since
             continue
-        items.append(read_model(db, p, a, common.tier(p, project_id, dep), audit_read=False))
+        items.append(read_model(db, p, a, t, audit_read=False))
     common.sensitive_read(
         db, p, EntityType.fitness_assessment, None, project_id, ["outcome", "restrictions"]
     )
@@ -1281,6 +1288,21 @@ def verify(
             "استخدم بوابة العيادة أو بريدها أو هاتفها المسجل.",
         )
     at = body.performed_at or now()
+    if body.performed_at is not None:
+        # FV-4: the 24 h "no response" clock runs on recorded attempts, not on a typed time
+        last = db.scalar(
+            select(func.max(FitnessVerification.performed_at)).where(
+                FitnessVerification.assessment_id == a.id
+            )
+        )
+        floor = max(t for t in (a.submitted_at, last) if t is not None) if (
+            a.submitted_at or last
+        ) else None  # fmt: skip
+        if at > now() or (floor is not None and at < floor):
+            raise validation_error(
+                "performed_at",
+                "performed_at must be between the previous verification step and now.",
+            )
     before = common.snap(a)
     after = a.verification_status
     counts = False
@@ -1396,3 +1418,112 @@ def scan_url(
 
 def is_oh_role(roles: set[Role]) -> bool:
     return Role.oh_practitioner in roles
+
+
+# ---- retention (P6-8) ----------------------------------------------------------------------------
+
+TEXT_RETENTION_YEARS = 2  # P6-8: referral notes and hold reason texts after closure
+
+
+def scan_retention_job(db: Session, at: datetime | None = None) -> int:
+    """P6-8: the scan of an Accepted / Rejected / Revoked assessment is deleted
+    `fitness_scan_retention_months` after the status change; the record stays. Each deletion
+    is audited `retention_purge`."""
+    at = at or now()
+    n = 0
+    uploaded = select(Attachment.owner_id).where(
+        Attachment.owner_type == AttachmentOwner.fitness_scan
+    )  # scans uploaded but not yet linked to the row (`scan_id`)
+    for a in list(
+        db.scalars(
+            select(FitnessAssessment).where(
+                FitnessAssessment.status.in_([S.accepted, S.rejected, S.revoked]),
+                or_(
+                    FitnessAssessment.scan_attachment_id.is_not(None),
+                    FitnessAssessment.id.in_(uploaded),
+                ),
+                FitnessAssessment.scan_deleted_at.is_(None),
+                FitnessAssessment.status_changed_at.is_not(None),
+            )
+        )
+    ):
+        months = common.settings(db, a.project_id).fitness_scan_retention_months
+        assert a.status_changed_at is not None  # noqa: S101
+        if common.local_day(at) < common.add_months(common.local_day(a.status_changed_at), months):
+            continue
+        if scan_id(db, a) is None:
+            continue
+        _delete_scan(db, a, "retention")
+        n += 1
+    db.flush()
+    return n
+
+
+def text_retention_job(db: Session, at: datetime | None = None) -> int:
+    """P6-8: encrypted referral notes and hold reason / cancel texts are erased two years after
+    the hold or referral closed; codes, dates and statuses stay for statistics."""
+    at = at or now()
+    cutoff = at - timedelta(days=365 * TEXT_RETENTION_YEARS)
+    n = 0
+    for h in list(
+        db.scalars(
+            select(FitnessHold).where(
+                FitnessHold.status.in_([HoldStatus.released, HoldStatus.cancelled]),
+                or_(
+                    FitnessHold.reason_text_enc.is_not(None),
+                    FitnessHold.cancel_reason_enc.is_not(None),
+                ),
+                func.coalesce(FitnessHold.released_at, FitnessHold.cancelled_at) < cutoff,
+            )
+        )
+    ):
+        h.reason_text_enc = None
+        h.cancel_reason_enc = None
+        _purge_audit(db, EntityType.fitness_hold, h.id, h.project_id, "hold_texts")
+        n += 1
+    for r in list(
+        db.scalars(
+            select(FitnessReferral).where(
+                FitnessReferral.status.in_([ReferralStatus.assessed, ReferralStatus.cancelled]),
+                or_(
+                    FitnessReferral.note_enc.is_not(None),
+                    FitnessReferral.cancel_reason_enc.is_not(None),
+                ),
+                func.coalesce(FitnessReferral.assessed_at, FitnessReferral.cancelled_at) < cutoff,
+            )
+        )
+    ):
+        r.note_enc = None
+        r.cancel_reason_enc = None
+        _purge_audit(db, EntityType.fitness_referral, r.id, r.project_id, "referral_texts")
+        n += 1
+    db.flush()
+    return n
+
+
+def _purge_audit(
+    db: Session, et: EntityType, eid: uuid.UUID, project_id: uuid.UUID, what: str
+) -> None:
+    audit.record(
+        db,
+        AuditAction.retention_purge,
+        audit.SYSTEM,
+        entity_type=et,
+        entity_id=eid,
+        project_id=project_id,
+        details={"reason": "retention", "fields": what, "years": TEXT_RETENTION_YEARS},
+    )
+
+
+def anonymise_worker(db: Session, worker_id: uuid.UUID) -> None:
+    """P6-8 with Phase 2 P2-7: the worker's assessments lose the printed name, the certificate
+    number and the scan; lines keep code, outcome and dates for statistics (`anonymised`)."""
+    for a in db.scalars(select(FitnessAssessment).where(FitnessAssessment.worker_id == worker_id)):
+        _delete_scan(db, a, "anonymised")
+        a.name_as_printed = None
+        a.certificate_no = ""
+        a.name_match = None
+        a.id_match_result = None
+        for ln in _lines(db, a):
+            ln.anonymised = True
+    db.flush()

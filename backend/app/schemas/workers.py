@@ -266,6 +266,10 @@ class WorkerRead(Timestamps):
     photo_attachment_id: uuid.UUID | None = Field(
         description="Open via POST /attachments/{id}/signed-url (≤ 5 min)."
     )
+    id_copy_attachment_id: uuid.UUID | None = Field(
+        default=None,
+        description="D-272 Iqama / ID photo; opening it needs the unmask capability.",
+    )
     status: WorkerStatus
     ban_reason: str | None
     deployments: list[WorkerDeploymentSummary] = Field(description="Only deployments in scope.")

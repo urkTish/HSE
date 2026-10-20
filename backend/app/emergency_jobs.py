@@ -15,6 +15,7 @@ import math
 import uuid
 from collections import defaultdict
 from datetime import date, datetime, timedelta
+from functools import partial
 from typing import Any
 
 from sqlalchemy import delete, select
@@ -45,7 +46,7 @@ from app.models import (
     WorkforceReturn,
 )
 from app.services import audit
-from app.services.cert.alerts import long_step
+from app.services.cert.alerts import long_step, step
 
 NK = NotificationKind
 SHORT = (30, 7, 0)
@@ -207,7 +208,9 @@ def emergency_daily(db: Session, at: datetime | None = None) -> dict[str, Any]:
     ec.clear_cache(db)
     out = {"purged": 0}
     for pid in _projects(db):
-        out["purged"] += purge_musters(db, pid, at)
+        per: dict[str, Any] = {}
+        step(db, per, "purged", partial(purge_musters, db, pid, at))
+        out["purged"] += per["purged"] or 0
     db.flush()
     return out
 
