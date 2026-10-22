@@ -557,6 +557,10 @@ class ErrorCode(StrEnum):
     VEHICLE_DEFECT_HOLD = "VEHICLE_DEFECT_HOLD"  # 7b PU-3 (409)
     VEHICLE_NOT_READY = "VEHICLE_NOT_READY"  # 7b JM-2 (409)
     AUTH_NOT_ACTIVE = "AUTH_NOT_ACTIVE"  # 7b (409)
+    # Trial readiness, package B: licence (D-289…D-298)
+    LICENCE_READ_ONLY = "LICENCE_READ_ONLY"  # 403: expired or invalid licence, writes blocked
+    LICENCE_LIMIT_REACHED = "LICENCE_LIMIT_REACHED"  # 409 / 429 (AI): meta {limit, max, used}
+    LICENCE_KEY_INVALID = "LICENCE_KEY_INVALID"  # 422: pasted key not valid (meta.reason)
     NOT_IMPLEMENTED = "NOT_IMPLEMENTED"
     INTERNAL_ERROR = "INTERNAL_ERROR"
 

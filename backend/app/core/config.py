@@ -6,7 +6,7 @@ from typing import Literal
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-CONTRACT_VERSION = "0.15.3"
+CONTRACT_VERSION = "0.16.0"  # contract: licence v1 (trial readiness B)
 API_PREFIX = "/api/v1"
 SESSION_COOKIE_NAME = "hse_session"
 GATE_SESSION_COOKIE = "hse_gate_session"
@@ -103,6 +103,17 @@ class Settings(BaseSettings):
     email_max_attempts: int = 6  # message-level failures before a row is marked failed
     email_retry_base_seconds: int = 60  # backoff: base, 2x, 4x … (capped at one hour)
     email_max_age_hours: int = 72  # older queued rows are marked failed, not sent (stale links)
+
+    # Licence (trial readiness, D-289…D-298). No key anywhere = unlimited (dev, tests). The key
+    # pasted by the HSE Manager is stored in the database and wins over LICENCE_KEY / LICENCE_FILE,
+    # which only bootstrap an install. LICENCE_PUBLIC_KEY (PEM, or base64 of the 32 raw bytes)
+    # overrides the public key shipped in app/data/licence_public_key.pem.
+    licence_key: str | None = None
+    licence_file: str | None = None
+    licence_public_key: str | None = None
+    # How long a process reuses the active key and the usage figures (renewal is picked up by
+    # every worker within this time, without a restart). 0 = read every time (tests, e2e).
+    licence_cache_seconds: int = 30
 
     # Seed (only used by app.seed)
     seed_password: str | None = None

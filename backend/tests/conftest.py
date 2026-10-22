@@ -12,6 +12,10 @@ os.environ["KPI_CACHE_SECONDS"] = "0"  # tests swap databases under the process;
 os.environ.setdefault("SEED_PASSWORD", "Seed-Passw0rd!2026")
 os.environ.setdefault("STORAGE_DIR", tempfile.mkdtemp(prefix="hse-test-storage-"))
 os.environ["ANTHROPIC_API_KEY"] = ""
+# No licence key: unlimited (D-289). Read the key on every request (tests swap databases).
+os.environ["LICENCE_KEY"] = ""
+os.environ["LICENCE_FILE"] = ""
+os.environ["LICENCE_CACHE_SECONDS"] = "0"
 
 from collections.abc import Iterator  # noqa: E402
 from pathlib import Path  # noqa: E402

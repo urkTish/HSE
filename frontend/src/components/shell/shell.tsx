@@ -12,6 +12,7 @@ import { NotificationsBell } from "@/components/shell/notifications-bell";
 import { ThemeToggle } from "@/components/shell/theme-toggle";
 import { UserMenu } from "@/components/shell/user-menu";
 import { FieldOfflineSync } from "@/components/field/offline";
+import { LicenceBanner } from "@/components/licence/licence-banner";
 
 function Brand({ onNavigate }: { onNavigate?: () => void }) {
   const t = useTranslations("meta");
@@ -95,6 +96,7 @@ export function Shell({ children }: { children: ReactNode }) {
         </header>
         <main id="main" tabIndex={-1} className="flex-1 px-4 py-5 outline-none sm:px-6 sm:py-6 lg:px-8 lg:py-8">
           <div className="mx-auto max-w-7xl">
+            <LicenceBanner />
             <Suspense>{children}</Suspense>
           </div>
         </main>

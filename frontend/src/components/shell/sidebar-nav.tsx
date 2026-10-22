@@ -1,5 +1,6 @@
 "use client";
 import {
+  KeyRound,
   Trophy,
   MessageCircleWarning,
   FileStack,
@@ -146,6 +147,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
     ...(g("audit_log.read") ? [{ href: "/audit-log", label: t("auditLog"), Icon: ScrollText, testId: "nav-audit" }] : []),
     ...(me.can_delete_projects ? [{ href: "/deleted-items", label: t("deletedItems"), Icon: Trash2, testId: "nav-deleted-items" }] : []),
     ...(me.is_hse_manager ? [{ href: "/ai-logs", label: t("aiLogs"), Icon: Bot, testId: "nav-ai-logs" }] : []),
+    ...(me.is_hse_manager ? [{ href: "/licence", label: t("licence"), Icon: KeyRound, testId: "nav-licence" }] : []),
     ...(g("hse_settings.edit") ? [{ href: "/reference-lists", label: t("referenceLists"), Icon: ListTree, testId: "nav-reference-lists" }] : []),
   ];
   const pid = project?.id;
