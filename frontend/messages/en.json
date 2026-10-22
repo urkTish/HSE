@@ -248,7 +248,8 @@
     "siteVehicles": "Site vehicles",
     "investigations": "Investigation reports",
     "hseTeam": "HSE team",
-    "deletedItems": "Deleted items"
+    "deletedItems": "Deleted items",
+    "licence": "Licence"
   },
   "shell": {
     "projectSwitcher": "Project",
@@ -984,7 +985,8 @@
       "site_vehicle_settings": "Site vehicle settings",
       "driver_authorisation": "Driver authorisation",
       "vehicle_check": "Pre-use check",
-      "journey_plan": "Journey plan"
+      "journey_plan": "Journey plan",
+      "licence": "Licence"
     },
     "system": "System"
   },
@@ -1564,7 +1566,10 @@
       "JOURNEY_CONTACT_IS_DRIVER": "The contact person cannot be the driver.",
       "VEHICLE_DEFECT_HOLD": "The hold can be cleared only after a passing pre-use check recorded after the failed one.",
       "VEHICLE_NOT_READY": "The vehicle is not ready (defect hold, not certified or withdrawn).",
-      "AUTH_NOT_ACTIVE": "The authorisation is not active."
+      "AUTH_NOT_ACTIVE": "The authorisation is not active.",
+      "LICENCE_READ_ONLY": "The licence has ended or is not valid. The platform is read-only: you can view and export, but not add or change records.",
+      "LICENCE_LIMIT_REACHED": "A limit of your licence is reached (projects, users, storage or AI questions). Ask for a larger licence.",
+      "LICENCE_KEY_INVALID": "This licence key is not valid. Check that it was copied in full."
     }
   },
   "theme": {
@@ -15251,6 +15256,80 @@
       "by": "By",
       "reason": "Reason",
       "rows": "Rows"
+    }
+  },
+  "licenceBanner": {
+    "trial": "{n, plural, =0 {Trial: last day} one {Trial: 1 day left} other {Trial: # days left}}",
+    "ending": "{n, plural, =0 {The licence ends today} one {The licence ends in 1 day} other {The licence ends in # days}}",
+    "until": "Last day: {date}.",
+    "expired": "Licence expired, read-only",
+    "invalid": "Licence key not valid, read-only",
+    "readOnlyText": "You can view and export, but not add or change records.",
+    "askManager": "Ask your HSE Manager to enter a new licence key.",
+    "deletion": "Trial data will be deleted after {date} unless a plan is chosen.",
+    "storage": "Storage {percent}% used ({used} of {limit} GB).",
+    "manage": "Open licence page"
+  },
+  "licence": {
+    "title": "Licence",
+    "subtitle": "The licence of this install: plan, last day and usage. To renew, enter a new key below; no restart is needed.",
+    "status": "Status",
+    "state": {
+      "none": "No licence key",
+      "active": "Active",
+      "expired": "Expired, read-only",
+      "invalid": "Not valid, read-only"
+    },
+    "bundle": {
+      "trial": "Free trial",
+      "basic": "Basic",
+      "professional": "Professional",
+      "enterprise": "Enterprise"
+    },
+    "noKey": "No licence key is installed, so nothing is limited (development or unlicensed install).",
+    "fields": {
+      "customer": "Customer",
+      "bundle": "Plan",
+      "licenceId": "Licence number",
+      "issuedOn": "Issued on",
+      "validUntil": "Last day",
+      "daysLeft": "Days left",
+      "source": "Key entered",
+      "installedAt": "Entered at",
+      "problem": "Problem"
+    },
+    "source": {
+      "database": "On this page",
+      "environment": "In the server configuration"
+    },
+    "usage": {
+      "title": "Usage",
+      "projects": "Open projects",
+      "users": "Users",
+      "ai": "AI questions this month",
+      "storage": "Storage",
+      "of": "{used} of {limit}",
+      "unlimited": "{used} (no limit)",
+      "gbOf": "{used} GB of {limit} GB",
+      "gbUnlimited": "{used} GB (no limit)",
+      "storageDetail": "Files {files} GB · database {db} GB",
+      "storageWarning": "Storage is {percent}% full. Remove old files or ask for more storage."
+    },
+    "renew": {
+      "title": "Enter a new licence key",
+      "hint": "Paste the key you received; it starts with HSE1. Spaces and line breaks do not matter.",
+      "label": "Licence key",
+      "submit": "Save key",
+      "saved": "Licence key saved.",
+      "managerOnly": "Only the HSE Manager can enter a licence key."
+    },
+    "trialTerms": {
+      "title": "Trial terms",
+      "t1": "The trial is free for 30 days and includes the Basic features plus the AI assistant.",
+      "t2": "Trial limits: 1 project, 50 users, 10 GB storage and 100 AI questions.",
+      "t3": "When the trial ends, the platform becomes read-only (view and export only) until a plan is chosen.",
+      "t4": "If a plan is chosen, all data is kept. If not, the data is deleted 30 days after the trial ends (Personal Data Protection Law).",
+      "deletion": "Deletion date if no plan is chosen: after {date}."
     }
   }
 }

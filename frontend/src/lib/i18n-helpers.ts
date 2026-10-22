@@ -15,6 +15,8 @@ export function useLocalizedName() {
   );
 }
 
+const SERVER_TEXT_FIRST = new Set<string>(["LICENCE_READ_ONLY", "LICENCE_LIMIT_REACHED", "LICENCE_KEY_INVALID"]);
+
 /** Map a stable server error code to translated text (rule 48). */
 export function useErrorMessage() {
   const t = useTranslations("errors");
@@ -22,6 +24,10 @@ export function useErrorMessage() {
   return useCallback(
     (err: unknown): string => {
       if (err instanceof ApiError) {
+        // Licence errors (D-296): the server text names the end date, the limit and the counts.
+        if (SERVER_TEXT_FIRST.has(err.code) && (locale === "ar" ? err.messageAr : err.message)) {
+          return (locale === "ar" ? err.messageAr : err.message) ?? err.message;
+        }
         const key = `code.${err.code}` as const;
         if (t.has(key)) return t(key);
         if (locale === "ar" && err.messageAr) return err.messageAr;
