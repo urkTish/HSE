@@ -28,6 +28,9 @@ export ENVIRONMENT="${ENVIRONMENT:-development}"
 export COOKIE_SECURE=false
 export FRONTEND_BASE_URL="${FRONTEND_BASE_URL:-http://localhost:3000}"
 export PRIVACY_NOTICE_VERSION="${PRIVACY_NOTICE_VERSION:-PN-1.0}"
+# Licence (D-297): LICENCE_PUBLIC_KEY comes from e2e/licence-key.ts; read the active key on every request so
+# licence.spec.ts can remove the key it entered (back to "no key = unlimited") for the specs that follow.
+export LICENCE_CACHE_SECONDS="${LICENCE_CACHE_SECONDS:-0}"
 
 if [ "$PREPARE" != "skip" ]; then
   uv run alembic upgrade head

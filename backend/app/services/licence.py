@@ -43,7 +43,8 @@ TRIAL_DATA_KEPT_DAYS = 30  # trial terms: data deleted 30 days after expiry if n
 STORAGE_EXEMPT = frozenset({AttachmentOwner.xp_export_file})
 
 # Writes that stay open in read-only mode (paths after /api/v1, any method). Sign-in and the
-# licence page itself; viewing actions that answer with a link or a lookup; exports; and the
+# licence page itself; viewing actions that answer with a link, a lookup or a preview that
+# stores nothing; the viewer's own preferences; exports; and the
 # life-safety flows (gate checks, musters, emergency events), which must never stop on a site.
 READ_ONLY_ALLOWED: tuple[re.Pattern[str], ...] = tuple(
     re.compile(p)
@@ -61,6 +62,8 @@ READ_ONLY_ALLOWED: tuple[re.Pattern[str], ...] = tuple(
         r"/audit-log/verify",
         r"/exports",
         r"/projects/[^/]+/journey-plans/hint",
+        r"/(obstacle-clearances|.+/gas-tests|projects/[^/]+/[a-z-]+)/preview",  # compute only
+        r"/dashboard/preferences",  # the viewer's own tile layout, saved by the dashboard
         r"/emergency/muster-(session|scan)",
         r"/musters/[^/]+/(scan|counts|entries/[^/]+/(tick|resolve))",
         r"/projects/[^/]+/emergency-events",
