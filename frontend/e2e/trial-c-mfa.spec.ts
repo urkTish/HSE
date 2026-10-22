@@ -47,6 +47,7 @@ test.describe("Two-step verification (D-299)", () => {
     await page.getByTestId("mfa-setup-code-input").fill("123");
     await page.getByTestId("mfa-confirm").click();
     await expect(page.getByText(en.mfa.codeInvalid)).toBeVisible();
+    const confirmStep = Math.floor(Date.now() / 1000 / 30);
     await page.getByTestId("mfa-setup-code-input").fill(totp(secret));
     await page.getByTestId("mfa-confirm").click();
     const codes = page.getByTestId("mfa-recovery-code");
@@ -73,14 +74,16 @@ test.describe("Two-step verification (D-299)", () => {
     await page.getByTestId("mfa-verify-submit").click();
     await expect(page.getByTestId("topbar")).toBeVisible();
 
-    // And with the app code (the next 30 s step: the confirm code's step is spent).
+    // And with the app code. The confirm code's step is spent, so wait for a later step and use the
+    // current code: a "next step" code can be two steps ahead of an API clock that lags this one.
+    while (Math.floor(Date.now() / 1000 / 30) <= confirmStep) await page.waitForTimeout(500);
     await page.getByTestId("user-menu").click();
     await page.getByTestId("logout").click();
     await page.goto("/en/login");
     await page.locator("#email").fill(USERS.noura);
     await page.locator("#password").fill(PASSWORD);
     await page.locator("button[type=submit]").click();
-    await page.getByTestId("mfa-code-input").fill(totp(secret, 1));
+    await page.getByTestId("mfa-code-input").fill(totp(secret));
     await page.getByTestId("mfa-verify-submit").click();
     await expect(page.getByTestId("topbar")).toBeVisible();
     await page.goto("/en/profile");
