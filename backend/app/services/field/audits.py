@@ -647,7 +647,7 @@ def report_doc(
         ("Score", "النتيجة", score),
         ("Grade", "التقدير", grade),
         ("Issue date", "تاريخ الإصدار", issued.isoformat()),
-        ("Issue date (Hijri, Umm al-Qura)", "تاريخ الإصدار (هجري، أم القرى)",
+        ("Issue date (Hijri, Umm al-Qura)", "تاريخ الإصدار الهجري، أم القرى",
          hijri_en(issued), hijri_ar(issued)),
     ]  # fmt: skip
     if issuer is not None:

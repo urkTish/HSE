@@ -5,7 +5,7 @@ from functools import lru_cache
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-CONTRACT_VERSION = "0.15.3"
+CONTRACT_VERSION = "0.16.0"
 API_PREFIX = "/api/v1"
 SESSION_COOKIE_NAME = "hse_session"
 GATE_SESSION_COOKIE = "hse_gate_session"

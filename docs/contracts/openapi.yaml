@@ -46,7 +46,7 @@ info:
     \ 157.\n  No diagnosis, test result or clinical note is ever stored (P6-1). Medical hooks use the\
     \ shared\n  hook policy (kind `medical_fitness`; enable with `POST /projects/{id}/medical-hooks/enable`);\n\
     \  gate texts never say \"medical\". Site-clinic sign-off needs step-up re-auth.\n"
-  version: 0.15.3
+  version: 0.16.0
 paths:
   /api/v1/health:
     get:

@@ -27,6 +27,16 @@
 
 ## Done
 
+### Trial readiness C — security basics and loose ends (2026-10-22, PR #6, branch `claude/trial-c-security`)
+- Two-step verification (D-299–D-301): TOTP set-up with QR code and manual key (`/mfa-setup`), sign-in code step with "use a recovery code", 10 recovery codes (copy / download), profile card (status, codes left, new codes, turn off for optional roles), HSE Manager reset on the user page, server CLI `python -m app.mfa_reset <email>`. Required for `MFA_REQUIRED_ROLES` (default `hse_manager,admin`) after a 7-day grace period (banner, then held on `/mfa-setup`). Migration `c0024`.
+- Upload scanning (D-302): ClamAV `clamav` service in docker-compose; every upload path scanned before acceptance (`attachments.store` and the import routers); fail closed by default (`CLAMAV_FAIL_OPEN`); off when `CLAMAV_HOST` is empty (dev, tests, CI). EN/AR messages `FILE_INFECTED`, `SCANNER_UNAVAILABLE`.
+- Hijri (D-303): `app.core.hijri` (Umm al-Qura via `hijridate`) replaces the tabular `followup.common.hijri()`; Hijri dates on 6g report packs, the 6d audit report, 6f packs and bulletins; the KPI Ramadan band uses it.
+- PDFs (D-304): 6d audit report (EN and AR PDFs), 6f notification packs (one PDF, Arabic first for government forms), lesson bulletins (`GET /lessons/{id}/bulletin`, EN / AR buttons on the lesson page), all through the 6g renderer with Arabic shaping and right-to-left isolation.
+- First-time setup (D-306): `/setup` creates the organisation (`installation`, migration `c0025`), first project and first administrator (HSE Manager) and signs them in; locked once users exist; optional `SETUP_TOKEN`; the login page forwards to it on an empty install.
+- Contract v0.16.0 (D-305). Strings `scripts/i18n/p8-security.py` (applied to the message files directly; `merge.py` re-applies every module and would revert later hand edits, so it was not run).
+- Tests: `test_mfa.py` (12), `test_scanner.py` (8, fake clamd on a local socket), `test_hijri.py`, `test_first_setup.py`, bulletin and PDF checks in `test_fu_lessons.py`, `test_fu_packs.py`, `test_field_audits.py`; e2e `trial-c-mfa`, `trial-c-setup`, `trial-c-outputs`. Local e2e on a fresh seed: the three new specs plus auth, invite, org, p6d-audits, p6f-lessons green.
+- Not done / for Turki: which roles must use MFA (default kept); the ClamAV container needs about 1.5 GB RAM (fits the trial VM); existing HTML audit reports / packs stay HTML (only new ones are PDF).
+
 ### Glass restyle, second pass (2026-10-19)
 - Design pass: D-278. Inputs / selects / textareas / multi-select / outline and secondary buttons on the translucent control fill; `Table` glass with a translucent header; `FormSection` glass fieldset (legend floated inside); ten sticky action bars on `.glass-bar`; module cards, import tiles, notes, AI panel, muster cards on `.glass` / `.glass-soft` / `.glass-strong`; a `.glass`-in-glass descendant rule flattens nested glass; sonner neutral toasts and the chart tooltip glass; chart grid / axis alpha tokens. Gate check, certificate check, scaffold tags, badges, status alerts and print unchanged. Contrast re-measured (`docs/design/glass-findings.md`), screenshots refreshed. Also fixes the date-bound `test_AC6_insert_only_E10_and_upsert_replaces_verified` (W04 "older than 30 days" now fires for the fixed 2026-09-14 row; the assert compares E-codes only).
 
@@ -957,10 +967,10 @@
 - **Phase 6a backend (2026-10-08):** not built or not tested yet: AI tools T18 / T9 `medical_gap_at_event` (AC106/107/108), the monthly E14 / E15 warning wiring (AC103/104), register exports with tier columns (AC124), retention / anonymisation of scans and fitness lines (AC126/127, untested), action-panel items for 6a, charts C22–C24 data, the field-check / competence Fitness section (AC133). ACs 19, 34, 45, 49, 56, 96, 98, 110, 112-113, 115, 125, 130-132, 134-135 have no dedicated backend test (several are frontend or covered by shared Phase 4 mechanisms).
 - (Phase 1, D-10) PDF export of the dashboard/monthly report: deferred by the coordinator. The frontend print view covers it for now.
 - (Phase 1, I-15) The check that the supervisor named on an incident holds a supervisor role on that site is not implemented; the field is free text.
-- (Phase 1) Attachment virus scanning: files are stored locally with `scan_status = skipped`. A scanner/object store is not chosen yet.
-- (Phase 1) Ramadan dates are a table for 2025/2026 marked VERIFY. Replace them with an Umm al-Qura library before go-live.
+- (Phase 1) Attachment virus scanning: done in trial readiness C (ClamAV, D-302).
+- (Phase 1) Ramadan dates: done in trial readiness C (Umm al-Qura library, D-303).
 - Email delivery: messages go to the `email_outbox` table; an SMTP/provider sender is not built (no provider chosen).
-- MFA (`mfa_enabled` stored, not enforced) — waits for §10 Q3.
+- MFA: done in trial readiness C (TOTP, required for HSE Manager and administrators by default, D-299; Turki may change `MFA_REQUIRED_ROLES`).
 - Data-subject requests (P8) and breach records (P9) — no Phase 0 endpoints; propose for Phase 6 / when the Consultant specs them.
 - Per-entity retention/anonymisation (P7) — no personal-data entities with retention defaults in Phase 0 beyond the audit log.
 

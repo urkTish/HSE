@@ -596,7 +596,7 @@ def to_doc(db: Session, pk: RpPack) -> render.Doc:
     if pk.issued_at:
         issued = cm.to_local(pk.issued_at).date()
         ctl.append(("Issue date", "تاريخ الإصدار", issued.isoformat()))
-        ctl.append(("Issue date (Hijri, Umm al-Qura)", "تاريخ الإصدار (هجري، أم القرى)",
+        ctl.append(("Issue date (Hijri, Umm al-Qura)", "تاريخ الإصدار الهجري، أم القرى",
                     hijri_en(issued), hijri_ar(issued)))  # fmt: skip
     if pk.reissue_reason:
         ctl.append(("Re-issue reason", "سبب إعادة الإصدار", pk.reissue_reason))

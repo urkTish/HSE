@@ -651,7 +651,7 @@ def bulletin_pdf(db: Session, p: Principal, lesson_id: uuid.UUID, lang: str) -> 
     control: list[tuple[str, ...]] = [
         ("Lesson", "الدرس", ls.lesson_no),
         ("Date", "التاريخ", day.isoformat()),
-        ("Date (Hijri, Umm al-Qura)", "التاريخ (هجري، أم القرى)", hijri_en(day), hijri_ar(day)),
+        ("Date (Hijri, Umm al-Qura)", "التاريخ الهجري، أم القرى", hijri_en(day), hijri_ar(day)),
     ]
     if ls.severity_potential is not None:
         control.append(("Potential severity", "الخطورة المحتملة", str(ls.severity_potential)))

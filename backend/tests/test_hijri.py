@@ -24,3 +24,11 @@ def test_labels_and_out_of_range_fallback() -> None:
     assert hijri_en(date(2026, 10, 22)) == "11 Jumada al-Ula 1448 AH"
     assert fc.hijri_str(date(2026, 10, 22)) == hijri_ar(date(2026, 10, 22))
     assert to_hijri(date(2200, 1, 1)) == _tabular(date(2200, 1, 1))
+
+
+def test_ramadan_band_follows_umm_al_qura() -> None:
+    from app.kpi.calendar import in_ramadan
+
+    assert in_ramadan(date(2026, 2, 18)) and in_ramadan(date(2026, 3, 19))
+    assert not in_ramadan(date(2026, 2, 17)) and not in_ramadan(date(2026, 3, 20))
+    assert in_ramadan(date(2025, 3, 1)) and not in_ramadan(date(2025, 3, 30))

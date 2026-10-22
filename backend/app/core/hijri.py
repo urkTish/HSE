@@ -7,6 +7,7 @@ same answer on the server so government-form packs, report packs and PDFs agree 
 from __future__ import annotations
 
 from datetime import date
+from functools import lru_cache
 
 from hijridate import Gregorian
 
@@ -34,6 +35,7 @@ def _tabular(d: date) -> tuple[int, int, int]:
     return y, m, day
 
 
+@lru_cache(maxsize=8192)
 def to_hijri(d: date) -> tuple[int, int, int]:
     try:
         h = Gregorian(d.year, d.month, d.day).to_hijri()

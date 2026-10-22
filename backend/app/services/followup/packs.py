@@ -501,8 +501,7 @@ def _lines(items: list[tuple[str, Any]]) -> tuple[list[str], list[str]]:
         lab_en, lab_ar = FIELD_LABELS.get(key, (key, key))
         val = _value(v)
         en.append(f"{lab_en}: {val}")
-        has_arabic = any("\u0600" <= ch <= "\u06ff" for ch in val)
-        ar.append(f"{lab_ar}: {val if has_arabic else render.ltr(val, True)}")
+        ar.append(f"{lab_ar}: {render.ar_value(val)}")
     return en, ar
 
 
@@ -527,7 +526,7 @@ def render_doc(db: Session, pk: FuPack, req: FuRequirement, inc: Incident) -> An
     control: list[tuple[str, ...]] = [
         ("Reference", "المرجع", f"{pk.pack_no} · v{pk.version}"),
         ("Date", "التاريخ", today.isoformat()),
-        ("Date (Hijri, Umm al-Qura)", "التاريخ (هجري، أم القرى)", hijri_en(today), hijri_ar(today)),
+        ("Date (Hijri, Umm al-Qura)", "التاريخ الهجري، أم القرى", hijri_en(today), hijri_ar(today)),
     ]  # fmt: skip
     if addressee:
         office_en = _value(addressee.get("office_name_en"))

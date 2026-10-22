@@ -107,6 +107,14 @@ def ltr(v: str, rtl: bool) -> str:
     return v
 
 
+def ar_value(v: str) -> str:
+    """A value after an Arabic label in RTL text (D-304): Arabic values are isolated right-to-left
+    (RLI … PDI) so a leading number does not stick to the label; others stay left-to-right."""
+    if any("\u0600" <= ch <= "\u06ff" for ch in v):
+        return f"\u2067{v}\u2069"
+    return ltr(v, True)
+
+
 def _shaping(pdf: FPDF, rtl: bool) -> None:
     pdf.set_text_shaping(
         use_shaping_engine=True, direction="rtl" if rtl else "ltr",
@@ -164,7 +172,7 @@ def pdf(doc: Doc, lang: str | list[str], superseded_by: int | None = None) -> by
         _font(p, 8)
         for row in doc.control:
             en, ar, v = row[0], row[1], row[2]
-            v_ar = row[3] if len(row) > 3 else ltr(v, True)
+            v_ar = ar_value(row[3]) if len(row) > 3 else ltr(v, True)
             p.multi_cell(0, 4.5, f"{ar}: {v_ar}" if rtl else f"{en}: {v}", align=align,
                          new_x=XPos.LMARGIN, new_y=YPos.NEXT)  # fmt: skip
         for sec in doc.sections:
