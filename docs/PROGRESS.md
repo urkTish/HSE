@@ -27,6 +27,14 @@
 
 ## Done
 
+### Trial readiness A + B + C combined (contract v0.17.0, 2026-10-22, branch `claude/trial-integration`)
+- One branch with packages A (#4), B (#5) and C (#6) merged for a single merge; decision D-307. Merge this instead of the three package PRs.
+- Migrations in one line: 0023 → `a_0024_email_sender` → `b_0024_licence` → `c0024` → `c0025` (`alembic heads` = `c0025`; upgrade, `alembic check` and a downgrade to 0023 / upgrade round trip are clean).
+- `attachments.store`: virus scan of the upload as received (C) → photo shrinking (A) → licence storage cap on the stored size (B); generated files are neither scanned nor shrunk.
+- Cross-package: read-only mode also allows `POST /users/{id}/mfa/reset` and `POST /setup` (sign-in, two-step code, recovery codes and set-up were already open under `/auth/*`); `GET /licence` answers a user whose two-step set-up is overdue; the email sender keeps running in read-only mode (background job). The shell shows the licence banner and the two-step banner together.
+- Tests: `backend/tests/test_trial_integration.py` (8: two-step sign-in and recovery codes in read-only mode, set-up and manager reset in read-only mode, first-time setup under an ended key, licence status while the set-up is overdue, sender in read-only mode, scan-then-shrink order, generated files, storage cap on the shrunk size); `e2e/licence.spec.ts` also checks both banners together.
+- Checks: in progress.
+
 ### Trial readiness A — email sending + photo shrinking (2026-10-22)
 - Handover `trial-readiness-handover.md` package A; decisions D-279…D-283; migration `a_0024_email_sender` (on 0023). No API / contract or frontend change.
 - Email: `app/services/mailer.py` and the scheduler job `email_send` (every minute) send the `email_outbox` over SMTP (settings `SMTP_*` / `EMAIL_*` in `.env.example`, README "Sending email"); queued / sent / failed with retry and backoff; no settings = emails wait in the outbox as before (the Parked "Email delivery" item is done; the provider is still Turki's choice). External 6g report-pack emails now carry the PDF / XLSX files and their delivery rows follow the send (queued → sent / failed). Check command: `python -m app.services.mailer test <address>`.

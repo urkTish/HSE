@@ -4,7 +4,7 @@ import { expect, test } from "./fixtures/test";
 import { login, sql, USERS } from "./helpers";
 
 /**
- * Trial readiness, package B (D-289…D-298): the HSE Manager pastes a licence key on the Licence page and the
+ * Trial readiness, package B (D-289…D-297): the HSE Manager pastes a licence key on the Licence page and the
  * trial banner appears at once; an expired licence shows the read-only banner (EN / AR, RTL). Read-only and caps
  * on the API are covered by backend/tests/test_licence.py. The spec removes its key afterwards, so the specs that
  * follow run with no key (unlimited).
@@ -91,6 +91,8 @@ test.describe.serial("licence", () => {
     await page.goto("/ar/projects");
     await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
     await expect(page.getByTestId("licence-banner-days")).toContainText("الفترة التجريبية");
+    // D-307: the HSE Manager's two-step set-up reminder (package C) shows together with the licence banner
+    await expect(page.getByTestId("mfa-banner")).toBeVisible();
     await page.goto("/ar/licence");
     await expect(page.getByTestId("licence-state")).toHaveText("ساري");
     await expect(page.getByTestId("licence-trial-terms")).toContainText("نظام حماية البيانات الشخصية");
