@@ -46,7 +46,7 @@ info:
     \ 157.\n  No diagnosis, test result or clinical note is ever stored (P6-1). Medical hooks use the\
     \ shared\n  hook policy (kind `medical_fitness`; enable with `POST /projects/{id}/medical-hooks/enable`);\n\
     \  gate texts never say \"medical\". Site-clinic sign-off needs step-up re-auth.\n"
-  version: 0.15.3
+  version: 0.16.0
 paths:
   /api/v1/health:
     get:
@@ -70854,6 +70854,80 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/licence:
+    get:
+      tags:
+      - licence
+      summary: Licence state, days left and usage against the licence caps
+      description: Any signed-in user (the shell shows the trial / expiry banner). No key = state `none`
+        and every limit null (unlimited).
+      operationId: get_licence
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenceRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+    put:
+      tags:
+      - licence
+      summary: Enter a new licence key (renewal, no restart)
+      description: 'HSE Manager only. Allowed in read-only mode. The key''s signature is checked against
+        the public key shipped with the app; 422 LICENCE_KEY_INVALID (meta.reason: malformed, bad_signature,
+        expired, no_public_key, …) otherwise. Every API process uses the new key within `LICENCE_CACHE_SECONDS`.'
+      operationId: put_licence
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LicenceKeyInput'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenceRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
   /api/v1/privacy-notice:
     get:
       tags:
@@ -89623,6 +89697,7 @@ components:
       - driver_authorisation
       - vehicle_check
       - journey_plan
+      - licence
       title: EntityType
       description: Entity types referenced by audit entries and change history.
     EntryDirection:
@@ -94429,6 +94504,9 @@ components:
       - VEHICLE_DEFECT_HOLD
       - VEHICLE_NOT_READY
       - AUTH_NOT_ACTIVE
+      - LICENCE_READ_ONLY
+      - LICENCE_LIMIT_REACHED
+      - LICENCE_KEY_INVALID
       - NOT_IMPLEMENTED
       - INTERNAL_ERROR
       title: ErrorCode
@@ -112148,6 +112226,203 @@ components:
       - gcc
       - international
       title: LicenceIssuer
+    LicenceKeyInput:
+      properties:
+        key:
+          type: string
+          maxLength: 8000
+          minLength: 10
+          title: Key
+          description: The licence key as received (HSE1.…); spaces and line breaks are ignored.
+      additionalProperties: false
+      type: object
+      required:
+      - key
+      title: LicenceKeyInput
+    LicenceRead:
+      properties:
+        state:
+          type: string
+          enum:
+          - none
+          - active
+          - expired
+          - invalid
+          title: State
+          description: none = no licence key (unlimited); active; expired or invalid = read-only.
+        read_only:
+          type: boolean
+          title: Read Only
+          description: Writes are refused with 403 LICENCE_READ_ONLY (GET, exports, sign-in, the licence
+            page and life-safety flows stay open).
+        source:
+          anyOf:
+          - type: string
+            enum:
+            - database
+            - environment
+          - type: 'null'
+          title: Source
+          description: 'Where the active key comes from: pasted on the licence page, or the server configuration
+            (LICENCE_KEY / LICENCE_FILE).'
+        problem:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Problem
+          description: Why the key is invalid (English), else null.
+        licence_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Licence Id
+        customer:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Customer
+        bundle:
+          anyOf:
+          - type: string
+            enum:
+            - trial
+            - basic
+            - professional
+            - enterprise
+          - type: 'null'
+          title: Bundle
+        is_trial:
+          type: boolean
+          title: Is Trial
+        issued_on:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Issued On
+        valid_until:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Valid Until
+          description: Last day of use (Riyadh), inclusive.
+        days_left:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Days Left
+          description: 0 on the last day; negative once expired.
+        data_deletion_after:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Data Deletion After
+          description: 'Trial only: data is deleted after this date unless a plan is chosen (trial terms,
+            PDPL). Not done automatically by the platform.'
+        installed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Installed At
+        projects:
+          $ref: '#/components/schemas/LicenceUsage'
+          description: Open (not closed) projects.
+        users:
+          $ref: '#/components/schemas/LicenceUsage'
+          description: Users that are not deactivated.
+        ai_questions_month:
+          $ref: '#/components/schemas/LicenceUsage'
+          description: AI assistant questions asked this calendar month (whole install).
+        storage:
+          $ref: '#/components/schemas/LicenceStorage'
+        can_manage:
+          type: boolean
+          title: Can Manage
+          description: The caller may enter a new key (HSE Manager).
+      type: object
+      required:
+      - state
+      - read_only
+      - source
+      - problem
+      - licence_id
+      - customer
+      - bundle
+      - is_trial
+      - issued_on
+      - valid_until
+      - days_left
+      - data_deletion_after
+      - installed_at
+      - projects
+      - users
+      - ai_questions_month
+      - storage
+      - can_manage
+      title: LicenceRead
+    LicenceStorage:
+      properties:
+        files_bytes:
+          type: integer
+          title: Files Bytes
+          description: Stored attachments and generated files.
+        database_bytes:
+          type: integer
+          title: Database Bytes
+          description: Size of the database.
+        used_bytes:
+          type: integer
+          title: Used Bytes
+        limit_gb:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Limit Gb
+          description: null = unlimited.
+        percent:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Percent
+        warning:
+          type: boolean
+          title: Warning
+          description: True from 80 % of the licence storage.
+      type: object
+      required:
+      - files_bytes
+      - database_bytes
+      - used_bytes
+      - limit_gb
+      - percent
+      - warning
+      title: LicenceStorage
+    LicenceUsage:
+      properties:
+        used:
+          type: integer
+          title: Used
+        limit:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Limit
+          description: null = unlimited.
+        percent:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Percent
+          description: used / limit, rounded down; null when unlimited.
+      type: object
+      required:
+      - used
+      - limit
+      - percent
+      title: LicenceUsage
     LiftBlacklistRequest:
       properties:
         reason:

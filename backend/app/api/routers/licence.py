@@ -25,13 +25,13 @@ def _read(db: Session, p: Principal, st: svc.Status) -> LicenceRead:
     if limit_gb is not None:
         pct = 100 if limit_gb == 0 else store.used_bytes * 100 // (limit_gb * svc.GB)
     return LicenceRead(
-        state=st.state,  # type: ignore[arg-type]
+        state=st.state,
         read_only=st.read_only,
-        source=st.loaded.source,  # type: ignore[arg-type]
+        source=st.loaded.source,
         problem=str(st.loaded.problem) if st.loaded.problem else None,
         licence_id=t.licence_id if t else None,
         customer=t.customer if t else None,
-        bundle=t.bundle if t else None,  # type: ignore[arg-type]
+        bundle=t.bundle if t else None,
         is_trial=bool(t and t.is_trial),
         issued_on=t.issued_on if t else None,
         valid_until=t.valid_until if t else None,

@@ -248,8 +248,7 @@ _LIMIT_TEXT = {
         "يتجدد الرصيد في أول الشهر القادم.",
     ),
     "storage": (
-        "The storage in your licence is full ({max} GB). Remove old files or ask for more "
-        "storage.",
+        "The storage in your licence is full ({max} GB). Remove old files or ask for more storage.",
         "المساحة التخزينية في ترخيصك ممتلئة ({max} غيغابايت). احذف ملفات قديمة أو اطلب "
         "مساحة إضافية.",
     ),
@@ -377,14 +376,13 @@ def ensure_storage(db: Session, owner: AttachmentOwner, extra_bytes: int) -> Non
 
 def invalid_key_error(exc: lk.LicenceKeyError) -> ApiError:
     ar = {
-        "no_public_key": "لا يحتوي هذا النظام على المفتاح العام للترخيص، فلا يمكن التحقق من أي مفتاح.",
+        "no_public_key": "لا يحتوي هذا النظام على المفتاح العام للترخيص، "
+        "فلا يمكن التحقق من أي مفتاح.",
         "bad_public_key": "المفتاح العام للترخيص في هذا النظام تالف.",
         "bad_signature": "توقيع المفتاح غير مطابق (معدّل أو غير صادر من المورّد).",
         "expired": "انتهت صلاحية هذا المفتاح بالفعل.",
     }.get(exc.reason, "هذا ليس مفتاح ترخيص صالحًا.")
-    return ApiError(
-        422, ErrorCode.LICENCE_KEY_INVALID, str(exc), ar, meta={"reason": exc.reason}
-    )
+    return ApiError(422, ErrorCode.LICENCE_KEY_INVALID, str(exc), ar, meta={"reason": exc.reason})
 
 
 def install(db: Session, p: Principal, key: str) -> Status:
