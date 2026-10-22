@@ -106,6 +106,12 @@ P = {
       ],
     },
   },
+  "fuBulletin": {
+    "title": ["Bulletin (PDF):", "النشرة (PDF):"],
+    "en": ["English", "الإنجليزية"],
+    "ar": ["Arabic", "العربية"],
+    "failed": ["The bulletin could not be downloaded. Try again.", "تعذّر تنزيل النشرة. حاول مرة أخرى."],
+  },
   "errors": {
     "code": {
       "MFA_REQUIRED": ["Enter the code from your authenticator app to finish signing in.", "أدخل الرمز من تطبيق المصادقة لإكمال تسجيل الدخول."],

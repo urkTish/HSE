@@ -1,5 +1,5 @@
 "use client";
-import { BookOpen, CheckCircle2, Link2, Plus, Search, Trash2, TriangleAlert, Users } from "lucide-react";
+import { BookOpen, CheckCircle2, FileDown, Link2, Plus, Search, Trash2, TriangleAlert, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -27,7 +27,7 @@ import { StackedDate } from "@/components/medical/common";
 import { StatusBadge } from "@/components/common/status-badge";
 import { useCurrentProject } from "@/lib/current-project";
 import { Link, useRouter } from "@/i18n/navigation";
-import { api, unwrap, type Schemas } from "@/lib/api/client";
+import { api, downloadFile, unwrap, type Schemas } from "@/lib/api/client";
 import { useEffectivenessChecks, useFuRefresh, useLesson, useLessonDistribution, useLessons, useProjectDistribution } from "@/lib/api/followup";
 import { useProjects } from "@/lib/api/queries";
 import { useDisplay } from "@/lib/digits";
@@ -236,6 +236,7 @@ export function LessonPage({ id }: { id: string }) {
           <span data-testid="lesson-title">{bi(l.title_en, l.title_ar) || t("untitled")}</span>
           <FuBadge group="fuLessonStatus" status={l.status} testId="lesson-status" />
         </h1>
+        {l.status === "published" || l.status === "archived" ? <BulletinButtons lessonId={l.id} lessonNo={l.lesson_no} /> : null}
         <dl className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
           {l.publish_due_on && (l.status === "draft" || l.status === "in_review") ? (
             <div className="flex flex-col">
@@ -1153,6 +1154,35 @@ function Checks({ project }: { project: S["ProjectRead"] }) {
         <EmptyState message={t("empty")} />
       )}
       {done ? <CompleteCheckDialog check={done} onClose={() => setDone(null)} /> : null}
+    </div>
+  );
+}
+
+/** D-304: the lesson bulletin as a PDF, in English or Arabic (shaped right-to-left). */
+function BulletinButtons({ lessonId, lessonNo }: { lessonId: string; lessonNo: string }) {
+  const t = useTranslations("fuBulletin");
+  const [busy, setBusy] = useState<"en" | "ar" | null>(null);
+  async function get(lang: "en" | "ar") {
+    setBusy(lang);
+    try {
+      await downloadFile(`/api/v1/lessons/${lessonId}/bulletin?lang=${lang}`, `${lessonNo}-bulletin-${lang.toUpperCase()}.pdf`);
+    } catch {
+      toast.error(t("failed"));
+    } finally {
+      setBusy(null);
+    }
+  }
+  return (
+    <div className="flex flex-wrap items-center gap-2" data-testid="lesson-bulletin">
+      <span className="text-sm text-muted-foreground">{t("title")}</span>
+      <Button variant="outline" size="sm" disabled={busy !== null} onClick={() => get("en")} data-testid="bulletin-en">
+        <FileDown aria-hidden />
+        {t("en")}
+      </Button>
+      <Button variant="outline" size="sm" disabled={busy !== null} onClick={() => get("ar")} data-testid="bulletin-ar">
+        <FileDown aria-hidden />
+        {t("ar")}
+      </Button>
     </div>
   );
 }

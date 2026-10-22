@@ -15330,5 +15330,11 @@
       "backToLogin": "Back to sign in",
       "lowCodes": "You used a recovery code. Make new recovery codes on your profile page."
     }
+  },
+  "fuBulletin": {
+    "title": "Bulletin (PDF):",
+    "en": "English",
+    "ar": "Arabic",
+    "failed": "The bulletin could not be downloaded. Try again."
   }
 }
