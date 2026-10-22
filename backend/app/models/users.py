@@ -4,7 +4,18 @@ import uuid
 from datetime import date, datetime
 from enum import StrEnum
 
-from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    Date,
+    DateTime,
+    ForeignKey,
+    Integer,
+    LargeBinary,
+    String,
+    Text,
+    false,
+)
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -32,6 +43,14 @@ class User(UUIDPk, TimestampMixin, Base):
     status_reason: Mapped[str | None] = mapped_column(String(500))
     password_hash: Mapped[str | None] = mapped_column(String(255))
     mfa_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    # D-299 TOTP: secrets are AES-GCM encrypted with the field key; the pending secret waits for
+    # the first code; `mfa_last_step` blocks reuse of a code; `mfa_required_since` starts the
+    # grace period of a user who must enrol.
+    mfa_secret_enc: Mapped[bytes | None] = mapped_column(LargeBinary)
+    mfa_pending_secret_enc: Mapped[bytes | None] = mapped_column(LargeBinary)
+    mfa_enabled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    mfa_last_step: Mapped[int | None] = mapped_column(BigInteger)
+    mfa_required_since: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     activated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     failed_login_count: Mapped[int] = mapped_column(Integer, default=0)
@@ -95,6 +114,20 @@ class UserSession(UUIDPk, Base):
     last_authenticated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     ip_address: Mapped[str | None] = mapped_column(String(64))
     user_agent: Mapped[str | None] = mapped_column(String(400))
+    # D-299: password accepted, TOTP / recovery code still due; only POST /auth/mfa/verify and
+    # logout accept such a session, and only for `mfa_pending_minutes`.
+    mfa_pending: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
+
+
+class UserRecoveryCode(UUIDPk, Base):
+    """D-299: single-use MFA recovery codes (SHA-256 of the normalised code)."""
+
+    __tablename__ = "user_mfa_recovery_codes"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    code_hash: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class TokenKind(StrEnum):

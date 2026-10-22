@@ -35,6 +35,15 @@ class Settings(BaseSettings):
     invite_token_hours: int = 72
     reset_token_minutes: int = 60
 
+    # Two-step verification (TOTP, D-299). Roles that must enrol: `hse_manager` and `admin` (the
+    # PROJECT_DELETE_EMAILS administrators); any other role value may be listed too. Empty = MFA
+    # optional for everyone. A user who must enrol gets `mfa_grace_days` from their first sign-in
+    # under the rule; after that only the enrolment screens answer until they enrol.
+    mfa_required_roles: str = "hse_manager,admin"
+    mfa_grace_days: int = Field(default=7, ge=0)
+    mfa_issuer: str = "HSE Platform"
+    mfa_pending_minutes: int = 10  # a password-only session must pass the code step within this
+
     # Privacy notice (§5.1 rule 6, P13)
     privacy_notice_version: str = "PN-1.0"
 

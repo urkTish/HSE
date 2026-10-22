@@ -599,6 +599,26 @@ def transition_user(
     return target
 
 
+def reset_mfa(db: Session, p: Principal, user_id: uuid.UUID) -> User:
+    """D-300: lost phone and recovery codes. The HSE Manager (capability 13) clears another
+    user's two-step verification; their sessions end and they enrol again."""
+    from app.services import mfa  # noqa: PLC0415
+
+    target = get_visible_user(db, p, user_id)
+    p.require(None, Capability.user_manage_status)
+    if target.id == p.user.id:
+        raise _self_forbidden()
+    if not target.mfa_enabled:
+        raise ApiError(
+            409,
+            ErrorCode.MFA_NOT_ENABLED,
+            "Two-step verification is not on for this user.",
+            "التحقق بخطوتين غير مفعّل لهذا المستخدم.",
+        )
+    mfa.admin_reset(db, p, target)
+    return target
+
+
 def resend_invite(db: Session, p: Principal, user_id: uuid.UUID) -> User:
     target = get_visible_user(db, p, user_id)
     projects = {a.project_id for a in target.assignments if a.project_id}

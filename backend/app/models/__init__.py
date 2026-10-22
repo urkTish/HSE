@@ -233,7 +233,14 @@ from app.models.train import (
     TrainingSettings,
     TrainingVerification,
 )
-from app.models.users import RoleAssignment, TokenKind, User, UserSession, UserToken
+from app.models.users import (
+    RoleAssignment,
+    TokenKind,
+    User,
+    UserRecoveryCode,
+    UserSession,
+    UserToken,
+)
 from app.models.vehicle import IncidentVehicle
 
 __all__ = [
@@ -434,6 +441,7 @@ __all__ = [
     "TrainingSettings",
     "TrainingVerification",
     "User",
+    "UserRecoveryCode",
     "UserSession",
     "UserToken",
     "Vehicle",

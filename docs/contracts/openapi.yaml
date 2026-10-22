@@ -66,9 +66,10 @@ paths:
       tags:
       - auth
       summary: Log in with email and password
-      description: Sets the httpOnly `hse_session` cookie and returns the same JWT. Unknown email and
+      description: 'Sets the httpOnly `hse_session` cookie and returns the same JWT. Unknown email and
         wrong password give an identical 401 INVALID_CREDENTIALS. After 10 failures in 15 min the account
-        is locked for 15 min (401 ACCOUNT_LOCKED).
+        is locked for 15 min (401 ACCOUNT_LOCKED). With two-step verification on, the response has `mfa_pending:
+        true` and no user; finish with POST /auth/mfa/verify (D-299).'
       operationId: login
       requestBody:
         content:
@@ -451,6 +452,254 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/auth/mfa/verify:
+    post:
+      tags:
+      - auth
+      summary: 'Second sign-in step: authenticator code or a recovery code'
+      description: 'Accepts only a session from POST /auth/login with `mfa_pending: true`. Wrong codes
+        give 401 MFA_CODE_INVALID and count toward the login lockout. A recovery code works once. Re-sets
+        the cookie with the full session lifetime.'
+      operationId: verify_mfa
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MfaVerifyRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+  /api/v1/auth/mfa:
+    get:
+      tags:
+      - auth
+      summary: Own two-step verification status
+      operationId: mfa_status
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MfaStatus'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+  /api/v1/auth/mfa/setup:
+    post:
+      tags:
+      - auth
+      summary: 'Start set-up: a new secret and its otpauth:// URI for the QR code'
+      description: The secret is active only after POST /auth/mfa/confirm with a valid code. 409 MFA_ALREADY_ENABLED
+        when it is on.
+      operationId: start_mfa_setup
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MfaSetupStart'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+  /api/v1/auth/mfa/confirm:
+    post:
+      tags:
+      - auth
+      summary: Finish set-up with the first code; returns 10 recovery codes (shown once)
+      operationId: confirm_mfa_setup
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MfaCodeRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MfaRecoveryCodes'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+  /api/v1/auth/mfa/recovery-codes:
+    post:
+      tags:
+      - auth
+      summary: Replace the recovery codes (needs a current authenticator code)
+      description: The old codes stop working. A wrong code counts toward the login lockout.
+      operationId: regenerate_recovery_codes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MfaCodeRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MfaRecoveryCodes'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+  /api/v1/auth/mfa/disable:
+    post:
+      tags:
+      - auth
+      summary: Turn two-step verification off (password and a current code)
+      description: 409 MFA_REQUIRED_FOR_ROLE when the user's role needs it.
+      operationId: disable_mfa
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MfaDisableRequest'
+        required: true
+      responses:
+        '204':
+          description: Successful Response
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
   /api/v1/projects:
     get:
       tags:
@@ -2624,6 +2873,63 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UserTransitionRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/users/{user_id}/mfa/reset:
+    post:
+      tags:
+      - users
+      summary: Clear another user's two-step verification (HSE Manager, lost phone)
+      description: The user's sessions end; they sign in with their password and enrol again (D-300).
+        409 MFA_NOT_ENABLED when it is off; 403 SELF_MODIFICATION_FORBIDDEN on own account.
+      operationId: reset_user_mfa
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: User Id
       responses:
         '200':
           description: Successful Response
@@ -93910,6 +94216,16 @@ components:
       - SESSION_EXPIRED
       - PRIVACY_ACK_REQUIRED
       - PRIVACY_NOTICE_VERSION_MISMATCH
+      - MFA_REQUIRED
+      - MFA_CODE_INVALID
+      - MFA_ENROLMENT_REQUIRED
+      - MFA_REQUIRED_FOR_ROLE
+      - MFA_ALREADY_ENABLED
+      - MFA_NOT_ENABLED
+      - MFA_SETUP_NOT_STARTED
+      - FILE_INFECTED
+      - SCANNER_UNAVAILABLE
+      - SETUP_ALREADY_DONE
       - INVITE_INVALID
       - INVITE_EXPIRED
       - RESET_TOKEN_INVALID
@@ -112999,8 +113315,18 @@ components:
           type: integer
           title: Idle Timeout Minutes
           description: Session ends after this many idle minutes.
+        mfa_pending:
+          type: boolean
+          title: Mfa Pending
+          description: 'D-299: the password was right and the account uses two-step verification; send
+            the code to POST /auth/mfa/verify within mfa_pending_minutes. Until then `user` is null and
+            every other API answers 401 MFA_REQUIRED.'
+          default: false
         user:
-          $ref: '#/components/schemas/Me'
+          anyOf:
+          - $ref: '#/components/schemas/Me'
+          - type: 'null'
+          description: Null while mfa_pending.
       type: object
       required:
       - access_token
@@ -113583,6 +113909,24 @@ components:
         mfa_enabled:
           type: boolean
           title: Mfa Enabled
+        mfa_required:
+          type: boolean
+          title: Mfa Required
+          description: 'D-299: the user''s role needs two-step verification (MFA_REQUIRED_ROLES).'
+          default: false
+        mfa_setup_due:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Mfa Setup Due
+          description: 'Required but not enrolled: end of the grace period; null otherwise.'
+        mfa_setup_blocking:
+          type: boolean
+          title: Mfa Setup Blocking
+          description: 'Grace period over: every API except the MFA set-up, /auth/me, privacy ack and
+            logout answers 403 MFA_ENROLMENT_REQUIRED until the user enrols.'
+          default: false
         last_login_at:
           anyOf:
           - type: string
@@ -115036,6 +115380,132 @@ components:
       - management_walk
       - other
       title: MeetingType
+    MfaCodeRequest:
+      properties:
+        code:
+          type: string
+          maxLength: 10
+          minLength: 6
+          title: Code
+          description: 6-digit code from the authenticator.
+      additionalProperties: false
+      type: object
+      required:
+      - code
+      title: MfaCodeRequest
+    MfaDisableRequest:
+      properties:
+        password:
+          type: string
+          maxLength: 256
+          minLength: 1
+          title: Password
+        code:
+          type: string
+          maxLength: 10
+          minLength: 6
+          title: Code
+          description: 6-digit code from the authenticator.
+      additionalProperties: false
+      type: object
+      required:
+      - password
+      - code
+      title: MfaDisableRequest
+    MfaRecoveryCodes:
+      properties:
+        codes:
+          items:
+            type: string
+          type: array
+          title: Codes
+          description: Shown once; each works once. Older codes stop working.
+      type: object
+      required:
+      - codes
+      title: MfaRecoveryCodes
+    MfaSetupStart:
+      properties:
+        secret:
+          type: string
+          title: Secret
+          description: Base32 secret for manual entry in the authenticator app.
+        otpauth_uri:
+          type: string
+          title: Otpauth Uri
+          description: otpauth://totp/… URI for the QR code.
+        issuer:
+          type: string
+          title: Issuer
+        account:
+          type: string
+          title: Account
+      type: object
+      required:
+      - secret
+      - otpauth_uri
+      - issuer
+      - account
+      title: MfaSetupStart
+    MfaStatus:
+      properties:
+        enabled:
+          type: boolean
+          title: Enabled
+        enabled_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Enabled At
+        required:
+          type: boolean
+          title: Required
+          description: The user's role needs two-step verification.
+        setup_due:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Setup Due
+          description: End of the grace period (required only).
+        blocking:
+          type: boolean
+          title: Blocking
+          description: Grace period over and not enrolled.
+        recovery_codes_remaining:
+          type: integer
+          title: Recovery Codes Remaining
+      type: object
+      required:
+      - enabled
+      - enabled_at
+      - required
+      - setup_due
+      - blocking
+      - recovery_codes_remaining
+      title: MfaStatus
+    MfaVerifyRequest:
+      properties:
+        code:
+          anyOf:
+          - type: string
+            maxLength: 10
+            minLength: 6
+          - type: 'null'
+          title: Code
+        recovery_code:
+          anyOf:
+          - type: string
+            maxLength: 20
+            minLength: 8
+          - type: 'null'
+          title: Recovery Code
+          description: One of the single-use codes.
+      additionalProperties: false
+      type: object
+      title: MfaVerifyRequest
+      description: Exactly one of `code` and `recovery_code`.
     MiddayBanHours:
       properties:
         start_local:

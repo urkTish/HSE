@@ -74,19 +74,27 @@ class IssuedSession:
     session: UserSession
 
 
-def create_session(db: Session, user: User) -> IssuedSession:
+def create_session(db: Session, user: User, mfa_pending: bool = False) -> IssuedSession:
+    """A `mfa_pending` session (password accepted, code still due, D-299) lives only
+    `mfa_pending_minutes`; the code step extends it to the normal lifetime."""
     s = get_settings()
     ctx = get_request_context()
     current = now()
+    life = (
+        timedelta(minutes=s.mfa_pending_minutes)
+        if mfa_pending
+        else timedelta(hours=s.session_absolute_hours)
+    )
     session = UserSession(
         id=uuid.uuid4(),
         user_id=user.id,
         created_at=current,
         last_seen_at=current,
-        expires_at=current + timedelta(hours=s.session_absolute_hours),
+        expires_at=current + life,
         ip_address=ctx.ip_address,
         user_agent=ctx.user_agent,
-        last_authenticated_at=current,
+        last_authenticated_at=None if mfa_pending else current,
+        mfa_pending=mfa_pending,
     )
     db.add(session)
     db.flush()
@@ -286,17 +294,49 @@ def login(db: Session, email: str, password: str) -> tuple[IssuedSession, User]:
             UserSession.user_agent.is_not_distinct_from(ctx.user_agent),
         )
     )
+    user.inactivity_warned_at = None  # §7: warn again on the next idle period
+    if had_sessions and not known:
+        notify.send_email(db, user, "new_login", ip=ctx.ip_address or "unknown")
+    if user.mfa_enabled:
+        # D-299: the code step follows. The failure counter is cleared only after it, so a known
+        # password does not buy unlimited code guesses.
+        return create_session(db, user, mfa_pending=True), user
     user.failed_login_count = 0
     user.failed_window_started_at = None
     user.last_login_at = current
-    user.inactivity_warned_at = None  # §7: warn again on the next idle period
     issued = create_session(db, user)
-    if had_sessions and not known:
-        notify.send_email(db, user, "new_login", ip=ctx.ip_address or "unknown")
     audit.record(
         db, AuditAction.login_success, actor, entity_type=EntityType.user, entity_id=user.id
     )
     return issued, user
+
+
+def complete_mfa(
+    db: Session, p: Principal, code: str | None, recovery_code: str | None
+) -> IssuedSession:
+    """Second sign-in step (D-299): the pending session becomes a normal one."""
+    from app.services import mfa  # noqa: PLC0415
+
+    session = p.session
+    if session is None or not session.mfa_pending:
+        raise ApiError(
+            409,
+            ErrorCode.INVALID_TRANSITION,
+            "This session has already passed two-step verification.",
+            "اجتازت هذه الجلسة التحقق بخطوتين من قبل.",
+        )
+    method = mfa.verify_sign_in(db, p, code, recovery_code)
+    session.expires_at = now() + timedelta(hours=get_settings().session_absolute_hours)
+    audit.record(
+        db,
+        AuditAction.login_success,
+        AuditActor(p.user.id),
+        entity_type=EntityType.user,
+        entity_id=p.user.id,
+        details={"mfa": method},
+    )
+    db.flush()
+    return IssuedSession(encode_jwt(p.user.id, session.id, session.expires_at), session)
 
 
 def logout(db: Session, p: Principal) -> None:
@@ -593,7 +633,10 @@ def build_me(db: Session, p: Principal) -> Me:
                 read_only=scope.read_only,
             )
         )
+    from app.services import mfa  # noqa: PLC0415
+
     u = p.user
+    mfa_state = mfa.state(p, start_grace=True)
     current_version = get_settings().privacy_notice_version
     assignments: list[RoleAssignmentRead] = [
         assignment_read(a, p.today) for a in p.active_assignments
@@ -611,6 +654,9 @@ def build_me(db: Session, p: Principal) -> Me:
         display_language=u.preferred_language,
         status=u.status,
         mfa_enabled=u.mfa_enabled,
+        mfa_required=mfa_state.required,
+        mfa_setup_due=mfa_state.setup_due,
+        mfa_setup_blocking=mfa_state.blocking,
         last_login_at=u.last_login_at,
         privacy_notice_version=u.privacy_notice_version,
         privacy_notice_ack_at=u.privacy_notice_ack_at,

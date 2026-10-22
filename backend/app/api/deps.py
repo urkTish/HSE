@@ -19,7 +19,7 @@ from app.core.errors import ApiError, ErrorCode
 from app.core.security import decode_jwt
 from app.db.session import get_sessionmaker
 from app.models import User, UserSession
-from app.services import audit
+from app.services import audit, mfa
 from app.services.permissions import Principal, build_principal
 
 cookie_scheme = APIKeyCookie(
@@ -120,8 +120,9 @@ def _expired() -> ApiError:
     )
 
 
-def get_principal(token: Annotated[RawToken, Depends(raw_token)], db: DB) -> Principal:
-    """Authenticate the request (cookie or bearer) and enforce session rules (§5.1 rule 4, 7)."""
+def _authenticate(token: RawToken, db: Session, allow_mfa_pending: bool) -> Principal:
+    """Authenticate the request (cookie or bearer) and enforce session rules (§5.1 rule 4, 7).
+    A session still waiting for its two-step code (D-299) passes only where allowed."""
     claims = decode_jwt(token.token)
     if not claims:
         raise ApiError(401, ErrorCode.UNAUTHENTICATED, "Invalid token.", "رمز غير صالح.")
@@ -146,15 +147,27 @@ def get_principal(token: Annotated[RawToken, Depends(raw_token)], db: DB) -> Pri
     user = db.get(User, uid)
     if user is None or user.status != UserStatus.active:
         raise _expired()
+    if session.mfa_pending and not allow_mfa_pending:
+        raise mfa.mfa_required_error()
     if current - session.last_seen_at > timedelta(seconds=30):
         session.last_seen_at = current
     return build_principal(db, user, session)
 
 
+def get_principal(token: Annotated[RawToken, Depends(raw_token)], db: DB) -> Principal:
+    return _authenticate(token, db, allow_mfa_pending=False)
+
+
+def get_mfa_pending_principal(token: Annotated[RawToken, Depends(raw_token)], db: DB) -> Principal:
+    """Also accepts a session that still needs its code (POST /auth/mfa/verify, logout)."""
+    return _authenticate(token, db, allow_mfa_pending=True)
+
+
 SessionUser = Annotated[Principal, Depends(get_principal)]
+MfaPendingUser = Annotated[Principal, Depends(get_mfa_pending_principal)]
 
 
-def get_acked_principal(p: SessionUser) -> Principal:
+def get_privacy_acked_principal(p: SessionUser) -> Principal:
     """Rule 6: nothing but privacy-notice ack and logout until the notice is acknowledged."""
     if p.user.privacy_notice_version != get_settings().privacy_notice_version:
         raise ApiError(
@@ -163,6 +176,19 @@ def get_acked_principal(p: SessionUser) -> Principal:
             "Please acknowledge the privacy notice first.",
             "يرجى الإقرار بإشعار الخصوصية أولاً.",
         )
+    return p
+
+
+MfaSetupUser = Annotated[Principal, Depends(get_privacy_acked_principal)]
+"""Signed in and privacy acknowledged, two-step set-up possibly overdue: /auth/me and the MFA
+set-up endpoints only."""
+
+
+def get_acked_principal(p: MfaSetupUser) -> Principal:
+    """D-299: a user whose role needs MFA and whose grace period is over reaches nothing but the
+    set-up until they enrol."""
+    if mfa.state(p).blocking:
+        raise mfa.enrolment_required()
     return p
 
 
