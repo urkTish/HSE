@@ -422,31 +422,20 @@ def redact(db: Session, inc: Incident, text: str | None) -> str | None:
 
 # ---- Umm al-Qura date (PK-4) ---------------------------------------------------------------------
 
-HIJRI_MONTHS_AR = [
-    "محرم", "صفر", "ربيع الأول", "ربيع الآخر", "جمادى الأولى", "جمادى الآخرة", "رجب", "شعبان",
-    "رمضان", "شوال", "ذو القعدة", "ذو الحجة",
-]  # fmt: skip
-
 
 def hijri(d: date) -> tuple[int, int, int]:
-    """Tabular (civil) Islamic calendar, an approximation of Umm al-Qura that may differ by one
-    day (DECISIONS: VERIFY against the official calendar before printing letters)."""
-    jd = d.toordinal() + 1721424.5
-    jd = int(jd + 0.5)
-    l_ = jd - 1948440 + 10632
-    n = (l_ - 1) // 10631
-    l_ = l_ - 10631 * n + 354
-    j = ((10985 - l_) // 5316) * ((50 * l_) // 17719) + (l_ // 5670) * ((43 * l_) // 15238)
-    l_ = l_ - ((30 - j) // 15) * ((17719 * j) // 50) - (j // 16) * ((15238 * j) // 43) + 29
-    m = (24 * l_) // 709
-    day = l_ - (709 * m) // 24
-    y = 30 * n + j - 30
-    return y, m, day
+    """Umm al-Qura date (the official Saudi calendar, D-303) as (year, month, day), from the
+    `hijridate` tables (1343-1500 AH, 1924-2077); outside that range the tabular Islamic calendar
+    is used, which can differ by a day."""
+    from app.core.hijri import to_hijri  # noqa: PLC0415
+
+    return to_hijri(d)
 
 
 def hijri_str(d: date) -> str:
-    y, m, day = hijri(d)
-    return f"{day} {HIJRI_MONTHS_AR[m - 1]} {y} هـ"
+    from app.core.hijri import hijri_ar  # noqa: PLC0415
+
+    return hijri_ar(d)
 
 
 def end_of_day(d: date) -> datetime:

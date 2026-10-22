@@ -8,6 +8,7 @@ core Latin font. fpdf2 + uharfbuzz were added for this (DECISIONS D-222)."""
 from __future__ import annotations
 
 import io
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from decimal import Decimal
 from pathlib import Path
@@ -29,6 +30,7 @@ class Table:
     title_en: str = ""
     title_ar: str = ""
     sheet: str | None = None  # XLSX sheet name (EX: one sheet per KPI table)
+    rows_ar: list[dict[str, Any]] | None = None  # Arabic cell texts when they differ (D-304)
 
 
 @dataclass
@@ -49,7 +51,8 @@ class Doc:
     title_en: str
     title_ar: str
     snapshot_hash: str
-    control: list[tuple[str, str, str]]  # EN label, AR label, value
+    # EN label, AR label, value[, Arabic value when it differs, e.g. a Hijri date (D-303)]
+    control: Sequence[tuple[str, ...]]
     sections: list[Section]
     footer_note: str = "CONFIDENTIAL"
 
@@ -132,7 +135,7 @@ def _table(pdf: _Pdf, t: Table, rtl: bool) -> None:
         pdf.cell(width, h, (ar if rtl else en)[:40], border=1, align="C")
     pdf.ln(h)
     _font(pdf, size)
-    for r in t.rows:
+    for r in t.rows_ar if (rtl and t.rows_ar is not None) else t.rows:
         if pdf.will_page_break(h):
             pdf.add_page()
         for key, _en, _ar in cols:
@@ -141,9 +144,9 @@ def _table(pdf: _Pdf, t: Table, rtl: bool) -> None:
     pdf.ln(2)
 
 
-def pdf(doc: Doc, lang: str, superseded_by: int | None = None) -> bytes:
-    """`lang` = en, ar or both (EN then AR in one file)."""
-    langs = ["en", "ar"] if lang == "both" else [lang]
+def pdf(doc: Doc, lang: str | list[str], superseded_by: int | None = None) -> bytes:
+    """`lang` = en, ar, both (EN then AR in one file) or an explicit order such as ["ar", "en"]."""
+    langs = lang if isinstance(lang, list) else (["en", "ar"] if lang == "both" else [lang])
     out: _Pdf | None = None
     for lg in langs:
         rtl = lg == "ar"
@@ -159,8 +162,10 @@ def pdf(doc: Doc, lang: str, superseded_by: int | None = None) -> bytes:
         p.multi_cell(0, 8, doc.title_ar if rtl else doc.title_en, align=align,
                      new_x=XPos.LMARGIN, new_y=YPos.NEXT)  # fmt: skip
         _font(p, 8)
-        for en, ar, v in doc.control:
-            p.multi_cell(0, 4.5, f"{ar}: {ltr(v, True)}" if rtl else f"{en}: {v}", align=align,
+        for row in doc.control:
+            en, ar, v = row[0], row[1], row[2]
+            v_ar = row[3] if len(row) > 3 else ltr(v, True)
+            p.multi_cell(0, 4.5, f"{ar}: {v_ar}" if rtl else f"{en}: {v}", align=align,
                          new_x=XPos.LMARGIN, new_y=YPos.NEXT)  # fmt: skip
         for sec in doc.sections:
             _shaping(p, rtl)
@@ -209,8 +214,8 @@ def xlsx(doc: Doc) -> bytes:
     ws0.append(["Document no.", "رقم الوثيقة", doc.doc_no])
     ws0.append(["Revision", "المراجعة", doc.revision])
     ws0.append(["Snapshot SHA-256", "بصمة البيانات", doc.snapshot_hash])
-    for en, ar, v in doc.control:
-        ws0.append([en, ar, v])
+    for ctl in doc.control:
+        ws0.append([ctl[0], ctl[1], ctl[2]])
     used: set[str] = {"Document"}
     n = 0
     for sec in doc.sections:

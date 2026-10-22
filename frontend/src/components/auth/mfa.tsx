@@ -195,7 +195,7 @@ export function MfaEnrol({ email, onFinished }: { email: string; onFinished: () 
     mutationFn: () => unwrap(api.POST("/api/v1/auth/mfa/confirm", { body: { code } })),
     onSuccess: (res) => {
       setCodes(res.codes);
-      void qc.invalidateQueries({ queryKey: keys.me });
+      // The me query is refreshed by `onFinished`: refreshing it here would swap the page away from the codes.
       void qc.invalidateQueries({ queryKey: mfaKey });
     },
     onError: () => setCode(""),

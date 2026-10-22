@@ -637,6 +637,72 @@ def bulletin(ls: FuLesson) -> tuple[str, str]:
     return en, ar
 
 
+def bulletin_pdf(db: Session, p: Principal, lesson_id: uuid.UUID, lang: str) -> tuple[bytes, str]:
+    """DS-2 bulletin as a PDF (D-304): EN, AR (shaped right-to-left) or both in one file, with
+    the publication date in Gregorian and Umm al-Qura Hijri (D-303)."""
+    import hashlib  # noqa: PLC0415
+    import json  # noqa: PLC0415
+
+    from app.core.hijri import hijri_ar, hijri_en  # noqa: PLC0415
+    from app.services.scorecard import render  # noqa: PLC0415
+
+    ls = _get(db, p, lesson_id)
+    day = fc.local_day(ls.published_at) if ls.published_at else fc.local_day()
+    control: list[tuple[str, ...]] = [
+        ("Lesson", "الدرس", ls.lesson_no),
+        ("Date", "التاريخ", day.isoformat()),
+        ("Date (Hijri, Umm al-Qura)", "التاريخ (هجري، أم القرى)", hijri_en(day), hijri_ar(day)),
+    ]
+    if ls.severity_potential is not None:
+        control.append(("Potential severity", "الخطورة المحتملة", str(ls.severity_potential)))
+    if ls.root_cause_codes:
+        control.append(("Root causes", "الأسباب الجذرية", ", ".join(ls.root_cause_codes)))
+    kl = ls.key_lessons or []
+    acts = ls.actions_taken or []
+    sections = [
+        render.Section(
+            key="what", title_en="What happened", title_ar="ماذا حدث",
+            paragraphs_en=[ls.what_happened_en or ls.what_happened_ar or "—"],
+            paragraphs_ar=[ls.what_happened_ar or ls.what_happened_en or "—"],
+        ),
+        render.Section(
+            key="why", title_en="Why it happened", title_ar="لماذا حدث",
+            paragraphs_en=[ls.why_en or ls.why_ar or "—"],
+            paragraphs_ar=[ls.why_ar or ls.why_en or "—"],
+        ),
+        render.Section(
+            key="lessons", title_en="Key lessons", title_ar="الدروس الرئيسية",
+            paragraphs_en=[f"• {k.get('text_en') or k.get('text_ar')}" for k in kl] or ["—"],
+            paragraphs_ar=[f"• {k.get('text_ar') or k.get('text_en')}" for k in kl] or ["—"],
+        ),
+    ]  # fmt: skip
+    if acts:
+        rows = [{"ref": a.get("ca_ref"), "level": a.get("control_level")} for a in acts]
+        sections.append(render.Section(
+            key="actions", title_en="Actions taken", title_ar="الإجراءات المتخذة",
+            tables=[render.Table([("ref", "Corrective action", "الإجراء التصحيحي"),
+                                  ("level", "Control level", "مستوى التحكم")], rows)],
+        ))  # fmt: skip
+    sections.append(render.Section(
+        key="brief", title_en="Brief your crews", title_ar="وعِّ فرق العمل",
+        paragraphs_en=["Share this lesson in the next toolbox talk and acknowledge it in the "
+                       "platform."],
+        paragraphs_ar=["شارك هذا الدرس في حديث السلامة القادم وأقرّ به في المنصة."],
+    ))  # fmt: skip
+    digest = hashlib.sha256(
+        json.dumps([ls.lesson_no, ls.title_en, ls.title_ar, ls.what_happened_en, ls.why_en, kl,
+                    acts], default=str).encode()
+    ).hexdigest()  # fmt: skip
+    doc = render.Doc(
+        doc_no=ls.lesson_no, revision=1,
+        title_en=f"Lesson learned: {ls.title_en or ls.title_ar or ls.lesson_no}",
+        title_ar=f"درس مستفاد: {ls.title_ar or ls.title_en or ls.lesson_no}",
+        snapshot_hash=digest, control=control, sections=sections, footer_note="HSE BULLETIN",
+    )  # fmt: skip
+    suffix = {"en": "EN", "ar": "AR"}.get(lang, "EN-AR")
+    return render.pdf(doc, lang), f"{ls.lesson_no}-bulletin-{suffix}.pdf"
+
+
 def publish(db: Session, p: Principal | None, ls: FuLesson, at: datetime) -> list[FuDistribution]:
     """LL-4 / DS-1 / DS-2 / EF-1."""
     from app.services.followup import effectiveness  # noqa: PLC0415
