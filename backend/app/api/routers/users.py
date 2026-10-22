@@ -111,6 +111,18 @@ def transition_user(
 
 
 @router.post(
+    "/{user_id}/mfa/reset",
+    response_model=UserRead,
+    summary="Clear another user's two-step verification (HSE Manager, lost phone)",
+    description="The user's sessions end; they sign in with their password and enrol again "
+    "(D-300). 409 MFA_NOT_ENABLED when it is off; 403 SELF_MODIFICATION_FORBIDDEN on own account.",
+    responses=error_responses(401, 403, 404, 409),
+)
+def reset_user_mfa(user_id: uuid.UUID, user: CurrentUser, db: DB) -> UserRead:
+    return svc.user_read(db, user, svc.reset_mfa(db, user, user_id), contacts=True)
+
+
+@router.post(
     "/{user_id}/resend-invite",
     response_model=UserRead,
     summary="Re-send the invite (new token; old one invalidated)",

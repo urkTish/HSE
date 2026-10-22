@@ -16,6 +16,10 @@ os.environ["ANTHROPIC_API_KEY"] = ""
 os.environ["LICENCE_KEY"] = ""
 os.environ["LICENCE_FILE"] = ""
 os.environ["LICENCE_CACHE_SECONDS"] = "0"
+# D-299: MFA enforcement is off for the suite (tests move the clock by weeks after signing in);
+# tests/test_mfa.py switches it on per test. Upload scanning stays unconfigured (D-302).
+os.environ["MFA_REQUIRED_ROLES"] = ""
+os.environ["CLAMAV_HOST"] = ""
 
 from collections.abc import Iterator  # noqa: E402
 from pathlib import Path  # noqa: E402

@@ -4,7 +4,8 @@ CAs (source `field_audit`) and the EN / AR report, automatic close, void, and pr
 
 from __future__ import annotations
 
-import html
+import hashlib
+import json
 import uuid
 from dataclasses import dataclass, field
 from datetime import date, timedelta
@@ -29,6 +30,7 @@ from app.core.field_enums import (
     VersionStatus,
 )
 from app.core.field_enums import AuditAction as AuditStep
+from app.core.hijri import hijri_ar, hijri_en
 from app.core.hse_enums import AttachmentOwner, CaSourceType, CaStatus, ControlLevel
 from app.models import (
     ChecklistResponse,
@@ -60,6 +62,7 @@ from app.services.field import execution, library, scoring
 from app.services.field.reference import AUDIT_TYPES, grade_for
 from app.services.hse_common import Refs
 from app.services.permissions import Principal, build_principal, forbidden_error
+from app.services.scorecard import render
 
 C = Capability
 S = AuditStatus
@@ -587,23 +590,34 @@ def _issue(db: Session, p: Principal, proj: Project, a: FieldAudit, obs_ca: bool
     a.issued_at = now()
     a.status = S.issued
     db.flush()
-    en, ar = report_html(db, a, r, findings)
+    doc = report_doc(db, a, r, findings)
     from app.services import attachments  # noqa: PLC0415
 
     a.report_en_id = attachments.store(
-        db, AttachmentOwner.field_audit_report, a.id, a.project_id, f"{a.audit_no}-EN.html",
-        en.encode(), "text/html", p.user.id,
+        db, AttachmentOwner.field_audit_report, a.id, a.project_id, f"{a.audit_no}-EN.pdf",
+        render.pdf(doc, "en"), "application/pdf", p.user.id, generated=True,
     ).id  # fmt: skip
     a.report_ar_id = attachments.store(
-        db, AttachmentOwner.field_audit_report, a.id, a.project_id, f"{a.audit_no}-AR.html",
-        ar.encode(), "text/html", p.user.id,
+        db, AttachmentOwner.field_audit_report, a.id, a.project_id, f"{a.audit_no}-AR.pdf",
+        render.pdf(doc, "ar"), "application/pdf", p.user.id, generated=True,
     ).id  # fmt: skip
 
 
-def report_html(
+SEVERITY_LABELS: dict[FindingSeverity, tuple[str, str]] = {
+    FS.minor: ("Minor", "بسيطة"),
+    FS.major: ("Major", "كبيرة"),
+    FS.critical: ("Critical", "حرجة"),
+    FS.major_nc: ("Major non-conformity", "عدم مطابقة كبرى"),
+    FS.minor_nc: ("Minor non-conformity", "عدم مطابقة صغرى"),
+    FS.observation: ("Observation", "ملاحظة"),
+    FS.ofi: ("Opportunity for improvement", "فرصة للتحسين"),
+}
+
+
+def report_doc(
     db: Session, a: FieldAudit, r: ChecklistResponse, findings: list[FieldFinding]
-) -> tuple[str, str]:
-    """AUD-4 report (HTML, EN and AR): scope, team (names), score, grade, section scores and
+) -> render.Doc:
+    """AUD-4 report (EN and AR PDFs, D-304): scope, team (names), score, grade, section scores and
     findings; never auditee worker names (findings carry no names, FND-4)."""
     refs = Refs(db).load(
         sites=list(a.site_ids or []),
@@ -611,45 +625,67 @@ def report_html(
         users=[a.lead_auditor_id, *list(a.team_ids or [])],
     )
     rr = execution.response_read(db, None, r)
-    e = html.escape
-    out = []
-    for lang in ("en", "ar"):
-        ar = lang == "ar"
-        eng = refs.eng(a.auditee_engagement_id)
-        scope = (eng.name_en if eng else "Project") if not ar else (
-            (eng.name_ar or eng.name_en) if eng else "المشروع")  # fmt: skip
-        team = [u for u in (refs.user(x) for x in [a.lead_auditor_id, *a.team_ids]) if u]
-        names = ", ".join(e((u.full_name_ar or u.full_name_en) if ar else u.full_name_en)
-                          for u in team)  # fmt: skip
-        label = AUDIT_TYPES[a.audit_type][1 if ar else 0]
-        rows = "".join(
-            f"<tr><td>{e(s.section_code)}</td><td>{e(s.title_ar if ar else s.title_en)}</td>"
-            f"<td>{e(s.score_pct or '—')}</td></tr>"
-            for s in rr.section_scores
-        )
-        frows = "".join(
-            f"<tr><td>{e(f.finding_no)}</td><td>{e(f.item_code or '')}</td>"
-            f"<td>{e(f.severity.value)}</td>"
-            f"<td>{e(_desc(f, ar))}</td></tr>"
-            for f in findings
-        )
-        summary = (a.summary_ar or a.summary_en) if ar else (a.summary_en or a.summary_ar)
-        h = (
-            ("تقرير التدقيق", "النطاق", "الفريق", "النتيجة", "التقدير", "الأقسام", "الملاحظات")
-            if ar
-            else ("Audit report", "Scope", "Team", "Score", "Grade", "Sections", "Findings")
-        )
-        out.append(
-            f'<!doctype html><html lang="{lang}" dir="{"rtl" if ar else "ltr"}"><head>'
-            f'<meta charset="utf-8"><title>{e(a.audit_no)}</title></head><body>'
-            f"<h1>{h[0]} {e(a.audit_no)}</h1><p>{e(label)}</p>"
-            f"<p>{h[1]}: {e(scope)}</p><p>{h[2]}: {names}</p>"
-            f"<p>{h[3]}: <bdi>{e(rr.score_pct or '—')} %</bdi> · {h[4]}: "
-            f"{e(r.grade.value if r.grade else '—')}</p><p>{e(summary or '')}</p>"
-            f"<h2>{h[5]}</h2><table>{rows}</table><h2>{h[6]}</h2><table>{frows}</table>"
-            "</body></html>"
-        )
-    return out[0], out[1]
+    eng = refs.eng(a.auditee_engagement_id)
+    scope_en = eng.name_en if eng else "Project"
+    scope_ar = (eng.name_ar or eng.name_en) if eng else "المشروع"
+    team = [u for u in (refs.user(x) for x in [a.lead_auditor_id, *a.team_ids]) if u]
+    names_en = ", ".join(u.full_name_en for u in team)
+    names_ar = "، ".join(u.full_name_ar or u.full_name_en for u in team)
+    type_en, type_ar = AUDIT_TYPES[a.audit_type]
+    score = f"{rr.score_pct} %" if rr.score_pct is not None else "—"
+    grade = r.grade.value if r.grade else "—"
+    issued = fc.local_day(a.issued_at) if a.issued_at else fc.local_day()
+    period = "—"
+    if a.fieldwork_start and a.fieldwork_end:
+        period = f"{a.fieldwork_start.isoformat()} – {a.fieldwork_end.isoformat()}"
+    issuer = db.get(User, a.issued_by_user_id) if a.issued_by_user_id else None
+    control: list[tuple[str, ...]] = [
+        ("Audit type", "نوع التدقيق", type_en, type_ar),
+        ("Scope", "النطاق", scope_en, scope_ar),
+        ("Team", "الفريق", names_en or "—", names_ar or "—"),
+        ("Fieldwork", "العمل الميداني", period),
+        ("Score", "النتيجة", score),
+        ("Grade", "التقدير", grade),
+        ("Issue date", "تاريخ الإصدار", issued.isoformat()),
+        ("Issue date (Hijri, Umm al-Qura)", "تاريخ الإصدار الهجري، أم القرى",
+         hijri_en(issued), hijri_ar(issued)),
+    ]  # fmt: skip
+    if issuer is not None:
+        control.append(("Issued by", "أصدره", issuer.full_name_en,
+                        issuer.full_name_ar or issuer.full_name_en))  # fmt: skip
+    sec_cols = [("code", "Section", "القسم"), ("title", "Title", "العنوان"),
+                ("score", "Score %", "النتيجة %")]  # fmt: skip
+    sec_rows = [{"code": s.section_code, "title": s.title_en, "score": s.score_pct}
+                for s in rr.section_scores]  # fmt: skip
+    sec_rows_ar = [{"code": s.section_code, "title": s.title_ar or s.title_en,
+                    "score": s.score_pct} for s in rr.section_scores]  # fmt: skip
+    f_cols = [("no", "Finding", "الملاحظة"), ("item", "Item", "البند"),
+              ("severity", "Severity", "الخطورة"), ("text", "Description", "الوصف")]  # fmt: skip
+    f_rows = [{"no": f.finding_no, "item": f.item_code, "severity": SEVERITY_LABELS[f.severity][0],
+               "text": _desc(f, False)} for f in findings]  # fmt: skip
+    f_rows_ar = [{"no": f.finding_no, "item": f.item_code,
+                  "severity": SEVERITY_LABELS[f.severity][1], "text": _desc(f, True)}
+                 for f in findings]  # fmt: skip
+    summary_en = a.summary_en or a.summary_ar or ""
+    summary_ar = a.summary_ar or a.summary_en or ""
+    sections = [
+        render.Section(key="summary", title_en="Summary", title_ar="الملخص",
+                       paragraphs_en=[summary_en], paragraphs_ar=[summary_ar]),
+        render.Section(key="sections", title_en="Section scores", title_ar="نتائج الأقسام",
+                       tables=[render.Table(sec_cols, sec_rows, rows_ar=sec_rows_ar)]),
+        render.Section(key="findings", title_en="Findings", title_ar="الملاحظات",
+                       tables=[render.Table(f_cols, f_rows, rows_ar=f_rows_ar)],
+                       paragraphs_en=[] if findings else ["No findings."],
+                       paragraphs_ar=[] if findings else ["لا توجد ملاحظات."]),
+    ]  # fmt: skip
+    digest = hashlib.sha256(
+        json.dumps([control, sec_rows, f_rows, summary_en, summary_ar], default=str).encode()
+    ).hexdigest()
+    return render.Doc(
+        doc_no=a.audit_no, revision=1, title_en=f"Audit report {a.audit_no}",
+        title_ar=f"تقرير التدقيق {a.audit_no}", snapshot_hash=digest, control=control,
+        sections=sections,
+    )  # fmt: skip
 
 
 def _desc(f: FieldFinding, ar: bool) -> str:

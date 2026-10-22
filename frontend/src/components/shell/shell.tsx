@@ -13,6 +13,8 @@ import { ThemeToggle } from "@/components/shell/theme-toggle";
 import { UserMenu } from "@/components/shell/user-menu";
 import { FieldOfflineSync } from "@/components/field/offline";
 import { LicenceBanner } from "@/components/licence/licence-banner";
+import { MfaBanner } from "@/components/auth/mfa";
+import { useMeData } from "@/components/shell/me-context";
 
 function Brand({ onNavigate }: { onNavigate?: () => void }) {
   const t = useTranslations("meta");
@@ -33,6 +35,7 @@ function Brand({ onNavigate }: { onNavigate?: () => void }) {
 export function Shell({ children }: { children: ReactNode }) {
   const t = useTranslations("common");
   const [mobileOpen, setMobileOpen] = useState(false);
+  const me = useMeData();
   return (
     <div className="app-mesh flex min-h-dvh">
       <a
@@ -97,6 +100,7 @@ export function Shell({ children }: { children: ReactNode }) {
         <main id="main" tabIndex={-1} className="flex-1 px-4 py-5 outline-none sm:px-6 sm:py-6 lg:px-8 lg:py-8">
           <div className="mx-auto max-w-7xl">
             <LicenceBanner />
+            <MfaBanner me={me} />
             <Suspense>{children}</Suspense>
           </div>
         </main>

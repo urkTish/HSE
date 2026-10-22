@@ -25,6 +25,7 @@ from app.schemas.heat import (
     VoidInput,
     ZoneHeatState,
 )
+from app.services import scanner
 from app.services.heat import board, readings
 
 router = APIRouter(tags=["heat-readings"])
@@ -89,6 +90,7 @@ def import_wbgt_readings(
     file: Annotated[UploadFile, File(description="CSV in the wbgt_readings template.")],
     dry_run: bool = True,
 ) -> ReadingImportResult:
+    scanner.check_upload(file, db, user.user.id, project_id)  # D-302
     return readings.import_csv(db, user, project_id, file, dry_run)
 
 

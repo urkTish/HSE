@@ -1,4 +1,4 @@
-"""Licence status and renewal (trial readiness, package B; D-289…D-298)."""
+"""Licence status and renewal (trial readiness, package B; D-289…D-297)."""
 
 from datetime import date, datetime
 from typing import Literal

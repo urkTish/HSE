@@ -11,6 +11,7 @@ from app.core.cert_enums import CertImportSource, CertImportStatus, CertImportTe
 from app.core.enums import Capability, ExportFormat
 from app.core.errors import error_responses
 from app.schemas.cert_imports import CertImportPage, CertImportRead
+from app.services import scanner
 from app.services.cert import imports as svc
 
 router = APIRouter(tags=["certificate-imports"])
@@ -80,6 +81,8 @@ def create_certificate_import(
         UploadFile | None, File(description="PDF / EML of the TPI's email")
     ] = None,
 ) -> CertImportRead:
+    for upload in (file, scans_zip, evidence_file):  # D-302
+        scanner.check_upload(upload, db, user.user.id, project_id)
     return svc.upload(
         db, user, project_id, file, template, source, create_items, tpi_id, scans_zip, evidence_file
     )

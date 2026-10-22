@@ -6,7 +6,7 @@ from typing import Literal
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-CONTRACT_VERSION = "0.16.0"  # contract: licence v1 (trial readiness B)
+CONTRACT_VERSION = "0.17.0"  # contract: trial readiness A + B + C combined
 API_PREFIX = "/api/v1"
 SESSION_COOKIE_NAME = "hse_session"
 GATE_SESSION_COOKIE = "hse_gate_session"
@@ -35,6 +35,15 @@ class Settings(BaseSettings):
     # Tokens (§5.1 rule 5)
     invite_token_hours: int = 72
     reset_token_minutes: int = 60
+
+    # Two-step verification (TOTP, D-299). Roles that must enrol: `hse_manager` and `admin` (the
+    # PROJECT_DELETE_EMAILS administrators); any other role value may be listed too. Empty = MFA
+    # optional for everyone. A user who must enrol gets `mfa_grace_days` from their first sign-in
+    # under the rule; after that only the enrolment screens answer until they enrol.
+    mfa_required_roles: str = "hse_manager,admin"
+    mfa_grace_days: int = Field(default=7, ge=0)
+    mfa_issuer: str = "HSE Platform"
+    mfa_pending_minutes: int = 10  # a password-only session must pass the code step within this
 
     # Privacy notice (§5.1 rule 6, P13)
     privacy_notice_version: str = "PN-1.0"
@@ -89,6 +98,18 @@ class Settings(BaseSettings):
     attachment_max_bytes: int = 20 * 1024 * 1024
     import_max_bytes: int = 5 * 1024 * 1024
     import_max_rows: int = 20_000
+    # Upload virus scanning (D-302): clamd over TCP (INSTREAM). Empty host = scanning off (files
+    # are stored with scan_status `skipped`, as before). When the scanner cannot be reached,
+    # uploads are refused (503 SCANNER_UNAVAILABLE) unless CLAMAV_FAIL_OPEN is true, in which case
+    # they are stored unscanned (`skipped`) and a warning is logged.
+    clamav_host: str = ""
+    clamav_port: int = 3310
+    clamav_timeout_seconds: float = 30.0
+    clamav_fail_open: bool = False
+
+    # First-time setup (D-306): optional one-off code the person running the setup must type, so
+    # nobody else can claim a freshly deployed server first. Empty = no code asked.
+    setup_token: str = ""
 
     # Outgoing email (D-279): any SMTP provider. No SMTP_HOST / SMTP_FROM = emails stay in the
     # outbox (email_outbox) and the `email_send` job only reports how many are waiting.
@@ -104,7 +125,7 @@ class Settings(BaseSettings):
     email_retry_base_seconds: int = 60  # backoff: base, 2x, 4x … (capped at one hour)
     email_max_age_hours: int = 72  # older queued rows are marked failed, not sent (stale links)
 
-    # Licence (trial readiness, D-289…D-298). No key anywhere = unlimited (dev, tests). The key
+    # Licence (trial readiness, D-289…D-297). No key anywhere = unlimited (dev, tests). The key
     # pasted by the HSE Manager is stored in the database and wins over LICENCE_KEY / LICENCE_FILE,
     # which only bootstrap an install. LICENCE_PUBLIC_KEY (PEM, or base64 of the 32 raw bytes)
     # overrides the public key shipped in app/data/licence_public_key.pem.

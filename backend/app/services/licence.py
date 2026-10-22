@@ -1,4 +1,4 @@
-"""Licence state, renewal and enforcement (trial readiness, package B; D-289…D-298).
+"""Licence state, renewal and enforcement (trial readiness, package B; D-289…D-297).
 
 * No key anywhere (database, LICENCE_KEY, LICENCE_FILE) → state ``none``: unlimited, nothing
   enforced (development, tests, installs that are not sold).
@@ -42,7 +42,9 @@ TRIAL_DATA_KEPT_DAYS = 30  # trial terms: data deleted 30 days after expiry if n
 # Files the platform writes for a read (export files) are never refused for storage.
 STORAGE_EXEMPT = frozenset({AttachmentOwner.xp_export_file})
 
-# Writes that stay open in read-only mode (paths after /api/v1, any method). Sign-in and the
+# Writes that stay open in read-only mode (paths after /api/v1, any method). Sign-in (with the
+# two-step verification code, recovery codes and set-up under /auth), a manager's reset of a
+# user's two-step verification, the first-time setup of an empty install (D-307) and the
 # licence page itself; viewing actions that answer with a link, a lookup or a preview that
 # stores nothing; the viewer's own preferences; exports; and the
 # life-safety flows (gate checks, musters, emergency events), which must never stop on a site.
@@ -50,6 +52,8 @@ READ_ONLY_ALLOWED: tuple[re.Pattern[str], ...] = tuple(
     re.compile(p)
     for p in (
         r"/auth/.*",
+        r"/users/[^/]+/mfa/reset",  # D-307: a locked-out user must still be able to sign in
+        r"/setup",  # D-307: locked by itself once the install has a user
         r"/licence",
         r"/gate-device/(login|logout)",
         r"/gate-checks",

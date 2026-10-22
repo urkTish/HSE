@@ -655,7 +655,7 @@
       "last_login_at": "Last sign-in",
       "invite_expires_at": "Invitation expires",
       "locked_until": "Locked until",
-      "mfa_enabled": "Two-factor authentication",
+      "mfa_enabled": "Two-step verification",
       "privacy_ack": "Privacy notice acknowledged",
       "roles": "Roles"
     },
@@ -688,7 +688,14 @@
     },
     "anyRole": "Any role",
     "neverLoggedIn": "Never",
-    "contactHidden": "Hidden for your role"
+    "contactHidden": "Hidden for your role",
+    "mfaReset": {
+      "action": "Reset two-step verification",
+      "title": "Reset two-step verification?",
+      "body": "Use this when the user has lost their phone and their recovery codes. Their sessions end, and they set up two-step verification again at their next sign-in.",
+      "confirm": "Reset",
+      "done": "Two-step verification was reset."
+    }
   },
   "role": {
     "hse_manager": "HSE Manager (admin)",
@@ -775,7 +782,7 @@
       "account_locked": "Account locked",
       "password_reset_requested": "Password reset requested",
       "password_changed": "Password changed",
-      "mfa_changed": "Two-factor setting changed",
+      "mfa_changed": "Two-step verification changed",
       "user_invited": "User invited",
       "user_status_changed": "User status changed",
       "role_assigned": "Role assigned",
@@ -1569,7 +1576,17 @@
       "AUTH_NOT_ACTIVE": "The authorisation is not active.",
       "LICENCE_READ_ONLY": "The licence has ended or is not valid. The platform is read-only: you can view and export, but not add or change records.",
       "LICENCE_LIMIT_REACHED": "A limit of your licence is reached (projects, users, storage or AI questions). Ask for a larger licence.",
-      "LICENCE_KEY_INVALID": "This licence key is not valid. Check that it was copied in full."
+      "LICENCE_KEY_INVALID": "This licence key is not valid. Check that it was copied in full.",
+      "MFA_REQUIRED": "Enter the code from your authenticator app to finish signing in.",
+      "MFA_CODE_INVALID": "The code is not valid. Check the time on your phone and try the newest code.",
+      "MFA_ENROLMENT_REQUIRED": "Your role needs two-step verification. Set it up to continue.",
+      "MFA_REQUIRED_FOR_ROLE": "Your role needs two-step verification, so it cannot be turned off.",
+      "MFA_ALREADY_ENABLED": "Two-step verification is already on.",
+      "MFA_NOT_ENABLED": "Two-step verification is off.",
+      "MFA_SETUP_NOT_STARTED": "Start the set-up again: no QR code is waiting for a code.",
+      "FILE_INFECTED": "The file was rejected because the virus scanner found a threat in it. Do not open it; contact your IT support.",
+      "SCANNER_UNAVAILABLE": "The file could not be checked for viruses right now, so it was not saved. Try again in a few minutes.",
+      "SETUP_ALREADY_DONE": "This installation is already set up. Sign in instead."
     }
   },
   "theme": {
@@ -15331,5 +15348,93 @@
       "t4": "If a plan is chosen, all data is kept. If not, the data is deleted 30 days after the trial ends (Personal Data Protection Law).",
       "deletion": "Deletion date if no plan is chosen: after {date}."
     }
+  },
+  "mfa": {
+    "title": "Two-step verification",
+    "intro": "After your password, you also enter a 6-digit code from an authenticator app on your phone (for example Microsoft Authenticator or Google Authenticator).",
+    "statusOn": "On",
+    "statusOff": "Off",
+    "enabledSince": "On since {date}",
+    "requiredNote": "Your role needs two-step verification.",
+    "codesLeft": "{count, plural, =0 {No recovery codes left. Make new ones now.} one {# recovery code left} other {# recovery codes left}}",
+    "setUp": "Set up two-step verification",
+    "newCodes": "Make new recovery codes",
+    "newCodesHint": "Enter a current code from your authenticator app. Your old recovery codes stop working.",
+    "turnOff": "Turn off",
+    "turnOffTitle": "Turn off two-step verification?",
+    "turnOffHint": "Enter your password and a current code. Signing in will then need your password only.",
+    "turnedOff": "Two-step verification is off.",
+    "password": "Password",
+    "code": "6-digit code",
+    "codeInvalid": "Enter the 6 digits from the app.",
+    "banner": "Your role needs two-step verification. Set it up before {date}, or you will not be able to continue after that.",
+    "bannerAction": "Set up now",
+    "setup": {
+      "title": "Set up two-step verification",
+      "blocking": "Your role needs two-step verification and the set-up period has ended. Set it up to continue.",
+      "due": "Set it up before {date}.",
+      "step1": "1. Install an authenticator app on your phone.",
+      "step2": "2. In the app, add an account and scan this QR code.",
+      "qrLabel": "QR code for your authenticator app",
+      "manual": "Cannot scan? Type this key in the app instead:",
+      "step3": "3. Enter the 6-digit code the app shows.",
+      "start": "Start",
+      "confirm": "Turn on",
+      "confirming": "Checking…",
+      "done": "Two-step verification is on.",
+      "continue": "Continue",
+      "alreadyOn": "Two-step verification is already on for your account.",
+      "signOut": "Sign out",
+      "later": "Not now"
+    },
+    "codes": {
+      "title": "Your recovery codes",
+      "hint": "Keep these codes somewhere safe, away from your phone. If you lose your phone, each code lets you sign in once. They are shown only now.",
+      "copy": "Copy",
+      "copied": "Codes copied.",
+      "download": "Download (.txt)",
+      "saved": "I have saved my recovery codes",
+      "fileTitle": "Recovery codes for {email}"
+    },
+    "verify": {
+      "title": "Enter your code",
+      "subtitle": "Open your authenticator app and enter the 6-digit code for this account.",
+      "recoveryTitle": "Use a recovery code",
+      "recoverySubtitle": "Enter one of the recovery codes you saved when you set up two-step verification. Each code works once.",
+      "recoveryCode": "Recovery code",
+      "useRecovery": "Lost your phone? Use a recovery code",
+      "useApp": "Use the authenticator app instead",
+      "submit": "Verify",
+      "submitting": "Checking…",
+      "backToLogin": "Back to sign in",
+      "lowCodes": "You used a recovery code. Make new recovery codes on your profile page."
+    }
+  },
+  "fuBulletin": {
+    "title": "Bulletin (PDF):",
+    "en": "English",
+    "ar": "Arabic",
+    "failed": "The bulletin could not be downloaded. Try again."
+  },
+  "firstSetup": {
+    "title": "Set up this installation",
+    "intro": "This server has no users yet. Create the organisation, its first project and the first administrator. This page closes for good once it is done.",
+    "tokenTitle": "Setup code",
+    "token": "Setup code",
+    "tokenHint": "The code given with the server (SETUP_TOKEN).",
+    "organisation": "Organisation",
+    "orgNameEn": "Organisation name (English)",
+    "orgNameAr": "Organisation name (Arabic)",
+    "project": "First project",
+    "codeHint": "Up to 12 characters; it starts every reference number, e.g. T3-EXP.",
+    "admin": "First administrator",
+    "adminHint": "This person becomes the HSE Manager for the whole organisation and invites everyone else. Two-step verification is required for this role.",
+    "password": "Password",
+    "confirmPassword": "Confirm password",
+    "submit": "Create and sign in",
+    "submitting": "Setting up…",
+    "after": "After this you are signed in as the administrator. Add sites, contractors and users from the menu.",
+    "locked": "This installation is already set up.",
+    "toLogin": "Go to sign in"
   }
 }

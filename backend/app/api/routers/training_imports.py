@@ -15,6 +15,7 @@ from app.core.train_enums import (
     TrainingImportTemplate,
 )
 from app.schemas.training_imports import TrainingImportPage, TrainingImportRead
+from app.services import scanner
 from app.services.train import imports
 
 router = APIRouter(tags=["training-imports"])
@@ -86,6 +87,8 @@ def create_training_import(
         UploadFile | None, File(description="PDF / EML of the provider's email")
     ] = None,
 ) -> TrainingImportRead:
+    for upload in (file, scans_zip, evidence_file):  # D-302
+        scanner.check_upload(upload, db, user.user.id, project_id)
     return imports.upload(
         db,
         user,

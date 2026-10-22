@@ -46,6 +46,7 @@ from app.api.routers import (
     field_inspections,
     field_library,
     field_toolbox,
+    first_setup,
     fitness_assessments,
     fitness_holds,
     followup_lessons,
@@ -335,6 +336,8 @@ def create_app() -> FastAPI:
         admin_records,
         # Trial readiness, package B (D-289)
         licence,
+        # Trial readiness C: first-time setup (D-306)
+        first_setup,
     ):
         app.include_router(module.router, prefix=API_PREFIX)
     app.include_router(auth.public_router, prefix=API_PREFIX)

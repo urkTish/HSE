@@ -1,7 +1,7 @@
 """Trial readiness, package B: installed licence keys (D-289).
 
 Revision ID: b_0024_licence
-Revises: 0023
+Revises: a_0024_email_sender (re-chained by the trial integration, D-307)
 Create Date: 2026-10-22 09:00:00
 
 """
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = 'b_0024_licence'
-down_revision: Union[str, Sequence[str], None] = '0023'
+down_revision: Union[str, Sequence[str], None] = 'a_0024_email_sender'  # D-307: chained after A
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

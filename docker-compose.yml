@@ -27,11 +27,33 @@ services:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-hse}:${POSTGRES_PASSWORD:-hse}@db:5432/${POSTGRES_DB:-hse}
       # KPI requests are CPU-bound: run several API processes (jobs run in `scheduler`).
       WEB_CONCURRENCY: ${WEB_CONCURRENCY:-4}
+      # Uploads are virus-scanned by the `clamav` service (D-302). Set CLAMAV_HOST empty in .env
+      # to switch scanning off; CLAMAV_FAIL_OPEN=true accepts files unscanned while it is down.
+      CLAMAV_HOST: ${CLAMAV_HOST-clamav}
+      CLAMAV_PORT: ${CLAMAV_PORT:-3310}
     ports:
       - "8000:8000"
     depends_on:
       db:
         condition: service_healthy
+      clamav:
+        condition: service_started
+
+  # Virus scanner for uploads (clamd on 3310; signatures are refreshed by freshclam inside the
+  # container and kept in a volume). Needs about 1.5 GB of RAM; the first start downloads the
+  # signature database, so uploads answer SCANNER_UNAVAILABLE for a few minutes.
+  clamav:
+    image: clamav/clamav:1.4
+    environment:
+      CLAMAV_NO_MILTERD: "true"
+    volumes:
+      - clamav-db:/var/lib/clamav
+    healthcheck:
+      test: ["CMD", "clamdcheck.sh"]
+      interval: 60s
+      timeout: 10s
+      start_period: 300s
+      retries: 3
 
   scheduler:
     build:
@@ -58,3 +80,4 @@ services:
 
 volumes:
   db-data:
+  clamav-db:

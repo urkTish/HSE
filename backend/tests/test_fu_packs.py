@@ -67,8 +67,12 @@ def test_ac11_ac12_gosi_pack_identity(db: Session) -> None:
     assert ("export", "gosi") in acts
     row_pk = db.get(FuPack, pk.id)
     assert row_pk is not None
-    html = packs.render_html(db, row_pk, g, i)
-    assert fc.hijri_str(fc.local_day()) in html and fc.local_day().isoformat() in html
+    doc = packs.render_doc(db, row_pk, g, i)  # D-303 / D-304: PDF with the Umm al-Qura date
+    ctl = {c[0]: c for c in doc.control}
+    assert ctl["Date"][2] == fc.local_day().isoformat()
+    assert ctl["Date (Hijri, Umm al-Qura)"][3] == fc.hijri_str(fc.local_day())
+    assert packs.pack_languages(row_pk)[0] == "ar"
+    assert packs.render_pdf(db, row_pk, g, i).startswith(b"%PDF")
     # AC 12: Fahad (no 29) → 403; he still sees the requirement (215)
     expect("FORBIDDEN", lambda: packs.generate(db, P(db, "fahad.mutairi"), g.id, FuPackCreate()))
     assert rq.read_requirement(db, P(db, "fahad.mutairi"), g.id).rule_code == "GOSI-W"

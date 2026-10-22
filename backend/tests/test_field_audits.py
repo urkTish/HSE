@@ -12,7 +12,14 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.clock import now, set_now
-from app.models import Attachment, ChecklistResponse, CorrectiveAction, FieldFinding, Inspection
+from app.models import (
+    Attachment,
+    ChecklistResponse,
+    CorrectiveAction,
+    FieldAudit,
+    FieldFinding,
+    Inspection,
+)
 from app.schemas.field import AuditAnswers, AuditCreate, AuditTransition, AuditUpdate
 from app.services.field import audits
 from app.services.field.reference import grade_for
@@ -95,11 +102,17 @@ def test_AC31_sod_and_report(db: Session) -> None:
     assert out.status.value == "issued" and out.report_en_id and out.report_ar_id
     from app.core.config import get_settings
 
-    for rid in (out.report_en_id, out.report_ar_id):
+    for rid in (out.report_en_id, out.report_ar_id):  # D-304: real PDFs, EN and AR
         att = db.get(Attachment, rid)
-        assert att is not None
-        html = (Path(get_settings().storage_dir) / att.storage_key).read_bytes().decode()
-        assert "WKR-" not in html and out.audit_no in html
+        assert att is not None and att.content_type == "application/pdf"
+        assert att.file_name.endswith(".pdf")
+        assert (Path(get_settings().storage_dir) / att.storage_key).read_bytes().startswith(b"%PDF")
+    row = db.get(FieldAudit, a.id)
+    r = db.get(ChecklistResponse, row.response_id)
+    doc = audits.report_doc(db, row, r, [])
+    text = repr(doc)
+    assert "WKR-" not in text and out.audit_no in doc.title_en and out.audit_no in doc.title_ar
+    assert any(c[0].startswith("Issue date (Hijri") and c[3].endswith("هـ") for c in doc.control)
 
 
 def test_AC32_report_overdue_alerts(db: Session) -> None:

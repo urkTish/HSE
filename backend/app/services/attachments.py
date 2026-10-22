@@ -158,11 +158,21 @@ def store(
     ctype: str,
     user_id: uuid.UUID,
     shrink: bool = True,
+    generated: bool = False,
 ) -> Attachment:
-    """Writes the file (encrypted for the medical and personal buckets) and the row. JPEG / PNG
-    photos are shrunk first (D-282) unless `shrink` is False or the owner keeps originals; the
-    licence storage cap (D-293) is checked on the size actually stored."""
-    if shrink and ctype in images.IMAGE_TYPES and owner_type not in KEEP_ORIGINAL:
+    """Writes the file (encrypted for the medical and personal buckets) and the row, in this order
+    (D-307): the upload as received is virus-scanned (D-302); JPEG / PNG photos are then shrunk
+    (D-282) unless `shrink` is False or the owner keeps originals; the licence storage cap (D-293)
+    is checked on the size actually stored. `generated` marks files the platform renders itself
+    (reports, packs, exports), which are neither scanned nor shrunk."""
+    from app.services import scanner  # noqa: PLC0415
+
+    status = (
+        ScanStatus.skipped
+        if generated
+        else scanner.ensure_clean(content, file_name, db, user_id, project_id)
+    )
+    if shrink and not generated and ctype in images.IMAGE_TYPES and owner_type not in KEEP_ORIGINAL:
         profile = images.DOCUMENT if owner_type in DOCUMENT_OWNERS else images.PHOTO
         r = images.shrink(content, ctype, file_name, profile)
         content, ctype, file_name = r.content, r.content_type, r.file_name
@@ -184,7 +194,7 @@ def store(
         sha256=hashlib.sha256(content).hexdigest(),
         storage_bucket=bucket,
         storage_key=key,
-        scan_status=ScanStatus.skipped,
+        scan_status=status,
         uploaded_by_user_id=user_id,
     )
     db.add(a)

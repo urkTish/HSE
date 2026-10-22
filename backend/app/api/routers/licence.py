@@ -1,9 +1,9 @@
-"""Licence status and renewal (trial readiness, package B; D-289…D-298)."""
+"""Licence status and renewal (trial readiness, package B; D-289…D-297)."""
 
 from fastapi import APIRouter
 from sqlalchemy.orm import Session
 
-from app.api.deps import DB, CurrentUser
+from app.api.deps import DB, CurrentUser, MfaSetupUser
 from app.core.errors import error_responses
 from app.schemas.licence import LicenceKeyInput, LicenceRead, LicenceStorage, LicenceUsage
 from app.services import licence as svc
@@ -59,11 +59,12 @@ def _read(db: Session, p: Principal, st: svc.Status) -> LicenceRead:
     "",
     response_model=LicenceRead,
     summary="Licence state, days left and usage against the licence caps",
-    description="Any signed-in user (the shell shows the trial / expiry banner). No key = state "
-    "`none` and every limit null (unlimited).",
+    description="Any signed-in user (the shell shows the trial / expiry banner), also one whose "
+    "two-step verification set-up is overdue (D-307). No key = state `none` and every limit "
+    "null (unlimited).",
     responses=error_responses(401, 403),
 )
-def get_licence(user: CurrentUser, db: DB) -> LicenceRead:
+def get_licence(user: MfaSetupUser, db: DB) -> LicenceRead:
     return _read(db, user, svc.current(db))
 
 

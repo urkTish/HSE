@@ -4,7 +4,7 @@ import uuid
 from datetime import date, datetime
 from typing import Literal
 
-from pydantic import EmailStr, Field
+from pydantic import EmailStr, Field, model_validator
 
 from app.core.enums import (
     Capability,
@@ -88,6 +88,19 @@ class Me(ApiModel):
     )
     status: UserStatus
     mfa_enabled: bool
+    mfa_required: bool = Field(
+        default=False,
+        description="D-299: the user's role needs two-step verification (MFA_REQUIRED_ROLES).",
+    )
+    mfa_setup_due: datetime | None = Field(
+        default=None,
+        description="Required but not enrolled: end of the grace period; null otherwise.",
+    )
+    mfa_setup_blocking: bool = Field(
+        default=False,
+        description="Grace period over: every API except the MFA set-up, /auth/me, privacy ack "
+        "and logout answers 403 MFA_ENROLMENT_REQUIRED until the user enrols.",
+    )
     last_login_at: datetime | None
     privacy_notice_version: str | None = Field(description="Version the user acknowledged.")
     privacy_notice_ack_at: datetime | None
@@ -134,7 +147,61 @@ class LoginResponse(ApiModel):
     token_type: Literal["bearer"] = "bearer"
     expires_at: datetime = Field(description="Absolute session expiry (12 h after login).")
     idle_timeout_minutes: int = Field(description="Session ends after this many idle minutes.")
-    user: Me
+    mfa_pending: bool = Field(
+        default=False,
+        description="D-299: the password was right and the account uses two-step verification; "
+        "send the code to POST /auth/mfa/verify within mfa_pending_minutes. Until then `user` is "
+        "null and every other API answers 401 MFA_REQUIRED.",
+    )
+    user: Me | None = Field(description="Null while mfa_pending.")
+
+
+# ---- two-step verification (D-299) ---------------------------------------------------------------
+TOTP_CODE = Field(min_length=6, max_length=10, description="6-digit code from the authenticator.")
+
+
+class MfaStatus(ApiModel):
+    enabled: bool
+    enabled_at: datetime | None
+    required: bool = Field(description="The user's role needs two-step verification.")
+    setup_due: datetime | None = Field(description="End of the grace period (required only).")
+    blocking: bool = Field(description="Grace period over and not enrolled.")
+    recovery_codes_remaining: int
+
+
+class MfaSetupStart(ApiModel):
+    secret: str = Field(description="Base32 secret for manual entry in the authenticator app.")
+    otpauth_uri: str = Field(description="otpauth://totp/… URI for the QR code.")
+    issuer: str
+    account: str
+
+
+class MfaCodeRequest(StrictInput):
+    code: str = TOTP_CODE
+
+
+class MfaVerifyRequest(StrictInput):
+    """Exactly one of `code` and `recovery_code`."""
+
+    code: str | None = Field(default=None, min_length=6, max_length=10)
+    recovery_code: str | None = Field(
+        default=None, min_length=8, max_length=20, description="One of the single-use codes."
+    )
+
+    @model_validator(mode="after")
+    def _one(self) -> "MfaVerifyRequest":
+        if bool(self.code) == bool(self.recovery_code):
+            raise ValueError("Send either code or recovery_code.")
+        return self
+
+
+class MfaDisableRequest(StrictInput):
+    password: str = Field(min_length=1, max_length=256)
+    code: str = TOTP_CODE
+
+
+class MfaRecoveryCodes(ApiModel):
+    codes: list[str] = Field(description="Shown once; each works once. Older codes stop working.")
 
 
 class MeUpdate(PatchInput):

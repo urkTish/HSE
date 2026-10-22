@@ -14,6 +14,7 @@ from app.api.deps import (
     gate_device_forbidden,
     get_acked_principal,
     get_principal,
+    get_privacy_acked_principal,
 )
 from app.core.access_enums import GateCallerKind
 from app.core.enums import Capability
@@ -56,7 +57,7 @@ def get_gate_caller(
         return gates.device_caller(db, claims)
     if not bearer and cookie is None and gate_cookie:
         raise ApiError(401, ErrorCode.UNAUTHENTICATED, "Invalid token.", "رمز غير صالح.")
-    p = get_acked_principal(get_principal(RawToken(token), db))
+    p = get_acked_principal(get_privacy_acked_principal(get_principal(RawToken(token), db)))
     if not p.has_any(Capability.gate_check):
         raise forbidden_error()
     return GateCaller(GateCallerKind.user, p, None, None)

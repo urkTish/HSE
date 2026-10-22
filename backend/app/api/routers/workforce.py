@@ -28,6 +28,7 @@ from app.schemas.workforce import (
     WorkforceReturnUpdate,
     WorkforceTransitionRequest,
 )
+from app.services import scanner
 from app.services import workforce as svc
 from app.services import workforce_import as imp
 
@@ -270,6 +271,8 @@ def create_workforce_import(
     mode: Annotated[ImportMode, Form()] = ImportMode.insert_only,
 ) -> WorkforceImportRead:
     content = file.file.read(imp.MAX_BYTES + 1)
+    if len(content) <= imp.MAX_BYTES:  # oversize files are refused by the import itself
+        scanner.ensure_clean(content, file.filename or "upload", db, user.user.id, project_id)
     return imp.dry_run(db, user, project_id, file.filename or "upload", content, mode)
 
 

@@ -19,6 +19,7 @@ from app.schemas.medical import (
     MedicalSettingsUpdate,
     MedicalSettingsUpdateResult,
 )
+from app.services import scanner
 from app.services.med import config as mconfig
 from app.services.med import imports
 
@@ -117,6 +118,7 @@ def create_medical_import(
     source: Annotated[MedicalImportSource, Form()] = MedicalImportSource.contractor_file,
     provider_id: Annotated[uuid.UUID | None, Form()] = None,
 ) -> MedicalImportBatchRead:
+    scanner.check_upload(file, db, user.user.id, project_id)  # D-302
     return imports.upload(db, user, project_id, file, source, provider_id)
 
 
