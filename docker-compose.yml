@@ -36,6 +36,7 @@ services:
   scheduler:
     build:
       context: ./backend
+    # Runs the timed jobs, including `email_send` every minute (SMTP_* settings in .env).
     command: ["python", "-m", "app.scheduler"]
     env_file:
       - path: .env
