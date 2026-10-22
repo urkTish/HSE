@@ -97,6 +97,14 @@ class Settings(BaseSettings):
     attachment_max_bytes: int = 20 * 1024 * 1024
     import_max_bytes: int = 5 * 1024 * 1024
     import_max_rows: int = 20_000
+    # Upload virus scanning (D-302): clamd over TCP (INSTREAM). Empty host = scanning off (files
+    # are stored with scan_status `skipped`, as before). When the scanner cannot be reached,
+    # uploads are refused (503 SCANNER_UNAVAILABLE) unless CLAMAV_FAIL_OPEN is true, in which case
+    # they are stored unscanned (`skipped`) and a warning is logged.
+    clamav_host: str = ""
+    clamav_port: int = 3310
+    clamav_timeout_seconds: float = 30.0
+    clamav_fail_open: bool = False
 
     # Seed (only used by app.seed)
     seed_password: str | None = None

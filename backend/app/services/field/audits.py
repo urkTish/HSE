@@ -592,11 +592,11 @@ def _issue(db: Session, p: Principal, proj: Project, a: FieldAudit, obs_ca: bool
 
     a.report_en_id = attachments.store(
         db, AttachmentOwner.field_audit_report, a.id, a.project_id, f"{a.audit_no}-EN.html",
-        en.encode(), "text/html", p.user.id,
+        en.encode(), "text/html", p.user.id, generated=True,
     ).id  # fmt: skip
     a.report_ar_id = attachments.store(
         db, AttachmentOwner.field_audit_report, a.id, a.project_id, f"{a.audit_no}-AR.html",
-        ar.encode(), "text/html", p.user.id,
+        ar.encode(), "text/html", p.user.id, generated=True,
     ).id  # fmt: skip
 
 

@@ -645,7 +645,15 @@ def render_files(db: Session, pk: RpPack, by: uuid.UUID, superseded_by: int | No
         lang = "-" + kind.value.split("_")[-1] if ext == "pdf" else ""
         name = f"{pk.doc_no}-R{pk.revision}{lang}.{ext}"
         a = attachments.store(
-            db, AttachmentOwner.rp_pack_file, pk.id, pid, name, content, CTYPE[ext], by
+            db,
+            AttachmentOwner.rp_pack_file,
+            pk.id,
+            pid,
+            name,
+            content,
+            CTYPE[ext],
+            by,
+            generated=True,
         )
         files[kind.value] = {
             "attachment_id": str(a.id),

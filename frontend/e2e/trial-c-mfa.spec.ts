@@ -14,7 +14,7 @@ function totp(secret: string, stepOffset = 0): string {
   const msg = Buffer.alloc(8);
   msg.writeBigUInt64BE(BigInt(step));
   const mac = createHmac("sha1", key).update(msg).digest();
-  const off = mac[mac.length - 1] & 0x0f;
+  const off = mac.readUInt8(mac.length - 1) & 0x0f;
   const value = (mac.readUInt32BE(off) & 0x7fffffff) % 1_000_000;
   return String(value).padStart(6, "0");
 }

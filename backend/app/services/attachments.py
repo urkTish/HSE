@@ -110,8 +110,18 @@ def store(
     content: bytes,
     ctype: str,
     user_id: uuid.UUID,
+    generated: bool = False,
 ) -> Attachment:
-    """Writes the file (encrypted for the medical and personal buckets) and the row."""
+    """Writes the file (encrypted for the medical and personal buckets) and the row. Uploads are
+    virus-scanned first (D-302); `generated` marks files the platform renders itself (reports,
+    packs, exports), which are not scanned."""
+    from app.services import scanner  # noqa: PLC0415
+
+    status = (
+        ScanStatus.skipped
+        if generated
+        else scanner.ensure_clean(content, file_name, db, user_id, project_id)
+    )
     aid = uuid.uuid4()
     bucket = _bucket(owner_type)
     key = f"{bucket}/{project_id}/{aid}"
@@ -129,7 +139,7 @@ def store(
         sha256=hashlib.sha256(content).hexdigest(),
         storage_bucket=bucket,
         storage_key=key,
-        scan_status=ScanStatus.skipped,
+        scan_status=status,
         uploaded_by_user_id=user_id,
     )
     db.add(a)

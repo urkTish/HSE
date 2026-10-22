@@ -313,9 +313,12 @@ def store_bytes(
     ctype: str,
     user_id: uuid.UUID,
 ) -> uuid.UUID:
+    """A file the platform renders itself (packs): stored without a virus scan."""
     from app.services import attachments  # noqa: PLC0415
 
-    return attachments.store(db, owner, owner_id, project_id, name, content, ctype, user_id).id
+    return attachments.store(
+        db, owner, owner_id, project_id, name, content, ctype, user_id, generated=True
+    ).id
 
 
 # ---- text: Arabic normalisation (LL-5), identity check (P6f-3), redaction (PK-3) -----------------
