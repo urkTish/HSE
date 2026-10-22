@@ -154,6 +154,7 @@ from app.models.hse import (
     WorkforceImportBatch,
     WorkforceReturn,
 )
+from app.models.licence import LicenceKey
 from app.models.med import (
     FitnessAssessment,
     FitnessCode,
@@ -348,6 +349,7 @@ __all__ = [
     "JobMark",
     "JourneyPlan",
     "Jsa",
+    "LicenceKey",
     "Lock",
     "MedicalExaminer",
     "MedicalImportBatch",

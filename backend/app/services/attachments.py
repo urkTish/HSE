@@ -25,7 +25,7 @@ from app.core.hse_enums import (
 from app.models import Attachment, HseMeeting, InjuryCase
 from app.schemas.attachments import AttachmentList, AttachmentRead, SignedUrlRead
 from app.schemas.hse_common import UserRef
-from app.services import audit
+from app.services import audit, licence
 from app.services import corrective_actions as ca_svc
 from app.services import incidents as inc_svc
 from app.services import observations as obs_svc
@@ -112,6 +112,7 @@ def store(
     user_id: uuid.UUID,
 ) -> Attachment:
     """Writes the file (encrypted for the medical and personal buckets) and the row."""
+    licence.ensure_storage(db, owner_type, len(content))  # D-293
     aid = uuid.uuid4()
     bucket = _bucket(owner_type)
     key = f"{bucket}/{project_id}/{aid}"

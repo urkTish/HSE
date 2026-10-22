@@ -31,7 +31,7 @@ from app.schemas.users import (
     UserTransitionRequest,
     UserUpdate,
 )
-from app.services import audit, auth
+from app.services import audit, auth, licence
 from app.services.common import duplicate, invalid_transition, paginate, require_reason
 from app.services.permissions import (
     CONTRACTOR_ROLES,
@@ -432,6 +432,7 @@ def invite(db: Session, p: Principal, body: UserInvite) -> User:
         _authorize_assignment(db, p, ra.role, ra.project_id)
     if db.scalar(select(User.id).where(User.email == body.email)):
         raise duplicate("email", "A user with this email already exists.")
+    licence.ensure_can_add_user(db)  # D-291
     if body.employer_contractor_id:
         c = db.get(Contractor, body.employer_contractor_id)
         if c is None:
@@ -579,6 +580,7 @@ def transition_user(
         target.failed_window_started_at = None
         target.status_reason = body.reason
     elif dst == UserStatus.active and src == UserStatus.deactivated:
+        licence.ensure_can_add_user(db)  # D-291: a reactivated user counts again
         target.status = UserStatus.active
         target.status_reason = body.reason
         target.password_hash = None  # forces password reset (§4.3)

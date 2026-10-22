@@ -32,7 +32,7 @@ from app.schemas.projects import (
     ProjectTransitionRequest,
     ProjectUpdate,
 )
-from app.services import audit, notify
+from app.services import audit, licence, notify
 from app.services.common import (
     condition_not_met,
     duplicate,
@@ -128,6 +128,7 @@ def create(db: Session, p: Principal, body: ProjectCreate) -> Project:
     p.require(None, Capability.project_manage)
     if db.scalar(select(Project.id).where(Project.code == body.code)):
         raise duplicate("code", "A project with this code already exists.")
+    licence.ensure_can_add_project(db)  # D-291
     project = Project(id=uuid.uuid4(), status=ProjectStatus.planning, **body.model_dump())
     project.search_text = _search(project)
     db.add(project)
@@ -217,6 +218,8 @@ def transition(
     if key not in PROJECT_TRANSITIONS:
         raise invalid_transition("Project", *key)
     reason = body.reason
+    if key == (PS.closed, PS.active):
+        licence.ensure_can_add_project(db)  # D-291: reopening counts as a new open project
     if PROJECT_TRANSITIONS[key]:
         reason = require_reason(reason, f"move the project to {body.to_status.value}")
     if key == (PS.planning, PS.active):

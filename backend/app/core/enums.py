@@ -716,6 +716,8 @@ class EntityType(StrEnum):
     driver_authorisation = "driver_authorisation"
     vehicle_check = "vehicle_check"
     journey_plan = "journey_plan"
+    # Trial readiness, package B (D-289)
+    licence = "licence"
 
 
 class ExportDataset(StrEnum):

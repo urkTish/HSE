@@ -89,6 +89,17 @@ class Settings(BaseSettings):
     import_max_bytes: int = 5 * 1024 * 1024
     import_max_rows: int = 20_000
 
+    # Licence (trial readiness, D-289…D-298). No key anywhere = unlimited (dev, tests). The key
+    # pasted by the HSE Manager is stored in the database and wins over LICENCE_KEY / LICENCE_FILE,
+    # which only bootstrap an install. LICENCE_PUBLIC_KEY (PEM, or base64 of the 32 raw bytes)
+    # overrides the public key shipped in app/data/licence_public_key.pem.
+    licence_key: str | None = None
+    licence_file: str | None = None
+    licence_public_key: str | None = None
+    # How long a process reuses the active key and the usage figures (renewal is picked up by
+    # every worker within this time, without a restart). 0 = read every time (tests, e2e).
+    licence_cache_seconds: int = 30
+
     # Seed (only used by app.seed)
     seed_password: str | None = None
 

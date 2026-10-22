@@ -41,7 +41,7 @@ from app.schemas.ai import (
 )
 from app.schemas.dashboard import DashboardFilters
 from app.schemas.kpi import ChartTable, ChartTableColumn
-from app.services import hse_settings, projects
+from app.services import hse_settings, licence, projects
 from app.services import incidents as inc_svc
 from app.services.hse_common import project_today
 from app.services.permissions import Principal, forbidden_error
@@ -440,6 +440,7 @@ class AskFailed(Exception):  # noqa: N818
 def preflight(db: Session, p: Principal, body: AiAskRequest) -> Project:
     """Errors returned as JSON before any stream starts (AC73, AI-17, AI-18)."""
     project = require_enabled(db, p, body.project_id)
+    licence.ensure_ai_question(db)  # D-292: monthly AI questions per licence
     if not llm.available():
         raise llm.unavailable_error()
     limit = get_settings().ai_questions_per_user_day

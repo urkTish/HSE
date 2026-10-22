@@ -5,7 +5,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.openapi.utils import get_openapi
 from fastapi.routing import APIRoute
@@ -65,6 +65,7 @@ from app.api.routers import (
     isolations,
     jsa,
     kpi,
+    licence,
     medical_catalogue,
     medical_config,
     medical_plan,
@@ -106,6 +107,7 @@ from app.core.errors import (
 )
 from app.core.middleware import RequestContextMiddleware
 from app.schemas.ai import AiStreamEvent
+from app.services.licence import read_only_guard
 
 DESCRIPTION = """
 HSE platform API — Phase 0 Foundation (spec `docs/specs/0-foundation.md` v1.3), Phase 1
@@ -227,6 +229,8 @@ def create_app() -> FastAPI:
         docs_url=f"{API_PREFIX}/docs",
         redoc_url=None,
         generate_unique_id_function=_operation_id,
+        # Expired / invalid licence → read-only (D-290); no licence key = unlimited.
+        dependencies=[Depends(read_only_guard)],
     )
     app.add_middleware(RequestContextMiddleware, trust_proxy=get_settings().trust_proxy_headers)
     app.add_exception_handler(ApiError, api_error_handler)
@@ -329,6 +333,8 @@ def create_app() -> FastAPI:
         # Owner feedback (D-270, D-271)
         hse_team,
         admin_records,
+        # Trial readiness, package B (D-289)
+        licence,
     ):
         app.include_router(module.router, prefix=API_PREFIX)
     app.include_router(auth.public_router, prefix=API_PREFIX)
