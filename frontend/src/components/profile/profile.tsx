@@ -16,6 +16,7 @@ import { PageHeader } from "@/components/common/page-header";
 import { MutationError } from "@/components/common/states";
 import { useMeData } from "@/components/shell/me-context";
 import { AccessSummary } from "@/components/users/access-summary";
+import { MfaProfileCard } from "@/components/auth/mfa";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { api, unwrap } from "@/lib/api/client";
 import { keys } from "@/lib/api/queries";
@@ -151,6 +152,7 @@ export function Profile() {
               </Button>
             </div>
           </form>
+          <MfaProfileCard me={me} />
         </div>
         <Card>
           <CardHeader>

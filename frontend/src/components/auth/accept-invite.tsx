@@ -60,8 +60,9 @@ export function AcceptInvite() {
         }),
       );
       qc.removeQueries({ predicate: (q) => q.queryKey[0] !== "invitation" });
-      qc.setQueryData(keys.me, res.user);
-      router.replace("/", { locale: res.user.display_language });
+      // A new account never has two-step verification yet, so `user` is always present here.
+      if (res.user) qc.setQueryData(keys.me, res.user);
+      router.replace("/", { locale: res.user?.display_language ?? locale });
     } catch (e) {
       setError(e);
     }

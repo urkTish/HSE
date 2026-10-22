@@ -70,6 +70,7 @@ export function UserDetail({ userId }: { userId: string }) {
   const projectCode = new Map(projects.map((p) => [p.id, p.code]));
   const q = useUser(userId);
   const assignments = useRoleAssignments(userId);
+  const [mfaResetOpen, setMfaResetOpen] = useState(false);
   const [assignOpen, setAssignOpen] = useState(false);
   const [draft, setDraft] = useState<AssignmentValue>(emptyAssignment);
   const [draftErrors, setDraftErrors] = useState<Partial<Record<keyof AssignmentValue, { message?: string }>>>({});
@@ -98,6 +99,20 @@ export function UserDetail({ userId }: { userId: string }) {
     const res = await unwrap(api.POST("/api/v1/users/{user_id}/transitions", { params: { path: { user_id: u.id } }, body: { to_status: to, reason } }));
     qc.setQueryData(keys.user(u.id), res);
     await refresh();
+  }
+
+  async function resetMfa() {
+    setActionError(null);
+    try {
+      const res = await unwrap(api.POST("/api/v1/users/{user_id}/mfa/reset", { params: { path: { user_id: u.id } } }));
+      qc.setQueryData(keys.user(u.id), res);
+      toast.success(t("mfaReset.done"));
+      setMfaResetOpen(false);
+      await refresh();
+    } catch (e) {
+      setActionError(e);
+      setMfaResetOpen(false);
+    }
   }
 
   async function resend() {
@@ -204,7 +219,14 @@ export function UserDetail({ userId }: { userId: string }) {
                 {u.invite_expires_at ? <FieldItem label={t("fields.invite_expires_at")}>{dateTime(u.invite_expires_at)}</FieldItem> : null}
                 {u.locked_until ? <FieldItem label={t("fields.locked_until")}>{dateTime(u.locked_until)}</FieldItem> : null}
                 <FieldItem label={t("fields.mfa_enabled")}>
-                  <YesNo value={u.mfa_enabled} yes={tc("yes")} no={tc("no")} />
+                  <span className="flex flex-wrap items-center gap-2">
+                    <YesNo value={u.mfa_enabled} yes={tc("yes")} no={tc("no")} />
+                    {canStatus && u.mfa_enabled ? (
+                      <Button variant="outline" size="sm" onClick={() => setMfaResetOpen(true)} data-testid="mfa-reset">
+                        {t("mfaReset.action")}
+                      </Button>
+                    ) : null}
+                  </span>
                 </FieldItem>
                 <FieldItem label={t("fields.privacy_ack")}>
                   {u.privacy_notice_ack_at ? `${dateTime(u.privacy_notice_ack_at)} (${u.privacy_notice_version ?? ""})` : "—"}
@@ -294,6 +316,22 @@ export function UserDetail({ userId }: { userId: string }) {
           {can(me, "history.view") ? <HistoryPanel entityType="user" entityId={u.id} /> : null}
         </div>
       </div>
+      <Dialog open={mfaResetOpen} onOpenChange={setMfaResetOpen}>
+        <DialogContent closeLabel={tc("close")}>
+          <DialogHeader>
+            <DialogTitle>{t("mfaReset.title")}</DialogTitle>
+            <DialogDescription>{t("mfaReset.body")}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMfaResetOpen(false)}>
+              {tc("cancel")}
+            </Button>
+            <Button variant="destructive" onClick={resetMfa} data-testid="mfa-reset-confirm">
+              {t("mfaReset.confirm")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <Dialog open={assignOpen} onOpenChange={setAssignOpen}>
         <DialogContent closeLabel={tc("close")} className="max-w-2xl">
           <DialogHeader>

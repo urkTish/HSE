@@ -35,6 +35,11 @@ function AuthEventBridge({ client }: { client: QueryClient }) {
           if (!pathname.startsWith("/privacy")) router.replace("/privacy");
           return;
         }
+        if (e === "mfa") {
+          // D-299: the role needs two-step verification and the grace period is over.
+          if (!pathname.startsWith("/mfa-setup")) router.replace("/mfa-setup");
+          return;
+        }
         if (onPublic) return;
         client.clear();
         clearAllDrafts(); // a draft typed by the previous user never greets the next one
