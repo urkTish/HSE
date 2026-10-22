@@ -112,10 +112,10 @@ def build(row: EmailMessage, files: list[File], s: Settings | None = None) -> Mi
     msg["Date"] = formatdate(localtime=False)
     domain = parseaddr(s.smtp_from)[1].rsplit("@", 1)[-1] or "hse.local"
     msg["Message-ID"] = make_msgid(idstring=row.id.hex[:12], domain=domain)
-    msg["Content-Language"] = row.language.value
     msg["Auto-Submitted"] = "auto-generated"
     msg.set_content(row.body)
     msg.add_alternative(_html(row.body, row.language), subtype="html")
+    msg["Content-Language"] = row.language.value  # after set_content, which clears Content-*
     for f in files:
         main, _, sub = f.content_type.partition("/")
         msg.add_attachment(

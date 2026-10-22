@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import base64
 import binascii
-import struct
 import uuid
 from collections.abc import Iterable
 from dataclasses import dataclass
@@ -29,7 +28,7 @@ from app.models import (
     Site,
     Zone,
 )
-from app.services import audit
+from app.services import audit, images
 from app.services.heat.common import (
     at_local,
     day_start,
@@ -197,47 +196,8 @@ def weeks_in(db: Session, project_id: uuid.UUID, d0: date, d1: date, as_of: date
 MAX_PHOTO = 5 * 1024 * 1024
 
 
-def _strip_jpeg(b: bytes) -> bytes:
-    """Drop APP1…APP15 (EXIF, XMP, GPS, maker data) and COM segments; keep APP0 and image data."""
-    if not b.startswith(b"\xff\xd8"):
-        return b
-    out = bytearray(b[:2])
-    i = 2
-    while i + 4 <= len(b):
-        if b[i] != 0xFF:
-            break
-        marker = b[i + 1]
-        if marker == 0xDA:  # start of scan: the rest is image data
-            out += b[i:]
-            return bytes(out)
-        (length,) = struct.unpack(">H", b[i + 2 : i + 4])
-        seg = b[i : i + 2 + length]
-        if not (0xE1 <= marker <= 0xEF or marker == 0xFE):
-            out += seg
-        i += 2 + length
-    out += b[i:]
-    return bytes(out)
-
-
-def _strip_png(b: bytes) -> bytes:
-    """Drop eXIf and text chunks (tEXt, zTXt, iTXt) and the time chunk."""
-    sig = b"\x89PNG\r\n\x1a\n"
-    if not b.startswith(sig):
-        return b
-    out = bytearray(sig)
-    i = len(sig)
-    while i + 8 <= len(b):
-        (n,) = struct.unpack(">I", b[i : i + 4])
-        kind = b[i + 4 : i + 8]
-        chunk = b[i : i + 12 + n]
-        if kind not in (b"eXIf", b"tEXt", b"zTXt", b"iTXt", b"tIME"):
-            out += chunk
-        i += 12 + n
-    return bytes(out)
-
-
-def strip_metadata(b: bytes) -> bytes:
-    return _strip_png(_strip_jpeg(b))
+# Metadata stripping lives in app.services.images (also used by the photo shrinking, D-282).
+strip_metadata = images.strip_metadata
 
 
 def decode_photo(p: Any, fld: str) -> tuple[bytes, str]:
