@@ -120,7 +120,8 @@ def test_AC3_dry_run_reports_E08_writes_nothing(api: Api, ids: Ids, db: Session)
     assert returns(db) == 0
 
 
-def test_AC4_commit_with_warnings(api: Api, ids: Ids, db: Session) -> None:
+def test_AC4_commit_with_warnings(api: Api, ids: Ids, db: Session, clock: None) -> None:
+    # Pinned clock: the 2026-09-20 rows must stay within 30 days, or W04 adds a third warning.
     c = api.as_("noura.qahtani")
     rows = [
         row("2026-09-20", "S-AIR", "RAWABI", "day", 10, 130),  # 13 h/person > 12 → W01

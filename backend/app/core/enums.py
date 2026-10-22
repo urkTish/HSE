@@ -425,6 +425,14 @@ class Language(StrEnum):
     ar = "ar"
 
 
+class EmailStatus(StrEnum):
+    """Outbox row state (D-279): queued until the SMTP sender delivers or gives up on it."""
+
+    queued = "queued"
+    sent = "sent"
+    failed = "failed"
+
+
 class UserStatus(StrEnum):
     """User lifecycle (§4.3)."""
 

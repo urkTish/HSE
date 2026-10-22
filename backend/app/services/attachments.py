@@ -25,7 +25,7 @@ from app.core.hse_enums import (
 from app.models import Attachment, HseMeeting, InjuryCase
 from app.schemas.attachments import AttachmentList, AttachmentRead, SignedUrlRead
 from app.schemas.hse_common import UserRef
-from app.services import audit
+from app.services import audit, images
 from app.services import corrective_actions as ca_svc
 from app.services import incidents as inc_svc
 from app.services import observations as obs_svc
@@ -93,6 +93,53 @@ REASON_GATED = frozenset(
 )
 
 
+# D-282: JPEG / PNG uploads are shrunk on store (app.services.images). These keep their bytes:
+# accident report files (7a, archived as received), generated files and signatures.
+KEEP_ORIGINAL = frozenset(
+    {
+        AttachmentOwner.incident_accident_report,
+        AttachmentOwner.induction_signature,
+        AttachmentOwner.gas_test_signature,
+        AttachmentOwner.crew_briefing_signature,
+        AttachmentOwner.toolbox_signature,
+        AttachmentOwner.training_attendance_signature,
+        AttachmentOwner.field_audit_report,
+        AttachmentOwner.fu_pack_file,
+        AttachmentOwner.fu_pack_identity_file,
+        AttachmentOwner.rp_pack_file,
+        AttachmentOwner.xp_export_file,
+    }
+)
+# Scans and photos of documents: a larger long edge so small print stays readable.
+DOCUMENT_OWNERS = frozenset(
+    {
+        AttachmentOwner.injury_case_medical,
+        AttachmentOwner.hse_meeting_minutes,
+        AttachmentOwner.worker_id_copy,
+        AttachmentOwner.vehicle_registration,
+        AttachmentOwner.pass_application_id_copy,
+        AttachmentOwner.permit_document,
+        AttachmentOwner.tpi_accreditation_certificate,
+        AttachmentOwner.equipment_document,
+        AttachmentOwner.equipment_certificate_scan,
+        AttachmentOwner.personnel_cert_scan,
+        AttachmentOwner.verification_evidence,
+        AttachmentOwner.defect_evidence,
+        AttachmentOwner.training_record_scan,
+        AttachmentOwner.training_accreditation_certificate,
+        AttachmentOwner.trainer_authorisation_evidence,
+        AttachmentOwner.training_attendance_sheet,
+        AttachmentOwner.training_verification_evidence,
+        AttachmentOwner.fitness_scan,
+        AttachmentOwner.toolbox_sheet,
+        AttachmentOwner.env_permit_document,
+        AttachmentOwner.consignment_ticket,
+        AttachmentOwner.fu_evidence,
+        AttachmentOwner.sc_remark_file,
+    }
+)
+
+
 def _bucket(owner: AttachmentOwner) -> str:
     if owner == AttachmentOwner.injury_case_medical:
         return "medical"
@@ -110,8 +157,14 @@ def store(
     content: bytes,
     ctype: str,
     user_id: uuid.UUID,
+    shrink: bool = True,
 ) -> Attachment:
-    """Writes the file (encrypted for the medical and personal buckets) and the row."""
+    """Writes the file (encrypted for the medical and personal buckets) and the row. JPEG / PNG
+    photos are shrunk first (D-282) unless `shrink` is False or the owner keeps originals."""
+    if shrink and ctype in images.IMAGE_TYPES and owner_type not in KEEP_ORIGINAL:
+        profile = images.DOCUMENT if owner_type in DOCUMENT_OWNERS else images.PHOTO
+        r = images.shrink(content, ctype, file_name, profile)
+        content, ctype, file_name = r.content, r.content_type, r.file_name
     aid = uuid.uuid4()
     bucket = _bucket(owner_type)
     key = f"{bucket}/{project_id}/{aid}"
@@ -474,7 +527,12 @@ def upload(
         entity_type=EntityType.attachment,
         entity_id=a.id,
         project_id=project_id,
-        details={"owner_type": owner_type.value, "owner_id": str(owner_id), "size": len(content)},
+        details={
+            "owner_type": owner_type.value,
+            "owner_id": str(owner_id),
+            "size": a.size_bytes,
+            **({"uploaded_size": len(content)} if a.size_bytes != len(content) else {}),
+        },
     )
     return _read(a, Refs(db))
 
@@ -562,10 +620,13 @@ def download(
             "This download link has expired or is invalid.",
             "انتهت صلاحية رابط التنزيل أو أنه غير صالح.",
         )
+    return read_content(a), a.content_type, a.file_name
+
+
+def read_content(a: Attachment) -> bytes:
+    """The stored file's bytes (decrypted for the medical and personal buckets)."""
     data = (Path(get_settings().storage_dir) / a.storage_key).read_bytes()
-    if a.storage_bucket in ENCRYPTED:
-        data = crypto.decrypt_bytes(data)
-    return data, a.content_type, a.file_name
+    return crypto.decrypt_bytes(data) if a.storage_bucket in ENCRYPTED else data
 
 
 def delete(db: Session, p: Principal, attachment_id: uuid.UUID) -> None:

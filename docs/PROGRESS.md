@@ -27,6 +27,12 @@
 
 ## Done
 
+### Trial readiness A — email sending + photo shrinking (2026-10-22)
+- Handover `trial-readiness-handover.md` package A; decisions D-279…D-283; migration `a_0024_email_sender` (on 0023). No API / contract or frontend change.
+- Email: `app/services/mailer.py` and the scheduler job `email_send` (every minute) send the `email_outbox` over SMTP (settings `SMTP_*` / `EMAIL_*` in `.env.example`, README "Sending email"); queued / sent / failed with retry and backoff; no settings = emails wait in the outbox as before (the Parked "Email delivery" item is done; the provider is still Turki's choice). External 6g report-pack emails now carry the PDF / XLSX files and their delivery rows follow the send (queued → sent / failed). Check command: `python -m app.services.mailer test <address>`.
+- Photos: JPEG / PNG uploads are shrunk in `attachments.store` (`app/services/images.py`): upright, long edge 1600 px (documents 2400 px), JPEG ~80, about 0.5 MB (documents ~1 MB), EXIF / GPS removed. A 4032×3024 phone photo of 5.7 MB is stored as about 0.5 MB in about 0.5 s. PDFs, accident report files, signatures, generated files and import zips are unchanged.
+- Tests: `test_trial_a_mailer.py` (in-process fake SMTP server: EN / AR send, HTML direction, 5xx fail, 4xx backoff, give-up, server down and login failure leave rows queued, stale and reserved rows, SKIP LOCKED, missing attachment, test command), `test_trial_a_pack_email.py` (files attached, delivery sent / failed with issuer notice), `test_trial_a_photos.py` (shrinker rules and the multipart, inline, encrypted-bucket and keep-original paths).
+
 ### Glass restyle, second pass (2026-10-19)
 - Design pass: D-278. Inputs / selects / textareas / multi-select / outline and secondary buttons on the translucent control fill; `Table` glass with a translucent header; `FormSection` glass fieldset (legend floated inside); ten sticky action bars on `.glass-bar`; module cards, import tiles, notes, AI panel, muster cards on `.glass` / `.glass-soft` / `.glass-strong`; a `.glass`-in-glass descendant rule flattens nested glass; sonner neutral toasts and the chart tooltip glass; chart grid / axis alpha tokens. Gate check, certificate check, scaffold tags, badges, status alerts and print unchanged. Contrast re-measured (`docs/design/glass-findings.md`), screenshots refreshed. Also fixes the date-bound `test_AC6_insert_only_E10_and_upsert_replaces_verified` (W04 "older than 30 days" now fires for the fixed 2026-09-14 row; the assert compares E-codes only).
 

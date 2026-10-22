@@ -36,7 +36,7 @@ from app.models import (
 from app.models.users import TokenKind
 from app.ptw_jobs import PHASE3_JOBS
 from app.scorecard_jobs import PHASE6G_JOBS
-from app.services import audit, notify
+from app.services import audit, mailer, notify
 from app.services.audit import SYSTEM
 from app.services.users import _active_manager_ids, deactivate
 from app.site_vehicle_jobs import PHASE7B_JOBS
@@ -304,6 +304,7 @@ JOBS: dict[str, Callable[[Session], dict[str, Any]]] = {
     "cr_expiry_alerts": cr_expiry_alerts,
     "role_assignment_ending": role_assignment_ending,
     "last_manager_risk": last_manager_risk,
+    "email_send": mailer.send_due,  # D-279: deliver the email outbox over SMTP
     **PHASE1_JOBS,
     **PHASE2_JOBS,
     **PHASE3_JOBS,

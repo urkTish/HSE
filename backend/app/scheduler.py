@@ -23,6 +23,9 @@ def main() -> None:
     )
     sched = BlockingScheduler(timezone="Asia/Riyadh")
     sched.add_job(_job, "interval", minutes=1, args=["unlock_expired"])
+    # D-279: the email outbox is sent every minute (no-op without SMTP settings); never more
+    # than one run at a time, a run that overlaps the next tick is skipped.
+    sched.add_job(_job, "interval", minutes=1, args=["email_send"], max_instances=1)
     sched.add_job(_job, "interval", hours=1, args=["invite_followups"])
     for i, name in enumerate(
         ["verify_audit_chain", "inactive_accounts", "cr_expiry_alerts", "role_assignment_ending"]

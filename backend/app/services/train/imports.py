@@ -740,6 +740,7 @@ def _store_scans(db: Session, p: Principal, b: TrainingImportBatch, data: bytes)
             zf.read(info),
             ctype,
             p.user.id,
+            shrink=False,  # bulk scan zips are archived as imported (D-282)
         )
         smap[stem.upper()] = str(a.id)
     b.scans_count = len(smap)

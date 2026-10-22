@@ -1,11 +1,13 @@
 """Distribution lists and the delivery log (spec 6g §3.7, DL-1…DL-5, P6g-3, P6g-6). Users get an
-in-app notice and an email with a link; external members get an email naming the files of their
-language (the outbox has no attachment column: the files are recorded on the delivery row,
-DECISIONS D-224). Only de-identified aggregate packs go to external members."""
+in-app notice and an email with a link; external members get an email with the files of their
+language attached (D-224, D-280): the outbox row carries the attachment ids and the delivery
+row stays `queued` until the SMTP sender (app.services.mailer) marks it sent or failed. Only
+de-identified aggregate packs go to external members."""
 
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
@@ -190,6 +192,9 @@ def distribute(db: Session, pk: RpPack, no_xlsx: bool = False) -> int:
     subject_tail = (f" — Rev {pk.revision} supersedes Rev {pk.revision - 1} — {pk.reissue_reason}"
                     if pk.revision > 0 and pk.reissue_reason else "")  # fmt: skip
     subject = f"{pk.doc_no} Rev {pk.revision} issued{subject_tail}"[:300]
+    subject_ar = (f"صدرت {pk.doc_no} المراجعة {pk.revision}"
+                  + (f" — تحل محل المراجعة {pk.revision - 1} — {pk.reissue_reason}"
+                     if pk.revision > 0 and pk.reissue_reason else ""))[:200]  # fmt: skip
     users: set[uuid.UUID] = set()
     externals: list[RpRecipient] = []
     if pk.report_type == RpType.SCP and pk.engagement_id and pk.project_id:
@@ -225,38 +230,67 @@ def distribute(db: Session, pk: RpPack, no_xlsx: bool = False) -> int:
         files = _ext_files(pk, m.language, no_xlsx)
         names = [str(f["file_name"]) for f in files]
         lang = Language.ar if m.language == RpLanguage.ar else Language.en
+        d = RpDelivery(id=uuid.uuid4(), pack_id=pk.id, recipient_id=m.id, email=m.email,
+                       channel=RpChannel.email, attachments=names, subject=subject,
+                       status=RpDeliveryStatus.queued, sent_at=t)  # fmt: skip
+        mail_subject = subject_ar if lang == Language.ar else subject[:200]
+        body = (f"{subject_ar}\n\nمرفق: {'، '.join(names)}\nسري — إحصاءات مجمعة للصحة والسلامة "
+                "والبيئة.\n" if lang == Language.ar else
+                f"{subject}\n\nAttached: {', '.join(names)}\n"
+                "CONFIDENTIAL — aggregate HSE statistics.\n")  # fmt: skip
         db.add(EmailMessage(to_email=m.email or "", to_user_id=None, language=lang,
-                            template="report_pack", subject=subject[:200],
-                            body=f"{subject}\n\nAttached: {', '.join(names)}\n"
-                                 "CONFIDENTIAL — aggregate HSE statistics."))  # fmt: skip
-        rows.append(RpDelivery(id=uuid.uuid4(), pack_id=pk.id, recipient_id=m.id, email=m.email,
-                               channel=RpChannel.email, attachments=names, subject=subject,
-                               status=RpDeliveryStatus.sent, sent_at=t))  # fmt: skip
+                            template="report_pack", subject=mail_subject, body=body,
+                            attachment_ids=[str(f["attachment_id"]) for f in files
+                                            if f.get("attachment_id")],
+                            delivery_id=d.id))  # fmt: skip
+        rows.append(d)
     for r in rows:
         db.add(r)
     db.flush()
     return len(rows)
 
 
-def bounce(db: Session, delivery_id: uuid.UUID, error: str) -> None:
-    """A bounce notice from the mail relay: the delivery is marked and the issuer alerted."""
+def bounce(
+    db: Session,
+    delivery_id: uuid.UUID,
+    error: str,
+    status: RpDeliveryStatus = RpDeliveryStatus.bounced,
+) -> None:
+    """A bounce notice from the mail relay, or the SMTP sender giving up (`failed`, D-280):
+    the delivery is marked and the issuer alerted."""
     d = db.get(RpDelivery, delivery_id)
     if d is None:
         return
-    d.status, d.error = RpDeliveryStatus.bounced, error[:500]
+    d.status, d.error = status, error[:500]
     pk = db.get(RpPack, d.pack_id)
     if pk is not None and pk.issued_by_user_id:
+        what, what_ar = (
+            ("bounced", "ارتدّ البريد إلى")
+            if status == RpDeliveryStatus.bounced
+            else ("could not be sent", "تعذّر الإرسال إلى")
+        )
         cm.send(
             db,
             [pk.issued_by_user_id],
             NotificationKind.delivery_bounced,
-            f"{pk.doc_no} Rev {pk.revision}: delivery to {d.email or 'a user'} bounced",
-            f"تعذّر تسليم {pk.doc_no}",
+            f"{pk.doc_no} Rev {pk.revision}: delivery to {d.email or 'a user'} {what}",
+            f"تعذّر تسليم {pk.doc_no} المراجعة {pk.revision}: {what_ar} {d.email or 'مستخدم'}",
             pk.project_id,
             EntityType.report_pack,
             pk.id,
         )
     db.flush()
+
+
+def delivery_failed(db: Session, delivery_id: uuid.UUID, error: str) -> None:
+    bounce(db, delivery_id, error, RpDeliveryStatus.failed)
+
+
+def delivery_sent(db: Session, delivery_id: uuid.UUID, at: datetime) -> None:
+    d = db.get(RpDelivery, delivery_id)
+    if d is not None and d.status == RpDeliveryStatus.queued:
+        d.status, d.sent_at, d.error = RpDeliveryStatus.sent, at, None
+        db.flush()
 
 
 def deliveries(

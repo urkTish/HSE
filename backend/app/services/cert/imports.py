@@ -963,7 +963,9 @@ def _store_scans(
         if not ctype or not stem:
             continue
         content = zf.read(info)
-        a = attachments.store(db, owner, b.id, b.project_id, base, content, ctype, p.user.id)
+        a = attachments.store(
+            db, owner, b.id, b.project_id, base, content, ctype, p.user.id, shrink=False
+        )
         smap[stem.upper()] = str(a.id)
         n += 1
     b.scans_count = n
