@@ -147,6 +147,8 @@ def shrink(content: bytes, content_type: str, file_name: str, profile: Profile =
             box = (max(1, round(w * scale)), max(1, round(h * scale)))
             if src.format == "JPEG":
                 src.draft("RGB", box)  # decode at 1/2, 1/4 or 1/8 when that is still big enough
+            if src.mode in ("I", "F") or src.mode.startswith("I;"):  # 16-bit / float scans
+                raise ValueError(f"mode {src.mode} is kept as uploaded")
             src.load()
             icc = src.info.get("icc_profile")  # colour profile: not personal, keeps colours true
             orientation = src.getexif().get(ORIENTATION_TAG, 1)
