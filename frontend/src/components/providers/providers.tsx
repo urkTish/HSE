@@ -22,7 +22,7 @@ function makeClient(): QueryClient {
 }
 
 /** Pages that handle a missing session themselves. "/gate" also serves gate-device sessions (GC-1). */
-const PUBLIC_PATHS = ["/login", "/privacy", "/invite", "/forgot-password", "/reset-password", "/gate"];
+const PUBLIC_PATHS = ["/login", "/privacy", "/invite", "/forgot-password", "/reset-password", "/gate", "/setup"];
 
 function AuthEventBridge({ client }: { client: QueryClient }) {
   const router = useRouter();

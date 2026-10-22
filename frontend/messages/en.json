@@ -15336,5 +15336,26 @@
     "en": "English",
     "ar": "Arabic",
     "failed": "The bulletin could not be downloaded. Try again."
+  },
+  "firstSetup": {
+    "title": "Set up this installation",
+    "intro": "This server has no users yet. Create the organisation, its first project and the first administrator. This page closes for good once it is done.",
+    "tokenTitle": "Setup code",
+    "token": "Setup code",
+    "tokenHint": "The code given with the server (SETUP_TOKEN).",
+    "organisation": "Organisation",
+    "orgNameEn": "Organisation name (English)",
+    "orgNameAr": "Organisation name (Arabic)",
+    "project": "First project",
+    "codeHint": "Up to 12 characters; it starts every reference number, e.g. T3-EXP.",
+    "admin": "First administrator",
+    "adminHint": "This person becomes the HSE Manager for the whole organisation and invites everyone else. Two-step verification is required for this role.",
+    "password": "Password",
+    "confirmPassword": "Confirm password",
+    "submit": "Create and sign in",
+    "submitting": "Setting up…",
+    "after": "After this you are signed in as the administrator. Add sites, contractors and users from the menu.",
+    "locked": "This installation is already set up.",
+    "toLogin": "Go to sign in"
   }
 }

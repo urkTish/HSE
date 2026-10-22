@@ -168,7 +168,7 @@ from app.models.med import (
     MedicalProvider,
     MedicalSettings,
 )
-from app.models.org import Project, ProjectSettings, Site, Zone
+from app.models.org import Installation, Project, ProjectSettings, Site, Zone
 from app.models.ptw import (
     BumpTest,
     GasDetector,
@@ -349,6 +349,7 @@ __all__ = [
     "InjuryCase",
     "Inspection",
     "InspectionPlan",
+    "Installation",
     "Investigation",
     "IsolationCertificate",
     "IsolationPoint",

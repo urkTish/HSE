@@ -145,3 +145,16 @@ class Zone(UUIDPk, TimestampMixin, Base):
     works_safety_plan_ref: Mapped[str | None] = mapped_column(String(40))
 
     site: Mapped[Site] = relationship()
+
+
+class Installation(Base):
+    """D-306: one row per install (one install = one customer organisation), written by the
+    first-time setup; its presence locks the setup screen."""
+
+    __tablename__ = "installation"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    organisation_name_en: Mapped[str] = mapped_column(String(150))
+    organisation_name_ar: Mapped[str] = mapped_column(String(150))
+    setup_completed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    setup_by_user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))

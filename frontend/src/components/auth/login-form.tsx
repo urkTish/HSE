@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +14,7 @@ import { FormField } from "@/components/common/form-field";
 import { Link, useRouter } from "@/i18n/navigation";
 import { api, ApiError, unwrap, type Schemas } from "@/lib/api/client";
 import { MfaVerifyStep } from "@/components/auth/mfa";
+import { useSetupStatus } from "@/components/auth/first-setup";
 import { keys } from "@/lib/api/queries";
 import { useErrorMessage } from "@/lib/i18n-helpers";
 
@@ -28,6 +29,12 @@ export function LoginForm() {
   const next = params.get("next");
   const [error, setError] = useState<unknown>(null);
   const [mfaStep, setMfaStep] = useState(false);
+  const setup = useSetupStatus();
+  const setupNeeded = Boolean(setup.data?.needed);
+  useEffect(() => {
+    // D-306: an empty install goes straight to the first-time setup.
+    if (setupNeeded) router.replace("/setup");
+  }, [setupNeeded, router]);
 
   const schema = useMemo(
     () =>

@@ -12319,6 +12319,26 @@ export interface paths {
         patch: operations["update_lesson"];
         trace?: never;
     };
+    "/api/v1/lessons/{lesson_id}/bulletin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The lesson's bulletin as a PDF (EN, AR or both; D-304)
+         * @description DS-2 bulletin for briefing crews: what happened, why, key lessons, actions, with the date in Gregorian and Umm al-Qura Hijri. Arabic is shaped right-to-left.
+         */
+        get: operations["get_lesson_bulletin"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/lessons/{lesson_id}/transitions": {
         parameters: {
             query?: never;
@@ -13796,6 +13816,30 @@ export interface paths {
         get: operations["get_deleted_record"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/setup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Is the first-time setup still open? (public)
+         * @description `needed` is true only on an install with no users that was never set up.
+         */
+        get: operations["get_setup_status"];
+        put?: never;
+        /**
+         * Create the organisation, first project and first administrator (public, once)
+         * @description Creates the organisation record, the first project (with default settings) and the first user as an organisation-wide HSE Manager, acknowledges the privacy notice and signs them in. 409 SETUP_ALREADY_DONE once any user exists; 403 when SETUP_TOKEN is set and `setup_token` does not match. The HSE Manager role needs two-step verification, so the new administrator is asked to set it up (D-299).
+         */
+        post: operations["run_setup"];
         delete?: never;
         options?: never;
         head?: never;
@@ -47446,6 +47490,68 @@ export interface components {
          * @enum {string}
          */
         SessionVoidReason: "trainer_not_competent" | "attendance_falsified" | "assessment_compromised" | "provider_misconduct" | "other";
+        /** SetupAdmin */
+        SetupAdmin: {
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+            /** Full Name En */
+            full_name_en: string;
+            /** Full Name Ar */
+            full_name_ar?: string | null;
+            /**
+             * Mobile
+             * @description E.164.
+             */
+            mobile?: string | null;
+            /** Job Title */
+            job_title?: string | null;
+            /** @default en */
+            preferred_language: components["schemas"]["Language"];
+            /**
+             * Password
+             * @description At least 12 characters, at least 3 of 4 classes (upper, lower, digit, symbol), not equal to the email local part and not a common breached password (spec §5.1 rule 2).
+             */
+            password: string;
+        };
+        /** SetupRequest */
+        SetupRequest: {
+            /**
+             * Setup Token
+             * @description Required when the server sets SETUP_TOKEN.
+             */
+            setup_token?: string | null;
+            /** Organisation Name En */
+            organisation_name_en: string;
+            /** Organisation Name Ar */
+            organisation_name_ar: string;
+            project: components["schemas"]["ProjectCreate"];
+            admin: components["schemas"]["SetupAdmin"];
+            /**
+             * Privacy Notice Version
+             * @description The privacy notice the admin acknowledged.
+             */
+            privacy_notice_version: string;
+        };
+        /** SetupStatus */
+        SetupStatus: {
+            /**
+             * Needed
+             * @description True only while the install has no users and has never been set up.
+             */
+            needed: boolean;
+            /**
+             * Token Required
+             * @description The setup asks for the SETUP_TOKEN code.
+             */
+            token_required: boolean;
+            /** Organisation Name En */
+            organisation_name_en?: string | null;
+            /** Organisation Name Ar */
+            organisation_name_ar?: string | null;
+        };
         /**
          * Severity
          * @enum {string}
@@ -117214,6 +117320,66 @@ export interface operations {
             };
         };
     };
+    get_lesson_bulletin: {
+        parameters: {
+            query?: {
+                lang?: "en" | "ar" | "both";
+            };
+            header?: never;
+            path: {
+                lesson_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     transition_lesson: {
         parameters: {
             query?: never;
@@ -123310,6 +123476,77 @@ export interface operations {
             };
             /** @description Not found or outside the caller's project/contractor scope. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_setup_status: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SetupStatus"];
+                };
+            };
+        };
+    };
+    run_setup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetupRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoginResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

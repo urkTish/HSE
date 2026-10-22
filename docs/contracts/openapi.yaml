@@ -65063,6 +65063,69 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/lessons/{lesson_id}/bulletin:
+    get:
+      tags:
+      - lessons-learned
+      summary: The lesson's bulletin as a PDF (EN, AR or both; D-304)
+      description: 'DS-2 bulletin for briefing crews: what happened, why, key lessons, actions, with the
+        date in Gregorian and Umm al-Qura Hijri. Arabic is shaped right-to-left.'
+      operationId: get_lesson_bulletin
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: lesson_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Lesson Id
+      - name: lang
+        in: query
+        required: false
+        schema:
+          enum:
+          - en
+          - ar
+          - both
+          type: string
+          default: both
+          title: Lang
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/v1/lessons/{lesson_id}/transitions:
     post:
       tags:
@@ -71150,6 +71213,62 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/setup:
+    get:
+      tags:
+      - setup
+      summary: Is the first-time setup still open? (public)
+      description: '`needed` is true only on an install with no users that was never set up.'
+      operationId: get_setup_status
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SetupStatus'
+    post:
+      tags:
+      - setup
+      summary: Create the organisation, first project and first administrator (public, once)
+      description: Creates the organisation record, the first project (with default settings) and the
+        first user as an organisation-wide HSE Manager, acknowledges the privacy notice and signs them
+        in. 409 SETUP_ALREADY_DONE once any user exists; 403 when SETUP_TOKEN is set and `setup_token`
+        does not match. The HSE Manager role needs two-step verification, so the new administrator is
+        asked to set it up (D-299).
+      operationId: run_setup
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetupRequest'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
           content:
             application/json:
               schema:
@@ -135679,6 +135798,114 @@ components:
       - other
       title: SessionVoidReason
       description: List SV (§3.15).
+    SetupAdmin:
+      properties:
+        email:
+          type: string
+          format: email
+          title: Email
+        full_name_en:
+          type: string
+          maxLength: 120
+          minLength: 1
+          title: Full Name En
+        full_name_ar:
+          anyOf:
+          - type: string
+            maxLength: 120
+          - type: 'null'
+          title: Full Name Ar
+        mobile:
+          anyOf:
+          - type: string
+            pattern: ^\+[1-9]\d{7,14}$
+          - type: 'null'
+          title: Mobile
+          description: E.164.
+        job_title:
+          anyOf:
+          - type: string
+            maxLength: 80
+          - type: 'null'
+          title: Job Title
+        preferred_language:
+          $ref: '#/components/schemas/Language'
+          default: en
+        password:
+          type: string
+          maxLength: 256
+          minLength: 12
+          title: Password
+          description: At least 12 characters, at least 3 of 4 classes (upper, lower, digit, symbol),
+            not equal to the email local part and not a common breached password (spec §5.1 rule 2).
+      additionalProperties: false
+      type: object
+      required:
+      - email
+      - full_name_en
+      - password
+      title: SetupAdmin
+    SetupRequest:
+      properties:
+        setup_token:
+          anyOf:
+          - type: string
+            maxLength: 200
+          - type: 'null'
+          title: Setup Token
+          description: Required when the server sets SETUP_TOKEN.
+        organisation_name_en:
+          type: string
+          maxLength: 150
+          minLength: 1
+          title: Organisation Name En
+        organisation_name_ar:
+          type: string
+          maxLength: 150
+          minLength: 1
+          title: Organisation Name Ar
+        project:
+          $ref: '#/components/schemas/ProjectCreate'
+        admin:
+          $ref: '#/components/schemas/SetupAdmin'
+        privacy_notice_version:
+          type: string
+          title: Privacy Notice Version
+          description: The privacy notice the admin acknowledged.
+      additionalProperties: false
+      type: object
+      required:
+      - organisation_name_en
+      - organisation_name_ar
+      - project
+      - admin
+      - privacy_notice_version
+      title: SetupRequest
+    SetupStatus:
+      properties:
+        needed:
+          type: boolean
+          title: Needed
+          description: True only while the install has no users and has never been set up.
+        token_required:
+          type: boolean
+          title: Token Required
+          description: The setup asks for the SETUP_TOKEN code.
+        organisation_name_en:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Organisation Name En
+        organisation_name_ar:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Organisation Name Ar
+      type: object
+      required:
+      - needed
+      - token_required
+      title: SetupStatus
     Severity:
       type: string
       enum:

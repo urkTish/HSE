@@ -106,6 +106,10 @@ class Settings(BaseSettings):
     clamav_timeout_seconds: float = 30.0
     clamav_fail_open: bool = False
 
+    # First-time setup (D-306): optional one-off code the person running the setup must type, so
+    # nobody else can claim a freshly deployed server first. Empty = no code asked.
+    setup_token: str = ""
+
     # Seed (only used by app.seed)
     seed_password: str | None = None
 
