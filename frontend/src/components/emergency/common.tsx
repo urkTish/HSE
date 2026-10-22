@@ -306,7 +306,7 @@ export function Codes({ items, empty = "—" }: { items: string[] | null | undef
 /** Lock note: who may see named lists (P6c-2, P6c-4). */
 export function PrivacyNote({ children, testId = "em-privacy-note" }: { children: ReactNode; testId?: string }) {
   return (
-    <p className="mb-3 flex w-fit max-w-full items-start gap-2 rounded-md border border-input/70 bg-surface px-3 py-1.5 text-xs" data-testid={testId}>
+    <p className="mb-3 flex w-fit max-w-full items-start gap-2 rounded-md border border-input/70 bg-glass-soft px-3 py-1.5 text-xs" data-testid={testId}>
       <Lock aria-hidden className="mt-px size-3.5 shrink-0 text-muted-foreground" />
       <span>{children}</span>
     </p>

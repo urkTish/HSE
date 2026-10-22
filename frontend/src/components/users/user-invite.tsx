@@ -146,7 +146,7 @@ export function UserInvite() {
             </Select>
           </FormField>
         </FormSection>
-        <fieldset className="rounded-lg border bg-surface p-5">
+        <fieldset className="glass rounded-lg border p-5">
           <legend className="px-1 text-base font-semibold">{ta("assignTitle")}</legend>
           <AssignmentFields
             idPrefix="assignment"

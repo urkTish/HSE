@@ -93,10 +93,11 @@ export function CheckboxField({
 
 export function FormSection({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
   return (
-    <fieldset className="rounded-xl border bg-surface p-4 shadow-xs sm:p-5">
-      <legend className="rounded-md bg-surface px-1.5 text-base font-semibold">{title}</legend>
-      {description ? <p className="mb-4 text-sm text-muted-foreground">{description}</p> : null}
-      <div className="grid gap-4 sm:grid-cols-2">{children}</div>
+    <fieldset className="glass rounded-xl border p-4 sm:p-5">
+      {/* Floated, so the legend sits inside the glass box instead of straddling a border it would have to mask. */}
+      <legend className="float-start mb-3 w-full text-base font-semibold">{title}</legend>
+      {description ? <p className="clear-both mb-4 text-sm text-muted-foreground">{description}</p> : null}
+      <div className="clear-both grid gap-4 sm:grid-cols-2">{children}</div>
     </fieldset>
   );
 }

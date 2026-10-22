@@ -245,7 +245,7 @@ export function MedicalImportDetail({ id }: { id: string }) {
         {COUNT_KEYS.map((k) => {
           const n = b.counts[k] ?? 0;
           return (
-            <div key={k} className={cn("rounded-xl border bg-surface p-3 shadow-xs", k === "errors" && n > 0 && "border-danger/60 bg-danger-bg", k === "warnings" && n > 0 && "border-warning/60 bg-warning-bg")} data-testid={`mi-count-${k}`}>
+            <div key={k} className={cn("glass-soft rounded-xl border p-3", k === "errors" && n > 0 && "border-danger/60 bg-danger-bg", k === "warnings" && n > 0 && "border-warning/60 bg-warning-bg")} data-testid={`mi-count-${k}`}>
               <dt className="text-xs font-medium text-muted-foreground">{t(`counts.${k}`)}</dt>
               <dd className="mt-1 text-2xl font-semibold tabular-nums">{n}</dd>
             </div>
@@ -271,7 +271,7 @@ export function MedicalImportDetail({ id }: { id: string }) {
         </Alert>
       ) : null}
       {pending ? (
-        <div className="mb-4 flex flex-col gap-3 rounded-xl border bg-surface p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between">
+        <div className="glass mb-4 flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-sm">
             {(b.counts.errors ?? 0) > 0 ? (
               <p className="flex items-center gap-1.5 font-medium" data-testid="mi-partial">

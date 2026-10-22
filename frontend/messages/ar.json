@@ -1571,7 +1571,11 @@
     "label": "المظهر",
     "light": "فاتح",
     "dark": "داكن",
-    "system": "حسب الجهاز"
+    "system": "حسب الجهاز",
+    "surface": "السطح",
+    "surface_glass": "زجاجي",
+    "surface_solid": "مصمت",
+    "surface_auto": "حسب الجهاز (مصمت على شاشات اللمس)"
   },
   "enums": {
     "shift": {

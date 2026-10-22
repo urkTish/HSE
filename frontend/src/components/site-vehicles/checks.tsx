@@ -516,7 +516,7 @@ function CheckForm({ project }: { project: S["ProjectRead"] }) {
         <LoadingState />
       ) : null}
       <MutationError error={error} />
-      <div className="sticky bottom-0 z-10 -mx-4 flex flex-wrap items-center gap-2 border-t bg-background/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0">
+      <div className="glass-bar sticky bottom-0 z-10 -mx-4 flex flex-wrap items-center gap-2 border-t px-4 py-3 sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none">
         {all.length ? (
           <p className="w-full text-xs text-muted-foreground" aria-live="polite" data-testid="pu-progress" data-open={open.length}>
             {td("answered", { done: show(all.length - open.length), total: show(all.length) })}

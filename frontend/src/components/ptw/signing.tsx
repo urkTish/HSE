@@ -130,7 +130,7 @@ export function SigningNotice() {
   const now = useNow(30_000);
   const valid = me.reauth_valid_until ? new Date(me.reauth_valid_until).getTime() > now : false;
   return (
-    <p className="flex items-start gap-2 rounded-md border bg-surface p-2 text-xs text-muted-foreground" data-testid="signing-notice">
+    <p className="glass-soft flex items-start gap-2 rounded-md border p-2 text-xs text-muted-foreground" data-testid="signing-notice">
       <PenLine aria-hidden className="mt-0.5 size-4 shrink-0" />
       <span>
         {t("signingAs", { name: locale === "ar" && me.full_name_ar ? me.full_name_ar : me.full_name_en })} {valid ? null : t("willAsk")}

@@ -33,7 +33,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const t = useTranslations("common");
   const [mobileOpen, setMobileOpen] = useState(false);
   return (
-    <div className="flex min-h-dvh">
+    <div className="app-mesh flex min-h-dvh">
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:start-2 focus:top-2 focus:z-50 focus:rounded-md focus:bg-surface focus:p-3 focus:shadow-lg"
@@ -42,7 +42,7 @@ export function Shell({ children }: { children: ReactNode }) {
       </a>
       <FieldOfflineSync />
       <aside
-        className="sticky top-0 hidden h-dvh w-(--sidebar-width) shrink-0 print:!hidden flex-col overflow-y-auto border-e border-sidebar-border bg-sidebar bg-[linear-gradient(180deg,rgb(255_255_255/0.025),transparent_40%)] lg:flex"
+        className="sticky top-0 hidden h-dvh w-(--sidebar-width) shrink-0 print:!hidden flex-col overflow-y-auto sidebar-glass border-e lg:flex"
         data-testid="sidebar"
       >
         <div className="px-3 pt-3 pb-1">
@@ -54,7 +54,7 @@ export function Shell({ children }: { children: ReactNode }) {
         <D.Portal>
           <D.Overlay className="fixed inset-0 z-40 bg-overlay lg:hidden" />
           <D.Content
-            className="fixed inset-y-0 start-0 z-50 flex w-[min(20rem,85vw)] flex-col overflow-y-auto bg-sidebar shadow-lg lg:hidden"
+            className="fixed inset-y-0 start-0 z-50 flex w-[min(20rem,85vw)] sidebar-glass flex-col overflow-y-auto shadow-lg lg:hidden"
             aria-describedby={undefined}
             data-testid="mobile-nav"
           >
@@ -62,7 +62,7 @@ export function Shell({ children }: { children: ReactNode }) {
             <div className="flex items-center justify-between gap-2 px-3 pt-3 pb-1">
               <Brand onNavigate={() => setMobileOpen(false)} />
               <D.Close
-                className="inline-flex size-touch shrink-0 items-center justify-center rounded-md text-sidebar-foreground hover:bg-sidebar-active"
+                className="inline-flex size-touch shrink-0 items-center justify-center rounded-md text-sidebar-foreground hover:bg-sidebar-hover"
                 aria-label={t("close")}
               >
                 <X aria-hidden className="size-5" />
@@ -74,7 +74,7 @@ export function Shell({ children }: { children: ReactNode }) {
       </D.Root>
       <div className="flex min-w-0 flex-1 flex-col">
         <header
-          className="sticky top-0 z-30 flex flex-wrap print:!hidden items-center gap-x-1 gap-y-0 border-b border-border bg-surface/95 px-2 shadow-xs backdrop-blur supports-[backdrop-filter]:bg-surface/85 sm:flex-nowrap sm:gap-2 sm:px-4"
+          className="sticky top-0 z-30 flex flex-wrap print:!hidden glass-bar items-center gap-x-1 gap-y-0 border-b px-2 sm:flex-nowrap sm:gap-2 sm:px-4"
           data-testid="topbar"
         >
           <div className="flex h-(--topbar-h) items-center lg:hidden">

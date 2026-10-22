@@ -295,7 +295,7 @@ function DeviceDialog({ i, onClose }: { i: S["InstrumentRead"]; onClose: () => v
     return (
       <StepDialog title={t("tokenTitle")} confirmLabel={tc("close")} onConfirm={async () => undefined} onClose={onClose}>
         <Alert tone="warning">{t("tokenOnce")}</Alert>
-        <code className="block rounded-md border bg-surface p-2 text-xs break-all ltr" data-testid="device-token">
+        <code className="glass-soft block rounded-md border p-2 text-xs break-all ltr" data-testid="device-token">
           {token}
         </code>
       </StepDialog>

@@ -27,6 +27,12 @@
 
 ## Done
 
+### Glass restyle, second pass (2026-10-19)
+- Design pass: D-278. Inputs / selects / textareas / multi-select / outline and secondary buttons on the translucent control fill; `Table` glass with a translucent header; `FormSection` glass fieldset (legend floated inside); ten sticky action bars on `.glass-bar`; module cards, import tiles, notes, AI panel, muster cards on `.glass` / `.glass-soft` / `.glass-strong`; a `.glass`-in-glass descendant rule flattens nested glass; sonner neutral toasts and the chart tooltip glass; chart grid / axis alpha tokens. Gate check, certificate check, scaffold tags, badges, status alerts and print unchanged. Contrast re-measured (`docs/design/glass-findings.md`), screenshots refreshed. Also fixes the date-bound `test_AC6_insert_only_E10_and_upsert_replaces_verified` (W04 "older than 30 days" now fires for the fixed 2026-09-14 row; the assert compares E-codes only).
+
+### Glass restyle, proof of concept (2026-10-18)
+- Design pass: PoC done (D-277). Tokens, mesh, glass utilities, shell, `Card`, dashboard tiles / bands / chart cards, dialogs, popovers, menus, list toolbar, empty state; Surface choice (Glass / Solid / Match device) in the theme menu, Solid by default on touch screens. Findings and contrast: `docs/design/glass-findings.md`; screenshots `docs/screenshots/glass/` (`screenshots-glass.spec.ts`). Strings `scripts/i18n/p7-glassdesign.py` (`theme.surface*`). No logic, API, permission or test-id change. Next pass (buttons, inputs, tables, badges, sticky bars, module cards, chart tokens) listed in the findings.
+
 ### Fixer check — Options 7a / 7b (2026-10-12)
 - Contract **v0.15.1**: drill-down `SourceRecord.recorded_not_counted` (K-136 / K-137 commuting rows; the frontend's 200-row register lookup is gone); `IncidentCreate.vehicle_involved` optional (null / omitted = derived, VA-1). openapi and `schema.d.ts` regenerated.
 - 1b: the September ANIA-EXP Phase 1 additions (0201 MTC, 0204 near miss, 0209 property damage) broke no e2e expectation; nothing changed.

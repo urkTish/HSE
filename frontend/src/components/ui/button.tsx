@@ -4,6 +4,8 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
+  // Glass (D-278): the primary stays solid emerald (the main action is the most opaque thing on screen);
+  // outline / secondary / destructive-outline sit on the translucent control fill, ghost hovers with a wash.
   // Restyle (D-238): crisp emerald primary with a top sheen, platinum outline/secondary, pressed states,
   // one radius (md) and a 2px focus ring offset from the button on every variant.
   "inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium tracking-[0.005em] transition-[background-color,border-color,color,box-shadow,transform] duration-150 ease-(--ease) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring active:translate-y-px disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none [&_svg]:size-4 [&_svg]:shrink-0",
@@ -15,12 +17,12 @@ const buttonVariants = cva(
         destructive:
           "border border-destructive-hover/60 bg-destructive text-destructive-foreground shadow-btn hover:bg-destructive-hover active:shadow-btn-pressed",
         // Hard-to-undo actions that are not the main action (cancel permit, cut lock): visible, never the loudest.
-        "destructive-outline": "border-2 border-destructive bg-surface text-destructive shadow-control hover:bg-danger-bg active:shadow-btn-pressed",
+        "destructive-outline": "border-2 border-destructive bg-control text-destructive shadow-control hover:bg-danger-bg active:shadow-btn-pressed",
         outline:
-          "border border-border-strong bg-surface bg-(image:--surface-sheen) text-foreground shadow-control hover:border-input hover:bg-accent hover:bg-none hover:text-accent-foreground active:shadow-btn-pressed",
+          "border border-border-strong bg-control bg-(image:--surface-sheen) text-foreground shadow-control hover:border-input hover:bg-accent hover:bg-none hover:text-accent-foreground active:shadow-btn-pressed",
         secondary:
-          "border border-border bg-secondary text-secondary-foreground shadow-control hover:border-border-strong hover:bg-accent active:shadow-btn-pressed",
-        ghost: "hover:bg-accent hover:text-accent-foreground active:bg-secondary",
+          "border border-border bg-secondary/80 text-secondary-foreground shadow-control hover:border-border-strong hover:bg-accent active:shadow-btn-pressed",
+        ghost: "hover:bg-accent/80 hover:text-accent-foreground active:bg-secondary",
         link: "text-primary underline-offset-4 hover:underline active:translate-y-0",
       },
       size: {

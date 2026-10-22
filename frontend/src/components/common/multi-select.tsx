@@ -50,7 +50,7 @@ export function MultiSelect<V extends string>({
             id={id}
             type="button"
             data-testid={testId}
-            className="flex h-control w-full items-center justify-between gap-2 rounded-md border border-input bg-surface ps-3 pe-2 text-start text-base lg:text-sm focus-visible:outline-2 focus-visible:outline-ring"
+            className="flex h-control w-full items-center justify-between gap-2 rounded-md border border-input bg-control ps-3 pe-2 text-start text-base lg:text-sm focus-visible:outline-2 focus-visible:outline-ring"
           >
             <span className="truncate">{summary}</span>
             <ChevronDown aria-hidden className="size-4 shrink-0 text-muted-foreground" />

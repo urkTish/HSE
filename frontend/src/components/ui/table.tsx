@@ -9,13 +9,13 @@ import { cn } from "@/lib/utils";
  */
 export function Table({ className, stack = true, compact = false, ...props }: React.TableHTMLAttributes<HTMLTableElement> & { stack?: boolean; compact?: boolean }) {
   return (
-    <div className="w-full overflow-x-auto rounded-xl border border-border bg-surface shadow-sm">
+    <div className="glass w-full overflow-x-auto rounded-xl border">
       <table className={cn("w-full caption-bottom text-sm", stack && "table-stack", stack && compact && "table-compact", className)} {...props} />
     </div>
   );
 }
 export function THead({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
-  return <thead className={cn("bg-muted/80 [&_tr]:border-b [&_tr]:border-border", className)} {...props} />;
+  return <thead className={cn("bg-table-head [&_tr]:border-b [&_tr]:border-border", className)} {...props} />;
 }
 export function TBody({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
   return <tbody className={cn("[&_tr:last-child]:border-0", className)} {...props} />;

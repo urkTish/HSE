@@ -318,7 +318,7 @@ export function TrainingImportDetail({ id }: { id: string }) {
           <div
             key={k}
             className={cn(
-              "rounded-xl border bg-surface p-3 shadow-xs",
+              "glass-soft rounded-xl border p-3",
               k === "rows_error" && b.counts[k] > 0 && "border-danger/60 bg-danger-bg",
               (k === "rows_warning" || k === "records_left_draft") && b.counts[k] > 0 && "border-warning/60 bg-warning-bg",
             )}
@@ -360,7 +360,7 @@ export function TrainingImportDetail({ id }: { id: string }) {
         </Alert>
       ) : null}
       {pending ? (
-        <div className="mb-4 flex flex-col gap-3 rounded-xl border bg-surface p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between">
+        <div className="glass mb-4 flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-sm">
             {b.counts.rows_error > 0 ? (
               <p className="flex items-center gap-1.5 font-medium" data-testid="ti-partial">

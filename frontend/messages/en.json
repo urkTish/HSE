@@ -1571,7 +1571,11 @@
     "label": "Theme",
     "light": "Light",
     "dark": "Dark",
-    "system": "Match device"
+    "system": "Match device",
+    "surface": "Surface",
+    "surface_glass": "Glass",
+    "surface_solid": "Solid",
+    "surface_auto": "Match device (solid on touch screens)"
   },
   "enums": {
     "shift": {

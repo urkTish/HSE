@@ -782,7 +782,7 @@ function RunBar(p: { done: number; total: number; failingCount: number; open: st
     else if (p.stopMissing) scrollToTestId('[data-testid="stop-fields"]');
   };
   return (
-    <div className="sticky bottom-0 z-20 -mx-1 flex flex-col gap-2 rounded-t-xl border border-b-0 bg-surface/95 p-3 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-surface/90" data-testid="run-bar">
+    <div className="glass-bar sticky bottom-0 z-20 -mx-1 flex flex-col gap-2 rounded-t-xl border border-b-0 p-3" data-testid="run-bar">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
         <span className="font-semibold tabular-nums">{td("answeredOf", { done: p.done, total: p.total })}</span>
         {p.failingCount ? (

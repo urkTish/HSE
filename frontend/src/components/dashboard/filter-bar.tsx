@@ -60,7 +60,7 @@ export function FilterBar({
   const [scopeOpen, setScopeOpen] = useState(scopeCount > 0);
 
   return (
-    <section aria-label={t("filters")} className="flex flex-col gap-3 rounded-xl border bg-surface p-3 shadow-xs print:hidden" data-testid="dashboard-filters">
+    <section aria-label={t("filters")} className="glass flex flex-col gap-3 rounded-xl border p-3 print:hidden" data-testid="dashboard-filters">
       <Button
         type="button"
         variant="outline"

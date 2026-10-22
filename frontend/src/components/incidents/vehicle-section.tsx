@@ -315,7 +315,7 @@ function VehicleRowCard({ row, incident: r, editable, onEdit, onRemove }: { row:
       : null;
   const hasPlate = Boolean(row.plate_digits || row.plate_letters_en || row.plate_letters_ar);
   return (
-    <li className="flex min-w-0 flex-col gap-2 rounded-lg border bg-surface p-3" data-testid="veh-row" data-label={row.label} data-ownership={row.ownership} data-licence-check={row.licence_check ?? ""}>
+    <li className="glass flex min-w-0 flex-col gap-2 rounded-lg border p-3" data-testid="veh-row" data-label={row.label} data-ownership={row.ownership} data-licence-check={row.licence_check ?? ""}>
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <p className="flex flex-wrap items-center gap-2 text-sm font-semibold">

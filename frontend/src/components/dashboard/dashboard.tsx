@@ -270,7 +270,7 @@ function Headline({ h, show, projectId, periodLabel }: { h: Schemas["DashboardHe
   const { date } = useFormatters(projectId);
   const l = h.lti_free;
   return (
-    <section aria-label={t("headline")} className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-xl border bg-surface p-4 shadow-xs lg:grid-cols-6" data-testid="headline">
+    <section aria-label={t("headline")} className="grid grid-cols-2 gap-x-4 gap-y-3 glass rounded-xl border p-4 lg:grid-cols-6" data-testid="headline">
       <div className="col-span-2 flex flex-col gap-1 border-b pb-3 lg:border-e lg:border-b-0 lg:pe-4 lg:pb-0" data-testid="lti-free">
         <p className="text-xs font-medium text-muted-foreground">
           <Bidi text={ar ? l.label_ar : l.label_en} />
@@ -332,7 +332,7 @@ function AccessBandView({ b, show }: { b: Schemas["AccessBand"]; show: Show }) {
     { key: "obstacles", label: t("band.obstacles"), value: b.active_obstacle_clearances, href: "/obstacle-clearances" },
   ];
   return (
-    <section aria-labelledby="access-band-h" className="flex flex-col gap-2 rounded-xl border bg-surface p-4 shadow-xs" data-testid="access-band">
+    <section aria-labelledby="access-band-h" className="glass flex flex-col gap-2 rounded-xl border p-4" data-testid="access-band">
       <h2 id="access-band-h" className="text-sm font-semibold">
         {t("band.title")}
       </h2>
@@ -383,7 +383,7 @@ function PtwBandView({ b, show }: { b: Schemas["PtwBand"]; show: Show }) {
     { key: "simops", label: t("ptwBand.simops"), value: b.open_simops_conflicts, href: "/simops-conflicts?status=open", tone: b.open_simops_conflicts ? "warning" : undefined },
   ];
   return (
-    <section aria-labelledby="ptw-band-h" className="flex flex-col gap-3 rounded-xl border bg-surface p-4 shadow-xs" data-testid="ptw-band">
+    <section aria-labelledby="ptw-band-h" className="glass flex flex-col gap-3 rounded-xl border p-4" data-testid="ptw-band">
       <h2 id="ptw-band-h" className="text-sm font-semibold">
         {t("ptwBand.title")}
       </h2>
@@ -437,7 +437,7 @@ function CertBandView({ b, show, projectId }: { b: Schemas["CertBand"]; show: Sh
     { key: "verification", label: t("certBand.awaitingVerification"), value: b.awaiting_verification, href: "/equipment-certificates?verification_status=not_verified" },
   ];
   return (
-    <section aria-labelledby="cert-band-h" className="flex flex-col gap-3 rounded-xl border bg-surface p-4 shadow-xs" data-testid="cert-band">
+    <section aria-labelledby="cert-band-h" className="glass flex flex-col gap-3 rounded-xl border p-4" data-testid="cert-band">
       <h2 id="cert-band-h" className="text-sm font-semibold">
         {t("certBand.title")}
       </h2>
@@ -510,7 +510,7 @@ function TrainingBandView({ b, show, projectId }: { b: Schemas["TrainingBand"]; 
   ];
   const h = b.hook_stage;
   return (
-    <section aria-labelledby="training-band-h" className="flex flex-col gap-3 rounded-xl border bg-surface p-4 shadow-xs" data-testid="training-band">
+    <section aria-labelledby="training-band-h" className="glass flex flex-col gap-3 rounded-xl border p-4" data-testid="training-band">
       <h2 id="training-band-h" className="text-sm font-semibold">
         {t("trainingBand.title")}
       </h2>
@@ -823,7 +823,7 @@ function ChartCard({
   const q = useChart(id, query, extra ?? {});
   const spec = q.data?.chart;
   return (
-    <div className={cn("min-w-0 rounded-xl border bg-surface p-3 shadow-xs", className)} data-testid={`chart-card-${id}`}>
+    <div className={cn("glass min-w-0 rounded-xl border p-3", className)} data-testid={`chart-card-${id}`}>
       {q.isError ? (
         <ErrorState error={q.error} onRetry={() => q.refetch()} />
       ) : !spec ? (
