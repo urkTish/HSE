@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Response, status
 
-from app.api.deps import DB, CurrentUser, SessionUser
+from app.api.deps import DB, CurrentUser, MfaPendingUser, MfaSetupUser, SessionUser
 from app.core.config import SESSION_COOKIE_NAME, get_settings
 from app.core.errors import error_responses
 from app.models import User
@@ -15,6 +15,12 @@ from app.schemas.auth import (
     LoginResponse,
     Me,
     MeUpdate,
+    MfaCodeRequest,
+    MfaDisableRequest,
+    MfaRecoveryCodes,
+    MfaSetupStart,
+    MfaStatus,
+    MfaVerifyRequest,
     PasswordChangeRequest,
     PasswordResetConfirm,
     PasswordResetRequest,
@@ -24,6 +30,7 @@ from app.schemas.auth import (
     ReauthResponse,
 )
 from app.services import auth as svc
+from app.services import mfa as mfa_svc
 from app.services import users as user_svc
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -43,11 +50,13 @@ def _login_response(
         secure=s.cookie_secure,
         path="/",
     )
+    pending = issued.session.mfa_pending
     return LoginResponse(
         access_token=issued.token,
         expires_at=issued.session.expires_at,
         idle_timeout_minutes=s.session_idle_minutes,
-        user=svc.me_for_user(db, user, issued.session),
+        mfa_pending=pending,
+        user=None if pending else svc.me_for_user(db, user, issued.session),
     )
 
 
@@ -57,7 +66,8 @@ def _login_response(
     summary="Log in with email and password",
     description="Sets the httpOnly `hse_session` cookie and returns the same JWT. Unknown email "
     "and wrong password give an identical 401 INVALID_CREDENTIALS. After 10 failures in 15 min "
-    "the account is locked for 15 min (401 ACCOUNT_LOCKED).",
+    "the account is locked for 15 min (401 ACCOUNT_LOCKED). With two-step verification on, the "
+    "response has `mfa_pending: true` and no user; finish with POST /auth/mfa/verify (D-299).",
     responses=error_responses(401, 422),
 )
 def login(body: LoginRequest, response: Response, db: DB) -> LoginResponse:
@@ -71,7 +81,7 @@ def login(body: LoginRequest, response: Response, db: DB) -> LoginResponse:
     summary="Log out (revokes the session, clears the cookie)",
     responses=error_responses(401),
 )
-def logout(user: SessionUser, response: Response, db: DB) -> None:
+def logout(user: MfaPendingUser, response: Response, db: DB) -> None:
     svc.logout(db, user)
     response.delete_cookie(SESSION_COOKIE_NAME, path="/")
     response.status_code = status.HTTP_204_NO_CONTENT
@@ -83,7 +93,7 @@ def logout(user: SessionUser, response: Response, db: DB) -> None:
     summary="Current user with resolved roles and capabilities",
     responses=error_responses(401, 403),
 )
-def get_me(user: CurrentUser, db: DB) -> Me:
+def get_me(user: MfaSetupUser, db: DB) -> Me:
     return svc.build_me(db, user)
 
 
@@ -192,3 +202,85 @@ def confirm_password_reset(body: PasswordResetConfirm, db: DB) -> None:
 )
 def get_privacy_notice() -> PrivacyNotice:
     return svc.privacy_notice()
+
+
+# ---- two-step verification (D-299, D-300) --------------------------------------------------------
+@router.post(
+    "/mfa/verify",
+    response_model=LoginResponse,
+    summary="Second sign-in step: authenticator code or a recovery code",
+    description="Accepts only a session from POST /auth/login with `mfa_pending: true`. Wrong "
+    "codes give 401 MFA_CODE_INVALID and count toward the login lockout. A recovery code works "
+    "once. Re-sets the cookie with the full session lifetime.",
+    responses=error_responses(401, 409, 422),
+)
+def verify_mfa(
+    body: MfaVerifyRequest, user: MfaPendingUser, response: Response, db: DB
+) -> LoginResponse:
+    issued = svc.complete_mfa(db, user, body.code, body.recovery_code)
+    return _login_response(db, response, issued, user.user)
+
+
+@router.get(
+    "/mfa",
+    response_model=MfaStatus,
+    summary="Own two-step verification status",
+    responses=error_responses(401, 403),
+)
+def mfa_status(user: MfaSetupUser, db: DB) -> MfaStatus:
+    st = mfa_svc.state(user, start_grace=True)
+    return MfaStatus(
+        enabled=st.enabled,
+        enabled_at=user.user.mfa_enabled_at,
+        required=st.required,
+        setup_due=st.setup_due,
+        blocking=st.blocking,
+        recovery_codes_remaining=mfa_svc.recovery_codes_left(db, user.user.id) if st.enabled else 0,
+    )
+
+
+@router.post(
+    "/mfa/setup",
+    response_model=MfaSetupStart,
+    summary="Start set-up: a new secret and its otpauth:// URI for the QR code",
+    description="The secret is active only after POST /auth/mfa/confirm with a valid code. "
+    "409 MFA_ALREADY_ENABLED when it is on.",
+    responses=error_responses(401, 403, 409),
+)
+def start_mfa_setup(user: MfaSetupUser, db: DB) -> MfaSetupStart:
+    secret, uri = mfa_svc.start_setup(db, user)
+    return MfaSetupStart(
+        secret=secret, otpauth_uri=uri, issuer=get_settings().mfa_issuer, account=user.user.email
+    )
+
+
+@router.post(
+    "/mfa/confirm",
+    response_model=MfaRecoveryCodes,
+    summary="Finish set-up with the first code; returns 10 recovery codes (shown once)",
+    responses=error_responses(401, 403, 409, 422),
+)
+def confirm_mfa_setup(body: MfaCodeRequest, user: MfaSetupUser, db: DB) -> MfaRecoveryCodes:
+    return MfaRecoveryCodes(codes=mfa_svc.confirm_setup(db, user, body.code))
+
+
+@router.post(
+    "/mfa/recovery-codes",
+    response_model=MfaRecoveryCodes,
+    summary="Replace the recovery codes (needs a current authenticator code)",
+    description="The old codes stop working. A wrong code counts toward the login lockout.",
+    responses=error_responses(401, 403, 409, 422),
+)
+def regenerate_recovery_codes(body: MfaCodeRequest, user: MfaSetupUser, db: DB) -> MfaRecoveryCodes:
+    return MfaRecoveryCodes(codes=mfa_svc.regenerate_codes(db, user, body.code))
+
+
+@router.post(
+    "/mfa/disable",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Turn two-step verification off (password and a current code)",
+    description="409 MFA_REQUIRED_FOR_ROLE when the user's role needs it.",
+    responses=error_responses(401, 403, 409, 422),
+)
+def disable_mfa(body: MfaDisableRequest, user: CurrentUser, db: DB) -> None:
+    mfa_svc.disable(db, user, body.password, body.code)

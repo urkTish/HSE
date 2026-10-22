@@ -1,13 +1,12 @@
 """Notification packs (spec 6f-incident-followup §3.4, §4.2, PK-1…PK-6, P6f-1…P6f-5).
 
 A pack freezes the incident, case and investigation values of its field set (`snapshot`, PK-2).
-The rendered file is HTML (EN / AR; Hijri date on government forms) because the stack has no PDF
-library (DECISIONS); identity packs are stored in the encrypted personal bucket and opened through
-signed URLs that live ≤ 5 minutes (P6f-4)."""
+The rendered file is a PDF (D-304; Arabic shaped right-to-left, the Umm al-Qura Hijri date next
+to the Gregorian one, D-303) made with the 6g renderer; identity packs are stored in the encrypted
+personal bucket and opened through signed URLs that live ≤ 5 minutes (P6f-4)."""
 
 from __future__ import annotations
 
-import html
 import time
 import uuid
 from datetime import datetime
@@ -435,64 +434,157 @@ def transition_pack(
 # ---- rendering (PK-4) ----------------------------------------------------------------------------
 
 
-def _h(x: Any) -> str:
-    return html.escape("" if x is None else str(x))
+FORM_TITLES: dict[FuForm, tuple[str, str]] = {
+    FuForm.GOSI_WIR: ("Work injury report (GOSI)",
+                      "بلاغ إصابة عمل (المؤسسة العامة للتأمينات الاجتماعية)"),
+    FuForm.MHRSD_LTR: ("Notification letter (Ministry of Human Resources)",
+                       "خطاب إشعار (وزارة الموارد البشرية والتنمية الاجتماعية)"),
+    FuForm.CD_LTR: ("Notification letter (Civil Defense)", "خطاب إشعار (الدفاع المدني)"),
+    FuForm.GACA_OCR: ("Occurrence report (GACA)", "تقرير حادثة (الهيئة العامة للطيران المدني)"),
+    FuForm.AO_OCR: ("Occurrence report (airport operator)", "تقرير حادثة (مشغّل المطار)"),
+    FuForm.NCEC_EIR: ("Environmental incident report (NCEC)",
+                      "تقرير حادث بيئي (المركز الوطني للرقابة على الالتزام البيئي)"),
+    FuForm.CLIENT_FLASH: ("Client flash report", "التقرير الأولي للعميل"),
+    FuForm.CLIENT_INTERIM: ("Client interim report", "التقرير المرحلي للعميل"),
+    FuForm.CLIENT_FINAL: ("Client final report", "التقرير النهائي للعميل"),
+}  # fmt: skip
+FIELD_LABELS: dict[str, tuple[str, str]] = {
+    "incident_ref": ("Incident ref.", "مرجع الحادث"),
+    "occurred_date": ("Date of incident", "تاريخ الحادث"),
+    "occurred_time": ("Time", "الوقت"),
+    "site": ("Site", "الموقع"),
+    "location": ("Location", "المكان"),
+    "title": ("Title", "العنوان"),
+    "activity": ("Activity", "النشاط"),
+    "airside_flags": ("Airside", "الجانب الجوي"),
+    "do_category": ("Dangerous occurrence category", "فئة الحدث الخطر"),
+    "potential_severity": ("Potential severity", "الخطورة المحتملة"),
+    "root_cause_codes": ("Root causes", "الأسباب الجذرية"),
+    "corrective_actions": ("Corrective actions", "الإجراءات التصحيحية"),
+    "lesson_no": ("Lesson", "الدرس المستفاد"),
+    "employer": ("Employer", "صاحب العمل"),
+    "person_no": ("Person no.", "رقم الشخص"),
+    "label": ("Person", "الشخص"),
+    "trade": ("Trade", "المهنة"),
+    "category": ("Category", "التصنيف"),
+    "body_part": ("Body part", "الجزء المصاب"),
+    "days_off": ("Days off work", "أيام الانقطاع عن العمل"),
+    "person_name": ("Name", "الاسم"),
+    "id_type": ("ID type", "نوع الهوية"),
+    "id_number": ("ID number", "رقم الهوية"),
+    "nationality": ("Nationality", "الجنسية"),
+    "occupation": ("Occupation", "المهنة"),
+    "nature": ("Nature of injury", "طبيعة الإصابة"),
+    "treated_at": ("Treated at", "مكان العلاج"),
+    "first_day_off": ("First day off", "أول يوم انقطاع"),
+}
+PACK_FIELDS = ("incident_ref", "occurred_date", "occurred_time", "site", "location", "title",
+               "activity", "airside_flags", "do_category", "potential_severity")  # fmt: skip
+FINAL_FIELDS = ("root_cause_codes", "corrective_actions", "lesson_no", "employer")
 
 
-def render_html(db: Session, pk: FuPack, req: FuRequirement, inc: Incident) -> str:
+def _value(v: Any) -> str:
+    if v is None or v in ("", []):
+        return "—"
+    if isinstance(v, list):
+        return ", ".join(_value(x) for x in v)
+    if isinstance(v, dict):
+        return " · ".join(f"{k}: {_value(x)}" for k, x in v.items() if x not in (None, ""))
+    return str(v)
+
+
+def _lines(items: list[tuple[str, Any]]) -> tuple[list[str], list[str]]:
+    from app.services.scorecard import render  # noqa: PLC0415
+
+    en, ar = [], []
+    for key, v in items:
+        lab_en, lab_ar = FIELD_LABELS.get(key, (key, key))
+        val = _value(v)
+        en.append(f"{lab_en}: {val}")
+        ar.append(f"{lab_ar}: {render.ar_value(val)}")
+    return en, ar
+
+
+def render_doc(db: Session, pk: FuPack, req: FuRequirement, inc: Incident) -> Any:
+    """PK-4 pack as a `render.Doc` (D-304): reference, date with its Umm al-Qura Hijri date
+    (D-303), addressee, the frozen snapshot, narrative and signatory."""
+    import hashlib  # noqa: PLC0415
+    import json  # noqa: PLC0415
+
+    from app.core.hijri import hijri_ar, hijri_en  # noqa: PLC0415
+    from app.services.scorecard import render  # noqa: PLC0415
+
     c = fc.cfg(db, pk.project_id)
     row = c.row
     form = FuForm(pk.form_code)
     snap = pk.snapshot or {}
     today = fc.local_day()
-    gov = req.body in GOVERNMENT or form in (FuForm.GACA_OCR,)
     addressee = next(
         (d for d in (row.body_directory if row else []) if d.get("body") == req.body.value), None
     )
     recips = row.client_recipients if row and req.body == ExternalBody.client else []
-    lines = [
-        "<!doctype html><html><head><meta charset='utf-8'>",
-        f"<title>{_h(pk.pack_no)}</title></head><body>",
-        f"<header><p>Ref: <bdi>{_h(pk.pack_no)}</bdi> · v{pk.version}</p>",
-        f"<p>Date: {today.isoformat()}" + (f" · <span dir='rtl'>{_h(fc.hijri_str(today))}</span>"
-                                           if gov else "") + "</p>",
+    control: list[tuple[str, ...]] = [
+        ("Reference", "المرجع", f"{pk.pack_no} · v{pk.version}"),
+        ("Date", "التاريخ", today.isoformat()),
+        ("Date (Hijri, Umm al-Qura)", "التاريخ الهجري، أم القرى", hijri_en(today), hijri_ar(today)),
     ]  # fmt: skip
     if addressee:
-        o_en, o_ar = _h(addressee.get("office_name_en")), _h(addressee.get("office_name_ar"))
-        lines.append(f"<p>To: {o_en} / <span dir='rtl'>{o_ar}</span></p>")
+        office_en = _value(addressee.get("office_name_en"))
+        office_ar = _value(addressee.get("office_name_ar") or addressee.get("office_name_en"))
+        control.append(("To", "إلى", office_en, office_ar))
     for r in recips:
-        org, role = _h(r.get("organisation_en")), _h(r.get("role"))
-        lines.append(f"<p>To: {org} ({role}) / "
-                     f"<span dir='rtl'>{_h(r.get('organisation_ar'))}</span></p>")  # fmt: skip
-    lines.append("</header><table>")
-    for k in ("incident_ref", "occurred_date", "occurred_time", "site", "location", "title",
-              "activity", "airside_flags", "do_category", "potential_severity"):  # fmt: skip
-        lines.append(f"<tr><th>{_h(k)}</th><td>{_h(snap.get(k))}</td></tr>")
+        org_en = f"{_value(r.get('organisation_en'))} ({_value(r.get('role'))})"
+        org_ar = _value(r.get("organisation_ar") or r.get("organisation_en"))
+        control.append(("To", "إلى", org_en, org_ar))
+    det_en, det_ar = _lines([(k, snap.get(k)) for k in PACK_FIELDS])
+    sections = [render.Section(key="incident", title_en="Incident", title_ar="الحادث",
+                               paragraphs_en=det_en, paragraphs_ar=det_ar)]  # fmt: skip
     for case in snap.get("cases", []):
-        lines.append(f"<tr><th>Person {_h(case.get('person_no'))}</th><td>"
-                     + "; ".join(f"{_h(k)}: {_h(v)}" for k, v in case.items() if k != "label_ar")
-                     + "</td></tr>")  # fmt: skip
-    for k in ("root_cause_codes", "corrective_actions", "lesson_no", "employer"):
-        if k in snap:
-            lines.append(f"<tr><th>{_h(k)}</th><td>{_h(snap.get(k))}</td></tr>")
-    for k, v in (pk.extra_fields or {}).items():
-        lines.append(f"<tr><th>{_h(k)}</th><td>{_h(v)}</td></tr>")
-    lines.append("</table>")
-    if form in CLIENT_FORMS:
-        lines.append("<table><tr><td>" + _h(pk.narrative_en) + "</td><td dir='rtl'>"
-                     + _h(pk.narrative_ar) + "</td></tr></table>")  # fmt: skip
-    else:
-        lines.append(f"<section dir='rtl'>{_h(pk.narrative_ar or pk.narrative_en)}</section>")
-        if "en" in (pk.languages or []):
-            lines.append(f"<section><h3>English translation (annex)</h3>{_h(pk.narrative_en)}"
-                         "</section>")  # fmt: skip
-    sig_en = row.signatory_role_en if row else None
-    sig_ar = row.signatory_role_ar if row else None
-    lines.append(f"<footer><p>{_h(sig_en or 'Project HSE Manager')} / "
-                 f"<span dir='rtl'>{_h(sig_ar or 'مدير السلامة للمشروع')}</span></p>"
-                 "<p>Prepared by: HSE Officer / أعدّها: مسؤول السلامة</p></footer>")  # fmt: skip
-    lines.append("</body></html>")
-    return "\n".join(lines)
+        items = [(k, v) for k, v in case.items() if k not in ("label", "label_ar", "person_no")]
+        c_en, c_ar = _lines(items)
+        sections.append(render.Section(
+            key=f"person-{case.get('person_no')}", title_en=_value(case.get("label")),
+            title_ar=_value(case.get("label_ar") or case.get("label")),
+            paragraphs_en=c_en, paragraphs_ar=c_ar))  # fmt: skip
+    more = [(k, snap.get(k)) for k in FINAL_FIELDS if k in snap]
+    more += [(str(k), v) for k, v in (pk.extra_fields or {}).items()]
+    if more:
+        m_en, m_ar = _lines(more)
+        sections.append(render.Section(key="more", title_en="Further details",
+                                       title_ar="تفاصيل إضافية", paragraphs_en=m_en,
+                                       paragraphs_ar=m_ar))  # fmt: skip
+    nar_en = pk.narrative_en or pk.narrative_ar or "—"
+    nar_ar = pk.narrative_ar or pk.narrative_en or "—"
+    sections.append(render.Section(key="narrative", title_en="Narrative", title_ar="السرد",
+                                   paragraphs_en=[nar_en], paragraphs_ar=[nar_ar]))  # fmt: skip
+    sig_en = (row.signatory_role_en if row else None) or "Project HSE Manager"
+    sig_ar = (row.signatory_role_ar if row else None) or "مدير السلامة للمشروع"
+    sections.append(render.Section(
+        key="signatory", title_en="Signatory", title_ar="التوقيع",
+        paragraphs_en=[sig_en, "Prepared by: HSE Officer"],
+        paragraphs_ar=[sig_ar, "أعدّها: مسؤول السلامة"]))  # fmt: skip
+    title_en, title_ar = FORM_TITLES.get(form, (form.value, form.value))
+    digest = hashlib.sha256(json.dumps([snap, pk.narrative_en, pk.narrative_ar,
+                                        pk.extra_fields], default=str, sort_keys=True).encode()
+                            ).hexdigest()  # fmt: skip
+    return render.Doc(doc_no=pk.pack_no, revision=pk.version, title_en=title_en,
+                      title_ar=title_ar, snapshot_hash=digest, control=control,
+                      sections=sections)  # fmt: skip
+
+
+def pack_languages(pk: FuPack) -> list[str]:
+    """Government forms are Arabic, with the English translation as an annex when asked for;
+    client and aviation forms are English then Arabic."""
+    form = FuForm(pk.form_code)
+    if fc.FORMS[form][0] == ["ar"]:
+        return ["ar", "en"] if "en" in (pk.languages or []) else ["ar"]
+    return ["en", "ar"]
+
+
+def render_pdf(db: Session, pk: FuPack, req: FuRequirement, inc: Incident) -> bytes:
+    from app.services.scorecard import render  # noqa: PLC0415
+
+    return render.pdf(render_doc(db, pk, req, inc), pack_languages(pk))
 
 
 def render(db: Session, pk: FuPack, req: FuRequirement, inc: Incident, user_id: uuid.UUID) -> None:
@@ -507,8 +599,8 @@ def render(db: Session, pk: FuPack, req: FuRequirement, inc: Incident, user_id: 
 
             attachments.erase(db, old)
     pk.file_id = fc.store_bytes(
-        db, owner, pk.id, pk.project_id, f"{pk.pack_no}-v{pk.version}.html",
-        render_html(db, pk, req, inc).encode(), "text/html", user_id,
+        db, owner, pk.id, pk.project_id, f"{pk.pack_no}-v{pk.version}.pdf",
+        render_pdf(db, pk, req, inc), "application/pdf", user_id,
     )  # fmt: skip
 
 

@@ -511,6 +511,7 @@ def _store(db: Session, p: Principal | User, job: XpJob, ds: reg.Dataset, o: Out
         content,
         CTYPES[job.format],
         u.id,
+        generated=True,
     )
     job.attachment_id = a.id
     job.sha256 = a.sha256

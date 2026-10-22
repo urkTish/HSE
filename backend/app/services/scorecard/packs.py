@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 from app.core.clock import now
 from app.core.enums import AuditAction, EntityType, NotificationKind, ProjectStatus
 from app.core.errors import ErrorCode, not_found, validation_error
+from app.core.hijri import hijri_ar, hijri_en
 from app.core.hse_enums import (
     RECORDABLE,
     AttachmentOwner,
@@ -576,7 +577,7 @@ def _scp_card(db: Session, pk: RpPack) -> ScCard:
 def to_doc(db: Session, pk: RpPack) -> render.Doc:
     en, ar = labels.RT[pk.report_type.value]
     snap = pk.snapshot or {}
-    ctl = [
+    ctl: list[tuple[str, ...]] = [
         ("Document", "الوثيقة", pk.doc_no),
         ("Revision", "المراجعة", str(pk.revision)),
         ("Period", "الفترة", f"{pk.period_start.isoformat()} – {pk.period_end.isoformat()}"),
@@ -593,7 +594,10 @@ def to_doc(db: Session, pk: RpPack) -> render.Doc:
         if u is not None:
             ctl.append((lbl, lar, u.full_name_en))
     if pk.issued_at:
-        ctl.append(("Issue date", "تاريخ الإصدار", cm.to_local(pk.issued_at).date().isoformat()))
+        issued = cm.to_local(pk.issued_at).date()
+        ctl.append(("Issue date", "تاريخ الإصدار", issued.isoformat()))
+        ctl.append(("Issue date (Hijri, Umm al-Qura)", "تاريخ الإصدار الهجري، أم القرى",
+                    hijri_en(issued), hijri_ar(issued)))  # fmt: skip
     if pk.reissue_reason:
         ctl.append(("Re-issue reason", "سبب إعادة الإصدار", pk.reissue_reason))
     if pk.report_type == RpType.MCR and pk.project_id:
@@ -645,7 +649,15 @@ def render_files(db: Session, pk: RpPack, by: uuid.UUID, superseded_by: int | No
         lang = "-" + kind.value.split("_")[-1] if ext == "pdf" else ""
         name = f"{pk.doc_no}-R{pk.revision}{lang}.{ext}"
         a = attachments.store(
-            db, AttachmentOwner.rp_pack_file, pk.id, pid, name, content, CTYPE[ext], by
+            db,
+            AttachmentOwner.rp_pack_file,
+            pk.id,
+            pid,
+            name,
+            content,
+            CTYPE[ext],
+            by,
+            generated=True,
         )
         files[kind.value] = {
             "attachment_id": str(a.id),

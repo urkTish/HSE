@@ -1,4 +1,4 @@
-export type AuthEvent = "expired" | "unauthenticated" | "privacy";
+export type AuthEvent = "expired" | "unauthenticated" | "privacy" | "mfa";
 type Listener = (e: AuthEvent) => void;
 
 const listeners = new Set<Listener>();

@@ -23,6 +23,19 @@ class ErrorCode(StrEnum):
     SESSION_EXPIRED = "SESSION_EXPIRED"
     PRIVACY_ACK_REQUIRED = "PRIVACY_ACK_REQUIRED"
     PRIVACY_NOTICE_VERSION_MISMATCH = "PRIVACY_NOTICE_VERSION_MISMATCH"
+    # ---- Two-step verification (D-299) ----
+    MFA_REQUIRED = "MFA_REQUIRED"  # 401: the session still needs the code step
+    MFA_CODE_INVALID = "MFA_CODE_INVALID"  # 401 at sign-in, 422 elsewhere
+    MFA_ENROLMENT_REQUIRED = "MFA_ENROLMENT_REQUIRED"  # 403: role needs MFA, grace is over
+    MFA_REQUIRED_FOR_ROLE = "MFA_REQUIRED_FOR_ROLE"  # 409: cannot turn MFA off
+    MFA_ALREADY_ENABLED = "MFA_ALREADY_ENABLED"  # 409
+    MFA_NOT_ENABLED = "MFA_NOT_ENABLED"  # 409
+    MFA_SETUP_NOT_STARTED = "MFA_SETUP_NOT_STARTED"  # 409
+    # ---- Upload scanning (D-302) ----
+    FILE_INFECTED = "FILE_INFECTED"  # 422: the virus scanner found malware
+    SCANNER_UNAVAILABLE = "SCANNER_UNAVAILABLE"  # 503: scanning is on and the scanner is down
+    # ---- First-time setup (D-306) ----
+    SETUP_ALREADY_DONE = "SETUP_ALREADY_DONE"  # 409: the install already has users
     INVITE_INVALID = "INVITE_INVALID"
     INVITE_EXPIRED = "INVITE_EXPIRED"
     RESET_TOKEN_INVALID = "RESET_TOKEN_INVALID"
@@ -557,6 +570,10 @@ class ErrorCode(StrEnum):
     VEHICLE_DEFECT_HOLD = "VEHICLE_DEFECT_HOLD"  # 7b PU-3 (409)
     VEHICLE_NOT_READY = "VEHICLE_NOT_READY"  # 7b JM-2 (409)
     AUTH_NOT_ACTIVE = "AUTH_NOT_ACTIVE"  # 7b (409)
+    # Trial readiness, package B: licence (D-289…D-297)
+    LICENCE_READ_ONLY = "LICENCE_READ_ONLY"  # 403: expired or invalid licence, writes blocked
+    LICENCE_LIMIT_REACHED = "LICENCE_LIMIT_REACHED"  # 409 / 429 (AI): meta {limit, max, used}
+    LICENCE_KEY_INVALID = "LICENCE_KEY_INVALID"  # 422: pasted key not valid (meta.reason)
     NOT_IMPLEMENTED = "NOT_IMPLEMENTED"
     INTERNAL_ERROR = "INTERNAL_ERROR"
 

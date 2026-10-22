@@ -154,6 +154,7 @@ from app.models.hse import (
     WorkforceImportBatch,
     WorkforceReturn,
 )
+from app.models.licence import LicenceKey
 from app.models.med import (
     FitnessAssessment,
     FitnessCode,
@@ -168,7 +169,7 @@ from app.models.med import (
     MedicalProvider,
     MedicalSettings,
 )
-from app.models.org import Project, ProjectSettings, Site, Zone
+from app.models.org import Installation, Project, ProjectSettings, Site, Zone
 from app.models.ptw import (
     BumpTest,
     GasDetector,
@@ -233,7 +234,14 @@ from app.models.train import (
     TrainingSettings,
     TrainingVerification,
 )
-from app.models.users import RoleAssignment, TokenKind, User, UserSession, UserToken
+from app.models.users import (
+    RoleAssignment,
+    TokenKind,
+    User,
+    UserRecoveryCode,
+    UserSession,
+    UserToken,
+)
 from app.models.vehicle import IncidentVehicle
 
 __all__ = [
@@ -342,12 +350,14 @@ __all__ = [
     "InjuryCase",
     "Inspection",
     "InspectionPlan",
+    "Installation",
     "Investigation",
     "IsolationCertificate",
     "IsolationPoint",
     "JobMark",
     "JourneyPlan",
     "Jsa",
+    "LicenceKey",
     "Lock",
     "MedicalExaminer",
     "MedicalImportBatch",
@@ -434,6 +444,7 @@ __all__ = [
     "TrainingSettings",
     "TrainingVerification",
     "User",
+    "UserRecoveryCode",
     "UserSession",
     "UserToken",
     "Vehicle",

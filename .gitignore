@@ -15,3 +15,5 @@ test-results/
 *.log
 .DS_Store
 backend/var/
+# Licence signing key: the private half never enters the repository (docs/LICENSING.md)
+*licence-private*.pem

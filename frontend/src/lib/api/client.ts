@@ -44,13 +44,15 @@ export function toApiError(status: number, body: unknown): ApiError {
 }
 
 /** Codes that mean the browser session is gone or blocked and the shell must react. */
-const SESSION_CODES = new Set<string>(["SESSION_EXPIRED", "UNAUTHENTICATED"]);
+const SESSION_CODES = new Set<string>(["SESSION_EXPIRED", "UNAUTHENTICATED", "MFA_REQUIRED"]);
 
 export function notifyAuthError(err: ApiError): void {
   if (err.status === 401 && SESSION_CODES.has(err.code)) {
     emitAuthEvent(err.code === "SESSION_EXPIRED" ? "expired" : "unauthenticated");
   } else if (err.status === 403 && err.code === "PRIVACY_ACK_REQUIRED") {
     emitAuthEvent("privacy");
+  } else if (err.status === 403 && err.code === "MFA_ENROLMENT_REQUIRED") {
+    emitAuthEvent("mfa");
   }
 }
 

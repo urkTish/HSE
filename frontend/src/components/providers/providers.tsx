@@ -22,7 +22,7 @@ function makeClient(): QueryClient {
 }
 
 /** Pages that handle a missing session themselves. "/gate" also serves gate-device sessions (GC-1). */
-const PUBLIC_PATHS = ["/login", "/privacy", "/invite", "/forgot-password", "/reset-password", "/gate"];
+const PUBLIC_PATHS = ["/login", "/privacy", "/invite", "/forgot-password", "/reset-password", "/gate", "/setup"];
 
 function AuthEventBridge({ client }: { client: QueryClient }) {
   const router = useRouter();
@@ -33,6 +33,11 @@ function AuthEventBridge({ client }: { client: QueryClient }) {
         const onPublic = PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
         if (e === "privacy") {
           if (!pathname.startsWith("/privacy")) router.replace("/privacy");
+          return;
+        }
+        if (e === "mfa") {
+          // D-299: the role needs two-step verification and the grace period is over.
+          if (!pathname.startsWith("/mfa-setup")) router.replace("/mfa-setup");
           return;
         }
         if (onPublic) return;

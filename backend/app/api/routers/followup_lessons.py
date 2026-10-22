@@ -3,7 +3,7 @@
 DS, LK, EF)."""
 
 import uuid
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Query, Response, status
 
@@ -83,6 +83,31 @@ def create_lesson(body: FuLessonCreate, user: CurrentUser, db: DB) -> FuLessonRe
 )
 def get_lesson(lesson_id: uuid.UUID, user: CurrentUser, db: DB) -> FuLessonRead:
     return lessons.read(db, user, lesson_id)
+
+
+@router.get(
+    "/lessons/{lesson_id}/bulletin",
+    response_class=Response,
+    summary="The lesson's bulletin as a PDF (EN, AR or both; D-304)",
+    description="DS-2 bulletin for briefing crews: what happened, why, key lessons, actions, with "
+    "the date in Gregorian and Umm al-Qura Hijri. Arabic is shaped right-to-left.",
+    responses={
+        200: {"content": {"application/pdf": {"schema": {"type": "string", "format": "binary"}}}},
+        **error_responses(401, 403, 404, 422),
+    },
+)
+def get_lesson_bulletin(
+    lesson_id: uuid.UUID,
+    user: CurrentUser,
+    db: DB,
+    lang: Annotated[Literal["en", "ar", "both"], Query()] = "both",
+) -> Response:
+    content, filename = lessons.bulletin_pdf(db, user, lesson_id, lang)
+    return Response(
+        content=content,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @router.patch(

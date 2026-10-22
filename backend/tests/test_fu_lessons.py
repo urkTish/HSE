@@ -462,3 +462,16 @@ def test_ac40_tbt_suggestion(db: Session) -> None:
     i = next(n for n, x in enumerate(srcs) if x == ("TT-014", "lesson"))
     assert all(s == "campaign" for _c, s in srcs[:i])
     assert db.scalar(select(FuLesson.id).where(FuLesson.lesson_no == "LL-2026-007")) is not None
+
+
+def test_bulletin_pdf_en_ar(api: Api, db: Session) -> None:
+    """D-304: the DS-2 bulletin downloads as a PDF in EN, AR or both."""
+    ls = lesson(db, "LL-2026-007")
+    c = api.as_("sarah.mitchell")
+    for lang in ("en", "ar", "both"):
+        res = c.get(f"/api/v1/lessons/{ls.id}/bulletin", params={"lang": lang})
+        assert res.status_code == 200, res.text
+        assert res.content.startswith(b"%PDF")
+        assert "application/pdf" in res.headers["content-type"]
+        assert "LL-2026-007-bulletin" in res.headers["content-disposition"]
+    assert c.get(f"/api/v1/lessons/{ls.id}/bulletin", params={"lang": "fr"}).status_code == 422

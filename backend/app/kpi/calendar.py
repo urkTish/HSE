@@ -3,17 +3,6 @@ weekday, days-on-site bands."""
 
 from datetime import date
 
-# Umm al-Qura Ramadan dates (first and last day). Approximate to ±1 day (moon sighting);
-# 2025 and 2026 as in spec A.4.2. VERIFY against the Umm al-Qura library before go-live.
-RAMADAN: dict[int, tuple[date, date]] = {
-    2023: (date(2023, 3, 23), date(2023, 4, 20)),
-    2024: (date(2024, 3, 11), date(2024, 4, 9)),
-    2025: (date(2025, 3, 1), date(2025, 3, 29)),
-    2026: (date(2026, 2, 18), date(2026, 3, 19)),
-    2027: (date(2027, 2, 8), date(2027, 3, 9)),
-    2028: (date(2028, 1, 28), date(2028, 2, 26)),
-}
-
 WEEKDAYS = [
     ("monday", "Monday", "الاثنين"),
     ("tuesday", "Tuesday", "الثلاثاء"),
@@ -27,8 +16,11 @@ DAYS_ON_SITE_BANDS = [(0, 7, "0-7"), (8, 30, "8-30"), (31, 90, "31-90"), (91, 36
 
 
 def in_ramadan(d: date) -> bool:
-    span = RAMADAN.get(d.year)
-    return span is not None and span[0] <= d <= span[1]
+    """Ramadan by the Umm al-Qura calendar (D-303; it replaced the 2023-2028 table, which agreed
+    for 2023-2026 and was a day long in 2027)."""
+    from app.core.hijri import to_hijri  # noqa: PLC0415
+
+    return to_hijri(d)[1] == 9
 
 
 def in_heat_season(d: date, start: str = "06-01", end: str = "09-30") -> bool:

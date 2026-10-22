@@ -46,7 +46,7 @@ info:
     \ 157.\n  No diagnosis, test result or clinical note is ever stored (P6-1). Medical hooks use the\
     \ shared\n  hook policy (kind `medical_fitness`; enable with `POST /projects/{id}/medical-hooks/enable`);\n\
     \  gate texts never say \"medical\". Site-clinic sign-off needs step-up re-auth.\n"
-  version: 0.15.3
+  version: 0.17.0
 paths:
   /api/v1/health:
     get:
@@ -66,9 +66,10 @@ paths:
       tags:
       - auth
       summary: Log in with email and password
-      description: Sets the httpOnly `hse_session` cookie and returns the same JWT. Unknown email and
+      description: 'Sets the httpOnly `hse_session` cookie and returns the same JWT. Unknown email and
         wrong password give an identical 401 INVALID_CREDENTIALS. After 10 failures in 15 min the account
-        is locked for 15 min (401 ACCOUNT_LOCKED).
+        is locked for 15 min (401 ACCOUNT_LOCKED). With two-step verification on, the response has `mfa_pending:
+        true` and no user; finish with POST /auth/mfa/verify (D-299).'
       operationId: login
       requestBody:
         content:
@@ -451,6 +452,254 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/auth/mfa/verify:
+    post:
+      tags:
+      - auth
+      summary: 'Second sign-in step: authenticator code or a recovery code'
+      description: 'Accepts only a session from POST /auth/login with `mfa_pending: true`. Wrong codes
+        give 401 MFA_CODE_INVALID and count toward the login lockout. A recovery code works once. Re-sets
+        the cookie with the full session lifetime.'
+      operationId: verify_mfa
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MfaVerifyRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+  /api/v1/auth/mfa:
+    get:
+      tags:
+      - auth
+      summary: Own two-step verification status
+      operationId: mfa_status
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MfaStatus'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+  /api/v1/auth/mfa/setup:
+    post:
+      tags:
+      - auth
+      summary: 'Start set-up: a new secret and its otpauth:// URI for the QR code'
+      description: The secret is active only after POST /auth/mfa/confirm with a valid code. 409 MFA_ALREADY_ENABLED
+        when it is on.
+      operationId: start_mfa_setup
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MfaSetupStart'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+  /api/v1/auth/mfa/confirm:
+    post:
+      tags:
+      - auth
+      summary: Finish set-up with the first code; returns 10 recovery codes (shown once)
+      operationId: confirm_mfa_setup
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MfaCodeRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MfaRecoveryCodes'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+  /api/v1/auth/mfa/recovery-codes:
+    post:
+      tags:
+      - auth
+      summary: Replace the recovery codes (needs a current authenticator code)
+      description: The old codes stop working. A wrong code counts toward the login lockout.
+      operationId: regenerate_recovery_codes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MfaCodeRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MfaRecoveryCodes'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+  /api/v1/auth/mfa/disable:
+    post:
+      tags:
+      - auth
+      summary: Turn two-step verification off (password and a current code)
+      description: 409 MFA_REQUIRED_FOR_ROLE when the user's role needs it.
+      operationId: disable_mfa
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MfaDisableRequest'
+        required: true
+      responses:
+        '204':
+          description: Successful Response
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
   /api/v1/projects:
     get:
       tags:
@@ -2624,6 +2873,63 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UserTransitionRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/users/{user_id}/mfa/reset:
+    post:
+      tags:
+      - users
+      summary: Clear another user's two-step verification (HSE Manager, lost phone)
+      description: The user's sessions end; they sign in with their password and enrol again (D-300).
+        409 MFA_NOT_ENABLED when it is off; 403 SELF_MODIFICATION_FORBIDDEN on own account.
+      operationId: reset_user_mfa
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: User Id
       responses:
         '200':
           description: Successful Response
@@ -64757,6 +65063,69 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/lessons/{lesson_id}/bulletin:
+    get:
+      tags:
+      - lessons-learned
+      summary: The lesson's bulletin as a PDF (EN, AR or both; D-304)
+      description: 'DS-2 bulletin for briefing crews: what happened, why, key lessons, actions, with the
+        date in Gregorian and Umm al-Qura Hijri. Arabic is shaped right-to-left.'
+      operationId: get_lesson_bulletin
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: lesson_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Lesson Id
+      - name: lang
+        in: query
+        required: false
+        schema:
+          enum:
+          - en
+          - ar
+          - both
+          type: string
+          default: both
+          title: Lang
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/v1/lessons/{lesson_id}/transitions:
     post:
       tags:
@@ -70844,6 +71213,136 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/licence:
+    get:
+      tags:
+      - licence
+      summary: Licence state, days left and usage against the licence caps
+      description: Any signed-in user (the shell shows the trial / expiry banner), also one whose two-step
+        verification set-up is overdue (D-307). No key = state `none` and every limit null (unlimited).
+      operationId: get_licence
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenceRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+    put:
+      tags:
+      - licence
+      summary: Enter a new licence key (renewal, no restart)
+      description: 'HSE Manager only. Allowed in read-only mode. The key''s signature is checked against
+        the public key shipped with the app; 422 LICENCE_KEY_INVALID (meta.reason: malformed, bad_signature,
+        expired, no_public_key, …) otherwise. Every API process uses the new key within `LICENCE_CACHE_SECONDS`.'
+      operationId: put_licence
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LicenceKeyInput'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenceRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+  /api/v1/setup:
+    get:
+      tags:
+      - setup
+      summary: Is the first-time setup still open? (public)
+      description: '`needed` is true only on an install with no users that was never set up.'
+      operationId: get_setup_status
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SetupStatus'
+    post:
+      tags:
+      - setup
+      summary: Create the organisation, first project and first administrator (public, once)
+      description: Creates the organisation record, the first project (with default settings) and the
+        first user as an organisation-wide HSE Manager, acknowledges the privacy notice and signs them
+        in. 409 SETUP_ALREADY_DONE once any user exists; 403 when SETUP_TOKEN is set and `setup_token`
+        does not match. The HSE Manager role needs two-step verification, so the new administrator is
+        asked to set it up (D-299).
+      operationId: run_setup
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetupRequest'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
           content:
             application/json:
               schema:
@@ -89623,6 +90122,7 @@ components:
       - driver_authorisation
       - vehicle_check
       - journey_plan
+      - licence
       title: EntityType
       description: Entity types referenced by audit entries and change history.
     EntryDirection:
@@ -93910,6 +94410,16 @@ components:
       - SESSION_EXPIRED
       - PRIVACY_ACK_REQUIRED
       - PRIVACY_NOTICE_VERSION_MISMATCH
+      - MFA_REQUIRED
+      - MFA_CODE_INVALID
+      - MFA_ENROLMENT_REQUIRED
+      - MFA_REQUIRED_FOR_ROLE
+      - MFA_ALREADY_ENABLED
+      - MFA_NOT_ENABLED
+      - MFA_SETUP_NOT_STARTED
+      - FILE_INFECTED
+      - SCANNER_UNAVAILABLE
+      - SETUP_ALREADY_DONE
       - INVITE_INVALID
       - INVITE_EXPIRED
       - RESET_TOKEN_INVALID
@@ -94429,6 +94939,9 @@ components:
       - VEHICLE_DEFECT_HOLD
       - VEHICLE_NOT_READY
       - AUTH_NOT_ACTIVE
+      - LICENCE_READ_ONLY
+      - LICENCE_LIMIT_REACHED
+      - LICENCE_KEY_INVALID
       - NOT_IMPLEMENTED
       - INTERNAL_ERROR
       title: ErrorCode
@@ -112148,6 +112661,203 @@ components:
       - gcc
       - international
       title: LicenceIssuer
+    LicenceKeyInput:
+      properties:
+        key:
+          type: string
+          maxLength: 8000
+          minLength: 10
+          title: Key
+          description: The licence key as received (HSE1.…); spaces and line breaks are ignored.
+      additionalProperties: false
+      type: object
+      required:
+      - key
+      title: LicenceKeyInput
+    LicenceRead:
+      properties:
+        state:
+          type: string
+          enum:
+          - none
+          - active
+          - expired
+          - invalid
+          title: State
+          description: none = no licence key (unlimited); active; expired or invalid = read-only.
+        read_only:
+          type: boolean
+          title: Read Only
+          description: Writes are refused with 403 LICENCE_READ_ONLY (GET, exports, sign-in, the licence
+            page and life-safety flows stay open).
+        source:
+          anyOf:
+          - type: string
+            enum:
+            - database
+            - environment
+          - type: 'null'
+          title: Source
+          description: 'Where the active key comes from: pasted on the licence page, or the server configuration
+            (LICENCE_KEY / LICENCE_FILE).'
+        problem:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Problem
+          description: Why the key is invalid (English), else null.
+        licence_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Licence Id
+        customer:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Customer
+        bundle:
+          anyOf:
+          - type: string
+            enum:
+            - trial
+            - basic
+            - professional
+            - enterprise
+          - type: 'null'
+          title: Bundle
+        is_trial:
+          type: boolean
+          title: Is Trial
+        issued_on:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Issued On
+        valid_until:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Valid Until
+          description: Last day of use (Riyadh), inclusive.
+        days_left:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Days Left
+          description: 0 on the last day; negative once expired.
+        data_deletion_after:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Data Deletion After
+          description: 'Trial only: data is deleted after this date unless a plan is chosen (trial terms,
+            PDPL). Not done automatically by the platform.'
+        installed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Installed At
+        projects:
+          $ref: '#/components/schemas/LicenceUsage'
+          description: Open (not closed) projects.
+        users:
+          $ref: '#/components/schemas/LicenceUsage'
+          description: Users that are not deactivated.
+        ai_questions_month:
+          $ref: '#/components/schemas/LicenceUsage'
+          description: AI assistant questions asked this calendar month (whole install).
+        storage:
+          $ref: '#/components/schemas/LicenceStorage'
+        can_manage:
+          type: boolean
+          title: Can Manage
+          description: The caller may enter a new key (HSE Manager).
+      type: object
+      required:
+      - state
+      - read_only
+      - source
+      - problem
+      - licence_id
+      - customer
+      - bundle
+      - is_trial
+      - issued_on
+      - valid_until
+      - days_left
+      - data_deletion_after
+      - installed_at
+      - projects
+      - users
+      - ai_questions_month
+      - storage
+      - can_manage
+      title: LicenceRead
+    LicenceStorage:
+      properties:
+        files_bytes:
+          type: integer
+          title: Files Bytes
+          description: Stored attachments and generated files.
+        database_bytes:
+          type: integer
+          title: Database Bytes
+          description: Size of the database.
+        used_bytes:
+          type: integer
+          title: Used Bytes
+        limit_gb:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Limit Gb
+          description: null = unlimited.
+        percent:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Percent
+        warning:
+          type: boolean
+          title: Warning
+          description: True from 80 % of the licence storage.
+      type: object
+      required:
+      - files_bytes
+      - database_bytes
+      - used_bytes
+      - limit_gb
+      - percent
+      - warning
+      title: LicenceStorage
+    LicenceUsage:
+      properties:
+        used:
+          type: integer
+          title: Used
+        limit:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Limit
+          description: null = unlimited.
+        percent:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Percent
+          description: used / limit, rounded down; null when unlimited.
+      type: object
+      required:
+      - used
+      - limit
+      - percent
+      title: LicenceUsage
     LiftBlacklistRequest:
       properties:
         reason:
@@ -112999,8 +113709,18 @@ components:
           type: integer
           title: Idle Timeout Minutes
           description: Session ends after this many idle minutes.
+        mfa_pending:
+          type: boolean
+          title: Mfa Pending
+          description: 'D-299: the password was right and the account uses two-step verification; send
+            the code to POST /auth/mfa/verify within mfa_pending_minutes. Until then `user` is null and
+            every other API answers 401 MFA_REQUIRED.'
+          default: false
         user:
-          $ref: '#/components/schemas/Me'
+          anyOf:
+          - $ref: '#/components/schemas/Me'
+          - type: 'null'
+          description: Null while mfa_pending.
       type: object
       required:
       - access_token
@@ -113583,6 +114303,24 @@ components:
         mfa_enabled:
           type: boolean
           title: Mfa Enabled
+        mfa_required:
+          type: boolean
+          title: Mfa Required
+          description: 'D-299: the user''s role needs two-step verification (MFA_REQUIRED_ROLES).'
+          default: false
+        mfa_setup_due:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Mfa Setup Due
+          description: 'Required but not enrolled: end of the grace period; null otherwise.'
+        mfa_setup_blocking:
+          type: boolean
+          title: Mfa Setup Blocking
+          description: 'Grace period over: every API except the MFA set-up, /auth/me, privacy ack and
+            logout answers 403 MFA_ENROLMENT_REQUIRED until the user enrols.'
+          default: false
         last_login_at:
           anyOf:
           - type: string
@@ -115036,6 +115774,132 @@ components:
       - management_walk
       - other
       title: MeetingType
+    MfaCodeRequest:
+      properties:
+        code:
+          type: string
+          maxLength: 10
+          minLength: 6
+          title: Code
+          description: 6-digit code from the authenticator.
+      additionalProperties: false
+      type: object
+      required:
+      - code
+      title: MfaCodeRequest
+    MfaDisableRequest:
+      properties:
+        password:
+          type: string
+          maxLength: 256
+          minLength: 1
+          title: Password
+        code:
+          type: string
+          maxLength: 10
+          minLength: 6
+          title: Code
+          description: 6-digit code from the authenticator.
+      additionalProperties: false
+      type: object
+      required:
+      - password
+      - code
+      title: MfaDisableRequest
+    MfaRecoveryCodes:
+      properties:
+        codes:
+          items:
+            type: string
+          type: array
+          title: Codes
+          description: Shown once; each works once. Older codes stop working.
+      type: object
+      required:
+      - codes
+      title: MfaRecoveryCodes
+    MfaSetupStart:
+      properties:
+        secret:
+          type: string
+          title: Secret
+          description: Base32 secret for manual entry in the authenticator app.
+        otpauth_uri:
+          type: string
+          title: Otpauth Uri
+          description: otpauth://totp/… URI for the QR code.
+        issuer:
+          type: string
+          title: Issuer
+        account:
+          type: string
+          title: Account
+      type: object
+      required:
+      - secret
+      - otpauth_uri
+      - issuer
+      - account
+      title: MfaSetupStart
+    MfaStatus:
+      properties:
+        enabled:
+          type: boolean
+          title: Enabled
+        enabled_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Enabled At
+        required:
+          type: boolean
+          title: Required
+          description: The user's role needs two-step verification.
+        setup_due:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Setup Due
+          description: End of the grace period (required only).
+        blocking:
+          type: boolean
+          title: Blocking
+          description: Grace period over and not enrolled.
+        recovery_codes_remaining:
+          type: integer
+          title: Recovery Codes Remaining
+      type: object
+      required:
+      - enabled
+      - enabled_at
+      - required
+      - setup_due
+      - blocking
+      - recovery_codes_remaining
+      title: MfaStatus
+    MfaVerifyRequest:
+      properties:
+        code:
+          anyOf:
+          - type: string
+            maxLength: 10
+            minLength: 6
+          - type: 'null'
+          title: Code
+        recovery_code:
+          anyOf:
+          - type: string
+            maxLength: 20
+            minLength: 8
+          - type: 'null'
+          title: Recovery Code
+          description: One of the single-use codes.
+      additionalProperties: false
+      type: object
+      title: MfaVerifyRequest
+      description: Exactly one of `code` and `recovery_code`.
     MiddayBanHours:
       properties:
         start_local:
@@ -135209,6 +136073,114 @@ components:
       - other
       title: SessionVoidReason
       description: List SV (§3.15).
+    SetupAdmin:
+      properties:
+        email:
+          type: string
+          format: email
+          title: Email
+        full_name_en:
+          type: string
+          maxLength: 120
+          minLength: 1
+          title: Full Name En
+        full_name_ar:
+          anyOf:
+          - type: string
+            maxLength: 120
+          - type: 'null'
+          title: Full Name Ar
+        mobile:
+          anyOf:
+          - type: string
+            pattern: ^\+[1-9]\d{7,14}$
+          - type: 'null'
+          title: Mobile
+          description: E.164.
+        job_title:
+          anyOf:
+          - type: string
+            maxLength: 80
+          - type: 'null'
+          title: Job Title
+        preferred_language:
+          $ref: '#/components/schemas/Language'
+          default: en
+        password:
+          type: string
+          maxLength: 256
+          minLength: 12
+          title: Password
+          description: At least 12 characters, at least 3 of 4 classes (upper, lower, digit, symbol),
+            not equal to the email local part and not a common breached password (spec §5.1 rule 2).
+      additionalProperties: false
+      type: object
+      required:
+      - email
+      - full_name_en
+      - password
+      title: SetupAdmin
+    SetupRequest:
+      properties:
+        setup_token:
+          anyOf:
+          - type: string
+            maxLength: 200
+          - type: 'null'
+          title: Setup Token
+          description: Required when the server sets SETUP_TOKEN.
+        organisation_name_en:
+          type: string
+          maxLength: 150
+          minLength: 1
+          title: Organisation Name En
+        organisation_name_ar:
+          type: string
+          maxLength: 150
+          minLength: 1
+          title: Organisation Name Ar
+        project:
+          $ref: '#/components/schemas/ProjectCreate'
+        admin:
+          $ref: '#/components/schemas/SetupAdmin'
+        privacy_notice_version:
+          type: string
+          title: Privacy Notice Version
+          description: The privacy notice the admin acknowledged.
+      additionalProperties: false
+      type: object
+      required:
+      - organisation_name_en
+      - organisation_name_ar
+      - project
+      - admin
+      - privacy_notice_version
+      title: SetupRequest
+    SetupStatus:
+      properties:
+        needed:
+          type: boolean
+          title: Needed
+          description: True only while the install has no users and has never been set up.
+        token_required:
+          type: boolean
+          title: Token Required
+          description: The setup asks for the SETUP_TOKEN code.
+        organisation_name_en:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Organisation Name En
+        organisation_name_ar:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Organisation Name Ar
+      type: object
+      required:
+      - needed
+      - token_required
+      title: SetupStatus
     Severity:
       type: string
       enum:

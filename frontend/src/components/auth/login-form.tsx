@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +12,9 @@ import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
 import { FormField } from "@/components/common/form-field";
 import { Link, useRouter } from "@/i18n/navigation";
-import { api, ApiError, unwrap } from "@/lib/api/client";
+import { api, ApiError, unwrap, type Schemas } from "@/lib/api/client";
+import { MfaVerifyStep } from "@/components/auth/mfa";
+import { useSetupStatus } from "@/components/auth/first-setup";
 import { keys } from "@/lib/api/queries";
 import { useErrorMessage } from "@/lib/i18n-helpers";
 
@@ -26,6 +28,13 @@ export function LoginForm() {
   const reason = params.get("reason");
   const next = params.get("next");
   const [error, setError] = useState<unknown>(null);
+  const [mfaStep, setMfaStep] = useState(false);
+  const setup = useSetupStatus();
+  const setupNeeded = Boolean(setup.data?.needed);
+  useEffect(() => {
+    // D-306: an empty install goes straight to the first-time setup.
+    if (setupNeeded) router.replace("/setup");
+  }, [setupNeeded, router]);
 
   const schema = useMemo(
     () =>
@@ -39,23 +48,50 @@ export function LoginForm() {
   const form = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { email: "", password: "" } });
   const { errors, isSubmitting } = form.formState;
 
+  function signedIn(res: Schemas["LoginResponse"]) {
+    if (!res.user) return;
+    const locale = res.user.display_language;
+    if (res.user.privacy_ack_required) {
+      router.replace("/privacy", { locale });
+      return;
+    }
+    qc.setQueryData(keys.me, res.user);
+    if (res.user.mfa_setup_blocking) {
+      router.replace("/mfa-setup", { locale });
+      return;
+    }
+    const dest = next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
+    router.replace(dest, { locale });
+  }
+
   async function onSubmit(values: Values) {
     setError(null);
     try {
       const res = await unwrap(api.POST("/api/v1/auth/login", { body: values }));
       qc.clear();
-      const locale = res.user.display_language;
-      if (res.user.privacy_ack_required) {
-        router.replace("/privacy", { locale });
+      if (res.mfa_pending) {
+        // D-299: the password was right; the authenticator code comes next.
+        setMfaStep(true);
         return;
       }
-      qc.setQueryData(keys.me, res.user);
-      const dest = next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
-      router.replace(dest, { locale });
+      signedIn(res);
     } catch (e) {
       setError(e);
       form.resetField("password");
     }
+  }
+
+  if (mfaStep) {
+    return (
+      <MfaVerifyStep
+        onDone={signedIn}
+        onBack={() => {
+          setMfaStep(false);
+          form.resetField("password");
+          void api.POST("/api/v1/auth/logout");
+        }}
+      />
+    );
   }
 
   const locked = error instanceof ApiError && error.code === "ACCOUNT_LOCKED";

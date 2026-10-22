@@ -1,6 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 // Sets E2E_CLOCK_OFFSET_MS once, before the servers and workers start, so they all share one clock.
 import "./e2e/clock";
+// Sets a throw-away licence key pair (LICENCE_PUBLIC_KEY for the API, the private half for the specs).
+import "./e2e/licence-key";
 
 const CI = Boolean(process.env.CI);
 const BASE_URL = process.env.E2E_BASE_URL ?? "http://localhost:3000";
