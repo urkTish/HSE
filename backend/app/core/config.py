@@ -1,6 +1,7 @@
 """Application settings, read from environment variables (see root .env.example)."""
 
 from functools import lru_cache
+from typing import Literal
 
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -88,6 +89,20 @@ class Settings(BaseSettings):
     attachment_max_bytes: int = 20 * 1024 * 1024
     import_max_bytes: int = 5 * 1024 * 1024
     import_max_rows: int = 20_000
+
+    # Outgoing email (D-279): any SMTP provider. No SMTP_HOST / SMTP_FROM = emails stay in the
+    # outbox (email_outbox) and the `email_send` job only reports how many are waiting.
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_from: str = Field(default="", description='e.g. "HSE Platform <hse@example.sa>"')
+    smtp_security: Literal["starttls", "ssl", "none"] = "starttls"
+    smtp_timeout_seconds: float = 30.0
+    email_batch_size: int = 50  # rows per job run (the job runs every minute)
+    email_max_attempts: int = 6  # message-level failures before a row is marked failed
+    email_retry_base_seconds: int = 60  # backoff: base, 2x, 4x … (capped at one hour)
+    email_max_age_hours: int = 72  # older queued rows are marked failed, not sent (stale links)
 
     # Seed (only used by app.seed)
     seed_password: str | None = None

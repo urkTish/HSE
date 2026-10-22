@@ -562,10 +562,13 @@ def download(
             "This download link has expired or is invalid.",
             "انتهت صلاحية رابط التنزيل أو أنه غير صالح.",
         )
+    return read_content(a), a.content_type, a.file_name
+
+
+def read_content(a: Attachment) -> bytes:
+    """The stored file's bytes (decrypted for the medical and personal buckets)."""
     data = (Path(get_settings().storage_dir) / a.storage_key).read_bytes()
-    if a.storage_bucket in ENCRYPTED:
-        data = crypto.decrypt_bytes(data)
-    return data, a.content_type, a.file_name
+    return crypto.decrypt_bytes(data) if a.storage_bucket in ENCRYPTED else data
 
 
 def delete(db: Session, p: Principal, attachment_id: uuid.UUID) -> None:

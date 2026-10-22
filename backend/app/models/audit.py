@@ -4,12 +4,20 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import BigInteger, DateTime, ForeignKey, Index, String, Text
+from sqlalchemy import BigInteger, DateTime, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.clock import now
-from app.core.enums import AuditAction, AuditResult, EntityType, Language, NotificationKind, Role
+from app.core.enums import (
+    AuditAction,
+    AuditResult,
+    EmailStatus,
+    EntityType,
+    Language,
+    NotificationKind,
+    Role,
+)
 from app.db.base import Base
 from app.models.base import UUIDPk, enum_col
 
@@ -59,9 +67,11 @@ class Notification(UUIDPk, Base):
 
 
 class EmailMessage(UUIDPk, Base):
-    """Outbox. A delivery worker (later phase / SMTP config) sends and marks rows."""
+    """Outbox. The `email_send` job (app.services.mailer, D-279) delivers queued rows over SMTP
+    and marks them sent or failed; without SMTP settings they stay queued."""
 
     __tablename__ = "email_outbox"
+    __table_args__ = (Index("ix_email_outbox_status_next", "status", "next_attempt_at"),)
 
     to_email: Mapped[str] = mapped_column(String(254))
     to_user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))
@@ -71,6 +81,14 @@ class EmailMessage(UUIDPk, Base):
     body: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    status: Mapped[EmailStatus] = enum_col(EmailStatus, default=EmailStatus.queued)
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    next_attempt_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_error: Mapped[str | None] = mapped_column(String(500))
+    # Attachment ids sent as files (6g external report packs, DL-4 ≤ 20 MB; D-280).
+    attachment_ids: Mapped[list[str]] = mapped_column(JSONB, default=list)
+    # The 6g delivery-log row this email stands for (status follows the send; D-280).
+    delivery_id: Mapped[uuid.UUID | None] = mapped_column()
 
 
 class DeletedRecord(UUIDPk, Base):
