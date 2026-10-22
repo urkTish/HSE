@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { type Page } from "@playwright/test";
 import { expect, test } from "./fixtures/test";
 import { apiAs, getJson, login, projectId, sql, userId, USERS } from "./helpers";
-import { accessCard } from "./p2-helpers";
+import { accessCard, pickMulti } from "./p2-helpers";
 import { pinProject } from "./p6a-helpers";
 
 // Phase 6c demo screenshots for docs/screenshots/phase-6c (run with SCREENSHOTS=1 on a fresh seed).
@@ -124,9 +124,7 @@ for (const locale of ["en", "ar"] as const) {
     await shot(page, `09-muster-devices-${locale}.png`);
 
     await go("/emergency-info");
-    await page.locator("button#ei-zones").click();
-    await page.getByRole("listbox").getByRole("option", { name: /Z-PIERB/ }).first().getByRole("button").click();
-    await page.keyboard.press("Escape");
+    await pickMulti(page, "ei-zones", [/Z-PIERB/]);
     await expect(page.getByTestId("ei-numbers")).toBeVisible();
     await shot(page, `10-emergency-info-${locale}.png`, true);
 

@@ -10,17 +10,30 @@ export async function selectContaining(select: Locator, text: string): Promise<v
   await select.selectOption(value);
 }
 
+/** The open MultiSelect popover (a group of checkboxes rendered in a portal). */
+export function multiPanel(page: Page): Locator {
+  return page.locator("[data-radix-popper-content-wrapper]").getByRole("group");
+}
+
+/** One option row (its <label>) in the open MultiSelect popover; `.getByRole("checkbox")` is its state. */
+export function multiOption(page: Page, name: string | RegExp): Locator {
+  const panel = multiPanel(page);
+  return panel.locator("label").filter({ has: page.getByRole("checkbox", { name }) }).first();
+}
+
 /** Ensure options are selected in a MultiSelect popover (trigger has the given id), then close it. */
 export async function pickMulti(page: Page, id: string, labels: (string | RegExp)[]): Promise<void> {
   await page.locator(`button#${id}`).click();
-  const list = page.getByRole("listbox");
+  const panel = multiPanel(page);
+  await expect(panel).toBeVisible();
   for (const l of labels) {
-    const opt = list.getByRole("option", { name: l }).first();
-    if ((await opt.getAttribute("aria-selected")) !== "true") await opt.getByRole("button").click();
-    await expect(opt).toHaveAttribute("aria-selected", "true");
+    const opt = multiOption(page, l);
+    const box = opt.getByRole("checkbox");
+    if (!(await box.isChecked())) await opt.click();
+    await expect(box).toBeChecked();
   }
   await page.keyboard.press("Escape");
-  await expect(list).toBeHidden();
+  await expect(panel).toBeHidden();
 }
 
 /** Draw a stroke on a signature pad canvas. */
