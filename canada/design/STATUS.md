@@ -1,6 +1,6 @@
 # Agent 06 — UI/UX design lane: status
 
-Updated 2026-10-30, end of Phase 1. Lane: `canada/design/`.
+Updated 2026-10-30, end of Phase 1 (after re-review 06-6). Lane: `canada/design/`.
 
 ## Done
 
@@ -12,8 +12,9 @@ Updated 2026-10-30, end of Phase 1. Lane: `canada/design/`.
 | `wireframes/` | Seven self-contained HTML files, no external scripts, fonts or images: `01-country-view`, `02-province-view`, `03-city-profile` (working reference implementation of the climate chart: hover, ← → keyboard reading, live region, Chart/Table toggle, null-month hatch), `04-comparison` (toggle between unweighted and weighted states), `05-search` (type-ahead and concept search), `06-mobile-360` (four 360 px frames), `index.html`. Each opens with a note on what it decides and has an OS/Light/Dark switch. All rendered in Chromium, no console errors, no horizontal scroll at 360 px. |
 | `components.md` | Inventory of about 45 components in six groups (shell, map, profile, comparison, search, primitives): purpose, props, states, accessibility, views, phase. Uses Agent 05's existing component names. |
 | `review-2026-10-30.md` | Review of the running app (desktop light/dark, 360 px), source and `ARCHITECTURE.md`: score 6.5/10, 15 findings (1 critical, 6 major, 6 minor, 2 polish) plus 2 architecture notes and a risk table for SPEC §9 B–D. |
+| `review-2026-10-30-b.md` | Re-review (task 06-6) of the findings Agent 05 addressed, on a fresh `build-data` + `build`, 1440 and 360 px, light and dark: score 8/10. Fixed F-01, F-02, F-03, F-06, F-09, F-10, F-11, F-12; partly F-04, F-05, F-07, F-13; F-08, F-14, F-15 deferred to Phase 2; 4 minor side effects (R-1 to R-4). |
 | `OPEN-QUESTIONS.md` | Three questions appended (see below). |
-| `TASKS.md` | 06-1 to 06-5 done; 06-6 (re-review) added. |
+| `TASKS.md` | 06-1 to 06-6 done. |
 
 Validator: not applicable (this lane produces no records). Colour checks:
 dataviz `validate_palette.js` for map-layer hues (all-pairs, light and dark)
@@ -22,6 +23,10 @@ design-system §4.3–4.4.
 
 ## In progress / parked
 
+- Re-review side effect R-2 (dark-mode city marker read as a bullseye) came
+  from my token value; fixed in `tokens.css` (dark `--ce-marker-halo`
+  `#ece9e2` → `#0f0f0d`, value only, logged in design-system §13), app
+  rebuilt and checked, wireframes regenerated.
 - Nothing parked. Not done by design (Phase 2+): high-fidelity mock-ups with
   the real fonts loaded, neighbourhood view wireframe (zoom ≥ 11), print
   styles, French UI copy.
@@ -84,9 +89,10 @@ design-system §4.3–4.4.
 
 ## Next step
 
-Agent 05 addresses review findings F-01 to F-07 (marker shapes, keyboard
-path to features and focus management, "Living" section instead of market
-records under "Nearby", mobile layout, dark-mode controls, duplicate city
-labels, map padding), then Agent 06 re-reviews (task 06-6) and produces the
-neighbourhood-view wireframe and high-fidelity profile header with real
-fonts.
+Agent 05, Phase 2 first: (1) finish mobile (F-04, plus F-07 top padding):
+one-row top bar, layers and "Places in view" in one sheet, profile in a
+bottom sheet; (2) dark-mode attribution and scale legibility, and keep the
+attribution clear of the profile panel (F-05 remainder, R-3); (3) self-hosted
+fonts with the display-size place name, then `SheetMargin` per section
+(F-14, F-08). Agent 06 next: neighbourhood-view wireframe, high-fidelity
+profile header with the real fonts, and a third review after those changes.

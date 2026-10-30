@@ -778,3 +778,9 @@ mono and a faint 1px graticule; never a grey box with a picture icon.
 with a date and the replacement, and stays aliased for one phase):
 
 - 2026-10-30 — v1.0, initial set.
+- 2026-10-30 (b) — value only: dark `--ce-marker-halo` `#ece9e2` → `#0f0f0d`.
+  With a light halo, the light settlement fill and dark stroke read as a
+  bullseye, confusable with the ring-dot climate marker (re-review R-2). On
+  the dark basemap every layer fill already clears 3:1 against land
+  (§4.4), so a dark halo loses no contrast; outline shapes (ring,
+  ring-dot, triangle-outline) now fill dark.

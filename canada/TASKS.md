@@ -36,11 +36,13 @@ section. A request to another agent is a new line under that agent with
 
 ## Agent 04 — Geography & Climate (`knowledge-base/geography-climate/`)
 
-- [doing] 04-1 Province and territory comparison: physiographic regions, landscapes, hazards, lifestyle, key cities; `region` and `landform` records.
-- [doing] 04-2 Climate normals for at least 20 representative cities as `clim` records (ECCC; 1991–2020 where published, else 1981–2010; station and period stated).
-- [doing] 04-3 Hazard records by region (wildfire, flood, coastal, drought, heat, cold, avalanche, ice storm, permafrost).
-- [doing] 04-4 First answers to the comparative questions, labelled as professional interpretation with evidence IDs.
-- [doing] 04-5 `STATUS.md`, open questions.
+- [done] 04-1 Province and territory comparison: physiographic regions, landscapes, hazards, lifestyle, key cities; `region` and `landform` records.
+- [done] 04-2 Climate normals for at least 20 representative cities as `clim` records (ECCC; 1991–2020 where published, else 1981–2010; station and period stated).
+- [done] 04-3 Hazard records by region (wildfire, flood, coastal, drought, heat, cold, avalanche, ice storm, permafrost).
+- [done] 04-4 First answers to the comparative questions, labelled as professional interpretation with evidence IDs.
+- [done] 04-5 `STATUS.md`, open questions.
+- [todo] 04-6 Parked from Phase 1 (see `geography-climate/STATUS.md`): Thunder Bay precipitation normals; PEI coastal-erosion source; official figures for the 2013 southern Alberta flood; Chic-Chocs/Appalachian Uplands descriptive source; city-centre stations for Montréal, Calgary and Halifax.
+- [todo] 04-7 handoff request for Agent 02 (from: agent-04; coordinator please move under Agent 02, since agents edit only their own section) — `re` records for the candidate mountain towns (Nelson, Castlegar, Cranbrook, Kamloops, Penticton, Prince George, Corner Brook, Whitehorse, Sherbrooke) so `comparative-answers.md` can fill the housing-cost column.
 
 ## Agent 05 — Map Architect (`map/`)
 
@@ -50,6 +52,7 @@ section. A request to another agent is a new line under that agent with
 - [done] 05-4 `STATUS.md`.
 - [doing] 05-5 from: agent-06 — adopt `design/tokens.css` and the component inventory once delivered. Tokens: done (app imports `design/tokens.css` and `design/tailwind-theme.css` unchanged). Components: MarkerGlyph, PlacesInViewList, FigureValue, NotYetResearched, LiveAnnouncer, SkipLinks adopted; the rest (MapControls, BottomSheet, ProfileTabs, SheetMargin, Breadcrumb, AboutDataDialog, fonts) in Phase 2, see `map/STATUS.md`.
 - [done] 05-6 from: agent-06 — work through review findings F-01 to F-07 in `design/review-2026-10-30.md` (F-01 critical: per-layer marker shapes and minimum zoom; F-02 keyboard reach and focus management; F-03 keep `re`/`nat` records out of "Nearby" and add a "Living" section with `FigureValue`); then Agent 06 re-reviews (06-6). Result: F-01, F-02, F-03, F-05, F-06, F-07 fixed; F-04 partly (wordmark hidden, attribution collapsed, city tiers; bottom sheet open); F-10, F-11, F-12, F-13 (partly) also fixed. Details in `map/STATUS.md`.
+- [todo] 05-7 from: agent-06 (re-review `design/review-2026-10-30-b.md`, 8/10) — Phase 2 first: (a) attribution and scale text legible in dark mode (`--ce-ink-2`) and never hidden behind the profile panel at 1440 px (licence requirement; F-05 remainder, R-3); (b) mobile: one-row top bar, layers and "Places in view" in one sheet, profile in a bottom sheet with snap points, top map padding on mobile (F-04, F-07, R-4; wireframe 06); (c) clusters of different layers overlap at one spot (R-1); (d) skip-link target needs `tabindex="-1"` (F-02 remainder); then F-14 fonts and F-08 per-section provenance. Rebuild to pick up the dark `--ce-marker-halo` token change (R-2).
 
 ## Agent 06 — UI/UX (`design/`)
 
@@ -58,7 +61,7 @@ section. A request to another agent is a new line under that agent with
 - [done] 06-3 `components.md` inventory for Agent 05.
 - [done] 06-4 First review of the Agent 05 skeleton (`review-2026-10-30.md`: 15 findings + 2 architecture notes).
 - [done] 06-5 `STATUS.md`.
-- [doing] 06-6 Re-review after Agent 05 addresses F-01 to F-07 (marker shapes, keyboard path, Living section, mobile, dark controls, duplicate labels, map padding).
+- [done] 06-6 Re-review (`design/review-2026-10-30-b.md`): score 8/10; F-01, F-02, F-03, F-06, F-09, F-10, F-11, F-12 fixed; F-04, F-05, F-07, F-13 partly; 4 minor side effects (R-2 fixed in tokens by Agent 06).
 
 ## Agent 07 — Coordinator (repository root of `canada/`)
 

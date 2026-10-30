@@ -71,3 +71,10 @@ the coordinator groups and removes answered items (recording the answer in
 
 - (agent-05) Besides the 31 principal cities now on the map (capitals and places Natural Earth lists above about 100,000 people), are there smaller towns you already have in mind, for example mountain or lake towns? — decides which places are added first when towns arrive in Phase 2.
 - (agent-05) Do you want to use the map offline on a phone while travelling in Canada (saved areas)? — decides whether Phase 6 adds small offline downloads within OpenFreeMap's limits (3,000 tiles or 50 MB each) or self-hosted tiles.
+
+## From Agent 04 — Geography and climate (appended 2026-10-30)
+
+- (agent-04) Which winter is your limit, using the bands in `geography-climate/comparative-answers.md`: very mild (Victoria, Vancouver), mild (Okanagan, Kamloops, Kootenays, Toronto), moderate (Ottawa, Montréal, Halifax, Cranbrook), cold (Calgary, Edmonton, Québec city) or severe (Winnipeg, Saskatoon, the North)? — decides which cities pass the climate gate; Calgary and Cranbrook move in or out on this answer alone.
+- (agent-04) By "more sunshine", do you mean sunnier winters (Calgary and Moncton get about 115–120 hours in January against 35–71 in BC cities) or sunnier summers and years overall (the Prairies, Victoria, the southern interior)? — decides whether Calgary or the BC interior ranks higher.
+- (agent-04) In southern BC, which is the lesser evil: grey, rainy winters on the coast (Vancouver, Victoria), or hot summers with wildfire-smoke episodes in the interior valleys (Kelowna, Penticton, Kamloops, Nelson)? — decides the order within the BC shortlist.
+- (agent-04) Do you plan winter backcountry activities (ski touring, snowshoeing or snowmobiling in avalanche terrain), or mainly resort skiing and summer hiking? — decides whether avalanche exposure and training belong in the location profiles.
