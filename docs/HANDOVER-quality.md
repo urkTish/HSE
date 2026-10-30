@@ -1,6 +1,7 @@
 # Handover: Quality (QA/QC) module, phase 8
 
-Status: ready to start, 2026-10-30. Repo: urkTish/HSE. Base branch: `claude/hse-platform-build-kannxy` at 39fe53b or later
+Status: ready to start, 2026-10-30. Repo: urkTish/HSE. Base branch: `claude/hse-platform-build-kannxy` at 2f4c330 (PR #9, 2026-10-30) or later;
+the orchestrator pins the actual base SHA in every builder prompt. Runs in a cloud session (Linux, Postgres 16, uv).
 (trial readiness A + B + C merged; last decision D-307; Alembic head `c0025`; contract 0.17.0).
 
 This file is for the **orchestrator session** that runs the whole build. Read it all, then follow section 6.
@@ -42,7 +43,8 @@ So nothing is left out "for later" because a customer might not need it.
 - Tests must not depend on today's date: use the `clock`/`noon`/`sc_clock` fixtures in `backend/tests/conftest.py`
   (a hard-coded September date broke CI on 2026-10-22).
 - e2e: the API clock can lag the Playwright clock by the backend start-up time; never rely on "next 30 s step" style timing.
-- Three agents on this 4-CPU / 15 GB machine is the practical maximum for parallel builds. Do not run the full backend suite
+- Three agents on this 4-CPU / 15 GB machine is the practical maximum for parallel builds. Fable reviewers count toward
+  the three: a reviewer launched while three builders run must not run tests locally. Do not run the full backend suite
   in 4 shards while builders run; let CI do it. The integrator runs the 4-shard suite when the machine is free.
 - Postgres 16 runs on localhost:5432 (superuser `hse`/`hse`); start it with `pg_ctlcluster 16 main start` if down.
   Raise `max_connections` to 400 once (`ALTER SYSTEM`, restart) before parallel test runs.
@@ -124,11 +126,13 @@ All branch from the base. Each package: own branch, own draft PR against the bas
 - **Q0** owns: sector profile on the project, Quality settings, responsible-person matrix, numbering, permissions / roles
   (QA/QC Manager, QC Inspector, Quality Engineer, Storekeeper / Warehouse QC, Responsible Person), navigation group
   "Quality" (profile-aware), shared models (NCR, NCR cost, root-cause analysis), NCR screens and the NCR → CA link,
-  Alembic `q0_…` on top of `c0025`. Wave 2 starts only when Q0 is merged into the base (or, if Turki is away, branch wave 2
-  from the Q0 branch head once Q0 CI is green, and say so in the PRs).
+  Alembic `q0_…` on top of `c0025`. Q0 is **never merged into the base on its own**: wave 2 branches from the Q0 branch
+  head once Q0 CI is green and the Fable review passed, and each wave-2 PR says so. Turki merges only the integration PR.
 - **Wave 2** packages run in parallel (three agents). Migrations `q1_…`, `q2_…`, `q3_…` all on top of Q0's head; the
   integrator re-chains them.
-- **Q4** runs after wave 2 is green, on top of the wave-2 integration or the three branches merged (orchestrator decides).
+- **Q4** runs after wave 2 is green, from a pre-integration branch `claude/quality-pre-q4` the orchestrator makes:
+  Q0 + Q1 + Q2 + Q3 merged, conflicts resolved, Alembic re-chained linearly (c0025 → q0 → q1 → q2 → q3), upgrade and
+  check green. Q4's migration goes on top of q3's head. The integrator reuses that chain instead of re-chaining from scratch.
 - **I** merges everything, re-chains Alembic linearly, bumps `CONTRACT_VERSION` to 0.18.0, regenerates the contract,
   runs the full 4-shard suite and full e2e, and opens the PR Turki merges.
 
@@ -149,7 +153,8 @@ backend tests for every new rule, e2e for the main flows, demo seed data for bot
 5. **Wave 2:** launch Q1, Q2, Q3 together (prompt 7.3 each, `isolation: worktree`). Review each with Fable as it reports.
 6. **Wave 3:** Q4 the same way.
 7. **Wave 4:** integrator (prompt 7.5), then a final Fable review of the integration PR.
-8. Subscribe to every PR; fix CI yourself or through the owning builder; never wait idle on a red PR.
+8. Watch every PR (`gh pr checks` or the GitHub tools); fix CI yourself or through the owning builder; never wait idle on
+   a red PR.
 9. Report to Turki at the end in 3–5 short lines (he reads on his phone): what is built, **which single PR to merge**,
    what he must decide.
 
@@ -164,7 +169,7 @@ Repo urkTish/HSE. Read docs/HANDOVER-quality.md (all), docs/CONVENTIONS.md, docs
 docs/DECISIONS.md and docs/specs/8-quality.md (your sections in full, the rest skimmed).
 Git: branch <branch> from <start point>; push after every working step (WIP commits with [skip ci]; the final commit
 without it); open a draft PR against claude/hse-platform-build-kannxy right after the first push using the GitHub MCP
-tools (load with ToolSearch; no gh CLI). Do not subscribe to the PR; the orchestrator does.
+tools if they are available (load with ToolSearch), otherwise the gh CLI. Do not subscribe to the PR; the orchestrator does.
 Commit messages end with:
   Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
   Claude-Session: <session url>
@@ -256,7 +261,8 @@ checks, sector-profile gating, Riyadh dates, numbering races, NCR/CA links, calc
 no secrets, PDPL fields masked as elsewhere; (4) reuse instead of duplication; (5) migration matches models, downgrade
 works, indexes for list filters; (6) EN/AR parity and RTL, phone layouts; (7) tests are deterministic (clock fixtures,
 no sleeps on wall time); (8) conventions in CONVENTIONS.md.
-You may run tests locally (DB prefix rv_<pkg>_, ports 8290/3290) but do not push or edit the branch.
+You may run tests locally (DB prefix rv_<pkg>_, ports 829N/329N where N is the package number: Q0 8290/3290,
+Q1 8291/3291, …) unless three builders are running, but do not push or edit the branch.
 Report findings most severe first: severity (blocking / should-fix / nit), file:line, problem, concrete fix. End with
 PASS (no blocking or should-fix findings left) or FAIL.
 ```
@@ -266,10 +272,10 @@ PASS (no blocking or should-fix findings left) or FAIL.
 ```
 You integrate the Quality packages Q0–Q4 of urkTish/HSE into one branch Turki can merge in one go. Read
 docs/HANDOVER-quality.md (all, especially section 3), docs/CONVENTIONS.md and docs/specs/8-quality.md.
-Inputs: <branches and PRs with last SHAs>. Create claude/quality-integration from origin/claude/hse-platform-build-kannxy,
-merge the packages in order Q0, Q1, Q2, Q3, Q4 with merge commits, and resolve every conflict keeping all behaviour.
-Re-chain Alembic linearly (c0025 → q0 … → q1 … → q2 … → q3 … → q4 …), editing down_revision only in this branch;
-upgrade, check and a downgrade-to-c0025 round trip must pass. Bump CONTRACT_VERSION to 0.18.0 and regenerate
+Inputs: <branches and PRs with last SHAs>. Create claude/quality-integration from claude/quality-pre-q4 (Q0–Q3 already merged and
+chained), merge Q4 with a merge commit, and resolve every conflict keeping all behaviour.
+Confirm the Alembic chain is linear (c0025 → q0 … → q1 … → q2 … → q3 … → q4 …), editing down_revision only in this
+branch where needed; upgrade, check and a downgrade-to-c0025 round trip must pass. Bump CONTRACT_VERSION to 0.18.0 and regenerate
 openapi.yaml and schema.d.ts with the repo tools. Keep all i18n keys (parity check), all navigation entries (profile-aware),
 all seed data (both profiles), DECISIONS rows in numeric order plus one integration decision in D-370 … D-379, and one
 PROGRESS section per package plus an integration section.
