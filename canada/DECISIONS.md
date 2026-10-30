@@ -71,3 +71,31 @@ One entry per non-obvious choice: what, why, alternatives, date.
   01's record remains canonical for public and subsidised school
   eligibility and cites it. The consolidated LégisQuébec text is still to be
   read (sites returned 403 to both agents).
+- **D-013 (2026-10-30) — Base map.** OpenFreeMap vector styles (Positron for
+  light, Dark for dark mode), no key, with a built-in no-network fallback
+  style after six seconds. Proposed by Agent 05 (P-05-1); consistent with
+  D-005.
+- **D-014 (2026-10-30) — First-pass gazetteer.** Province boundaries and the
+  31 principal `city` records come from Natural Earth v5.1.2 (public domain)
+  for Phase 1; Statistics Canada boundaries and census subdivisions replace
+  them in Phase 2. City records carry `data_kind: official_fact` with
+  `source_type: other` and the dataset named in `coord_source`; when the
+  Statistics Canada source lands they become official facts in the strict
+  sense (P-05-2).
+- **D-015 (2026-10-30) — What never enters static files.** Market values,
+  tuition amounts, dollar figures in free text and anything that reads as a
+  forecast are stripped from the generated GeoJSON; the school year and the
+  source link stay, and the amount is shown on demand from the record.
+  Legislated figures in `nat` records (tax brackets, credits, programme fees)
+  stay. Stricter than SPEC §9 B on tuition; to be revisited with the
+  private-versus-published decision (D-008) (P-05-3).
+- **D-016 (2026-10-30) — Build behaviour on invalid records.** `build-data`
+  skips records that fail validation and fails only if the map's own lane
+  fails; `build-data --strict` fails on any invalid record and is the
+  coordinator's pre-commit check (P-05-4).
+- **D-017 (2026-10-30) — Generated data is not committed.** `public/data/` is
+  rebuilt by `dev`, `build` and `build-data`; only the 276 KB Natural Earth
+  source extract is committed (P-05-5).
+- **D-018 (2026-10-30) — Toolchain.** Vite 8, React 19, TypeScript 6,
+  Tailwind 4, MapLibre GL JS 6 as resolved on 2026-10-30; MapLibre 6
+  requires the worker URL to be registered explicitly (P-05-6).

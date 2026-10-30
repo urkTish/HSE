@@ -1,0 +1,70 @@
+{
+ "id": "hazard-ca-mountain-avalanche",
+ "category": "hazard",
+ "subcategory": "avalanche",
+ "name": "Snow avalanches – western mountains",
+ "name_fr": null,
+ "geo": {
+  "province": "CA",
+  "region": null,
+  "city": null,
+  "neighbourhood": null,
+  "address": null,
+  "lat": null,
+  "lon": null,
+  "coord_precision": "unknown",
+  "coord_source": null,
+  "extent": "Rocky, Columbia, Coast and other Cordilleran ranges in BC, Alberta and Yukon; Chic-Chocs in Quebec"
+ },
+ "description": "Avalanches are the most significant winter safety threat to anyone in uncontrolled mountain backcountry. Parks Canada publishes public avalanche forecasts for all the mountain national parks, updated daily from November to April (twice weekly for Waterton Lakes), and recommends Avalanche Skills Training courses.",
+ "attributes": {
+  "hazard_type": "avalanche",
+  "exposed_areas": [
+   "Backcountry of Banff, Jasper, Yoho, Kootenay, Glacier, Mount Revelstoke, Waterton Lakes",
+   "Kootenays and Rogers Pass",
+   "Coast Mountains (Whistler, Squamish backcountry)"
+  ],
+  "documented_events": [],
+  "practical_implications": [
+   "Winter backcountry skiing, snowshoeing and snowmobiling require training and equipment",
+   "Highway closures for avalanche control (e.g. Rogers Pass)"
+  ],
+  "related_climate_records": [
+   "clim-ab-banff-cs",
+   "clim-bc-nelson-cs"
+  ],
+  "official_information": [
+   "https://www.parks.canada.ca/pn-np/mtn/securiteenmontagne-mountainsafety/avalanche"
+  ]
+ },
+ "data_kind": "official_fact",
+ "sources": [
+  {
+   "url": "https://www.parks.canada.ca/pn-np/mtn/securiteenmontagne-mountainsafety/avalanche",
+   "title": "Parks Canada avalanche information (Mountain National Parks)",
+   "publisher": "Parks Canada",
+   "source_type": "park_authority",
+   "accessed": "2026-10-30",
+   "data_period": null,
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  }
+ ],
+ "units": {
+  "elevation": "m",
+  "area": "km2",
+  "distance": "km"
+ },
+ "verification": {
+  "status": "verified",
+  "confidence": "high",
+  "verified_by": "agent-04",
+  "last_verified": "2026-10-30",
+  "next_review": "2027-04-30",
+  "notes": "Event facts quoted or paraphrased from the cited official pages on 2026-10-30. Exposure and implications are agent-04 interpretation."
+ },
+ "responsible_agent": "agent-04",
+ "limitations": "Fatality statistics were not retrieved from an official source. Past events show exposure; they are not a prediction for any particular year. Exposure varies street by street – check municipal and provincial hazard maps for a specific property.",
+ "created": "2026-10-30",
+ "updated": "2026-10-30"
+}

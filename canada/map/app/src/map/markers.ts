@@ -9,7 +9,7 @@ export type MarkerShape =
   | "triangle-outline" | "hexagon" | "pentagon" | "square" | "tag";
 
 /** Shapes drawn as a coloured outline on a paper fill rather than a solid fill. */
-const OUTLINE: ReadonlySet<MarkerShape> = new Set(["ring", "ring-dot", "triangle-outline"]);
+export const OUTLINE: ReadonlySet<MarkerShape> = new Set(["ring", "ring-dot", "triangle-outline"]);
 
 const n = (v: number) => Math.round(v * 1000) / 1000;
 const poly = (pts: [number, number][]) => `M${pts.map(([x, y]) => `${n(x)} ${n(y)}`).join(" L")} Z`;
@@ -53,8 +53,8 @@ export interface MarkerColours {
   halo: string;
 }
 
-const STROKE = 1.5;
-const HALO = 2;
+export const STROKE = 1.5;
+export const HALO = 2;
 
 /** Rasterises a marker for map.addImage(..., { pixelRatio }). */
 export function drawMarker(shape: MarkerShape, size: number, c: MarkerColours, pixelRatio = 2) {
@@ -96,23 +96,3 @@ export function drawMarker(shape: MarkerShape, size: number, c: MarkerColours, p
   return { width: px, height: px, data: new Uint8Array(img.data.buffer) };
 }
 
-/** Inline SVG marker for lists and the legend (decorative: aria-hidden). */
-export function MarkerGlyph({ shape, colorToken, size = 14, muted = false }: { shape: MarkerShape; colorToken: string; size?: number; muted?: boolean }) {
-  const r = size / 2;
-  const box = size + 2 * (HALO + STROKE + 1);
-  const outline = OUTLINE.has(shape);
-  return (
-    <svg width={box} height={box} viewBox={`${-box / 2} ${-box / 2} ${box} ${box}`} aria-hidden="true" className="shrink-0" style={{ opacity: muted ? 0.4 : 1 }}>
-      <path d={shapePath(shape, r)} fill="none" stroke="var(--ce-marker-halo)" strokeWidth={(HALO + STROKE) * 2} strokeLinejoin="round" />
-      {outline ? (
-        <>
-          <path d={shapePath(shape, r)} fill="var(--ce-marker-halo)" />
-          <path d={shapePath(shape, r - 1.5)} fill="none" stroke={`var(${colorToken})`} strokeWidth={3} strokeLinejoin="round" />
-          {shape === "ring-dot" && <path d={shapePath("circle", r * 0.3)} fill={`var(${colorToken})`} />}
-        </>
-      ) : (
-        <path d={shapePath(shape, r)} fill={`var(${colorToken})`} stroke="var(--ce-marker-stroke)" strokeWidth={STROKE} strokeLinejoin="round" />
-      )}
-    </svg>
-  );
-}

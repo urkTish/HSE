@@ -1,0 +1,95 @@
+{
+ "id": "hazard-ca-prairie-drought",
+ "category": "hazard",
+ "subcategory": "drought",
+ "name": "Drought – Prairies (southern Alberta, Saskatchewan, Manitoba)",
+ "name_fr": null,
+ "geo": {
+  "province": "CA",
+  "region": null,
+  "city": null,
+  "neighbourhood": null,
+  "address": null,
+  "lat": null,
+  "lon": null,
+  "coord_precision": "unknown",
+  "coord_source": null,
+  "extent": "Southern Alberta, Saskatchewan and Manitoba"
+ },
+ "description": "The semi-arid southern prairies have recurring drought. In 2023 the Bow River had its lowest flow since 1911 and February–May precipitation at Lethbridge and Winnipeg was among the lowest in over 100 years; drought affected every province and territory at the start of June 2023. AAFC's Canadian Drought Monitor is the official monthly tracker.",
+ "attributes": {
+  "hazard_type": "drought",
+  "exposed_areas": [
+   "Lethbridge and south-east Alberta",
+   "southern Saskatchewan (Regina)",
+   "south-west Manitoba"
+  ],
+  "documented_events": [
+   "2023: Bow River lowest flow since 1911; record-low spring precipitation at Lethbridge and Winnipeg (ECCC 2023)"
+  ],
+  "practical_implications": [
+   "Water restrictions; agricultural economy; dust and grassfire"
+  ],
+  "related_climate_records": [
+   "clim-ab-lethbridge-a",
+   "clim-sk-regina-intl-a",
+   "clim-sk-saskatoon-intl-a",
+   "clim-mb-winnipeg-intl-a"
+  ],
+  "official_information": [
+   "https://www.canada.ca/en/environment-climate-change/services/top-ten-weather-stories/2023.html",
+   "https://agriculture.canada.ca/en/agricultural-production/weather/canadian-drought-monitor",
+   "https://changingclimate.ca/CCCR2019/chapter/headline-statements/"
+  ]
+ },
+ "data_kind": "official_fact",
+ "sources": [
+  {
+   "url": "https://www.canada.ca/en/environment-climate-change/services/top-ten-weather-stories/2023.html",
+   "title": "Canada's top 10 weather stories of 2023",
+   "publisher": "Environment and Climate Change Canada",
+   "source_type": "federal_government",
+   "accessed": "2026-10-30",
+   "data_period": "2023",
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  },
+  {
+   "url": "https://agriculture.canada.ca/en/agricultural-production/weather/canadian-drought-monitor",
+   "title": "Canadian Drought Monitor",
+   "publisher": "Agriculture and Agri-Food Canada",
+   "source_type": "federal_government",
+   "accessed": "2026-10-30",
+   "data_period": null,
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  },
+  {
+   "url": "https://changingclimate.ca/CCCR2019/chapter/headline-statements/",
+   "title": "Canada's Changing Climate Report (2019) – Headline statements",
+   "publisher": "Government of Canada (Environment and Climate Change Canada, lead)",
+   "source_type": "federal_government",
+   "accessed": "2026-10-30",
+   "data_period": null,
+   "methodology": "Assessment report; statements are assessments of observed and projected change, not local forecasts",
+   "licence": "Open Government Licence – Canada"
+  }
+ ],
+ "units": {
+  "elevation": "m",
+  "area": "km2",
+  "distance": "km"
+ },
+ "verification": {
+  "status": "verified",
+  "confidence": "high",
+  "verified_by": "agent-04",
+  "last_verified": "2026-10-30",
+  "next_review": "2027-04-30",
+  "notes": "Event facts quoted or paraphrased from the cited official pages on 2026-10-30. Exposure and implications are agent-04 interpretation."
+ },
+ "responsible_agent": "agent-04",
+ "limitations": "Current drought status is on the AAFC monitor and is not stored here. Past events show exposure; they are not a prediction for any particular year. Exposure varies street by street – check municipal and provincial hazard maps for a specific property.",
+ "created": "2026-10-30",
+ "updated": "2026-10-30"
+}

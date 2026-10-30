@@ -1,0 +1,85 @@
+{
+ "id": "landform-nl-long-range-mountains",
+ "category": "landform",
+ "subcategory": "mountain range",
+ "name": "Long Range Mountains",
+ "name_fr": null,
+ "geo": {
+  "province": "NL",
+  "region": null,
+  "city": null,
+  "neighbourhood": null,
+  "address": null,
+  "lat": null,
+  "lon": null,
+  "coord_precision": "unknown",
+  "coord_source": null,
+  "extent": "Western Newfoundland from the Codroy valley to the Great Northern Peninsula"
+ },
+ "description": "The Appalachian ranges of western Newfoundland, rising over the Gulf of St. Lawrence coast: Lewis Hills (814 m) and Gros Morne (806 m). Gros Morne National Park protects the Tablelands and other formations showing major stages of the Earth's evolution, with boreal forest, arctic-alpine barrens, lakes and coast.",
+ "attributes": {
+  "physiographic_level": "Appalachian Uplands",
+  "provinces_territories": [
+   "NL"
+  ],
+  "notable_heights": [
+   {
+    "name": "Lewis Hills",
+    "elevation_m": 814
+   },
+   {
+    "name": "Gros Morne",
+    "elevation_m": 806
+   }
+  ],
+  "protected_area": "Gros Morne National Park",
+  "gateway_towns": [
+   "Corner Brook",
+   "Deer Lake",
+   "Rocky Harbour"
+  ],
+  "climate_records": [
+   "clim-nl-corner-brook"
+  ]
+ },
+ "data_kind": "official_fact",
+ "sources": [
+  {
+   "url": "https://www150.statcan.gc.ca/n1/pub/11-402-x/2010000/chap/geo/tbl/tbl03-eng.htm",
+   "title": "Table 15.3 Selected principal heights, by province and territory (Canada Year Book 2010, archived; source: NRCan Atlas of Canada)",
+   "publisher": "Statistics Canada",
+   "source_type": "statistics_agency",
+   "accessed": "2026-10-30",
+   "data_period": null,
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  },
+  {
+   "url": "https://parks.canada.ca/pn-np/nl/grosmorne/nature",
+   "title": "Gros Morne National Park – Nature",
+   "publisher": "Parks Canada",
+   "source_type": "park_authority",
+   "accessed": "2026-10-30",
+   "data_period": null,
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  }
+ ],
+ "units": {
+  "elevation": "m",
+  "area": "km2",
+  "distance": "km"
+ },
+ "verification": {
+  "status": "verified",
+  "confidence": "high",
+  "verified_by": "agent-04",
+  "last_verified": "2026-10-30",
+  "next_review": "2027-10-30",
+  "notes": null
+ },
+ "responsible_agent": "agent-04",
+ "limitations": "Gateway towns are agent-04 context.",
+ "created": "2026-10-30",
+ "updated": "2026-10-30"
+}

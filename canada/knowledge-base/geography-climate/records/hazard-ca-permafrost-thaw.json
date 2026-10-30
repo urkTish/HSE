@@ -1,0 +1,84 @@
+{
+ "id": "hazard-ca-permafrost-thaw",
+ "category": "hazard",
+ "subcategory": "permafrost thaw",
+ "name": "Permafrost and permafrost thaw – the North",
+ "name_fr": null,
+ "geo": {
+  "province": "CA",
+  "region": null,
+  "city": null,
+  "neighbourhood": null,
+  "address": null,
+  "lat": null,
+  "lon": null,
+  "coord_precision": "unknown",
+  "coord_source": null,
+  "extent": "Territories, northern parts of the provinces, high Cordillera"
+ },
+ "description": "About one-half of Canada's land surface is underlain by permafrost: continuous in the north (about 100 m thick at its southern limit to 1,000 m in the Far North) and discontinuous to the south. Thawing permafrost is among the effects of warming already evident in Canada, and northern Canada has warmed at more than double the global rate (CCCR 2019). Thaw damages foundations, roads and airstrips.",
+ "attributes": {
+  "hazard_type": "permafrost thaw",
+  "exposed_areas": [
+   "Inuvik and the Mackenzie Delta",
+   "Yellowknife and the Mackenzie valley",
+   "Iqaluit and Nunavut communities",
+   "Northern Yukon"
+  ],
+  "documented_events": [],
+  "practical_implications": [
+   "Specialised foundations (piles) and higher construction and maintenance costs",
+   "Seasonal road access (winter roads) is shortening"
+  ],
+  "related_climate_records": [
+   "clim-nt-inuvik-a",
+   "clim-nt-yellowknife-a",
+   "clim-nu-iqaluit-a",
+   "clim-yt-whitehorse-a"
+  ],
+  "official_information": [
+   "https://open.canada.ca/data/en/dataset/ab0c22c6-bbc2-5838-9b6e-7d83c61ba91d",
+   "https://changingclimate.ca/CCCR2019/chapter/headline-statements/"
+  ]
+ },
+ "data_kind": "official_fact",
+ "sources": [
+  {
+   "url": "https://open.canada.ca/data/en/dataset/ab0c22c6-bbc2-5838-9b6e-7d83c61ba91d",
+   "title": "Permafrost (Atlas of Canada map dataset, description)",
+   "publisher": "Natural Resources Canada",
+   "source_type": "federal_government",
+   "accessed": "2026-10-30",
+   "data_period": null,
+   "methodology": "National Atlas map; older compilation – boundaries are generalised",
+   "licence": "Open Government Licence – Canada"
+  },
+  {
+   "url": "https://changingclimate.ca/CCCR2019/chapter/headline-statements/",
+   "title": "Canada's Changing Climate Report (2019) – Headline statements",
+   "publisher": "Government of Canada (Environment and Climate Change Canada, lead)",
+   "source_type": "federal_government",
+   "accessed": "2026-10-30",
+   "data_period": null,
+   "methodology": "Assessment report; statements are assessments of observed and projected change, not local forecasts",
+   "licence": "Open Government Licence – Canada"
+  }
+ ],
+ "units": {
+  "elevation": "m",
+  "area": "km2",
+  "distance": "km"
+ },
+ "verification": {
+  "status": "verified",
+  "confidence": "high",
+  "verified_by": "agent-04",
+  "last_verified": "2026-10-30",
+  "next_review": "2027-04-30",
+  "notes": "Event facts quoted or paraphrased from the cited official pages on 2026-10-30. Exposure and implications are agent-04 interpretation."
+ },
+ "responsible_agent": "agent-04",
+ "limitations": "The NRCan map dataset is an older Atlas compilation; site conditions vary. Past events show exposure; they are not a prediction for any particular year. Exposure varies street by street – check municipal and provincial hazard maps for a specific property.",
+ "created": "2026-10-30",
+ "updated": "2026-10-30"
+}

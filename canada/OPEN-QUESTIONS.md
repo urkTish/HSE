@@ -66,3 +66,8 @@ the coordinator groups and removes answered items (recording the answer in
 - (agent-03) Must the children's secondary schooling end in a provincial diploma (Dogwood, OSSD, etc.), or is a foreign/accredited diploma (e.g. Clonlara, IB) acceptable? — decides whether non-credit-granting schools and homeschooling are viable at secondary level.
 - (agent-03) What annual school budget per child can you accept (for example under $10k, $10–20k, $20–30k, over $30k CAD)? — decides the cost gate; 2026-27 tuition among qualifying schools ranges from $6,240 to $37,400.
 - (agent-03) If Quebec stays in scope: would you accept French-language instruction, or would you pay full fees at an unsubsidised English private school, knowing that years there do not create eligibility for English public school? — decides whether Quebec schools enter the education layer.
+
+## From Agent 05 — Map (appended 2026-10-30)
+
+- (agent-05) Besides the 31 principal cities now on the map (capitals and places Natural Earth lists above about 100,000 people), are there smaller towns you already have in mind, for example mountain or lake towns? — decides which places are added first when towns arrive in Phase 2.
+- (agent-05) Do you want to use the map offline on a phone while travelling in Canada (saved areas)? — decides whether Phase 6 adds small offline downloads within OpenFreeMap's limits (3,000 tiles or 50 MB each) or self-hosted tiles.

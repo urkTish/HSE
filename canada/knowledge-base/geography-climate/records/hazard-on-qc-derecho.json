@@ -1,0 +1,73 @@
+{
+ "id": "hazard-on-qc-derecho",
+ "category": "hazard",
+ "subcategory": "severe convective storm",
+ "name": "Severe thunderstorms and derechos – Windsor–Québec corridor",
+ "name_fr": null,
+ "geo": {
+  "province": "ON",
+  "region": null,
+  "city": null,
+  "neighbourhood": null,
+  "address": null,
+  "lat": null,
+  "lon": null,
+  "coord_precision": "unknown",
+  "coord_source": null,
+  "extent": "Southern Ontario and southern Quebec"
+ },
+ "description": "On 21 May 2022 a derecho travelled 1,000 km from Sarnia to Québec city in nine hours; 11 people died, more than a million hydro customers lost power and damage topped one billion dollars (sixth-largest insured loss in Canadian history at the time).",
+ "attributes": {
+  "hazard_type": "severe convective storm",
+  "exposed_areas": [
+   "Ottawa",
+   "Greater Toronto",
+   "London",
+   "Montréal",
+   "Québec city"
+  ],
+  "documented_events": [
+   "May 2022 derecho (ECCC 2022)"
+  ],
+  "practical_implications": [
+   "Tree-fall damage and outages; summer storm preparedness"
+  ],
+  "related_climate_records": [
+   "clim-on-ottawa-cda",
+   "clim-on-london-a"
+  ],
+  "official_information": [
+   "https://www.canada.ca/en/environment-climate-change/services/top-ten-weather-stories/2022.html"
+  ]
+ },
+ "data_kind": "official_fact",
+ "sources": [
+  {
+   "url": "https://www.canada.ca/en/environment-climate-change/services/top-ten-weather-stories/2022.html",
+   "title": "Canada's top 10 weather stories of 2022",
+   "publisher": "Environment and Climate Change Canada",
+   "source_type": "federal_government",
+   "accessed": "2026-10-30",
+   "data_period": "2022",
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  }
+ ],
+ "units": {
+  "elevation": "m",
+  "area": "km2",
+  "distance": "km"
+ },
+ "verification": {
+  "status": "verified",
+  "confidence": "high",
+  "verified_by": "agent-04",
+  "last_verified": "2026-10-30",
+  "next_review": "2027-04-30",
+  "notes": "Event facts quoted or paraphrased from the cited official pages on 2026-10-30. Exposure and implications are agent-04 interpretation."
+ },
+ "responsible_agent": "agent-04",
+ "limitations": "Single event; tornado climatology not covered. Past events show exposure; they are not a prediction for any particular year. Exposure varies street by street – check municipal and provincial hazard maps for a specific property.",
+ "created": "2026-10-30",
+ "updated": "2026-10-30"
+}

@@ -1,0 +1,89 @@
+{
+ "id": "landform-ca-canadian-shield",
+ "category": "landform",
+ "subcategory": "physiographic region",
+ "name": "Canadian Shield",
+ "name_fr": null,
+ "geo": {
+  "province": "CA",
+  "region": null,
+  "city": null,
+  "neighbourhood": null,
+  "address": null,
+  "lat": null,
+  "lon": null,
+  "coord_precision": "unknown",
+  "coord_source": null,
+  "extent": "Horseshoe around Hudson Bay: from the Arctic islands and Labrador to the Great Lakes and the Northwest Territories"
+ },
+ "description": "The largest physiographic region of Canada: an ancient, glaciated rock surface levelled by long erosion, with an even skyline broken by rounded or flat-topped hills and a great share of its surface covered by lakes, ponds and swamps. The terrain is strikingly similar from Labrador through northern Quebec and Ontario to the Northwest Territories.",
+ "attributes": {
+  "physiographic_level": "region",
+  "subregions": [
+   "Kazan Region (northern Manitoba and Saskatchewan, parts of NT and NU)",
+   "Davis Region (Ellesmere Island to northern Labrador; includes the Torngat Mountains)",
+   "James Region (centre of Manitoba to Labrador)",
+   "Laurentian Region (uplands and highlands along the St. Lawrence Lowlands from Georgian Bay to the Atlantic)"
+  ],
+  "provinces_territories": [
+   "NT",
+   "NU",
+   "SK",
+   "MB",
+   "ON",
+   "QC",
+   "NL"
+  ],
+  "characteristic_landforms": [
+   "glacially scoured bedrock",
+   "eskers",
+   "innumerable lakes and wetlands",
+   "rounded hills"
+  ],
+  "ecozones_named_in_source": [
+   "Boreal Shield (plains, some hills; evergreen and mixed forest; cold, moist)",
+   "Taiga Shield (plains, some hills; open evergreen-deciduous trees, some lichen-shrub tundra; discontinuous permafrost)"
+  ],
+  "settlement_note": "Settlement is concentrated on its southern margin (e.g. Sudbury, Thunder Bay, Yellowknife); interior access is mainly by air, water and winter road."
+ },
+ "data_kind": "official_fact",
+ "sources": [
+  {
+   "url": "https://atlas.gc.ca/phys/en/index.html",
+   "title": "The Atlas of Canada – Physiographic Regions of Canada (map 1254A compiled by H.S. Bostock, 1967, with descriptive text)",
+   "publisher": "Natural Resources Canada",
+   "source_type": "federal_government",
+   "accessed": "2026-10-30",
+   "data_period": null,
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  },
+  {
+   "url": "https://www150.statcan.gc.ca/n1/pub/16-201-x/2009000/t232-eng.htm",
+   "title": "Table 1.4 Biophysical characteristics of terrestrial ecozones (Human Activity and the Environment 2009, archived; from the National Ecological Framework / Wiken et al. 1996)",
+   "publisher": "Statistics Canada",
+   "source_type": "statistics_agency",
+   "accessed": "2026-10-30",
+   "data_period": null,
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  }
+ ],
+ "units": {
+  "elevation": "m",
+  "area": "km2",
+  "distance": "km"
+ },
+ "verification": {
+  "status": "verified",
+  "confidence": "high",
+  "verified_by": "agent-04",
+  "last_verified": "2026-10-30",
+  "next_review": "2027-10-30",
+  "notes": null
+ },
+ "responsible_agent": "agent-04",
+ "limitations": "Physiographic description summarised from the Atlas of Canada; the map dates from 1967 (Bostock) and boundaries are generalised at 1:5 million. Lat/lon not given because the record describes an extensive region, not a point. Province list and settlement note are agent-04 readings of the Atlas map, not Atlas text.",
+ "created": "2026-10-30",
+ "updated": "2026-10-30"
+}

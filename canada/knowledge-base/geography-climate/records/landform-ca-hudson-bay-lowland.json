@@ -1,0 +1,80 @@
+{
+ "id": "landform-ca-hudson-bay-lowland",
+ "category": "landform",
+ "subcategory": "physiographic region",
+ "name": "Hudson Bay Lowland",
+ "name_fr": null,
+ "geo": {
+  "province": "CA",
+  "region": null,
+  "city": null,
+  "neighbourhood": null,
+  "address": null,
+  "lat": null,
+  "lon": null,
+  "coord_precision": "unknown",
+  "coord_source": null,
+  "extent": "Southern and western shores of Hudson Bay and James Bay"
+ },
+ "description": "The main central depression on the surface of the Canadian Shield: a low, swampy plain with subdued glacial features and a belt of raised beaches bordering Hudson Bay. One of the largest wetland landscapes in North America, almost roadless.",
+ "attributes": {
+  "physiographic_level": "region",
+  "provinces_territories": [
+   "MB",
+   "ON",
+   "QC"
+  ],
+  "ecozone_named_in_source": "Hudson Plains (plains; wetlands, some herb-moss-lichen tundra, evergreen forest; cold to mild, semi-arid; discontinuous permafrost)",
+  "protected_area_example": "Wapusk National Park (MB): spans boreal forest to arctic tundra; one of the world's largest polar bear maternity denning areas"
+ },
+ "data_kind": "official_fact",
+ "sources": [
+  {
+   "url": "https://atlas.gc.ca/phys/en/index.html",
+   "title": "The Atlas of Canada – Physiographic Regions of Canada (map 1254A compiled by H.S. Bostock, 1967, with descriptive text)",
+   "publisher": "Natural Resources Canada",
+   "source_type": "federal_government",
+   "accessed": "2026-10-30",
+   "data_period": null,
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  },
+  {
+   "url": "https://www150.statcan.gc.ca/n1/pub/16-201-x/2009000/t232-eng.htm",
+   "title": "Table 1.4 Biophysical characteristics of terrestrial ecozones (Human Activity and the Environment 2009, archived; from the National Ecological Framework / Wiken et al. 1996)",
+   "publisher": "Statistics Canada",
+   "source_type": "statistics_agency",
+   "accessed": "2026-10-30",
+   "data_period": null,
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  },
+  {
+   "url": "https://parks.canada.ca/pn-np/mb/wapusk/nature",
+   "title": "Wapusk National Park – Nature",
+   "publisher": "Parks Canada",
+   "source_type": "park_authority",
+   "accessed": "2026-10-30",
+   "data_period": null,
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  }
+ ],
+ "units": {
+  "elevation": "m",
+  "area": "km2",
+  "distance": "km"
+ },
+ "verification": {
+  "status": "verified",
+  "confidence": "high",
+  "verified_by": "agent-04",
+  "last_verified": "2026-10-30",
+  "next_review": "2027-10-30",
+  "notes": null
+ },
+ "responsible_agent": "agent-04",
+ "limitations": "Physiographic description summarised from the Atlas of Canada; the map dates from 1967 (Bostock) and boundaries are generalised at 1:5 million. Lat/lon not given because the record describes an extensive region, not a point. Wetland superlative and roadless note are agent-04 interpretation.",
+ "created": "2026-10-30",
+ "updated": "2026-10-30"
+}

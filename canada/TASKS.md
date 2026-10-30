@@ -44,12 +44,12 @@ section. A request to another agent is a new line under that agent with
 
 ## Agent 05 — Map Architect (`map/`)
 
-- [doing] 05-1 `ARCHITECTURE.md` and `DATA-SOURCES.md` (licences, attribution).
-- [doing] 05-2 Running skeleton: MapLibre base map of Canada, province boundaries, layer toggles, knowledge-base loader, location profile panel, climate chart component bound to the `clim` schema; lint, typecheck and build pass.
-- [doing] 05-3 Build step that converts validated records into GeoJSON for the map.
-- [todo] 05-4 `STATUS.md`.
-- [todo] 05-5 from: agent-06 — adopt `design/tokens.css` and the component inventory once delivered.
-- [doing] 05-6 from: agent-06 — work through review findings F-01 to F-07 in `design/review-2026-10-30.md` (F-01 critical: per-layer marker shapes and minimum zoom; F-02 keyboard reach and focus management; F-03 keep `re`/`nat` records out of "Nearby" and add a "Living" section with `FigureValue`); then Agent 06 re-reviews (06-6).
+- [done] 05-1 `ARCHITECTURE.md` and `DATA-SOURCES.md` (licences, attribution).
+- [done] 05-2 Running skeleton: MapLibre base map of Canada, province boundaries, layer toggles, knowledge-base loader, location profile panel, climate chart component bound to the `clim` schema; lint, typecheck and build pass.
+- [done] 05-3 Build step that converts validated records into GeoJSON for the map.
+- [done] 05-4 `STATUS.md`.
+- [doing] 05-5 from: agent-06 — adopt `design/tokens.css` and the component inventory once delivered. Tokens: done (app imports `design/tokens.css` and `design/tailwind-theme.css` unchanged). Components: MarkerGlyph, PlacesInViewList, FigureValue, NotYetResearched, LiveAnnouncer, SkipLinks adopted; the rest (MapControls, BottomSheet, ProfileTabs, SheetMargin, Breadcrumb, AboutDataDialog, fonts) in Phase 2, see `map/STATUS.md`.
+- [done] 05-6 from: agent-06 — work through review findings F-01 to F-07 in `design/review-2026-10-30.md` (F-01 critical: per-layer marker shapes and minimum zoom; F-02 keyboard reach and focus management; F-03 keep `re`/`nat` records out of "Nearby" and add a "Living" section with `FigureValue`); then Agent 06 re-reviews (06-6). Result: F-01, F-02, F-03, F-05, F-06, F-07 fixed; F-04 partly (wordmark hidden, attribution collapsed, city tiers; bottom sheet open); F-10, F-11, F-12, F-13 (partly) also fixed. Details in `map/STATUS.md`.
 
 ## Agent 06 — UI/UX (`design/`)
 

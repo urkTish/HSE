@@ -1,0 +1,88 @@
+{
+ "id": "hazard-qc-on-ice-storm",
+ "category": "hazard",
+ "subcategory": "ice storm",
+ "name": "Ice storms and freezing rain – St. Lawrence and Ottawa valleys",
+ "name_fr": null,
+ "geo": {
+  "province": "QC",
+  "region": null,
+  "city": null,
+  "neighbourhood": null,
+  "address": null,
+  "lat": null,
+  "lon": null,
+  "coord_precision": "unknown",
+  "coord_source": null,
+  "extent": "Eastern Ontario, southern Quebec, New Brunswick"
+ },
+ "description": "Freezing rain is most frequent in the St. Lawrence and Ottawa valleys and the Maritimes. The January 1998 ice storm (4–10 January) left up to 100 mm of ice pellets and freezing rain in some areas of eastern Ontario, southern Quebec and New Brunswick, destroyed power grids, caused about 35 deaths, displaced more than 600,000 people and led to the largest domestic troop deployment in Canadian history (over 15,000 personnel). An April 2023 glaze storm hit Montréal–Ottawa again.",
+ "attributes": {
+  "hazard_type": "ice storm",
+  "exposed_areas": [
+   "Montréal",
+   "Ottawa",
+   "Kingston",
+   "Eastern Townships",
+   "Saint John River valley"
+  ],
+  "documented_events": [
+   "January 1998 ice storm (Veterans Affairs Canada)",
+   "April 2023 glaze storm in Montréal–Ottawa (ECCC 2023 list)"
+  ],
+  "practical_implications": [
+   "Multi-day power outages in winter; tree damage",
+   "A backup heat source matters more here than in the West"
+  ],
+  "related_climate_records": [
+   "clim-qc-montreal-trudeau-intl-a",
+   "clim-on-ottawa-intl-a",
+   "clim-on-ottawa-cda",
+   "clim-nb-fredericton-a"
+  ],
+  "official_information": [
+   "https://veterans.gc.ca/en/remembrance/military-history/service-canada/1998-ice-storm",
+   "https://www.canada.ca/en/environment-climate-change/services/top-ten-weather-stories/2023.html"
+  ]
+ },
+ "data_kind": "official_fact",
+ "sources": [
+  {
+   "url": "https://veterans.gc.ca/en/remembrance/military-history/service-canada/1998-ice-storm",
+   "title": "1998 Ice Storm",
+   "publisher": "Veterans Affairs Canada",
+   "source_type": "federal_government",
+   "accessed": "2026-10-30",
+   "data_period": "1998",
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  },
+  {
+   "url": "https://www.canada.ca/en/environment-climate-change/services/top-ten-weather-stories/2023.html",
+   "title": "Canada's top 10 weather stories of 2023",
+   "publisher": "Environment and Climate Change Canada",
+   "source_type": "federal_government",
+   "accessed": "2026-10-30",
+   "data_period": "2023",
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  }
+ ],
+ "units": {
+  "elevation": "m",
+  "area": "km2",
+  "distance": "km"
+ },
+ "verification": {
+  "status": "verified",
+  "confidence": "high",
+  "verified_by": "agent-04",
+  "last_verified": "2026-10-30",
+  "next_review": "2027-04-30",
+  "notes": "Event facts quoted or paraphrased from the cited official pages on 2026-10-30. Exposure and implications are agent-04 interpretation."
+ },
+ "responsible_agent": "agent-04",
+ "limitations": "Average days with freezing rain per station are in the 1991–2020 clim records (\"Days per year with freezing rain\"). Past events show exposure; they are not a prediction for any particular year. Exposure varies street by street – check municipal and provincial hazard maps for a specific property.",
+ "created": "2026-10-30",
+ "updated": "2026-10-30"
+}

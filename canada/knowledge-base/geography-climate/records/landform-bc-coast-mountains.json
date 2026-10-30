@@ -1,0 +1,102 @@
+{
+ "id": "landform-bc-coast-mountains",
+ "category": "landform",
+ "subcategory": "mountain range",
+ "name": "Coast Mountains",
+ "name_fr": null,
+ "geo": {
+  "province": "BC",
+  "region": null,
+  "city": null,
+  "neighbourhood": null,
+  "address": null,
+  "lat": null,
+  "lon": null,
+  "coord_precision": "unknown",
+  "coord_source": null,
+  "extent": "Mainland BC coast from the Fraser River to the Alaska Panhandle"
+ },
+ "description": "The Western System ranges that rise directly from the fjorded Pacific coast of mainland British Columbia; glaciated, very wet on the windward side and the barrier that separates the mild, rainy coast from the drier interior. Mount Waddington (4,016 m) is the highest summit wholly in British Columbia.",
+ "attributes": {
+  "system": "Cordillera – Western System",
+  "provinces_territories": [
+   "BC"
+  ],
+  "notable_heights": [
+   {
+    "name": "Mount Waddington",
+    "elevation_m": 4016
+   },
+   {
+    "name": "Mount Tiedemann",
+    "elevation_m": 3848
+   },
+   {
+    "name": "Monarch Mountain",
+    "elevation_m": 3459
+   }
+  ],
+  "ecozone_named_in_source": "Pacific Maritime (mountains, minor coastal plains; coastal evergreen forest; mild temperate, very wet to cold alpine)",
+  "gateway_towns": [
+   "Vancouver (North Shore)",
+   "Squamish",
+   "Whistler",
+   "Bella Coola",
+   "Prince Rupert"
+  ],
+  "climate_records": [
+   "clim-bc-vancouver-intl-a",
+   "clim-bc-vancouver-harbour-cs"
+  ]
+ },
+ "data_kind": "official_fact",
+ "sources": [
+  {
+   "url": "https://www150.statcan.gc.ca/n1/pub/11-402-x/2010000/chap/geo/tbl/tbl03-eng.htm",
+   "title": "Table 15.3 Selected principal heights, by province and territory (Canada Year Book 2010, archived; source: NRCan Atlas of Canada)",
+   "publisher": "Statistics Canada",
+   "source_type": "statistics_agency",
+   "accessed": "2026-10-30",
+   "data_period": null,
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  },
+  {
+   "url": "https://www150.statcan.gc.ca/n1/pub/16-201-x/2009000/t232-eng.htm",
+   "title": "Table 1.4 Biophysical characteristics of terrestrial ecozones (Human Activity and the Environment 2009, archived; from the National Ecological Framework / Wiken et al. 1996)",
+   "publisher": "Statistics Canada",
+   "source_type": "statistics_agency",
+   "accessed": "2026-10-30",
+   "data_period": null,
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  },
+  {
+   "url": "https://parks.canada.ca/pn-np/bc/glacier/nature",
+   "title": "Glacier National Park – Nature",
+   "publisher": "Parks Canada",
+   "source_type": "park_authority",
+   "accessed": "2026-10-30",
+   "data_period": null,
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  }
+ ],
+ "units": {
+  "elevation": "m",
+  "area": "km2",
+  "distance": "km"
+ },
+ "verification": {
+  "status": "verified",
+  "confidence": "high",
+  "verified_by": "agent-04",
+  "last_verified": "2026-10-30",
+  "next_review": "2027-10-30",
+  "notes": null
+ },
+ "responsible_agent": "agent-04",
+ "limitations": "Rain-shadow role and gateway towns are agent-04 interpretation; the Glacier NP page names the Coast Mountains as the first barrier west of the Columbia Mountains.",
+ "created": "2026-10-30",
+ "updated": "2026-10-30"
+}

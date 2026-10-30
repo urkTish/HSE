@@ -241,6 +241,7 @@
   "phenomena": [
    "Days per year with freezing rain or freezing drizzle: 9.8 (code D)",
    "Days per year with thunderstorms: 11.3 (code D)",
+   "Days per year with hail: 0.7 (code D)",
    "Days per year with humidex >= 30: 50.4 (code D)",
    "Days per year with wind chill below -30: 6.7 (code D)",
    "Days per year with maximum temperature <= 0 °C: 73.9 (code C)",

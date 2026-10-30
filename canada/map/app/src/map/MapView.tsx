@@ -20,6 +20,7 @@ import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
 import type { FeatureCollection } from "geojson";
 import type { AttributionEntry, LayerDef, ProvinceCode, Selection } from "../kb/types";
 import { drawMarker } from "./markers";
+import { CITY_TIER_MINZOOM, pointLayerIds } from "./layerIds";
 import {
   CANADA_BOUNDS,
   RELIEF_TILES,
@@ -65,17 +66,11 @@ export interface MapViewState {
   zoom: number;
 }
 
-/** City tiers (design/components.md §2): tier 1 always, tier 2 from z5, tier 3 from z7. */
-export const CITY_TIER_MINZOOM: Record<number, number> = { 1: 0, 2: 5, 3: 7 };
-
-/** Every rendered point-layer id of a layer (cities have one per tier). */
-export function pointLayerIds(l: LayerDef): string[] {
-  return l.id === "cities" ? [1, 2, 3].map((t) => `ce-cities-pt-${t}`) : [`ce-${l.id}-pt`];
-}
 
 setWorkerUrl(workerUrl);
 
 const PROV_SRC = "ce-provinces";
+const INITIAL_FIT_PADDING = { top: 80, bottom: 90, left: 24, right: 24 };
 const SEL_SRC = "ce-selected";
 const srcId = (layer: string) => `ce-src-${layer}`;
 
@@ -105,6 +100,7 @@ export default function MapView(props: Props) {
   const selectedProv = useRef<ProvinceCode | null>(null);
   const attributionRef = useRef<AttributionControl | null>(null);
   const selectProvRef = useRef<((code: ProvinceCode | null) => void) | null>(null);
+  const initialFitDone = useRef(false);
   const [styleVersion, setStyleVersion] = useState(0);
   const [tooltip, setTooltip] = useState<{ x: number; y: number; text: string } | null>(null);
 
@@ -132,7 +128,8 @@ export default function MapView(props: Props) {
         style,
         bounds: CANADA_BOUNDS,
         // Leave room for the layer panel on wide screens and the search bar on top.
-        fitBoundsOptions: { padding: window.innerWidth >= 768 ? { top: 80, bottom: 70, left: 340, right: 24 } : { top: 110, bottom: 40, left: 16, right: 16 } },
+        // Panel space is applied separately with setPadding (see the padding effect).
+        fitBoundsOptions: { padding: INITIAL_FIT_PADDING },
         attributionControl: false,
         maxZoom: 16,
         minZoom: 1.5,
@@ -292,6 +289,11 @@ export default function MapView(props: Props) {
     const m = mapRef.current;
     if (!m || !styleVersion) return;
     m.setPadding({ left: padding.left, right: padding.right, bottom: padding.bottom, top: 0 });
+    if (!initialFitDone.current) {
+      // Re-fit Canada once the panel padding is known, so the country sits in the visible area.
+      initialFitDone.current = true;
+      m.fitBounds(CANADA_BOUNDS, { padding: INITIAL_FIT_PADDING, duration: 0 });
+    }
   }, [padding.left, padding.right, padding.bottom, styleVersion]);
 
   // ---- fly to a focus point (search results, nearby list) ----

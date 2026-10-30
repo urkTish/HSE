@@ -241,6 +241,7 @@
   "phenomena": [
    "Days per year with freezing rain or freezing drizzle: 16 (code A)",
    "Days per year with thunderstorms: 19.6 (code A)",
+   "Days per year with hail: 0.5 (code A)",
    "Days per year with fog, ice fog or freezing fog: 56.8 (code A)",
    "Days per year with smoke or haze: 8.1 (code A)",
    "Days per year with humidex >= 30: 25.1 (code A)",

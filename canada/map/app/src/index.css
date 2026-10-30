@@ -45,9 +45,16 @@ body {
   border-top-color: var(--ce-line) !important;
 }
 
+/* Keep the attribution clear of the left column on wide screens. */
+@media (min-width: 768px) {
+  .maplibregl-ctrl-bottom-right .maplibregl-ctrl-attrib {
+    max-width: calc(100vw - 380px);
+  }
+}
+
 /* Small screens: keep map controls clear of the wrapped header. */
 @media (max-width: 767px) {
-  .maplibregl-ctrl-top-right {
-    top: 128px;
+  .maplibregl-map .maplibregl-ctrl-top-right {
+    top: 60px;
   }
 }

@@ -1,0 +1,87 @@
+{
+ "id": "landform-nu-innuitian-region",
+ "category": "landform",
+ "subcategory": "physiographic region",
+ "name": "Innuitian Region",
+ "name_fr": null,
+ "geo": {
+  "province": "NU",
+  "region": null,
+  "city": null,
+  "neighbourhood": null,
+  "address": null,
+  "lat": null,
+  "lon": null,
+  "coord_precision": "unknown",
+  "coord_source": null,
+  "extent": "Queen Elizabeth Islands (Ellesmere, Axel Heiberg and neighbouring islands)"
+ },
+ "description": "The mountains, plateaus and lowlands of the northern Arctic islands: two mountain zones (Grantland, Axel Heiberg, Victoria and Albert mountains) separated by the Eureka Upland, with ice sheets on Axel Heiberg and north-western Ellesmere islands through which peaks rise as nunataks; Sverdrup Lowlands and Perry Plateau to the south. Barbeau Peak (2,616 m) on Ellesmere Island is Nunavut's highest point.",
+ "attributes": {
+  "physiographic_level": "subregion of the Arctic Lands",
+  "provinces_territories": [
+   "NU"
+  ],
+  "notable_heights": [
+   {
+    "name": "Barbeau Peak, Ellesmere Island (highest point of Nunavut)",
+    "elevation_m": 2616
+   },
+   {
+    "name": "Outlook Peak, Axel Heiberg Island",
+    "elevation_m": 2210
+   }
+  ],
+  "ecozone_named_in_source": "Arctic Cordillera (mountains; mainly unvegetated; extremely cold, dry; continuous permafrost)"
+ },
+ "data_kind": "official_fact",
+ "sources": [
+  {
+   "url": "https://atlas.gc.ca/phys/en/index.html",
+   "title": "The Atlas of Canada – Physiographic Regions of Canada (map 1254A compiled by H.S. Bostock, 1967, with descriptive text)",
+   "publisher": "Natural Resources Canada",
+   "source_type": "federal_government",
+   "accessed": "2026-10-30",
+   "data_period": null,
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  },
+  {
+   "url": "https://www150.statcan.gc.ca/n1/pub/11-402-x/2010000/chap/geo/tbl/tbl03-eng.htm",
+   "title": "Table 15.3 Selected principal heights, by province and territory (Canada Year Book 2010, archived; source: NRCan Atlas of Canada)",
+   "publisher": "Statistics Canada",
+   "source_type": "statistics_agency",
+   "accessed": "2026-10-30",
+   "data_period": null,
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  },
+  {
+   "url": "https://www150.statcan.gc.ca/n1/pub/16-201-x/2009000/t232-eng.htm",
+   "title": "Table 1.4 Biophysical characteristics of terrestrial ecozones (Human Activity and the Environment 2009, archived; from the National Ecological Framework / Wiken et al. 1996)",
+   "publisher": "Statistics Canada",
+   "source_type": "statistics_agency",
+   "accessed": "2026-10-30",
+   "data_period": null,
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  }
+ ],
+ "units": {
+  "elevation": "m",
+  "area": "km2",
+  "distance": "km"
+ },
+ "verification": {
+  "status": "verified",
+  "confidence": "high",
+  "verified_by": "agent-04",
+  "last_verified": "2026-10-30",
+  "next_review": "2027-10-30",
+  "notes": null
+ },
+ "responsible_agent": "agent-04",
+ "limitations": "Physiographic description summarised from the Atlas of Canada; the map dates from 1967 (Bostock) and boundaries are generalised at 1:5 million. Lat/lon not given because the record describes an extensive region, not a point. The Arctic Cordillera ecozone also includes the mountains of eastern Baffin Island and the Torngats (Davis Region of the Shield in the physiographic scheme).",
+ "created": "2026-10-30",
+ "updated": "2026-10-30"
+}

@@ -38,9 +38,10 @@ analytics.
 | Data build | `app/scripts/build-data.mjs` | Validator run, sanitising, geometry, layer assignment, file output | knowledge base, `layers.config.json`, `DATA-SOURCES.md` |
 | Gazetteer import | `app/scripts/fetch-natural-earth.mjs` | Regenerates `knowledge-base/places/city-*.json` and the province boundary file from pinned Natural Earth v5.1.2 | Natural Earth only |
 | Knowledge base (client) | `app/src/kb/` | `types.ts` mirrors the JSON schemas; `loader.ts` fetches generated files with a per-category cache; `geo.ts` great-circle distance and accent-insensitive normalisation; `layers.config.json` the twelve layers (shared with the build) | generated files |
-| Map | `app/src/map/` | `basemap.ts` style resolution with 6 s timeout and built-in fallback, theme detection, token reader; `MapView.tsx` MapLibre map, province boundaries with hover/selected feature-state, one clustered GeoJSON source per layer, selection ring, attribution control, fly-to | nothing about profiles or search; reports clicks via `onSelect` |
+| Map | `app/src/map/` | `basemap.ts` style resolution with 6 s timeout and built-in fallback, theme detection, token reader; `markers.ts` one geometry per marker shape (design-system §7.2), rasterised for `map.addImage`; `MarkerGlyph.tsx` the same geometry as inline SVG for the legend and lists; `layerIds.ts` city tiers and layer ids; `MapView.tsx` MapLibre map, province boundaries with hover/selected feature-state, one clustered GeoJSON source per layer drawn as symbol markers with per-layer min-zoom and a feature-state hover ring, city tiers (z0/z5/z7), selection ring, base-map city labels hidden while our city layer is on, padding so the camera centres beside open panels, attribution control, fly-to, view reporting for "Places in view" | nothing about profiles or search; reports clicks via `onSelect` and the view via `onView` |
 | Dynamic retrieval | `app/src/dynamic/onDemand.ts` | The single entry point for figures that change (rents, prices, tuition amounts, rates, forecasts). Phase 1 returns `unavailable` with a reason | — |
-| UI | `app/src/ui/` | `LayerPanel` (12 toggles, counts, honest empty states), `SearchBox` (combobox over names), `ProfilePanel` (record and province profiles, section by section), `ClimateChart` (SVG, bound to the `clim` schema) | kb types, dynamic |
+| UI | `app/src/ui/` | `LayerPanel` (12 toggles with marker glyphs, "n in view" / "zoom n+" / "none yet", honest empty states, "About the data"), `PlacesInView` (keyboard and screen-reader list of what is on screen), `SearchBox` (combobox over names), `ProfilePanel` (record and province profiles, section by section, focus to the heading on open), `FigureValue` (the one way a figure is shown: kind, period, verification, 60-day staleness, link-only state), `ClimateChart` (SVG, bound to the `clim` schema) | kb types, dynamic |
+| Accessibility glue | `app/src/App.tsx` | Skip link to "Places in view", one `aria-live` announcer for selections, focus returned to the opener on close, Escape closes the profile only outside text inputs | — |
 | Shell | `app/src/App.tsx` | Loads data, owns UI state (layers on, selection, focus), composes the modules | all |
 | Styling | `app/src/index.css` | Imports Tailwind, `canada/design/tokens.css` and `canada/design/tailwind-theme.css` (Agent 06); the app defines no colours of its own. MapLibre paint colours are read from the same tokens at style load | design lane |
 
@@ -81,11 +82,16 @@ province profile, not drawn).
 searchable and appear on the province profile under "Records without a map
 location".
 
-**Contextual visibility.** Every layer except cities is a clustered source
-(radius 40 px, clusters up to z9; click zooms to the expansion zoom). Cities
-are few and drawn unclustered, with capitals larger and labels ordered by
-Natural Earth rank so collisions hide the minor ones first. Only layers 1
-and 12 are on by default.
+**Contextual visibility.** Each layer has a marker shape and a minimum zoom
+(`layers.config.json`, from `design/components.md` §2: schools diamond z0,
+climate ring-dot z4, parks hexagon z4, transport square z4, natural triangle
+z5, physical triangle-outline z5, real estate tag z6, tourism pentagon z6,
+trails inverted triangle z9, neighbourhoods ring z10). Every layer except
+cities is a clustered source (radius 48 px, clusters up to z12; click zooms
+to the expansion zoom). Cities are drawn unclustered in three tiers
+(capitals and Natural Earth scalerank ≤ 3 from z0, ≤ 6 from z5, the rest
+from z7), capitals larger, labels ordered by rank. Only layers 1 and 12 are
+on by default. The layer panel shows "n in view", "zoom n+" or "none yet".
 
 ## 4. What is never in static files, and how changing figures will appear
 
@@ -159,7 +165,12 @@ qualifying ones. Nothing else populates that section.
   how it was placed), Sources and reliability (data kind, verification,
   sources with access dates and licences, limitations, record ID). A
   `city` profile pulls in `clim` records with the same province and city
-  name, or the nearest within 30 km. A province click opens a province
+  name, or the nearest within 30 km (newest normals period first; one
+  chart, other stations as links). City profiles add a "Living" section
+  listing the city's market observations through `FigureValue` (no value
+  stored; link to the source), and close with "Not yet researched for this
+  place". "Nearby" lists places only (not `re`, `nat`, `clim` or `hazard`
+  records). A province click opens a province
   profile (counts per layer, principal cities, unmapped records, boundary
   caveat).
 - **Climate chart.** Hand-written SVG following `design/design-system.md`
@@ -200,8 +211,9 @@ proposals P-05-1 … P-05-6 in `STATUS.md`.
   GeoJSON geometry convention (for example `knowledge-base/geography-climate/geometry/<id>.geojson`).
 
 **Phase 3 — core interactive map**
-- Marker shapes per layer drawn on canvas and registered with `addImage`
-  (design-system §7.2), selection bracket, cluster sizes 28/36/44 px.
+- Selection bracket image (design-system §7.3); marker images regenerated
+  with `updateImage` on a manual theme toggle (they are redrawn on every
+  style load today). Marker shapes per layer are done (review F-01).
 - Mobile bottom sheet with peek height; layer rail collapsed to icons.
 - Re-theme base-map land and water to the design tokens; manual theme toggle.
 - Self-host Archivo and Source Sans 3 (SIL OFL) via npm packages, with a

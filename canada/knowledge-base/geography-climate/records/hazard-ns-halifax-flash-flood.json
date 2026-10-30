@@ -1,0 +1,79 @@
+{
+ "id": "hazard-ns-halifax-flash-flood",
+ "category": "hazard",
+ "subcategory": "flood",
+ "name": "Flash flooding from extreme rain – Halifax region",
+ "name_fr": null,
+ "geo": {
+  "province": "NS",
+  "region": null,
+  "city": null,
+  "neighbourhood": null,
+  "address": null,
+  "lat": null,
+  "lon": null,
+  "coord_precision": "unknown",
+  "coord_source": null,
+  "extent": "Halifax Regional Municipality and central Nova Scotia"
+ },
+ "description": "In July 2023, 100 mm in one hour and 173 mm in six hours fell in Bedford (Halifax), a national rainfall record per ECCC; four people died. Halifax's summer rainfall that year was 619 mm, about twice normal.",
+ "attributes": {
+  "hazard_type": "flood",
+  "exposed_areas": [
+   "Bedford, Sackville and other Halifax-area communities along small rivers"
+  ],
+  "documented_events": [
+   "July 2023: 100 mm/1 h and 173 mm/6 h in Bedford; 4 deaths (ECCC 2023)"
+  ],
+  "practical_implications": [
+   "Small-river and urban flooding; basement flooding risk"
+  ],
+  "related_climate_records": [
+   "clim-ns-halifax-stanfield-intl-a"
+  ],
+  "official_information": [
+   "https://www.canada.ca/en/environment-climate-change/services/top-ten-weather-stories/2023.html",
+   "https://changingclimate.ca/CCCR2019/chapter/headline-statements/"
+  ]
+ },
+ "data_kind": "official_fact",
+ "sources": [
+  {
+   "url": "https://www.canada.ca/en/environment-climate-change/services/top-ten-weather-stories/2023.html",
+   "title": "Canada's top 10 weather stories of 2023",
+   "publisher": "Environment and Climate Change Canada",
+   "source_type": "federal_government",
+   "accessed": "2026-10-30",
+   "data_period": "2023",
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  },
+  {
+   "url": "https://changingclimate.ca/CCCR2019/chapter/headline-statements/",
+   "title": "Canada's Changing Climate Report (2019) – Headline statements",
+   "publisher": "Government of Canada (Environment and Climate Change Canada, lead)",
+   "source_type": "federal_government",
+   "accessed": "2026-10-30",
+   "data_period": null,
+   "methodology": "Assessment report; statements are assessments of observed and projected change, not local forecasts",
+   "licence": "Open Government Licence – Canada"
+  }
+ ],
+ "units": {
+  "elevation": "m",
+  "area": "km2",
+  "distance": "km"
+ },
+ "verification": {
+  "status": "verified",
+  "confidence": "high",
+  "verified_by": "agent-04",
+  "last_verified": "2026-10-30",
+  "next_review": "2027-04-30",
+  "notes": "Event facts quoted or paraphrased from the cited official pages on 2026-10-30. Exposure and implications are agent-04 interpretation."
+ },
+ "responsible_agent": "agent-04",
+ "limitations": "Single event. Past events show exposure; they are not a prediction for any particular year. Exposure varies street by street – check municipal and provincial hazard maps for a specific property.",
+ "created": "2026-10-30",
+ "updated": "2026-10-30"
+}

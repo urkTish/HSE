@@ -1,0 +1,95 @@
+{
+ "id": "region-nt-northwest-territories",
+ "category": "region",
+ "subcategory": "province or territory",
+ "name": "Northwest Territories",
+ "name_fr": "Territoires du Nord-Ouest",
+ "geo": {
+  "province": "NT",
+  "region": null,
+  "city": null,
+  "neighbourhood": null,
+  "address": null,
+  "lat": null,
+  "lon": null,
+  "coord_precision": "unknown",
+  "coord_source": null,
+  "extent": null
+ },
+ "description": "The Mackenzie River valley (Interior Plains) separates the Mackenzie Mountains on the west from the Canadian Shield on the east (Yellowknife, Great Slave and Great Bear lakes); the Mackenzie Delta (Inuvik) and Arctic islands lie to the north. Much of the territory has permafrost.",
+ "attributes": {
+  "area_total_km2": 1346106,
+  "land_area_km2": 1183085,
+  "freshwater_area_km2": 163021,
+  "highest_point": {
+   "name": "Unnamed peak, Mackenzie Mountains (61°52′N, 127°42′W)",
+   "elevation_m": 2773
+  },
+  "physiographic_regions_and_landforms": [
+   "landform-ca-interior-plains",
+   "landform-ca-canadian-shield",
+   "landform-nt-mackenzie-mountains",
+   "landform-ca-arctic-lowlands"
+  ],
+  "climate_records": [
+   "clim-nt-yellowknife-a",
+   "clim-nt-inuvik-a"
+  ],
+  "hazard_records": [
+   "hazard-nt-boreal-wildfire",
+   "hazard-ca-permafrost-thaw",
+   "hazard-ca-extreme-cold"
+  ],
+  "see_also_other_agents": "Taxes, healthcare and immigration: knowledge-base/national/ (Agent 01). Housing and rents: knowledge-base/real-estate/ (Agent 02)."
+ },
+ "data_kind": "professional_interpretation",
+ "sources": [
+  {
+   "url": "https://www150.statcan.gc.ca/n1/pub/11-402-x/2012000/chap/geo/tbl/tbl06-eng.htm",
+   "title": "Table 15.6 Land and freshwater area, by province and territory (Canada Year Book 2012, archived; source: NRCan Atlas of Canada)",
+   "publisher": "Statistics Canada",
+   "source_type": "statistics_agency",
+   "accessed": "2026-10-30",
+   "data_period": null,
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  },
+  {
+   "url": "https://www150.statcan.gc.ca/n1/pub/11-402-x/2010000/chap/geo/tbl/tbl03-eng.htm",
+   "title": "Table 15.3 Selected principal heights, by province and territory (Canada Year Book 2010, archived; source: NRCan Atlas of Canada)",
+   "publisher": "Statistics Canada",
+   "source_type": "statistics_agency",
+   "accessed": "2026-10-30",
+   "data_period": null,
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  },
+  {
+   "url": "https://atlas.gc.ca/phys/en/index.html",
+   "title": "The Atlas of Canada – Physiographic Regions of Canada (map 1254A compiled by H.S. Bostock, 1967, with descriptive text)",
+   "publisher": "Natural Resources Canada",
+   "source_type": "federal_government",
+   "accessed": "2026-10-30",
+   "data_period": null,
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  }
+ ],
+ "units": {
+  "elevation": "m",
+  "area": "km2",
+  "distance": "km"
+ },
+ "verification": {
+  "status": "partially_verified",
+  "confidence": "medium",
+  "verified_by": "agent-04",
+  "last_verified": "2026-10-30",
+  "next_review": "2027-10-30",
+  "notes": "Area and highest point checked against the cited tables on 2026-10-30; descriptive text is interpretation of the Atlas map and climate records."
+ },
+ "responsible_agent": "agent-04",
+ "limitations": "Numeric attributes (area, heights) are official figures from the cited StatCan/NRCan tables (archived editions; area figures date from the Atlas of Canada compilation). The profile text, landform composition and city list are agent-04 professional interpretation. Tax, healthcare, housing and immigration are out of scope here (Agents 01 and 02).",
+ "created": "2026-10-30",
+ "updated": "2026-10-30"
+}

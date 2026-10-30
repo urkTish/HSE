@@ -1,0 +1,75 @@
+{
+ "id": "landform-on-niagara-escarpment",
+ "category": "landform",
+ "subcategory": "escarpment",
+ "name": "Niagara Escarpment",
+ "name_fr": null,
+ "geo": {
+  "province": "ON",
+  "region": null,
+  "city": null,
+  "neighbourhood": null,
+  "address": null,
+  "lat": null,
+  "lon": null,
+  "coord_precision": "unknown",
+  "coord_source": null,
+  "extent": "Niagara River to the Bruce Peninsula and Manitoulin Island"
+ },
+ "description": "The cuesta that splits the West Lowland of southern Ontario, running from the Niagara River on a sinuous westerly and north-westerly course to the Bruce Peninsula and Manitoulin Island; it reaches 535 m at 44°23′N 80°14′W. The main ridge of cliffs, forest and hiking terrain within reach of the Toronto–Hamilton region.",
+ "attributes": {
+  "physiographic_level": "Great Lakes–St. Lawrence Lowlands (West Lowland)",
+  "provinces_territories": [
+   "ON"
+  ],
+  "notable_heights": [
+   {
+    "name": "Niagara Escarpment high point (44°23′N 80°14′W)",
+    "elevation_m": 535
+   }
+  ],
+  "climate_records": [
+   "clim-on-toronto-city"
+  ]
+ },
+ "data_kind": "official_fact",
+ "sources": [
+  {
+   "url": "https://atlas.gc.ca/phys/en/index.html",
+   "title": "The Atlas of Canada – Physiographic Regions of Canada (map 1254A compiled by H.S. Bostock, 1967, with descriptive text)",
+   "publisher": "Natural Resources Canada",
+   "source_type": "federal_government",
+   "accessed": "2026-10-30",
+   "data_period": null,
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  },
+  {
+   "url": "https://www150.statcan.gc.ca/n1/pub/11-402-x/2010000/chap/geo/tbl/tbl03-eng.htm",
+   "title": "Table 15.3 Selected principal heights, by province and territory (Canada Year Book 2010, archived; source: NRCan Atlas of Canada)",
+   "publisher": "Statistics Canada",
+   "source_type": "statistics_agency",
+   "accessed": "2026-10-30",
+   "data_period": null,
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  }
+ ],
+ "units": {
+  "elevation": "m",
+  "area": "km2",
+  "distance": "km"
+ },
+ "verification": {
+  "status": "verified",
+  "confidence": "high",
+  "verified_by": "agent-04",
+  "last_verified": "2026-10-30",
+  "next_review": "2027-10-30",
+  "notes": null
+ },
+ "responsible_agent": "agent-04",
+ "limitations": "Hiking statement is agent-04 interpretation; trail data belongs to a later trail-record task.",
+ "created": "2026-10-30",
+ "updated": "2026-10-30"
+}

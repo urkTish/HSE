@@ -2,7 +2,7 @@
 // equivalent of the markers on screen. Markers on the canvas are not focusable.
 import { useState } from "react";
 import type { IndexEntry, LayerDef } from "../kb/types";
-import { MarkerGlyph } from "../map/markers";
+import MarkerGlyph from "../map/MarkerGlyph";
 
 interface Props {
   items: IndexEntry[];
@@ -41,8 +41,8 @@ export default function PlacesInView({ items, total, layers, onOpen }: Props) {
                       className="flex min-h-11 w-full items-center gap-2 px-4 text-left text-sm text-ink hover:bg-surface-2 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"
                     >
                       {l?.shape && <MarkerGlyph shape={l.shape} colorToken={l.colorToken} size={10} />}
-                      <span className="flex-1">{e.name}</span>
-                      <span className="text-2xs text-ink-3">{l?.label}</span>
+                      <span className="flex-1 py-1">{e.name}</span>
+                      <span className="sr-only">, {l?.label}</span>
                     </button>
                   </li>
                 );

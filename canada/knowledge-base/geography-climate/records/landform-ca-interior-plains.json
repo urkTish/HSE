@@ -1,0 +1,107 @@
+{
+ "id": "landform-ca-interior-plains",
+ "category": "landform",
+ "subcategory": "physiographic region",
+ "name": "Interior Plains",
+ "name_fr": null,
+ "geo": {
+  "province": "CA",
+  "region": null,
+  "city": null,
+  "neighbourhood": null,
+  "address": null,
+  "lat": null,
+  "lon": null,
+  "coord_precision": "unknown",
+  "coord_source": null,
+  "extent": "From the 49th parallel to the Arctic coast between the Shield and the Rocky Mountain foothills"
+ },
+ "description": "The plains between the Canadian Shield on the east and the Cordillera on the west: semi-arid prairie in the south, forest in the centre and tundra in the north. In the south they step down eastward from the Alberta Plain to the Saskatchewan Plain and, below the Manitoba Escarpment, to the lake-covered Manitoba Plain. Isolated uplands such as the Cypress Hills rise above 1,400 m.",
+ "attributes": {
+  "physiographic_level": "region",
+  "subdivisions_named_in_source": [
+   "Alberta Plain",
+   "Saskatchewan Plain",
+   "Manitoba Plain",
+   "Alberta Plateau (Peace River and Fort Nelson lowlands)",
+   "Great Slave Plain",
+   "Great Bear Plain",
+   "Peel Plain and Plateau",
+   "Horton and Anderson Plains",
+   "Colville Hills"
+  ],
+  "provinces_territories": [
+   "AB",
+   "SK",
+   "MB",
+   "BC",
+   "NT",
+   "YT"
+  ],
+  "notable_heights": [
+   {
+    "name": "Cypress Hills (SK, highest point of Saskatchewan)",
+    "elevation_m": 1392
+   },
+   {
+    "name": "Baldy Mountain (MB, highest point of Manitoba)",
+    "elevation_m": 832
+   }
+  ],
+  "ecozones_named_in_source": [
+   "Prairies (grass; aspen parkland; cold, semi-arid)",
+   "Boreal Plains (mixed forest; cold, moist)",
+   "Taiga Plains (plains; discontinuous permafrost)"
+  ]
+ },
+ "data_kind": "official_fact",
+ "sources": [
+  {
+   "url": "https://atlas.gc.ca/phys/en/index.html",
+   "title": "The Atlas of Canada – Physiographic Regions of Canada (map 1254A compiled by H.S. Bostock, 1967, with descriptive text)",
+   "publisher": "Natural Resources Canada",
+   "source_type": "federal_government",
+   "accessed": "2026-10-30",
+   "data_period": null,
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  },
+  {
+   "url": "https://www150.statcan.gc.ca/n1/pub/11-402-x/2010000/chap/geo/tbl/tbl03-eng.htm",
+   "title": "Table 15.3 Selected principal heights, by province and territory (Canada Year Book 2010, archived; source: NRCan Atlas of Canada)",
+   "publisher": "Statistics Canada",
+   "source_type": "statistics_agency",
+   "accessed": "2026-10-30",
+   "data_period": null,
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  },
+  {
+   "url": "https://www150.statcan.gc.ca/n1/pub/16-201-x/2009000/t232-eng.htm",
+   "title": "Table 1.4 Biophysical characteristics of terrestrial ecozones (Human Activity and the Environment 2009, archived; from the National Ecological Framework / Wiken et al. 1996)",
+   "publisher": "Statistics Canada",
+   "source_type": "statistics_agency",
+   "accessed": "2026-10-30",
+   "data_period": null,
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  }
+ ],
+ "units": {
+  "elevation": "m",
+  "area": "km2",
+  "distance": "km"
+ },
+ "verification": {
+  "status": "verified",
+  "confidence": "high",
+  "verified_by": "agent-04",
+  "last_verified": "2026-10-30",
+  "next_review": "2027-10-30",
+  "notes": null
+ },
+ "responsible_agent": "agent-04",
+ "limitations": "Physiographic description summarised from the Atlas of Canada; the map dates from 1967 (Bostock) and boundaries are generalised at 1:5 million. Lat/lon not given because the record describes an extensive region, not a point. Atlas text gives the Cypress Hills as \"more than 1400 metres\"; the StatCan heights table gives 1,392 m for the Saskatchewan point – the two figures refer to different summits or survey bases and are both kept.",
+ "created": "2026-10-30",
+ "updated": "2026-10-30"
+}

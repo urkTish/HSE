@@ -12,6 +12,9 @@ const STATUS: Record<Verification["status"], { icon: string; word: string; cls: 
   outdated: { icon: "⌛", word: "Outdated", cls: "text-status-warning" },
 };
 
+/** Page-load time: staleness is judged once per visit, keeping render pure. */
+const LOADED_AT = Date.now();
+
 const KIND: Record<string, string> = {
   survey: "survey figure",
   asking: "asking figure",
@@ -21,7 +24,7 @@ const KIND: Record<string, string> = {
 };
 
 /** Last day of a YYYY, YYYY-MM or YYYY-Qn period. */
-export function periodEnd(period: string | null | undefined): Date | null {
+function periodEnd(period: string | null | undefined): Date | null {
   if (!period) return null;
   const q = /^(\d{4})-Q([1-4])$/.exec(period);
   if (q) return new Date(Date.UTC(Number(q[1]), Number(q[2]) * 3, 0));
@@ -45,7 +48,7 @@ interface Props {
 export default function FigureValue({ label, value, unit, figureKind, period, verification, linkOnly }: Props) {
   const st = STATUS[verification.status];
   const end = periodEnd(period);
-  const stale = end ? Date.now() - end.getTime() > 60 * 86_400_000 : false;
+  const stale = end ? LOADED_AT - end.getTime() > 60 * 86_400_000 : false;
   return (
     <div className="rounded-md border border-line px-3 py-2">
       <div className="text-sm text-ink">{label}</div>

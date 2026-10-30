@@ -2,7 +2,7 @@
 // A layer with no records says so plainly instead of looking broken.
 import { useState } from "react";
 import type { KbIndex, LayerDef } from "../kb/types";
-import { MarkerGlyph } from "../map/markers";
+import MarkerGlyph from "../map/MarkerGlyph";
 
 interface Props {
   layers: LayerDef[];

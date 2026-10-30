@@ -1,0 +1,91 @@
+{
+ "id": "landform-qc-laurentian-highlands",
+ "category": "landform",
+ "subcategory": "highlands",
+ "name": "Laurentian Highlands (Laurentides)",
+ "name_fr": null,
+ "geo": {
+  "province": "QC",
+  "region": null,
+  "city": null,
+  "neighbourhood": null,
+  "address": null,
+  "lat": null,
+  "lon": null,
+  "coord_precision": "unknown",
+  "coord_source": null,
+  "extent": "North shore of the St. Lawrence and Ottawa valleys, Georgian Bay to the Atlantic"
+ },
+ "description": "The southern edge of the Canadian Shield, rising abruptly above the St. Lawrence Lowlands along their north-west border from Georgian Bay to the Atlantic. Rounded forested hills and countless lakes north of Montréal and Québec city, with ski hills such as Mont Tremblant (968 m) and Mont Sainte-Anne (800 m); Mont Raoul-Blanchard (1,181 m) is the highest of the Laurentians.",
+ "attributes": {
+  "physiographic_level": "Laurentian Region of the Canadian Shield",
+  "provinces_territories": [
+   "QC",
+   "ON"
+  ],
+  "notable_heights": [
+   {
+    "name": "Mont Raoul-Blanchard",
+    "elevation_m": 1181
+   },
+   {
+    "name": "Mont Tremblant",
+    "elevation_m": 968
+   },
+   {
+    "name": "Mont Sainte-Anne",
+    "elevation_m": 800
+   }
+  ],
+  "gateway_towns": [
+   "Saint-Jérôme",
+   "Sainte-Agathe-des-Monts",
+   "Mont-Tremblant",
+   "Québec city (Charlevoix, Jacques-Cartier valley)"
+  ],
+  "climate_records": [
+   "clim-qc-montreal-trudeau-intl-a",
+   "clim-qc-quebec-jean-lesage-intl-a"
+  ]
+ },
+ "data_kind": "official_fact",
+ "sources": [
+  {
+   "url": "https://atlas.gc.ca/phys/en/index.html",
+   "title": "The Atlas of Canada – Physiographic Regions of Canada (map 1254A compiled by H.S. Bostock, 1967, with descriptive text)",
+   "publisher": "Natural Resources Canada",
+   "source_type": "federal_government",
+   "accessed": "2026-10-30",
+   "data_period": null,
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  },
+  {
+   "url": "https://www150.statcan.gc.ca/n1/pub/11-402-x/2010000/chap/geo/tbl/tbl03-eng.htm",
+   "title": "Table 15.3 Selected principal heights, by province and territory (Canada Year Book 2010, archived; source: NRCan Atlas of Canada)",
+   "publisher": "Statistics Canada",
+   "source_type": "statistics_agency",
+   "accessed": "2026-10-30",
+   "data_period": null,
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  }
+ ],
+ "units": {
+  "elevation": "m",
+  "area": "km2",
+  "distance": "km"
+ },
+ "verification": {
+  "status": "verified",
+  "confidence": "high",
+  "verified_by": "agent-04",
+  "last_verified": "2026-10-30",
+  "next_review": "2027-10-30",
+  "notes": null
+ },
+ "responsible_agent": "agent-04",
+ "limitations": "Gateway towns are agent-04 context. No climate station inside the highlands is in this record set; the highlands are colder and snowier than the Montréal and Québec airport stations (direction from elevation; magnitude not quantified here).",
+ "created": "2026-10-30",
+ "updated": "2026-10-30"
+}

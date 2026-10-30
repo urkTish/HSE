@@ -241,6 +241,7 @@
   "phenomena": [
    "Days per year with freezing rain or freezing drizzle: 6.5 (code D)",
    "Days per year with thunderstorms: 10.8 (code D)",
+   "Days per year with hail: 0.16 (code D)",
    "Days per year with humidex >= 30: 22.2 (code A)",
    "Days per year with wind chill below -30: 39.8 (code A)",
    "Days per year with gusts >= 90 km/h: 0.66 (code C)",

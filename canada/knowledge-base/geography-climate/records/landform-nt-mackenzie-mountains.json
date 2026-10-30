@@ -1,0 +1,77 @@
+{
+ "id": "landform-nt-mackenzie-mountains",
+ "category": "landform",
+ "subcategory": "mountain range",
+ "name": "Mackenzie Mountains",
+ "name_fr": null,
+ "geo": {
+  "province": "NT",
+  "region": null,
+  "city": null,
+  "neighbourhood": null,
+  "address": null,
+  "lat": null,
+  "lon": null,
+  "coord_precision": "unknown",
+  "coord_source": null,
+  "extent": "Yukon–Northwest Territories boundary"
+ },
+ "description": "The Eastern System ranges along the Yukon–Northwest Territories boundary, remote and largely roadless, containing the highest point of the Northwest Territories (an unnamed peak of 2,773 m) and Mount Sir James MacBrien (2,762 m); the Nahanni country lies in their southern part.",
+ "attributes": {
+  "system": "Cordillera – Eastern System",
+  "provinces_territories": [
+   "NT",
+   "YT"
+  ],
+  "notable_heights": [
+   {
+    "name": "Unnamed peak 61°52′N 127°42′W (highest point of NT)",
+    "elevation_m": 2773
+   },
+   {
+    "name": "Mount Sir James MacBrien",
+    "elevation_m": 2762
+   }
+  ]
+ },
+ "data_kind": "official_fact",
+ "sources": [
+  {
+   "url": "https://www150.statcan.gc.ca/n1/pub/11-402-x/2010000/chap/geo/tbl/tbl03-eng.htm",
+   "title": "Table 15.3 Selected principal heights, by province and territory (Canada Year Book 2010, archived; source: NRCan Atlas of Canada)",
+   "publisher": "Statistics Canada",
+   "source_type": "statistics_agency",
+   "accessed": "2026-10-30",
+   "data_period": null,
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  },
+  {
+   "url": "https://atlas.gc.ca/phys/en/index.html",
+   "title": "The Atlas of Canada – Physiographic Regions of Canada (map 1254A compiled by H.S. Bostock, 1967, with descriptive text)",
+   "publisher": "Natural Resources Canada",
+   "source_type": "federal_government",
+   "accessed": "2026-10-30",
+   "data_period": null,
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  }
+ ],
+ "units": {
+  "elevation": "m",
+  "area": "km2",
+  "distance": "km"
+ },
+ "verification": {
+  "status": "verified",
+  "confidence": "high",
+  "verified_by": "agent-04",
+  "last_verified": "2026-10-30",
+  "next_review": "2027-10-30",
+  "notes": null
+ },
+ "responsible_agent": "agent-04",
+ "limitations": "\"Largely roadless\" and the Nahanni reference are agent-04 context.",
+ "created": "2026-10-30",
+ "updated": "2026-10-30"
+}

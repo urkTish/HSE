@@ -1,0 +1,71 @@
+{
+ "id": "hazard-bc-cascadia-earthquake",
+ "category": "hazard",
+ "subcategory": "earthquake",
+ "name": "Earthquakes and tsunami – south-western BC (Cascadia)",
+ "name_fr": null,
+ "geo": {
+  "province": "BC",
+  "region": null,
+  "city": null,
+  "neighbourhood": null,
+  "address": null,
+  "lat": null,
+  "lon": null,
+  "coord_precision": "unknown",
+  "coord_source": null,
+  "extent": "South-western British Columbia, especially Vancouver Island's west coast and the Lower Mainland"
+ },
+ "description": "South-western BC is one of the most seismically active regions in Canada: about 400 earthquakes a year occur from northern Vancouver Island to Seattle, and earthquakes capable of structural damage happen every decade or so. Megathrust earthquakes on the Cascadia Subduction Zone can reach magnitude 9, recur every 200 to 800 years and cause large tsunamis; the last was on 26 January 1700.",
+ "attributes": {
+  "hazard_type": "earthquake",
+  "exposed_areas": [
+   "Victoria",
+   "Vancouver",
+   "Vancouver Island west coast (tsunami: 15–30 minutes warning)"
+  ],
+  "documented_events": [
+   "26 January 1700 Cascadia megathrust earthquake (≈M9)"
+  ],
+  "practical_implications": [
+   "Seismic building standards; earthquake insurance; tsunami zones on the outer coast"
+  ],
+  "related_climate_records": [
+   "clim-bc-victoria-gonzales-cs",
+   "clim-bc-vancouver-intl-a"
+  ],
+  "official_information": [
+   "https://origin2.earthquakescanada.nrcan.gc.ca/pprs-pprp/pubs/GF-GI/GEOFACT_earthquakes-SW-BC_e.pdf"
+  ]
+ },
+ "data_kind": "official_fact",
+ "sources": [
+  {
+   "url": "https://origin2.earthquakescanada.nrcan.gc.ca/pprs-pprp/pubs/GF-GI/GEOFACT_earthquakes-SW-BC_e.pdf",
+   "title": "GEOFACT: Earthquakes in southwestern British Columbia",
+   "publisher": "Natural Resources Canada – Earthquakes Canada",
+   "source_type": "federal_government",
+   "accessed": "2026-10-30",
+   "data_period": null,
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  }
+ ],
+ "units": {
+  "elevation": "m",
+  "area": "km2",
+  "distance": "km"
+ },
+ "verification": {
+  "status": "verified",
+  "confidence": "high",
+  "verified_by": "agent-04",
+  "last_verified": "2026-10-30",
+  "next_review": "2027-04-30",
+  "notes": "Event facts quoted or paraphrased from the cited official pages on 2026-10-30. Exposure and implications are agent-04 interpretation."
+ },
+ "responsible_agent": "agent-04",
+ "limitations": "Geological, not climatic; included because it differentiates BC coastal cities from the rest of Canada. Past events show exposure; they are not a prediction for any particular year. Exposure varies street by street – check municipal and provincial hazard maps for a specific property.",
+ "created": "2026-10-30",
+ "updated": "2026-10-30"
+}

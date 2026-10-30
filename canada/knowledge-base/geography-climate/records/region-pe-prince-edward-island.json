@@ -1,0 +1,89 @@
+{
+ "id": "region-pe-prince-edward-island",
+ "category": "region",
+ "subcategory": "province or territory",
+ "name": "Prince Edward Island",
+ "name_fr": "Île-du-Prince-Édouard",
+ "geo": {
+  "province": "PE",
+  "region": null,
+  "city": null,
+  "neighbourhood": null,
+  "address": null,
+  "lat": null,
+  "lon": null,
+  "coord_precision": "unknown",
+  "coord_source": null,
+  "extent": null
+ },
+ "description": "A low, gently rolling island of red sandstone soils, farmland and beaches in the Gulf of St. Lawrence; the highest point is 142 m. Coastal erosion and storm surge are the dominant physical hazards (provincial source not retrievable on 2026-10-30).",
+ "attributes": {
+  "area_total_km2": 5660,
+  "land_area_km2": 5660,
+  "freshwater_area_km2": null,
+  "highest_point": {
+   "name": "Highest point in Queen's County (46°20′N, 63°25′W)",
+   "elevation_m": 142
+  },
+  "physiographic_regions_and_landforms": [
+   "landform-ca-appalachian-uplands"
+  ],
+  "climate_records": [
+   "clim-pe-charlottetown-a"
+  ],
+  "hazard_records": [
+   "hazard-ca-atlantic-post-tropical-storms"
+  ],
+  "see_also_other_agents": "Taxes, healthcare and immigration: knowledge-base/national/ (Agent 01). Housing and rents: knowledge-base/real-estate/ (Agent 02)."
+ },
+ "data_kind": "professional_interpretation",
+ "sources": [
+  {
+   "url": "https://www150.statcan.gc.ca/n1/pub/11-402-x/2012000/chap/geo/tbl/tbl06-eng.htm",
+   "title": "Table 15.6 Land and freshwater area, by province and territory (Canada Year Book 2012, archived; source: NRCan Atlas of Canada)",
+   "publisher": "Statistics Canada",
+   "source_type": "statistics_agency",
+   "accessed": "2026-10-30",
+   "data_period": null,
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  },
+  {
+   "url": "https://www150.statcan.gc.ca/n1/pub/11-402-x/2010000/chap/geo/tbl/tbl03-eng.htm",
+   "title": "Table 15.3 Selected principal heights, by province and territory (Canada Year Book 2010, archived; source: NRCan Atlas of Canada)",
+   "publisher": "Statistics Canada",
+   "source_type": "statistics_agency",
+   "accessed": "2026-10-30",
+   "data_period": null,
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  },
+  {
+   "url": "https://atlas.gc.ca/phys/en/index.html",
+   "title": "The Atlas of Canada – Physiographic Regions of Canada (map 1254A compiled by H.S. Bostock, 1967, with descriptive text)",
+   "publisher": "Natural Resources Canada",
+   "source_type": "federal_government",
+   "accessed": "2026-10-30",
+   "data_period": null,
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  }
+ ],
+ "units": {
+  "elevation": "m",
+  "area": "km2",
+  "distance": "km"
+ },
+ "verification": {
+  "status": "partially_verified",
+  "confidence": "medium",
+  "verified_by": "agent-04",
+  "last_verified": "2026-10-30",
+  "next_review": "2027-10-30",
+  "notes": "Area and highest point checked against the cited tables on 2026-10-30; descriptive text is interpretation of the Atlas map and climate records."
+ },
+ "responsible_agent": "agent-04",
+ "limitations": "Numeric attributes (area, heights) are official figures from the cited StatCan/NRCan tables (archived editions; area figures date from the Atlas of Canada compilation). The profile text, landform composition and city list are agent-04 professional interpretation. Tax, healthcare, housing and immigration are out of scope here (Agents 01 and 02).",
+ "created": "2026-10-30",
+ "updated": "2026-10-30"
+}

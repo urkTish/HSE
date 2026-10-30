@@ -1,0 +1,102 @@
+{
+ "id": "hazard-bc-interior-wildfire",
+ "category": "hazard",
+ "subcategory": "wildfire",
+ "name": "Wildfire and smoke – BC southern and central interior",
+ "name_fr": null,
+ "geo": {
+  "province": "BC",
+  "region": null,
+  "city": null,
+  "neighbourhood": null,
+  "address": null,
+  "lat": null,
+  "lon": null,
+  "coord_precision": "unknown",
+  "coord_source": null,
+  "extent": "Southern and central interior of British Columbia"
+ },
+ "description": "Wildfire is the dominant summer hazard of BC's dry interior valleys and plateaus (Okanagan, Thompson–Nicola, Cariboo, Kootenays). In 2021 the BC Wildfire Service recorded 1,522 fires burning 889,813 ha, about 50,000 evacuations and a province-wide state of emergency; the Lytton fire destroyed an estimated 90% of the village.",
+ "attributes": {
+  "hazard_type": "wildfire",
+  "exposed_areas": [
+   "Okanagan (Kelowna, Penticton)",
+   "Thompson–Nicola (Kamloops, Lytton, Merritt)",
+   "Cariboo",
+   "Kootenays (Nelson, Castlegar, Cranbrook)",
+   "Fraser Canyon"
+  ],
+  "documented_events": [
+   "2021: 1,522 fires, 889,813 ha, 50,000 evacuations, Lytton largely destroyed (ECCC top 10 of 2021)",
+   "2023 nationally: over 6,800 fires and more than 14.6 million ha; over 230,000 people evacuated (NRCan)"
+  ],
+  "practical_implications": [
+   "Summer smoke days reduce outdoor activity and air quality in July–September",
+   "Evacuation alerts and highway closures can isolate valley towns",
+   "Home insurance and FireSmart property requirements in the wildland–urban interface",
+   "Hot, dry summers in these valleys are the same climate that makes them sunny (see clim records)"
+  ],
+  "related_climate_records": [
+   "clim-bc-kelowna-a",
+   "clim-bc-kamloops-a",
+   "clim-bc-penticton-a",
+   "clim-bc-castlegar-a",
+   "clim-bc-cranbrook-a"
+  ],
+  "official_information": [
+   "https://www.canada.ca/en/environment-climate-change/services/top-ten-weather-stories/2021.html",
+   "https://natural-resources.canada.ca/forests-forestry/wildland-fires/forest-fires",
+   "https://changingclimate.ca/CCCR2019/chapter/headline-statements/"
+  ]
+ },
+ "data_kind": "official_fact",
+ "sources": [
+  {
+   "url": "https://www.canada.ca/en/environment-climate-change/services/top-ten-weather-stories/2021.html",
+   "title": "Canada's top 10 weather stories of 2021",
+   "publisher": "Environment and Climate Change Canada",
+   "source_type": "federal_government",
+   "accessed": "2026-10-30",
+   "data_period": "2021",
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  },
+  {
+   "url": "https://natural-resources.canada.ca/forests-forestry/wildland-fires/forest-fires",
+   "title": "Forest fires",
+   "publisher": "Natural Resources Canada",
+   "source_type": "federal_government",
+   "accessed": "2026-10-30",
+   "data_period": null,
+   "methodology": null,
+   "licence": "Open Government Licence – Canada"
+  },
+  {
+   "url": "https://changingclimate.ca/CCCR2019/chapter/headline-statements/",
+   "title": "Canada's Changing Climate Report (2019) – Headline statements",
+   "publisher": "Government of Canada (Environment and Climate Change Canada, lead)",
+   "source_type": "federal_government",
+   "accessed": "2026-10-30",
+   "data_period": null,
+   "methodology": "Assessment report; statements are assessments of observed and projected change, not local forecasts",
+   "licence": "Open Government Licence – Canada"
+  }
+ ],
+ "units": {
+  "elevation": "m",
+  "area": "km2",
+  "distance": "km"
+ },
+ "verification": {
+  "status": "verified",
+  "confidence": "high",
+  "verified_by": "agent-04",
+  "last_verified": "2026-10-30",
+  "next_review": "2027-04-30",
+  "notes": "Event facts quoted or paraphrased from the cited official pages on 2026-10-30. Exposure and implications are agent-04 interpretation."
+ },
+ "responsible_agent": "agent-04",
+ "limitations": "Provincial wildfire statistics for other years were not retrieved. Past events show exposure; they are not a prediction for any particular year. Exposure varies street by street – check municipal and provincial hazard maps for a specific property.",
+ "created": "2026-10-30",
+ "updated": "2026-10-30"
+}
