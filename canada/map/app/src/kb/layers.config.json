@@ -1,0 +1,167 @@
+{
+  "$comment": "The twelve information layers of SPEC §9 C. Shared by scripts/build-data.mjs and the app. A record joins the first layer whose categories include its category and whose subcategoryPattern (if any) matches its subcategory.",
+  "layers": [
+    {
+      "id": "cities",
+      "n": 1,
+      "label": "Cities and towns",
+      "categories": [
+        "city"
+      ],
+      "kind": "points",
+      "defaultOn": true,
+      "colorToken": "--ce-layer-settlement",
+      "emptyNote": "No city records loaded."
+    },
+    {
+      "id": "neighbourhoods",
+      "n": 2,
+      "label": "Neighbourhoods",
+      "categories": [
+        "nbhd"
+      ],
+      "kind": "points",
+      "defaultOn": false,
+      "colorToken": "--ce-layer-settlement",
+      "emptyNote": "No neighbourhood records yet. Neighbourhood geography is planned for Phase 2."
+    },
+    {
+      "id": "physical",
+      "n": 3,
+      "label": "Physical geography and terrain",
+      "categories": [
+        "region",
+        "landform"
+      ],
+      "kind": "points",
+      "defaultOn": false,
+      "colorToken": "--ce-layer-terrain-ink",
+      "emptyNote": "No region or landform records yet (Agent 04)."
+    },
+    {
+      "id": "elevation",
+      "n": 4,
+      "label": "Elevation and topography",
+      "categories": [],
+      "kind": "relief",
+      "defaultOn": false,
+      "colorToken": "--ce-layer-terrain-ink",
+      "emptyNote": "Country-scale shaded relief (Natural Earth II, zoom 6 and below). Detailed NRCan elevation is planned for Phase 2."
+    },
+    {
+      "id": "climate",
+      "n": 5,
+      "label": "Climate regions and climate information",
+      "categories": [
+        "clim",
+        "hazard"
+      ],
+      "kind": "points",
+      "defaultOn": false,
+      "colorToken": "--ce-layer-climate",
+      "emptyNote": "No climate-normals or hazard records yet (Agent 04)."
+    },
+    {
+      "id": "real-estate",
+      "n": 6,
+      "label": "Real estate",
+      "categories": [
+        "re"
+      ],
+      "kind": "points",
+      "defaultOn": false,
+      "colorToken": "--ce-layer-housing",
+      "emptyNote": "No market observations yet (Agent 02). Prices and rents will be fetched on demand, never stored in the map."
+    },
+    {
+      "id": "schools",
+      "n": 7,
+      "label": "Verified alternative private schools",
+      "categories": [
+        "school"
+      ],
+      "kind": "points",
+      "defaultOn": false,
+      "colorToken": "--ce-layer-education",
+      "emptyNote": "No qualifying schools yet (Agent 03). Only schools verified as qualifying are ever shown."
+    },
+    {
+      "id": "parks",
+      "n": 8,
+      "label": "National and provincial parks",
+      "categories": [
+        "park"
+      ],
+      "kind": "points",
+      "defaultOn": false,
+      "colorToken": "--ce-layer-nature",
+      "emptyNote": "No park records yet (Agent 04)."
+    },
+    {
+      "id": "trails",
+      "n": 9,
+      "label": "Hiking trails",
+      "categories": [
+        "trail"
+      ],
+      "kind": "points",
+      "defaultOn": false,
+      "colorToken": "--ce-layer-nature",
+      "emptyNote": "No trail records yet (Agent 04)."
+    },
+    {
+      "id": "natural",
+      "n": 10,
+      "label": "Natural attractions",
+      "categories": [
+        "attr"
+      ],
+      "subcategoryPattern": "natur|lake|river|waterfall|falls|mountain|peak|glacier|beach|coast|canyon|gorge|forest|island|hot spring|scenic|viewpoint|wildlife",
+      "kind": "points",
+      "defaultOn": false,
+      "colorToken": "--ce-layer-nature",
+      "emptyNote": "No natural-attraction records yet (Agent 04)."
+    },
+    {
+      "id": "tourism",
+      "n": 11,
+      "label": "Tourism and historical attractions",
+      "categories": [
+        "attr"
+      ],
+      "kind": "points",
+      "defaultOn": false,
+      "colorToken": "--ce-layer-heritage",
+      "emptyNote": "No tourism or historical-attraction records yet (Agent 04)."
+    },
+    {
+      "id": "transport",
+      "n": 12,
+      "label": "Transportation and infrastructure",
+      "categories": [
+        "route",
+        "service"
+      ],
+      "kind": "points+basemap",
+      "defaultOn": true,
+      "colorToken": "--ce-layer-transport",
+      "emptyNote": "No route or service records yet. Roads, railways and airports shown come from the OpenStreetMap base map."
+    }
+  ],
+  "categoryLabels": {
+    "city": "City or town",
+    "nbhd": "Neighbourhood",
+    "region": "Region",
+    "landform": "Landform",
+    "clim": "Climate normals",
+    "school": "School",
+    "park": "Park",
+    "trail": "Trail",
+    "attr": "Attraction",
+    "re": "Real-estate observation",
+    "nat": "National rule or programme",
+    "hazard": "Hazard",
+    "route": "Route",
+    "service": "Service"
+  }
+}
