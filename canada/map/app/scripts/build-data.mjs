@@ -3,6 +3,7 @@
 //
 //   node scripts/build-data.mjs           build; fail only if Agent 05's own lane fails validation
 //   node scripts/build-data.mjs --strict  fail when any record anywhere fails validation
+//   node scripts/build-data.mjs --kb <dir> --out <dir>   test against another knowledge-base copy
 //
 // 1. Runs canada/knowledge-base/scripts/validate.mjs over the whole knowledge base.
 // 2. Reads every record that passed. Records that failed are left out and listed
@@ -20,16 +21,21 @@ import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const appRoot = resolve(here, "..");
-const kbRoot = resolve(appRoot, "../../knowledge-base");
+const argValue = (flag) => {
+  const i = process.argv.indexOf(flag);
+  return i > -1 && process.argv[i + 1] ? resolve(process.argv[i + 1]) : null;
+};
+const realKb = resolve(appRoot, "../../knowledge-base");
+const kbRoot = argValue("--kb") ?? realKb;
 const mapRoot = resolve(appRoot, "..");
-const outDir = join(appRoot, "public/data");
+const outDir = argValue("--out") ?? join(appRoot, "public/data");
 const strict = process.argv.includes("--strict");
 const OWN_LANE = "places";
 
 const layerConfig = JSON.parse(readFileSync(join(appRoot, "src/kb/layers.config.json"), "utf8"));
 
 // ---------- 1. validate ----------
-const run = spawnSync(process.execPath, [join(kbRoot, "scripts/validate.mjs"), kbRoot], { cwd: kbRoot, encoding: "utf8" });
+const run = spawnSync(process.execPath, [join(realKb, "scripts/validate.mjs"), kbRoot], { cwd: kbRoot, encoding: "utf8" });
 if (run.error) throw run.error;
 const vOut = run.stdout || "";
 const summaryLine = vOut.trim().split("\n").filter(Boolean).pop() || "(no validator output)";

@@ -1,0 +1,52 @@
+{
+  "id": "nat-ab-rent-increase-rules",
+  "category": "nat",
+  "subcategory": "rent control",
+  "name": "Alberta rent increase rules — no cap",
+  "name_fr": null,
+  "geo": {
+    "province": "AB",
+    "region": null,
+    "city": null,
+    "neighbourhood": null,
+    "address": null,
+    "coord_precision": "unknown",
+    "coord_source": null
+  },
+  "description": "Alberta sets no limit on the amount of a rent increase; rent can rise once 365 days have passed since the last increase or the start of the tenancy, with three full tenancy months' written notice for a monthly periodic tenancy.",
+  "attributes": {
+    "cap": null,
+    "frequency": "once per 365 days",
+    "notice_monthly_periodic": "three full tenancy months",
+    "fixed_term": "no increase during the term"
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://www.alberta.ca/during-a-tenancy",
+      "title": "During a tenancy",
+      "publisher": "Government of Alberta",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": "Government of Alberta website terms (link and cite)"
+    }
+  ],
+  "units": {
+    "money": "CAD",
+    "rates": "percent"
+  },
+  "verification": {
+    "status": "partially_verified",
+    "confidence": "high",
+    "verified_by": "agent-02",
+    "last_verified": "2026-10-30",
+    "next_review": "2027-01-15",
+    "notes": "From the search summary of alberta.ca pages; the direct rent-increases URL returned 404."
+  },
+  "responsible_agent": "agent-02",
+  "limitations": "Alberta has no provincial land transfer tax; title registration fees apply (amounts not researched).",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

@@ -1,0 +1,60 @@
+{
+  "id": "nat-ns-halifax-deed-transfer-tax",
+  "category": "nat",
+  "subcategory": "land transfer tax",
+  "name": "Halifax Regional Municipality deed transfer tax (1.5%)",
+  "name_fr": null,
+  "geo": {
+    "province": "NS",
+    "region": null,
+    "city": "Halifax",
+    "neighbourhood": null,
+    "address": null,
+    "coord_precision": "unknown",
+    "coord_source": null
+  },
+  "description": "Municipal deed transfer tax of 1.5% of the purchase price within HRM (By-law D-200).",
+  "attributes": {
+    "rate_pct": 1.5,
+    "bylaw": "D-200"
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://www.halifax.ca/home-property/property-taxes/taxes-halifax",
+      "title": "Property tax information",
+      "publisher": "Halifax Regional Municipality",
+      "source_type": "municipal_government",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": "HRM website terms (link and cite)"
+    },
+    {
+      "url": "https://cdn.halifax.ca/sites/default/files/documents/city-hall/legislation-by-laws/By-lawD-200.pdf",
+      "title": "By-law D-200 respecting deed transfer tax",
+      "publisher": "Halifax Regional Municipality",
+      "source_type": "municipal_government",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": "HRM website terms (link and cite)"
+    }
+  ],
+  "units": {
+    "money": "CAD",
+    "rates": "percent"
+  },
+  "verification": {
+    "status": "partially_verified",
+    "confidence": "medium",
+    "verified_by": "agent-02",
+    "last_verified": "2026-10-30",
+    "next_review": "2027-01-15",
+    "notes": "From search summaries of the HRM page and by-law."
+  },
+  "responsible_agent": "agent-02",
+  "limitations": "Rates differ in other NS municipalities.",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

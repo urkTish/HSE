@@ -1,0 +1,54 @@
+{
+  "id": "nat-qc-rent-fixing-2026",
+  "category": "nat",
+  "subcategory": "rent control",
+  "name": "Quebec rent-fixing rules (TAL) — 2026 base percentage",
+  "name_fr": "Fixation des loyers — pourcentages applicables 2026",
+  "geo": {
+    "province": "QC",
+    "region": null,
+    "city": null,
+    "neighbourhood": null,
+    "address": null,
+    "coord_precision": "unknown",
+    "coord_source": null
+  },
+  "description": "Quebec has no fixed cap: a tenant may refuse a proposed increase and the Tribunal administratif du logement (TAL) then fixes the rent using its regulation. Under the new regulation in force 1 January 2026, the base percentage is 3.1% (plus building-specific adjustments).",
+  "attributes": {
+    "base_percentage_2026_pct": 3.1,
+    "personal_services_pct": 6.7,
+    "capital_expenditures_pct": 5.0,
+    "applies_to_notices_given_from": "2026-01-01",
+    "regulation": "Regulation respecting the criteria for the fixing of rent (Gazette officielle no. 51, 17 December 2025)",
+    "binding": "Reference used by the TAL when it fixes rent; not an automatic cap"
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://www.tal.gouv.qc.ca/en/renewal-of-the-lease-and-fixing-of-rent/applicable-percentages-to-the-criteria-for-the-fixing-of-rent",
+      "title": "Applicable percentages to the criteria for the fixing of rent",
+      "publisher": "Tribunal administratif du logement",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30",
+      "data_period": "2026",
+      "methodology": null,
+      "licence": "Gouvernement du Québec / Ville de Montréal website terms (link and cite)"
+    }
+  ],
+  "units": {
+    "money": "CAD",
+    "rates": "percent"
+  },
+  "verification": {
+    "status": "verified",
+    "confidence": "high",
+    "verified_by": "agent-02",
+    "last_verified": "2026-10-30",
+    "next_review": "2027-01-15",
+    "notes": "Read on 2026-10-30."
+  },
+  "responsible_agent": "agent-02",
+  "limitations": "New buildings may carry a five-year exemption from TAL rent fixing if the lease says so (not verified in Phase 1).",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

@@ -1,0 +1,72 @@
+{
+  "id": "nat-on-non-resident-speculation-tax",
+  "category": "nat",
+  "subcategory": "non-resident and vacancy taxes",
+  "name": "Ontario Non-Resident Speculation Tax (25%)",
+  "name_fr": null,
+  "geo": {
+    "province": "ON",
+    "region": null,
+    "city": null,
+    "neighbourhood": null,
+    "address": null,
+    "coord_precision": "unknown",
+    "coord_source": null
+  },
+  "description": "Foreign nationals, foreign corporations and taxable trustees pay 25% of the value of consideration on residential property (one to six single-family residences) anywhere in Ontario, in addition to land transfer tax.",
+  "attributes": {
+    "rate_pct": 25,
+    "effective": "2022-10-25",
+    "scope": "anywhere in Ontario",
+    "property": "land with one to six single family residences; condo parking/storage units designated since 2024-03-27",
+    "exemptions": [
+      "Ontario Immigrant Nominee Program nominees (conditions)",
+      "protected persons",
+      "spouse of a Canadian citizen or permanent resident"
+    ],
+    "rebates": [
+      "Permanent-resident rebate if the buyer becomes a PR within four years of registration (application within 180 days of becoming PR)",
+      "Industrial-use rebate (conveyances from 2025-11-06)"
+    ],
+    "international_student_or_worker_rebate": "not mentioned on the current page"
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://www.ontario.ca/document/non-resident-speculation-tax",
+      "title": "Non-Resident Speculation Tax (last updated 4 May 2026)",
+      "publisher": "Ontario Ministry of Finance",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": "© King's Printer for Ontario; ontario.ca copyright terms (non-commercial reproduction with attribution)"
+    },
+    {
+      "url": "https://www.ontario.ca/document/non-resident-speculation-tax/non-resident-speculation-tax-exemptions",
+      "title": "Non-Resident Speculation Tax exemptions",
+      "publisher": "Ontario Ministry of Finance",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": "© King's Printer for Ontario; ontario.ca copyright terms (non-commercial reproduction with attribution)"
+    }
+  ],
+  "units": {
+    "money": "CAD",
+    "rates": "percent"
+  },
+  "verification": {
+    "status": "verified",
+    "confidence": "high",
+    "verified_by": "agent-02",
+    "last_verified": "2026-10-30",
+    "next_review": "2027-01-15",
+    "notes": "Main page read on 2026-10-30; exemption detail via search summary of the exemptions page."
+  },
+  "responsible_agent": "agent-02",
+  "limitations": "Independent of the federal prohibition and of its 2027 expiry.",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

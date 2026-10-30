@@ -1,0 +1,113 @@
+{
+  "id": "nat-on-toronto-municipal-land-transfer-tax",
+  "category": "nat",
+  "subcategory": "land transfer tax",
+  "name": "City of Toronto municipal land transfer tax and first-time purchaser rebate",
+  "name_fr": null,
+  "geo": {
+    "province": "ON",
+    "region": null,
+    "city": "Toronto",
+    "neighbourhood": null,
+    "address": null,
+    "coord_precision": "unknown",
+    "coord_source": null
+  },
+  "description": "Toronto charges its own land transfer tax on top of Ontario's; graduated luxury brackets above $3 million took effect 1 April 2026.",
+  "attributes": {
+    "brackets_one_or_two_single_family_residences": [
+      {
+        "from": 0,
+        "to": 55000,
+        "rate_pct": 0.5
+      },
+      {
+        "from": 55000,
+        "to": 250000,
+        "rate_pct": 1.0
+      },
+      {
+        "from": 250000,
+        "to": 400000,
+        "rate_pct": 1.5
+      },
+      {
+        "from": 400000,
+        "to": 2000000,
+        "rate_pct": 2.0
+      },
+      {
+        "from": 2000000,
+        "to": 3000000,
+        "rate_pct": 2.5
+      },
+      {
+        "from": 3000000,
+        "to": 4000000,
+        "rate_pct": 4.4
+      },
+      {
+        "from": 4000000,
+        "to": 5000000,
+        "rate_pct": 5.45
+      },
+      {
+        "from": 5000000,
+        "to": 10000000,
+        "rate_pct": 6.5
+      },
+      {
+        "from": 10000000,
+        "to": 20000000,
+        "rate_pct": 7.55
+      },
+      {
+        "from": 20000000,
+        "to": null,
+        "rate_pct": 8.6
+      }
+    ],
+    "brackets_effective": "2026-04-01",
+    "first_time_purchaser_rebate_max": 4475,
+    "rebate_status_condition": "Canadian citizen or permanent resident (or within 18 months)"
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://www.toronto.ca/services-payments/property-taxes-utilities/municipal-land-transfer-tax-mltt/municipal-land-transfer-tax-mltt-rates-and-fees/",
+      "title": "MLTT rates and fees (date modified 7 April 2026)",
+      "publisher": "City of Toronto",
+      "source_type": "municipal_government",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": "City of Toronto website terms of use (link and cite)"
+    },
+    {
+      "url": "https://www.toronto.ca/services-payments/property-taxes-utilities/municipal-land-transfer-tax-mltt/municipal-land-transfer-tax-mltt-rebate-opportunities/",
+      "title": "MLTT rebate opportunities (date modified 18 December 2025)",
+      "publisher": "City of Toronto",
+      "source_type": "municipal_government",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": "City of Toronto website terms of use (link and cite)"
+    }
+  ],
+  "units": {
+    "money": "CAD",
+    "rates": "percent"
+  },
+  "verification": {
+    "status": "verified",
+    "confidence": "high",
+    "verified_by": "agent-02",
+    "last_verified": "2026-10-30",
+    "next_review": "2027-01-15",
+    "notes": "Read on 2026-10-30."
+  },
+  "responsible_agent": "agent-02",
+  "limitations": "A Toronto buyer pays Ontario LTT plus MLTT, roughly doubling the transfer tax.",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

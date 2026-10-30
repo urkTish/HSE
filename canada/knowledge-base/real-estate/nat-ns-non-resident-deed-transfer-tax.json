@@ -1,0 +1,64 @@
+{
+  "id": "nat-ns-non-resident-deed-transfer-tax",
+  "category": "nat",
+  "subcategory": "non-resident and vacancy taxes",
+  "name": "Nova Scotia non-resident deed transfer tax (10%)",
+  "name_fr": null,
+  "geo": {
+    "province": "NS",
+    "region": null,
+    "city": null,
+    "neighbourhood": null,
+    "address": null,
+    "coord_precision": "unknown",
+    "coord_source": null
+  },
+  "description": "Non-residents of Nova Scotia pay 10% of the higher of purchase price or assessed value on the share they acquire of residential property with three or fewer units (agreements after 31 March 2025), in addition to municipal deed transfer tax. Buyers who move to Nova Scotia within 12 months (transfers from 6 August 2026) can avoid it.",
+  "attributes": {
+    "rate_pct": 10,
+    "previous_rate_pct": 5,
+    "effective_for_agreements_after": "2025-03-31",
+    "base": "higher of purchase price or assessed value, on the non-resident's ownership share",
+    "property": "residential property with three or fewer dwelling units, including residential vacant land",
+    "move_to_ns_exemption": "declare intent at transfer and provide proof of residency within 12 months (transfers on or after 2026-08-06; 6 months before)"
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://www.novascotia.ca/non-resident-provincial-deed-transfer-tax",
+      "title": "Non-resident provincial deed transfer tax",
+      "publisher": "Government of Nova Scotia",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": "Government of Nova Scotia (link and cite)"
+    },
+    {
+      "url": "https://news.novascotia.ca/en/2026/08/07/changes-non-resident-deed-transfer-tax",
+      "title": "Changes to Non-Resident Deed Transfer Tax (7 August 2026)",
+      "publisher": "Government of Nova Scotia",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": "Government of Nova Scotia (link and cite)"
+    }
+  ],
+  "units": {
+    "money": "CAD",
+    "rates": "percent"
+  },
+  "verification": {
+    "status": "verified",
+    "confidence": "high",
+    "verified_by": "agent-02",
+    "last_verified": "2026-10-30",
+    "next_review": "2027-01-15",
+    "notes": "Program page read on 2026-10-30."
+  },
+  "responsible_agent": "agent-02",
+  "limitations": "'Non-resident' is defined in the guidelines PDF, not stored. A newcomer who settles in Nova Scotia within the window is the main relief path.",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

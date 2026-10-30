@@ -1,0 +1,77 @@
+{
+  "id": "nat-mb-land-transfer-tax",
+  "category": "nat",
+  "subcategory": "land transfer tax",
+  "name": "Manitoba land transfer tax — rates",
+  "name_fr": null,
+  "geo": {
+    "province": "MB",
+    "region": null,
+    "city": null,
+    "neighbourhood": null,
+    "address": null,
+    "coord_precision": "unknown",
+    "coord_source": null
+  },
+  "description": "Tax on the fair market value of land at registration of a transfer in Manitoba.",
+  "attributes": {
+    "brackets": [
+      {
+        "from": 0,
+        "to": 30000,
+        "rate_pct": 0
+      },
+      {
+        "from": 30000,
+        "to": 90000,
+        "rate_pct": 0.5
+      },
+      {
+        "from": 90000,
+        "to": 150000,
+        "rate_pct": 1.0
+      },
+      {
+        "from": 150000,
+        "to": 200000,
+        "rate_pct": 1.5
+      },
+      {
+        "from": 200000,
+        "to": null,
+        "rate_pct": 2.0
+      }
+    ],
+    "first_time_buyer_rebate": null,
+    "non_resident_tax": null
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://www.gov.mb.ca/finance/other/landtransfertax.html",
+      "title": "Land transfer tax",
+      "publisher": "Manitoba Finance",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": "Government of Manitoba website terms (link and cite)"
+    }
+  ],
+  "units": {
+    "money": "CAD",
+    "rates": "percent"
+  },
+  "verification": {
+    "status": "verified",
+    "confidence": "high",
+    "verified_by": "agent-02",
+    "last_verified": "2026-10-30",
+    "next_review": "2027-01-15",
+    "notes": "Read on 2026-10-30; no update date on the page."
+  },
+  "responsible_agent": "agent-02",
+  "limitations": "Manitoba restricts non-resident ownership of farmland under separate legislation (not researched).",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

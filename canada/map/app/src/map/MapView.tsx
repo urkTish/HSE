@@ -7,12 +7,16 @@ import {
   Map as MLMap,
   NavigationControl,
   ScaleControl,
+  setWorkerUrl,
   type GeoJSONSource,
   type MapGeoJSONFeature,
   type MapMouseEvent,
   type StyleSpecification,
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+// MapLibre 6 loads its worker relative to its own module; the bundler must emit
+// the worker file explicitly, so its URL is imported and registered here.
+import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
 import type { FeatureCollection } from "geojson";
 import type { AttributionEntry, LayerDef, ProvinceCode, Selection } from "../kb/types";
 import {
@@ -47,6 +51,8 @@ interface Props {
   onSelect: (s: Selection) => void;
   onBasemap: (m: BasemapMode) => void;
 }
+
+setWorkerUrl(workerUrl);
 
 const PROV_SRC = "ce-provinces";
 const SEL_SRC = "ce-selected";
@@ -104,14 +110,15 @@ export default function MapView(props: Props) {
         container: containerRef.current,
         style,
         bounds: CANADA_BOUNDS,
-        fitBoundsOptions: { padding: 24 },
+        // Leave room for the layer panel on wide screens and the search bar on top.
+        fitBoundsOptions: { padding: window.innerWidth >= 768 ? { top: 80, bottom: 40, left: 340, right: 24 } : { top: 110, bottom: 40, left: 16, right: 16 } },
         attributionControl: false,
         maxZoom: 16,
         minZoom: 1.5,
       });
       mapRef.current = map;
       map.addControl(new NavigationControl({ showCompass: false }), "top-right");
-      map.addControl(new ScaleControl({ unit: "metric" }), "bottom-left");
+      map.addControl(new ScaleControl({ unit: "metric" }), "bottom-right");
       map.on("style.load", () => {
         if (!map) return;
         addOverlays(map, propsRef.current, Boolean(map.getStyle().glyphs));
@@ -163,6 +170,7 @@ export default function MapView(props: Props) {
           setTooltip({ x: e.point.x, y: e.point.y, text });
         }
       });
+      m.on("movestart", () => setTooltip(null));
       m.getCanvas().addEventListener("mouseleave", () => {
         setProvState(null, "hover", hoverProv);
         setTooltip(null);
@@ -250,7 +258,7 @@ export default function MapView(props: Props) {
 
   return (
     <div className="absolute inset-0">
-      <div ref={containerRef} className="absolute inset-0" role="region" aria-label="Map of Canada" />
+      <div ref={containerRef} className="h-full w-full" role="region" aria-label="Map of Canada" />
       {tooltip && (
         <div
           className="pointer-events-none absolute z-40 -translate-x-1/2 -translate-y-full rounded-sm bg-surface-inverse px-2 py-1 text-xs text-ink-inverse shadow-2"
@@ -288,7 +296,7 @@ function addOverlays(map: MLMap, props: Props, hasGlyphs: boolean) {
   // Layer 4: shaded relief (below everything except the background).
   map.addSource("ce-relief", { type: "raster", tiles: [RELIEF_TILES], tileSize: 256, maxzoom: 6, attribution: "" });
   map.addLayer(
-    { id: "ce-elevation-relief", type: "raster", source: "ce-relief", layout: { visibility: "none" }, paint: { "raster-opacity": 0.6 } },
+    { id: "ce-elevation-relief", type: "raster", source: "ce-relief", maxzoom: 9, layout: { visibility: "none" }, paint: { "raster-opacity": 0.6 } },
     firstAfterBackground,
   );
 

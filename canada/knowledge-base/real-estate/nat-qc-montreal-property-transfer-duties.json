@@ -1,0 +1,86 @@
+{
+  "id": "nat-qc-montreal-property-transfer-duties",
+  "category": "nat",
+  "subcategory": "land transfer tax",
+  "name": "Montréal property transfer duties (\"welcome tax\") — 2026 brackets",
+  "name_fr": "Droits sur les mutations immobilières — Montréal, 2026",
+  "geo": {
+    "province": "QC",
+    "region": null,
+    "city": "Montréal",
+    "neighbourhood": null,
+    "address": null,
+    "coord_precision": "unknown",
+    "coord_source": null
+  },
+  "description": "Duties on the transfer of an immovable in Montréal for transfers from 1 January 2026; the first three brackets are Quebec's indexed provincial brackets, the higher ones are set by the city.",
+  "attributes": {
+    "brackets_2026": [
+      {
+        "from": 0,
+        "to": 62900,
+        "rate_pct": 0.5
+      },
+      {
+        "from": 62900,
+        "to": 315000,
+        "rate_pct": 1.0
+      },
+      {
+        "from": 315000,
+        "to": 552300,
+        "rate_pct": 1.5
+      },
+      {
+        "from": 552300,
+        "to": 1104700,
+        "rate_pct": 2.0
+      },
+      {
+        "from": 1104700,
+        "to": 2136500,
+        "rate_pct": 2.5
+      },
+      {
+        "from": 2136500,
+        "to": 3113000,
+        "rate_pct": 3.5
+      },
+      {
+        "from": 3113000,
+        "to": null,
+        "rate_pct": 4.0
+      }
+    ],
+    "thresholds_indexed_annually": true
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://montreal.ca/articles/comment-sont-calcules-les-droits-sur-les-mutations-immobilieres-9279",
+      "title": "Comment sont calculés les droits sur les mutations immobilières (mis à jour le 12 janvier 2026)",
+      "publisher": "Ville de Montréal",
+      "source_type": "municipal_government",
+      "accessed": "2026-10-30",
+      "data_period": "2026",
+      "methodology": null,
+      "licence": "Gouvernement du Québec / Ville de Montréal website terms (link and cite)"
+    }
+  ],
+  "units": {
+    "money": "CAD",
+    "rates": "percent"
+  },
+  "verification": {
+    "status": "verified",
+    "confidence": "high",
+    "verified_by": "agent-02",
+    "last_verified": "2026-10-30",
+    "next_review": "2027-01-15",
+    "notes": "Read on 2026-10-30."
+  },
+  "responsible_agent": "agent-02",
+  "limitations": "Other Quebec municipalities (Québec City, Sherbrooke) set their own upper brackets; not researched in Phase 1.",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

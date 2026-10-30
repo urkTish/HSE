@@ -1,0 +1,61 @@
+{
+  "id": "nat-ca-underused-housing-tax-status",
+  "category": "nat",
+  "subcategory": "non-resident and vacancy taxes",
+  "name": "Underused Housing Tax — eliminated from the 2025 calendar year",
+  "name_fr": null,
+  "geo": {
+    "province": "CA",
+    "region": null,
+    "city": null,
+    "neighbourhood": null,
+    "address": null,
+    "coord_precision": "unknown",
+    "coord_source": null
+  },
+  "description": "The federal Underused Housing Tax (1% annual tax mainly on non-resident, non-Canadian owners of residential property) no longer applies for 2025 and later calendar years; obligations for 2022–2024 remain.",
+  "attributes": {
+    "status": "eliminated for 2025 and later calendar years",
+    "legislation": "Budget 2025 Implementation Act, No. 1 — royal assent 26 March 2026 (as reported by the CRA)",
+    "prior_years": "2022–2024 filing, tax, penalties and interest still apply"
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/uhtn16/proposed-amendments-to-underused-housing-tax.html",
+      "title": "Proposed Amendments to the Underused Housing Tax (UHTN16)",
+      "publisher": "Canada Revenue Agency",
+      "source_type": "federal_government",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": "Government of Canada website; Terms and conditions of canada.ca (reproduction for non-commercial purposes permitted with attribution unless otherwise stated)"
+    },
+    {
+      "url": "https://budget.canada.ca/2025/report-rapport/nwmm-amvm-3-en.html",
+      "title": "Budget 2025 — Notice of Ways and Means Motion to amend the Underused Housing Tax Act",
+      "publisher": "Department of Finance Canada",
+      "source_type": "federal_government",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": "Government of Canada website; Terms and conditions of canada.ca (reproduction for non-commercial purposes permitted with attribution unless otherwise stated)"
+    }
+  ],
+  "units": {
+    "money": "CAD",
+    "rates": "percent"
+  },
+  "verification": {
+    "status": "partially_verified",
+    "confidence": "medium",
+    "verified_by": "agent-02",
+    "last_verified": "2026-10-30",
+    "next_review": "2027-01-15",
+    "notes": "Read through search summaries of the CRA and Budget 2025 pages; pages not fetched directly."
+  },
+  "responsible_agent": "agent-02",
+  "limitations": "Confirm on the CRA page before advising an owner with 2022–2024 obligations.",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

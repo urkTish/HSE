@@ -1,0 +1,85 @@
+{
+  "id": "nat-ca-cmhc-mortgage-insurance-premiums",
+  "category": "nat",
+  "subcategory": "mortgage rules",
+  "name": "CMHC mortgage loan insurance premiums by loan-to-value",
+  "name_fr": null,
+  "geo": {
+    "province": "CA",
+    "region": null,
+    "city": null,
+    "neighbourhood": null,
+    "address": null,
+    "coord_precision": "unknown",
+    "coord_source": null
+  },
+  "description": "Premium charged on an insured mortgage, as a percentage of the loan, by loan-to-value ratio (CMHC schedule). Provincial sales tax applies to the premium in Quebec, Ontario and Saskatchewan and cannot be added to the loan.",
+  "attributes": {
+    "premium_pct_of_loan": [
+      {
+        "ltv": "up to 65%",
+        "pct": 0.6
+      },
+      {
+        "ltv": "65.01–75%",
+        "pct": 1.7
+      },
+      {
+        "ltv": "75.01–80%",
+        "pct": 2.4
+      },
+      {
+        "ltv": "80.01–85%",
+        "pct": 2.8
+      },
+      {
+        "ltv": "85.01–90%",
+        "pct": 3.1
+      },
+      {
+        "ltv": "90.01–95%",
+        "pct": 4.0
+      },
+      {
+        "ltv": "90.01–95% non-traditional down payment",
+        "pct": 4.5
+      }
+    ],
+    "provincial_sales_tax_on_premium": [
+      "QC",
+      "ON",
+      "SK"
+    ],
+    "pst_rates_stored": false,
+    "surcharge_30_year_amortization": null
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://www.cmhc-schl.gc.ca/consumers/home-buying/mortgage-loan-insurance-for-consumers/cmhc-mortgage-loan-insurance-cost",
+      "title": "CMHC mortgage loan insurance cost",
+      "publisher": "Canada Mortgage and Housing Corporation",
+      "source_type": "housing_agency",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": "© CMHC; CMHC Terms and Conditions (personal use; no republication without consent). Link, do not copy."
+    }
+  ],
+  "units": {
+    "money": "CAD",
+    "rates": "percent"
+  },
+  "verification": {
+    "status": "verified",
+    "confidence": "high",
+    "verified_by": "agent-02",
+    "last_verified": "2026-10-30",
+    "next_review": "2027-01-15",
+    "notes": "Premium table read on 2026-10-30."
+  },
+  "responsible_agent": "agent-02",
+  "limitations": "The page does not state the premium surcharge for 30-year amortization or the PST rates; those are not stored (null) and must be retrieved. Private insurers (Sagen, Canada Guaranty) publish their own schedules.",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

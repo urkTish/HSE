@@ -1,0 +1,52 @@
+{
+  "id": "nat-on-toronto-vacant-home-tax",
+  "category": "nat",
+  "subcategory": "non-resident and vacancy taxes",
+  "name": "City of Toronto Vacant Home Tax",
+  "name_fr": null,
+  "geo": {
+    "province": "ON",
+    "region": null,
+    "city": "Toronto",
+    "neighbourhood": null,
+    "address": null,
+    "coord_precision": "unknown",
+    "coord_source": null
+  },
+  "description": "Annual tax of 3% of current value assessment on Toronto residential property vacant six months or more in the taxation year (from the 2024 taxation year); owners must declare by 30 April.",
+  "attributes": {
+    "rate_pct": 3,
+    "rate_since_taxation_year": 2024,
+    "vacancy_test": "vacant six months or more in the year",
+    "declaration_deadline": "April 30"
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://www.toronto.ca/services-payments/property-taxes-utilities/vacant-home-tax/",
+      "title": "Vacant Home Tax (last updated 22 July 2026)",
+      "publisher": "City of Toronto",
+      "source_type": "municipal_government",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": "City of Toronto website terms of use (link and cite)"
+    }
+  ],
+  "units": {
+    "money": "CAD",
+    "rates": "percent"
+  },
+  "verification": {
+    "status": "verified",
+    "confidence": "high",
+    "verified_by": "agent-02",
+    "last_verified": "2026-10-30",
+    "next_review": "2027-01-15",
+    "notes": "Read on 2026-10-30."
+  },
+  "responsible_agent": "agent-02",
+  "limitations": "Ottawa and Hamilton vacant-unit taxes were not researched in Phase 1.",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

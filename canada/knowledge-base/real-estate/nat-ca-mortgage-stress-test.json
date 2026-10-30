@@ -1,0 +1,69 @@
+{
+  "id": "nat-ca-mortgage-stress-test",
+  "category": "nat",
+  "subcategory": "mortgage rules",
+  "name": "Mortgage stress test (minimum qualifying rate) and debt-service guidelines",
+  "name_fr": null,
+  "geo": {
+    "province": "CA",
+    "region": null,
+    "city": null,
+    "neighbourhood": null,
+    "address": null,
+    "coord_precision": "unknown",
+    "coord_source": null
+  },
+  "description": "Borrowers must qualify at the greater of 5.25% or the contract rate plus 2 percentage points, for both insured and uninsured mortgages from federally regulated lenders. Straight switches of uninsured mortgages at renewal are exempt.",
+  "attributes": {
+    "qualifying_rate_rule": "max(5.25%, contract rate + 2.00 points)",
+    "floor_pct": 5.25,
+    "buffer_points": 2.0,
+    "applies_to": [
+      "insured",
+      "uninsured"
+    ],
+    "straight_switch_at_renewal_exempt_uninsured": true,
+    "guideline_gds_max_pct": 39,
+    "guideline_tds_max_pct": 44,
+    "osfi_page_modified": "2026-01-29"
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://www.osfi-bsif.gc.ca/en/supervision/financial-institutions/banks/minimum-qualifying-rate-uninsured-mortgages",
+      "title": "Minimum qualifying rate for uninsured mortgages",
+      "publisher": "Office of the Superintendent of Financial Institutions",
+      "source_type": "regulator",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": "Government of Canada website; Terms and conditions of canada.ca (reproduction for non-commercial purposes permitted with attribution unless otherwise stated)"
+    },
+    {
+      "url": "https://www.canada.ca/en/financial-consumer-agency/services/mortgages/preparing-mortgage.html",
+      "title": "Getting ready to buy a home / mortgage stress test",
+      "publisher": "Financial Consumer Agency of Canada",
+      "source_type": "federal_government",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": "Government of Canada website; Terms and conditions of canada.ca (reproduction for non-commercial purposes permitted with attribution unless otherwise stated)"
+    }
+  ],
+  "units": {
+    "money": "CAD",
+    "rates": "percent"
+  },
+  "verification": {
+    "status": "verified",
+    "confidence": "high",
+    "verified_by": "agent-02",
+    "last_verified": "2026-10-30",
+    "next_review": "2027-01-15",
+    "notes": "OSFI page (modified 2026-01-29) and FCAC page read on 2026-10-30."
+  },
+  "responsible_agent": "agent-02",
+  "limitations": "GDS/TDS limits are FCAC guidance; insurers and lenders set their own. OSFI reviews the floor at least annually. Credit unions regulated provincially may differ.",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

@@ -1,0 +1,64 @@
+{
+  "id": "nat-nl-rent-increase-rules",
+  "category": "nat",
+  "subcategory": "rent control",
+  "name": "Newfoundland and Labrador rent increase rules — no cap",
+  "name_fr": null,
+  "geo": {
+    "province": "NL",
+    "region": null,
+    "city": null,
+    "neighbourhood": null,
+    "address": null,
+    "coord_precision": "unknown",
+    "coord_source": null
+  },
+  "description": "No limit on the amount of a rent increase; at most once per 12 months and not in the first 12 months of a tenancy; six months' written notice for monthly or fixed-term tenancies (eight weeks for weekly).",
+  "attributes": {
+    "cap": null,
+    "frequency": "once per 12 months; none in the first 12 months",
+    "notice": {
+      "monthly_or_fixed_term": "6 months",
+      "weekly": "8 weeks"
+    }
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://www.gov.nl.ca/gs/files/landlord-guide-for-landlords-tenants.pdf",
+      "title": "A Guide for Landlords and Tenants (January 2019)",
+      "publisher": "Government of Newfoundland and Labrador — Digital Government and Service NL",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": "Government of NL (link and cite)"
+    },
+    {
+      "url": "https://www.gov.nl.ca/gs/faq/landlord-faq/",
+      "title": "Landlord & Tenant FAQ",
+      "publisher": "Government of Newfoundland and Labrador",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": "Government of NL (link and cite)"
+    }
+  ],
+  "units": {
+    "money": "CAD",
+    "rates": "percent"
+  },
+  "verification": {
+    "status": "partially_verified",
+    "confidence": "medium",
+    "verified_by": "agent-02",
+    "last_verified": "2026-10-30",
+    "next_review": "2027-01-15",
+    "notes": "From search summaries; guide dated 2019."
+  },
+  "responsible_agent": "agent-02",
+  "limitations": "Check for amendments to the Residential Tenancies Act, 2018.",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

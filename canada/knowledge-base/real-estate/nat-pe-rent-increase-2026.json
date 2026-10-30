@@ -1,0 +1,62 @@
+{
+  "id": "nat-pe-rent-increase-2026",
+  "category": "nat",
+  "subcategory": "rent control",
+  "name": "Prince Edward Island allowable rent increase 2026 — not verified",
+  "name_fr": null,
+  "geo": {
+    "province": "PE",
+    "region": null,
+    "city": null,
+    "neighbourhood": null,
+    "address": null,
+    "coord_precision": "unknown",
+    "coord_source": null
+  },
+  "description": "PEI's Director of Residential Tenancy sets an allowable annual increase (statutory maximum 3% per calendar year). The 2026 figure could not be retrieved from an official source; value is null.",
+  "attributes": {
+    "allowable_increase_pct_2026": null,
+    "statutory_max_pct": 3,
+    "allowable_2025_pct": 2.3,
+    "notice": "three months' written notice (secondary sources)"
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://www.princeedwardisland.ca/sites/default/files/legislation/r-13-11-_residential_tenancy_act.pdf",
+      "title": "Residential Tenancy Act (PEI)",
+      "publisher": "Government of Prince Edward Island",
+      "source_type": "legislation",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": "Government of PEI (link and cite)"
+    },
+    {
+      "url": "https://irac.pe.ca/wp-content/uploads/PR25-001.pdf",
+      "title": "IRAC Order PR25-001 (states 2025 allowable increase 2.3%)",
+      "publisher": "Island Regulatory and Appeals Commission",
+      "source_type": "regulator",
+      "accessed": "2026-10-30",
+      "data_period": "2025",
+      "methodology": null,
+      "licence": "IRAC (link and cite)"
+    }
+  ],
+  "units": {
+    "money": "CAD",
+    "rates": "percent"
+  },
+  "verification": {
+    "status": "unverified",
+    "confidence": "low",
+    "verified_by": "agent-02",
+    "last_verified": "2026-10-30",
+    "next_review": "2027-01-15",
+    "notes": "princeedwardisland.ca blocked the fetch (browser verification) and searches found only secondary sources (2%). Gap recorded; do not display a 2026 figure."
+  },
+  "responsible_agent": "agent-02",
+  "limitations": "2026 value unknown. PEI also has a 1% real property transfer tax with a first-time buyer exemption and Lands Protection Act limits on non-resident land holdings — neither verified in Phase 1.",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

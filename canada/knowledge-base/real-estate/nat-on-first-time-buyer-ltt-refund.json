@@ -1,0 +1,53 @@
+{
+  "id": "nat-on-first-time-buyer-ltt-refund",
+  "category": "nat",
+  "subcategory": "first-time buyer relief",
+  "name": "Ontario land transfer tax refund for first-time homebuyers",
+  "name_fr": null,
+  "geo": {
+    "province": "ON",
+    "region": null,
+    "city": null,
+    "neighbourhood": null,
+    "address": null,
+    "coord_precision": "unknown",
+    "coord_source": null
+  },
+  "description": "Refund of up to $4,000 of Ontario land transfer tax for eligible first-time buyers.",
+  "attributes": {
+    "max_refund": 4000,
+    "status_condition": "Canadian citizen or permanent resident (or becomes one within 18 months of registration)",
+    "never_owned_home_anywhere": true,
+    "occupy_within_months": 9,
+    "apply_within_months": 18
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://www.ontario.ca/document/land-transfer-tax/land-transfer-tax-refunds-first-time-homebuyers",
+      "title": "Land transfer tax refunds for first-time homebuyers (last updated 10 February 2026)",
+      "publisher": "Ontario Ministry of Finance",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": "© King's Printer for Ontario; ontario.ca copyright terms (non-commercial reproduction with attribution)"
+    }
+  ],
+  "units": {
+    "money": "CAD",
+    "rates": "percent"
+  },
+  "verification": {
+    "status": "verified",
+    "confidence": "high",
+    "verified_by": "agent-02",
+    "last_verified": "2026-10-30",
+    "next_review": "2027-01-15",
+    "notes": "Read on 2026-10-30."
+  },
+  "responsible_agent": "agent-02",
+  "limitations": null,
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

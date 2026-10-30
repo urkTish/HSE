@@ -1,0 +1,57 @@
+{
+  "id": "re-on-toronto-cma-cmhc-condo-rent-2bed-2025-10",
+  "category": "re",
+  "subcategory": "rental market survey",
+  "name": "Toronto — CMHC average rent, two-bedroom rental condominium apartment, October 2025",
+  "name_fr": null,
+  "geo": {
+    "province": "ON",
+    "region": null,
+    "city": "Toronto",
+    "neighbourhood": null,
+    "address": null,
+    "coord_precision": "unknown",
+    "coord_source": null
+  },
+  "description": "Survey average monthly rent for two-bedroom condominium apartments rented out by their owners, Toronto CMA, October 2025 (CMHC Rental Market Survey, condominium component). Used in the investment screen because investor-owned condos are the stock a buyer would rent out.",
+  "attributes": {
+    "metric": "average_rent",
+    "property_type": "apartment_condo",
+    "bedrooms": "2",
+    "value": 2891.0,
+    "unit": "cad_per_month",
+    "period": "2025-10",
+    "geography_level": "cma",
+    "geography_name": "Toronto CMA",
+    "figure_kind": "survey",
+    "sample_size": null,
+    "year_over_year_change_pct": null,
+    "notes": "October 2024: $2,924; October 2025: $2,891 (quality 'a', excellent). Rental-condo vacancy rate October 2025: 0.9% (quality 'a'). No year-over-year % stored because CMHC publishes no same-sample estimate for condos."
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://assets.cmhc-schl.gc.ca/sites/cmhc/professional/housing-markets-data-and-research/housing-data-tables/rental-market/rental-market-report-data-tables/2025/rmr-toronto-2025-en.xlsx",
+      "title": "Rental Market Survey Data Tables, Toronto CMA, 2025 (Table 4.1.3)",
+      "publisher": "Canada Mortgage and Housing Corporation (CMHC)",
+      "source_type": "housing_agency",
+      "accessed": "2026-10-30",
+      "data_period": "2025-10",
+      "methodology": "CMHC Rental Market Survey (condominium apartment component), October 2025: condominium apartments rented by their owners; quality grades a–d.",
+      "licence": "© Canada Mortgage and Housing Corporation. CMHC Terms and Conditions (https://www.cmhc-schl.gc.ca/about-us/terms-conditions): content may be copied, downloaded and printed for personal use; it may not otherwise be redistributed, republished or reproduced without CMHC's prior written consent. The same average-rent figures are republished by Statistics Canada (table 34-10-0133-01) under the Statistics Canada Open Licence."
+    }
+  ],
+  "units": null,
+  "verification": {
+    "status": "verified",
+    "confidence": "high",
+    "verified_by": "agent-02",
+    "last_verified": "2026-10-30",
+    "next_review": "2026-12-29",
+    "notes": "Value read from the CMHC Excel data table downloaded on 2026-10-30."
+  },
+  "responsible_agent": "agent-02",
+  "limitations": "Condominium rental survey covers fewer units than the purpose-built survey; quality grade may be lower. Survey average across sitting tenants, not an asking rent. Average, not median.",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

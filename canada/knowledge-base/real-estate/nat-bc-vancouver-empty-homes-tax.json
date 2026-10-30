@@ -1,0 +1,62 @@
+{
+  "id": "nat-bc-vancouver-empty-homes-tax",
+  "category": "nat",
+  "subcategory": "non-resident and vacancy taxes",
+  "name": "City of Vancouver Empty Homes Tax",
+  "name_fr": null,
+  "geo": {
+    "province": "BC",
+    "region": null,
+    "city": null,
+    "neighbourhood": null,
+    "address": null,
+    "coord_precision": "unknown",
+    "coord_source": null
+  },
+  "description": "Municipal tax of 3% of assessed value on Class 1 residential property in the City of Vancouver that is empty for more than six months of the year (separate from the provincial speculation and vacancy tax).",
+  "attributes": {
+    "rate_pct": 3,
+    "rate_since_tax_year": 2021,
+    "applies_to": "Class 1 residential property, City of Vancouver",
+    "pending_change": "A September 2025 council motion proposed 5%; adoption not confirmed."
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://vancouver.ca/home-property-development/empty-homes-tax-frequently-asked-questions.aspx",
+      "title": "Empty Homes Tax FAQ",
+      "publisher": "City of Vancouver",
+      "source_type": "municipal_government",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": "City of Vancouver website terms (link and cite)"
+    },
+    {
+      "url": "https://council.vancouver.ca/20250917/documents/pspcmotion7.pdf",
+      "title": "Members' Motion — Improving the Empty Homes Tax (17 September 2025)",
+      "publisher": "City of Vancouver",
+      "source_type": "municipal_government",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": "City of Vancouver website terms (link and cite)"
+    }
+  ],
+  "units": {
+    "money": "CAD",
+    "rates": "percent"
+  },
+  "verification": {
+    "status": "partially_verified",
+    "confidence": "medium",
+    "verified_by": "agent-02",
+    "last_verified": "2026-10-30",
+    "next_review": "2027-01-15",
+    "notes": "vancouver.ca returned HTTP 403 to two fetches; rate taken from the search summary of the city FAQ. Re-check the 2026 rate."
+  },
+  "responsible_agent": "agent-02",
+  "limitations": "Whether a 5% rate applies from the 2026 reference year is unconfirmed.",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

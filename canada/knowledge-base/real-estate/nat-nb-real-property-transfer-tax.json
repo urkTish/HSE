@@ -1,0 +1,51 @@
+{
+  "id": "nat-nb-real-property-transfer-tax",
+  "category": "nat",
+  "subcategory": "land transfer tax",
+  "name": "New Brunswick real property transfer tax",
+  "name_fr": null,
+  "geo": {
+    "province": "NB",
+    "region": null,
+    "city": null,
+    "neighbourhood": null,
+    "address": null,
+    "coord_precision": "unknown",
+    "coord_source": null
+  },
+  "description": "1% of the greater of the consideration or the assessed value, for deeds tendered on or after 1 April 2016.",
+  "attributes": {
+    "rate_pct": 1.0,
+    "base": "greater of consideration and assessed value",
+    "since": "2016-04-01"
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://laws.gnb.ca/en/document/cs/R-2.1",
+      "title": "Real Property Transfer Tax Act, R-2.1",
+      "publisher": "Government of New Brunswick",
+      "source_type": "legislation",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": "Government of New Brunswick (link and cite)"
+    }
+  ],
+  "units": {
+    "money": "CAD",
+    "rates": "percent"
+  },
+  "verification": {
+    "status": "partially_verified",
+    "confidence": "medium",
+    "verified_by": "agent-02",
+    "last_verified": "2026-10-30",
+    "next_review": "2027-01-15",
+    "notes": "From the search summary of the consolidated Act; not fetched directly."
+  },
+  "responsible_agent": "agent-02",
+  "limitations": "Confirm no change since 2016.",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}
