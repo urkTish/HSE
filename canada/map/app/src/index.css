@@ -32,3 +32,10 @@ body {
 .maplibregl-ctrl-group button + button {
   border-top-color: var(--ce-line) !important;
 }
+
+/* Small screens: keep map controls clear of the wrapped header. */
+@media (max-width: 767px) {
+  .maplibregl-ctrl-top-right {
+    top: 128px;
+  }
+}

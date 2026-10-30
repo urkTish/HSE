@@ -25,7 +25,8 @@ function niceTicks(min: number, max: number, target = 4): number[] {
   const mag = 10 ** Math.floor(Math.log10(raw));
   const step = [1, 2, 5, 10].map((m) => m * mag).find((s) => s >= raw) ?? raw;
   const ticks: number[] = [];
-  for (let t = Math.floor(min / step) * step; t <= max + 1e-9; t += step) ticks.push(Math.round(t * 100) / 100);
+  const end = Math.ceil(max / step) * step;
+  for (let t = Math.floor(min / step) * step; t <= end + 1e-9; t += step) ticks.push(Math.round(t * 100) / 100);
   return ticks;
 }
 
@@ -129,7 +130,7 @@ export default function ClimateChart({ record }: { record: ClimRecord }) {
   const tLo = Math.min(tTicks[0] ?? tMin, tMin);
   const tHi = Math.max(tTicks[tTicks.length - 1] ?? tMax, tMax);
   const TH = 130;
-  const yT = (v: number) => 6 + ((tHi - v) / (tHi - tLo || 1)) * (TH - 4 - 6);
+  const yT = (v: number) => 14 + ((tHi - v) / (tHi - tLo || 1)) * (TH - 14 - 14);
 
   const pMax = Math.max(10, ...pr.filter((v): v is number => v !== null));
   const pTicks = niceTicks(0, pMax, 3);

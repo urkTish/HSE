@@ -95,8 +95,14 @@ for (const file of walk(kbRoot)) {
 }
 
 // ---------- 3. static-asset rules ----------
-// Keys whose numeric values are money; withheld everywhere (SPEC §9 B, §12).
-const MONEY_KEY = /(^|_)(price|prices|rent|rents|tuition|fee|fees|cost|costs|amount|cad)(_|$)/i;
+// What counts as a changing money figure (SPEC §9 B, §12; ARCHITECTURE §4):
+//  - `re` records: the observed value and its year-over-year change;
+//  - `school` records: tuition amounts (the school year stays);
+//  - any other category except `nat`: numeric fields whose key names a price,
+//    rent, cost or fee (for example `average_rent_cad`, `entry_fee`).
+// `nat` records hold legislated parameters (tax brackets, credits, programme
+// fees) rather than market prices, so they are published as researched.
+const MONEY_KEY = /(^|_)(price|prices|rent|rents|cost|costs|fee|fees|tuition)(_|$)/i;
 function stripMoney(obj, path, withheld) {
   if (Array.isArray(obj)) return obj.map((v, i) => stripMoney(v, `${path}[${i}]`, withheld));
   if (obj && typeof obj === "object") {
@@ -115,8 +121,8 @@ function stripMoney(obj, path, withheld) {
 function sanitize(rec) {
   const withheld = [];
   const r = structuredClone(rec);
-  if (r.category === "re" && r.attributes) {
-    // A market observation's figures are changing financial data: keep what was measured, where and when; withhold the numbers.
+  r.attributes ??= {};
+  if (r.category === "re") {
     for (const k of ["value", "year_over_year_change_pct"]) {
       if (k in r.attributes && r.attributes[k] !== null) {
         withheld.push(`attributes.${k}`);
@@ -124,7 +130,15 @@ function sanitize(rec) {
       }
     }
   }
-  r.attributes = stripMoney(r.attributes ?? {}, "attributes", withheld);
+  if (r.category === "school" && r.attributes.tuition && typeof r.attributes.tuition === "object") {
+    for (const k of ["amount_cad_min", "amount_cad_max"]) {
+      if (typeof r.attributes.tuition[k] === "number") {
+        withheld.push(`attributes.tuition.${k}`);
+        delete r.attributes.tuition[k];
+      }
+    }
+  }
+  if (r.category !== "nat") r.attributes = stripMoney(r.attributes, "attributes", withheld);
   if (withheld.length) r._withheld = withheld;
   return r;
 }

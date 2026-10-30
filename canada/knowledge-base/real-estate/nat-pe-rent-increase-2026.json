@@ -56,7 +56,7 @@
     "notes": "princeedwardisland.ca blocked the fetch (browser verification) and searches found only secondary sources (2%). Gap recorded; do not display a 2026 figure."
   },
   "responsible_agent": "agent-02",
-  "limitations": "2026 value unknown. PEI also has a 1% real property transfer tax with a first-time buyer exemption and Lands Protection Act limits on non-resident land holdings — neither verified in Phase 1.",
+  "limitations": "2026 value unknown. PEI transfer tax and any non-resident land-holding limits were not researched in Phase 1 (official site blocked automated fetches).",
   "created": "2026-10-30",
   "updated": "2026-10-30"
 }

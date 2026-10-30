@@ -130,7 +130,7 @@ export default function App() {
         </div>
       )}
 
-      <div className="pointer-events-none absolute bottom-10 left-3 top-24 z-10 flex w-[min(20rem,calc(100%-1.5rem))] flex-col justify-start md:top-20">
+      <div className="pointer-events-none absolute bottom-10 left-3 top-36 z-10 flex w-[min(20rem,calc(100%-1.5rem))] flex-col justify-start md:top-20">
         <LayerPanel layers={LAYERS} layersOn={layersOn} index={data.index} onToggle={toggle} />
       </div>
 

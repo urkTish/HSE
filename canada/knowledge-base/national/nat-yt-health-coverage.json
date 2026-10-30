@@ -1,0 +1,110 @@
+{
+  "id": "nat-yt-health-coverage",
+  "category": "nat",
+  "subcategory": "health",
+  "name": "Yukon: public health coverage for newcomers",
+  "name_fr": "Yukon : assurance maladie publique pour les nouveaux arrivants",
+  "geo": {
+    "province": "YT",
+    "region": null,
+    "city": null,
+    "neighbourhood": null,
+    "address": null,
+    "lat": null,
+    "lon": null,
+    "coord_precision": "unknown",
+    "coord_source": null,
+    "extent": "province or territory"
+  },
+  "description": "Who is covered by Yukon Health Care Insurance Plan by immigration status, any waiting period for newcomers, how to apply, the public drug-coverage model and the share of adults with a regular health care provider.",
+  "attributes": {
+    "plan_name": "Yukon Health Care Insurance Plan",
+    "jurisdiction": "Yukon",
+    "legal_status": "in force (eligibility rules as published on the access date)",
+    "eligibility_by_status": {
+      "citizen": "Eligible as a resident (residency and presence rules apply).",
+      "permanent_resident": "Eligible as a resident making a permanent home in Yukon.",
+      "work_permit_holder": "Eligible with a Yukon-specific or open work permit valid at least 1 year.",
+      "study_permit_holder": "Not captured.",
+      "visitor": "Not eligible (visitors and tourists are excluded from every provincial plan reviewed)."
+    },
+    "status_dependency": "Which rule applies depends on the user's immigration status, which is unknown (USER-PROFILE.md: 'Citizenship(s) and current country of residence', 'Existing Canadian status or application').",
+    "newcomer_waiting_period": {
+      "arriving_from_outside_canada": "Three-month waiting period for new and returning residents; private insurance recommended for arrivals from abroad.",
+      "moving_from_another_province": "Three months, covered meanwhile by the former province's plan."
+    },
+    "how_to_apply": "Apply on arrival while physically present in Yukon.",
+    "drug_coverage_model": "Pharmacare for seniors, Chronic Disease Program and Children's Drug and Optical Program (deductibles up to $250 per person, $500 per family) (PMPRB 2020/21 summary); national-pharmacare agreement for listed contraception and diabetes medications (Health Canada, 2026).",
+    "regular_provider": {
+      "share_adults_with_regular_provider_pct": 76.6,
+      "share_adults_without_regular_provider_pct": 23.4,
+      "confidence_interval_95_pct": [
+        72.9,
+        80.0
+      ],
+      "survey_year": 2024,
+      "age_group": "adults 18+",
+      "quality_flag": null,
+      "source": "CIHI indicator 'Canadians With a Primary Health Care Provider', Statistics Canada CCHS",
+      "canada_2025_pct": 83.4
+    }
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://yukon.ca/en/health-and-wellness/care-services/apply-health-care-card",
+      "title": "Apply for a Yukon health care card (read through search-engine extract)",
+      "publisher": "Government of Yukon",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": null
+    },
+    {
+      "url": "https://www.cihi.ca/sites/default/files/document/data-file/880-canadians-with-a-primary-health-care-provider-data-table-en.xlsx",
+      "title": "Canadians With a Primary Health Care Provider — indicator data table (data updated October 2026); underlying data: Statistics Canada, Canadian Community Health Survey, Annual Component",
+      "publisher": "Canadian Institute for Health Information",
+      "source_type": "statistics_agency",
+      "accessed": "2026-10-30",
+      "data_period": "2025 (provinces); 2024 (territories)",
+      "methodology": "Weighted percent of adults 18+ reporting a regular/primary health care provider (family doctor, nurse practitioner or other); 95% confidence interval given. 2025 adult questions were harmonized, so compare with earlier years with caution.",
+      "licence": null
+    },
+    {
+      "url": "https://www.canada.ca/en/patented-medicine-prices-review/services/npduis/analytical-studies/supporting-information/public-drug-plan-designs.html",
+      "title": "Public Drug Plan Designs, 2021/22 edition (describes 2020/21 plan designs; page modified 2024-01-30)",
+      "publisher": "Patented Medicine Prices Review Board (NPDUIS)",
+      "source_type": "federal_government",
+      "accessed": "2026-10-30",
+      "data_period": "2020/21",
+      "methodology": null,
+      "licence": "Open Government Licence – Canada"
+    },
+    {
+      "url": "https://www.canada.ca/en/health-canada/services/health-services-benefits/national-pharmacare/whats-covered.html",
+      "title": "What's covered by national pharmacare (page modified 2026-04-24)",
+      "publisher": "Health Canada",
+      "source_type": "federal_government",
+      "accessed": "2026-10-30",
+      "data_period": "2026",
+      "methodology": null,
+      "licence": "Open Government Licence – Canada"
+    }
+  ],
+  "units": {
+    "shares": "percent of adults 18+"
+  },
+  "verification": {
+    "status": "partially_verified",
+    "confidence": "medium",
+    "verified_by": "agent-01",
+    "last_verified": "2026-10-30",
+    "next_review": "2026-11-29",
+    "notes": "Provincial page(s) fetched directly where status is 'verified'; otherwise some content came from search-engine extracts of official pages (403 or bot-check on fetch). Regular-provider figures parsed from CIHI's published data table."
+  },
+  "responsible_agent": "agent-01",
+  "limitations": "Eligibility text summarises official pages and is not legal advice; temporary-status rules change often. Drug-plan designs are from PMPRB's 2020/21 summary and may be out of date. 'Without a regular provider' is 100 minus the CIHI share (simple arithmetic). Territorial provider figure is for 2024 with a wide confidence interval.",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

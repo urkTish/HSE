@@ -1,0 +1,100 @@
+{
+  "id": "nat-sk-health-coverage",
+  "category": "nat",
+  "subcategory": "health",
+  "name": "Saskatchewan: public health coverage for newcomers",
+  "name_fr": "Saskatchewan : assurance maladie publique pour les nouveaux arrivants",
+  "geo": {
+    "province": "SK",
+    "region": null,
+    "city": null,
+    "neighbourhood": null,
+    "address": null,
+    "lat": null,
+    "lon": null,
+    "coord_precision": "unknown",
+    "coord_source": null,
+    "extent": "province or territory"
+  },
+  "description": "Who is covered by Saskatchewan health benefits (eHealth Saskatchewan health card) by immigration status, any waiting period for newcomers, how to apply, the public drug-coverage model and the share of adults with a regular health care provider.",
+  "attributes": {
+    "plan_name": "Saskatchewan health benefits (eHealth Saskatchewan health card)",
+    "jurisdiction": "Saskatchewan",
+    "legal_status": "in force (eligibility rules as published on the access date)",
+    "eligibility_by_status": {
+      "citizen": "Eligible as a resident (residency and presence rules apply).",
+      "permanent_resident": "Eligible (permanent residents moving from outside Canada).",
+      "work_permit_holder": "Eligible as 'a worker or businessperson who is allowed to live in Canada temporarily for work'; no minimum permit length stated on the page.",
+      "study_permit_holder": "Eligible if living in Saskatchewan temporarily to study, with a valid study permit and proof of full-time enrolment.",
+      "visitor": "Not eligible (visitors and tourists are excluded from every provincial plan reviewed)."
+    },
+    "status_dependency": "Which rule applies depends on the user's immigration status, which is unknown (USER-PROFILE.md: 'Citizenship(s) and current country of residence', 'Existing Canadian status or application').",
+    "newcomer_waiting_period": {
+      "arriving_from_outside_canada": "Coverage can start 'on or before the first day of the third month after you arrive in Canada'.",
+      "moving_from_another_province": "First day of the third month after the move (e.g. move 27 Sept → coverage 1 Dec)."
+    },
+    "how_to_apply": "Apply through eHealth Saskatchewan with proof of legal status in Canada and proof of Saskatchewan residence.",
+    "drug_coverage_model": "Special Support Program (income-tested deductible and co-payment) plus Seniors' and Children's Drug Plans (PMPRB 2020/21 summary).",
+    "regular_provider": {
+      "share_adults_with_regular_provider_pct": 82.6,
+      "share_adults_without_regular_provider_pct": 17.4,
+      "confidence_interval_95_pct": [
+        79.6,
+        85.3
+      ],
+      "survey_year": 2025,
+      "age_group": "adults 18+",
+      "quality_flag": null,
+      "source": "CIHI indicator 'Canadians With a Primary Health Care Provider', Statistics Canada CCHS",
+      "canada_2025_pct": 83.4
+    }
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://www.ehealthsask.ca/residents/health-cards/apply-for-a-health-card/eligibility-for-health-benefits",
+      "title": "Eligibility for health benefits",
+      "publisher": "eHealth Saskatchewan",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": null
+    },
+    {
+      "url": "https://www.cihi.ca/sites/default/files/document/data-file/880-canadians-with-a-primary-health-care-provider-data-table-en.xlsx",
+      "title": "Canadians With a Primary Health Care Provider — indicator data table (data updated October 2026); underlying data: Statistics Canada, Canadian Community Health Survey, Annual Component",
+      "publisher": "Canadian Institute for Health Information",
+      "source_type": "statistics_agency",
+      "accessed": "2026-10-30",
+      "data_period": "2025 (provinces); 2024 (territories)",
+      "methodology": "Weighted percent of adults 18+ reporting a regular/primary health care provider (family doctor, nurse practitioner or other); 95% confidence interval given. 2025 adult questions were harmonized, so compare with earlier years with caution.",
+      "licence": null
+    },
+    {
+      "url": "https://www.canada.ca/en/patented-medicine-prices-review/services/npduis/analytical-studies/supporting-information/public-drug-plan-designs.html",
+      "title": "Public Drug Plan Designs, 2021/22 edition (describes 2020/21 plan designs; page modified 2024-01-30)",
+      "publisher": "Patented Medicine Prices Review Board (NPDUIS)",
+      "source_type": "federal_government",
+      "accessed": "2026-10-30",
+      "data_period": "2020/21",
+      "methodology": null,
+      "licence": "Open Government Licence – Canada"
+    }
+  ],
+  "units": {
+    "shares": "percent of adults 18+"
+  },
+  "verification": {
+    "status": "verified",
+    "confidence": "high",
+    "verified_by": "agent-01",
+    "last_verified": "2026-10-30",
+    "next_review": "2026-11-29",
+    "notes": "Provincial page(s) fetched directly where status is 'verified'; otherwise some content came from search-engine extracts of official pages (403 or bot-check on fetch). Regular-provider figures parsed from CIHI's published data table."
+  },
+  "responsible_agent": "agent-01",
+  "limitations": "Eligibility text summarises official pages and is not legal advice; temporary-status rules change often. Drug-plan designs are from PMPRB's 2020/21 summary and may be out of date. 'Without a regular provider' is 100 minus the CIHI share (simple arithmetic).",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

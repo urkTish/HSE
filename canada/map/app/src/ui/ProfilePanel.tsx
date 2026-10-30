@@ -198,7 +198,7 @@ export default function ProfilePanel({ selection, index, layers, categoryLabels,
   } else if (error || !record) {
     body = <p className="p-5 text-sm text-status-critical" role="alert">{error ?? "Not found."}</p>;
   } else {
-    body = <RecordProfile record={record} climate={climate} onDemand={onDemand} index={index} categoryLabels={categoryLabels} onOpen={onOpen} provinceName={province(record.geo.province)?.name ?? record.geo.province} />;
+    body = <RecordProfile record={record} climate={climate} onDemand={onDemand} index={index} categoryLabels={categoryLabels} onOpen={onOpen} provinceName={record.geo.province === "CA" ? "Canada (national)" : (province(record.geo.province)?.name ?? record.geo.province)} />;
   }
 
   return (

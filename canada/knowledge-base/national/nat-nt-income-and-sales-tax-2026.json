@@ -1,0 +1,116 @@
+{
+  "id": "nat-nt-income-and-sales-tax-2026",
+  "category": "nat",
+  "subcategory": "tax",
+  "name": "Northwest Territories: income and sales tax, 2026",
+  "name_fr": "Territoires du Nord-Ouest : impôt sur le revenu et taxes de vente, 2026",
+  "geo": {
+    "province": "NT",
+    "region": null,
+    "city": null,
+    "neighbourhood": null,
+    "address": null,
+    "lat": null,
+    "lon": null,
+    "coord_precision": "unknown",
+    "coord_source": null,
+    "extent": "province or territory"
+  },
+  "description": "Provincial/territorial personal income tax brackets, basic personal amount and sales tax rates for Northwest Territories for the 2026 tax year, with estimated take-home pay for a single employee at three salaries.",
+  "attributes": {
+    "tax_year": 2026,
+    "jurisdiction": "Northwest Territories",
+    "legal_status": "in force (2026 tax year)",
+    "provincial_brackets": [
+      {
+        "from": 0,
+        "to": 53003,
+        "rate_pct": 5.9
+      },
+      {
+        "from": 53003,
+        "to": 106009,
+        "rate_pct": 8.6
+      },
+      {
+        "from": 106009,
+        "to": 172346,
+        "rate_pct": 12.2
+      },
+      {
+        "from": 172346,
+        "to": null,
+        "rate_pct": 14.05
+      }
+    ],
+    "basic_personal_amount": 18198,
+    "lowest_rate_pct_used_for_credits": 5.9,
+    "surtax": null,
+    "health_premium": null,
+    "payroll": "CPP 5.95% (+4% CPP2 band), EI 1.63% — see nat-ca-federal-income-tax-and-payroll-2026",
+    "sales_tax": {
+      "gst_pct": 5.0,
+      "hst_pct": null,
+      "pst_pct": 0.0,
+      "qst_pct": null,
+      "combined_general_rate_pct": 5.0,
+      "note": "No provincial or territorial retail sales tax; only the 5% GST applies. HST replaces GST and PST in participating provinces. PST/QST bases and exemptions differ from GST and are set provincially; only headline rates are recorded here."
+    },
+    "take_home_examples_ref": "nat-ca-take-home-pay-examples-2026",
+    "net_annual_estimate_single_employee": {
+      "60000": 47938.02,
+      "100000": 75204.48,
+      "150000": 107360.83
+    },
+    "notes": null
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://www.canada.ca/en/revenue-agency/services/tax/individuals/tax-rates-brackets/current-year.html",
+      "title": "Current year tax rates and income brackets (2026) — page modified 2026-06-25",
+      "publisher": "Canada Revenue Agency",
+      "source_type": "federal_government",
+      "accessed": "2026-10-30",
+      "data_period": "2026",
+      "methodology": null,
+      "licence": "Open Government Licence – Canada"
+    },
+    {
+      "url": "https://www.canada.ca/en/revenue-agency/services/forms-publications/payroll/t4127-payroll-deductions-formulas/t4127-jan/t4127-jan-payroll-deductions-formulas-computer-programs.html",
+      "title": "T4127 Payroll Deductions Formulas, 122nd edition, effective 1 January 2026 (Table 8.1 rates and thresholds; basic personal amounts; CPP/QPP/EI/QPIP parameters)",
+      "publisher": "Canada Revenue Agency",
+      "source_type": "federal_government",
+      "accessed": "2026-10-30",
+      "data_period": "2026",
+      "methodology": null,
+      "licence": "Open Government Licence – Canada"
+    },
+    {
+      "url": "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate/calculator.html",
+      "title": "GST/HST calculator (and rates for provinces) — rates on or after 1 April 2025; page modified 2025-04-01",
+      "publisher": "Canada Revenue Agency",
+      "source_type": "federal_government",
+      "accessed": "2026-10-30",
+      "data_period": "2025-04-01 onward",
+      "methodology": null,
+      "licence": "Open Government Licence – Canada"
+    }
+  ],
+  "units": {
+    "money": "CAD",
+    "rates": "percent"
+  },
+  "verification": {
+    "status": "verified",
+    "confidence": "high",
+    "verified_by": "agent-01",
+    "last_verified": "2026-10-30",
+    "next_review": "2027-01-04",
+    "notes": "Brackets agree between the CRA current-year page and T4127 Table 8.1 (Jan 2026, PE updated May 2026)."
+  },
+  "responsible_agent": "agent-01",
+  "limitations": "Headline rates only: no refundable credits, low-income reductions, dividend or capital-gains treatment, or property taxes. The net-pay figures in attributes are estimates (method in nat-ca-take-home-pay-examples-2026), not official figures.",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}
