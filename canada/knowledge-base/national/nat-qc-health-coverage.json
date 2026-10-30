@@ -34,7 +34,7 @@
       "moving_from_another_province": "Not captured in this pass."
     },
     "how_to_apply": "Register with RAMQ once in Québec with all documents; the waiting period starts at registration. Private insurance recommended for the gap.",
-    "drug_coverage_model": "Mandatory prescription-drug insurance: residents with access to a private group plan must join it; others join the public plan (income-based premium, monthly deductible and co-insurance) (PMPRB 2020/21 summary). Premium amounts not captured.",
+    "drug_coverage_model": "Public Prescription Drug Insurance Plan for residents without private coverage, seniors 65+ and last-resort assistance recipients: income-based premium, monthly deductible and 35% co-insurance (PMPRB 2020/21 summary). Whether people with access to a group plan must join it was not verified in this pass; premium amounts not captured.",
     "regular_provider": {
       "share_adults_with_regular_provider_pct": 72.3,
       "share_adults_without_regular_provider_pct": 27.7,

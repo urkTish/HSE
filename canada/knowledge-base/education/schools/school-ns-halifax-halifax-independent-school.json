@@ -1,0 +1,131 @@
+{
+  "id": "school-ns-halifax-halifax-independent-school",
+  "category": "school",
+  "subcategory": "Progressive inquiry, P–9",
+  "name": "Halifax Independent School",
+  "name_fr": null,
+  "geo": {
+    "province": "NS",
+    "region": "Halifax Regional Municipality",
+    "city": "Halifax",
+    "neighbourhood": "West End (Connaught Avenue)",
+    "address": "3331 Connaught Avenue, Halifax, NS B3L 3B4",
+    "lat": 44.656128,
+    "lon": -63.616121,
+    "coord_precision": "exact",
+    "coord_source": "OpenStreetMap Nominatim geocode of the official address (© OpenStreetMap contributors, ODbL), 2026-10-30 — school building match"
+  },
+  "description": "Small progressive independent school in Halifax (pre-primary to Grade 9), founded in 1974 as Dalhousie University's laboratory school; hands-on inquiry ('Theme') alongside a core curriculum.",
+  "attributes": {
+    "website": "https://halifaxindependentschool.ca/",
+    "models": [
+      "project_based",
+      "other_innovative"
+    ],
+    "philosophy": "Progressive, holistic, whole-child; hands-on inquiry through 'Theme' study; three outdoor play times a day.",
+    "legal_status": {
+      "label": "Private (independent) school, Nova Scotia — elementary/middle; not on the province's list of schools granting the High School Leaving Certificate",
+      "province_category": null,
+      "authority": "Nova Scotia Department of Education and Early Childhood Development",
+      "registered": null,
+      "publicly_funded": false,
+      "inspected": null,
+      "can_issue_provincial_diploma": false,
+      "source_url": "https://www.ednet.ns.ca/going-school-nova-scotia"
+    },
+    "institution_type": "independent_private_school",
+    "ages": {
+      "min": 4,
+      "max": 15
+    },
+    "grades": "Pre-primary, Primary–Grade 9",
+    "language_of_instruction": [
+      "English"
+    ],
+    "curriculum": "Core curriculum with inquiry-based Theme study.",
+    "qualifications_offered": "None (ends at Grade 9).",
+    "accreditation": [],
+    "tuition": {
+      "amount_cad_min": 13805,
+      "amount_cad_max": 17175,
+      "period": "year",
+      "school_year": "2026-2027",
+      "notes": "2026-27: Pre-primary $13,805; Elementary (Primary–6) $15,880; Middle (7–9) $17,175; initial admission fee $2,500 (new families); EAL support $1,600 where assessed. Fee cards were parsed from page text; card-to-amount mapping (Pre-primary → $13,805, Elementary → $15,880, Middle → $17,175) should be re-checked visually.",
+      "source_url": "https://halifaxindependentschool.ca/admissions/"
+    },
+    "additional_fees": "Application $100 (Canadian/PR or work/study-permit holder), $300 international; initial admission fee $2,500.",
+    "admission": "Inquiry, tour, application with documents.",
+    "class_size": null,
+    "boarding": false,
+    "transportation": "Metro Transit Route 29 (school statement).",
+    "campuses": [
+      {
+        "name": "Connaught Avenue",
+        "address": "3331 Connaught Avenue, Halifax, NS B3L 3B4",
+        "lat": 44.656128,
+        "lon": -63.616121,
+        "coord_precision": "exact"
+      }
+    ],
+    "media_links": [
+      "https://halifaxindependentschool.ca/student-experience/"
+    ],
+    "advantages": [
+      "Moderate fees for a city independent school",
+      "Application fee policy explicitly covers work/study-permit families"
+    ],
+    "limitations": [
+      "Inquiry model is partial: a core curriculum runs alongside Theme study",
+      "No public provincial register of private elementary schools found to confirm registration"
+    ],
+    "nearby_cities_km": null,
+    "qualifying": "unverified_candidate",
+    "qualifying_reason": "Tuition and model read on the official site, but (1) the model is a progressive blend rather than a clearly distinct alternative and (2) Nova Scotia publishes no list of private elementary schools, so legal status could not be confirmed against a register."
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://halifaxindependentschool.ca/admissions/",
+      "title": "Admissions — 2026–27 fees",
+      "publisher": "Halifax Independent School",
+      "source_type": "school_official",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://halifaxindependentschool.ca/about-us/",
+      "title": "About Us",
+      "publisher": "Halifax Independent School",
+      "source_type": "school_official",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://halifaxindependentschool.ca/student-experience/elementary/",
+      "title": "Elementary",
+      "publisher": "Halifax Independent School",
+      "source_type": "school_official",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://www.ednet.ns.ca/going-school-nova-scotia",
+      "title": "Going to School in Nova Scotia",
+      "publisher": "Nova Scotia Department of Education and Early Childhood Development",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30"
+    }
+  ],
+  "units": {
+    "tuition": "CAD"
+  },
+  "verification": {
+    "status": "partially_verified",
+    "confidence": "medium",
+    "verified_by": "agent-03",
+    "last_verified": "2026-10-30",
+    "next_review": "2027-09-01",
+    "notes": "Legal status not confirmable against a public register."
+  },
+  "limitations": "Registration status unconfirmed.",
+  "responsible_agent": "agent-03",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

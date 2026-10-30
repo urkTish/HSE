@@ -1,0 +1,75 @@
+{
+  "id": "nat-ns-education-private-schools-and-home-education",
+  "category": "nat",
+  "subcategory": "education regulation — private schools, home education",
+  "name": "Nova Scotia — private schools and home education",
+  "name_fr": null,
+  "geo": {
+    "province": "NS",
+    "region": null,
+    "city": null,
+    "neighbourhood": null,
+    "address": null,
+    "lat": null,
+    "lon": null,
+    "coord_precision": "unknown",
+    "coord_source": null,
+    "extent": "province-wide"
+  },
+  "description": "Nova Scotia private schools are not publicly funded (except partial tuition support at designated special-education private schools). The province defines a private school as one with a curriculum comparable to the public schools (Education Act 2018, ss.85–87) and publishes a list of private schools recognized to grant the Nova Scotia High School Leaving Certificate. Home education requires an annual registration form received by 20 September; it is unfunded, the Minister may terminate a programme that does not meet the Act, and the Home Schooling division awards no credits or diplomas.",
+  "attributes": {
+    "legal_term": "Private school (Education Act, S.N.S. 2018, c.1, ss.85–87)",
+    "funding": "None, except the Tuition Support Program at Designated Special Education Private Schools (DESPS).",
+    "curriculum": "'A curriculum comparable to that provided by the public schools' (ednet.ns.ca).",
+    "register": "Open data: Recognized Private Schools Granting the NS High School Leaving Certificate (modified 2026-10-14). Current rows include Armbrae Academy, Halifax Grammar School, King's-Edgehill School, Sacred Heart School of Halifax, Shambhala School, Class Afloat (West Island College International), DEVI International Boarding School, Maritime Muslim Academy and three designated special-education schools (Bridgeway Academy ×2, Churchill Academy, Landmark East). No public list of private elementary-only schools was found.",
+    "diploma": "Only recognized private schools on that list grant the NS High School Leaving Certificate.",
+    "home_education": "Annual Registration Form for Home Schooling due 20 September (2026-27 form published); unfunded; Minister may terminate a programme on evidence it does not meet the Act or the child is not progressing (s.84); no credits or graduation certificate from the division; a home-educated child may take board courses with board approval.",
+    "online": "Not researched in Phase 1."
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://www.ednet.ns.ca/going-school-nova-scotia",
+      "title": "Going to School in Nova Scotia",
+      "publisher": "Nova Scotia Department of Education and Early Childhood Development",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://www.ednet.ns.ca/homeschooling",
+      "title": "Home Schooling",
+      "publisher": "Nova Scotia Department of Education and Early Childhood Development",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://www.ednet.ns.ca/homeschooling/files-homeschooling/docs/homeschooling_registration_form_2026-27_en.pdf",
+      "title": "Registration Form for Home Schooling 2026-27",
+      "publisher": "Nova Scotia Department of Education and Early Childhood Development",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30",
+      "data_period": "2026-2027"
+    },
+    {
+      "url": "https://open.canada.ca/data/en/dataset/b2fcaefb-52c9-8514-8a12-3b320686d0af",
+      "title": "Recognized Private Schools Granting the Nova Scotia High School Leaving Certificate (CSV via data.novascotia.ca, modified 2026-10-14)",
+      "publisher": "Nova Scotia Department of Education and Early Childhood Development",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30",
+      "licence": "Open Government Licence – Nova Scotia"
+    }
+  ],
+  "units": null,
+  "verification": {
+    "status": "partially_verified",
+    "confidence": "medium",
+    "verified_by": "agent-03",
+    "last_verified": "2026-10-30",
+    "next_review": "2027-04-30",
+    "notes": "ednet page and open-data list read directly; home-education details from ednet search excerpts; Education Act text not read."
+  },
+  "limitations": "Registration procedure for private schools (who registers, inspection) not confirmed from statute text.",
+  "responsible_agent": "agent-03",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

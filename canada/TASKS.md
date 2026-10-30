@@ -6,12 +6,15 @@ section. A request to another agent is a new line under that agent with
 
 ## Agent 01 — National Intelligence (`knowledge-base/national/`)
 
-- [doing] 01-1 Immigration pathways overview (Express Entry incl. category-based selection, PNPs by province, family, work permits), current Levels Plan, processing times; `nat` records for status-dependent rights.
-- [doing] 01-2 Provincial tax comparison for the current tax year: income tax brackets, sales taxes, worked take-home examples with stated assumptions.
-- [doing] 01-3 Healthcare by province: eligibility by status, newcomer waiting periods, regular-provider attachment, drug coverage.
-- [doing] 01-4 Employment and credential recognition: how regulated professions are licensed per province; Job Bank outlook method; placeholder for the user's NOC once known.
-- [doing] 01-5 Quebec language rules affecting newcomers (work, services, schooling eligibility) as `nat` records.
-- [doing] 01-6 `STATUS.md`, open questions appended to `OPEN-QUESTIONS.md`.
+- [done] 01-1 Immigration pathways overview (Express Entry incl. category-based selection, PNPs by province, family, work permits), current Levels Plan, processing times; `nat` records for status-dependent rights.
+- [done] 01-2 Provincial tax comparison for the current tax year: income tax brackets, sales taxes, worked take-home examples with stated assumptions.
+- [done] 01-3 Healthcare by province: eligibility by status, newcomer waiting periods, regular-provider attachment, drug coverage.
+- [done] 01-4 Employment and credential recognition: how regulated professions are licensed per province; Job Bank outlook method; placeholder for the user's NOC once known.
+- [done] 01-5 Quebec language rules affecting newcomers (work, services, schooling eligibility) as `nat` records.
+- [done] 01-6 `STATUS.md`, open questions appended to `OPEN-QUESTIONS.md`.
+- [todo] 01-7 Re-check in early November 2026: 2027–2029 Levels Plan (due 1 Nov), Express Entry CRS change in force 3 Nov and the list of high-wage occupations, the non-Canadian buyer ban (expires 1 Jan 2027), and Quebec policy under the new government.
+- [todo] 01-8 Fill Phase 1 gaps: IRCC permanent-residence processing times (null), CLB minimums for CEC/FST, PEI and Nunavut newcomer waiting periods, Quebec drug-plan premium and the temporary English-schooling regulation text, check of the take-home estimates against the CRA Payroll Deductions Online Calculator.
+- [todo] 01-9 Once USER-PROFILE.md names the occupation, citizenship and family: fill the occupation placeholder in employment-and-credentials.md and add regulator records for the shortlisted provinces.
 
 ## Agent 02 — Real Estate (`knowledge-base/real-estate/`)
 
@@ -47,11 +50,12 @@ section. A request to another agent is a new line under that agent with
 
 ## Agent 06 — UI/UX (`design/`)
 
-- [doing] 06-1 `design-system.md` and `tokens.css` (light and dark).
-- [doing] 06-2 Wireframes: country, province, city with profile, comparison, search, mobile.
-- [doing] 06-3 `components.md` inventory for Agent 05.
-- [todo] 06-4 First review of the Agent 05 skeleton (`review-YYYY-MM-DD.md`).
-- [todo] 06-5 `STATUS.md`.
+- [done] 06-1 `design-system.md` and `tokens.css` (light and dark), plus `tailwind-theme.css` (Tailwind v4 mapping, already imported by the app).
+- [done] 06-2 Wireframes: country, province, city with profile, comparison, search, mobile (`design/wireframes/`, index.html).
+- [done] 06-3 `components.md` inventory for Agent 05.
+- [done] 06-4 First review of the Agent 05 skeleton (`review-2026-10-30.md`: 15 findings + 2 architecture notes).
+- [done] 06-5 `STATUS.md`.
+- [todo] 06-6 Re-review after Agent 05 addresses F-01 to F-07 (marker shapes, keyboard path, Living section, mobile, dark controls, duplicate labels, map padding).
 
 ## Agent 07 — Coordinator (repository root of `canada/`)
 

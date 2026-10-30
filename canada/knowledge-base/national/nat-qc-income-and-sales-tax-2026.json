@@ -46,7 +46,7 @@
     "basic_personal_amount": 18952,
     "lowest_rate_pct_used_for_credits": 14.0,
     "surtax": null,
-    "health_premium": "Quebec: 1% contribution by individuals to the Health Services Fund has 2026 thresholds of $18,500 and $64,355 (Quebec MoF); which income it applies to was not verified in this pass and it is not modelled. Quebec also requires prescription-drug insurance (public plan premium or group plan) — amount not captured.",
+    "health_premium": "Quebec: 1% contribution by individuals to the Health Services Fund has 2026 thresholds of $18,500 and $64,355 (Quebec MoF); which income it applies to was not verified in this pass and it is not modelled. Quebec's public prescription-drug plan charges an income-based premium to members (PMPRB summary) — amount not captured.",
     "payroll": "QPP 6.30% (+4% QPP2 band), EI 1.30%, QPIP 0.43% — see nat-ca-federal-income-tax-and-payroll-2026",
     "sales_tax": {
       "gst_pct": 5.0,

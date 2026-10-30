@@ -1,0 +1,133 @@
+{
+  "id": "school-qc-montreal-ecole-rudolf-steiner-de-montreal",
+  "category": "school",
+  "subcategory": "Waldorf, kindergarten–Secondary 2",
+  "name": "Rudolf Steiner School of Montréal",
+  "name_fr": "École Rudolf Steiner de Montréal",
+  "geo": {
+    "province": "QC",
+    "region": "Montréal",
+    "city": "Montréal",
+    "neighbourhood": "Notre-Dame-de-Grâce (former Fraser-Hickson library)",
+    "address": "4855, avenue de Kensington, Montréal, QC H3X 3S6",
+    "lat": 45.471628,
+    "lon": -73.635614,
+    "coord_precision": "exact",
+    "coord_source": "Ministère de l'Éducation du Québec open-data layer 'Installation d'enseignement privé' (COORD_X/Y_LL84), updated 2026-10-26"
+  },
+  "description": "French-language private Waldorf school (elementary and first cycle of secondary, i.e. Secondary 1–2) with a private kindergarten/garderie, housed in the heritage former Fraser-Hickson library. The school states it is a private francophone school subsidised by the Ministère de l'Éducation.",
+  "attributes": {
+    "website": "https://ersm.org/",
+    "models": [
+      "waldorf_steiner"
+    ],
+    "philosophy": "Waldorf pedagogy 'respecting the standards of the ministère de l'Éducation'; class teacher who stays with the class over several years.",
+    "legal_status": {
+      "label": "Private educational institution holding a permit under the Act respecting private education (Québec); subsidised (school statement)",
+      "province_category": "Subsidised (agréé aux fins de subventions) — per school website, not confirmed in the ministry layer",
+      "authority": "Ministère de l'Éducation du Québec",
+      "registered": true,
+      "publicly_funded": true,
+      "inspected": null,
+      "can_issue_provincial_diploma": false,
+      "source_url": "https://www.donneesquebec.ca/recherche/dataset/localisation-des-etablissements-d-enseignement-du-reseau-scolaire-au-quebec"
+    },
+    "institution_type": "registered_private_school",
+    "ages": {
+      "min": 3,
+      "max": 14
+    },
+    "grades": "Kindergarten (jardin), elementary, Secondary 1–2",
+    "language_of_instruction": [
+      "French"
+    ],
+    "curriculum": "Québec Education Program delivered through Waldorf pedagogy.",
+    "qualifications_offered": "None (school ends at Secondary 2; the Québec DES is completed elsewhere).",
+    "accreditation": [],
+    "tuition": {
+      "amount_cad_min": null,
+      "amount_cad_max": null,
+      "period": "year",
+      "school_year": "2025-2026",
+      "notes": "Gross tuition not published. The 2025-2026 financial-aid simulation shows an annual family outlay after aid and returns of $1,638 (family income $30,000), $6,054 ($50,000), $7,646 ($75,000) and $8,921 ($100,000+).",
+      "source_url": "https://ersm.org/wp-content/uploads/2025/05/7-Aide-Financiere-2025-2026.docx"
+    },
+    "additional_fees": null,
+    "admission": "Open houses each October and February; contact admissions@ersm.org.",
+    "class_size": null,
+    "boarding": false,
+    "transportation": null,
+    "campuses": [
+      {
+        "name": "Kensington",
+        "address": "4855, avenue de Kensington, Montréal, QC H3X 3S6",
+        "lat": 45.471628,
+        "lon": -73.635614,
+        "coord_precision": "exact"
+      }
+    ],
+    "media_links": [
+      "https://ersm.org/notre-ecole/",
+      "https://www.facebook.com/ersm.org/"
+    ],
+    "advantages": [
+      "Subsidised, so fees are far below unsubsidised private schools",
+      "Heritage building in a central residential district"
+    ],
+    "limitations": [
+      "French-language instruction only; as a subsidised school it is bound by the Charter of the French Language, so a newcomer child without an eligibility certificate is taught in French",
+      "Ends at Secondary 2"
+    ],
+    "nearby_cities_km": null,
+    "qualifying": "unverified_candidate",
+    "qualifying_reason": "Model (Waldorf) and private status confirmed (ministry private-installation layer; school site). Gross tuition is not published — only a 2025-26 aid simulation — so SPEC §7 'tuition with its school year' is not met. Strong candidate for French-speaking or French-learning families."
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://ersm.org/notre-ecole/",
+      "title": "Notre école",
+      "publisher": "École Rudolf Steiner de Montréal",
+      "source_type": "school_official",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://ersm.org/admission-ecole/",
+      "title": "Admission",
+      "publisher": "École Rudolf Steiner de Montréal",
+      "source_type": "school_official",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://ersm.org/wp-content/uploads/2025/05/7-Aide-Financiere-2025-2026.docx",
+      "title": "Aide financière – Simulation des frais 2025-2026",
+      "publisher": "École Rudolf Steiner de Montréal",
+      "source_type": "school_official",
+      "accessed": "2026-10-30",
+      "data_period": "2025-2026"
+    },
+    {
+      "url": "https://www.donneesquebec.ca/recherche/dataset/localisation-des-etablissements-d-enseignement-du-reseau-scolaire-au-quebec",
+      "title": "Localisation des établissements d'enseignement du réseau scolaire — couche Installation d'enseignement privé (WFS, mise à jour 2026-10-26)",
+      "publisher": "Ministère de l'Éducation du Québec",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30",
+      "licence": "CC-BY 4.0 (Données Québec)"
+    }
+  ],
+  "units": {
+    "tuition": "CAD"
+  },
+  "verification": {
+    "status": "partially_verified",
+    "confidence": "medium",
+    "verified_by": "agent-03",
+    "last_verified": "2026-10-30",
+    "next_review": "2027-09-01",
+    "notes": "Status and model verified; gross tuition missing."
+  },
+  "limitations": "Subsidy status from the school site only.",
+  "responsible_agent": "agent-03",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

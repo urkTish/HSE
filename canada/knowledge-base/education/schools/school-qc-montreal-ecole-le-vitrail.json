@@ -1,0 +1,71 @@
+{
+  "id": "school-qc-montreal-ecole-le-vitrail",
+  "category": "school",
+  "subcategory": "Excluded — public alternative school",
+  "name": "École Le Vitrail",
+  "name_fr": null,
+  "geo": {
+    "province": "QC",
+    "region": "Montréal",
+    "city": "Montréal",
+    "neighbourhood": "La Petite-Patrie",
+    "address": "rue Boyer, Montréal (street-level match)",
+    "lat": 45.53511,
+    "lon": -73.597198,
+    "coord_precision": "approximate",
+    "coord_source": "OpenStreetMap Nominatim geocode of the official address (© OpenStreetMap contributors, ODbL), 2026-10-30 — school-name match; exact civic address not recorded"
+  },
+  "description": "Public alternative primary-secondary school in Montréal, member of the Réseau des écoles publiques alternatives du Québec (RÉPAQ). Recorded so it is not re-added: Québec's many public 'écoles alternatives' are outside the private scope.",
+  "attributes": {
+    "website": "https://repaq.org/ecoles/",
+    "models": [
+      "self_directed",
+      "project_based"
+    ],
+    "legal_status": {
+      "label": "Public school (school service centre), alternative stream",
+      "province_category": "Public alternative school (RÉPAQ member)",
+      "authority": "Centre de services scolaire (Montréal)",
+      "registered": true,
+      "publicly_funded": true,
+      "source_url": "https://repaq.org/ecoles/"
+    },
+    "institution_type": null,
+    "grades": "Primary and secondary",
+    "language_of_instruction": [
+      "French"
+    ],
+    "tuition": null,
+    "campuses": [],
+    "media_links": [],
+    "advantages": [],
+    "limitations": [],
+    "qualifying": "excluded",
+    "qualifying_reason": "Public alternative programme (SPEC §7 exclusion). RÉPAQ lists about 50 such public schools across Québec (Freinet, Rose-des-Vents, Élan, etc.) — all excluded on the same ground."
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://repaq.org/ecoles/",
+      "title": "Liste des écoles alternatives",
+      "publisher": "Réseau des écoles publiques alternatives du Québec (RÉPAQ)",
+      "source_type": "community",
+      "accessed": "2026-10-30"
+    }
+  ],
+  "units": {
+    "tuition": "CAD"
+  },
+  "verification": {
+    "status": "partially_verified",
+    "confidence": "medium",
+    "verified_by": "agent-03",
+    "last_verified": "2026-10-30",
+    "next_review": "2027-10-30",
+    "notes": "Public status from the RÉPAQ network list (network of public schools); not cross-checked in the ministry public-school layer."
+  },
+  "limitations": "Exclusion record.",
+  "responsible_agent": "agent-03",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

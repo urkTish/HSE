@@ -195,7 +195,13 @@ export default function ProfilePanel({ selection, index, layers, categoryLabels,
           if (!linked.length && typeof rec.geo.lat === "number" && typeof rec.geo.lon === "number") {
             linked = nearby({ id: rec.id, lat: rec.geo.lat, lon: rec.geo.lon }, candidates, 30, 1).map((x) => x.entry);
           }
-          clim = (await Promise.all(linked.slice(0, 3).map((e) => loadRecord("clim", e.id)))).filter(Boolean) as unknown as ClimRecord[];
+          const loaded = (await Promise.all(linked.map((e) => loadRecord("clim", e.id)))).filter(Boolean) as unknown as ClimRecord[];
+          // Newest normals period first (D-004: 1991–2020 where published), then nearest to the city centre.
+          clim = loaded.sort(
+            (a, b) =>
+              b.attributes.normals_period.localeCompare(a.attributes.normals_period) ||
+              (a.attributes.distance_to_city_centre_km ?? 999) - (b.attributes.distance_to_city_centre_km ?? 999),
+          );
         }
         const od = rec?.category === "re" ? await requestOnDemand({ kind: "market-figure", recordId: rec.id }) : null;
         if (!live) return;
@@ -305,16 +311,29 @@ function RecordProfile({
 
       {(climate.length > 0 || seasonal || phenomena.length > 0) && (
         <Section title="Year-round climate">
-          {climate.map((c) => (
-            <div key={c.id} className="space-y-1">
-              {c.id !== r.id && (
+          {climate[0] && (
+            <div className="space-y-1">
+              {climate[0].id !== r.id && (
                 <p className="text-xs text-ink-2">
-                  From <button type="button" className="underline" onClick={() => { const e = index.records.find((x) => x.id === c.id); if (e) onOpen(e); }}>{c.name}</button>
+                  From <button type="button" className="underline" onClick={() => { const e = index.records.find((x) => x.id === climate[0]?.id); if (e) onOpen(e); }}>{climate[0].name}</button>
                 </p>
               )}
-              <ClimateChart record={c} />
+              <ClimateChart record={climate[0]} />
             </div>
-          ))}
+          )}
+          {climate.length > 1 && (
+            <div className="text-xs text-ink-2">
+              Other stations and periods:{" "}
+              {climate.slice(1).map((c, i) => (
+                <span key={c.id}>
+                  {i > 0 && " · "}
+                  <button type="button" className="underline" onClick={() => { const e = index.records.find((x) => x.id === c.id); if (e) onOpen(e); }}>
+                    {c.attributes.station_name} ({c.attributes.normals_period})
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
           {seasonal && (
             <Dl rows={(["winter", "spring", "summer", "autumn"] as const).map((s) => [humanise(s), seasonal[s] ?? null] as [string, ReactNode])} />
           )}
@@ -364,6 +383,18 @@ function RecordProfile({
           <p className="rounded-sm bg-status-warning-soft px-2 py-1 text-xs text-status-warning">
             The figure itself is not stored in the map. {onDemand?.reason ?? ""} The full record is in the knowledge base at <code>{r._map?.file}</code>.
           </p>
+          {(() => {
+            const src = r.sources.find((x) => /statistics canada/i.test(x.publisher)) ?? r.sources[0];
+            return src ? (
+              <p className="text-xs">
+                Not available here —{" "}
+                <a className="underline" href={src.url} target="_blank" rel="noopener noreferrer">
+                  open the source ({src.publisher})
+                </a>
+                .
+              </p>
+            ) : null;
+          })()}
         </Section>
       )}
 

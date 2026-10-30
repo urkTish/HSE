@@ -45,3 +45,19 @@ One entry per non-obvious choice: what, why, alternatives, date.
   2024. `nat-ca-mortgage-down-payment-insurance-rules` follows Finance (the
   rule-making body); the FCAC page is noted as outdated. Period, not
   methodology, explains the difference.
+- **D-010 (2026-10-30) — Two records for the federal buyer ban.** Agent 01
+  (`nat-ca-residential-property-purchase-by-non-canadians`) and Agent 02
+  (`nat-ca-non-canadian-residential-purchase-prohibition`) both describe the
+  Prohibition on the Purchase of Residential Property by Non-Canadians Act.
+  They agree on substance (in force since 2023-01-01, scheduled end
+  2027-01-01, exemption for work-permit holders with at least 183 days
+  remaining, one property). Both stay. Agent 02's record is canonical for
+  the rule (verified against the Justice Laws consolidation); Agent 01's is
+  the status-dependency cross-reference used by the "what each status
+  allows" table. New facts go to the canonical record first.
+- **D-011 (2026-10-30) — Manitoba 2026 tax thresholds, disputed.** The CRA
+  current-year rates page shows $47,564 / $101,200; CRA's payroll formulas
+  show $47,000 / $100,000, matching Manitoba's indexation freeze.
+  `nat-mb-income-and-sales-tax-2026` uses $47,000 / $100,000 and stays
+  `disputed`; the effect is under $70 a year. Re-check against Manitoba
+  Finance when its site is reachable.

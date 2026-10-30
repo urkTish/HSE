@@ -1,0 +1,82 @@
+{
+  "id": "nat-qc-education-private-schools-and-home-schooling",
+  "category": "nat",
+  "subcategory": "education regulation — private schools, home schooling",
+  "name": "Québec — private educational institutions and home schooling",
+  "name_fr": "Québec — établissements d'enseignement privés et enseignement à la maison",
+  "geo": {
+    "province": "QC",
+    "region": null,
+    "city": null,
+    "neighbourhood": null,
+    "address": null,
+    "lat": null,
+    "lon": null,
+    "coord_precision": "unknown",
+    "coord_source": null,
+    "extent": "province-wide"
+  },
+  "description": "Québec private schools hold a permit from the Ministère de l'Éducation under the Act respecting private education; some are also accredited for subsidies (agréés aux fins de subventions). All must meet ministerial requirements for programs of study and pedagogical supervision; each sets its own admission rules. Home schooling requires an annual notice to the Ministry's Direction de l'enseignement à la maison by 1 July, a learning project implemented by 30 September, monitoring and an end-of-year report (by 15 June), and evaluation by one of the regulated methods.",
+  "attributes": {
+    "legal_term": "Établissement d'enseignement privé (Act respecting private education, CQLR c. E-9.1)",
+    "categories": "Permit holder; subsidised (agréé aux fins de subventions) or unsubsidised. A sector body (FEEP, 2024–2025 briefs) states no new subsidy accreditations have been granted since 2008 — not confirmed by the ministry.",
+    "curriculum": "Must conform to ministerial requirements on programs of study and pedagogical supervision (Québec Education Program); secondary studies lead to the DES.",
+    "register": "Ministry open-data layer 'Installation d'enseignement privé' lists 353 private installations with language(s) of instruction (updated 2026-10-26); it does not show subsidy status.",
+    "language": "See nat-qc-education-english-instruction-eligibility. Instruction in subsidised private schools follows the Charter of the French Language; unsubsidised schools may teach in English but time spent there does not create eligibility.",
+    "home_schooling": "Regulation respecting home schooling (CQLR c. I-13.3, r. 6.01, in force 1 July 2018): notice by 1 July (or within 10 days of leaving school); learning project by 30 September; follow-up with the ministry; evaluation through a school service centre/board, a private institution, a licensed teacher, a portfolio, or a ministerial exam; school service centres provide support on request.",
+    "funding": "Subsidised private schools receive ministry funding under the budget rules; unsubsidised receive none."
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://www.quebec.ca/education/prescolaire-primaire-et-secondaire/inscription-scolaire/ecole-privee",
+      "title": "Inscription à une école privée (updated 2026-10-26)",
+      "publisher": "Gouvernement du Québec",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://www.quebec.ca/education/prescolaire-primaire-et-secondaire/administration-encadrements/obligations-etablissements-enseignement-prives",
+      "title": "Obligations des établissements d'enseignement privés",
+      "publisher": "Gouvernement du Québec",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://www.quebec.ca/en/education/preschool-elementary-and-secondary-schools/programs-training-evaluation/homeschooling/process-steps",
+      "title": "Homeschooling process and steps",
+      "publisher": "Gouvernement du Québec",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://cdn-contenu.quebec.ca/cdn-contenu/education/enseignement-maison/Guide-exigences-enseignement-maison-VA.pdf",
+      "title": "Homeschooling Requirements – Guide for Parent-Educators",
+      "publisher": "Ministère de l'Éducation du Québec",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30",
+      "data_period": "2025-2026"
+    },
+    {
+      "url": "https://www.donneesquebec.ca/recherche/dataset/localisation-des-etablissements-d-enseignement-du-reseau-scolaire-au-quebec",
+      "title": "Localisation des établissements d'enseignement du réseau scolaire — couche Installation d'enseignement privé (WFS, mise à jour 2026-10-26)",
+      "publisher": "Ministère de l'Éducation du Québec",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30",
+      "licence": "CC-BY 4.0 (Données Québec)"
+    }
+  ],
+  "units": null,
+  "verification": {
+    "status": "partially_verified",
+    "confidence": "medium",
+    "verified_by": "agent-03",
+    "last_verified": "2026-10-30",
+    "next_review": "2027-04-30",
+    "notes": "Private-school page read directly; home-schooling details from quebec.ca search excerpts and guide titles; LégisQuébec blocked automated access (HTTP 403)."
+  },
+  "limitations": "Statute text of the Act respecting private education not read (LégisQuébec returned 403). Subsidy status per school is not in the open-data layer.",
+  "responsible_agent": "agent-03",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

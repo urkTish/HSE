@@ -92,8 +92,8 @@ Payroll used prorated figures in the second half of the year.
 - **Quebec:**
   - The Health Services Fund contribution has 2026 thresholds of $18,500 and $64,355. Its base was
     not verified, and it is not modelled here.
-  - Prescription-drug insurance is compulsory: a public-plan premium or a group plan. The amount was
-    not captured.
+  - The public prescription-drug plan charges members an income-based premium. The amount was not
+    captured.
 - No other provincial health premium appears in CRA's 2026 payroll formulas as read.
 
 **Data conflicts and gaps:**
@@ -166,7 +166,7 @@ next step.
   and treaty relief) was not researched in this pass. It depends on the user's country (question 1)
   and is a Phase 2 item.
 - **Quebec residents file a separate Quebec return**, because Revenu Québec administers Quebec income
-  tax and CRA does not publish Quebec brackets. They must also have prescription-drug insurance.
+  tax and CRA does not publish Quebec brackets. Those on the public drug plan also pay its premium.
 - **Property taxes, land-transfer taxes and foreign-buyer taxes are provincial or municipal.** They
   are in Agent 02's lane.
 

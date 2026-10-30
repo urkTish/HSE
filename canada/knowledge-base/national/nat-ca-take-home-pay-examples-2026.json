@@ -23,7 +23,7 @@
       "Single, no dependants, under 65, resident in the province on 31 December 2026 for the full year",
       "All income is employment income from one employer; no RRSP, union dues, childcare, moving, medical or other credits",
       "Manitoba thresholds $47,000/$100,000 (see disputed note in nat-mb-income-and-sales-tax-2026)",
-      "Quebec: the deduction for workers (maximum $1,450), any Quebec credit for QPP/EI/QPIP contributions, the Health Services Fund contribution and the public drug-plan premium are NOT modelled; Quebec net pay is therefore approximate (the omitted deduction for workers alone would add up to roughly $200–$370 of net pay)",
+      "Quebec: the deduction for workers (maximum $1,450), any Quebec credit for QPP/EI/QPIP contributions, the Health Services Fund contribution and any public drug-plan premium are NOT modelled; Quebec net pay is therefore approximate (the omitted deduction for workers alone would add up to roughly $200–$370 of net pay)",
       "Low-income reductions (e.g. BC, Ontario) are nil at these salaries and are not modelled",
       "Employer-provided benefits and their taxable value ignored"
     ],

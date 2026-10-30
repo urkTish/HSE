@@ -1,0 +1,135 @@
+{
+  "id": "school-qc-orford-ecole-secondaire-montessori-orford",
+  "category": "school",
+  "subcategory": "Montessori secondary",
+  "name": "Montessori Orford Secondary School",
+  "name_fr": "École secondaire Montessori Orford",
+  "geo": {
+    "province": "QC",
+    "region": "Estrie (Eastern Townships)",
+    "city": "Orford (near Magog)",
+    "neighbourhood": null,
+    "address": "3165, chemin du Parc, Orford, QC J1X 7A2",
+    "lat": 45.326844,
+    "lon": -72.180657,
+    "coord_precision": "exact",
+    "coord_source": "Ministère de l'Éducation du Québec open-data layer 'Installation d'enseignement privé', updated 2026-10-26"
+  },
+  "description": "Rare Montessori secondary school (Secondary 1–5) in the Eastern Townships, paired with École Montessori Magog (preschool–elementary). Multi-level classes of at most 24, instruction in French and English according to the student's mother tongue, forest-school and ski/music academies, an International Baccalaureate stream. Holds a teaching permit (RU.2838194 on the school site).",
+  "attributes": {
+    "website": "https://montessorimagogorford.org/",
+    "models": [
+      "montessori",
+      "forest_school",
+      "international_alternative"
+    ],
+    "philosophy": "Montessori approach at secondary level, multi-level context and small ratios (max 24) for learning at a personal pace.",
+    "legal_status": {
+      "label": "Private educational institution holding a permit under the Act respecting private education (Québec)",
+      "province_category": "Subsidy status not confirmed",
+      "authority": "Ministère de l'Éducation du Québec",
+      "registered": true,
+      "publicly_funded": null,
+      "inspected": null,
+      "can_issue_provincial_diploma": null,
+      "source_url": "https://www.donneesquebec.ca/recherche/dataset/localisation-des-etablissements-d-enseignement-du-reseau-scolaire-au-quebec"
+    },
+    "institution_type": "registered_private_school",
+    "ages": {
+      "min": 12,
+      "max": 17
+    },
+    "grades": "Secondary 1–5 (sister school: preschool–elementary in Magog)",
+    "language_of_instruction": [
+      "French",
+      "English"
+    ],
+    "curriculum": "Québec programme through Montessori; IB stream.",
+    "qualifications_offered": "Québec secondary diploma (DES) expected; IB stream named on site — not confirmed.",
+    "accreditation": [],
+    "tuition": null,
+    "additional_fees": null,
+    "admission": "Open house 8 October 2026; online application form.",
+    "class_size": "Maximum 24 students per group (school statement).",
+    "boarding": false,
+    "transportation": null,
+    "campuses": [
+      {
+        "name": "Orford secondary",
+        "address": "3165, chemin du Parc, Orford, QC J1X 7A2",
+        "lat": 45.326844,
+        "lon": -72.180657,
+        "coord_precision": "exact"
+      },
+      {
+        "name": "École Montessori Magog (preschool–elementary)",
+        "address": "25, chemin Roy, Magog, QC J1X 0N4",
+        "lat": 45.280261,
+        "lon": -72.180157,
+        "coord_precision": "exact"
+      }
+    ],
+    "media_links": [
+      "https://montessorimagogorford.org/secondaire/lecoles-en-images/"
+    ],
+    "advantages": [
+      "Montessori continued through all of secondary — very rare in Canada",
+      "Mountain-lake setting (Mont Orford, Lac Memphrémagog)",
+      "English instruction offered by mother tongue (ministry layer lists French and English)"
+    ],
+    "limitations": [
+      "Tuition not published on pages read",
+      "Whether English-stream access depends on Charter eligibility is not stated — ask the school"
+    ],
+    "nearby_cities_km": null,
+    "qualifying": "unverified_candidate",
+    "qualifying_reason": "Private permit holder confirmed in the ministry layer; Montessori secondary model confirmed on the official site; tuition not found and subsidy status (which decides whether the Charter's French-instruction rule applies) not confirmed."
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://montessorimagogorford.org/secondaire/approche-pedagogique/",
+      "title": "Choisir l'école Montessori Orford",
+      "publisher": "École Montessori Magog-Orford",
+      "source_type": "school_official",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://montessorimagogorford.org/secondaire/volet-linguistique/",
+      "title": "Volet linguistique",
+      "publisher": "École Montessori Magog-Orford",
+      "source_type": "school_official",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://montessorimagogorford.org/secondaire/admission/",
+      "title": "Admission",
+      "publisher": "École Montessori Magog-Orford",
+      "source_type": "school_official",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://www.donneesquebec.ca/recherche/dataset/localisation-des-etablissements-d-enseignement-du-reseau-scolaire-au-quebec",
+      "title": "Localisation des établissements d'enseignement du réseau scolaire — couche Installation d'enseignement privé (WFS, mise à jour 2026-10-26)",
+      "publisher": "Ministère de l'Éducation du Québec",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30",
+      "licence": "CC-BY 4.0 (Données Québec)"
+    }
+  ],
+  "units": {
+    "tuition": "CAD"
+  },
+  "verification": {
+    "status": "partially_verified",
+    "confidence": "medium",
+    "verified_by": "agent-03",
+    "last_verified": "2026-10-30",
+    "next_review": "2027-09-01",
+    "notes": "Status and model verified; fees and subsidy status missing."
+  },
+  "limitations": "Fees unknown.",
+  "responsible_agent": "agent-03",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

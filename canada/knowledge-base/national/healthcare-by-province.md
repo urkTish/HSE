@@ -27,8 +27,8 @@ adults with a regular health care provider.
   the territories.** In 2025, 33.7% of adults in PEI, 27.7% in Quebec and 24.1% in Newfoundland and
   Labrador had no regular provider. In Ontario the figure was 11.2% (CIHI, 2025).
 - **Drug coverage is not universal.** Each province runs a different public drug plan for people
-  without employer coverage. Quebec is the only province where drug insurance is compulsory (public
-  or private). Four jurisdictions (B.C., Manitoba, PEI and Yukon) have national-pharmacare agreements
+  without employer coverage. In Quebec the public plan covers residents without private coverage and charges an income-based
+  premium. Four jurisdictions (B.C., Manitoba, PEI and Yukon) have national-pharmacare agreements
   that cover listed contraceptives and diabetes drugs.
 
 ## 2. Comparison table
@@ -43,7 +43,7 @@ Canada's Canadian Community Health Survey. Canada overall: 83.4% (2025). "Withou
 | AB | From the residency or document date if applied within 3 months (temporary residents); PR timing not confirmed | Permit naming an AB employer or open; 6+ months left; intent to stay 12 months | Separate rules (not read) | 13.8% (2025) | Voluntary premium-based Blue Cross non-group plan | `nat-ab-health-coverage` (partial) |
 | SK | On or before the first day of the 3rd month after arrival | Eligible (no minimum stated) | Eligible with permit and full-time enrolment | 17.4% (2025) | Special Support Program (income-tested) | `nat-sk-health-coverage` (verified) |
 | MB | None stated | From permit issue date; permit of 12+ months | **Not eligible** (since 2018) | 14.6% (2025) | Pharmacare (income-based deductible); pharmacare agreement | `nat-mb-health-coverage` (verified) |
-| QC | Up to 3 months from registration (also applies to citizens; children exempt; agreement countries exempt) | Conditions not captured (RAMQ blocked) | Generally not, with exceptions | 27.7% (2025) | Compulsory: group plan or RAMQ public plan (premium) | `nat-qc-health-coverage` (partial) |
+| QC | Up to 3 months from registration (also applies to citizens; children exempt; agreement countries exempt) | Conditions not captured (RAMQ blocked) | Generally not, with exceptions | 27.7% (2025) | RAMQ public plan for those without private coverage (income-based premium) | `nat-qc-health-coverage` (partial) |
 | NB | From the first day of arrival once permanent residence is established | Accepted document; no duration rule stated | Permit for the full school year | 20.5% (2025) | NB Drug Plan (income-based premiums) | `nat-nb-health-coverage` (verified) |
 | NS | None (from date of residency) | Permit of 12+ months | From the 13th month, with a 12-month permit | 16.2% (2025) | Family Pharmacare (income-based) | `nat-ns-health-coverage` (verified) |
 | PE | Not found (null) | "Working visa" may apply | With enrolment proof | 33.7% (2025) | PEI Pharmacare (payer of last resort); pharmacare agreement | `nat-pe-health-coverage` (partial) |

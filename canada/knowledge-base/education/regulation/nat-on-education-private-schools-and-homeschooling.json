@@ -1,0 +1,77 @@
+{
+  "id": "nat-on-education-private-schools-and-homeschooling",
+  "category": "nat",
+  "subcategory": "education regulation — private schools, homeschooling",
+  "name": "Ontario — private schools and home schooling",
+  "name_fr": null,
+  "geo": {
+    "province": "ON",
+    "region": null,
+    "city": null,
+    "neighbourhood": null,
+    "address": null,
+    "lat": null,
+    "lon": null,
+    "coord_precision": "unknown",
+    "coord_source": null,
+    "extent": "province-wide"
+  },
+  "description": "Ontario private schools are businesses or non-profits that file an annual Notice of Intention to Operate (Education Act s.16, due 1 September). The ministry provides no funding, regulation, licensing, accreditation or oversight of operations; it inspects only secondary schools seeking or holding authority to grant OSSD credits. Teachers need not be Ontario-certified. Home schooling rests on Education Act s.21(2)(a) ('satisfactory instruction at home or elsewhere'); PPM 131 asks parents to notify the board in writing each year; boards normally do not investigate; no funding.",
+  "attributes": {
+    "legal_term": "Private school (Education Act, R.S.O. 1990, c. E.2, s.16 — Notice of Intention to Operate)",
+    "registration": "Annual NOI by 1 September; ministry publishes a list of all operating private schools (data.ontario.ca) with OSSD-credit status and association membership.",
+    "inspection": "Only private high schools seeking or approved to grant OSSD credits are inspected; elementary and non-credit secondary schools are not, and need not follow the Ontario curriculum.",
+    "teacher_certification": "Not required (Ontario College of Teachers certification optional).",
+    "funding": "None.",
+    "diploma": "OSSD only through an inspected credit-granting private school; ministry warns not all private schools can grant it.",
+    "consumer_warning": "'You must do your own research'; the lists are not endorsements.",
+    "homeschooling": "Notify the board where the child last attended, in writing, before 1 September each year (PPM 131, 2002); board accepts it as evidence of satisfactory instruction and normally does not investigate unless reasonable grounds; no per-pupil funding; EQAO and curriculum documents available; ILC courses carry an administration fee; secondary-school entry assessed by PLAR.",
+    "online": "Online private schools are private schools like any other: credit-granting online schools are inspected (e.g., Virtual High School, BSID 665681).",
+    "compulsory_age": "PPM 131 (issued 2002) cites compulsory attendance from 6 to 16; the current statutory age range was not re-verified in Phase 1."
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://www.ontario.ca/page/private-schools",
+      "title": "Private schools (updated 2026-10-19)",
+      "publisher": "Government of Ontario",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://ontario.ca/page/private-schools-notice-intention-operate-private-school",
+      "title": "Private schools: Notice of intention to operate a private school",
+      "publisher": "Government of Ontario",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://www.ontario.ca/document/education-ontario-policy-and-program-direction/policyprogram-memorandum-131",
+      "title": "Policy/Program Memorandum 131: Home Schooling",
+      "publisher": "Government of Ontario",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://data.ontario.ca/dataset/private-school-contact-information",
+      "title": "Private school contact information (CSV, resource last modified 2026-10-22)",
+      "publisher": "Ontario Ministry of Education",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30",
+      "licence": "Open Government Licence – Ontario"
+    }
+  ],
+  "units": null,
+  "verification": {
+    "status": "verified",
+    "confidence": "high",
+    "verified_by": "agent-03",
+    "last_verified": "2026-10-30",
+    "next_review": "2027-04-30",
+    "notes": "Ministry pages read 2026-10-30 (private-schools page updated 2026-10-19)."
+  },
+  "limitations": "Compulsory-age range not re-verified against the current Education Act.",
+  "responsible_agent": "agent-03",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

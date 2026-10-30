@@ -67,6 +67,7 @@ function walk(dir, out = []) {
   return out;
 }
 
+const isStatCan = (src) => /statistics canada|statcan/i.test(`${src.publisher ?? ""} ${src.url ?? ""}`);
 const excluded = [];
 const records = [];
 for (const file of walk(kbRoot)) {
@@ -85,6 +86,12 @@ for (const file of walk(kbRoot)) {
   if (!data || data.type === "FeatureCollection" || (data.$schema && !data.id)) continue;
   if (data.data_kind === "forecast") {
     excluded.push({ file: rel, id: data.id, reason: "forecast: never stored in static assets (served on demand)" });
+    continue;
+  }
+  // DECISIONS D-008: CREA and CMHC terms forbid republishing their figures. An `re`
+  // record is published only when it also cites Statistics Canada (open licence).
+  if (data.category === "re" && !(data.sources ?? []).some(isStatCan)) {
+    excluded.push({ file: rel, id: data.id, reason: "D-008: no Statistics Canada source (CREA/CMHC-only figures are not republished)" });
     continue;
   }
   if (data.category === "school" && data.attributes?.qualifying !== "qualifying") {

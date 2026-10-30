@@ -1,0 +1,88 @@
+{
+  "id": "nat-qc-education-english-instruction-eligibility",
+  "category": "nat",
+  "subcategory": "education regulation — language of instruction",
+  "name": "Québec — who may attend school in English (Charter of the French Language) and where unsubsidised private schools fit",
+  "name_fr": "Québec — admissibilité à l'enseignement en anglais (Charte de la langue française)",
+  "geo": {
+    "province": "QC",
+    "region": null,
+    "city": null,
+    "neighbourhood": null,
+    "address": null,
+    "lat": null,
+    "lon": null,
+    "coord_precision": "unknown",
+    "coord_source": null,
+    "extent": "province-wide"
+  },
+  "description": "In Québec, preschool, elementary and secondary instruction is in French unless the Charter of the French Language allows otherwise. A child who resides in Québec permanently may be declared eligible for English instruction only if a parent is a Canadian citizen and one of four schooling-history conditions is met (essentially English schooling in Canada of the child, a sibling or a parent). Newcomer children of permanent residents who are not Canadian citizens are therefore normally taught in French in public and subsidised private schools. Children staying temporarily (for example, dependants of foreign nationals with a work or study permit) can obtain a temporary authorisation for English instruction, limited in time. Unsubsidised private schools may teach in English to anyone who pays, but since 2002 English instruction received there by the child or a sibling is disregarded when assessing eligibility.",
+  "attributes": {
+    "rule": "French is the language of instruction in preschool, elementary and secondary school, except where the Charter allows otherwise (quebec.ca, updated 2026-10-28).",
+    "permanent_eligibility": "Child residing in Québec permanently, whose mother or father is a Canadian citizen, may be eligible if one of four situations applies (prior English schooling in Canada of the child, of a sibling, a parent's English elementary schooling in Canada, or a parent's school attendance in Québec after 26 August 1977) — Charter s.73 as summarised by quebec.ca.",
+    "newcomer_permanent_residents": "Children whose parents are permanent residents but not Canadian citizens do not meet s.73; they attend French public or subsidised private schools (MEQ information document for immigrant parents: 'Your children must therefore attend school in French until the end of their secondary studies').",
+    "temporary_authorisation": "Three categories: (1) children living temporarily in Québec to study, or dependants of people temporarily in Québec to study or work — including children of foreign nationals holding a permit, and children of Canadian citizens/PRs from another province; (2) dependants of foreign representatives/officers of another country or international organisation; (3) dependants of Canadian Armed Forces members posted temporarily. Special rules govern maximum duration; school boards and McGill report a three-year maximum and that work/study-permit-based authorisations are not renewable (secondary sources; conflicting on renewal). Not available to refugee claimants or to families settling permanently (school-board sources).",
+    "unsubsidised_private_schools": "Section 72 applies the French-instruction rule to school bodies and to subsidised instruction in private institutions accredited for subsidies; private institutions not accredited for subsidies may teach in English to any child at full cost. Bill 104 (2002) added to s.73: 'instruction in English received in Québec in a private educational institution not accredited for the purposes of subsidies by the child for whom the request is made, or by a brother or sister of the child, shall be disregarded.' Section 73.1 (added 2010) and Regulation C-11, r. 2.1 created a weighted assessment of such instruction for requests under s.73 paras 1–2 — which still require a Canadian-citizen parent.",
+    "practical_reading_for_a_newcomer_family": "(a) Temporary residents (work/study permit): apply for temporary authorisation to attend English public or private school. (b) Permanent residents who are not citizens: French public or subsidised private school; an unsubsidised English private school is lawful at full cost but does not open the English public system. (c) After a parent becomes a Canadian citizen, eligibility depends on the s.73 conditions; prior unsubsidised-English-school years count only through the weighted r. 2.1 assessment. Recommendation: treat Québec as a French-schooling province unless the family's status clearly fits a temporary category.",
+    "appeals": "Administrative Tribunal of Québec; Examining Committee on the Language of Instruction for serious family or humanitarian situations (quebec.ca)."
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://www.quebec.ca/en/education/preschool-elementary-and-secondary-schools/guidance-support-students/eligibility-instruction-english/about",
+      "title": "Eligibility for instruction in English (updated 2026-10-28)",
+      "publisher": "Gouvernement du Québec",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://www.quebec.ca/en/education/preschool-elementary-and-secondary-schools/guidance-support-students/eligibility-instruction-english/dispute-eligibility-instruction-english",
+      "title": "Dispute regarding eligibility to receive instruction in English",
+      "publisher": "Gouvernement du Québec",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://www.publicationsduquebec.gouv.qc.ca/fileadmin/gazette/pdf_encrypte/lois_reglements/2002A/5141.pdf",
+      "title": "Bill 104 (2002), An Act to amend the Charter of the French language — text amending s.73",
+      "publisher": "Publications du Québec",
+      "source_type": "legislation",
+      "accessed": "2026-10-30",
+      "data_period": "2002"
+    },
+    {
+      "url": "https://cdn-contenu.quebec.ca/cdn-contenu/education/integration-education-interculturelle/Feuillet-parents-immigrants-anglais.pdf",
+      "title": "Information document for immigrant parents — Welcome to Québec and its French public schools (PDF modified 2022-05-12)",
+      "publisher": "Ministère de l'Éducation du Québec",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://www.quebec.ca/en/immigration/work-quebec/temporary-workers/temporary-foreign-worker-program/spouse-and-children",
+      "title": "When your spouse and children accompany you (temporary foreign workers)",
+      "publisher": "Gouvernement du Québec",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://www.mcgill.ca/familycare/schooling/eligibility-study-english",
+      "title": "Eligibility to Study in English (secondary source on temporary authorisation)",
+      "publisher": "McGill University",
+      "source_type": "academic",
+      "accessed": "2026-10-30"
+    }
+  ],
+  "units": null,
+  "verification": {
+    "status": "partially_verified",
+    "confidence": "medium",
+    "verified_by": "agent-03",
+    "last_verified": "2026-10-30",
+    "next_review": "2026-12-30",
+    "notes": "quebec.ca summary and Bill 104 text read directly. Current consolidated Charter (ss.72, 73, 73.1, 85) not read: LégisQuébec and CanLII returned HTTP 403. Temporary-authorisation duration/renewal from secondary sources."
+  },
+  "limitations": "The s.72 wording on subsidised instruction is stated from the structure of the Charter and Bill 104, not from a fetched consolidation — verify on LégisQuébec. Bill 96 (2022) amendments affecting duration of temporary authorisations not verified. Not legal advice.",
+  "responsible_agent": "agent-03",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

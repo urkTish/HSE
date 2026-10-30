@@ -44,3 +44,17 @@ the coordinator groups and removes answered items (recording the answer in
 - (agent-02) Do you plan to rent first and buy later, and would a purchase be your own home only or also a rental investment? — decides whether the analysis weights rent levels and vacancy, or yields, rent-control exposure and short-term-rental bans.
 - (agent-02) How many bedrooms and what type of home do you need (apartment, townhouse, detached)? — decides which rent and price series are compared (Phase 1 uses two-bedroom rents and composite/apartment benchmarks).
 - (agent-02, for the coordinator and user) Will the map be private to you or published? CREA (MLS® HPI) and CMHC terms forbid republishing their figures without consent. — decides whether stored benchmark prices may be shown in the map or only linked, and whether to request permission from CREA/CMHC.
+
+## From Agent 06 — UI/UX (appended 2026-10-30)
+
+- (agent-06) Should the interface be in English only, or English and French (or another language you read more easily)? — decides whether labels, number formats and place names ship bilingual from Phase 2.
+- (agent-06) Will you use the map mostly on a computer or on a phone? — decides whether the mobile layout gets equal priority with the desktop-first design.
+- (agent-06) For comparisons, are worded bands such as "Very weak · Weak · Moderate · Strong · Very strong" (and for winters "Very harsh … Very mild") clear to you, or would you prefer other words? — decides the band vocabulary shown in every comparison.
+
+## From Agent 01 — National intelligence (appended 2026-10-30)
+
+- (agent-01) Has anyone in the household worked or studied in Canada, or do you hold a Canadian job offer (occupation and province)? — decides Canadian Experience Class eligibility and the points available from the Express Entry rules in force from 3 November 2026.
+- (agent-01) Does any adult work as a physician, nurse or other health worker, in a skilled trade, in transport (pilot, aircraft mechanic), as a researcher or as a senior manager, or have military experience? — decides which 2026 Express Entry category rounds you could be invited in.
+- (agent-01) Do you have a brother or sister, or other close family, who is a Canadian citizen or permanent resident, and in which province? — decides sibling points in Express Entry and the "connection" factors in several provincial nominee streams.
+- (agent-01) If Quebec ranked well on other criteria, would you accept French-language schooling for the children and French-only provincial services after six months? — decides whether Quebec stays on the shortlist (permanent residents' children attend French school).
+- (agent-01) After moving, will you keep income, property, pensions or a business in your current country? — decides the tax-residence and tax-treaty analysis (Phase 2).

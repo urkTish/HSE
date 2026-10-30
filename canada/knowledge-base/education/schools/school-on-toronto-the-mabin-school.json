@@ -9,7 +9,7 @@
     "region": "Toronto",
     "city": "Toronto",
     "neighbourhood": "Casa Loma / Deer Park",
-    "address": "50 Poplar Plains Road, Toronto, ON M4V 2M8",
+    "address": "50 Poplar Plains Road, Toronto, ON",
     "lat": 43.679024,
     "lon": -79.403347,
     "coord_precision": "exact",
@@ -134,7 +134,7 @@
     "next_review": "2027-09-01",
     "notes": "Official site and Ontario list read."
   },
-  "limitations": "Postal code in the OSM match differs slightly from older listings; address is the official one.",
+  "limitations": "Postal code not recorded (official site gives street address only).",
   "responsible_agent": "agent-03",
   "created": "2026-10-30",
   "updated": "2026-10-30"

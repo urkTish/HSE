@@ -1,0 +1,95 @@
+{
+  "id": "school-ns-halifax-shambhala-school",
+  "category": "school",
+  "subcategory": "Contemplative (unverified), P–12",
+  "name": "Shambhala School",
+  "name_fr": null,
+  "geo": {
+    "province": "NS",
+    "region": "Halifax Regional Municipality",
+    "city": "Halifax",
+    "neighbourhood": "North End",
+    "address": "5450 Russell Street, Halifax, NS B3K 1W9",
+    "lat": 44.66184,
+    "lon": -63.59668,
+    "coord_precision": "exact",
+    "coord_source": "Nova Scotia private-schools dataset georeference POINT (-63.59668 44.66184)"
+  },
+  "description": "Halifax private school (Primary–Grade 12) recognized by Nova Scotia to grant the High School Leaving Certificate. Its name refers to the Shambhala Buddhist community; whether the programme is a distinct contemplative alternative could not be verified because the website refused access.",
+  "attributes": {
+    "website": "https://www.shambhalaschool.org/",
+    "models": [
+      "other_innovative"
+    ],
+    "philosophy": null,
+    "legal_status": {
+      "label": "Recognized private school granting the Nova Scotia High School Leaving Certificate",
+      "province_category": "Recognized private school",
+      "authority": "Nova Scotia Department of Education and Early Childhood Development",
+      "registered": true,
+      "publicly_funded": false,
+      "inspected": null,
+      "can_issue_provincial_diploma": true,
+      "source_url": "https://open.canada.ca/data/en/dataset/b2fcaefb-52c9-8514-8a12-3b320686d0af"
+    },
+    "institution_type": "independent_private_school",
+    "ages": null,
+    "grades": "Primary–Grade 12 (provincial dataset)",
+    "language_of_instruction": [
+      "English"
+    ],
+    "tuition": null,
+    "campuses": [
+      {
+        "name": "Russell Street",
+        "address": "5450 Russell Street, Halifax, NS B3K 1W9",
+        "lat": 44.66184,
+        "lon": -63.59668,
+        "coord_precision": "exact"
+      }
+    ],
+    "media_links": [],
+    "advantages": [
+      "P–12 with provincial leaving certificate"
+    ],
+    "limitations": [
+      "Website returned HTTP 401 twice on 2026-10-30",
+      "Recognition renewal date in the dataset is 31 July 2026 (already passed) although the row is still listed"
+    ],
+    "qualifying": "unverified_candidate",
+    "qualifying_reason": "Provincially recognized private school, but the official site could not be read (HTTP 401 on two attempts) and SPEC §7 admits a religious-affiliated school only for an independently qualifying model, which is unverified."
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://open.canada.ca/data/en/dataset/b2fcaefb-52c9-8514-8a12-3b320686d0af",
+      "title": "Recognized Private Schools Granting the Nova Scotia High School Leaving Certificate (CSV via data.novascotia.ca, modified 2026-10-14)",
+      "publisher": "Nova Scotia Department of Education and Early Childhood Development",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30",
+      "licence": "Open Government Licence – Nova Scotia"
+    },
+    {
+      "url": "https://www.shambhalaschool.org/",
+      "title": "Home (not readable: HTTP 401 on 2026-10-30)",
+      "publisher": "Shambhala School",
+      "source_type": "school_official",
+      "accessed": "2026-10-30"
+    }
+  ],
+  "units": {
+    "tuition": "CAD"
+  },
+  "verification": {
+    "status": "unverified",
+    "confidence": "low",
+    "verified_by": "agent-03",
+    "last_verified": "2026-10-30",
+    "next_review": "2027-01-31",
+    "notes": "Register only."
+  },
+  "limitations": "Model, tuition, ages unknown.",
+  "responsible_agent": "agent-03",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

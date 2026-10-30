@@ -34,8 +34,9 @@ Source: Canadian Information Centre for International Credentials (CICIC), termi
    province, whether the occupation is regulated, whether certification is mandatory or voluntary,
    whether the title is reserved or practice is exclusive, and the regulator's name and link.
 3. Confirm on the **regulator's own site**: requirements, fees, exams, timelines, and any
-   language-proficiency requirement. In Quebec, professional orders require French under the
-   Charter of the French language (see `quebec-language-rules.md`).
+   language-proficiency requirement. In Quebec, the Charter of the French language links
+   professional licensing to knowledge of French. The exact provision was not read in this pass
+   (see `quebec-language-rules.md`).
 4. For immigration, an **Educational Credential Assessment** from an IRCC-designated organisation is
    needed for foreign education under the Federal Skilled Worker programme. It is **not** a licence.
    Regulators run their own assessments.
@@ -109,10 +110,11 @@ To be filled once `USER-PROFILE.md` names the occupation (question 2).
 | Median wage by province | unknown | Job Bank wages |
 | PNP streams that target it | unknown | `nat-<prov>-provincial-nominee-program` |
 
-**If the occupation is engineering:** "engineer" is a regulated title in every province. **If it is
-software:** most software roles are non-regulated, but the word "engineer" in a title may be
-restricted. **If it is occupational health and safety:** that is usually non-regulated, with
-voluntary designations. These three notes are hypotheses to test with CICIC; they are not findings.
+Hypotheses to test with CICIC once the occupation is known. None of these was checked in this pass:
+
+- Professional engineering may be a regulated profession with a protected title.
+- Many software roles may be non-regulated, while "engineer" in a job title may be restricted.
+- Occupational health and safety roles may be non-regulated, with voluntary designations.
 
 ## 6. Labour-market context relevant to newcomers (in force)
 
