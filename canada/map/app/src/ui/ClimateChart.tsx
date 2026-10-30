@@ -15,8 +15,9 @@ const STEP = PLOT_W / 12;
 const BAR_W = Math.min(14, STEP * 0.55);
 const cx = (i: number) => ML + STEP * i + STEP / 2;
 
+// Negative values use the true minus sign (U+2212), not a hyphen.
 const fmt = (v: number | null | undefined, digits = 1) =>
-  v === null || v === undefined ? "—" : v.toLocaleString("en-CA", { maximumFractionDigits: digits, minimumFractionDigits: 0 });
+  v === null || v === undefined ? "—" : v.toLocaleString("en-CA", { maximumFractionDigits: digits, minimumFractionDigits: 0 }).replace(/^-/, "\u2212");
 const num = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);
 
 function niceTicks(min: number, max: number, target = 4): number[] {
@@ -65,8 +66,8 @@ function Panel({ title, height, ticks, y, active, setActive, monthAxis, missing,
         {children}
         {monthAxis &&
           MONTHS.map((m, i) => (
-            <text key={m} x={cx(i)} y={height - 3} textAnchor="middle" fontSize={10} fill="var(--ce-ink-3)">
-              {m[0]}
+            <text key={m} x={cx(i)} y={height - 3} textAnchor="middle" fontSize={9} fill="var(--ce-ink-3)">
+              {m.slice(0, 3)}
             </text>
           ))}
         {MONTHS.map((m, i) => (

@@ -95,6 +95,8 @@ export default function SearchBox({ index, categoryLabels, onPick }: Props) {
             e.preventDefault();
             pick(active);
           } else if (e.key === "Escape") {
+            // Escape closes the result list only, never the open profile (review F-02).
+            e.stopPropagation();
             setOpen(false);
           }
         }}

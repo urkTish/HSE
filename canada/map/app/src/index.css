@@ -26,8 +26,20 @@ body {
   background: var(--ce-surface-1) !important;
   color: var(--ce-ink-2);
 }
-.maplibregl-ctrl-attrib a {
+.maplibregl-ctrl.maplibregl-ctrl-attrib,
+.maplibregl-ctrl.maplibregl-ctrl-attrib a {
   color: var(--ce-ink-2);
+}
+/* Dark mode: MapLibre's control icons are dark SVGs; invert them (review F-05). */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .maplibregl-ctrl-icon,
+  :root:not([data-theme="light"]) .maplibregl-ctrl-attrib-button {
+    filter: invert(0.9);
+  }
+}
+:root[data-theme="dark"] .maplibregl-ctrl-icon,
+:root[data-theme="dark"] .maplibregl-ctrl-attrib-button {
+  filter: invert(0.9);
 }
 .maplibregl-ctrl-group button + button {
   border-top-color: var(--ce-line) !important;
