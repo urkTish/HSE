@@ -53,6 +53,28 @@ design-system §4.3–4.4.
    that need the user's own facts (budget) stay unapplied until set.
 8. Archivo + Source Sans 3 (both SIL OFL 1.1), self-hosted via Fontsource,
    never from a CDN; Lucide icons (ISC); markers drawn at runtime.
+9. Every displayed figure goes through one `FigureValue` component that
+   shows verification, figure kind and staleness.
+
+## Coordinator requirements adopted (note of 2026-10-30)
+
+- **Verification status on every figure.** design-system §8 "Verification
+  on every figure": the record's `verification.status` sits next to each
+  value as a Lucide icon plus a word (never colour alone); disputed values
+  get a "Disputed" badge linked to `DECISIONS.md` and a dotted underline;
+  records with cautions (for example territorial doctor-access figures)
+  get "Use with caution" quoting `verification.notes`. Comparison cells
+  show the *weakest* status among their evidence, and a row on disputed
+  evidence gets the chip "Disputed evidence" (§10.2). New component
+  `FigureValue`; `BandCell` props extended (components.md).
+- **Market figures (D-008).** Figure-kind badge (Survey, Asking,
+  Transaction, Index, Estimate) before every market value; "Older than 60
+  days" staleness badge; CREA- or CMHC-only figures are link-only ("View on
+  the CREA HPI tool", with the reason) rather than displayed; Statistics
+  Canada–republished survey rents may be shown with Statistics Canada named.
+- Both are shown in `wireframes/04-comparison.html` (cell badges, disputed
+  healthcare row) and `wireframes/03-city-profile.html` (Residential
+  intelligence section).
 
 ## Open questions added
 

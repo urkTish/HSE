@@ -592,7 +592,7 @@ table.data thead th{position:sticky;top:0;background:var(--ce-surface-2);font-we
     <div class="eyebrow">Wireframe 03 · Agent 06 · 2026-10-30 · low fidelity · fonts fall back to system faces here</div>
     <h1>City view with profile panel and climate chart</h1>
     <p><b>What this decides.</b> The location profile structure and the climate-normals chart, including every provenance and anti-forecast rule.</p>
-    <ul><li>Panel opens on the right; the map re-pads so the selected city (survey bracket) stays centred in the visible map.</li><li>Header: art-directed location plate (no grey box), place name at display scale in Archivo wide capitals, French name, verification and data-kind badges, one primary action "Add to comparison".</li><li>Tabs give progressive disclosure; sections without records are omitted but listed at the end as "Not yet researched".</li><li>Chart = small multiples on one month axis (temperature range split at a labelled 0 °C line, precipitation in mm, snowfall in cm). No dual axis, no weather icons, no current-month marker. October snowfall is null on purpose to show the missing-data hatch.</li><li>Always visible: "Climate normals, 1991–2020 · 30-year averages, not a forecast", station, distance note, and the sheet margin. Keyboard: focus the chart and use ← → Home End; Chart | Table toggle gives the equivalent table.</li><li>Values are the synthetic schema example and must not be read as a real place.</li></ul>
+    <ul><li>Panel opens on the right; the map re-pads so the selected city (survey bracket) stays centred in the visible map.</li><li>Header: art-directed location plate (no grey box), place name at display scale in Archivo wide capitals, French name, verification and data-kind badges, one primary action "Add to comparison".</li><li>Tabs give progressive disclosure; sections without records are omitted but listed at the end as "Not yet researched".</li><li>Chart = small multiples on one month axis (temperature range split at a labelled 0 °C line, precipitation in mm, snowfall in cm). No dual axis, no weather icons, no current-month marker. October snowfall is null on purpose to show the missing-data hatch.</li><li>Always visible: "Climate normals, 1991–2020 · 30-year averages, not a forecast", station, distance note, and the sheet margin. Keyboard: focus the chart and use ← → Home End; Chart | Table toggle gives the equivalent table.</li><li>Residential figures (Living) show figure kind, verification and staleness on each value; CREA/CMHC-only figures are linked, not displayed (D-008).</li><li>Values are the synthetic schema example and must not be read as a real place.</li></ul>
     <nav aria-label="Wireframes"><a href="01-country-view.html">Country view</a><a href="02-province-view.html">Province view</a><a href="03-city-profile.html">City profile</a><a href="04-comparison.html">Place comparison</a><a href="05-search.html">Search and concepts</a><a href="06-mobile-360.html">Mobile layout</a><a href="index.html">All wireframes</a></nav>
   </div>
   <div class="theme" role="group" aria-label="Theme"><button data-set-theme="os">OS</button><button data-set-theme="light">Light</button><button data-set-theme="dark">Dark</button></div>
@@ -701,8 +701,17 @@ table.data thead th{position:sticky;top:0;background:var(--ce-surface-2);font-we
       <section class="sec">
         <h2>Residential intelligence</h2>
         <p>Rents and prices are fetched when you ask, then shown with their date and source. Nothing is stored in the app.</p>
-        <button class="btn sm">Fetch current rents</button>
-        <div class="margin"><b>Source</b>CMHC Rental Market Survey (on demand)<span class="sep">·</span><b>As of</b>—</div>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:6px 12px;font-size:14px;align-items:baseline;border-top:1px solid var(--ce-line);padding-top:8px">
+          <span>Two-bedroom rent, purpose-built</span><span class="tnum"><span class="badge">Survey</span> <b>$0,000</b>/month</span>
+          <span class="muted" style="font-size:12px">Statistics Canada (republishes CMHC survey, open licence)</span><span style="display:flex;gap:4px;justify-content:flex-end"><span class="badge good">✓ Verified</span><span class="badge warn">Older than 60 days</span></span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:6px 12px;font-size:14px;align-items:baseline;border-top:1px solid var(--ce-line);padding-top:8px;margin-top:8px">
+          <span>Benchmark price, apartment</span><span><span class="badge">Index</span> <a href="#">View on the CREA HPI tool</a></span>
+          <span class="muted" style="font-size:12px;grid-column:1 / -1">Not republished here: the publisher's terms do not allow it (decision D-008).</span>
+        </div>
+        <button class="btn sm" style="margin-top:12px">Fetch current rents</button>
+        <div class="margin"><b>Source</b>Statistics Canada / CMHC Rental Market Survey<span class="sep">·</span><b>Period</b>October 2025<span class="sep">·</span><b>Accessed</b>2026-10-30<span class="sep">·</span><b>Record</b><span class="mono">re-xx-sample-city-rent-2br</span></div>
+        <span class="synthetic">Placeholder value, not a real rent</span>
       </section>
       <div class="notyet"><b class="ink2">Not yet researched for this place:</b> Verified schools · Trails · Healthcare access. These sections appear when records exist.</div>
     </div>

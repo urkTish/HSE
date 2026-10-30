@@ -603,7 +603,7 @@ table.data thead th{position:sticky;top:0;background:var(--ce-surface-2);font-we
     <div class="eyebrow">Wireframe 04 · Agent 06 · 2026-10-30 · low fidelity · fonts fall back to system faces here</div>
     <h1>Comparison of two to four places</h1>
     <p><b>What this decides.</b> How SPEC §4 ordinal bands, missing data, weights, essential gates and sensitivity are shown for two to four places.</p>
-    <ul><li>Criteria are rows (sticky), places are columns (sticky header with "n of 11 rated"). Each cell: band word, five-segment monochrome meter, evidence count (expands to record IDs), data date.</li><li>"No data" is italic, hatched and explained; never zero, never averaged, never hidden by "Show differences only". Place D shows "Too little evidence to compare fairly".</li><li>Rows warn when data dates or normals periods differ across columns.</li><li>Switch the wireframe state to "Weights set": columns reorder with rank and range, the place that fails an essential criterion stays visible but de-emphasised with "Remove from shortlist", and a sensitivity note says whether the lead is robust. No composite number without its range.</li><li>Column reorder uses buttons (no drag-only interaction, WCAG 2.5.7). The locator keeps the map one click away.</li></ul>
+    <ul><li>Criteria are rows (sticky), places are columns (sticky header with "n of 11 rated"). Each cell: band word, five-segment monochrome meter, evidence count (expands to record IDs), data date.</li><li>"No data" is italic, hatched and explained; never zero, never averaged, never hidden by "Show differences only". Place D shows "Too little evidence to compare fairly".</li><li>Rows warn when data dates or normals periods differ across columns. Every cell shows the weakest verification status of its evidence (icon + word: Disputed, Partial, Use with caution…); market criteria show the figure kind (Survey) and "Older than 60 days" when stale.</li><li>Switch the wireframe state to "Weights set": columns reorder with rank and range, the place that fails an essential criterion stays visible but de-emphasised with "Remove from shortlist", and a sensitivity note says whether the lead is robust. No composite number without its range.</li><li>Column reorder uses buttons (no drag-only interaction, WCAG 2.5.7). The locator keeps the map one click away.</li></ul>
     <nav aria-label="Wireframes"><a href="01-country-view.html">Country view</a><a href="02-province-view.html">Province view</a><a href="03-city-profile.html">City profile</a><a href="04-comparison.html">Place comparison</a><a href="05-search.html">Search and concepts</a><a href="06-mobile-360.html">Mobile layout</a><a href="index.html">All wireframes</a></nav>
   </div>
   <div class="theme" role="group" aria-label="Theme"><button data-set-theme="os">OS</button><button data-set-theme="light">Light</button><button data-set-theme="dark">Dark</button></div>
@@ -680,6 +680,8 @@ table.data thead th{position:sticky;top:0;background:var(--ce-surface-2);font-we
     { n: 3, name: 'Place C', prov: 'Ontario', period: '1981–2010', d: { aff: [3, 2, '2026-09'], clim: [4, 1, '1981–2010'], env: [3, 2, '2026-08'], hike: null, emp: [4, 2, '2026-06'], health: [3, 2, '2026-05'], edu: null, safe: [4, 1, '2025-11'], trans: [4, 2, '2026-01'], imm: null, qol: [4, 3, '2026-09'] } },
     { n: 4, name: 'Place D', prov: 'Quebec', period: '1991–2020', d: { aff: null, clim: [3, 1, '1991–2020'], env: [4, 2, '2026-08'], hike: null, emp: null, health: null, edu: null, safe: null, trans: [3, 1, '2026-01'], imm: null, qol: null } }
   ];
+  var VER = { 'health-2': 'disputed', 'emp-1': 'partial', 'health-4': 'caution', 'qol-3': 'unverified' };
+  var VLABEL = { verified: ['Verified', 'good', '\u2713'], partial: ['Partial', 'info', '\u25d0'], unverified: ['Unverified', '', '\u25cb'], disputed: ['Disputed', 'warn', '!'], outdated: ['Outdated', 'warn', '\u23f2'], caution: ['Use with caution', 'info', 'i'] };
   var state = 'u', diffOnly = false, open = 'aff-1';
   function meter(b) { var s = '<span class="meter" aria-hidden="true">'; for (var i = 1; i <= 5; i++) s += '<i class="' + (b && i <= b ? 'on' : '') + '"></i>'; return s + '</span>'; }
   function rated(p) { var k = 0; CRIT.forEach(function (c) { if (p.d[c[0]]) k++; }); return k; }
@@ -688,7 +690,11 @@ table.data thead th{position:sticky;top:0;background:var(--ce-surface-2);font-we
     if (!v) return '<div role="cell" class="cc nod"><i class="ink2" style="font-style:italic;color:var(--ce-ink-3)">No data</i><br><span class="meter nodata" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span><div class="cm">No record for this place yet</div></div>';
     var exp = open === id ? '<div class="ev"><div class="mono" style="font-size:12px">' + c[0] + '-xx-' + p.name.toLowerCase().replace(' ', '-') + '-1<br>' + (v[1] > 1 ? c[0] + '-xx-' + p.name.toLowerCase().replace(' ', '-') + '-2' : '') + '</div><a href="#" style="font-size:12px">How this band is set</a></div>' : '';
     var meta = c[0] === 'clim' ? 'Normals ' + v[2] : 'data ' + v[2];
-    return '<div role="cell" class="cc"><b style="font-size:14px">' + words[v[0] - 1] + '</b><br>' + meter(v[0]) + '<span class="sr"> band ' + v[0] + ' of 5</span><div class="cm"><button class="lnk" data-open="' + id + '" aria-expanded="' + (open === id) + '">' + v[1] + ' record' + (v[1] > 1 ? 's' : '') + '</button> · ' + meta + '</div>' + exp + '</div>';
+    var vk = VER[id] || 'verified', vl = VLABEL[vk];
+    var badges = '<span class="badge ' + vl[1] + '" title="Weakest verification status among the evidence">' + vl[2] + ' ' + vl[0] + '</span>';
+    if (c[0] === 'aff') badges += ' <span class="badge">Survey</span>';
+    if (c[0] === 'aff' && v[2] < '2026-08') badges += ' <span class="badge warn">Older than 60 days</span>';
+    return '<div role="cell" class="cc"><b style="font-size:14px">' + words[v[0] - 1] + '</b><br>' + meter(v[0]) + '<span class="sr"> band ' + v[0] + ' of 5</span><div class="cm"><button class="lnk" data-open="' + id + '" aria-expanded="' + (open === id) + '">' + v[1] + ' record' + (v[1] > 1 ? 's' : '') + '</button> · ' + meta + '</div><div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">' + badges + '</div>' + exp + '</div>';
   }
   function order() {
     if (state === 'u') return { cols: P.slice(), info: {} };
@@ -727,6 +733,7 @@ table.data thead th{position:sticky;top:0;background:var(--ce-surface-2);font-we
       var chips = '';
       if (c[0] === 'aff') chips = '<span class="badge warn">Dates differ</span>';
       if (c[0] === 'clim') chips = '<span class="badge warn">Periods differ</span>';
+      if (c[0] === 'health') chips = '<span class="badge warn">Disputed evidence</span>';
       h += '<div role="row" class="gr" style="' + gt + '"><div role="rowheader" class="cc crit"><span style="font-size:14px;font-weight:600">' + c[1] + '</span><div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">' + chips + '</div></div>';
       cols.forEach(function (p) { h += cell(p, c).replace('class="cc', 'class="cc' + ((o.info[p.n] || {}).fail ? ' failed' : '')); });
       h += '</div>';

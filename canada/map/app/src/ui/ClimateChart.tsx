@@ -133,8 +133,10 @@ export default function ClimateChart({ record }: { record: ClimRecord }) {
   const pMax = Math.max(10, ...pr.filter((v): v is number => v !== null));
   const pTicks = niceTicks(0, pMax, 3);
   const pTop = Math.max(pMax, pTicks[pTicks.length - 1] ?? pMax);
-  const PH = 72;
-  const yP = (v: number) => 6 + ((pTop - v) / pTop) * (PH - 4 - 6);
+  // The precipitation panel carries the month axis when there is no snowfall panel.
+  const PH = hasSnow ? 72 : 84;
+  const pBottom = hasSnow ? 4 : 16;
+  const yP = (v: number) => 6 + ((pTop - v) / pTop) * (PH - pBottom - 6);
 
   const sMax = Math.max(10, ...sn.filter((v): v is number => v !== null));
   const sTicks = niceTicks(0, sMax, 3);
