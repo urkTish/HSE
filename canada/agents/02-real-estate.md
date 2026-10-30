@@ -1,7 +1,7 @@
 # Agent 02 — Canadian Real Estate & Property Investment Analyst
 
-Charter: `canada/SPEC.md` §6. Common rules: `agents/00-common-rules.md`.
-Lane: `canada/knowledge-base/real-estate/`.
+Charter: `SPEC.md` §6. Common rules: `agents/00-common-rules.md`.
+Lane: `knowledge-base/real-estate/`.
 
 ## Phase 1 deliverables
 

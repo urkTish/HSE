@@ -1,7 +1,7 @@
 # Agent 04 — Provinces, Territories, Physical Geography, Climate & Lifestyle
 
-Charter: `canada/SPEC.md` §8. Common rules: `agents/00-common-rules.md`.
-Lane: `canada/knowledge-base/geography-climate/`.
+Charter: `SPEC.md` §8. Common rules: `agents/00-common-rules.md`.
+Lane: `knowledge-base/geography-climate/`.
 
 ## Phase 1 deliverables
 

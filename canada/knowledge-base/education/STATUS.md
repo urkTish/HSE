@@ -4,7 +4,7 @@ Phase 1 · last updated 2026-10-30 · written for a reader who did not watch the
 
 ## Done
 
-Files (all under `canada/knowledge-base/education/`):
+Files (all under `knowledge-base/education/`):
 
 - `regulation-by-province.md` — rules for every province and territory (full
   sections for BC, AB, ON, QC, NS; first-pass notes for MB, SK, NB, PE; NL, YT,
@@ -117,7 +117,7 @@ any change after 2022 to the consolidated texts is recorded as a gap.
    scope: TDSB's ALPHA, B.C. district Montessori schools and Québec's roughly 50
    RÉPAQ schools. They are recorded as excluded.
 
-## Open questions added (appended to `canada/OPEN-QUESTIONS.md`)
+## Open questions added (appended to `OPEN-QUESTIONS.md`)
 
 - Which organisation "Hand in Hand" refers to (city or website), with the
   candidates listed.

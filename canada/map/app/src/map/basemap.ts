@@ -52,7 +52,7 @@ export function currentTheme(): Theme {
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
-/** Reads a design token from canada/design/tokens.css (MapLibre cannot read CSS variables). */
+/** Reads a design token from design/tokens.css (MapLibre cannot read CSS variables). */
 export function token(name: string, fallback: string): string {
   const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   return v || fallback;

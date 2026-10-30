@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "canada/knowledge-base/schema/climate-normals.schema.json",
+  "$id": "knowledge-base/schema/climate-normals.schema.json",
   "title": "attributes of a `clim` record (SPEC §2.5, §8 B)",
   "type": "object",
   "required": ["station_name", "climate_id", "normals_period", "months", "annual"],

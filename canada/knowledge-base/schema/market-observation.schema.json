@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "canada/knowledge-base/schema/market-observation.schema.json",
+  "$id": "knowledge-base/schema/market-observation.schema.json",
   "title": "attributes of a `re` record (SPEC §2.5, §6)",
   "type": "object",
   "required": ["metric", "value", "unit", "period", "geography_level", "figure_kind"],

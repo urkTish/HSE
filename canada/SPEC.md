@@ -1180,24 +1180,27 @@ is true and recorded in `PROGRESS.md`.
 
 ## 14. Repository layout
 
+The project is the repository `urkTish/Canada` (decision D-019).
+
 ```
-canada/
-  SPEC.md                      this document (v1.1)
-  SPEC-REVIEW.md               what changed from v1.0 and why
-  PROGRESS.md  DECISIONS.md  TASKS.md  OPEN-QUESTIONS.md  USER-PROFILE.md
-  agents/                      one charter per agent (01–07)
-  knowledge-base/
-    schema/                    JSON schemas (§2)
-    scripts/validate.mjs       validator (§2.8)
-    national/                  lane of Agent 01 (records + prose + STATUS.md)
-    real-estate/               lane of Agent 02
-    education/                 lane of Agent 03
-    geography-climate/         lane of Agent 04
-  map/                         lane of Agent 05 (application, ARCHITECTURE.md,
-                               DATA-SOURCES.md, STATUS.md)
-  design/                      lane of Agent 06 (design system, tokens,
-                               wireframes, reviews, STATUS.md)
-  archive/                     superseded documents
+SPEC.md                      this document (v1.1)
+SPEC-REVIEW.md               what changed from v1.0 and why
+README.md                    orientation, how to validate and run
+PROGRESS.md  DECISIONS.md  TASKS.md  OPEN-QUESTIONS.md  USER-PROFILE.md
+agents/                      one charter per agent (01–07)
+knowledge-base/
+  schema/                    JSON schemas (§2)
+  scripts/validate.mjs       validator (§2.8)
+  national/                  lane of Agent 01 (records + prose + STATUS.md)
+  real-estate/               lane of Agent 02
+  education/                 lane of Agent 03
+  geography-climate/         lane of Agent 04
+  places/                    gazetteer `city` records (Agent 05, from open data)
+map/                         lane of Agent 05 (app/, ARCHITECTURE.md,
+                             DATA-SOURCES.md, STATUS.md)
+design/                      lane of Agent 06 (design system, tokens,
+                             wireframes, reviews, STATUS.md)
+archive/                     superseded documents
 ```
 
 ---

@@ -1,8 +1,8 @@
 # Agent 05 — Interactive Canada Map Architect
 
-Charter: `canada/SPEC.md` §9 (defaults in §9 H). Common rules:
-`agents/00-common-rules.md`. Lane: `canada/map/`, plus one exception:
-you own `canada/knowledge-base/places/` for gazetteer-type `city` records
+Charter: `SPEC.md` §9 (defaults in §9 H). Common rules:
+`agents/00-common-rules.md`. Lane: `map/`, plus one exception:
+you own `knowledge-base/places/` for gazetteer-type `city` records
 derived from open datasets (not research).
 
 ## Phase 1 deliverables
@@ -17,7 +17,7 @@ derived from open datasets (not research).
 2. **`DATA-SOURCES.md`** — every dataset, tile source, font and image source
    with licence, attribution text and usage limits. Nothing enters the app
    without a line here.
-3. **The application** at `canada/map/app/`: Vite, React, TypeScript,
+3. **The application** at `map/app/`: Vite, React, TypeScript,
    Tailwind, MapLibre GL JS. Use open vector tiles that need no key (for
    example OpenFreeMap styles); verify the style URL loads before relying
    on it, and keep a fallback. Required in Phase 1:
@@ -25,10 +25,10 @@ derived from open datasets (not research).
      admin-1 filtered to Canada is acceptable now; note Statistics Canada
      boundaries for Phase 2) with hover and click.
    - `city` records for the principal cities, generated from Natural Earth
-     populated places (public domain) into `canada/knowledge-base/places/`,
+     populated places (public domain) into `knowledge-base/places/`,
      validated, with `coord_source` named.
    - A build step `app/scripts/build-data.mjs` that runs the knowledge-base
-     validator, then converts every record under `canada/knowledge-base/`
+     validator, then converts every record under `knowledge-base/`
      into `app/public/data/<category>.geojson` plus an `index.json`.
      The education GeoJSON includes only `attributes.qualifying ===
      "qualifying"`.
@@ -46,7 +46,7 @@ derived from open datasets (not research).
      (calls the knowledge-base validator), `build-data`. All of `lint`,
      `typecheck`, `build-data` and `build` must pass before you finish.
    - Styling: define CSS custom properties in one tokens file. Before you
-     finish, check whether `canada/design/tokens.css` exists; if it does,
+     finish, check whether `design/tokens.css` exists; if it does,
      import it and map your Tailwind theme to those variables; if not, note
      the task as waiting for Agent 06 in your STATUS.
 4. **`app/.gitignore`** for `node_modules/`, `dist/`, caches. Do not commit

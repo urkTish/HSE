@@ -612,7 +612,7 @@
         }
       ]
     },
-    "calculation_script": "canada/knowledge-base/national/taxes-by-province.md (method section reproduces the formula)"
+    "calculation_script": "knowledge-base/national/taxes-by-province.md (method section reproduces the formula)"
   },
   "data_kind": "estimate",
   "sources": [

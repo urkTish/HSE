@@ -1,6 +1,6 @@
 # Agent 06 — UI/UX design lane: status
 
-Updated 2026-10-30, end of Phase 1 (after re-review 06-6). Lane: `canada/design/`.
+Updated 2026-10-30, end of Phase 1 (after re-review 06-6). Lane: `design/`.
 
 ## Done
 

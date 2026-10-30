@@ -1,7 +1,7 @@
 # Agent 07 — Chief Canada Intelligence Officer & Settlement Strategist
 
-Charter: `canada/SPEC.md` §11. Held by the orchestrating session (decision
-D-002). Owns `canada/*.md` at the root, git, and the final recommendation.
+Charter: `SPEC.md` §11. Held by the orchestrating session (decision
+D-002). Owns the `*.md` files at the repository root, git, and the final recommendation.
 
 ## Phase 1 checklist
 

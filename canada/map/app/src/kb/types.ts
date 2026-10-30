@@ -1,4 +1,4 @@
-// Types mirroring canada/knowledge-base/schema/*.schema.json (SPEC §2).
+// Types mirroring knowledge-base/schema/*.schema.json (SPEC §2).
 // The app treats records as read-only data produced by scripts/build-data.mjs.
 import type { MarkerShape } from "../map/markers";
 

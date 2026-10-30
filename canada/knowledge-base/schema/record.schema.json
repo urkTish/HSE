@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "canada/knowledge-base/schema/record.schema.json",
+  "$id": "knowledge-base/schema/record.schema.json",
   "title": "Canada knowledge-base record (SPEC §2.1)",
   "type": "object",
   "required": [

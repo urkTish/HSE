@@ -4,19 +4,19 @@ These apply to Agents 01–06. Each agent's own charter adds its deliverables.
 
 ## Read first
 
-1. `canada/SPEC.md` §0–§4 (context, principles, data model, coordination,
+1. `SPEC.md` §0–§4 (context, principles, data model, coordination,
    comparison method), then your own section.
-2. `canada/USER-PROFILE.md` and `canada/OPEN-QUESTIONS.md`: what is known
+2. `USER-PROFILE.md` and `OPEN-QUESTIONS.md`: what is known
    about the user (almost nothing yet) and what is already asked.
-3. `canada/TASKS.md`: your tasks. Mark them `doing` / `done` as you go.
-4. `canada/knowledge-base/schema/*.schema.json` and the example under
+3. `TASKS.md`: your tasks. Mark them `doing` / `done` as you go.
+4. `knowledge-base/schema/*.schema.json` and the example under
    `schema/examples/`, if you produce records.
 
 ## Your lane
 
 Write only inside your lane directory (named in your charter), plus your own
-section of `canada/TASKS.md` and new lines appended to
-`canada/OPEN-QUESTIONS.md`. Do not edit another agent's files. Do not run any
+section of `TASKS.md` and new lines appended to
+`OPEN-QUESTIONS.md`. Do not edit another agent's files. Do not run any
 git command; the coordinator commits.
 
 ## Research tooling
@@ -38,7 +38,7 @@ git command; the coordinator commits.
   source with a URL and a date; unknown values are `null` with a note in
   `limitations`.
 - Validate until clean:
-  `node canada/knowledge-base/scripts/validate.mjs <your lane>`.
+  `node knowledge-base/scripts/validate.mjs <your lane>`.
   The coordinator rejects lanes that fail.
 - Prose documents (Markdown) explain and interpret; they cite record IDs in
   backticks so the map and other agents can follow the evidence.

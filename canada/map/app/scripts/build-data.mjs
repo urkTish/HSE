@@ -5,7 +5,7 @@
 //   node scripts/build-data.mjs --strict  fail when any record anywhere fails validation
 //   node scripts/build-data.mjs --kb <dir> --out <dir>   test against another knowledge-base copy
 //
-// 1. Runs canada/knowledge-base/scripts/validate.mjs over the whole knowledge base.
+// 1. Runs knowledge-base/scripts/validate.mjs over the whole knowledge base.
 // 2. Reads every record that passed. Records that failed are left out and listed
 //    in index.json → excluded, so one lane's half-finished file cannot break the map.
 // 3. Applies the static-asset rules: no prices, rents, tuition amounts or forecasts

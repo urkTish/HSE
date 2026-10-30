@@ -34,9 +34,7 @@ the coordinator groups and removes answered items (recording the answer in
 
 ## Housekeeping
 
-11. The Canada system currently lives in `canada/` inside the HSE repository
-    on the designated branch. Keep it there or move it to its own
-    repository? — decides where the map application is deployed from.
+11. Resolved 2026-10-30: the project lives in its own repository, `urkTish/Canada` (D-019).
 
 ## From Agent 02 — Real estate (appended 2026-10-30)
 

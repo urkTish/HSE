@@ -1,4 +1,4 @@
-/* One tokens file: canada/design/tokens.css (Agent 06) is the single source of
+/* One tokens file: design/tokens.css (Agent 06) is the single source of
    the CSS custom properties; tailwind-theme.css maps the Tailwind theme onto
    those variables. The app defines no colours of its own. */
 @import "tailwindcss";

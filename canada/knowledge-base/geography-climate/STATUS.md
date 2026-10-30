@@ -5,7 +5,7 @@ Last updated 2026-10-30 · Phase 1
 ## Done
 
 The validator passes:
-`node canada/knowledge-base/scripts/validate.mjs canada/knowledge-base/geography-climate` reports
+`node knowledge-base/scripts/validate.mjs knowledge-base/geography-climate` reports
 **113 record(s) checked, 0 failed, 0 warning(s), 0 non-record JSON file(s) skipped.**
 
 | Path | Contents |
@@ -17,7 +17,8 @@ The validator passes:
 | `climate/` | 61 `clim` records. |
 | `records/` | 52 records: 18 `landform`, 13 `region`, 21 `hazard`. |
 
-The 61 `clim` records cover every province and territory and 34 cities and towns:
+The 61 `clim` records cover every province and territory and 38 cities and towns. Dartmouth
+(Halifax) and Gander appear only as supplementary sunshine records.
 
 - **38 primary 1991–2020 records.** Several cities have both an airport and an in-town record:
   Victoria, Vancouver, Edmonton, Ottawa and Sherbrooke (Sherbrooke A and Lennoxville).
@@ -86,7 +87,7 @@ The 61 `clim` records cover every province and territory and 34 cities and towns
 
 ## Open questions added
 
-Four lines were appended to `canada/OPEN-QUESTIONS.md` under "From Agent 04":
+Four lines were appended to `OPEN-QUESTIONS.md` under "From Agent 04":
 
 1. The user's winter limit, as a band.
 2. Whether "more sunshine" means winter sunshine or annual sunshine.

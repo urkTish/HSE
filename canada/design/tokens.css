@@ -1,10 +1,10 @@
 /*
  * Canada Intelligence & Exploration System — design tokens
- * Owner: Agent 06 (canada/design/). Version 1.0, 2026-10-30.
+ * Owner: Agent 06 (design/). Version 1.0, 2026-10-30.
  *
- * Imported as-is by the map application (canada/map/app). Token NAMES are a
+ * Imported as-is by the map application (map/app). Token NAMES are a
  * contract: they will not be renamed or removed without a dated entry in
- * canada/design/design-system.md §13 "Token changelog". Values may be tuned.
+ * design/design-system.md §13 "Token changelog". Values may be tuned.
  *
  * Namespace: every token starts with `--ce-` ("Canada Explorer") so it can
  * never collide with Tailwind v4's own `--color-*`, `--spacing-*`, etc.

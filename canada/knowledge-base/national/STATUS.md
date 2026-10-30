@@ -4,7 +4,7 @@ Last updated 2026-10-30 by Agent 01, Phase 1. Written for someone who did not wa
 
 ## Done
 
-**Validator:** `node canada/knowledge-base/scripts/validate.mjs canada/knowledge-base/national` →
+**Validator:** `node knowledge-base/scripts/validate.mjs knowledge-base/national` →
 `54 record(s) checked, 0 failed, 0 warning(s), 0 non-record JSON file(s) skipped.`
 
 **Records: 54 `nat` records.**

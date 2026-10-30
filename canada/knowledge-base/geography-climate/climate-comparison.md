@@ -2,7 +2,7 @@
 
 Agent 04 · researched 2026-10-30 · Phase 1
 
-This page compares the long-term climate of 34 cities and towns in all ten provinces and three
+This page compares the long-term climate of 38 cities and towns in all ten provinces and three
 territories. Every number comes from Environment and Climate Change Canada (ECCC) climate
 normals, stored as one `clim` record per station under `climate/`. The tables below were
 generated from those records and were not typed by hand.

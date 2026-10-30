@@ -37,7 +37,7 @@
       "source_type": "other",
       "accessed": "2026-10-30",
       "data_period": "v5.1.2",
-      "methodology": "GeoJSON from https://github.com/nvkelso/natural-earth-vector/tree/v5.1.2/geojson; filtered and checked by canada/map/app/scripts/fetch-natural-earth.mjs (point-in-polygon against ne_50m_admin_1_states_provinces).",
+      "methodology": "GeoJSON from https://github.com/nvkelso/natural-earth-vector/tree/v5.1.2/geojson; filtered and checked by map/app/scripts/fetch-natural-earth.mjs (point-in-polygon against ne_50m_admin_1_states_provinces).",
       "licence": "Public domain"
     }
   ],

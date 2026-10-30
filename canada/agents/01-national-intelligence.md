@@ -1,7 +1,7 @@
 # Agent 01 — Canada National Intelligence & Advisory Agent
 
-Charter: `canada/SPEC.md` §5. Common rules: `agents/00-common-rules.md`.
-Lane: `canada/knowledge-base/national/`.
+Charter: `SPEC.md` §5. Common rules: `agents/00-common-rules.md`.
+Lane: `knowledge-base/national/`.
 
 ## Phase 1 deliverables
 

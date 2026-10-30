@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Validator for the Canada knowledge base (SPEC §2.8). No dependencies.
 //
-//   node canada/knowledge-base/scripts/validate.mjs            validate every lane
-//   node canada/knowledge-base/scripts/validate.mjs <dir|file>  validate given paths
+//   node knowledge-base/scripts/validate.mjs            validate every lane
+//   node knowledge-base/scripts/validate.mjs <dir|file>  validate given paths
 //
 // Checks each *.json record (GeoJSON FeatureCollections are skipped) against
 // record.schema.json, then its `attributes` against the category schema when

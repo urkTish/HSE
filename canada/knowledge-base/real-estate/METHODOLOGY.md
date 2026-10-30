@@ -1,6 +1,6 @@
 # Real estate — methodology, source register and on-demand retrieval design
 
-Agent 02 · Phase 1 · researched 2026-10-30 · lane `canada/knowledge-base/real-estate/`
+Agent 02 · Phase 1 · researched 2026-10-30 · lane `knowledge-base/real-estate/`
 
 This file says where every price, rent and rule in this lane comes from, what
 each figure means, what the licence lets us keep, and how the map (Agent 05)

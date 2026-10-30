@@ -7,7 +7,7 @@ Owner: Agent 05. Written 2026-10-30 for Phase 1. Governing text: SPEC §9
 ## 1. Shape of the system
 
 ```
-canada/knowledge-base/**/<id>.json          records from Agents 01–05 (validated JSON)
+knowledge-base/**/<id>.json          records from Agents 01–05 (validated JSON)
         │   node scripts/build-data.mjs
         │     1. validate.mjs over the whole knowledge base
         │     2. read records that passed; drop forecasts and non-qualifying schools
@@ -43,7 +43,7 @@ analytics.
 | UI | `app/src/ui/` | `LayerPanel` (12 toggles with marker glyphs, "n in view" / "zoom n+" / "none yet", honest empty states, "About the data"), `PlacesInView` (keyboard and screen-reader list of what is on screen), `SearchBox` (combobox over names), `ProfilePanel` (record and province profiles, section by section, focus to the heading on open), `FigureValue` (the one way a figure is shown: kind, period, verification, 60-day staleness, link-only state), `ClimateChart` (SVG, bound to the `clim` schema) | kb types, dynamic |
 | Accessibility glue | `app/src/App.tsx` | Skip link to "Places in view", one `aria-live` announcer for selections, focus returned to the opener on close, Escape closes the profile only outside text inputs | — |
 | Shell | `app/src/App.tsx` | Loads data, owns UI state (layers on, selection, focus), composes the modules | all |
-| Styling | `app/src/index.css` | Imports Tailwind, `canada/design/tokens.css` and `canada/design/tailwind-theme.css` (Agent 06); the app defines no colours of its own. MapLibre paint colours are read from the same tokens at style load | design lane |
+| Styling | `app/src/index.css` | Imports Tailwind, `design/tokens.css` and `design/tailwind-theme.css` (Agent 06); the app defines no colours of its own. MapLibre paint colours are read from the same tokens at style load | design lane |
 
 ## 3. From validated records to layers
 

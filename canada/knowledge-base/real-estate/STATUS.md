@@ -1,6 +1,6 @@
 # Agent 02 — Real estate · STATUS
 
-Phase 1 · 2026-10-30 · lane `canada/knowledge-base/real-estate/`
+Phase 1 · 2026-10-30 · lane `knowledge-base/real-estate/`
 
 ## Done
 
@@ -13,11 +13,11 @@ Phase 1 · 2026-10-30 · lane `canada/knowledge-base/real-estate/`
 | 96 `re-*.json` records | 20 two-bedroom purpose-built rents, 20 vacancy rates, 15 condominium two-bedroom rents, 20 HPI composite and 19 HPI apartment benchmarks, 2 national HPI |
 | 32 `nat-*.json` records | 5 federal (`nat-ca-*`), 7 BC, 6 ON, 3 QC, 1 AB, 1 SK, 2 MB, 2 NB, 3 NS, 1 NL, 1 PE; all `responsible_agent: agent-02` |
 
-**Validator:** `node canada/knowledge-base/scripts/validate.mjs canada/knowledge-base/real-estate`
+**Validator:** `node knowledge-base/scripts/validate.mjs knowledge-base/real-estate`
 → `128 record(s) checked, 0 failed, 0 warning(s), 0 non-record JSON file(s) skipped.`
 
-Also edited: own section of `canada/TASKS.md` (02-1 to 02-5 done, 02-6 added
-for leftovers); four lines appended to `canada/OPEN-QUESTIONS.md`.
+Also edited: own section of `TASKS.md` (02-1 to 02-5 done, 02-6 added
+for leftovers); four lines appended to `OPEN-QUESTIONS.md`.
 
 ## In progress / parked
 
@@ -44,7 +44,7 @@ for leftovers); four lines appended to `canada/OPEN-QUESTIONS.md`.
 9. **Hypothetical worked example**: a $600,000 Ontario condo with 20% down at a hypothetical 4.5% rate and $2,400 rent loses about $17,000 a year before tax; screening gross yields run from about 5% (Vancouver, Montréal) to about 10% (Edmonton), before condo fees and taxes (`investment-model.md`).
 10. **Licensing**: CREA and CMHC terms forbid republishing their figures; Statistics Canada republishes the CMHC rents under an open licence (all 20 values matched), so the public map can show rents but should only link to benchmark prices.
 
-## Open questions added (to `canada/OPEN-QUESTIONS.md`)
+## Open questions added (to `OPEN-QUESTIONS.md`)
 
 - The user's immigration status on the purchase date (decides the federal ban and BC/ON/NS foreign taxes).
 - Rent first and buy later? Own home only, or also an investment?

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "canada/knowledge-base/schema/school.schema.json",
+  "$id": "knowledge-base/schema/school.schema.json",
   "title": "attributes of a `school` record (SPEC §2.5, §7)",
   "type": "object",
   "required": ["website", "models", "legal_status", "qualifying", "qualifying_reason"],

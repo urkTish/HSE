@@ -99,3 +99,9 @@ One entry per non-obvious choice: what, why, alternatives, date.
 - **D-018 (2026-10-30) — Toolchain.** Vite 8, React 19, TypeScript 6,
   Tailwind 4, MapLibre GL JS 6 as resolved on 2026-10-30; MapLibre 6
   requires the worker URL to be registered explicitly (P-05-6).
+- **D-019 (2026-10-30) — Own repository.** The user chose a dedicated
+  repository: `urkTish/Canada`. The former `canada/` folder is the
+  repository root, history preserved via `git subtree split`; every path in
+  this project is now root-relative. The folder is removed from the HSE
+  repository and the draft pull request into HSE is closed. Supersedes the
+  location part of D-001.

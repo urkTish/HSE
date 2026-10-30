@@ -136,7 +136,7 @@ export default function App() {
           <h1 className="font-display text-xl font-bold">The map data could not be loaded</h1>
           <p className="mt-2 text-sm text-ink-2">{loadError}</p>
           <p className="mt-2 text-sm text-ink-2">
-            Run <code>npm run build-data</code> in <code>canada/map/app</code> to generate <code>public/data/</code>, then reload.
+            Run <code>npm run build-data</code> in <code>map/app</code> to generate <code>public/data/</code>, then reload.
           </p>
         </div>
       </main>

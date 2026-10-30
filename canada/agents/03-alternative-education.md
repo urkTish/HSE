@@ -1,7 +1,7 @@
 # Agent 03 — Canadian Private Alternative Education & Schooling Specialist
 
-Charter: `canada/SPEC.md` §7. Common rules: `agents/00-common-rules.md`.
-Lane: `canada/knowledge-base/education/`.
+Charter: `SPEC.md` §7. Common rules: `agents/00-common-rules.md`.
+Lane: `knowledge-base/education/`.
 
 ## Phase 1 deliverables
 

@@ -1,7 +1,7 @@
 # Agent 05 — Map: status
 
-Last updated 2026-10-30 (end of Phase 1). Lane: `canada/map/` and
-`canada/knowledge-base/places/`. Architecture: `ARCHITECTURE.md`. Licences:
+Last updated 2026-10-30 (end of Phase 1). Lane: `map/` and
+`knowledge-base/places/`. Architecture: `ARCHITECTURE.md`. Licences:
 `DATA-SOURCES.md`.
 
 ## Done
@@ -62,8 +62,8 @@ MapLibre GL JS 6; no keys, no analytics):
   profile heading on open and back to the opener on close, one live
   announcer, Escape in search closes the list only, 44 px layer rows,
   reduced motion respected, tooltip `aria-hidden`.
-- Styling: `src/index.css` imports `canada/design/tokens.css` and
-  `canada/design/tailwind-theme.css` (Agent 06) unchanged; the app defines no
+- Styling: `src/index.css` imports `design/tokens.css` and
+  `design/tailwind-theme.css` (Agent 06) unchanged; the app defines no
   colours of its own; MapLibre paint colours are read from the same tokens.
 - Scripts: `dev`, `build`, `lint`, `typecheck`, `validate`, `build-data`,
   `fetch-natural-earth`. `app/.gitignore` covers `node_modules/`, `dist/`,
@@ -89,7 +89,7 @@ $ npm run typecheck
 
 $ npm run build-data
 validator: 306 record(s) checked, 0 failed, 0 warning(s), 0 non-record JSON file(s) skipped.
-build-data: 234 record(s) → canada/map/app/public/data
+build-data: 234 record(s) → map/app/public/data
   on map by layer: cities 31, neighbourhoods 0, physical 0, elevation 0, climate 61, real-estate 35, schools 11, parks 0, trails 0, natural 0, tourism 0, transport 0
   excluded: 72 — 11 × school not qualifying (unverified_candidate); 4 × school not qualifying (excluded); 57 × D-008: no Statistics Canada source (CREA/CMHC-only figures are not republished)
 

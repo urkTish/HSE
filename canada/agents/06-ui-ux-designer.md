@@ -1,8 +1,8 @@
 # Agent 06 — Principal UI/UX Designer & Creative Director
 
-Charter: `canada/SPEC.md` §10. Common rules: `agents/00-common-rules.md`
+Charter: `SPEC.md` §10. Common rules: `agents/00-common-rules.md`
 (the research-tooling section applies only if you look up references).
-Lane: `canada/design/`.
+Lane: `design/`.
 
 If the skills `anthropic-skills:ui-designer`, `anthropic-skills:ux-designer`
 and `dataviz` are available to you, load them before designing.
@@ -34,7 +34,7 @@ and `dataviz` are available to you, load them before designing.
 4. **`components.md`** — component inventory for Agent 05: name, purpose,
    props, states, accessibility notes, which views use it.
 5. **`review-2026-10-30.md`** — review of whatever Agent 05 has produced
-   by the time you finish (`canada/map/ARCHITECTURE.md`, the app); if
+   by the time you finish (`map/ARCHITECTURE.md`, the app); if
    nothing is there yet, review the information hierarchy implied by
    SPEC §9 B–D and list the risks. Each finding: severity, where, what,
    concrete fix.

@@ -1,7 +1,7 @@
 # Design system — Canada Intelligence & Exploration System
 
 Owner: Agent 06 (Principal UI/UX Designer). Version 1.0, 2026-10-30.
-Applies to the map application in `canada/map/app/` (Vite, React, TypeScript,
+Applies to the map application in `map/app/` (Vite, React, TypeScript,
 Tailwind v4, MapLibre GL JS). Companion files in this folder:
 
 | File | What it is |

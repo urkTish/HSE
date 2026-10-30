@@ -5,12 +5,12 @@
 //   node scripts/fetch-natural-earth.mjs
 //
 // Inputs (pinned to the Natural Earth v5.1.2 release, public domain; see
-// canada/map/DATA-SOURCES.md entries NE-ADMIN1 and NE-PLACES):
+// map/DATA-SOURCES.md entries NE-ADMIN1 and NE-PLACES):
 //   ne_50m_admin_1_states_provinces.geojson
 //   ne_10m_populated_places_simple.geojson
 // Outputs:
 //   app/data-src/natural-earth/ca-provinces.geojson   13 provinces and territories
-//   canada/knowledge-base/places/city-<pr>-<slug>.json  principal-city records
+//   knowledge-base/places/city-<pr>-<slug>.json  principal-city records
 //
 // Selection rule for principal cities (written down so it can be revised):
 //   Natural Earth features with adm0_a3 = CAN whose featurecla is
@@ -177,7 +177,7 @@ async function main() {
           source_type: "other",
           accessed: TODAY,
           data_period: NE_VERSION,
-          methodology: `GeoJSON from https://github.com/nvkelso/natural-earth-vector/tree/${NE_VERSION}/geojson; filtered and checked by canada/map/app/scripts/fetch-natural-earth.mjs (point-in-polygon against ne_50m_admin_1_states_provinces).`,
+          methodology: `GeoJSON from https://github.com/nvkelso/natural-earth-vector/tree/${NE_VERSION}/geojson; filtered and checked by map/app/scripts/fetch-natural-earth.mjs (point-in-polygon against ne_50m_admin_1_states_provinces).`,
           licence: "Public domain",
         },
       ],
