@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "canada/knowledge-base/schema/record.schema.json",
+  "title": "Canada knowledge-base record (SPEC §2.1)",
+  "type": "object",
+  "required": [
+    "id", "category", "name", "geo", "description", "attributes", "data_kind",
+    "sources", "verification", "responsible_agent", "created", "updated"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^(city|nbhd|region|landform|clim|school|park|trail|attr|re|nat|hazard|route|service)-(ab|bc|mb|nb|nl|ns|nt|nu|on|pe|qc|sk|yt|ca)-[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "category": {
+      "type": "string",
+      "enum": ["city", "nbhd", "region", "landform", "clim", "school", "park", "trail", "attr", "re", "nat", "hazard", "route", "service"]
+    },
+    "subcategory": { "type": ["string", "null"] },
+    "name": { "type": "string", "minLength": 1 },
+    "name_fr": { "type": ["string", "null"] },
+    "geo": {
+      "type": "object",
+      "required": ["province"],
+      "additionalProperties": false,
+      "properties": {
+        "province": { "type": "string", "enum": ["AB", "BC", "MB", "NB", "NL", "NS", "NT", "NU", "ON", "PE", "QC", "SK", "YT", "CA"] },
+        "region": { "type": ["string", "null"] },
+        "city": { "type": ["string", "null"] },
+        "neighbourhood": { "type": ["string", "null"] },
+        "address": { "type": ["string", "null"] },
+        "lat": { "type": ["number", "null"], "minimum": 41, "maximum": 84 },
+        "lon": { "type": ["number", "null"], "minimum": -142, "maximum": -52 },
+        "coord_precision": { "type": "string", "enum": ["exact", "approximate", "centroid", "unknown"] },
+        "coord_source": { "type": ["string", "null"] },
+        "extent": { "type": ["string", "null"] }
+      }
+    },
+    "description": { "type": "string", "minLength": 1 },
+    "attributes": { "type": "object" },
+    "data_kind": {
+      "type": "string",
+      "enum": ["official_fact", "estimate", "assumption", "forecast", "professional_interpretation", "subjective_assessment"]
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["url", "publisher", "source_type", "accessed"],
+        "additionalProperties": false,
+        "properties": {
+          "url": { "type": "string", "pattern": "^https?://" },
+          "title": { "type": ["string", "null"] },
+          "publisher": { "type": "string", "minLength": 1 },
+          "source_type": {
+            "type": "string",
+            "enum": ["federal_government", "provincial_government", "municipal_government", "legislation", "regulator", "statistics_agency", "park_authority", "school_official", "real_estate_board", "housing_agency", "industry_report", "academic", "news", "community", "other"]
+          },
+          "accessed": { "type": "string", "format": "date" },
+          "data_period": { "type": ["string", "null"] },
+          "methodology": { "type": ["string", "null"] },
+          "licence": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "units": { "type": ["object", "null"] },
+    "verification": {
+      "type": "object",
+      "required": ["status", "confidence", "verified_by", "last_verified", "next_review"],
+      "additionalProperties": false,
+      "properties": {
+        "status": { "type": "string", "enum": ["verified", "partially_verified", "unverified", "disputed", "outdated"] },
+        "confidence": { "type": "string", "enum": ["high", "medium", "low"] },
+        "verified_by": { "type": "string", "pattern": "^agent-0[1-7]$" },
+        "last_verified": { "type": "string", "format": "date" },
+        "next_review": { "type": "string", "format": "date" },
+        "notes": { "type": ["string", "null"] }
+      }
+    },
+    "responsible_agent": { "type": "string", "pattern": "^agent-0[1-7]$" },
+    "limitations": { "type": ["string", "null"] },
+    "created": { "type": "string", "format": "date" },
+    "updated": { "type": "string", "format": "date" }
+  }
+}

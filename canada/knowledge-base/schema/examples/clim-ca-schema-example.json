@@ -1,0 +1,75 @@
+{
+  "id": "clim-ca-schema-example",
+  "category": "clim",
+  "subcategory": "schema example",
+  "name": "SCHEMA EXAMPLE — synthetic values, not climate data",
+  "name_fr": null,
+  "geo": {
+    "province": "CA",
+    "region": null,
+    "city": null,
+    "neighbourhood": null,
+    "address": null,
+    "lat": 60.0,
+    "lon": -95.0,
+    "coord_precision": "unknown",
+    "coord_source": "none; placeholder"
+  },
+  "description": "Illustrates the shape of a climate-normals record for the validator. Every number here is invented and must never be shown in the map or cited anywhere.",
+  "attributes": {
+    "station_name": "EXAMPLE STATION",
+    "climate_id": "0000000",
+    "station_id": null,
+    "wmo_id": null,
+    "station_lat": 60.0,
+    "station_lon": -95.0,
+    "elevation_m": 0,
+    "distance_to_city_centre_km": null,
+    "normals_period": "1991-2020",
+    "months": [
+      { "month": 1, "tmax_c": -5.0, "tmin_c": -15.0, "tmean_c": -10.0, "precip_mm": 30.0, "rain_mm": 5.0, "snow_cm": 25.0, "sunshine_h": 90.0 },
+      { "month": 2, "tmax_c": -3.0, "tmin_c": -13.0, "tmean_c": -8.0, "precip_mm": 25.0, "rain_mm": 5.0, "snow_cm": 20.0, "sunshine_h": 110.0 },
+      { "month": 3, "tmax_c": 2.0, "tmin_c": -8.0, "tmean_c": -3.0, "precip_mm": 30.0, "rain_mm": 10.0, "snow_cm": 20.0, "sunshine_h": 150.0 },
+      { "month": 4, "tmax_c": 10.0, "tmin_c": -1.0, "tmean_c": 4.5, "precip_mm": 35.0, "rain_mm": 25.0, "snow_cm": 10.0, "sunshine_h": 190.0 },
+      { "month": 5, "tmax_c": 17.0, "tmin_c": 5.0, "tmean_c": 11.0, "precip_mm": 50.0, "rain_mm": 48.0, "snow_cm": 2.0, "sunshine_h": 230.0 },
+      { "month": 6, "tmax_c": 22.0, "tmin_c": 10.0, "tmean_c": 16.0, "precip_mm": 70.0, "rain_mm": 70.0, "snow_cm": 0.0, "sunshine_h": 260.0 },
+      { "month": 7, "tmax_c": 25.0, "tmin_c": 13.0, "tmean_c": 19.0, "precip_mm": 75.0, "rain_mm": 75.0, "snow_cm": 0.0, "sunshine_h": 280.0 },
+      { "month": 8, "tmax_c": 24.0, "tmin_c": 12.0, "tmean_c": 18.0, "precip_mm": 65.0, "rain_mm": 65.0, "snow_cm": 0.0, "sunshine_h": 250.0 },
+      { "month": 9, "tmax_c": 18.0, "tmin_c": 7.0, "tmean_c": 12.5, "precip_mm": 50.0, "rain_mm": 49.0, "snow_cm": 1.0, "sunshine_h": 180.0 },
+      { "month": 10, "tmax_c": 10.0, "tmin_c": 1.0, "tmean_c": 5.5, "precip_mm": 40.0, "rain_mm": 32.0, "snow_cm": 8.0, "sunshine_h": 130.0 },
+      { "month": 11, "tmax_c": 2.0, "tmin_c": -6.0, "tmean_c": -2.0, "precip_mm": 35.0, "rain_mm": 15.0, "snow_cm": 20.0, "sunshine_h": 80.0 },
+      { "month": 12, "tmax_c": -4.0, "tmin_c": -13.0, "tmean_c": -8.5, "precip_mm": 30.0, "rain_mm": 5.0, "snow_cm": 25.0, "sunshine_h": 70.0 }
+    ],
+    "annual": { "tmean_c": 4.6, "precip_mm": 535.0, "rain_mm": 404.0, "snow_cm": 131.0, "sunshine_h": 2020.0 },
+    "extremes": null,
+    "phenomena": [],
+    "seasonal_summary": null,
+    "notes": "Synthetic example for schema validation only."
+  },
+  "data_kind": "assumption",
+  "sources": [
+    {
+      "url": "https://climate.weather.gc.ca/climate_normals/",
+      "title": "Canadian Climate Normals (landing page; cited only as the intended source type)",
+      "publisher": "Environment and Climate Change Canada",
+      "source_type": "federal_government",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": "Open Government Licence – Canada"
+    }
+  ],
+  "units": { "temperature": "C", "precipitation": "mm", "snow": "cm", "sunshine": "h" },
+  "verification": {
+    "status": "unverified",
+    "confidence": "low",
+    "verified_by": "agent-07",
+    "last_verified": "2026-10-30",
+    "next_review": "2027-10-30",
+    "notes": "Not data. Schema example only."
+  },
+  "responsible_agent": "agent-07",
+  "limitations": "Synthetic. Lives under schema/examples so the lane validator never treats it as knowledge.",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}
