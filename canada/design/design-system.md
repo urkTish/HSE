@@ -486,6 +486,36 @@ verified (half-circle, info) · unverified (circle-dashed, ink-3) · disputed
 (alert-triangle, warning, links to the `DECISIONS.md` entry) · outdated
 (clock-alert, warning). Past `next_review`: "Due for review since <date>".
 
+**Verification on every figure (coordinator requirement, 2026-10-30).**
+Every displayed figure — a profile value, a stat tile, a comparison cell, a
+search-result fact — carries its record's `verification.status` next to it,
+not only in the margin: a 16px Lucide icon plus the word, never colour
+alone. Compact form in dense cells: icon + short word ("Verified",
+"Partial", "Unverified", "Disputed", "Outdated"); the full word and
+confidence are in the tooltip and the margin. `verified` may be shown as the
+icon alone *only* inside a block whose margin states "Verified (high)";
+every other status always shows its word. **Disputed** values (for example
+the Manitoba tax thresholds in Phase 1) get the warning badge "Disputed"
+linked to the `DECISIONS.md` entry, and the figure itself is set in ink-2
+with a dotted underline so it is not read as settled. Records whose notes
+carry a caution (for example the territorial doctor-access figures) show an
+info badge "Use with caution" whose tooltip quotes `verification.notes`.
+
+**Market figures (D-008).** Every price, rent or market metric carries:
+(1) a **figure-kind label** from the record's `figure_kind` — *Survey*,
+*Asking*, *Transaction*, *Index* or *Estimate* — as a typographic badge
+before the value ("Survey · $1,850 / month"); asking prices and estimates
+use the dashed border, survey, transaction and index the solid border;
+(2) the period and "as of" date in the margin; (3) a **staleness badge**
+"Older than 60 days" (warning, clock icon) when the data period ends more
+than 60 days before today (SPEC §2.7). Figures whose only sources are CREA
+(MLS® HPI) or CMHC are **not displayed from storage**: the slot shows the
+metric, period and figure kind with a link "View on the CREA HPI tool"
+(external-link icon) and the line "Not republished here: the publisher's
+terms do not allow it." Two-bedroom survey rents republished by Statistics
+Canada under its open licence may be displayed, with Statistics Canada
+named as the source.
+
 **On-demand figures** (rents, prices — SPEC §9 B, E): never pre-rendered.
 The slot shows "Fetch current figure" (secondary button) → loading line
 "Fetching from <publisher>…" with Cancel → value with "as of <date>,
@@ -599,8 +629,16 @@ or "—".
 Strong                         ← band word, 14px semibold ink
 ▮▮▮▮▯                          ← 5-segment meter, filled = band (1–5), 8×4px segments, 2px gaps
 3 records · data 2025-10       ← evidence count (button) · data date, 12px ink-3
-[Estimate]                     ← data_kind badge if any evidence is not official_fact
+✓ Verified  [Survey]           ← weakest verification.status among the evidence (icon + word)
+                                  · figure kind for market criteria · data_kind badge if not official_fact
+[Older than 60 days]           ← staleness badge when a market figure's period is > 60 days old
 ```
+
+The cell shows the **weakest** verification status among its evidence
+records (order: disputed < outdated < unverified < partially verified <
+verified), so one disputed record cannot hide behind verified ones; the
+expanded evidence list shows each record's own status. A band resting on a
+disputed record also gets the row chip "Disputed evidence".
 
 Expanding the evidence count lists record IDs (mono, linked to their
 profiles) and the band thresholds used ("How this band is set").

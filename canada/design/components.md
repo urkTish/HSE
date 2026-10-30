@@ -195,6 +195,13 @@ Render points as a `symbol` layer with runtime images (`drawMarker(shape, fill, 
 - **A11y:** text is the label; never colour alone.
 - **Views:** all.
 
+### FigureValue (new, P1 — coordinator requirement 2026-10-30)
+- **Purpose:** the one way any figure is displayed: value + unit, its record's verification status, and for market figures the figure kind and staleness (design-system §8).
+- **Props:** `value: number|string|null; unit?: string; verification: { status: 'verified'|'partially_verified'|'unverified'|'disputed'|'outdated'; confidence; notes?: string; decisionId?: string }; caution?: boolean; figureKind?: 'survey'|'asking'|'transaction'|'index'|'estimate'; periodEnd?: string; linkOnly?: { label: string; url: string; reason: string }`.
+- **States:** verified · partially verified · unverified · disputed (warning badge linked to `DECISIONS.md`, value in ink-2 with dotted underline) · outdated · use with caution (info badge quoting `notes`) · stale (> 60 days after `periodEnd`: "Older than 60 days") · link-only (CREA/CMHC per D-008: no value, link + reason) · null ("—" + "No data").
+- **A11y:** status is icon + word, never colour alone; accessible name reads "1,850 dollars per month, survey figure, verified, September 2026".
+- **Views:** Ci, N, P, Cmp, S, M.
+
 ### NotYetResearched (new, P1)
 - **Purpose:** closes the profile with "Not yet researched for this place: Schools · Trails · Rents", so omitted sections are explicit.
 - **Props:** `missing: string[]`.
@@ -203,11 +210,11 @@ Render points as a `symbol` layer with runtime images (`drawMarker(shape, fill, 
 ### OnDemandFigure (new, P1 shell, P2 service)
 - **Purpose:** rents/prices fetched on request (§8).
 - **Props:** `label; request: () => Promise<{ value; unit; asOf; source }>`.
-- **States:** idle ("Fetch current rents") · loading ("Fetching from CMHC…" + Cancel) · ready (value + margin with "as of") · stale > 60 days (warning) · error (what/why/next) · offline (disabled with reason) · not available yet (Phase 1: explains the service does not exist yet).
+- **States:** link-only (D-008: CREA/CMHC-only figure → "View on the CREA HPI tool" + reason) · idle ("Fetch current rents") · loading ("Fetching from CMHC…" + Cancel) · ready (value + margin with "as of") · stale > 60 days (warning) · error (what/why/next) · offline (disabled with reason) · not available yet (Phase 1: explains the service does not exist yet).
 - **Views:** Ci, N, Cmp.
 
 ### MarketObservationList (new, P1)
-- **Purpose:** groups `re` records under the city's "Living" tab (metric, property type, period, figure kind, source), instead of listing them as nearby places.
+- **Purpose:** groups `re` records under the city's "Living" tab (metric, property type, period, figure kind, source), instead of listing them as nearby places. Each value goes through `FigureValue` (figure-kind label, verification, staleness); CREA- or CMHC-only figures render link-only per D-008.
 - **Props:** `records: IndexEntry[]` filtered to the city/CMA.
 - **Views:** Ci.
 
@@ -255,7 +262,7 @@ Render points as a `symbol` layer with runtime images (`drawMarker(shape, fill, 
 - **Views:** Cmp; M as CriterionCard stack.
 
 ### BandCell, BandMeter, NoDataCell (new, P2)
-- **BandCell props:** `band: 1..5; words: [string ×5]; records: string[]; dataDate: string; dataKinds: DataKind[]; expanded; onToggle`.
+- **BandCell props:** `band: 1..5; words: [string ×5]; records: { id; verification: VerificationStatus }[]; dataDate: string; dataKinds: DataKind[]; figureKind?: FigureKind; stale?: boolean; expanded; onToggle`. Shows the **weakest** verification status among its records (icon + word), the figure-kind badge for market criteria and the "Older than 60 days" badge; the expanded list shows each record's own status.
 - **BandMeter:** five 14×6px segments, filled count = band, `--ce-band-fill` / `--ce-band-track`; screen-reader text "band 3 of 5, Moderate".
 - **NoDataCell:** italic "No data", hatched meter (`--ce-band-nodata`), reason line; never zero.
 - **Views:** Cmp, M.
