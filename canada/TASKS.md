@@ -58,7 +58,7 @@ section. A request to another agent is a new line under that agent with
 - [done] 06-3 `components.md` inventory for Agent 05.
 - [done] 06-4 First review of the Agent 05 skeleton (`review-2026-10-30.md`: 15 findings + 2 architecture notes).
 - [done] 06-5 `STATUS.md`.
-- [todo] 06-6 Re-review after Agent 05 addresses F-01 to F-07 (marker shapes, keyboard path, Living section, mobile, dark controls, duplicate labels, map padding).
+- [doing] 06-6 Re-review after Agent 05 addresses F-01 to F-07 (marker shapes, keyboard path, Living section, mobile, dark controls, duplicate labels, map padding).
 
 ## Agent 07 — Coordinator (repository root of `canada/`)
 
