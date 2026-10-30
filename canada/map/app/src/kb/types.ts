@@ -1,5 +1,6 @@
 // Types mirroring canada/knowledge-base/schema/*.schema.json (SPEC §2).
 // The app treats records as read-only data produced by scripts/build-data.mjs.
+import type { MarkerShape } from "../map/markers";
 
 export type Category =
   | "city" | "nbhd" | "region" | "landform" | "clim" | "school" | "park"
@@ -153,6 +154,7 @@ export interface IndexEntry {
   lon: number | null;
   geom_source: string | null;
   rank: number;
+  tier: number;
   capital: string | null;
   file: string;
 }
@@ -190,6 +192,8 @@ export interface LayerDef {
   subcategoryPattern?: string;
   kind: "points" | "relief" | "points+basemap";
   defaultOn: boolean;
+  shape: MarkerShape | null;
+  minzoom: number;
   colorToken: string;
   emptyNote: string;
 }

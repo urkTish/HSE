@@ -19,6 +19,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
 import type { FeatureCollection } from "geojson";
 import type { AttributionEntry, LayerDef, ProvinceCode, Selection } from "../kb/types";
+import { drawMarker } from "./markers";
 import {
   CANADA_BOUNDS,
   RELIEF_TILES,
@@ -48,8 +49,28 @@ interface Props {
   selection: Selection;
   selectedPoint: { lat: number; lon: number } | null;
   focus: Focus | null;
+  /** Space taken by panels over the map, so the camera centres in the visible area. */
+  padding: { left: number; right: number; bottom: number };
   onSelect: (s: Selection) => void;
   onBasemap: (m: BasemapMode) => void;
+  /** Reported on every moveend: the visible bounds and zoom (drives "Places in view"). */
+  onView: (v: MapViewState) => void;
+}
+
+export interface MapViewState {
+  west: number;
+  south: number;
+  east: number;
+  north: number;
+  zoom: number;
+}
+
+/** City tiers (design/components.md §2): tier 1 always, tier 2 from z5, tier 3 from z7. */
+export const CITY_TIER_MINZOOM: Record<number, number> = { 1: 0, 2: 5, 3: 7 };
+
+/** Every rendered point-layer id of a layer (cities have one per tier). */
+export function pointLayerIds(l: LayerDef): string[] {
+  return l.id === "cities" ? [1, 2, 3].map((t) => `ce-cities-pt-${t}`) : [`ce-${l.id}-pt`];
 }
 
 setWorkerUrl(workerUrl);
@@ -138,7 +159,7 @@ export default function MapView(props: Props) {
     function wireEvents(m: MLMap) {
       const interactive = () => {
         const ids: string[] = [];
-        for (const l of propsRef.current.layers) ids.push(`ce-${l.id}-pt`, `ce-${l.id}-cluster`);
+        for (const l of propsRef.current.layers) ids.push(...pointLayerIds(l), `ce-${l.id}-cluster`);
         ids.push("ce-prov-fill");
         return ids.filter((id) => m.getLayer(id));
       };
@@ -148,6 +169,13 @@ export default function MapView(props: Props) {
         if (code) m.setFeatureState({ source: PROV_SRC, id: code }, { [key]: true });
         ref.current = code;
       };
+      let hoverPt: { source: string; id: string } | null = null;
+      const setPointHover = (next: { source: string; id: string } | null) => {
+        if (hoverPt && (hoverPt.id !== next?.id || hoverPt.source !== next?.source) && m.getSource(hoverPt.source))
+          m.setFeatureState(hoverPt, { hover: false });
+        if (next) m.setFeatureState(next, { hover: true });
+        hoverPt = next;
+      };
       const top = (e: MapMouseEvent): MapGeoJSONFeature | undefined =>
         m.queryRenderedFeatures(e.point, { layers: interactive() })[0];
 
@@ -156,6 +184,7 @@ export default function MapView(props: Props) {
         if (!f) {
           m.getCanvas().style.cursor = "";
           setProvState(null, "hover", hoverProv);
+          setPointHover(null);
           setTooltip(null);
           return;
         }
@@ -163,14 +192,22 @@ export default function MapView(props: Props) {
         const p = f.properties as Record<string, unknown>;
         if (f.layer.id === "ce-prov-fill") {
           setProvState(p.code as ProvinceCode, "hover", hoverProv);
+          setPointHover(null);
           setTooltip({ x: e.point.x, y: e.point.y, text: String(p.name) });
         } else {
           setProvState(null, "hover", hoverProv);
+          setPointHover(p.point_count ? null : { source: f.source, id: String(p.id) });
           const text = p.point_count ? `${p.point_count} records — click to zoom in` : String(p.name);
           setTooltip({ x: e.point.x, y: e.point.y, text });
         }
       });
       m.on("movestart", () => setTooltip(null));
+      const reportView = () => {
+        const b = m.getBounds();
+        propsRef.current.onView({ west: b.getWest(), south: b.getSouth(), east: b.getEast(), north: b.getNorth(), zoom: m.getZoom() });
+      };
+      m.on("moveend", reportView);
+      m.once("idle", reportView);
       m.getCanvas().addEventListener("mouseleave", () => {
         setProvState(null, "hover", hoverProv);
         setTooltip(null);
@@ -208,15 +245,16 @@ export default function MapView(props: Props) {
     if (!m || !styleVersion) return;
     for (const l of layers) {
       const vis = layersOn[l.id] ? "visible" : "none";
-      for (const suffix of ["pt", "cluster", "cluster-count", "label", "relief"]) {
-        const id = `ce-${l.id}-${suffix}`;
-        if (m.getLayer(id)) m.setLayoutProperty(id, "visibility", vis);
-      }
+      const ids = [...pointLayerIds(l), ...["hover", "cluster", "cluster-count", "relief"].map((x) => `ce-${l.id}-${x}`)];
+      for (const id of ids) if (m.getLayer(id)) m.setLayoutProperty(id, "visibility", vis);
     }
+    // Our city labels replace the base map's city and town labels (no double names).
+    const cityLabelsVis = layersOn.cities ? "none" : "visible";
     const transportVis = layersOn.transport ? "visible" : "none";
     for (const bl of m.getStyle().layers) {
       const sl = (bl as { "source-layer"?: string })["source-layer"];
       if (sl && TRANSPORT_SOURCE_LAYERS.has(sl)) m.setLayoutProperty(bl.id, "visibility", transportVis);
+      if (sl === "place" && /city|town/.test(bl.id)) m.setLayoutProperty(bl.id, "visibility", cityLabelsVis);
     }
   }, [layersOn, layers, styleVersion]);
 
@@ -228,6 +266,8 @@ export default function MapView(props: Props) {
     if (attributionRef.current) m.removeControl(attributionRef.current);
     const ctrl = new AttributionControl({ compact: true, customAttribution: attributionHtml(attribution, layersOn, categoriesPresent) });
     m.addControl(ctrl, "bottom-right");
+    // Collapsed by default on small screens so it does not cover the map; one tap opens it.
+    if (window.innerWidth < 768) m.getContainer().querySelector(".maplibregl-ctrl-attrib")?.classList.remove("maplibregl-compact-show");
     attributionRef.current = ctrl;
   }, [attribution, layersOn, categoriesPresent, styleVersion]);
 
@@ -246,6 +286,14 @@ export default function MapView(props: Props) {
     selectProvRef.current?.(selection?.kind === "province" ? selection.code : null);
   }, [selection, selectedPoint, styleVersion]);
 
+  // ---- keep the camera centred in the part of the map not covered by panels ----
+  const { padding } = props;
+  useEffect(() => {
+    const m = mapRef.current;
+    if (!m || !styleVersion) return;
+    m.setPadding({ left: padding.left, right: padding.right, bottom: padding.bottom, top: 0 });
+  }, [padding.left, padding.right, padding.bottom, styleVersion]);
+
   // ---- fly to a focus point (search results, nearby list) ----
   const { focus } = props;
   useEffect(() => {
@@ -263,7 +311,7 @@ export default function MapView(props: Props) {
         <div
           className="pointer-events-none absolute z-40 -translate-x-1/2 -translate-y-full rounded-sm bg-surface-inverse px-2 py-1 text-xs text-ink-inverse shadow-2"
           style={{ left: tooltip.x, top: tooltip.y - 10 }}
-          role="status"
+          aria-hidden="true"
         >
           {tooltip.text}
         </div>
@@ -331,74 +379,110 @@ function addOverlays(map: MLMap, props: Props, hasGlyphs: boolean) {
     firstSymbol,
   );
 
+  // Marker images: one per layer and theme, drawn from markers.tsx (same geometry as the legend).
+  const addMarker = (id: string, shape: LayerDef["shape"], size: number, fill: string) => {
+    if (!shape) return;
+    const img = drawMarker(shape, size, { fill, stroke: c.stroke, halo: c.halo });
+    if (map.hasImage(id)) map.updateImage(id, img);
+    else map.addImage(id, img, { pixelRatio: 2 });
+  };
+
   // Knowledge-base point layers (drawn above base-map labels).
   for (const l of props.layers) {
-    if (l.kind === "relief") continue;
+    if (l.kind === "relief" || !l.shape) continue;
     const colour = token(l.colorToken, "#1e1d1a");
     const vis = props.layersOn[l.id] ? "visible" : "none";
     const isCities = l.id === "cities";
-    map.addSource(srcId(l.id), {
+    const src = srcId(l.id);
+    map.addSource(src, {
       type: "geojson",
       data: props.layerData[l.id] ?? { type: "FeatureCollection", features: [] },
+      promoteId: "id",
       cluster: !isCities,
-      clusterRadius: 40,
-      clusterMaxZoom: 9,
+      clusterRadius: 48,
+      clusterMaxZoom: 12,
+    });
+    // Hover ring (feature-state) under the marker.
+    map.addLayer({
+      id: `ce-${l.id}-hover`,
+      type: "circle",
+      source: src,
+      minzoom: isCities ? 0 : l.minzoom,
+      filter: ["!", ["has", "point_count"]],
+      layout: { visibility: vis },
+      paint: {
+        "circle-radius": 13,
+        "circle-color": "rgba(0,0,0,0)",
+        "circle-stroke-color": c.hover,
+        "circle-stroke-width": ["case", ["boolean", ["feature-state", "hover"], false], 2, 0],
+      },
     });
     if (!isCities) {
       map.addLayer({
         id: `ce-${l.id}-cluster`,
         type: "circle",
-        source: srcId(l.id),
+        source: src,
+        minzoom: l.minzoom,
         filter: ["has", "point_count"],
         layout: { visibility: vis },
         paint: {
           "circle-color": c.clusterFill,
           "circle-stroke-color": colour,
-          "circle-stroke-width": 2,
-          "circle-radius": ["step", ["get", "point_count"], 13, 10, 16, 50, 20],
+          "circle-stroke-width": 3,
+          "circle-radius": ["step", ["get", "point_count"], 14, 10, 18, 100, 22],
         },
       });
       if (hasGlyphs) {
         map.addLayer({
           id: `ce-${l.id}-cluster-count`,
           type: "symbol",
-          source: srcId(l.id),
+          source: src,
+          minzoom: l.minzoom,
           filter: ["has", "point_count"],
           layout: { visibility: vis, "text-field": ["get", "point_count_abbreviated"], "text-font": ["Noto Sans Bold"], "text-size": 12, "text-allow-overlap": true },
           paint: { "text-color": c.clusterInk },
         });
       }
-    }
-    map.addLayer({
-      id: `ce-${l.id}-pt`,
-      type: "circle",
-      source: srcId(l.id),
-      filter: ["!", ["has", "point_count"]],
-      layout: { visibility: vis },
-      paint: {
-        "circle-color": colour,
-        "circle-radius": isCities ? ["case", ["==", ["get", "capital"], "national"], 7, ["==", ["get", "capital"], "provincial_territorial"], 6, 4.5] : 6,
-        "circle-stroke-color": c.halo,
-        "circle-stroke-width": 1.5,
-      },
-    });
-    if (isCities && hasGlyphs) {
+      addMarker(`ce-marker-${l.id}`, l.shape, 14, colour);
       map.addLayer({
-        id: `ce-${l.id}-label`,
+        id: `ce-${l.id}-pt`,
         type: "symbol",
-        source: srcId(l.id),
-        layout: {
-          visibility: vis,
-          "text-field": ["get", "name"],
-          "text-font": ["case", ["!=", ["get", "capital"], ""], ["literal", ["Noto Sans Bold"]], ["literal", ["Noto Sans Regular"]]],
-          "text-size": ["interpolate", ["linear"], ["zoom"], 3, 11, 8, 14],
-          "text-offset": [0, 0.9],
-          "text-anchor": "top",
-          "symbol-sort-key": ["get", "rank"],
-          "text-optional": true,
-        },
-        paint: { "text-color": c.ink, "text-halo-color": c.labelHalo, "text-halo-width": 1.5 },
+        source: src,
+        minzoom: l.minzoom,
+        filter: ["!", ["has", "point_count"]],
+        layout: { visibility: vis, "icon-image": `ce-marker-${l.id}`, "icon-allow-overlap": true, "icon-ignore-placement": true },
       });
+    } else {
+      addMarker("ce-marker-cities-1", l.shape, 14, colour);
+      addMarker("ce-marker-cities-2", l.shape, 11, colour);
+      addMarker("ce-marker-cities-3", l.shape, 9, colour);
+      addMarker("ce-marker-cities-capital", l.shape, 18, colour);
+      for (const tier of [1, 2, 3]) {
+        map.addLayer({
+          id: `ce-cities-pt-${tier}`,
+          type: "symbol",
+          source: src,
+          minzoom: CITY_TIER_MINZOOM[tier] ?? 0,
+          filter: ["==", ["get", "tier"], tier],
+          layout: {
+            visibility: vis,
+            "icon-image": ["case", ["!=", ["get", "capital"], ""], "ce-marker-cities-capital", `ce-marker-cities-${tier}`],
+            "icon-allow-overlap": true,
+            "symbol-sort-key": ["get", "rank"],
+            ...(hasGlyphs
+              ? {
+                  "text-field": ["get", "name"],
+                  "text-font": ["case", ["!=", ["get", "capital"], ""], ["literal", ["Noto Sans Bold"]], ["literal", ["Noto Sans Regular"]]],
+                  "text-size": ["interpolate", ["linear"], ["zoom"], 3, 11, 8, 14],
+                  "text-offset": [0, 0.9],
+                  "text-anchor": "top",
+                  "text-optional": true,
+                }
+              : {}),
+          },
+          paint: hasGlyphs ? { "text-color": c.ink, "text-halo-color": c.labelHalo, "text-halo-width": 1.5 } : {},
+        });
+      }
     }
   }
 

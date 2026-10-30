@@ -15,7 +15,7 @@ export const loadIndex = () => getJson<KbIndex>("index.json");
 export const loadAttribution = () => getJson<AttributionEntry[]>("attribution.json");
 export const loadBoundaries = () => getJson<FeatureCollection>("boundaries/ca-provinces.geojson");
 
-export type PointCollection = FeatureCollection<Point, { id: string; name: string; category: Category; layer: string; province: string; rank: number; capital: string }>;
+export type PointCollection = FeatureCollection<Point, { id: string; name: string; category: Category; layer: string; province: string; rank: number; tier: number; capital: string }>;
 export const loadCategoryGeojson = (c: Category) => getJson<PointCollection>(`${c}.geojson`);
 
 const recordCache = new Map<Category, Promise<Record<string, KbRecord>>>();

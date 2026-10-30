@@ -1,5 +1,5 @@
 {
-  "$comment": "The twelve information layers of SPEC §9 C. Shared by scripts/build-data.mjs and the app. A record joins the first layer whose categories include its category and whose subcategoryPattern (if any) matches its subcategory.",
+  "$comment": "The twelve information layers of SPEC §9 C. Shared by scripts/build-data.mjs and the app. A record joins the first layer whose categories include its category and whose subcategoryPattern (if any) matches its subcategory. shape and minzoom follow design/components.md §2 (Agent 06); cities use tiers instead of one minzoom (tier 1 always, tier 2 from z5, tier 3 from z7).",
   "layers": [
     {
       "id": "cities",
@@ -11,6 +11,8 @@
       "kind": "points",
       "defaultOn": true,
       "colorToken": "--ce-layer-settlement",
+      "shape": "circle",
+      "minzoom": 0,
       "emptyNote": "No city records loaded."
     },
     {
@@ -23,6 +25,8 @@
       "kind": "points",
       "defaultOn": false,
       "colorToken": "--ce-layer-settlement",
+      "shape": "ring",
+      "minzoom": 10,
       "emptyNote": "No neighbourhood records yet. Neighbourhood geography is planned for Phase 2."
     },
     {
@@ -36,6 +40,8 @@
       "kind": "points",
       "defaultOn": false,
       "colorToken": "--ce-layer-terrain-ink",
+      "shape": "triangle-outline",
+      "minzoom": 5,
       "emptyNote": "No region or landform records yet (Agent 04)."
     },
     {
@@ -46,6 +52,8 @@
       "kind": "relief",
       "defaultOn": false,
       "colorToken": "--ce-layer-terrain-ink",
+      "shape": null,
+      "minzoom": 0,
       "emptyNote": "Country-scale shaded relief (Natural Earth II, zoom 6 and below). Detailed NRCan elevation is planned for Phase 2."
     },
     {
@@ -59,6 +67,8 @@
       "kind": "points",
       "defaultOn": false,
       "colorToken": "--ce-layer-climate",
+      "shape": "ring-dot",
+      "minzoom": 4,
       "emptyNote": "No climate-normals or hazard records yet (Agent 04)."
     },
     {
@@ -71,6 +81,8 @@
       "kind": "points",
       "defaultOn": false,
       "colorToken": "--ce-layer-housing",
+      "shape": "tag",
+      "minzoom": 6,
       "emptyNote": "No market observations yet (Agent 02). Prices and rents will be fetched on demand, never stored in the map."
     },
     {
@@ -83,6 +95,8 @@
       "kind": "points",
       "defaultOn": false,
       "colorToken": "--ce-layer-education",
+      "shape": "diamond",
+      "minzoom": 0,
       "emptyNote": "No qualifying schools yet (Agent 03). Only schools verified as qualifying are ever shown."
     },
     {
@@ -95,6 +109,8 @@
       "kind": "points",
       "defaultOn": false,
       "colorToken": "--ce-layer-nature",
+      "shape": "hexagon",
+      "minzoom": 4,
       "emptyNote": "No park records yet (Agent 04)."
     },
     {
@@ -107,6 +123,8 @@
       "kind": "points",
       "defaultOn": false,
       "colorToken": "--ce-layer-nature",
+      "shape": "triangle-down",
+      "minzoom": 9,
       "emptyNote": "No trail records yet (Agent 04)."
     },
     {
@@ -120,6 +138,8 @@
       "kind": "points",
       "defaultOn": false,
       "colorToken": "--ce-layer-nature",
+      "shape": "triangle",
+      "minzoom": 5,
       "emptyNote": "No natural-attraction records yet (Agent 04)."
     },
     {
@@ -132,6 +152,8 @@
       "kind": "points",
       "defaultOn": false,
       "colorToken": "--ce-layer-heritage",
+      "shape": "pentagon",
+      "minzoom": 6,
       "emptyNote": "No tourism or historical-attraction records yet (Agent 04)."
     },
     {
@@ -145,6 +167,8 @@
       "kind": "points+basemap",
       "defaultOn": true,
       "colorToken": "--ce-layer-transport",
+      "shape": "square",
+      "minzoom": 4,
       "emptyNote": "No route or service records yet. Roads, railways and airports shown come from the OpenStreetMap base map."
     }
   ],

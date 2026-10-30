@@ -207,6 +207,13 @@ const layerFor = (rec) => {
   }
   return null; // e.g. `nat`: searchable and listed by province, not drawn
 };
+// City tiers for contextual visibility: 1 = capitals and Natural Earth scalerank <= 3, 2 = <= 6, 3 = the rest.
+const tierFor = (rec) => {
+  if (rec.category !== "city") return 1;
+  if (rec.attributes?.capital) return 1;
+  const r = rec.attributes?.natural_earth?.scalerank;
+  return typeof r === "number" ? (r <= 3 ? 1 : r <= 6 ? 2 : 3) : 3;
+};
 const rankFor = (rec) => {
   if (rec.category !== "city") return 5;
   const ne = rec.attributes?.natural_earth;
@@ -238,6 +245,7 @@ for (const { rel, data } of records) {
     lon: loc.lon,
     geom_source: loc.geom_source,
     rank: rankFor(rec),
+    tier: tierFor(rec),
     capital: rec.category === "city" ? (rec.attributes?.capital ?? null) : null,
     file: rel,
   };
@@ -247,7 +255,7 @@ for (const { rel, data } of records) {
     byCategory[rec.category].features.push({
       type: "Feature",
       id: rec.id,
-      properties: { id: rec.id, name: rec.name, category: rec.category, layer, province: rec.geo.province, rank: entry.rank, capital: entry.capital ?? "" },
+      properties: { id: rec.id, name: rec.name, category: rec.category, layer, province: rec.geo.province, rank: entry.rank, tier: entry.tier, capital: entry.capital ?? "" },
       geometry: { type: "Point", coordinates: [loc.lon, loc.lat] },
     });
   }

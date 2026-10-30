@@ -1,7 +1,7 @@
 // Location profile (SPEC §9 B). Renders what the record has, section by
 // section; a section with no data is not rendered at all.
-import { useEffect, useState, type ReactNode } from "react";
-import { loadRecord } from "../kb/loader";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { loadRecord, loadRecords } from "../kb/loader";
 import { nearby, normalise } from "../kb/geo";
 import { requestOnDemand, type OnDemandAnswer } from "../dynamic/onDemand";
 import type {
@@ -16,6 +16,7 @@ import type {
   Selection,
 } from "../kb/types";
 import ClimateChart from "./ClimateChart";
+import FigureValue from "./FigureValue";
 
 interface Props {
   selection: Exclude<Selection, null>;
@@ -47,6 +48,8 @@ const PRECISION: Record<string, string> = {
   centroid: "centroid",
   unknown: "unknown precision",
 };
+/** Categories that are places; observations, rules, normals and hazards are not "nearby places" (review F-03). */
+const PLACE_CATEGORIES = new Set(["city", "nbhd", "region", "landform", "school", "park", "trail", "attr", "route", "service"]);
 const humanise = (k: string) => k.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -127,7 +130,7 @@ function ProvinceProfile({ province, index, layers, onOpen }: { province: Provin
     <>
       <header className="px-5 pb-4 pt-5">
         <p className="text-2xs font-semibold uppercase tracking-caps text-ink-3">{province.kind ?? "Province or territory"} · {province.iso_3166_2}</p>
-        <h2 className="font-display text-2xl font-bold leading-tight tracking-display text-ink">{province.name}</h2>
+        <h2 tabIndex={-1} className="font-display text-2xl font-bold leading-tight tracking-display text-ink focus:outline-none">{province.name}</h2>
         {province.name_fr && province.name_fr !== province.name && <p className="text-sm text-ink-2" lang="fr">{province.name_fr}</p>}
       </header>
       <Section title="In the knowledge base">
@@ -175,6 +178,8 @@ export default function ProfilePanel({ selection, index, layers, categoryLabels,
   const [error, setError] = useState<string | null>(null);
   const [onDemand, setOnDemand] = useState<OnDemandAnswer | null>(null);
   const [loadedFor, setLoadedFor] = useState<string | null>(null);
+  const [living, setLiving] = useState<KbRecord[]>([]);
+  const asideRef = useRef<HTMLElement>(null);
 
   const selKey = selection.kind === "record" ? selection.id : `prov-${selection.code}`;
   const loading = selection.kind === "record" && loadedFor !== selKey;
@@ -203,11 +208,22 @@ export default function ProfilePanel({ selection, index, layers, categoryLabels,
               (a.attributes.distance_to_city_centre_km ?? 999) - (b.attributes.distance_to_city_centre_km ?? 999),
           );
         }
+        // "Living": market observations recorded for this city (never listed as nearby places).
+        let liv: KbRecord[] = [];
+        if (rec && (rec.category === "city" || rec.category === "nbhd")) {
+          const name = normalise(rec.category === "city" ? rec.name : rec.geo.city);
+          const ids = index.records.filter((e) => e.category === "re" && e.province === rec.geo.province && normalise(e.city) === name).map((e) => e.id);
+          if (ids.length) {
+            const all = await loadRecords("re");
+            liv = ids.map((id) => all[id]).filter((x): x is KbRecord => Boolean(x));
+          }
+        }
         const od = rec?.category === "re" ? await requestOnDemand({ kind: "market-figure", recordId: rec.id }) : null;
         if (!live) return;
         setRecord(rec);
         setClimate(clim);
         setOnDemand(od);
+        setLiving(liv);
         setError(rec ? null : "This record is not in the published data.");
         setLoadedFor(selKey);
       } catch (e) {
@@ -221,6 +237,12 @@ export default function ProfilePanel({ selection, index, layers, categoryLabels,
     };
   }, [selection, selKey, index]);
 
+  // Move focus to the place heading when a profile opens (design review F-02).
+  useEffect(() => {
+    if (loading) return;
+    asideRef.current?.querySelector<HTMLElement>("h2")?.focus();
+  }, [loading, selKey]);
+
   const province = (code: string) => index.provinces.find((p) => p.code === code);
 
   let body: ReactNode;
@@ -232,11 +254,12 @@ export default function ProfilePanel({ selection, index, layers, categoryLabels,
   } else if (error || !record) {
     body = <p className="p-5 text-sm text-status-critical" role="alert">{error ?? "Not found."}</p>;
   } else {
-    body = <RecordProfile record={record} climate={climate} onDemand={onDemand} index={index} categoryLabels={categoryLabels} onOpen={onOpen} provinceName={record.geo.province === "CA" ? "Canada (national)" : (province(record.geo.province)?.name ?? record.geo.province)} />;
+    body = <RecordProfile record={record} climate={climate} living={living} onDemand={onDemand} index={index} categoryLabels={categoryLabels} onOpen={onOpen} provinceName={record.geo.province === "CA" ? "Canada (national)" : (province(record.geo.province)?.name ?? record.geo.province)} />;
   }
 
   return (
     <aside
+      ref={asideRef}
       aria-label="Location profile"
       className="pointer-events-auto flex max-h-full flex-col overflow-hidden rounded-lg border border-line bg-surface-1 shadow-3"
     >
@@ -253,6 +276,7 @@ export default function ProfilePanel({ selection, index, layers, categoryLabels,
 function RecordProfile({
   record: r,
   climate,
+  living,
   onDemand,
   index,
   categoryLabels,
@@ -261,6 +285,7 @@ function RecordProfile({
 }: {
   record: KbRecord;
   climate: ClimRecord[];
+  living: KbRecord[];
   onDemand: OnDemandAnswer | null;
   index: KbIndex;
   categoryLabels: Record<string, string>;
@@ -270,7 +295,9 @@ function RecordProfile({
   const g = r.geo;
   const entry = index.records.find((e) => e.id === r.id);
   const near =
-    entry && entry.lat !== null && entry.lon !== null ? nearby({ id: r.id, lat: entry.lat, lon: entry.lon }, index.records, 50, 8) : [];
+    entry && entry.lat !== null && entry.lon !== null
+      ? nearby({ id: r.id, lat: entry.lat, lon: entry.lon }, index.records.filter((e) => PLACE_CATEGORIES.has(e.category)), 50, 8)
+      : [];
   const geomSource = r._map?.geom_source;
   const placeLine = [g.neighbourhood, g.city && g.city !== r.name ? g.city : null, g.region, provinceName].filter(Boolean).join(", ");
 
@@ -295,7 +322,7 @@ function RecordProfile({
           {categoryLabels[r.category] ?? r.category}
           {r.subcategory ? ` · ${r.subcategory}` : ""}
         </p>
-        <h2 className="font-display text-2xl font-bold leading-tight tracking-display text-ink">{r.name}</h2>
+        <h2 tabIndex={-1} className="font-display text-2xl font-bold leading-tight tracking-display text-ink focus:outline-none">{r.name}</h2>
         {r.name_fr && r.name_fr !== r.name && <p className="text-sm text-ink-2" lang="fr">{r.name_fr}</p>}
         {placeLine && <p className="mt-1 text-sm text-ink-2">{placeLine}</p>}
         {r.category === "city" && typeof r.attributes.capital === "string" && (
@@ -338,6 +365,32 @@ function RecordProfile({
             <Dl rows={(["winter", "spring", "summer", "autumn"] as const).map((s) => [humanise(s), seasonal[s] ?? null] as [string, ReactNode])} />
           )}
           {phenomena.length > 0 && <Dl rows={[["Local phenomena", renderValue(phenomena)]]} />}
+        </Section>
+      )}
+
+      {living.length > 0 && (
+        <Section title="Living">
+          <p className="text-xs text-ink-2">
+            Housing market observations for this area. Figures are fetched on demand with their date and source (Phase 4); none are stored in the map.
+          </p>
+          <div className="space-y-2">
+            {living.map((m) => {
+              const a = m.attributes as unknown as MarketAttributes;
+              const src = m.sources.find((x) => /statistics canada/i.test(x.publisher)) ?? m.sources[0];
+              const label = [humanise(a.metric), a.bedrooms ? `${a.bedrooms === "studio" ? "studio" : `${a.bedrooms}-bedroom`}` : null, a.property_type ? humanise(a.property_type).toLowerCase() : null].filter(Boolean).join(", ");
+              return (
+                <FigureValue
+                  key={m.id}
+                  label={label}
+                  value={null}
+                  figureKind={a.figure_kind}
+                  period={a.period}
+                  verification={m.verification}
+                  linkOnly={src ? { label: `open the source (${src.publisher})`, url: src.url, reason: "Not available here until the on-demand service exists (Phase 4)." } : undefined}
+                />
+              );
+            })}
+          </div>
         </Section>
       )}
 
@@ -450,6 +503,23 @@ function RecordProfile({
           />
         </Section>
       )}
+
+      {(r.category === "city" || r.category === "nbhd") && entry && entry.lat !== null && entry.lon !== null && (() => {
+        const within = (cat: string) =>
+          nearby({ id: r.id, lat: entry.lat as number, lon: entry.lon as number }, index.records.filter((e) => e.category === cat), 50, 1).length > 0;
+        const missing = [
+          climate.length === 0 ? "Climate normals" : null,
+          living.length === 0 ? "Housing market" : null,
+          within("school") ? null : "Qualifying schools within 50 km",
+          within("park") ? null : "Parks",
+          within("trail") ? null : "Trails",
+        ].filter(Boolean);
+        return missing.length ? (
+          <Section title="Not yet researched for this place">
+            <p className="text-xs text-ink-2">{missing.join(" · ")}. These appear as Agents 02–04 publish records; no data is never shown as zero.</p>
+          </Section>
+        ) : null;
+      })()}
 
       <Section title="Sources and reliability">
         <Dl

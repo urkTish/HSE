@@ -147,47 +147,64 @@ Records: `nat-qc-education-private-schools-and-home-schooling`,
 
 ### Language of instruction — what a newcomer family must know
 
-Stated plainly, with sources dated 2026-10-30 (quebec.ca page updated
-2026-10-28; Bill 104 text, 2002):
+General eligibility for English public and subsidised schools (French by
+default; permanent eligibility needs a Canadian-citizen parent with the right
+schooling history; permanent residents who are not citizens attend French
+school) is recorded by Agent 01 in `nat-qc-english-schooling-eligibility` and
+not repeated here. This section adds the parts that concern non-public
+schooling, from primary texts read on 2026-10-30
+(`nat-qc-education-english-instruction-eligibility`):
 
-1. **The rule.** Preschool, elementary and secondary instruction in Québec is in
-   **French**, except where the Charter of the French Language allows otherwise.
-2. **Who may attend English school permanently.** A child who lives in Québec
-   permanently **and whose mother or father is a Canadian citizen**, if one of
-   four schooling-history conditions is met (English schooling in Canada of the
-   child, of a sibling, or of a parent at elementary level, or a parent's
-   schooling in Québec after 26 August 1977). Children of **permanent residents
-   who are not yet citizens** do not meet this rule and attend **French** public
-   or subsidised private schools. The ministry's leaflet for immigrant parents
-   says: "Your children must therefore attend school in French until the end of
-   their secondary studies."
-3. **Temporary stays.** Children living in Québec temporarily — including
-   dependants of foreign nationals holding a **work or study permit** — can
-   obtain a **temporary authorisation** to attend English school. Special rules
-   limit its duration; school-board and university sources report a maximum of
-   three years and that permit-based authorisations are not renewable (these
-   sources disagree on renewal — confirm with the ministry). It is not available
-   to refugee claimants or to families who settle permanently.
-4. **Unsubsidised private schools.** A private school that is **not accredited
-   for subsidies** may teach in English to any child whose family pays full
-   tuition. But since Bill 104 (2002), English instruction received there "by
-   the child … or by a brother or sister of the child, shall be disregarded" when
-   deciding eligibility for English public schooling. Since 2010 (s.73.1 and
-   Regulation C-11, r. 2.1) such instruction can be weighed in a points-based
-   assessment, but only for requests that already rest on a Canadian-citizen
-   parent. **So an unsubsidised English private school is a lawful, fee-paying
-   option, not a route into the English public system.**
-5. **Subsidised private schools** (such as
+1. **Temporary stays on a work or study permit — the three-year cap is in the
+   statute.** Charter s.84.1, enacted by Bill 96 (S.Q. 2022, c.14, s.57,
+   assented 1 June 2022): a foreign-national child who holds a work or study
+   permit, or is the dependant of a foreign national holding one, may be
+   exempted and receive instruction in English. "The exemption is valid for a
+   period of up to three years and may not be renewed", extended to 30 June of
+   the school year in which it ends. Bill 96 s.169 also rewrote s.7 of the
+   regulation for the other temporary categories (C-11, r.7: Québec
+   certificate-of-acceptance holders, Canadians from other provinces, foreign
+   officials, Armed Forces dependants): every exemption is "valid for a period
+   of up to 3 years". The exemption ends at 30 June of the school year in which
+   the family seeks refugee status or receives a Québec selection certificate.
+   Under the 1997 regulation as made, permit-based exemptions were renewable and
+   the cap applied only to some categories — older web guidance saying
+   "renewable" predates Bill 96.
+2. **Unsubsidised private schools.** A private school not accredited for
+   subsidies may teach in English to any child at full cost. Since Bill 104
+   (2002), English instruction received there "by the child … or by a brother or
+   sister of the child, shall be disregarded" for eligibility; since 2010
+   (s.73.1, Regulation C-11, r.2.1) it can be weighed only in requests that
+   already rest on a Canadian-citizen parent. **So it is a lawful fee-paying
+   option, not a route into English public schooling.** The ministry's open
+   data shows a school's languages of instruction but not whether it is
+   subsidised, so ask each school.
+3. **Subsidised private schools** (such as
    `school-qc-montreal-ecole-rudolf-steiner-de-montreal`) follow the same
    French-instruction rule as public schools.
-6. **Appeals.** Administrative Tribunal of Québec; Examining Committee on the
-   Language of Instruction for serious family or humanitarian situations.
+4. **Home schooling.** The home-schooling rules do not make French the medium.
+   The learning project must apply the ministry programmes "for every
+   compulsory subject: the language of instruction and the second language (one
+   in French and the other in English)". Support from an English school board,
+   however, requires the child to be eligible for English instruction
+   (Ministry guide for parent-educators, 2026 edition).
+5. **CEGEP (age 17+).** Bill 96 caps English-language colleges' combined
+   enrolment at the lesser of 17.5 % of all college students or the previous
+   year's share, caps English instruction in French colleges at 2 %, requires
+   English colleges to give admission priority to students declared eligible
+   for English instruction, and requires every DEC student at an English college
+   to pass three courses given in French and, unless eligible, the uniform
+   French examination. Unsubsidised private colleges teaching in English count
+   toward the cap. A child schooled in French secondary should expect a French
+   CEGEP.
+6. **Gaps.** The consolidated Charter and regulations on LégisQuébec (and
+   CanLII) returned HTTP 403 twice; the Bill 96 annual statute and the 1997
+   Gazette text were read instead from Publications du Québec. Any amendment
+   after 2022 would be missed. The statement that s.72 binds only school bodies
+   and subsidised private instruction is inferred from the wording of Bills 104
+   and 96, not from a fetched s.72.
 
-Gaps: the consolidated Charter text (ss.72, 73, 73.1, 85) could not be fetched
-(LégisQuébec and CanLII returned HTTP 403 twice); the reading of s.72 above is
-labelled in the record as needing confirmation.
-
-**Implication.** Unless the family arrives on temporary permits or a parent is a
+**Implication.** Unless the family arrives on temporary permits (English for at most three years) or a parent is a
 Canadian citizen with the right schooling history, Québec means French-language
 schooling, or full-fee unsubsidised English private school. Alternative models
 exist in French (Waldorf in Montréal, Montessori secondary in Orford,

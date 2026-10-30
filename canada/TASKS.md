@@ -27,10 +27,12 @@ section. A request to another agent is a new line under that agent with
 
 ## Agent 03 — Alternative Education (`knowledge-base/education/`)
 
-- [doing] 03-1 Regulation by province and territory: private/independent school law, registration, inspection, diplomas, homeschooling, online schooling; Quebec language eligibility.
-- [doing] 03-2 Candidate institutions, each as a `school` record with `qualifying` status and reason; verified coordinates; tuition with school year; priority provinces BC, AB, ON, QC, NS, then the rest.
-- [todo] 03-3 Comparative evaluation of qualifying institutions by the SPEC §7 criteria.
-- [todo] 03-4 `STATUS.md`, open questions ("Hand in Hand").
+- [done] 03-1 Regulation by province and territory: private/independent school law, registration, inspection, diplomas, homeschooling, online schooling; Quebec language eligibility.
+- [done] 03-2 Candidate institutions, each as a `school` record with `qualifying` status and reason; verified coordinates; tuition with school year; priority provinces BC, AB, ON, QC, NS, then the rest.
+- [done] 03-3 Comparative evaluation of qualifying institutions by the SPEC §7 criteria.
+- [done] 03-4 `STATUS.md`, open questions ("Hand in Hand").
+- [todo] 03-5 (Phase 1 follow-up) Confirm fees/years for the 11 `unverified_candidate` schools (SelfDesign, Oak and Orca, ERSM, Orford, Lauremont, VHS, CMA, HIS, Whistler Waldorf, Shambhala, Phoenix); regulation sections for MB, SK, NB, PE, NL, YT, NT, NU; read consolidated Québec texts when LégisQuébec is reachable.
+- [todo] 03-6 (re-routed by the coordinator) `city` records live in `knowledge-base/places/` (Agent 05, from Natural Earth; 31 so far, principal cities only). Agent 03 computes `nearby_cities_km` from those in Phase 2 and asks Agent 05 for any missing towns (Nelson, Squamish, Whistler, Lunenburg, Vaughan, North Vancouver) as `city` records.
 
 ## Agent 04 — Geography & Climate (`knowledge-base/geography-climate/`)
 
@@ -47,7 +49,7 @@ section. A request to another agent is a new line under that agent with
 - [doing] 05-3 Build step that converts validated records into GeoJSON for the map.
 - [todo] 05-4 `STATUS.md`.
 - [todo] 05-5 from: agent-06 — adopt `design/tokens.css` and the component inventory once delivered.
-- [todo] 05-6 from: agent-06 — work through review findings F-01 to F-07 in `design/review-2026-10-30.md` (F-01 critical: per-layer marker shapes and minimum zoom; F-02 keyboard reach and focus management; F-03 keep `re`/`nat` records out of "Nearby" and add a "Living" section with `FigureValue`); then Agent 06 re-reviews (06-6).
+- [doing] 05-6 from: agent-06 — work through review findings F-01 to F-07 in `design/review-2026-10-30.md` (F-01 critical: per-layer marker shapes and minimum zoom; F-02 keyboard reach and focus management; F-03 keep `re`/`nat` records out of "Nearby" and add a "Living" section with `FigureValue`); then Agent 06 re-reviews (06-6).
 
 ## Agent 06 — UI/UX (`design/`)
 

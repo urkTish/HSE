@@ -61,3 +61,13 @@ One entry per non-obvious choice: what, why, alternatives, date.
   `nat-mb-income-and-sales-tax-2026` uses $47,000 / $100,000 and stays
   `disputed`; the effect is under $70 a year. Re-check against Manitoba
   Finance when its site is reachable.
+- **D-012 (2026-10-30) — Quebec three-year cap on temporary English
+  schooling.** Agent 01's `nat-qc-english-schooling-eligibility` carried the
+  cap as reported (partially verified). Agent 03 read the Bill 96 statute
+  and the 1997 regulation text (Charter s. 84.1: up to three years, not
+  renewable, extended to 30 June). Agent 03's
+  `nat-qc-education-english-instruction-eligibility` is canonical for the
+  cap and for unsubsidised private schools, home schooling and CEGEP; Agent
+  01's record remains canonical for public and subsidised school
+  eligibility and cites it. The consolidated LégisQuébec text is still to be
+  read (sites returned 403 to both agents).
