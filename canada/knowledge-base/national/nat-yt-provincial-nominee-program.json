@@ -1,0 +1,78 @@
+{
+  "id": "nat-yt-provincial-nominee-program",
+  "category": "nat",
+  "subcategory": "immigration",
+  "name": "Yukon Nominee Program (YNP)",
+  "name_fr": "Programme des candidats du Yukon",
+  "geo": {
+    "province": "YT",
+    "region": null,
+    "city": null,
+    "neighbourhood": null,
+    "address": null,
+    "lat": null,
+    "lon": null,
+    "coord_precision": "unknown",
+    "coord_source": null,
+    "extent": "province or territory"
+  },
+  "description": "Skilled-worker streams of the Yukon Nominee Program (YNP) and whether they run through Express Entry (an Express Entry-aligned nomination adds 600 CRS points).",
+  "attributes": {
+    "jurisdiction": "Yukon",
+    "legal_status": "in force on the access date (provincial programme under a federal–provincial agreement)",
+    "skilled_worker_streams": [
+      {
+        "stream": "Skilled Worker",
+        "summary": "Employer-driven, TEER 0–3, at least 12 months' experience"
+      },
+      {
+        "stream": "Critical Impact Worker",
+        "summary": "TEER 4–5, at least 6 months' experience"
+      },
+      {
+        "stream": "Express Entry",
+        "summary": "In the federal pool; TEER 0–3 only"
+      }
+    ],
+    "express_entry_aligned": "Yes — Express Entry stream (employer-driven)",
+    "notes": "Employer Expression of Interest intakes in 2026 ran 19–30 January and 6–17 July 2026; next opportunity expected in 2027. 2026 priorities: regulated health professionals, rural employers, Yukon University graduates, Francophone workers.",
+    "federal_target_ref": "nat-ca-immigration-levels-plan-2026-2028 (PNP 91,500 in 2026, all provinces)",
+    "status_dependency": "Eligibility depends on occupation (NOC/TEER), job offer, language scores and existing ties to the province — all unknown (USER-PROFILE.md; OPEN-QUESTIONS.md items 2, 4, 7)."
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://yukon.ca/en/yukon-nominee-program",
+      "title": "Learn about the Yukon Nominee Program process for 2026",
+      "publisher": "Government of Yukon",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": null
+    },
+    {
+      "url": "https://yukon.ca/sites/default/files/ecdev-ynp-2026-operational-guidance-2026-07-03.pdf",
+      "title": "Yukon Nominee Program 2026 Operational Guidance (updated 3 July 2026)",
+      "publisher": "Government of Yukon",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": null
+    }
+  ],
+  "units": null,
+  "verification": {
+    "status": "partially_verified",
+    "confidence": "medium",
+    "verified_by": "agent-01",
+    "last_verified": "2026-10-30",
+    "next_review": "2026-11-29",
+    "notes": "Read through search-engine extracts of the provincial programme's official pages, not fetched in full."
+  },
+  "responsible_agent": "agent-01",
+  "limitations": "Stream rules change several times a year and intake is often by invitation only; read the provincial guide in force before applying.",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

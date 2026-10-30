@@ -1,0 +1,131 @@
+{
+  "id": "school-ab-calgary-calgary-waldorf-school",
+  "category": "school",
+  "subcategory": "Waldorf, JK–Grade 9",
+  "name": "Calgary Waldorf School",
+  "name_fr": null,
+  "geo": {
+    "province": "AB",
+    "region": "Calgary",
+    "city": "Calgary",
+    "neighbourhood": "Cougar Ridge (southwest)",
+    "address": "515 Cougar Ridge Drive SW, Calgary, AB T3H 5G9",
+    "lat": 51.070358,
+    "lon": -114.219039,
+    "coord_precision": "approximate",
+    "coord_source": "OpenStreetMap Nominatim geocode of the official address (© OpenStreetMap contributors, ODbL), 2026-10-30 — street-level match (Cougar Ridge Drive SW), not the building"
+  },
+  "description": "Independent Waldorf school founded in 1985 in southwest Calgary; Parent & Tot, preschool and kindergarten through Grade 9. States that it fulfils both the Waldorf curriculum and the Alberta Education curriculum.",
+  "attributes": {
+    "website": "https://www.calgarywaldorf.org/",
+    "models": [
+      "waldorf_steiner"
+    ],
+    "philosophy": "Steiner/anthroposophical developmental stages inform pedagogy; arts, imagination and movement integrated into all subjects; head, heart and hands.",
+    "legal_status": {
+      "label": "Independent (private) school registered under the Education Act (Alberta); listed by Alberta Education as authority type 'Private School'",
+      "province_category": null,
+      "authority": "Alberta Education and Childcare",
+      "registered": true,
+      "publicly_funded": null,
+      "inspected": null,
+      "can_issue_provincial_diploma": null,
+      "source_url": "https://education.alberta.ca/media/1626669/authority_and_school.xlsx"
+    },
+    "institution_type": "independent_private_school",
+    "ages": {
+      "min": 3,
+      "max": 15
+    },
+    "grades": "Parent & Tot, Junior Kindergarten (3–4), Kindergarten, Grades 1–9",
+    "language_of_instruction": [
+      "English"
+    ],
+    "curriculum": "Waldorf curriculum plus Alberta programs of study (school statement).",
+    "qualifications_offered": "None (ends at Grade 9).",
+    "accreditation": [],
+    "tuition": {
+      "amount_cad_min": 12050,
+      "amount_cad_max": 13790,
+      "period": "year",
+      "school_year": "2026-2027",
+      "notes": "First child: Kindergarten full day $13,760; Grades 1–6 $12,050; Grades 7–9 $13,790. Sibling rates 90% / 40% / 15%. Field trip & supply fee $470–$940 by grade. JK $15,150 (5 full days) before Alberta affordability grants.",
+      "source_url": "https://www.calgarywaldorf.org/admissions/tuition-fees-and-enrolment"
+    },
+    "additional_fees": "Field trip & school supply fee $470–$940; after-care $1,850–$3,900/yr; $500 acceptance deposit and staged non-refundable deposits.",
+    "admission": "Application; Grade 1 entry age 6 by 1 September; Grades 2–9 reviewed individually; JK on a wait-pool list for 2026/27.",
+    "class_size": null,
+    "boarding": false,
+    "transportation": null,
+    "campuses": [
+      {
+        "name": "Cougar Ridge campus",
+        "address": "515 Cougar Ridge Drive SW, Calgary, AB T3H 5G9",
+        "lat": 51.070358,
+        "lon": -114.219039,
+        "coord_precision": "approximate"
+      }
+    ],
+    "media_links": [
+      "https://www.calgarywaldorf.org/"
+    ],
+    "advantages": [
+      "Established (1985) full Waldorf grade school to Grade 9",
+      "Steep sibling discounts",
+      "West-side location toward the Rockies"
+    ],
+    "limitations": [
+      "Ends at Grade 9",
+      "Funded/non-funded accreditation category not confirmed from an official source"
+    ],
+    "nearby_cities_km": null,
+    "qualifying": "qualifying",
+    "qualifying_reason": "Private school confirmed in Alberta Education's school and authority directory (extract 2026-10-28); Waldorf programme to Grade 9 and 2026/27 tuition read on the official site."
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://www.calgarywaldorf.org/admissions/tuition-fees-and-enrolment",
+      "title": "Tuition, Fees and Enrolment 2026/27",
+      "publisher": "Calgary Waldorf School",
+      "source_type": "school_official",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://www.calgarywaldorf.org/about-us",
+      "title": "About Us",
+      "publisher": "Calgary Waldorf School",
+      "source_type": "school_official",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://education.alberta.ca/media/1626669/authority_and_school.xlsx",
+      "title": "School and Authority Information Report (authority_and_school.xlsx, extract date 2026-10-28)",
+      "publisher": "Alberta Education and Childcare",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://www.alberta.ca/private-schools",
+      "title": "Independent (private) schools",
+      "publisher": "Government of Alberta",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30"
+    }
+  ],
+  "units": {
+    "tuition": "CAD"
+  },
+  "verification": {
+    "status": "verified",
+    "confidence": "high",
+    "verified_by": "agent-03",
+    "last_verified": "2026-10-30",
+    "next_review": "2027-09-01",
+    "notes": "Official site and Alberta directory read. Accreditation sub-category (registered / accredited non-funded / accredited funded) not stated in the directory."
+  },
+  "limitations": "Alberta's directory does not show funding category; the school's statement that it teaches the Alberta curriculum is consistent with, but does not prove, accredited-funded status.",
+  "responsible_agent": "agent-03",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

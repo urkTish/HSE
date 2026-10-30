@@ -73,18 +73,46 @@ function Dl({ rows }: { rows: [string, ReactNode][] }) {
   );
 }
 
+const isPlainRow = (x: unknown): x is Record<string, unknown> =>
+  Boolean(x) && typeof x === "object" && !Array.isArray(x) && Object.values(x as object).every((v) => v === null || typeof v !== "object");
+
 /** Generic attributes renderer for categories without a dedicated section. */
-function renderValue(v: unknown): ReactNode {
+function renderValue(v: unknown, key = ""): ReactNode {
   if (v === null || v === undefined || v === "") return null;
   if (typeof v === "boolean") return v ? "Yes" : "No";
-  if (typeof v === "number") return v.toLocaleString("en-CA");
+  if (typeof v === "number") return /year|period/i.test(key) ? String(v) : v.toLocaleString("en-CA");
   if (typeof v === "string") return /^https?:\/\//.test(v) ? <a className="underline break-all" href={v} target="_blank" rel="noopener noreferrer">{v}</a> : v;
   if (Array.isArray(v)) {
-    const items = v.map(renderValue).filter((x) => x !== null);
+    if (v.length && v.every(isPlainRow)) {
+      const cols = [...new Set(v.flatMap((row) => Object.keys(row)))];
+      return (
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-xs tabular-nums">
+            <thead>
+              <tr className="bg-surface-2 text-ink-2">
+                {cols.map((c) => (
+                  <th key={c} scope="col" className="px-1 py-0.5 text-left font-semibold">{humanise(c)}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {v.map((row, i) => (
+                <tr key={i} className="border-b border-line">
+                  {cols.map((c) => (
+                    <td key={c} className="px-1 py-0.5 align-top">{renderValue(row[c], c) ?? "—"}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+    const items = v.map((x) => renderValue(x, key)).filter((x) => x !== null);
     return items.length ? <ul className="list-disc pl-4">{items.map((x, i) => <li key={i}>{x}</li>)}</ul> : null;
   }
   if (typeof v === "object") {
-    const rows = Object.entries(v as Record<string, unknown>).map(([k, x]) => [humanise(k), renderValue(x)] as [string, ReactNode]);
+    const rows = Object.entries(v as Record<string, unknown>).map(([k, x]) => [humanise(k), renderValue(x, k)] as [string, ReactNode]);
     return <Dl rows={rows} />;
   }
   return String(v);
@@ -341,7 +369,7 @@ function RecordProfile({
 
       {genericAttrs && genericAttrs.length > 0 && (
         <Section title="Details">
-          <Dl rows={genericAttrs.map(([k, v]) => [humanise(k), renderValue(v)] as [string, ReactNode])} />
+          <Dl rows={genericAttrs.map(([k, v]) => [humanise(k), renderValue(v, k)] as [string, ReactNode])} />
         </Section>
       )}
 

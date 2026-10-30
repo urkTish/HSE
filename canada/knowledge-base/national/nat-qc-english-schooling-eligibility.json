@@ -1,0 +1,88 @@
+{
+  "id": "nat-qc-english-schooling-eligibility",
+  "category": "nat",
+  "subcategory": "language",
+  "name": "Quebec: who may attend English public school",
+  "name_fr": "Québec : admissibilité à l'enseignement en anglais",
+  "geo": {
+    "province": "QC",
+    "region": null,
+    "city": null,
+    "neighbourhood": null,
+    "address": null,
+    "lat": null,
+    "lon": null,
+    "coord_precision": "unknown",
+    "coord_source": null,
+    "extent": "province or territory"
+  },
+  "description": "Preschool, elementary and secondary instruction in Quebec is in French by default. English public (and subsidised private) school is open to children who meet Charter criteria — essentially a Canadian-citizen parent with English schooling in Canada — or who receive a temporary authorization while their family is in Quebec temporarily.",
+  "attributes": {
+    "jurisdiction": "Quebec (Charter of the French language, ss. 72–88)",
+    "legal_status": "in force; Bill 96 (assented 2022-06-01) amended the temporary-stay rules",
+    "permanent_residents_and_immigrants": "Children who settle permanently follow the French-school rule; eligibility for English requires a parent who is a Canadian citizen plus a qualifying situation such as English schooling in Canada. PR status alone does not confer eligibility.",
+    "temporary_stays": "Temporary authorization possible for children in Quebec temporarily to study, or dependants of people in Quebec temporarily to study or work (foreign nationals holding a certificate, permit or exemption; Canadian citizens or PRs from another province; foreign officials; Canadian Armed Forces).",
+    "temporary_authorization_duration": "The Charter (s. 85) leaves the period to regulation and the official page says 'special rules govern the maximum duration'; secondary sources (McGill Family Care Office; reporting on Bill 96) describe a maximum of 3 years, issued once and not renewable, and not beyond the validity of the immigration document. Not confirmed from the regulation text.",
+    "particular_circumstances": "Serious learning disabilities or serious family or humanitarian reasons",
+    "application": "Through the chosen school, which submits to the Ministry; decisions usually within 15 working days (current year); contestable before the Administrative Tribunal of Québec within 60 days.",
+    "not_covered_here": "Unsubsidised private schools, CEGEP admission rules (Bill 96 caps on English CEGEPs), homeschooling — Agent 03's lane",
+    "practical_effect": "If the family settles in Quebec as permanent residents, children will normally attend French school. A temporary stay can buy a limited period of English schooling.",
+    "status_dependency": "Matters only if Quebec is in scope (USER-PROFILE.md: 'English-only vs bilingual environment' unknown) and depends on the user's status and French ability (unknown)."
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://www.quebec.ca/en/education/preschool-elementary-and-secondary-schools/guidance-support-students/eligibility-instruction-english/about",
+      "title": "Eligibility for instruction in English (last update 28 October 2026)",
+      "publisher": "Gouvernement du Québec (Ministère de l'Éducation)",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": null
+    },
+    {
+      "url": "https://www.legisquebec.gouv.qc.ca/en/document/cs/c-11",
+      "title": "Charter of the French language, CQLR c C-11 — HTTP 403 on two fetch attempts; section 85 text taken from a search extract",
+      "publisher": "Gouvernement du Québec (LégisQuébec)",
+      "source_type": "legislation",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": null
+    },
+    {
+      "url": "https://www.assnat.qc.ca/en/travaux-parlementaires/projets-loi/projet-loi-96-42-1.html",
+      "title": "Bill 96, An Act respecting French, the official and common language of Québec — passed 24 May 2022, assented 1 June 2022 (S.Q. 2022, c. 14) (via search extract)",
+      "publisher": "National Assembly of Québec",
+      "source_type": "legislation",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": null
+    },
+    {
+      "url": "https://www.mcgill.ca/familycare/node/602",
+      "title": "Eligibility to Study in English (secondary explanation; via search extract)",
+      "publisher": "McGill University, Family Care Office",
+      "source_type": "school_official",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": null
+    }
+  ],
+  "units": null,
+  "verification": {
+    "status": "partially_verified",
+    "confidence": "medium",
+    "verified_by": "agent-01",
+    "last_verified": "2026-10-30",
+    "next_review": "2026-11-29",
+    "notes": "Official eligibility page fetched (updated 28 October 2026); the 3-year cap is from secondary sources because LégisQuébec blocked fetches."
+  },
+  "responsible_agent": "agent-01",
+  "limitations": "The regulation on temporary stays was not read. Private unsubsidised schools follow different rules (not covered).",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

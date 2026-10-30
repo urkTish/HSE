@@ -1,0 +1,70 @@
+{
+  "id": "school-ab-grande-prairie-parkside-montessori",
+  "category": "school",
+  "subcategory": "Excluded — public Montessori",
+  "name": "Parkside Montessori",
+  "name_fr": null,
+  "geo": {
+    "province": "AB",
+    "region": "Peace Country",
+    "city": "Grande Prairie",
+    "neighbourhood": "Highland Park",
+    "address": "9617 91A Avenue, Grande Prairie, AB",
+    "lat": 55.161636,
+    "lon": -118.782884,
+    "coord_precision": "exact",
+    "coord_source": "OpenStreetMap Nominatim geocode of the official address (© OpenStreetMap contributors, ODbL), 2026-10-30 — house-number match"
+  },
+  "description": "Public Montessori school (ECS–Grade 9 flags) of the Grande Prairie Public School Division. Recorded so it is not re-added.",
+  "attributes": {
+    "website": "http://www.gppsd.ab.ca/school/parkside",
+    "models": [
+      "montessori"
+    ],
+    "legal_status": {
+      "label": "Public school (The Grande Prairie School Division)",
+      "province_category": "Public",
+      "authority": "The Grande Prairie School Division",
+      "registered": true,
+      "publicly_funded": true,
+      "source_url": "https://education.alberta.ca/media/1626669/authority_and_school.xlsx"
+    },
+    "institution_type": null,
+    "grades": "ECS–Grade 9 (directory flags)",
+    "language_of_instruction": [
+      "English"
+    ],
+    "tuition": null,
+    "campuses": [],
+    "media_links": [],
+    "advantages": [],
+    "limitations": [],
+    "qualifying": "excluded",
+    "qualifying_reason": "Public school programme (SPEC §7 exclusion of public alternative programmes)."
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://education.alberta.ca/media/1626669/authority_and_school.xlsx",
+      "title": "School and Authority Information Report (authority_and_school.xlsx, extract date 2026-10-28)",
+      "publisher": "Alberta Education and Childcare",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30"
+    }
+  ],
+  "units": {
+    "tuition": "CAD"
+  },
+  "verification": {
+    "status": "verified",
+    "confidence": "high",
+    "verified_by": "agent-03",
+    "last_verified": "2026-10-30",
+    "next_review": "2027-10-30",
+    "notes": "Directory authority type = Public."
+  },
+  "limitations": "Exclusion record.",
+  "responsible_agent": "agent-03",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

@@ -1,0 +1,136 @@
+{
+  "id": "school-on-ottawa-the-element-high-school",
+  "category": "school",
+  "subcategory": "Montessori secondary, Grades 7–12",
+  "name": "The Element High School",
+  "name_fr": null,
+  "geo": {
+    "province": "ON",
+    "region": "Ottawa",
+    "city": "Ottawa",
+    "neighbourhood": "Lansdowne / The Glebe",
+    "address": "425 Marché Way, Unit 201, Ottawa, ON K1S 5J3",
+    "lat": 45.40093,
+    "lon": -75.68301,
+    "coord_precision": "exact",
+    "coord_source": "OpenStreetMap Nominatim geocode of the official address (© OpenStreetMap contributors, ODbL), 2026-10-30 — building match"
+  },
+  "description": "Montessori-based middle and high school (Grades 7–12) at Lansdowne in Ottawa, linked to OMS Montessori; weekly off-campus experiential 'AWOL' programme, portfolio development and Duke of Edinburgh's Award. Inspected to grant OSSD credits.",
+  "attributes": {
+    "website": "https://www.elementhighschool.com/",
+    "models": [
+      "montessori",
+      "experiential_outdoor",
+      "project_based"
+    ],
+    "philosophy": "Built on Montessori principles for adolescents; community-based experiential learning every Wednesday afternoon (Grades 9–12); project-based portfolio work.",
+    "legal_status": {
+      "label": "Private school operating under a Notice of Intention to Operate (Education Act s.16, Ontario)",
+      "province_category": "OSSD credit-granting (inspected)",
+      "authority": "Ontario Ministry of Education",
+      "registered": true,
+      "publicly_funded": false,
+      "inspected": true,
+      "can_issue_provincial_diploma": true,
+      "source_url": "https://data.ontario.ca/dataset/private-school-contact-information"
+    },
+    "institution_type": "registered_private_school",
+    "ages": {
+      "min": 12,
+      "max": 18
+    },
+    "grades": "Grades 7–12 (e1 7–8, e2 9–10, e3 11–12); French-language Grades 7–8 programme opening 2026",
+    "language_of_instruction": [
+      "English",
+      "French (Grades 7–8 programme from 2026)"
+    ],
+    "curriculum": "Ontario secondary curriculum through Montessori adolescent approach.",
+    "qualifications_offered": "OSSD credits (listed as 'Offers credits toward the OSSD').",
+    "accreditation": [
+      "Ontario Ministry inspection for OSSD credits",
+      "Canadian Council of Montessori Administrators (association listed by Ontario)"
+    ],
+    "tuition": {
+      "amount_cad_min": 22450,
+      "amount_cad_max": 22470,
+      "period": "year",
+      "school_year": "2026-2027",
+      "notes": "e1 (Gr 7–8) $22,450; e2 and e3 (Gr 9–12) $22,470; admission fee $250; 2.4% card surcharge; 10% reduction for third and fourth children across OMS/Element.",
+      "source_url": "https://www.elementhighschool.com/affording-the-element/"
+    },
+    "additional_fees": "Admission fee $250 (one-time).",
+    "admission": "Application process published on site.",
+    "class_size": null,
+    "boarding": false,
+    "transportation": null,
+    "campuses": [
+      {
+        "name": "Lansdowne",
+        "address": "425 Marché Way, Unit 201, Ottawa, ON K1S 5J3",
+        "lat": 45.40093,
+        "lon": -75.68301,
+        "coord_precision": "exact"
+      }
+    ],
+    "media_links": [
+      "https://www.elementhighschool.com/blog/"
+    ],
+    "advantages": [
+      "Montessori continued through secondary with OSSD",
+      "Bilingual capital-city context"
+    ],
+    "limitations": [
+      "Montessori adolescent programmes vary; observe before enrolling"
+    ],
+    "nearby_cities_km": null,
+    "qualifying": "qualifying",
+    "qualifying_reason": "On Ontario's list as OSSD credit-granting (no. 886025); Montessori-based secondary with structured experiential programme; 2026-27 tuition published."
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://www.elementhighschool.com/affording-the-element/",
+      "title": "Affording The Element — 2026–2027 fees",
+      "publisher": "The Element High School",
+      "source_type": "school_official",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://www.elementhighschool.com/the-element-advantage/what-we-offer-2/",
+      "title": "What We Offer",
+      "publisher": "The Element High School",
+      "source_type": "school_official",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://data.ontario.ca/dataset/private-school-contact-information",
+      "title": "Private school contact information (CSV, resource last modified 2026-10-22)",
+      "publisher": "Ontario Ministry of Education",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30",
+      "licence": "Open Government Licence – Ontario"
+    },
+    {
+      "url": "https://www.ontario.ca/page/private-schools",
+      "title": "Private schools (updated 2026-10-19)",
+      "publisher": "Government of Ontario",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30"
+    }
+  ],
+  "units": {
+    "tuition": "CAD"
+  },
+  "verification": {
+    "status": "verified",
+    "confidence": "high",
+    "verified_by": "agent-03",
+    "last_verified": "2026-10-30",
+    "next_review": "2027-09-01",
+    "notes": "Official site and Ontario list read."
+  },
+  "limitations": "Class size not published.",
+  "responsible_agent": "agent-03",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

@@ -1,0 +1,132 @@
+{
+  "id": "nat-ca-rights-by-immigration-status",
+  "category": "nat",
+  "subcategory": "immigration",
+  "name": "What each immigration status allows (summary across records)",
+  "name_fr": "Ce que permet chaque statut d'immigration",
+  "geo": {
+    "province": "CA",
+    "region": null,
+    "city": null,
+    "neighbourhood": null,
+    "address": null,
+    "lat": null,
+    "lon": null,
+    "coord_precision": "unknown",
+    "coord_source": null,
+    "extent": "country"
+  },
+  "description": "A cross-reference of what citizens, permanent residents, work-permit holders, study-permit holders and visitors may do in Canada — work, study, provincial health coverage, buying a home, children's schooling, and path to PR — built from the other nat records.",
+  "attributes": {
+    "basis": "Agent 01 reading of the cited nat records as of 2026-10-30",
+    "statuses": {
+      "citizen": {
+        "work": "yes",
+        "study": "yes",
+        "health": "yes, subject to provincial residency rules; Quebec applies its up-to-3-month wait even to citizens arriving from abroad (nat-qc-health-coverage)",
+        "buy_home": "yes",
+        "children_school": "public school; in Quebec English public school only with an eligibility certificate (nat-qc-english-schooling-eligibility)",
+        "path_to_pr": "n/a"
+      },
+      "permanent_resident": {
+        "work": "yes",
+        "study": "yes",
+        "health": "yes in every province; no wait stated for arrivals from abroad in ON, MB, NB, NS and NL; up to about 3 months in BC, SK, QC and YT; AB timing for PRs not confirmed; PE and NU not found — see nat-<prov>-health-coverage",
+        "buy_home": "yes (not a 'non-Canadian')",
+        "children_school": "public school; in Quebec French school unless an eligibility criterion is met — PR status alone does not give access to English public school",
+        "path_to_pr": "held; citizenship after residence requirements"
+      },
+      "work_permit_holder": {
+        "work": "yes, under permit conditions (employer-specific or open)",
+        "study": "generally yes for short courses; longer study may need a study permit (not catalogued)",
+        "health": "varies: ON after 6 months full-time; MB with 12-month permit; NS/NL/YT/NU with 12-month permit; AB with 6+ months remaining and intent to stay 12 months; BC/SK with conditions — see records",
+        "buy_home": "exempt from the federal ban if at least 183 days remain on the permit and no more than one property (until the ban ends 1 Jan 2027)",
+        "children_school": "public school (provincial rules); in Quebec a temporary authorization for English school may be available (reported 3-year maximum)",
+        "path_to_pr": "Canadian Experience Class after 1 year skilled work; provincial nominee streams"
+      },
+      "study_permit_holder": {
+        "work": "limited, under study-permit conditions (not catalogued)",
+        "study": "yes",
+        "health": "excluded in MB; possible in SK, NB, NL (12-month permit), NS (after 12 months), BC (conditions); otherwise private/school insurance",
+        "buy_home": "generally a 'non-Canadian'; student exemption conditions not catalogued",
+        "children_school": "dependants may attend public school (provincial rules)",
+        "path_to_pr": "PGWP then CEC or PNP"
+      },
+      "visitor": {
+        "work": "no",
+        "study": "short courses only (not catalogued)",
+        "health": "no provincial coverage",
+        "buy_home": "no (federal ban until 1 Jan 2027, unless property outside CMAs/CAs)",
+        "children_school": "not catalogued",
+        "path_to_pr": "none directly"
+      }
+    },
+    "user_status": "unknown — every row must be read against USER-PROFILE.md once citizenship and status are known (OPEN-QUESTIONS.md items 1, 7)."
+  },
+  "data_kind": "professional_interpretation",
+  "sources": [
+    {
+      "url": "https://www.laws-lois.justice.gc.ca/eng/regulations/SOR-2022-250/FullText.html",
+      "title": "Prohibition on the Purchase of Residential Property by Non-Canadians Regulations, SOR/2022-250 (current to 21 June 2026; last amended 27 March 2023; via search extract)",
+      "publisher": "Department of Justice Canada",
+      "source_type": "legislation",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": "Open Government Licence – Canada"
+    },
+    {
+      "url": "https://www.canada.ca/en/immigration-refugees-citizenship/corporate/mandate/corporate-initiatives/levels/supplementary-immigration-levels-2026-2028.html",
+      "title": "Supplementary Information for the 2026–2028 Immigration Levels Plan (page dated 2026-10-13)",
+      "publisher": "Immigration, Refugees and Citizenship Canada",
+      "source_type": "federal_government",
+      "accessed": "2026-10-30",
+      "data_period": "2026-2028",
+      "methodology": null,
+      "licence": "Open Government Licence – Canada"
+    },
+    {
+      "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/work-canada/special-instructions/spouses-dependent-children/eligibility.html",
+      "title": "Open work permits for family members of foreign workers: who can apply (via search extract)",
+      "publisher": "Immigration, Refugees and Citizenship Canada",
+      "source_type": "federal_government",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": "Open Government Licence – Canada"
+    },
+    {
+      "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/study-canada/work/after-graduation/eligibility.html",
+      "title": "Post-graduation work permit: who can apply (via search extract)",
+      "publisher": "Immigration, Refugees and Citizenship Canada",
+      "source_type": "federal_government",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": "Open Government Licence – Canada"
+    },
+    {
+      "url": "https://www.ontario.ca/page/apply-ohip-and-get-health-card",
+      "title": "Apply for OHIP and get a health card",
+      "publisher": "Government of Ontario",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": null
+    }
+  ],
+  "units": null,
+  "verification": {
+    "status": "partially_verified",
+    "confidence": "medium",
+    "verified_by": "agent-01",
+    "last_verified": "2026-10-30",
+    "next_review": "2026-11-29",
+    "notes": "Synthesis of other nat records; each cell inherits the verification of the record it cites."
+  },
+  "responsible_agent": "agent-01",
+  "limitations": "A summary; individual cases depend on permit conditions and provincial rules. Rows marked 'not catalogued' were outside Phase 1.",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

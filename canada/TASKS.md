@@ -15,11 +15,12 @@ section. A request to another agent is a new line under that agent with
 
 ## Agent 02 — Real Estate (`knowledge-base/real-estate/`)
 
-- [doing] 02-1 Source register and methodology: CREA/boards, CMHC, StatCan, assessment databases, listing platforms; terms of use per source; on-demand retrieval design for the map.
-- [doing] 02-2 Dated market snapshot for 15–20 CMAs: benchmark/average prices and CMHC survey rents, as `re` records with period and figure kind.
-- [doing] 02-3 Rules by province: eligibility to buy by status (federal prohibition and exemptions, provincial non-resident taxes), land-transfer taxes, rent control, tenant protections, short-term rental rules.
-- [doing] 02-4 Investment model template with formulas and stated assumptions (no stored rates).
-- [doing] 02-5 `STATUS.md`, open questions.
+- [done] 02-1 Source register and methodology: CREA/boards, CMHC, StatCan, assessment databases, listing platforms; terms of use per source; on-demand retrieval design for the map.
+- [done] 02-2 Dated market snapshot for 15–20 CMAs: benchmark/average prices and CMHC survey rents, as `re` records with period and figure kind.
+- [done] 02-3 Rules by province: eligibility to buy by status (federal prohibition and exemptions, provincial non-resident taxes), land-transfer taxes, rent control, tenant protections, short-term rental rules.
+- [done] 02-4 Investment model template with formulas and stated assumptions (no stored rates).
+- [done] 02-5 `STATUS.md`, open questions.
+- [todo] 02-6 Phase 1 leftovers (parked): eviction notice rules per province; transfer costs AB/SK/NL/PE; PEI 2026 rent increase; Kelowna and Sherbrooke CMA-level board prices; Ottawa/Hamilton vacant-unit taxes; STR rules Calgary/Edmonton/Ottawa/Halifax. See `knowledge-base/real-estate/STATUS.md`.
 
 ## Agent 03 — Alternative Education (`knowledge-base/education/`)
 

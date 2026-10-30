@@ -26,7 +26,7 @@
       "permanent_resident": "Eligible once settled in Québec; immigrants must be present 183 days or more in the first 12 months of eligibility (RAMQ, via search extract).",
       "work_permit_holder": "Temporary workers may be eligible under conditions not captured here (RAMQ pages blocked); persons staying more than 6 months must hold a valid authorization of stay.",
       "study_permit_holder": "Generally not eligible unless covered by a social security agreement or another exception (not confirmed in this pass).",
-      "visitor": "Not eligible (visitors and tourists are excluded from every provincial plan reviewed)."
+      "visitor": "Visitors and tourists are expressly excluded in the AB, MB, NB and PE material read; treat visitors as not covered everywhere and confirm locally."
     },
     "status_dependency": "Which rule applies depends on the user's immigration status, which is unknown (USER-PROFILE.md: 'Citizenship(s) and current country of residence', 'Existing Canadian status or application').",
     "newcomer_waiting_period": {

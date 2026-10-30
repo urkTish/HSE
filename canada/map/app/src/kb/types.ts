@@ -178,7 +178,7 @@ export interface KbIndex {
   counts: { records: number; on_map: number; by_layer: Record<string, number> };
   files: Record<Category, { geojson: string; records: string; features: number; records_count: number }>;
   provinces: ProvinceInfo[];
-  excluded: { file: string; id?: string; reason: string }[];
+  excluded: { file: string | null; id?: string; reason: string }[];
   records: IndexEntry[];
 }
 

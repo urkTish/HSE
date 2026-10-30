@@ -1,0 +1,135 @@
+{
+  "id": "school-on-vaughan-toronto-waldorf-school",
+  "category": "school",
+  "subcategory": "Waldorf, infant–Grade 12",
+  "name": "Toronto Waldorf School",
+  "name_fr": null,
+  "geo": {
+    "province": "ON",
+    "region": "York Region (Greater Toronto Area)",
+    "city": "Vaughan (Thornhill postal address)",
+    "neighbourhood": "Carrville / Bathurst & Rutherford",
+    "address": "9100 Bathurst Street, Unit 1, Thornhill, ON L4J 8C7",
+    "lat": 43.843168,
+    "lon": -79.457903,
+    "coord_precision": "exact",
+    "coord_source": "OpenStreetMap Nominatim geocode of the official address (© OpenStreetMap contributors, ODbL), 2026-10-30 — house-number match"
+  },
+  "description": "One of Canada's few complete Waldorf schools, from infant care through Grade 12, on a wooded campus north of Toronto. Inspected by the Ontario ministry to grant OSSD credits; offers a high-school boarder (homestay-type) programme and exchanges.",
+  "attributes": {
+    "website": "https://torontowaldorfschool.com/",
+    "models": [
+      "waldorf_steiner",
+      "experiential_outdoor"
+    ],
+    "philosophy": "Waldorf developmental curriculum; arts, movement and environmental education woven through all grades; nature-connected campus.",
+    "legal_status": {
+      "label": "Private school operating under a Notice of Intention to Operate (Education Act s.16, Ontario)",
+      "province_category": "OSSD credit-granting (inspected)",
+      "authority": "Ontario Ministry of Education",
+      "registered": true,
+      "publicly_funded": false,
+      "inspected": true,
+      "can_issue_provincial_diploma": true,
+      "source_url": "https://data.ontario.ca/dataset/private-school-contact-information"
+    },
+    "institution_type": "registered_private_school",
+    "ages": {
+      "min": 0,
+      "max": 18
+    },
+    "grades": "Infant/child care, Kindergarten, Grades 1–12",
+    "language_of_instruction": [
+      "English"
+    ],
+    "curriculum": "Waldorf curriculum; secondary courses for OSSD credit.",
+    "qualifications_offered": "Ontario Secondary School Diploma (OSSD) credits — school listed as 'Offers credits toward the OSSD'.",
+    "accreditation": [
+      "Ontario Ministry of Education inspection for OSSD credit-granting"
+    ],
+    "tuition": {
+      "amount_cad_min": 23880,
+      "amount_cad_max": 26470,
+      "period": "year",
+      "school_year": "2026-2027",
+      "notes": "Grades 1–8 $23,880 + activity fee $220–$1,655; Grades 9–12 $26,470 + $2,420; high-school boarders full year $31,660 + $2,420. One-time enrolment fee $2,000 (K–12).",
+      "source_url": "https://torontowaldorfschool.com/fees-2026-27/"
+    },
+    "additional_fees": "Enrolment fee $2,000 (one-time); activity fees by grade.",
+    "admission": "Tour, inquiry form, admissions process published.",
+    "class_size": null,
+    "boarding": true,
+    "transportation": null,
+    "campuses": [
+      {
+        "name": "Bathurst Street campus",
+        "address": "9100 Bathurst Street, Unit 1, Thornhill, ON L4J 8C7",
+        "lat": 43.843168,
+        "lon": -79.457903,
+        "coord_precision": "exact"
+      }
+    ],
+    "media_links": [
+      "https://torontowaldorfschool.com/"
+    ],
+    "advantages": [
+      "Waldorf from infancy to Grade 12 with OSSD credits",
+      "Boarding/homestay option for high school",
+      "Large natural campus inside the GTA"
+    ],
+    "limitations": [
+      "High fees (about $24k–$29k all-in)",
+      "Suburban location; car-dependent"
+    ],
+    "nearby_cities_km": null,
+    "qualifying": "qualifying",
+    "qualifying_reason": "Private school on Ontario's list as an OSSD credit-granting (inspected) school; full Waldorf programme to Grade 12; 2026-27 fees read on the official site."
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://torontowaldorfschool.com/fees-2026-27/",
+      "title": "Toronto Waldorf School Fees 2026-27",
+      "publisher": "Toronto Waldorf School",
+      "source_type": "school_official",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://torontowaldorfschool.com/",
+      "title": "Home",
+      "publisher": "Toronto Waldorf School",
+      "source_type": "school_official",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://data.ontario.ca/dataset/private-school-contact-information",
+      "title": "Private school contact information (CSV, resource last modified 2026-10-22)",
+      "publisher": "Ontario Ministry of Education",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30",
+      "licence": "Open Government Licence – Ontario"
+    },
+    {
+      "url": "https://www.ontario.ca/page/private-schools",
+      "title": "Private schools (updated 2026-10-19)",
+      "publisher": "Government of Ontario",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30"
+    }
+  ],
+  "units": {
+    "tuition": "CAD"
+  },
+  "verification": {
+    "status": "verified",
+    "confidence": "high",
+    "verified_by": "agent-03",
+    "last_verified": "2026-10-30",
+    "next_review": "2027-09-01",
+    "notes": "Official site and Ontario private-school list (school no. 887790) read."
+  },
+  "limitations": "Class sizes not published; boarding details on the fees page only.",
+  "responsible_agent": "agent-03",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

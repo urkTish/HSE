@@ -1,0 +1,75 @@
+{
+  "id": "nat-ca-ircc-fees-2026",
+  "category": "nat",
+  "subcategory": "immigration",
+  "name": "IRCC application fees (as of 30 October 2026)",
+  "name_fr": "Frais de traitement d'IRCC (au 30 octobre 2026)",
+  "geo": {
+    "province": "CA",
+    "region": null,
+    "city": null,
+    "neighbourhood": null,
+    "address": null,
+    "lat": null,
+    "lon": null,
+    "coord_precision": "unknown",
+    "coord_source": null,
+    "extent": "country"
+  },
+  "description": "Government fees for permanent residence, family sponsorship, work and study permits, biometrics and citizenship.",
+  "attributes": {
+    "jurisdiction": "federal (IRCC)",
+    "legal_status": "in force on the access date (fee page modified 2026-09-21)",
+    "permanent_residence_economic": {
+      "principal_with_rprf": 1590.0,
+      "principal_without_rprf": 990.0,
+      "spouse_with_rprf": 1590.0,
+      "spouse_without_rprf": 990.0,
+      "dependent_child": 270.0
+    },
+    "family_sponsorship": {
+      "spouse_or_partner_with_rprf": 1260.0,
+      "spouse_or_partner_without_rprf": 660.0,
+      "parent_or_grandparent_with_rprf": 1260.0,
+      "dependent_child": 180.0
+    },
+    "work_permit": 155.0,
+    "open_work_permit_holder_fee": 100.0,
+    "study_permit": 150.0,
+    "biometrics": {
+      "individual": 85.0,
+      "family_max": 170.0
+    },
+    "citizenship": {
+      "adult": 653.0,
+      "minor": 100.0
+    },
+    "not_included": "Language tests, Educational Credential Assessment, medical exam, police certificates, translation, provincial nomination fees, Quebec selection fees, LMIA fee"
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://ircc.canada.ca/english/information/fees/fees.asp",
+      "title": "IRCC fee list (modified 2026-09-21)",
+      "publisher": "Immigration, Refugees and Citizenship Canada",
+      "source_type": "federal_government",
+      "accessed": "2026-10-30",
+      "data_period": "as of 2026-10-30",
+      "methodology": null,
+      "licence": "Open Government Licence – Canada"
+    }
+  ],
+  "units": null,
+  "verification": {
+    "status": "verified",
+    "confidence": "high",
+    "verified_by": "agent-01",
+    "last_verified": "2026-10-30",
+    "next_review": "2026-11-29",
+    "notes": "IRCC fee list fetched directly."
+  },
+  "responsible_agent": "agent-01",
+  "limitations": "Fees are adjusted periodically; the effective date of the latest change was not shown on the page.",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

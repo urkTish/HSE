@@ -1,0 +1,299 @@
+{
+  "id": "nat-ca-express-entry-2026",
+  "category": "nat",
+  "subcategory": "immigration",
+  "name": "Express Entry: programmes, ranking system, 2026 categories and recent draws",
+  "name_fr": "Entrée express : programmes, système de classement, catégories 2026 et tirages récents",
+  "geo": {
+    "province": "CA",
+    "region": null,
+    "city": null,
+    "neighbourhood": null,
+    "address": null,
+    "lat": null,
+    "lon": null,
+    "coord_precision": "unknown",
+    "coord_source": null,
+    "extent": "country"
+  },
+  "description": "Express Entry manages three federal economic programmes (Federal Skilled Worker, Canadian Experience Class, Federal Skilled Trades) and part of the provincial nominee programmes. Candidates in the pool are ranked by the Comprehensive Ranking System and invited in general, programme-specific or category-based rounds.",
+  "attributes": {
+    "jurisdiction": "federal (IRCC); Quebec selects its own economic immigrants outside Express Entry",
+    "legal_status": "in force; the CRS rules below apply until 2 November 2026 — see nat-ca-express-entry-crs-changes-2026-11-03 for the rules in force from 3 November 2026",
+    "programmes": {
+      "federal_skilled_worker": "At least 1 year continuous paid work (1,560 h) in one TEER 0–3 occupation within the last 10 years, in Canada or abroad; approved language test with first official language at CLB 7 or higher in all four abilities (selection grid); Canadian credential or foreign credential with an Educational Credential Assessment; 67/100 on the FSW selection grid (language 28, education 25, experience 15, age 12, arranged employment 10, adaptability 10); proof of funds unless authorised to work in Canada with a valid job offer.",
+      "canadian_experience_class": "At least 1 year (1,560 h) of skilled TEER 0–3 work in Canada in the 3 years before applying; excludes work while studying full-time, self-employment (some physicians excepted), volunteer/unpaid work and unauthorised work; minimum language scores in all four abilities (levels on a separate IRCC page, not read).",
+      "federal_skilled_trades": "At least 2 years full-time (3,120 h) in a skilled trade in the 5 years before applying; minimum language scores; a valid full-time job offer of at least 1 year or a Canadian certificate of qualification in the trade."
+    },
+    "crs_structure_until_2026_11_02": {
+      "core_human_capital_max": "460 with spouse / 500 without",
+      "spouse_factors_max": 40,
+      "skill_transferability_max": 100,
+      "additional_points_max": 600,
+      "total_max": 1200,
+      "additional_points": {
+        "provincial_nomination": 600,
+        "french_ability": "25 or 50",
+        "sibling_in_canada": 15,
+        "canadian_post_secondary_education": "15 or 30",
+        "arranged_employment": "none since March 2025 (not listed on the grid)"
+      }
+    },
+    "categories_2026": {
+      "new": [
+        "Physicians/foreign medical doctors with Canadian work experience",
+        "Researchers and senior managers with Canadian work experience",
+        "Transport occupations (e.g. pilots, aircraft mechanics and inspectors)",
+        "Skilled military recruits (Canadian Armed Forces)"
+      ],
+      "continuing": [
+        "French-language proficiency",
+        "Healthcare and social services",
+        "Trades"
+      ],
+      "note": "Announced 18 February 2026. IRCC expects STEM and education needs to be met through general and programme-specific rounds (search extract of the release)."
+    },
+    "recent_rounds": [
+      {
+        "draw": 453,
+        "date": "2026-10-28",
+        "type": "Transport occupations",
+        "invitations": 150,
+        "lowest_crs": 477
+      },
+      {
+        "draw": 452,
+        "date": "2026-10-27",
+        "type": "French-language proficiency",
+        "invitations": 5000,
+        "lowest_crs": 407
+      },
+      {
+        "draw": 451,
+        "date": "2026-10-26",
+        "type": "Provincial Nominee Program",
+        "invitations": 792,
+        "lowest_crs": 761
+      },
+      {
+        "draw": 450,
+        "date": "2026-10-16",
+        "type": "French-language proficiency",
+        "invitations": 5000,
+        "lowest_crs": 435
+      },
+      {
+        "draw": 449,
+        "date": "2026-10-15",
+        "type": "Canadian Experience Class",
+        "invitations": 2500,
+        "lowest_crs": 519
+      },
+      {
+        "draw": 448,
+        "date": "2026-10-13",
+        "type": "Provincial Nominee Program",
+        "invitations": 752,
+        "lowest_crs": 772
+      },
+      {
+        "draw": 447,
+        "date": "2026-10-01",
+        "type": "Trades occupations",
+        "invitations": 3500,
+        "lowest_crs": 476
+      },
+      {
+        "draw": 446,
+        "date": "2026-09-29",
+        "type": "Canadian Experience Class",
+        "invitations": 2000,
+        "lowest_crs": 518
+      },
+      {
+        "draw": 445,
+        "date": "2026-09-28",
+        "type": "Provincial Nominee Program",
+        "invitations": 733,
+        "lowest_crs": 725
+      },
+      {
+        "draw": 444,
+        "date": "2026-09-16",
+        "type": "Senior managers with Canadian work experience",
+        "invitations": 250,
+        "lowest_crs": 389
+      },
+      {
+        "draw": 443,
+        "date": "2026-09-15",
+        "type": "Canadian Experience Class",
+        "invitations": 2000,
+        "lowest_crs": 519
+      },
+      {
+        "draw": 442,
+        "date": "2026-09-14",
+        "type": "Provincial Nominee Program",
+        "invitations": 576,
+        "lowest_crs": 734
+      },
+      {
+        "draw": 441,
+        "date": "2026-09-04",
+        "type": "Healthcare and social services occupations",
+        "invitations": 3500,
+        "lowest_crs": 475
+      },
+      {
+        "draw": 440,
+        "date": "2026-09-03",
+        "type": "Physicians with Canadian work experience",
+        "invitations": 229,
+        "lowest_crs": 198
+      },
+      {
+        "draw": 439,
+        "date": "2026-09-01",
+        "type": "Canadian Experience Class",
+        "invitations": 2000,
+        "lowest_crs": 521
+      },
+      {
+        "draw": 438,
+        "date": "2026-08-31",
+        "type": "Provincial Nominee Program",
+        "invitations": 562,
+        "lowest_crs": 697
+      },
+      {
+        "draw": 437,
+        "date": "2026-08-19",
+        "type": "French-language proficiency",
+        "invitations": 5000,
+        "lowest_crs": 382
+      },
+      {
+        "draw": 436,
+        "date": "2026-08-18",
+        "type": "Canadian Experience Class",
+        "invitations": 1000,
+        "lowest_crs": 523
+      },
+      {
+        "draw": 435,
+        "date": "2026-08-17",
+        "type": "Provincial Nominee Program",
+        "invitations": 442,
+        "lowest_crs": 760
+      },
+      {
+        "draw": 434,
+        "date": "2026-08-07",
+        "type": "Transport occupations",
+        "invitations": 300,
+        "lowest_crs": 470
+      },
+      {
+        "draw": 433,
+        "date": "2026-08-06",
+        "type": "French-language proficiency",
+        "invitations": 5000,
+        "lowest_crs": 391
+      },
+      {
+        "draw": 432,
+        "date": "2026-08-05",
+        "type": "Canadian Experience Class",
+        "invitations": 3000,
+        "lowest_crs": 516
+      },
+      {
+        "draw": 431,
+        "date": "2026-08-04",
+        "type": "Provincial Nominee Program",
+        "invitations": 507,
+        "lowest_crs": 768
+      }
+    ],
+    "pool_size_2026_10_25": 228724,
+    "pattern_observed": "Since August 2026 there have been no all-programme rounds in this window; CEC rounds cut off at 516–523, PNP rounds at 697–772 (nomination adds 600), French-proficiency rounds at 382–435, trades and healthcare category rounds at about 475.",
+    "status_dependency": "Applies according to the user's citizenship, status, occupation, language scores, age and family — all unknown (USER-PROFILE.md 'Facts about the user'; OPEN-QUESTIONS.md items 1, 2, 4, 7)."
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/who-can-apply/federal-skilled-workers.html",
+      "title": "Express Entry: Federal Skilled Worker Program (modified 2026-10-16)",
+      "publisher": "Immigration, Refugees and Citizenship Canada",
+      "source_type": "federal_government",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": "Open Government Licence – Canada"
+    },
+    {
+      "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/who-can-apply/canadian-experience-class.html",
+      "title": "Express Entry: Canadian Experience Class (modified 2026-10-16)",
+      "publisher": "Immigration, Refugees and Citizenship Canada",
+      "source_type": "federal_government",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": "Open Government Licence – Canada"
+    },
+    {
+      "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/who-can-apply/federal-skilled-trades.html",
+      "title": "Express Entry: Federal Skilled Trades Program (modified 2026-10-16)",
+      "publisher": "Immigration, Refugees and Citizenship Canada",
+      "source_type": "federal_government",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": "Open Government Licence – Canada"
+    },
+    {
+      "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/eligibility/criteria-comprehensive-ranking-system/grid.html",
+      "title": "Comprehensive Ranking System criteria grid (modified 2026-10-16)",
+      "publisher": "Immigration, Refugees and Citizenship Canada",
+      "source_type": "federal_government",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": "Open Government Licence – Canada"
+    },
+    {
+      "url": "https://www.canada.ca/en/immigration-refugees-citizenship/news/2026/02/canada-prioritizes-top-talent-in-2026-immigration-express-entry-categories.html",
+      "title": "Canada prioritizes top talent in 2026 immigration Express Entry categories (news release, 18 February 2026)",
+      "publisher": "Immigration, Refugees and Citizenship Canada",
+      "source_type": "federal_government",
+      "accessed": "2026-10-30",
+      "data_period": "2026",
+      "methodology": null,
+      "licence": "Open Government Licence – Canada"
+    },
+    {
+      "url": "https://www.canada.ca/content/dam/ircc/documents/json/ee_rounds_123_en.json",
+      "title": "Express Entry rounds of invitations — data file behind the official 'rounds' page",
+      "publisher": "Immigration, Refugees and Citizenship Canada",
+      "source_type": "federal_government",
+      "accessed": "2026-10-30",
+      "data_period": "2026-06-22 to 2026-10-28",
+      "methodology": null,
+      "licence": "Open Government Licence – Canada"
+    }
+  ],
+  "units": null,
+  "verification": {
+    "status": "verified",
+    "confidence": "high",
+    "verified_by": "agent-01",
+    "last_verified": "2026-10-30",
+    "next_review": "2026-11-29",
+    "notes": "Programme pages, CRS grid and the IRCC rounds data file were fetched directly. Pool size is the last field (dd18) of the rounds data file, whose fields are unlabelled; treat as probable total."
+  },
+  "responsible_agent": "agent-01",
+  "limitations": "Dated snapshot. Rounds are not announced in advance and cut-offs move each round. CLB minimums for CEC and FST were not read. Invitations pause for up to two weeks from 3 November 2026 while profiles are rescored.",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

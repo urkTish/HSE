@@ -111,7 +111,7 @@ export default function MapView(props: Props) {
         style,
         bounds: CANADA_BOUNDS,
         // Leave room for the layer panel on wide screens and the search bar on top.
-        fitBoundsOptions: { padding: window.innerWidth >= 768 ? { top: 80, bottom: 40, left: 340, right: 24 } : { top: 110, bottom: 40, left: 16, right: 16 } },
+        fitBoundsOptions: { padding: window.innerWidth >= 768 ? { top: 80, bottom: 70, left: 340, right: 24 } : { top: 110, bottom: 40, left: 16, right: 16 } },
         attributionControl: false,
         maxZoom: 16,
         minZoom: 1.5,

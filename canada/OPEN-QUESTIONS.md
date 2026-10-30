@@ -37,3 +37,10 @@ the coordinator groups and removes answered items (recording the answer in
 11. The Canada system currently lives in `canada/` inside the HSE repository
     on the designated branch. Keep it there or move it to its own
     repository? — decides where the map application is deployed from.
+
+## From Agent 02 — Real estate (appended 2026-10-30)
+
+- (agent-02) If you buy, what immigration status will you hold on the purchase date (citizen, permanent resident, work permit with at least 183 days left, study permit, none yet)? — decides whether the federal ban (if extended past 1 January 2027) and the BC 20%, Ontario 25% and Nova Scotia 10% foreign/non-resident taxes apply.
+- (agent-02) Do you plan to rent first and buy later, and would a purchase be your own home only or also a rental investment? — decides whether the analysis weights rent levels and vacancy, or yields, rent-control exposure and short-term-rental bans.
+- (agent-02) How many bedrooms and what type of home do you need (apartment, townhouse, detached)? — decides which rent and price series are compared (Phase 1 uses two-bedroom rents and composite/apartment benchmarks).
+- (agent-02, for the coordinator and user) Will the map be private to you or published? CREA (MLS® HPI) and CMHC terms forbid republishing their figures without consent. — decides whether stored benchmark prices may be shown in the map or only linked, and whether to request permission from CREA/CMHC.

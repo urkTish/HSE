@@ -1,0 +1,132 @@
+{
+  "id": "school-on-toronto-waldorf-academy",
+  "category": "school",
+  "subcategory": "Waldorf, JK–Grade 8",
+  "name": "Waldorf Academy",
+  "name_fr": null,
+  "geo": {
+    "province": "ON",
+    "region": "Toronto",
+    "city": "Toronto",
+    "neighbourhood": "The Annex / Casa Loma",
+    "address": "250 Madison Avenue, Toronto, ON M4V 2W6",
+    "lat": 43.677234,
+    "lon": -79.407051,
+    "coord_precision": "exact",
+    "coord_source": "OpenStreetMap Nominatim geocode of the official address (© OpenStreetMap contributors, ODbL), 2026-10-30 — building match"
+  },
+  "description": "Non-profit Waldorf school in central Toronto from child care and Junior Kindergarten to Grade 8.",
+  "attributes": {
+    "website": "https://waldorfacademy.org/",
+    "models": [
+      "waldorf_steiner"
+    ],
+    "philosophy": "Waldorf elementary and middle school; child care subsidised under CWELCC.",
+    "legal_status": {
+      "label": "Private school operating under a Notice of Intention to Operate (Education Act s.16, Ontario)",
+      "province_category": "Non-credit-granting (not inspected)",
+      "authority": "Ontario Ministry of Education",
+      "registered": true,
+      "publicly_funded": false,
+      "inspected": false,
+      "can_issue_provincial_diploma": false,
+      "source_url": "https://data.ontario.ca/dataset/private-school-contact-information"
+    },
+    "institution_type": "registered_private_school",
+    "ages": {
+      "min": 2,
+      "max": 14
+    },
+    "grades": "Child care, JK–Grade 8",
+    "language_of_instruction": [
+      "English"
+    ],
+    "curriculum": "Waldorf curriculum (Ontario curriculum not required for non-credit-granting private schools).",
+    "qualifications_offered": "None (ends at Grade 8).",
+    "accreditation": [],
+    "tuition": {
+      "amount_cad_min": 22500,
+      "amount_cad_max": 24950,
+      "period": "year",
+      "school_year": "2026-2027",
+      "notes": "JK/SK $22,500; Grades 1–8 $24,950; $250 early-payment discount; one-time registration fee $3,000 for new students; $2,500 deposit by 31 March.",
+      "source_url": "https://waldorfacademy.org/s/Waldorf-Academy-NEW-Families_-Fee-Schedule-2026-2027docx-1.pdf"
+    },
+    "additional_fees": "Registration $3,000 (one-time); credit-card surcharge 2.4%.",
+    "admission": "Tour, admissions conversation, application.",
+    "class_size": null,
+    "boarding": false,
+    "transportation": null,
+    "campuses": [
+      {
+        "name": "Madison Avenue",
+        "address": "250 Madison Avenue, Toronto, ON M4V 2W6",
+        "lat": 43.677234,
+        "lon": -79.407051,
+        "coord_precision": "exact"
+      }
+    ],
+    "media_links": [
+      "https://waldorfacademy.org/"
+    ],
+    "advantages": [
+      "Central, transit-accessible Toronto location",
+      "Tuition assistance via Apple Financial"
+    ],
+    "limitations": [
+      "Ends at Grade 8",
+      "Ontario does not inspect non-credit-granting private schools — quality assurance rests on the school"
+    ],
+    "nearby_cities_km": null,
+    "qualifying": "qualifying",
+    "qualifying_reason": "On Ontario's private-school list (no. 884693); Waldorf programme JK–8 confirmed on the official site; 2026-27 fee schedule read."
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://waldorfacademy.org/s/Waldorf-Academy-NEW-Families_-Fee-Schedule-2026-2027docx-1.pdf",
+      "title": "2026–2027 Tuition Fees (new families)",
+      "publisher": "Waldorf Academy",
+      "source_type": "school_official",
+      "accessed": "2026-10-30",
+      "data_period": "2026-2027"
+    },
+    {
+      "url": "https://waldorfacademy.org/tuition",
+      "title": "Tuition",
+      "publisher": "Waldorf Academy",
+      "source_type": "school_official",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://data.ontario.ca/dataset/private-school-contact-information",
+      "title": "Private school contact information (CSV, resource last modified 2026-10-22)",
+      "publisher": "Ontario Ministry of Education",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30",
+      "licence": "Open Government Licence – Ontario"
+    },
+    {
+      "url": "https://www.ontario.ca/page/private-schools",
+      "title": "Private schools (updated 2026-10-19)",
+      "publisher": "Government of Ontario",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30"
+    }
+  ],
+  "units": {
+    "tuition": "CAD"
+  },
+  "verification": {
+    "status": "verified",
+    "confidence": "high",
+    "verified_by": "agent-03",
+    "last_verified": "2026-10-30",
+    "next_review": "2027-09-01",
+    "notes": "Official fee schedule and Ontario list read."
+  },
+  "limitations": "Not inspected by the province (elementary only).",
+  "responsible_agent": "agent-03",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

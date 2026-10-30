@@ -88,7 +88,8 @@ for (const file of walk(kbRoot)) {
     continue;
   }
   if (data.category === "school" && data.attributes?.qualifying !== "qualifying") {
-    excluded.push({ file: rel, id: data.id, reason: `school with qualifying = ${data.attributes?.qualifying}: education layer shows qualifying schools only` });
+    // Only the count is published: names of non-qualifying schools never reach the map's files.
+    excluded.push({ file: null, reason: `school not qualifying (${data.attributes?.qualifying ?? "no status"})` });
     continue;
   }
   records.push({ rel, data });
@@ -118,9 +119,32 @@ function stripMoney(obj, path, withheld) {
   }
   return obj;
 }
+// Money written as text ("$1,970", "1 970 $", "2,000 CAD") is redacted from every
+// string field of the same records; in `re` records percentages are too
+// (vacancy rates, year-over-year changes). URLs are left untouched.
+const NUM = String.raw`\d(?:[\d,.\u00a0\u202f]|\s(?=\d{3}\b))*`;
+const MONEY_TEXT = new RegExp(
+  String.raw`C?A?\$\s?${NUM}(?:\s?(?:million|billion)\b|[kKmM]\b)?` + // $1,970  C$ 2 000  $1.2 million
+    String.raw`|\b${NUM}\s?\$(?!\s?\d)` + //                               1 970 $
+    String.raw`|\b${NUM}\s?(?:CAD|dollars)\b`, //                          2,000 CAD
+  "g",
+);
+const PERCENT_TEXT = /[+\-\u2212]?\d+(?:[.,]\d+)?\s?(?:%|per ?cent|percentage points?)/gi;
+function scrubText(obj, isMarket, counter) {
+  if (typeof obj === "string") {
+    if (/^https?:\/\//.test(obj)) return obj;
+    let out = obj.replace(MONEY_TEXT, () => (counter.n++, "[amount withheld]"));
+    if (isMarket) out = out.replace(PERCENT_TEXT, () => (counter.n++, "[figure withheld]"));
+    return out;
+  }
+  if (Array.isArray(obj)) return obj.map((v) => scrubText(v, isMarket, counter));
+  if (obj && typeof obj === "object") return Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, k === "id" || k === "url" ? v : scrubText(v, isMarket, counter)]));
+  return obj;
+}
+
 function sanitize(rec) {
   const withheld = [];
-  const r = structuredClone(rec);
+  let r = structuredClone(rec);
   r.attributes ??= {};
   if (r.category === "re") {
     for (const k of ["value", "year_over_year_change_pct"]) {
@@ -138,7 +162,12 @@ function sanitize(rec) {
       }
     }
   }
-  if (r.category !== "nat") r.attributes = stripMoney(r.attributes, "attributes", withheld);
+  if (r.category !== "nat") {
+    r.attributes = stripMoney(r.attributes, "attributes", withheld);
+    const counter = { n: 0 };
+    r = scrubText(r, r.category === "re", counter);
+    if (counter.n) withheld.push(`${counter.n} amount(s) in text fields`);
+  }
   if (withheld.length) r._withheld = withheld;
   return r;
 }
@@ -255,4 +284,6 @@ writeFileSync(
 
 console.log(`build-data: ${index.length} record(s) → ${outDir}`);
 console.log(`  on map by layer: ${Object.entries(byLayer).map(([k, v]) => `${k} ${v}`).join(", ")}`);
-console.log(`  excluded: ${excluded.length}${excluded.length ? " (" + excluded.map((e) => `${e.file}: ${e.reason}`).join("; ") + ")" : ""}`);
+const reasons = {};
+for (const e of excluded) reasons[e.reason] = (reasons[e.reason] ?? 0) + 1;
+console.log(`  excluded: ${excluded.length}${excluded.length ? " — " + Object.entries(reasons).map(([k, n]) => `${n} × ${k}`).join("; ") : ""}`);

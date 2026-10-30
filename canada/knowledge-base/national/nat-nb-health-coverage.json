@@ -26,7 +26,7 @@
       "permanent_resident": "Eligible if legally entitled to remain in Canada and making a permanent home in New Brunswick, with no intention to keep PR status in another country.",
       "work_permit_holder": "Work permits are listed among accepted immigration documents, but 'not all Canadian immigration documents are acceptable'; no duration rule given.",
       "study_permit_holder": "Eligible with a study permit valid for the full school year (at least September–April); exchange, part-time and certain graduate students excluded.",
-      "visitor": "Not eligible (visitors and tourists are excluded from every provincial plan reviewed)."
+      "visitor": "Visitors and tourists are expressly excluded in the AB, MB, NB and PE material read; treat visitors as not covered everywhere and confirm locally."
     },
     "status_dependency": "Which rule applies depends on the user's immigration status, which is unknown (USER-PROFILE.md: 'Citizenship(s) and current country of residence', 'Existing Canadian status or application').",
     "newcomer_waiting_period": {

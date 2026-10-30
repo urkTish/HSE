@@ -1,0 +1,145 @@
+{
+  "id": "school-bc-nelson-nelson-waldorf-school",
+  "category": "school",
+  "subcategory": "Waldorf, K–9",
+  "name": "Nelson Waldorf School",
+  "name_fr": null,
+  "geo": {
+    "province": "BC",
+    "region": "West Kootenay",
+    "city": "Nelson (rural area)",
+    "neighbourhood": null,
+    "address": "3648 Silverking Ski Hill Road, Nelson, BC V1L 6N2",
+    "lat": 49.496729,
+    "lon": -117.359074,
+    "coord_precision": "approximate",
+    "coord_source": "BC Ministry school-location dataset 2025/2026 (DataBC geocode of the registered address)"
+  },
+  "description": "Independent Waldorf school on the edge of Nelson in the West Kootenay mountains; Kindergarten to Grade 9 with an early-years centre. Group 1 independent school and Associate member of AWSNA since 1984. Among the lowest Waldorf tuitions in Canada.",
+  "attributes": {
+    "website": "https://nelsonwaldorf.org/",
+    "models": [
+      "waldorf_steiner"
+    ],
+    "philosophy": "Waldorf 'head, heart and hands' pedagogy: storytelling, main-lesson books, handwork, natural art materials; early years play-based.",
+    "legal_status": {
+      "label": "Independent school, Group 1 (Independent School Act, B.C.)",
+      "province_category": "Group 1 (K–3, 4–7, 8–10 bands)",
+      "authority": "B.C. Ministry of Education and Child Care — Independent Schools Branch",
+      "registered": true,
+      "publicly_funded": true,
+      "inspected": true,
+      "can_issue_provincial_diploma": false,
+      "source_url": "https://bcschoolcontacts.gov.bc.ca/api/download/allindependentschools.csv"
+    },
+    "institution_type": "independent_private_school",
+    "ages": {
+      "min": 5,
+      "max": 15
+    },
+    "grades": "Kindergarten–Grade 9 (plus early-years child care centre)",
+    "language_of_instruction": [
+      "English"
+    ],
+    "curriculum": "Waldorf curriculum within B.C. program requirements.",
+    "qualifications_offered": "None (ends at Grade 9).",
+    "accreditation": [
+      "B.C. Group 1 classification",
+      "AWSNA Associate member (since 1984)",
+      "WECAN full member (child care centre)"
+    ],
+    "tuition": {
+      "amount_cad_min": 6240,
+      "amount_cad_max": 6240,
+      "period": "year",
+      "school_year": "2026-2027",
+      "notes": "K–Grade 9 full tuition $6,240 (12 × $520); tuition modification for combined family net income under $120,000; sibling discounts 10% / 35%. International students $1,684 per month (2025/26 rate).",
+      "source_url": "https://nelsonwaldorf.org/tuition/"
+    },
+    "additional_fees": "Registration $250/yr, supply fee $300, society membership $30/family, one-time enrolment fee $300 for new students; bus $55/student/month.",
+    "admission": "Steps to enrolment published on the school site; mid-year admission prorated.",
+    "class_size": null,
+    "boarding": false,
+    "transportation": "School bus service, $55 per student per month (2026-27).",
+    "campuses": [
+      {
+        "name": "Main campus",
+        "address": "3648 Silverking Ski Hill Rd, Nelson, BC V1L 6N2",
+        "lat": 49.496729,
+        "lon": -117.359074,
+        "coord_precision": "approximate"
+      }
+    ],
+    "media_links": [
+      "https://nelsonwaldorf.org/tour-school/",
+      "https://instagram.com/nelson_waldorf_school/"
+    ],
+    "advantages": [
+      "Very low tuition for a Waldorf school (ministry funding covers much of the budget)",
+      "Mountain small-city setting",
+      "AWSNA membership with cyclical self-study"
+    ],
+    "limitations": [
+      "Ends at Grade 9",
+      "Small-town location far from a major airport"
+    ],
+    "nearby_cities_km": null,
+    "qualifying": "qualifying",
+    "qualifying_reason": "Private Group 1 independent school with a Waldorf programme to Grade 9; tuition 2026-27, accreditation and register confirmed 2026-10-30."
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://nelsonwaldorf.org/tuition/",
+      "title": "Tuition + Fees 2026/27",
+      "publisher": "Nelson Waldorf School",
+      "source_type": "school_official",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://nelsonwaldorf.org/accreditation/",
+      "title": "Accreditation",
+      "publisher": "Nelson Waldorf School",
+      "source_type": "school_official",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://bcschoolcontacts.gov.bc.ca/api/download/allindependentschools.csv",
+      "title": "School District and Contact Information app — all independent schools (CSV, includes Group Classification by grade band)",
+      "publisher": "B.C. Ministry of Education and Child Care",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://catalogue.data.gov.bc.ca/dataset/95da1091-7e8c-4aa6-9c1b-5ab159ea7b42",
+      "title": "BC Schools – K-12 with Francophone Indicators (school locations, 2025/2026)",
+      "publisher": "B.C. Ministry of Education and Child Care / DataBC",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30",
+      "data_period": "2025-2026",
+      "licence": "Open Government Licence – British Columbia"
+    },
+    {
+      "url": "https://www2.gov.bc.ca/gov/content/education-training/k-12/administration/legislation-policy/independent-schools/classification-of-independent-schools",
+      "title": "Classification of Independent Schools",
+      "publisher": "Government of British Columbia",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30"
+    }
+  ],
+  "units": {
+    "tuition": "CAD"
+  },
+  "verification": {
+    "status": "verified",
+    "confidence": "high",
+    "verified_by": "agent-03",
+    "last_verified": "2026-10-30",
+    "next_review": "2027-09-01",
+    "notes": "Official tuition page, accreditation page and B.C. register read."
+  },
+  "limitations": "Website navigation shows a 'High School' item whose page returned no content; register shows K–9 only. Coordinates are a register geocode on a rural road, so approximate.",
+  "responsible_agent": "agent-03",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

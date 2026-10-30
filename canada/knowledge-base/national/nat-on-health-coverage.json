@@ -26,7 +26,7 @@
       "permanent_resident": "Eligible (permanent residents; also applicants for PR whose application has not been denied), subject to living in Ontario as primary residence and 153 days' presence in any 12 months.",
       "work_permit_holder": "Eligible if working full-time for an Ontario employer for at least 6 months (spouse and dependants may also qualify); live-in caregivers and seasonal agricultural workers with valid permits also listed.",
       "study_permit_holder": "International students are not listed among eligible groups on the OHIP page; contact ServiceOntario.",
-      "visitor": "Not eligible (visitors and tourists are excluded from every provincial plan reviewed)."
+      "visitor": "Visitors and tourists are expressly excluded in the AB, MB, NB and PE material read; treat visitors as not covered everywhere and confirm locally."
     },
     "status_dependency": "Which rule applies depends on the user's immigration status, which is unknown (USER-PROFILE.md: 'Citizenship(s) and current country of residence', 'Existing Canadian status or application').",
     "newcomer_waiting_period": {

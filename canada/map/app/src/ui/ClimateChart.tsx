@@ -35,7 +35,6 @@ interface PanelProps {
   height: number;
   ticks: number[];
   y: (v: number) => number;
-  unit: string;
   active: number | null;
   setActive: (i: number | null) => void;
   monthAxis?: boolean;
@@ -44,7 +43,7 @@ interface PanelProps {
   children: ReactNode;
 }
 
-function Panel({ title, height, ticks, y, unit, active, setActive, monthAxis, missing, patternId, children }: PanelProps) {
+function Panel({ title, height, ticks, y, active, setActive, monthAxis, missing, patternId, children }: PanelProps) {
   const top = 6;
   const bottom = height - (monthAxis ? 16 : 4);
   return (
@@ -60,9 +59,6 @@ function Panel({ title, height, ticks, y, unit, active, setActive, monthAxis, mi
             </text>
           </g>
         ))}
-        <text x={2} y={top + 4} fontSize={9} fill="var(--ce-ink-3)">
-          {unit}
-        </text>
         {missing.map((m, i) =>
           m ? <rect key={i} x={cx(i) - BAR_W / 2} y={top} width={BAR_W} height={bottom - top} fill={`url(#${patternId})`} /> : null,
         )}
@@ -94,6 +90,8 @@ function bars(values: (number | null)[], y: (v: number) => number, colour: strin
   return values.map((v, i) => {
     if (v === null) return null;
     const y0 = y(0);
+    // Zero is data (null is not): a 1px baseline tick.
+    if (v === 0) return <line key={i} x1={cx(i) - BAR_W / 2} x2={cx(i) + BAR_W / 2} y1={y0 - 0.5} y2={y0 - 0.5} stroke={colour} strokeWidth={1} />;
     const y1 = y(v);
     const h = Math.max(0, y0 - y1);
     // 2px rounded data-end anchored to the baseline.
@@ -157,7 +155,19 @@ export default function ClimateChart({ record }: { record: ClimRecord }) {
   const am = active !== null ? months[active] : null;
 
   return (
-    <div className="relative" role="group" aria-label={summary}>
+    <div
+      className="relative rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+      role="group"
+      aria-label={`${summary} Use the left and right arrow keys to read each month.`}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        const next = e.key === "ArrowRight" ? (active ?? -1) + 1 : e.key === "ArrowLeft" ? (active ?? 12) - 1 : e.key === "Home" ? 0 : e.key === "End" ? 11 : null;
+        if (next === null) return;
+        e.preventDefault();
+        setActive(Math.max(0, Math.min(11, next)));
+      }}
+      onBlur={() => setActive(null)}
+    >
       <svg width="0" height="0" className="absolute" aria-hidden="true">
         <defs>
           <pattern id={patternId} width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
@@ -166,17 +176,25 @@ export default function ClimateChart({ record }: { record: ClimRecord }) {
         </defs>
       </svg>
 
-      <p className="mb-2 rounded-sm bg-status-info-soft px-2 py-1 text-xs text-status-info">
-        Long-term averages ({a.normals_period} climate normals), not a forecast.
-      </p>
+      <p className="text-sm font-semibold text-ink">Climate normals, {a.normals_period.replace("-", "–")}</p>
+      <p className="mb-2 text-xs text-ink-2">30-year averages, not a forecast.</p>
+      {a.normals_period !== "1991-2020" && (
+        <p className="mb-2 rounded-sm bg-status-info-soft px-2 py-1 text-xs text-status-info">
+          Older period: ECCC has not published 1991–2020 normals for this station.
+        </p>
+      )}
+      {num(a.distance_to_city_centre_km) !== null && (a.distance_to_city_centre_km as number) > 10 && (
+        <p className="mb-2 rounded-sm bg-status-info-soft px-2 py-1 text-xs text-status-info">
+          Station is {fmt(a.distance_to_city_centre_km, 0)} km from the centre; airport stations can be cooler or windier.
+        </p>
+      )}
 
       <div className="space-y-1">
         <Panel
-          title={<>Temperature: bar spans the average daily low to the average daily high{mean.some((v) => v !== null) ? "; tick = monthly mean" : ""}</>}
+          title={<>Temperature, °C: bar spans the average daily low to the average daily high{mean.some((v) => v !== null) ? "; tick = monthly mean" : ""}</>}
           height={TH}
           ticks={tTicks}
           y={yT}
-          unit="°C"
           active={active}
           setActive={setActive}
           missing={months.map((_, i) => hi[i] === null || lo[i] === null)}
@@ -212,11 +230,10 @@ export default function ClimateChart({ record }: { record: ClimRecord }) {
         </Panel>
 
         <Panel
-          title={<>Precipitation (rain and melted snow){num(a.annual?.precip_mm) !== null ? `, annual ${fmt(a.annual.precip_mm, 0)} mm` : ""}</>}
+          title={<>Precipitation, mm (rain and melted snow){num(a.annual?.precip_mm) !== null ? `, annual ${fmt(a.annual.precip_mm, 0)} mm` : ""}</>}
           height={PH}
           ticks={pTicks}
           y={yP}
-          unit="mm"
           active={active}
           setActive={setActive}
           missing={pr.map((v) => v === null)}
@@ -228,12 +245,11 @@ export default function ClimateChart({ record }: { record: ClimRecord }) {
 
         {hasSnow ? (
           <Panel
-            title={<>Snowfall{num(a.annual?.snow_cm) !== null ? `, annual ${fmt(a.annual.snow_cm, 0)} cm` : ""}</>}
+            title={<>Snowfall, cm{num(a.annual?.snow_cm) !== null ? `, annual ${fmt(a.annual.snow_cm, 0)} cm` : ""}</>}
             height={SH}
             ticks={sTicks}
             y={yS}
-            unit="cm"
-            active={active}
+              active={active}
             setActive={setActive}
             missing={sn.map((v) => v === null)}
             patternId={patternId}
@@ -241,11 +257,14 @@ export default function ClimateChart({ record }: { record: ClimRecord }) {
           >
             {bars(sn, yS, "var(--ce-chart-snow)")}
           </Panel>
-        ) : (
-          <p className="text-2xs text-ink-3">Snowfall is not reported in this record.</p>
-        )}
+        ) : null}
       </div>
 
+      <p className="sr-only" aria-live="polite">
+        {am
+          ? `${MONTHS[am.month - 1]}: high ${fmt(am.tmax_c)} °C, low ${fmt(am.tmin_c)} °C, precipitation ${fmt(am.precip_mm)} mm${hasSnow ? `, snowfall ${fmt(am.snow_cm)} cm` : ""}.`
+          : ""}
+      </p>
       {am && (
         <div className="pointer-events-none absolute right-0 top-8 z-10 min-w-36 rounded-md bg-surface-inverse px-2 py-1.5 text-xs text-ink-inverse shadow-3" role="status">
           <div className="font-semibold">{MONTHS[am.month - 1]}</div>
@@ -317,6 +336,7 @@ export default function ClimateChart({ record }: { record: ClimRecord }) {
               </tr>
             </tfoot>
           </table>
+          <p className="mt-1 text-2xs text-ink-3">— = not published for this station. Annual values are the record's own, never recomputed from months.</p>
         </div>
       </details>
     </div>

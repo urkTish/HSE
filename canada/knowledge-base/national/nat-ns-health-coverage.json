@@ -26,7 +26,7 @@
       "permanent_resident": "Coverage 'usually starts on the date you become a resident of Nova Scotia'.",
       "work_permit_holder": "Eligible with a permit of 12 months or more; coverage from the later of the residency date and the permit issue date.",
       "study_permit_holder": "May apply on the first day of the 13th month after arrival with a study permit of at least 12 months (no wait for teaching/research assistants at NS universities).",
-      "visitor": "Not eligible (visitors and tourists are excluded from every provincial plan reviewed)."
+      "visitor": "Visitors and tourists are expressly excluded in the AB, MB, NB and PE material read; treat visitors as not covered everywhere and confirm locally."
     },
     "status_dependency": "Which rule applies depends on the user's immigration status, which is unknown (USER-PROFILE.md: 'Citizenship(s) and current country of residence', 'Existing Canadian status or application').",
     "newcomer_waiting_period": {

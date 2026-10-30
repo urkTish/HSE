@@ -29,3 +29,19 @@ One entry per non-obvious choice: what, why, alternatives, date.
   scores" and "weighted comparisons".
 - **D-007 (2026-10-30) — Agent model.** Specialist agents run on Opus at high
   effort, as the user requested.
+- **D-008 (2026-10-30) — Market figures and publication, provisional.** CREA
+  (MLS® HPI) and CMHC terms forbid republishing their figures without
+  consent (Agent 02, `knowledge-base/real-estate/METHODOLOGY.md`). Until the
+  user decides whether the map is private or published
+  (`OPEN-QUESTIONS.md`, Agent 02 item), the map is treated as private to the
+  user, and in every case the build step keeps `re` records whose only
+  sources are CREA or CMHC out of any published GeoJSON; benchmark prices
+  are linked to the CREA HPI tool rather than displayed from storage.
+  Two-bedroom survey rents may be displayed because Statistics Canada
+  republishes them under its open licence and the values match.
+- **D-009 (2026-10-30) — Source conflict: insured-mortgage price cap.** The
+  Financial Consumer Agency of Canada page still states $1 million; the
+  Department of Finance raised the cap to $1.5 million from 15 December
+  2024. `nat-ca-mortgage-down-payment-insurance-rules` follows Finance (the
+  rule-making body); the FCAC page is noted as outdated. Period, not
+  methodology, explains the difference.

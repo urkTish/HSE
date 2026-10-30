@@ -26,7 +26,7 @@
       "permanent_resident": "Eligible if lawfully entitled to be in Canada, making a home in the NWT and present at least 153 days a year.",
       "work_permit_holder": "Conflicting official material: a 2018 booklet excludes temporary workers; the current application form accepts a work permit; the current page says to contact the Health Services Administration Office.",
       "study_permit_holder": "Contact the Health Services Administration Office.",
-      "visitor": "Not eligible (visitors and tourists are excluded from every provincial plan reviewed)."
+      "visitor": "Visitors and tourists are expressly excluded in the AB, MB, NB and PE material read; treat visitors as not covered everywhere and confirm locally."
     },
     "status_dependency": "Which rule applies depends on the user's immigration status, which is unknown (USER-PROFILE.md: 'Citizenship(s) and current country of residence', 'Existing Canadian status or application').",
     "newcomer_waiting_period": {

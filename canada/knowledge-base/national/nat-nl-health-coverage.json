@@ -26,7 +26,7 @@
       "permanent_resident": "Eligible; first coverage is valid for one year, then renewable for up to five years; interim coverage possible while a PR card is pending.",
       "work_permit_holder": "Eligible with a permit valid at least 12 months plus an employer letter confirming 12 months' full-time work (6 months for NLPNP and Atlantic Immigration Program participants); coverage up to one year at a time.",
       "study_permit_holder": "Eligible with a study permit valid at least 12 months for full-time enrolment; renew annually.",
-      "visitor": "Not eligible (visitors and tourists are excluded from every provincial plan reviewed)."
+      "visitor": "Visitors and tourists are expressly excluded in the AB, MB, NB and PE material read; treat visitors as not covered everywhere and confirm locally."
     },
     "status_dependency": "Which rule applies depends on the user's immigration status, which is unknown (USER-PROFILE.md: 'Citizenship(s) and current country of residence', 'Existing Canadian status or application').",
     "newcomer_waiting_period": {

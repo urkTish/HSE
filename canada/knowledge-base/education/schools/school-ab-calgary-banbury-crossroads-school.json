@@ -1,0 +1,143 @@
+{
+  "id": "school-ab-calgary-banbury-crossroads-school",
+  "category": "school",
+  "subcategory": "Self-directed, JK–Grade 12",
+  "name": "Banbury Crossroads School (and Banbury Crossroads Academy)",
+  "name_fr": null,
+  "geo": {
+    "province": "AB",
+    "region": "Calgary",
+    "city": "Calgary",
+    "neighbourhood": "Currie Barracks (southwest)",
+    "address": "35 Normandy Drive SW, Building B1 #201, Calgary, AB T3E 7K1",
+    "lat": 51.019741,
+    "lon": -114.118902,
+    "coord_precision": "approximate",
+    "coord_source": "OpenStreetMap Nominatim geocode of the official address (© OpenStreetMap contributors, ODbL), 2026-10-30 — street-level match (Normandy Drive SW)"
+  },
+  "description": "Calgary independent school authority founded 1979 running a self-directed, multi-age, learn-to-mastery programme from Junior Kindergarten to Grade 12 (the School, ratios about 10:1 in Grades 1–6 and 15:1 in Grades 7–12) and a teacher-guided small-group stream for diverse learning needs (the Academy, about 6:1). Also listed by Alberta Education as a supervisor of home education.",
+  "attributes": {
+    "website": "https://www.banburycrossroads.com/",
+    "models": [
+      "self_directed",
+      "homeschool_support",
+      "other_innovative"
+    ],
+    "philosophy": "Self-Directed Learning: intrinsic motivation, mixed-age classrooms, students set goals and progress at their own pace to mastery; peer mentoring; minimal competition.",
+    "legal_status": {
+      "label": "Independent (private) school registered under the Education Act (Alberta); listed by Alberta Education as authority type 'Private School'",
+      "province_category": null,
+      "authority": "Alberta Education and Childcare",
+      "registered": true,
+      "publicly_funded": null,
+      "inspected": null,
+      "can_issue_provincial_diploma": null,
+      "source_url": "https://education.alberta.ca/media/1626669/authority_and_school.xlsx"
+    },
+    "institution_type": "independent_private_school",
+    "ages": {
+      "min": 4,
+      "max": 18
+    },
+    "grades": "JK, K, Grades 1–12 (School); K–12 (Academy)",
+    "language_of_instruction": [
+      "English"
+    ],
+    "curriculum": "Alberta curriculum mastered at individual pace (school statement).",
+    "qualifications_offered": "High-school completion; Alberta diploma status not confirmed on pages read.",
+    "accreditation": [
+      "Member, Association of Independent Schools and Colleges in Alberta (AISCA) — per site footer"
+    ],
+    "tuition": {
+      "amount_cad_min": 17600,
+      "amount_cad_max": 19750,
+      "period": "year",
+      "school_year": "2026-2027",
+      "notes": "Domestic 26/27: School (JK–12) $17,600; Academy (K–12) $19,750; annual registration fee $525. International $25,800. Sibling discount 10% / 15%.",
+      "source_url": "https://www.banburycrossroads.com/tuition-and-fees-policy"
+    },
+    "additional_fees": "Annual registration $525.",
+    "admission": "Tour and application process published on the site.",
+    "class_size": "About 10:1 (Gr 1–6) and 15:1 (Gr 7–12) in the School; about 6:1 in the Academy (school statement).",
+    "boarding": false,
+    "transportation": null,
+    "campuses": [
+      {
+        "name": "Normandy Drive campus",
+        "address": "35 Normandy Drive SW, #201, Building B1, Calgary, AB T3E 7K1",
+        "lat": 51.019741,
+        "lon": -114.118902,
+        "coord_precision": "approximate"
+      }
+    ],
+    "media_links": [
+      "https://www.youtube.com/@BanburyCrossroadsVideos",
+      "https://www.banburycrossroads.com/facilities"
+    ],
+    "advantages": [
+      "Rare self-directed programme running to Grade 12 in a major city",
+      "Very small ratios",
+      "Can supervise Alberta home education"
+    ],
+    "limitations": [
+      "Self-directed approach is self-paced mastery of the provincial curriculum, not unschooling",
+      "Diploma status to confirm with the school"
+    ],
+    "nearby_cities_km": null,
+    "qualifying": "qualifying",
+    "qualifying_reason": "Private school authority confirmed in Alberta Education's directory; self-directed multi-age mastery model described in detail on the official site; 2026/27 tuition published."
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://www.banburycrossroads.com/tuition-and-fees-policy",
+      "title": "Tuition and Fees — Domestic Students 26/27",
+      "publisher": "Banbury Crossroads",
+      "source_type": "school_official",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://www.banburycrossroads.com/banbury-crossroads-school-2",
+      "title": "Banbury Crossroads School — Self-Directed Learning Program",
+      "publisher": "Banbury Crossroads",
+      "source_type": "school_official",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://www.banburycrossroads.com/",
+      "title": "Home",
+      "publisher": "Banbury Crossroads",
+      "source_type": "school_official",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://education.alberta.ca/media/1626669/authority_and_school.xlsx",
+      "title": "School and Authority Information Report (authority_and_school.xlsx, extract date 2026-10-28)",
+      "publisher": "Alberta Education and Childcare",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://education.alberta.ca/media/3273207/home-education-providers.pdf",
+      "title": "Home Education Providers (list; publication date not shown)",
+      "publisher": "Alberta Education",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30"
+    }
+  ],
+  "units": {
+    "tuition": "CAD"
+  },
+  "verification": {
+    "status": "verified",
+    "confidence": "high",
+    "verified_by": "agent-03",
+    "last_verified": "2026-10-30",
+    "next_review": "2027-09-01",
+    "notes": "Official site and Alberta directory read."
+  },
+  "limitations": "Accreditation/funding category not shown in the directory; the home-education-providers PDF is undated.",
+  "responsible_agent": "agent-03",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

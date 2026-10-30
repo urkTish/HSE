@@ -1,0 +1,118 @@
+{
+  "id": "school-on-richmond-hill-lauremont-school",
+  "category": "school",
+  "subcategory": "Montessori to Grade 6 + IB",
+  "name": "Lauremont School (formerly The Toronto Montessori Schools)",
+  "name_fr": null,
+  "geo": {
+    "province": "ON",
+    "region": "York Region",
+    "city": "Richmond Hill",
+    "neighbourhood": null,
+    "address": "500 Elgin Mills Road East, Richmond Hill, ON (Upper School)",
+    "lat": 43.892884,
+    "lon": -79.426923,
+    "coord_precision": "exact",
+    "coord_source": "OpenStreetMap Nominatim geocode of the official address (© OpenStreetMap contributors, ODbL), 2026-10-30 — house-number match (Upper School address in Ontario's list)"
+  },
+  "description": "Large Richmond Hill private school: Montessori from toddler to Grade 6, then International Baccalaureate MYP (Grades 7–10) and DP (Grades 11–12) in the Upper School; OSSD credit-granting.",
+  "attributes": {
+    "website": "https://www.lauremontschool.ca/",
+    "models": [
+      "montessori",
+      "international_alternative"
+    ],
+    "philosophy": "Montessori Children's House and Elementary; IB programmes in the Upper School.",
+    "legal_status": {
+      "label": "Private school operating under a Notice of Intention to Operate (Education Act s.16, Ontario) — Upper School",
+      "province_category": "OSSD credit-granting (inspected)",
+      "authority": "Ontario Ministry of Education",
+      "registered": true,
+      "publicly_funded": false,
+      "inspected": true,
+      "can_issue_provincial_diploma": true,
+      "source_url": "https://data.ontario.ca/dataset/private-school-contact-information"
+    },
+    "institution_type": "registered_private_school",
+    "ages": {
+      "min": 1,
+      "max": 18
+    },
+    "grades": "Toddler–Grade 12",
+    "language_of_instruction": [
+      "English"
+    ],
+    "curriculum": "Montessori (to Grade 6); IB MYP and DP; OSSD.",
+    "qualifications_offered": "OSSD; IB Diploma.",
+    "accreditation": [
+      "IB World School (MYP, DP) — per school site",
+      "Ontario inspection for OSSD credits"
+    ],
+    "tuition": {
+      "amount_cad_min": 33390,
+      "amount_cad_max": 37040,
+      "period": "year",
+      "school_year": null,
+      "notes": "Children's House 2 & 3 and Elementary Gr 1–6: $33,390 (single payment) to $35,015 (10 payments); Toddler full day $35,360–$37,040; excludes $6,000 registration fee. Upper School fees not captured. School year not stated on the page.",
+      "source_url": "https://www.lauremontschool.ca/admissions/tuition-and-support/tuition-additional-costs"
+    },
+    "additional_fees": "Registration fee $6,000 on acceptance.",
+    "admission": null,
+    "class_size": null,
+    "boarding": false,
+    "transportation": null,
+    "campuses": [
+      {
+        "name": "Upper School",
+        "address": "500 Elgin Mills Road East, Richmond Hill, ON",
+        "lat": 43.892884,
+        "lon": -79.426923,
+        "coord_precision": "exact"
+      }
+    ],
+    "media_links": [],
+    "advantages": [
+      "Continuous Montessori-to-IB pathway with an internationally portable diploma"
+    ],
+    "limitations": [
+      "Montessori ends at Grade 6; Upper School is IB, a recognised but not necessarily alternative model",
+      "Fee year not shown; very high fees"
+    ],
+    "nearby_cities_km": null,
+    "qualifying": "unverified_candidate",
+    "qualifying_reason": "Montessori stops at Grade 6 and the Upper School is IB, so whether the secondary years are a genuine alternative is doubtful; tuition page has no school year. Legal status confirmed (Ontario list no. 885797, OSSD credits)."
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://www.lauremontschool.ca/admissions/tuition-and-support/tuition-additional-costs",
+      "title": "Tuition & Additional Costs",
+      "publisher": "Lauremont School",
+      "source_type": "school_official",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://data.ontario.ca/dataset/private-school-contact-information",
+      "title": "Private school contact information (CSV, resource last modified 2026-10-22)",
+      "publisher": "Ontario Ministry of Education",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30",
+      "licence": "Open Government Licence – Ontario"
+    }
+  ],
+  "units": {
+    "tuition": "CAD"
+  },
+  "verification": {
+    "status": "partially_verified",
+    "confidence": "medium",
+    "verified_by": "agent-03",
+    "last_verified": "2026-10-30",
+    "next_review": "2027-09-01",
+    "notes": "Status verified; tuition undated; lower-school campus address not captured."
+  },
+  "limitations": "Lower-school campus coordinates not recorded.",
+  "responsible_agent": "agent-03",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

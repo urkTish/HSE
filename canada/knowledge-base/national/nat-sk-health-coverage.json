@@ -26,7 +26,7 @@
       "permanent_resident": "Eligible (permanent residents moving from outside Canada).",
       "work_permit_holder": "Eligible as 'a worker or businessperson who is allowed to live in Canada temporarily for work'; no minimum permit length stated on the page.",
       "study_permit_holder": "Eligible if living in Saskatchewan temporarily to study, with a valid study permit and proof of full-time enrolment.",
-      "visitor": "Not eligible (visitors and tourists are excluded from every provincial plan reviewed)."
+      "visitor": "Visitors and tourists are expressly excluded in the AB, MB, NB and PE material read; treat visitors as not covered everywhere and confirm locally."
     },
     "status_dependency": "Which rule applies depends on the user's immigration status, which is unknown (USER-PROFILE.md: 'Citizenship(s) and current country of residence', 'Existing Canadian status or application').",
     "newcomer_waiting_period": {

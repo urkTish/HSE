@@ -1,0 +1,144 @@
+{
+  "id": "school-bc-victoria-selkirk-montessori-school",
+  "category": "school",
+  "subcategory": "Montessori, preschool–Grade 8",
+  "name": "Selkirk Montessori School",
+  "name_fr": null,
+  "geo": {
+    "province": "BC",
+    "region": "Capital Regional District",
+    "city": "Victoria (Saanich border)",
+    "neighbourhood": "Burnside / Selkirk Waterway",
+    "address": "2970 Jutland Road, Victoria, BC V8T 5K2",
+    "lat": 48.440885,
+    "lon": -123.378494,
+    "coord_precision": "approximate",
+    "coord_source": "BC Ministry school-location dataset 2025/2026 (DataBC geocode of the registered address)"
+  },
+  "description": "Non-profit Montessori school (Pacific Montessori Society, since 1992) in Victoria from preschool to Grade 8, following the full B.C. curriculum with Montessori methodology. Group 1 independent school; also hosts a Montessori teacher-training institute.",
+  "attributes": {
+    "website": "https://www.selkirkmontessori.ca/",
+    "models": [
+      "montessori",
+      "project_based"
+    ],
+    "philosophy": "'Contemporary Montessori': mixed-age classrooms, hands-on materials, research and project-based learning, service learning and field studies.",
+    "legal_status": {
+      "label": "Independent school, Group 1 (Independent School Act, B.C.)",
+      "province_category": "Group 1 (K–3, 4–7, 8–10 bands)",
+      "authority": "B.C. Ministry of Education and Child Care — Independent Schools Branch",
+      "registered": true,
+      "publicly_funded": true,
+      "inspected": true,
+      "can_issue_provincial_diploma": false,
+      "source_url": "https://bcschoolcontacts.gov.bc.ca/api/download/allindependentschools.csv"
+    },
+    "institution_type": "independent_private_school",
+    "ages": {
+      "min": 3,
+      "max": 14
+    },
+    "grades": "Preschool, Kindergarten–Grade 8",
+    "language_of_instruction": [
+      "English"
+    ],
+    "curriculum": "Full B.C. curriculum through Montessori methodology; French, music, PE specialists.",
+    "qualifications_offered": "None (ends at Grade 8).",
+    "accreditation": [
+      "B.C. Group 1 classification"
+    ],
+    "tuition": {
+      "amount_cad_min": 11486,
+      "amount_cad_max": 11534,
+      "period": "year",
+      "school_year": "2025-2026",
+      "notes": "2025-26 Schedule of Fees (PDF): Kindergarten full day $11,534; Levels 1–8 $11,486; preschool $13,480 before CCFRI rebate. The current tuition web page (school year not labelled, presumably 2026-27) shows K $12,110 and Elementary & Middle $12,060. Sibling discounts 15% / 30%.",
+      "source_url": "https://www.selkirkmontessori.ca/admissions/tuition"
+    },
+    "additional_fees": "Supply & activity $156–$1,663 by grade; one-time new-student fees $450; mortgage retirement fund minimum $350/yr; before/after care $1,700–$3,400/yr.",
+    "admission": "Expression of interest and application via the school site.",
+    "class_size": "Low student-teacher ratios stated; numbers not published.",
+    "boarding": false,
+    "transportation": null,
+    "campuses": [
+      {
+        "name": "Jutland Road campus",
+        "address": "2970 Jutland Rd, Victoria, BC V8T 5K2",
+        "lat": 48.440885,
+        "lon": -123.378494,
+        "coord_precision": "approximate"
+      }
+    ],
+    "media_links": [
+      "https://www.selkirkmontessori.ca/admissions/virtual-tour"
+    ],
+    "advantages": [
+      "Montessori continues to Grade 8, well past early childhood",
+      "Moderate fees for an urban Montessori school",
+      "Teacher-training institute on site signals method depth"
+    ],
+    "limitations": [
+      "Ends at Grade 8",
+      "Latest dated fee schedule is 2025-26; 2026-27 figures on the web page carry no year label"
+    ],
+    "nearby_cities_km": null,
+    "qualifying": "qualifying",
+    "qualifying_reason": "Private Group 1 school with Montessori to Grade 8; register and official site read; latest dated tuition (2025-26) recorded with its year and the unlabelled current figure noted."
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://www.selkirkmontessori.ca/admissions/tuition",
+      "title": "Tuition & Fees",
+      "publisher": "Selkirk Montessori School",
+      "source_type": "school_official",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://cdn.prod.website-files.com/693cef90ed64c5b7e2e2ceed/69822ca0a49ca0249bf9fea2_2025-2056_schedule_of_fees.pdf",
+      "title": "Schedule of Fees 2025-2026 (PDF)",
+      "publisher": "Selkirk Montessori School",
+      "source_type": "school_official",
+      "accessed": "2026-10-30",
+      "data_period": "2025-2026"
+    },
+    {
+      "url": "https://bcschoolcontacts.gov.bc.ca/api/download/allindependentschools.csv",
+      "title": "School District and Contact Information app — all independent schools (CSV, includes Group Classification by grade band)",
+      "publisher": "B.C. Ministry of Education and Child Care",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://catalogue.data.gov.bc.ca/dataset/95da1091-7e8c-4aa6-9c1b-5ab159ea7b42",
+      "title": "BC Schools – K-12 with Francophone Indicators (school locations, 2025/2026)",
+      "publisher": "B.C. Ministry of Education and Child Care / DataBC",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30",
+      "data_period": "2025-2026",
+      "licence": "Open Government Licence – British Columbia"
+    },
+    {
+      "url": "https://www2.gov.bc.ca/gov/content/education-training/k-12/administration/legislation-policy/independent-schools/classification-of-independent-schools",
+      "title": "Classification of Independent Schools",
+      "publisher": "Government of British Columbia",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30"
+    }
+  ],
+  "units": {
+    "tuition": "CAD"
+  },
+  "verification": {
+    "status": "verified",
+    "confidence": "medium",
+    "verified_by": "agent-03",
+    "last_verified": "2026-10-30",
+    "next_review": "2027-09-01",
+    "notes": "Register and official site read. Confidence medium because the newest fee page is not dated; the dated figure is for 2025-26."
+  },
+  "limitations": "Tuition dated 2025-26; confirm 2026-27 figures with the school.",
+  "responsible_agent": "agent-03",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

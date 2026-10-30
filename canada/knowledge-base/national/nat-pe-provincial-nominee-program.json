@@ -1,0 +1,74 @@
+{
+  "id": "nat-pe-provincial-nominee-program",
+  "category": "nat",
+  "subcategory": "immigration",
+  "name": "Prince Edward Island Provincial Nominee Program (PEI PNP)",
+  "name_fr": "Programme des candidats de l'Île-du-Prince-Édouard",
+  "geo": {
+    "province": "PE",
+    "region": null,
+    "city": null,
+    "neighbourhood": null,
+    "address": null,
+    "lat": null,
+    "lon": null,
+    "coord_precision": "unknown",
+    "coord_source": null,
+    "extent": "province or territory"
+  },
+  "description": "Skilled-worker streams of the Prince Edward Island Provincial Nominee Program (PEI PNP) and whether they run through Express Entry (an Express Entry-aligned nomination adds 600 CRS points).",
+  "attributes": {
+    "jurisdiction": "Prince Edward Island",
+    "legal_status": "in force on the access date (provincial programme under a federal–provincial agreement)",
+    "skilled_worker_streams": [
+      {
+        "stream": "Labour Impact — Skilled Worker, Critical Worker, International Graduate",
+        "summary": "With a PEI job offer and employer support"
+      },
+      {
+        "stream": "PEI Express Entry",
+        "summary": "Federal Express Entry profile (FSW, FST or CEC); priority to people living and working in PEI"
+      }
+    ],
+    "express_entry_aligned": "Yes — PEI Express Entry stream",
+    "notes": "Expression of Interest system; 2026 invitation totals not readable in this pass.",
+    "federal_target_ref": "nat-ca-immigration-levels-plan-2026-2028 (PNP 91,500 in 2026, all provinces)",
+    "status_dependency": "Eligibility depends on occupation (NOC/TEER), job offer, language scores and existing ties to the province — all unknown (USER-PROFILE.md; OPEN-QUESTIONS.md items 2, 4, 7)."
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://www.princeedwardisland.ca/sites/default/files/publications/pei_pnp_express_entry_guide.pdf",
+      "title": "PEI PNP Express Entry Application Guide",
+      "publisher": "Government of Prince Edward Island",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": null
+    },
+    {
+      "url": "https://www.princeedwardisland.ca/en/topic/expression-of-interest",
+      "title": "Expression of Interest",
+      "publisher": "Government of Prince Edward Island",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30",
+      "data_period": null,
+      "methodology": null,
+      "licence": null
+    }
+  ],
+  "units": null,
+  "verification": {
+    "status": "partially_verified",
+    "confidence": "medium",
+    "verified_by": "agent-01",
+    "last_verified": "2026-10-30",
+    "next_review": "2026-11-29",
+    "notes": "Read through search-engine extracts of the provincial programme's official pages, not fetched in full."
+  },
+  "responsible_agent": "agent-01",
+  "limitations": "Stream rules change several times a year and intake is often by invitation only; read the provincial guide in force before applying.",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}

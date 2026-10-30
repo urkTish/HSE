@@ -1,0 +1,156 @@
+{
+  "id": "school-bc-victoria-oak-and-orca-bioregional-school",
+  "category": "school",
+  "subcategory": "Open-classroom / bioregional, K–12 + online learning",
+  "name": "Oak and Orca Bioregional School (and Oak and Orca School online learning)",
+  "name_fr": null,
+  "geo": {
+    "province": "BC",
+    "region": "Capital Regional District",
+    "city": "Victoria",
+    "neighbourhood": "Oaklands / Hillside",
+    "address": "2738 Higgins Street, Victoria, BC V8T 3N1",
+    "lat": 48.441748,
+    "lon": -123.349779,
+    "coord_precision": "approximate",
+    "coord_source": "BC Ministry school-location dataset 2025/2026 (DataBC geocode of the registered address)"
+  },
+  "description": "Victoria independent school founded 1999 offering an on-site K–12 'open classroom' bioregional programme (multi-age, non-graded, child-led inquiry) and a separate Group 1 provincial online learning school ('Hands-On Home-Learning') for home learners across B.C., with blended 1–4 day options and a forest-school day.",
+  "attributes": {
+    "website": "https://www.oakandorca.ca/",
+    "models": [
+      "self_directed",
+      "project_based",
+      "experiential_outdoor",
+      "forest_school",
+      "distributed_learning",
+      "hybrid",
+      "homeschool_support"
+    ],
+    "philosophy": "Open classroom: multi-age, non-graded, emergent curriculum, child-directed choice between teacher-led workshops and self-directed activities; bioregional (place-based) education. High school by mentor-planned inquiry projects mapped to ministry standards.",
+    "legal_status": {
+      "label": "Independent school, Group 1 (on-site school and separate online learning school)",
+      "province_category": "Group 1 (all grade bands, both schools)",
+      "authority": "B.C. Ministry of Education and Child Care — Independent Schools Branch",
+      "registered": true,
+      "publicly_funded": true,
+      "inspected": true,
+      "can_issue_provincial_diploma": true,
+      "source_url": "https://bcschoolcontacts.gov.bc.ca/api/download/allindependentschools.csv"
+    },
+    "institution_type": "independent_private_school",
+    "ages": {
+      "min": 5,
+      "max": 18
+    },
+    "grades": "Pre-primary and K–12 on site; K–12 online learning (home learning)",
+    "language_of_instruction": [
+      "English"
+    ],
+    "curriculum": "B.C. curriculum met through inquiry and interest-based projects.",
+    "qualifications_offered": "B.C. Dogwood through the high-school programme (first graduation 2014 reported by the school).",
+    "accreditation": [
+      "B.C. Group 1 classification",
+      "Listed by the Ministry as an independent online learning school"
+    ],
+    "tuition": {
+      "amount_cad_min": 2500,
+      "amount_cad_max": 4000,
+      "period": "year",
+      "school_year": null,
+      "notes": "On-site full time: $250–$400 per month on a sliding scale, September–June (≈$2,500–$4,000/yr, computed), plus $100 activity fee. Blended on-site add-on for online-learning students: $1,050–$1,200/yr (1 day/week), $1,875–$2,175/yr (2 days/week). The page does not state the school year. Online (home-learning) enrolment fee not stated.",
+      "source_url": "https://www.oakandorca.ca/learn-with-us/on-site-school-k-12/"
+    },
+    "additional_fees": "Activity fee $100/yr (on-site).",
+    "admission": "Application via the school site.",
+    "class_size": "Low student-teacher ratio stated; no figures.",
+    "boarding": false,
+    "transportation": null,
+    "campuses": [
+      {
+        "name": "Higgins Street site",
+        "address": "2738 Higgins St, Victoria, BC V8T 3N1",
+        "lat": 48.441748,
+        "lon": -123.349779,
+        "coord_precision": "approximate"
+      }
+    ],
+    "media_links": [
+      "https://www.oakandorca.ca/"
+    ],
+    "advantages": [
+      "Genuinely learner-directed, non-graded model with a Dogwood pathway",
+      "Very low fees",
+      "Online learning school lets families anywhere in B.C. enrol and blend with on-site days"
+    ],
+    "limitations": [
+      "Tuition page carries no school-year label",
+      "Small school; facilities modest"
+    ],
+    "nearby_cities_km": null,
+    "qualifying": "unverified_candidate",
+    "qualifying_reason": "Model and legal status verified (official site, B.C. register, ministry list of independent online learning schools), but the published tuition has no school year, so the record cannot be marked verified under SPEC §7. Strong candidate: confirm the fee year with the school."
+  },
+  "data_kind": "official_fact",
+  "sources": [
+    {
+      "url": "https://www.oakandorca.ca/learn-with-us/on-site-school-k-12/",
+      "title": "On-Site School K-12",
+      "publisher": "Oak and Orca School",
+      "source_type": "school_official",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://www.oakandorca.ca/learn-with-us/home-learning-blended-on-site/",
+      "title": "Home Learning Blended On-Site",
+      "publisher": "Oak and Orca School",
+      "source_type": "school_official",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://www.oakandorca.ca/",
+      "title": "Home",
+      "publisher": "Oak and Orca School",
+      "source_type": "school_official",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://www2.gov.bc.ca/gov/content/education-training/k-12/administration/program-management/online-learning/independent-online-learning-programs",
+      "title": "Independent online learning schools (updated 2025-09-10)",
+      "publisher": "Government of British Columbia",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://bcschoolcontacts.gov.bc.ca/api/download/allindependentschools.csv",
+      "title": "School District and Contact Information app — all independent schools (CSV, includes Group Classification by grade band)",
+      "publisher": "B.C. Ministry of Education and Child Care",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30"
+    },
+    {
+      "url": "https://catalogue.data.gov.bc.ca/dataset/95da1091-7e8c-4aa6-9c1b-5ab159ea7b42",
+      "title": "BC Schools – K-12 with Francophone Indicators (school locations, 2025/2026)",
+      "publisher": "B.C. Ministry of Education and Child Care / DataBC",
+      "source_type": "provincial_government",
+      "accessed": "2026-10-30",
+      "data_period": "2025-2026",
+      "licence": "Open Government Licence – British Columbia"
+    }
+  ],
+  "units": {
+    "tuition": "CAD"
+  },
+  "verification": {
+    "status": "partially_verified",
+    "confidence": "medium",
+    "verified_by": "agent-03",
+    "last_verified": "2026-10-30",
+    "next_review": "2027-09-01",
+    "notes": "Everything except the tuition year verified."
+  },
+  "limitations": "Tuition year missing; annual figure computed from the monthly range over ten months.",
+  "responsible_agent": "agent-03",
+  "created": "2026-10-30",
+  "updated": "2026-10-30"
+}
