@@ -408,7 +408,10 @@ def _round_owner(
         )
         if not (mine or sub or insp):
             raise forbidden_error()
-    return r.project_id, r.status not in (QIrStatus.cancelled, QIrStatus.voided)
+    # evidence of a decided round stays as signed: files are added while the step is pending
+    return r.project_id, (r.status in IR_PENDING or r.status == QIrStatus.draft) and (
+        rnd.round_no == r.current_round
+    )
 
 
 def _punch_owner(
