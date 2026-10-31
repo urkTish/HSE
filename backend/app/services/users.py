@@ -36,6 +36,7 @@ from app.services.common import duplicate, invalid_transition, paginate, require
 from app.services.permissions import (
     CONTRACTOR_ROLES,
     OFFICER_ASSIGNABLE,
+    QUALITY_ROLES,
     Grant,
     Principal,
     deny,
@@ -277,6 +278,14 @@ def _authorize_assignment(
     project = db.get(Project, project_id)
     if project is None or not p.can_see_project(project_id):
         raise deny(db, p, EntityType.project, project_id, project_id, "Project")
+    if role in QUALITY_ROLES and not p.is_manager:
+        # 8-quality Q-ROL-01: the project's qa_qc_manager (239, never contractor-assigned) assigns
+        # the quality roles; an HSE Officer may not
+        g = p.grant(project_id, Capability.quality_settings)
+        if g is None:
+            raise _role_not_assignable(role)
+        p.ensure_writer()
+        return g
     grant = p.require(project_id, Capability.user_invite)
     if not p.is_manager and role not in OFFICER_ASSIGNABLE:
         raise _role_not_assignable(role)
@@ -324,6 +333,13 @@ def _validate_assignment(
         )
         if found != set(site_ids):
             raise validation_error("site_ids", "All sites must belong to the project.")
+    if role in QUALITY_ROLES and engagement_id is not None:
+        # Q-ROL-02: an optional engagement narrows every Quality grant to its tree
+        eng_q = db.get(ProjectEngagement, engagement_id)
+        if eng_q is None or eng_q.project_id != project_id:
+            raise validation_error(
+                "contractor_engagement_id", "The engagement must be on the same project."
+            )
     if role in CONTRACTOR_ROLES:
         eng = db.get(ProjectEngagement, engagement_id) if engagement_id else None
         if eng is None or eng.project_id != project_id:

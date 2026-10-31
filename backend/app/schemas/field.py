@@ -46,6 +46,7 @@ from app.core.field_enums import (
     VersionStatus,
 )
 from app.core.hse_enums import CaStatus, ControlLevel, InspectionType
+from app.core.quality.common import QChecklistType, QProfileScope
 from app.schemas.common import ApiModel, Page, PatchInput, StrictInput
 from app.schemas.hse_common import ApiWarning, EngagementRef, SiteRef, UserRef, ZoneRef
 from app.schemas.kpi import KpiContext, KpiValue
@@ -148,7 +149,7 @@ class ItemOption(ApiModel):
 
 
 class TemplateItem(ApiModel):
-    item_code: str = Field(pattern=r"^[A-Z]{2,8}-[0-9]{2,3}$", examples=["GSI-05"])
+    item_code: str = Field(pattern=r"^[A-Z][A-Z0-9-]{1,8}-[0-9]{2,3}$", examples=["GSI-05"])
     section_code: str = Field(max_length=4)
     order: int = 0
     text_en: str = Field(max_length=300)
@@ -176,10 +177,21 @@ class TemplateItem(ApiModel):
 class TemplateCreate(StrictInput):
     """Capability 192. A new code starts at v1; an existing code gets the next version (Draft)."""
 
-    template_code: str = Field(pattern=r"^[A-Z]{2,8}$", examples=["GSI"])
+    template_code: str = Field(
+        pattern=r"^[A-Z][A-Z0-9-]{1,7}$",
+        examples=["GSI", "QSTC-FW"],
+        description="Letters only for HSE kinds; kind quality starts with Q and may use digits "
+        "and - (8-quality Q-CHK-01).",
+    )
     kind: TemplateKind
     inspection_type: InspectionType | None = None
     audit_type: AuditType | None = None
+    quality_type: QChecklistType | None = Field(
+        default=None, description="Kind quality only (list QCT)."
+    )
+    sector_profiles: QProfileScope | None = Field(
+        default=None, description="Kind quality only: both / construction / logistics."
+    )
     title_en: str = Field(min_length=1, max_length=150)
     title_ar: str = Field(default="", max_length=150)
     sections: list[TemplateSection] = Field(default_factory=list)
@@ -220,6 +232,8 @@ class TemplateRead(ApiModel):
     kind: TemplateKind
     inspection_type: InspectionType | None
     audit_type: AuditType | None
+    quality_type: QChecklistType | None = None
+    sector_profiles: QProfileScope | None = None
     title_en: str
     title_ar: str
     sections: list[TemplateSection]
