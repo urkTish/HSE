@@ -252,7 +252,7 @@ Seeded positions per profile: construction CONSULTANT_RE (Consultant Resident En
 
 ## A.5 Numbering (Q-NUM)
 
-- **Q-NUM-01.** Each record type of list QRT has a format in `q_numbering` (editable by 239): tokens `{PFX}` (type prefix), `{PROJECT}` (project code), `{SITE}` (site code), `{DISC}` (discipline code where the type has one), `{YYYY}`, `{YY}`, `{SEQ3}`…`{SEQ6}` (zero-padded sequence), literal `-` `/` `_` and letters. Default `{PFX}-{PROJECT}-{YYYY}-{SEQ4}` (e.g. `NCR-ANIA-EXP-2026-0041`); ITP `{PFX}-{PROJECT}-{DISC}-{SEQ3}`; reset `yearly` (default) or `never`.
+- **Q-NUM-01.** Each record type of list QRT has a format in `q_numbering` (editable by 239): tokens `{PFX}` (type prefix), `{PROJECT}` (project code), `{SITE}` (site code), `{DISC}` (discipline code where the type has one), `{YYYY}`, `{YY}`, `{SEQ3}`…`{SEQ6}` (zero-padded sequence), literal `-` `/` `_` and letters. Default `{PFX}-{PROJECT}-{YYYY}-{SEQ4}` (e.g. `NCR-ANIA-EXP-2026-0041`); high-volume types (IR, punch item, test request, receipt, FEFO check, trip, damage report) `{PFX}-{PROJECT}-{YYYY}-{SEQ5}`; ITP `{PFX}-{PROJECT}-{DISC}-{SEQ3}` and documents `{PROJECT}-QA-{PFX}-{SEQ3}` (reset `never`); M&TE `{PFX}-{SEQ4}` (reset `never`, unique per project); reset `yearly` (default) or `never`.
 - **Q-NUM-02.** A format must contain one `{SEQn}` and, when reset is yearly, `{YYYY}` or `{YY}` (`NUMBER_FORMAT_INVALID`). The rendered number is ≤ 40 characters.
 - **Q-NUM-03.** Numbers are assigned when a record leaves Draft (drafts show "Draft"), from a per-project, per-type, per-year sequence locked with the project row (`hse_common.next_seq` pattern), so two submissions never get the same number (AC-Q0-17). Numbers are never reused, including after void.
 - **Q-NUM-04.** A format change applies to numbers assigned after it; existing numbers never change. Revisable records (ITP, MAR, WPS, documents) append the revision in display (`… Rev.2`), not in the number.
@@ -283,7 +283,7 @@ Seeded positions per profile: construction CONSULTANT_RE (Consultant Resident En
 `q_systems`: code (`^[A-Z0-9-]{2,20}$`, unique per project), name EN / AR, discipline (list DSC, §B.1), parent system (≤ 3 levels), zone_ids, status active / archived. Used by Q1 (IRs, punch, dossiers) and Q2 (tests, welds).
 
 ### A.8.2 Supplier master — سجل الموردين
-Org-wide, like contractors (Phase 0 §3.4). `q_suppliers`: supplier_code (`^[A-Z0-9]{2,12}$`, unique), legal_name_en / _ar (unique, normalised as Phase 0 rule 45), cr_number (optional; same validation as contractors), vat_number (optional), country, categories (list SC, ≥ 1), contractor_id (optional link when the supplier is also a contractor), scope_en / _ar (what they supply), contact name / mobile / email (personal), status (list SS), status_reason, approved_scope (text), next_evaluation_due (sys, Q4), `tpi_id` (optional link to a Phase 4 TPI, for calibration and NDT bodies). `q_supplier_accreditations`: body (`sac` · `ilac_mra_other` · `other`), standard (`iso_iec_17025` · `iso_iec_17020` · `iso_9001` · `iso_22000` · `other`), number, scope (text and test-type codes), valid_from, valid_until, certificate file.
+Org-wide, like contractors (Phase 0 §3.4). `q_suppliers`: supplier_code (`^[A-Z0-9-]{2,12}$`, unique), legal_name_en / _ar (unique, normalised as Phase 0 rule 45), cr_number (optional; same validation as contractors), vat_number (optional), country, categories (list SC, ≥ 1), contractor_id (optional link when the supplier is also a contractor), scope_en / _ar (what they supply), contact name / mobile / email (personal), status (list SS), status_reason, approved_scope (text), next_evaluation_due (sys, Q4), `tpi_id` (optional link to a Phase 4 TPI, for calibration and NDT bodies). `q_supplier_accreditations`: body (`sac` · `ilac_mra_other` · `other`), standard (`iso_iec_17025` · `iso_iec_17020` · `iso_9001` · `iso_22000` · `other`), number, scope (text and test-type codes), valid_from, valid_until, certificate file.
 
 **SC — supplier categories:** `material_supplier` مورد مواد · `manufacturer` مصنّع · `subcontractor` مقاول باطن · `testing_lab` مختبر اختبارات · `calibration_lab` مختبر معايرة · `ndt_provider` مزود فحص غير إتلافي · `carrier` ناقل · `pest_control` مكافحة آفات · `cleaning` تنظيف · `packaging` تغليف · `shipper` شاحن / مورد البضاعة · `service` خدمات · `other` أخرى.
 **SS — supplier status:** `draft` مسودة → `pending_approval` بانتظار الاعتماد → `approved` معتمد · `conditional` معتمد بشروط · `suspended` موقوف · `disqualified` مستبعد.
@@ -317,7 +317,7 @@ All Quality files go through `attachments.store` (virus scan D-302, photo shrink
 |---|---|---|---|---|---|---|
 | ncr_no | رقم التقرير | string(40) | sys | Q-NUM; at Draft → Open | NCR-ANIA-EXP-2026-0044 | none |
 | profile | القطاع | enum | sys | profile at raise | construction | none |
-| source_type / source_id / source_ref | المصدر | enum / UUID / string | Y / cond. / sys | list NS; id required except `manual`; ref copied (Q-NCR-02) | test_result / … / TST-ANIA-EXP-2026-0388 | none |
+| source_type / source_id / source_ref | المصدر | enum / UUID / string | Y / cond. / sys | list NS; id required except `manual`; ref copied (Q-NCR-02) | test_result / … / TST-ANIA-EXP-2026-00388 | none |
 | site_id / zone_id / system_id / location_ref | الموقع / المنطقة / النظام / الموقع التفصيلي | FK / FK / FK / string(120) | Y / N / N / N | from the source when it has them | S-LAND / Z-PIERB / — / Level 3 slab, grid C14–C20 | none |
 | title | العنوان | string(150) | Y | — | 28-day cylinder strength below acceptance, pour POUR-ANIA-EXP-2026-0077 | none |
 | requirement_en / _ar | المتطلب | text(1000) | Y (one language) | what was required: criterion, spec clause, drawing | f'c 40 MPa; ACI 318 §26.12.3.1 `[VERIFY]` | none |
@@ -413,7 +413,7 @@ Attachments (`q_ncr` photos, `q_ncr_evidence` evidence files). Every change audi
 - **Q-NCR-15.** **Close** needs: disposition implemented; every linked CA Closed or Cancelled (cancelled with reason); every `reject_return` / `reject_scrap` line evidenced; costs recorded (Q-NCR-14); and no blocker from the source adapter's `close_check` (e.g. a rework IR not yet approved, a hold not released or rejected). The verifier is the user who resolves for `ncr.close`; Q-RPM-06 applies.
 - **Q-NCR-16.** **Repeat NCR:** on Open, an NCR is a repeat when a not-voided NCR with the same `category`, the same responsible party (supplier when set, else responsible engagement) and the same `item_key` was opened within the previous `ncr_repeat_days`. A repeat sets `repeat_of`, raises minor to major (Q-NCR-05 raise), and requires RCA method `five_why`, `ishikawa` or `eight_d`.
 - **Q-NCR-17.** **Effectiveness:** at closure, `effectiveness.due_on` = closed_date + `ncr_effectiveness_days`. On the due date the job proposes "effective" when no repeat (Q-NCR-16 key) was opened since closure, else "not effective"; a 242 holder confirms. "Not effective" offers a new linked NCR (source `manual`, link `relates`). The closed NCR stays closed.
-- **Q-NCR-18.** Ageing and timing: age_days = local today − local date(opened_at) for NCRs not Closed or Voided; closure_days = closed_date − local date(opened_at); on-time ⇔ closed_date ≤ target_close_date. A reopened NCR keeps its opened_at and target date; its closure_days use the final closure.
+- **Q-NCR-18.** Ageing and timing: age_days = local today − local date(opened_at) for NCRs not Closed or Voided; closure_days = closed_date − local date(opened_at); on-time ⇔ closed_date ≤ target_close_date. A reopened NCR keeps its opened_at and target date; its closure_days use the final closure. **Worked example QX3:** opened 2026-08-10, still open on 2026-10-06 → age **57** days (bucket 31–60); a major NCR opened 2026-08-10 (target 2026-09-09) and closed 2026-09-15 → closure_days **36**, not on time.
 - **Q-NCR-19.** The NCR PDF (EN or AR, Hijri date, project, all sections, sign-offs, photos thumbnails, cost summary without rates if the reader lacks 242) uses the 6g renderer.
 
 ### A.9.5 CAPA through the existing corrective actions (Q-CAP)
@@ -767,7 +767,7 @@ Profile: construction. Every write in this part needs the project profile `const
 
 | Field | AR label | Type | Req | Validation | Example | PDPL |
 |---|---|---|---|---|---|---|
-| punch_no | رقم البند | string | sys | Q-NUM | PCH-ANIA-EXP-2026-0318 | none |
+| punch_no | رقم البند | string | sys | Q-NUM | PCH-ANIA-EXP-2026-00318 | none |
 | site_id / zone_id / system_id / location_ref | الموقع | FK / FK / FK / string(120) | Y / Y / N / Y | — | S-LAND / Z-PIERB / — / Gate B4 lounge, column C17 | none |
 | discipline | التخصص | enum | Y | list DSC | ARC | none |
 | description_en / _ar | الوصف | text(500) | Y (one language) | P1-8 scan | Ceiling tile damaged and stained | none |
@@ -898,7 +898,7 @@ Seeded test types (Appendix A.2 has their criteria): `CONC-CYL` concrete cylinde
 ### C.2.2 Test request — طلب اختبار (`q_test_requests`, `q_test_specimens`)
 | Field | AR label | Type | Req | Validation | Example | PDPL |
 |---|---|---|---|---|---|---|
-| test_no | رقم الطلب | string | sys | Q-NUM | TST-ANIA-EXP-2026-0388 | none |
+| test_no | رقم الطلب | string | sys | Q-NUM | TST-ANIA-EXP-2026-00388 | none |
 | test_type + version | نوع الاختبار | FK | Y | Published; profile matches | CONC-CYL v1 | none |
 | site / zone / system / location_ref | الموقع | FK / FK / FK / string | Y / N / N / Y | — | S-LAND / Z-PIERB / — / Level 3 slab bay C14 | none |
 | lab_supplier_id | المختبر | FK | Y | category `testing_lab` (or `ndt_provider`); Q-SHR-02 / -03 | LAB-RGM | none |
@@ -1141,7 +1141,7 @@ Kinds: `readings` (logger files), `stock_snapshot`, `shipments`, `products`, `cy
 | po_ref / asn_ref | أمر الشراء / إشعار الشحن | string(40) ×2 | N | — | PO-77812 / ASN-GFF-26-0914 | none |
 | vehicle_plate / reefer_display_c | لوحة المركبة / عرض حرارة الوحدة | string(20) / decimal | N | — | 4521 RJA / −19.0 | none |
 | seal_expected / seal_actual / seal_intact | الختم | string ×2 / bool | N / Y / Y | mismatch flagged (Q-RCV-06) | 0098812 / 0098812 / true | none |
-| arrived_at / unload_start / unload_end | الوصول / بدء وانتهاء التفريغ | timestamptz ×3 | Y / Y / Y | order | 06:10 / 06:25 / 06:48 | none |
+| expected_at / arrived_at / unload_start / unload_end | الموعد / الوصول / بدء وانتهاء التفريغ | timestamptz ×4 | N / Y / Y / Y | order; expected_at = booked slot (feeds supplier on-time delivery, §E.3) | 06:00 / 06:10 / 06:25 / 06:48 | none |
 | vehicle_check | فحص المركبة | checklist response (`receiving`) | Y | template QRCV | — | none |
 | transit_data | بيانات النقل | import batch | N | logger file of the inbound trip | — | none |
 | lines | البنود | list `q_receipt_lines` | Y | ≥ 1 | 6 lines | none |
@@ -1259,7 +1259,7 @@ Hold status (derived): On Hold محجوز (any line on hold) → Released مُف
 - **Q-RCL-04.** effectiveness % = (on hand + retrieved + confirmed destroyed by consignees + destroyed in the warehouse) ÷ received × 100 for a real recall; for a mock recall = (on hand + shipped and traced to a named consignee + destroyed) ÷ received × 100. Closing below `recall_effectiveness_target_pct` needs a justification ≥ 50 chars (`RECALL_TARGET_NOT_MET`); a trace slower than `recall_trace_target_hours` is flagged.
 - **Q-RCL-05.** A site without a closed mock recall in the last `mock_recall_months` alerts 239 holders monthly; counted in the K-166 chip set.
 - **Q-RCL-06.** A real recall is class `critical` for its NCR (source `recall`, auto), linked to the supplier when known.
-- **Worked example QX16** (mock recall MR of batch NDC-Y-2609, 2026-09-08 09:00): received 4,800; on hand 1,150; shipped 3,620 to 14 consignees; destroyed 0 at first → accounted 4,770 → **99.4 %**; linking DMG-RUH-CCH-2026-0207 (30 units destroyed) → **100.0 %**; trace completed 11:35 → **2 h 35 min** ≤ 4 h.
+- **Worked example QX16** (mock recall MR of batch NDC-Y-2609, 2026-09-08 09:00): received 4,800; on hand 1,150; shipped 3,620 to 14 consignees; destroyed 0 at first → accounted 4,770 → **99.4 %**; linking DMG-RUH-CCH-2026-00207 (30 units destroyed) → **100.0 %**; trace completed 11:35 → **2 h 35 min** ≤ 4 h.
 
 ## D.9 Transport — النقل (Q-TRN)
 
@@ -1317,7 +1317,7 @@ Hold status (derived): On Hold محجوز (any line on hold) → Released مُف
 6. **AC-Q3-06** (Q-RCV-02) **Given** the yoghurt line **When** Imran records accept **Then** 422 `DECISION_BETTER_THAN_CRITERIA` unless a `receipt.deviation` sign-off with reason is given.
 7. **AC-Q3-07** (Q-RCV-03) **Given** Gulf Frozen Foods with owner_release_approval **When** accept_with_deviation is signed without the owner's file **Then** 422 `OWNER_DECISION_REQUIRED`.
 8. **AC-Q3-08** (Q-RCV-04, Q-RCV-05) **Given** a line decided quarantine **Then** a hold with that line exists; a reject without NCR or claim no. **Then** 422 `REJECT_NEEDS_NCR_OR_CLAIM`.
-9. **AC-Q3-09** (Q-RCV-07, Q-SHR-04) **Given** a chilled line without M&TE **Then** 422 `MTE_REQUIRED`; with overdue MTE-0042 under policy warn **Then** saved with warning and a usage row.
+9. **AC-Q3-09** (Q-RCV-07, Q-SHR-04) **Given** a chilled line without M&TE **Then** 422 `MTE_REQUIRED`; with an overdue probe under policy warn **Then** saved with warning and a usage row.
 10. **AC-Q3-10** (Q-RCV-08) **Given** unloading 06:25–07:05 for a frozen receipt **Then** warning `DOCK_DWELL_LONG` (40 > 30).
 11. **AC-Q3-11** (Q-EXC-01, Q-EXC-02, QX12) **Given** QX12 readings **Then** one excursion 08:15–09:15, 60 min, max deviation 1.6, degree-minutes 58.5, severity minor; no NCR; no auto hold.
 12. **AC-Q3-12** (Q-EXC-03) **Given** a run of 10 min out of range in Z-CHL1 (alarm delay 15) **Then** a transient: no excursion, no alert, 10 min in TOR.
@@ -1338,7 +1338,7 @@ Hold status (derived): On Hold محجوز (any line on hold) → Released مُف
 27. **AC-Q3-27** (Q-HYG-03) **Given** station RB-14 in Z-DRY1 with activity on two consecutive visits **Then** a quality alert and an NCR are proposed; any activity in Z-CHL1 proposes them at the first visit.
 28. **AC-Q3-28** (Q-STK-02) **Given** the latest snapshot **Then** expired and near-expiry lines are listed per owner; an expired line not on hold triggers the daily alert and "Place hold".
 29. **AC-Q3-29** (Q-STK-04) **Given** batch B1 (expiry 2026-11-05) available and B2 (2026-11-30) picked **Then** non_compliant; with B1 on hold **Then** compliant.
-30. **AC-Q3-30** (Q-HLD-04) **Given** HLD-…-0112 with its NCR in Open **When** Saad releases a line **Then** 422 `HOLD_RELEASE_BLOCKED`; after the excursion is Assessed and the NCR disposition Approved **Then** released with a sign-off.
+30. **AC-Q3-30** (Q-HLD-04) **Given** an excursion hold whose NCR is Open (HLD-…-0112 before its assessment) **When** Saad releases a line **Then** 422 `HOLD_RELEASE_BLOCKED`; after the excursion is Assessed and the NCR disposition Approved **Then** released with a sign-off.
 31. **AC-Q3-31** (Q-HLD-02, Q-HLD-03) **Given** a zone-level hold placed 2026-10-05 09:00 without lines **Then** an alert at 2026-10-06 09:00; no segregation photo by 13:00 on the day of placing **Then** an alert at 13:00.
 32. **AC-Q3-32** (Q-HLD-06) **Given** a rejected line **When** the hold is closed without a destruction or return document **Then** 422.
 33. **AC-Q3-33** (Q-STK-08) **Given** a chilled return line without temperature history **When** graded A **Then** 422 `COLD_RETURN_NO_HISTORY`.
@@ -1348,7 +1348,427 @@ Hold status (derived): On Hold محجوز (any line on hold) → Released مُف
 37. **AC-Q3-37** (Q-TRN-01) **Given** frozen and chilled shipments in a one-compartment trip **Then** 422 `INCOMPATIBLE_LOAD`.
 38. **AC-Q3-38** (Q-TRN-02) **Given** a pre-load with box temperature −12 °C for a frozen compartment set at −20 °C **When** dispatched **Then** 422 `PRELOAD_FAILED`; with a `trip.dispatch_override` by Saad **Then** dispatched; with a pharma compartment **Then** 422 `OVERRIDE_NOT_ALLOWED`.
 39. **AC-Q3-39** (Q-TRN-04) **Given** a trip naming a Phase 2 vehicle whose 7b Istimara expired **Then** warning `VEHICLE_NOT_READY` and no 7b record is created.
-40. **AC-Q3-40** (Q-TRN-05, Q-TRN-06) **Given** TRP-RUH-CCH-2026-0921 with a transit excursion of severity major **Then** an NCR (source trip) and a notify-consignee task exist; a shipment without POD **Then** the trip cannot become Delivered (`POD_REQUIRED`).
+40. **AC-Q3-40** (Q-TRN-05, Q-TRN-06) **Given** TRP-RUH-CCH-2026-00921 with a transit excursion of severity major **Then** an NCR (source trip) and a notify-consignee task exist; a shipment without POD **Then** the trip cannot become Delivered (`POD_REQUIRED`).
 41. **AC-Q3-41** (Q-TRN-08, QX17) **Given** the September shipments of Appendix A.6 **Then** K-163 = 93.2 %.
 42. **AC-Q3-42** (Q-PRF-04) **Given** ANIA-EXP (construction) **Then** creating a receipt → 409 `PROFILE_INACTIVE`.
 43. **AC-Q3-43** (rule 41) **Given** the Arabic UI **Then** every Q3 label, storage class, status, alert, PDF and export header is in Arabic; temperatures, batch numbers and times stay LTR, and negative temperatures render with the minus sign before the digits in both directions.
+
+---
+
+# Part E — Q4: documents, audits, suppliers, KPIs, SPC, COPQ, AI, report packs
+
+Q4 runs in wave 3 from `claude/quality-pre-q4` (Q0–Q3 merged, handover §5), so it may read every Phase 8 table and edit Q0 files and the 6d / 6g / KPI / AI files named in §3.3.
+
+## E.1 Q4 settings and document control (light) — ضبط الوثائق
+
+### E.1.1 Settings (registry keys)
+| Key | AR label | Type | Default | Allowed |
+|---|---|---|---|---|
+| `doc_review_months` | دورية مراجعة الوثائق | months | 24 ASSUMPTION | 6–60 |
+| `doc_revision_scheme` | نظام ترقيم المراجعات | enum | `letters_then_numbers` (drafts A, B, …; approved 0, 1, …) | `letters_then_numbers` · `numbers` |
+| `read_ack_days` | مهلة الإقرار بالاطلاع | days | 7 | 1–30 |
+| `q_audit_frequency` | تكرار التدقيق حسب المخاطر | {high, medium, low} audits per year | 2 / 1 / 0.5 ASSUMPTION | 0.25–4 |
+| `q_audit_report_days` | مهلة إصدار تقرير التدقيق | days | 7 | 3–30 |
+| `mgmt_review_months` | دورية مراجعة الإدارة | months | 12 | 3–12 |
+| `supplier_reeval_months` | دورية إعادة تقييم الموردين | months | 12 | 3–36 |
+| `supplier_score_period` | فترة بطاقة الأداء | enum | `quarter` | `month` · `quarter` |
+| `supplier_score_weights` / anchors / bands | الأوزان / المراجع / الفئات | JSON | §E.3 | weights 0–100; bands increasing |
+| `spc_min_subgroups` | الحد الأدنى للمجموعات الفرعية | int | 20 | 8–50 |
+| `pareto_include_observations` | تضمين الملاحظات في باريتو | bool | false | — |
+| `dpmo_processes` | تعريف الفرص | JSON | §E.6 | — |
+| warning thresholds: `ncr_ontime_warning_pct`, `ftpr_warning_pct`, `test_fail_warning_pct`, `tor_warning_pct`, `transport_compliance_warning_pct` | حدود الإنذار | % | 80.0 / 85.0 / 5.0 / 0.50 / 98.0 ASSUMPTION | 0–100 |
+
+KPI targets (quality objectives, ISO 9001 6.2) live in `q_kpi_targets`: project, KPI id, target, valid_from; edited by 239; shown on tiles (RAG) and in packs.
+
+### E.1.2 Documents
+`q_documents`: doc_no (Q-NUM), type (list DT), title EN / AR, profile, discipline or process, owner user, current revision (sys), review_due_on (sys), status (sys, from the current revision).
+**DT — document types (prefix):** `pqp` Project Quality Plan خطة الجودة للمشروع (PQP) · `quality_manual` دليل الجودة (QM) · `procedure` إجراء (PRC) · `work_instruction` تعليمات عمل (WI) · `sop` إجراء تشغيل قياسي (SOP) · `method_statement` بيان طريقة العمل (MS) · `specification` مواصفة (SPC) · `form` نموذج (FRM) · `other` أخرى (DOC).
+`q_document_revisions`: rev code, file (PDF required to approve), source file (optional), change summary, effective_date, reviewers and approver (sys, from sign-offs), status `draft` مسودة → `for_review` قيد المراجعة → `approved` معتمدة → `superseded` مستبدلة; `for_review` → `draft` (returned with comments); `approved` → `obsolete` ملغاة (239, reason; the document is withdrawn).
+`q_doc_distribution`: document, members (roles, positions, engagements, users), ack_required. `q_doc_acks`: revision, user, acked_at.
+
+- **Q-DOC-01.** Revision codes follow `doc_revision_scheme`; the first approved revision is 0 (or 1 with `numbers`).
+- **Q-DOC-02.** Approval needs the PDF, ≥ 1 sign-off of `document.review` (approved or approved with comments), then `document.approve`; the author cannot review or approve (Q-RPM-06).
+- **Q-DOC-03.** An approved revision is immutable (`DOCUMENT_IMMUTABLE`); a new revision starts from the current one; approving it supersedes the previous. Superseded files stay downloadable with a banner and the file name suffix `-SUPERSEDED`.
+- **Q-DOC-04.** review_due_on = add_months(approval date, `doc_review_months`) − 1 day; alerts to the owner at 30 / 0 days; an overdue document stays valid and is flagged (K-159).
+- **Q-DOC-05.** **Read and acknowledge:** approving a revision with ack_required creates one task per distribution member (resolved at approval); due in `read_ack_days`; one reminder at the due date; ack % per revision is shown (275).
+- **Q-DOC-06.** Records cite documents by revision through `q_links` (e.g. ITP → MS Rev.2). When the cited revision is superseded, open citing records show "newer revision available".
+- **Q-DOC-07.** **Transmittals** (`q_transmittals`, `q_transmittal_items`): trm_no, to (engagement, supplier, customer or an external organisation name and email), purpose (`for_approval` · `for_review` · `for_information` · `for_construction` · `as_built`), items (document revisions or Phase 8 records such as ITPs and MARs), sent_at, method (`email` · `portal` · `hand`), response due, response received (date, name), per-item response code A / B / C / D, cover sheet PDF (EN / AR, Hijri date). "Send by email" uses the email outbox with attachments (D-280, 20 MB limit) to the external address.
+- **Q-DOC-08.** Not an EDMS: no drawing register, markup, check-in / check-out or folder tree (handover §4).
+
+## E.2 Quality audits and management review (Q-AUD, Q-MRV)
+
+### E.2.1 Audits on the 6d engine
+Quality audits are rows of 6d `field_audits` with a new column `domain` (`hse` default · `quality`), new audit types (`qms_internal` تدقيق داخلي لنظام إدارة الجودة · `process_quality` تدقيق عملية أو منتج · `supplier_quality` تدقيق مورد · `subcontractor_quality` تدقيق جودة مقاول باطن), `auditee_supplier_id` and `process_ids`. Answers, scoring, grades, findings (`field_findings`, grades AF) and the report renderer are 6d's. `q_processes`: code, name EN / AR, owner user, profile, risk (`high` · `medium` · `low`), linked documents. `q_audit_programme_lines`: project, year, subject (process, supplier, engagement or clause set), risk, planned month, audit link, status `planned` · `scheduled` · `done` · `postponed` (reason) · `cancelled`.
+
+- **Q-AUD-01.** Domain `quality` audits use capabilities 276 / 277 instead of 6d 194 / 195, templates of kind `quality` with `quality_type` `q_audit` or `supplier_audit`, and the Phase 8 numbering (QAU).
+- **Q-AUD-02.** **Independence and competence** (ISO 19011): the lead auditor and team are not the owner of an audited process, not employed by the auditee engagement or supplier, and not the author of the audited documents' current revisions (`SOD_CONFLICT`); the lead auditor is checked against competence `QMS-AUDITOR` through `COMPETENCE` (policy).
+- **Q-AUD-03.** Items carry ISO 9001 clause references; ratings map to grades as 6d AUD-2. At issue: each `major_nc` opens an NCR (source `q_audit_finding`, class major) and each `minor_nc` an NCR (class minor), with the clause in the requirement text; observations and OFIs create a CA (source `quality_audit`) only when the issuer asks. No 6d HSE CA is created for domain `quality`.
+- **Q-AUD-04.** Issue by a 277 holder ≠ lead auditor (RPM `q_audit.issue`); report PDF EN / AR with Hijri date (6d report document); not issued within `q_audit_report_days` of fieldwork end → alerts as 6d AUD-5.
+- **Q-AUD-05.** Domain `quality` audits never enter K-114, K-115 or the 6d programme lines (6d code filters `domain = hse`); quality audits count in K-158.
+- **Q-AUD-06.** **Programme:** each active process of the project gets lines per year by risk (`q_audit_frequency`: 2 → planned months 3 and 9; 1 → month 6; 0.5 → every other year, month 6) ASSUMPTION, editable; supplier and subcontractor audits are added by hand. A line is *done on time* when an issued audit linked to it has fieldwork_end ≤ the last day of its planned month.
+- **Q-AUD-07.** Seeded templates: `Q9K` ISO 9001:2015 internal audit (56 items, clauses 4–10, rating_0_3; critical: 8.5.1 controlled conditions, 8.7 nonconforming outputs, 10.2 corrective action), `QSUP` supplier audit (30 items), `QGDP` cold-chain warehouse audit (40 items, logistics).
+
+### E.2.2 Management review — مراجعة الإدارة
+`q_management_reviews`: mrv_no, period covered, held_on, chair, attendees (users and external names), inputs (one entry per ISO 9001 9.3.2 heading: status of previous actions; changes in issues; customer satisfaction and feedback; quality objectives; process performance and conformity; nonconformities and corrective actions; monitoring and measurement results; audit results; performance of external providers; adequacy of resources; actions on risks and opportunities; opportunities for improvement — each a note or "not applicable"), KPI snapshot (sys, frozen), outputs (decisions: improvement opportunities, QMS changes, resource needs; each optionally a CA, source `quality_review`), minutes PDF, status `draft` مسودة → `held` عُقدت → `minutes_issued` صدر المحضر (277 + RPM `management_review.approve`).
+- **Q-MRV-01.** Held needs every input heading answered (`MRV_INPUTS_INCOMPLETE`).
+- **Q-MRV-02.** The KPI snapshot (K-141…K-169 of the covered period, with targets) is frozen at Held; later recalculation never changes the minutes.
+- **Q-MRV-03.** No review held for `mgmt_review_months` → alert to 239 holders.
+
+## E.3 Supplier evaluation and quality scorecards (Q-SUP)
+
+`q_supplier_evaluations`: sev_no, supplier, kind (`initial` · `periodic` · `for_cause`), method (`questionnaire` · `audit` (linked quality audit) · `document_review` · `trial_order`), criteria (list {criterion, weight, score 0–100}), total (sys, weighted mean), recommendation (`approve` · `conditional` · `reject` · `suspend`), conditions, evaluated_at, status `draft` → `submitted` → `approved` (278 / 279 + RPM `supplier_evaluation.approve`).
+`q_supplier_scores`: supplier, period, metric values and points, score, band, recommendation, status `provisional` → `final` (System, 10 days after period end).
+
+- **Q-SUP-01.** Q4 registers a `SUPPLIER_GATES` blocker: pending_approval → approved needs an approved evaluation with recommendation `approve` within the last 12 months (`conditional` for the conditional status) (`SUPPLIER_EVALUATION_REQUIRED`); labs also show Q-SHR-03 accreditation status.
+- **Q-SUP-02.** next_evaluation_due = add_months(last approved evaluation date, `supplier_reeval_months`) − 1 day; overdue alerts 278 holders; status does not change by itself ASSUMPTION.
+- **Q-SUP-03.** **Scorecard metrics** (per supplier per period; data from Q2 and Q3; a metric without data is left out and weights are re-normalised):
+
+| # | Metric | Formula | Good / bad anchor | Weight |
+|---|---|---|---|---|
+| M1 | Acceptance | lines (Q3 receipts) and MIRs (Q2) decided `accept` without deviation ÷ decided × 100 | 100 / 90 | 30 |
+| M2 | NCR rate | NCRs with this supplier opened in period ÷ deliveries (receipts + MIRs) × 100 | 0 / 5 | 20 |
+| M3 | On-time delivery | receipts with arrived_at ≤ expected_at + `otif_window_minutes` ÷ receipts with expected_at × 100 | 98 / 80 | 20 |
+| M4 | Test conformity | passed ÷ (passed + failed) test results linked to the supplier's MIRs × 100 | 100 / 90 | 15 |
+| M5 | Responsiveness | supplier responses (SCAR) received by due ÷ requested × 100 | 100 / 50 | 10 |
+| M6 | Documents | deliveries with complete certificates ÷ deliveries × 100 | 100 / 90 | 5 |
+
+  points = 6g `calc.points(v, good, bad)` (linear, clipped 0–100); score = Σ wᵢ·pointsᵢ ÷ Σ wᵢ (1 dp); band by 6g `calc.band`: A ≥ 85.0 · B ≥ 70.0 · C ≥ 50.0 · D < 50.0 ASSUMPTION.
+- **Q-SUP-04.** Band C asks the supplier for an improvement plan (task to the 278 holder); band D recommends suspension (alert to the 279 resolvers); no automatic status change.
+- **Q-SUP-05.** A supplier linked to a contractor (`contractor_id`) shows its latest quality score on the contractor page as information only; it never enters the 6g HSE scorecard.
+- **Worked example QX19** (Riyadh Readymix, Q3 2026): M1 97.5 → 75.00; M2 1.2 → 76.00; M3 91.0 → 61.11; M4 95.8 → 58.00; M5 100 → 100.00; M6 no data (left out). Score = (30 × 75 + 20 × 76 + 20 × 61.111 + 15 × 58 + 10 × 100) ÷ 95 = 6,862.22 ÷ 95 = **72.2** → band **B**.
+
+## E.4 KPI catalogue (continues 7b; K-141…K-169)
+
+General (Q-KPI): computed by the backend KPI engine from stored records (K-R1); periods and filters as Phase 1 (D-2), plus profile, supplier, discipline, storage class, test type. Records before `quality_start_date`, voided records and dismissed excursions are excluded. Rounding half-up at output only: % 1 dp (K-162 and K-164 3 dp shown as 2 / 3 dp), money 2 dp, rates 2 dp; comparisons use unrounded values. A KPI with a zero denominator shows "—". Contractor filters include descendants (K-R5); supplier filters use `supplier_id`. KPIs of a profile are shown for any period that has records (Q-PRF-05).
+
+| ID | Metric (EN / AR) | Formula | Profile | Unit | Better |
+|---|---|---|---|---|---|
+| K-141 | **First-time pass rate** / نسبة النجاح من أول مرة | n(IRs with round 1 decided in period and result approved / approved_with_comments) ÷ n(IRs with round 1 decided in period, result ∈ approved, approved_with_comments, rejected, not_ready) × 100; chips: waived, short notice, paper sign-off % | C | % | higher |
+| K-142 | IR rejection rate / نسبة رفض طلبات الفحص | n(rounds decided in period with result rejected or not_ready) ÷ n(rounds decided in period, any of the four results) × 100 | C | % | lower |
+| K-143 | NCRs raised / تقارير عدم المطابقة الصادرة | n(NCRs opened in period) by class; chip: open at as_of | both | count | — |
+| K-144 | **NCR ageing** / تقادم التقارير المفتوحة | open NCRs at as_of in buckets 0–30, 31–60, 61–90, > 90 days (Q-NCR-18); mean age | both | count, days | lower |
+| K-145 | NCR closure time / زمن إغلاق التقارير | median closure_days of NCRs closed in period; chip: mean | both | days | lower |
+| K-146 | **NCR on-time closure** / إغلاق التقارير في الموعد | n(NCRs with target_close_date in period and ≤ as_of, closed on or before it) ÷ n(NCRs with target_close_date in period and ≤ as_of) × 100; chip: quality CA on-time closure (K-41 formula over quality source types) | both | % | higher |
+| K-147 | Repeat NCR rate / نسبة التقارير المتكررة | n(NCRs opened in period with repeat_of) ÷ n(NCRs opened in period) × 100 | both | % | lower |
+| K-148 | **Cost of poor quality** / تكلفة الجودة الرديئة | Σ amount of cost lines of NCRs opened in period (gross); chips: internal / external, recovered, net, COPQ % = gross ÷ `q_work_value` of the period × 100; months with NCRs not closed are "provisional" | both | SAR, % | lower |
+| K-149 | **DPMO and sigma level** / العيوب لكل مليون فرصة ومستوى سيجما | §E.6 per process | both | DPMO, σ | lower DPMO |
+| K-150 | Pareto of defect causes / باريتو أسباب العيوب | NCR count by category (switch: cause_category 6M; IR reject_category), sorted, cumulative %, vital few (§E.6) | both | count, % | — |
+| K-151 | Material rejection rate / نسبة رفض المواد | n(MIRs decided in period with rejected_qty > 0) ÷ n(MIRs decided in period) × 100; chip: by quantity | C | % | lower |
+| K-152 | Test failure rate / نسبة فشل الاختبارات | n(test requests with verdict fail, results entered in period) ÷ n(with verdict pass or fail) × 100, by test type; chip: pours with sampling short | both | % | lower |
+| K-153 | Weld repair rate / نسبة إصلاح اللحام | Σ rejected first examinations ÷ Σ first examinations × 100 (Q-WLD-07); chips: by length, lots with NDT shortfall, lapsed WPQs | C | % | lower |
+| K-154 | **Calibration compliance** / الالتزام بالمعايرة | n(active M&TE with check_kind ≠ none, not out_of_service, status calibrated or due_soon at as_of) ÷ n(active M&TE with check_kind ≠ none, not out_of_service) × 100; chips: overdue, open OOT reviews | both | % | higher |
+| K-155 | Competence compliance / الالتزام بالكفاءة | n(person-requirement pairs met at as_of) ÷ n(applicable pairs) × 100; chip: warn-policy overrides in period | both | % | higher |
+| K-156 | Punch closure / إغلاق النواقص | n(items closed on or before target with target in period, ≤ as_of) ÷ n(items with target in period, ≤ as_of) × 100; chips: open A, open B | C | % | higher |
+| K-157 | Supplier quality score / درجة جودة الموردين | mean of the latest final scores of suppliers used in the period; chip: count by band | both | points | higher |
+| K-158 | Quality audit programme compliance / الالتزام ببرنامج تدقيق الجودة | lines done on time ÷ lines with planned month in period and ≤ as_of × 100 (Q-AUD-06); chips: major / minor NC from quality audits issued in period | both | % | higher |
+| K-159 | Document control / ضبط الوثائق | n(approved current documents not past review_due_on at as_of) ÷ n(approved current documents) × 100; chip: read-ack completion % (acks ÷ required acks of revisions whose ack due ≤ as_of) | both | % | higher |
+| K-160 | **Receiving rejection rate** / نسبة رفض الاستلام | n(receipts decided in period with ≥ 1 line rejected) ÷ n(receipts decided in period) × 100; chips: deviation rate, quarantine rate, line rejection %, dock dwell over limit | L | % | lower |
+| K-161 | **Excursions per zone-month** / الانحرافات لكل منطقة شهرياً | n(storage excursions started in period, not dismissed) ÷ n(zone-months monitored in period) (a zone-month = a storage zone with ≥ 1 monitored minute in the month); by severity; chip: transit excursions | L | per zone-month, 2 dp | lower |
+| K-162 | **Time out of range** / الزمن خارج النطاق | Σ out minutes ÷ Σ monitored minutes × 100 over storage zones (pooled, Q-STO-04 / -05); chips: coverage %, zones not mapped, gaps | L | %, 2 dp | lower |
+| K-163 | On time in full (OTIF) / التسليم في الموعد وكاملاً | n(shipments delivered in period, on time and in full, Q-TRN-08) ÷ n(shipments delivered in period with promised_at and delivered_at) × 100; "—" when no data | L | % | higher |
+| K-164 | Damage rate / نسبة التلف | units damaged (damage reports in period) ÷ units handled (Σ throughput received + dispatched) × 100; chip: ppm | L | %, 3 dp | lower |
+| K-165 | Inventory record accuracy / دقة سجلات المخزون | lines within tolerance ÷ lines counted × 100 (cycle counts in period) | L | % | higher |
+| K-166 | FEFO compliance / الالتزام بالأقدم انتهاءً أولاً | (compliant + exception with a listed reason) ÷ FEFO checks in period × 100; chips: checks vs weekly target, near-expiry lines, expired not on hold, last mock recall | L | % | higher |
+| K-167 | Transport temperature compliance / الالتزام الحراري في النقل | n(trips delivered in period with transit data and no transit excursion) ÷ n(trips delivered in period with transit data) × 100; chips: trips without data, pre-load fails, overrides | L | % | higher |
+| K-168 | Hygiene and pest check compliance / الالتزام بفحوص النظافة والآفات | due checks done in their period ÷ due checks whose period ended in period and ≤ as_of × 100; chips: mean hygiene score, stations with activity | L | % | higher |
+| K-169 | Customer complaints / شكاوى العملاء | n(complaints received in period); rate per 1,000 shipments (logistics; "—" without throughput); chips: justified %, median response days, observations raised | both | count, rate | lower |
+
+**Worked examples (backend unit tests must match):**
+- **QX2 — IRs, ANIA-EXP, September 2026:** 120 IRs had round 1 decided in September; 96 approved or approved with comments → K-141 = 96 ÷ 120 = **80.0 %**. Rounds decided in September: 120 first rounds + 21 re-inspections = 141; rejected or not ready: 24 + 3 = 27 → K-142 = 27 ÷ 141 = 19.148… = **19.1 %**. Not counted: 4 waived W rounds (chip), 2 cancelled IRs without a decided round.
+- **QX17 — OTIF, RUH-CCH, September 2026:** 1,250 shipments delivered with data; on time 1,190; in full 1,210; both 1,165 → **93.2 %**.
+- **QX18 — time out of range:** Z-CHL1 September: period 43,200 min, unmonitored 90 → monitored **43,110**; out 135 (the 60-min QX12 excursion and 75 transient minutes) → 135 ÷ 43,110 = **0.31 %**; coverage 99.79 → **99.8 %**. Pooled over the 7 storage zones: monitored 301,980, out 640 → **0.21 %**.
+- **QX20 — damage rate:** 412 units damaged ÷ 1,860,000 handled = **0.022 %** (221.5 ppm).
+- **QX21 — K-161:** 5 storage excursions (Z-CHL1 minor 09-17, Z-FRZ1 major 09-22, Z-DOCK 3 minor) ÷ 7 zone-months = **0.71**.
+
+## E.5 Statistical process control (Q-SPC)
+
+`q_spc_charts`: code, title EN / AR, type (`xbar_r` · `imr` · `p`), source (registry list SPCS: `conc_strength_28d` (subgroup = one set's specimens, per mix), `slump` (I-MR), `dft_spot` (X-bar/R, subgroup = the 3 gauge readings of a spot), `compaction_pct` (I-MR), `zone_daily_mean_temp` (I-MR, per zone), `ir_rejection_weekly` (p: defectives = rejected or not-ready rounds, n = rounds per week), `receiving_rejection_weekly` (p: receipts with a rejected line, n = receipts per week)), filters (mix, zone, discipline, test type), subgroup size n (2–10 for X-bar/R), baseline (`frozen` = subgroups chosen by the Quality Engineer, or `rolling` = last 25), spec limits (from a criterion), owner.
+
+Constants (ISO 7870-2):
+
+| n | A2 | D3 | D4 | d2 |
+|---|---|---|---|---|
+| 2 | 1.880 | 0 | 3.267 | 1.128 |
+| 3 | 1.023 | 0 | 2.574 | 1.693 |
+| 4 | 0.729 | 0 | 2.282 | 2.059 |
+| 5 | 0.577 | 0 | 2.114 | 2.326 |
+| 6 | 0.483 | 0 | 2.004 | 2.534 |
+| 7 | 0.419 | 0.076 | 1.924 | 2.704 |
+| 8 | 0.373 | 0.136 | 1.864 | 2.847 |
+| 9 | 0.337 | 0.184 | 1.816 | 2.970 |
+| 10 | 0.308 | 0.223 | 1.777 | 3.078 |
+
+- **Q-SPC-01. X-bar / R:** for k baseline subgroups, X̿ = mean of subgroup means, R̄ = mean of ranges; UCL_X = X̿ + A2·R̄, LCL_X = X̿ − A2·R̄; UCL_R = D4·R̄, LCL_R = D3·R̄.
+- **Q-SPC-02. I-MR:** MRᵢ = |xᵢ − xᵢ₋₁|; UCL = X̄ + 2.66·MR̄, LCL = X̄ − 2.66·MR̄; UCL_MR = 3.267·MR̄.
+- **Q-SPC-03. p-chart:** p̄ = Σ defectives ÷ Σ n over the baseline; for each point i, UCLᵢ / LCLᵢ = p̄ ± 3·√(p̄(1 − p̄) ÷ nᵢ), LCL floored at 0, UCL capped at 1.
+- **Q-SPC-04.** With fewer than `spc_min_subgroups` baseline subgroups the limits are labelled "provisional"; with fewer than 8, no limits are drawn.
+- **Q-SPC-05. Signals** (Western Electric; zones at 1σ and 2σ from the centre, σ = (UCL − CL) ÷ 3, per point for p-charts): rule 1 — a point beyond a control limit; rule 2 — 2 of 3 consecutive points beyond 2σ on the same side; rule 3 — 4 of 5 consecutive beyond 1σ on the same side; rule 4 — 8 consecutive on the same side of the centre. Rules 2–4 apply to X-bar, I and p charts; R and MR charts use rule 1 only.
+- **Q-SPC-06.** A signal is listed on the chart and notifies the chart owner, who may raise a quality observation; no NCR is opened automatically.
+- **Q-SPC-07. Capability** (X-bar/R or I-MR with spec limits, ≥ `spc_min_subgroups` baseline subgroups and no rule-1 signal in the baseline): σ̂ = R̄ ÷ d2 (I-MR: MR̄ ÷ 1.128); Cp = (USL − LSL) ÷ 6σ̂; Cpk = min(USL − μ, μ − LSL) ÷ 3σ̂, one-sided with a single limit. Labelled "short-term (within-subgroup)".
+- **Q-SPC-08.** Only verified, not-voided results are plotted; an amended result plots its latest version and marks the point.
+- **Worked examples. QX22** (CONC-CYL C40 mix, 20 sets of n = 3): X̿ = 46.80 MPa, R̄ = 3.10 → UCL_X = 46.80 + 1.023 × 3.10 = **49.97**, LCL_X = **43.63**; UCL_R = 2.574 × 3.10 = **7.98**, LCL_R = 0; σ̂ = 3.10 ÷ 1.693 = 1.831; LSL = 40 → Cpk = (46.80 − 40) ÷ (3 × 1.831) = **1.24**. **QX23** (ir_rejection_weekly, baseline p̄ = 27 ÷ 141 = 0.1915): a week with n = 35 → UCL **0.391**, LCL **0**; n = 40 → UCL **0.378**, LCL **0.005**.
+
+## E.6 COPQ, DPMO, sigma level and Pareto
+
+- **Q-SIX-01. COPQ** = internal failure costs + external failure costs of NCRs (Q-COST-02); prevention and appraisal costs are not recorded (COPQ, not total cost of quality). `q_work_value` (project, month, value of work done or revenue in SAR, entered by 239) gives COPQ %.
+- **Q-SIX-02. DPMO** per process = defects ÷ (units × opportunities per unit) × 1,000,000, with processes defined as data in `dpmo_processes` (seeded):
+
+| Process | Unit | Opportunities per unit | Defect |
+|---|---|---|---|
+| `ir_inspection` | IR round (round ≥ 1) | applicable scored checklist items of the round | non-compliant scored answer |
+| `mir_inspection` | MIR | applicable scored checklist items | non-compliant scored answer |
+| `receiving` | receipt line | 4 (temperature, shelf life, condition, labels) | each failed check |
+| `picking_fefo` | FEFO check | 1 | non-compliant |
+| `delivery` | shipment | 2 (on time, in full) | each miss |
+| `inventory` | counted line | 1 | outside tolerance |
+
+- **Q-SIX-03. Sigma level** (short-term, with the conventional 1.5 σ shift) = Φ⁻¹(1 − DPMO ÷ 10⁶) + 1.5, where Φ⁻¹ is the inverse standard normal (Python `statistics.NormalDist().inv_cdf`); DPMO 0 → shown "> 6.0"; 2 dp. Check values: 66,807 → 3.00; 6,210 → 4.00; 233 → 5.00; 3.4 → 6.00.
+- **Q-SIX-04. Pareto:** categories sorted by count (ties by code), cumulative % = running sum ÷ total × 100; the *vital few* are the smallest leading set whose cumulative % ≥ 80.0.
+- **Worked examples. QX24** (ANIA-EXP IR rounds, September): defects 31, opportunities 4,820 → DPMO = 31 ÷ 4,820 × 10⁶ = **6,431.5** → σ = **3.99**. **QX25** (ANIA-EXP NCRs opened in September, 14): workmanship 6 (42.9 %), material 3 (64.3 %), design_documentation 2 (78.6 %), testing_failure 1 (85.7 %), dimensional 1 (92.9 %), other 1 (100.0 %) → vital few = the first **4** categories. **QX26** (COPQ, ANIA-EXP September): gross **186,450.00** (internal 171,200.00, external 15,250.00), recovered 22,600.00; work value 48,500,000.00 → COPQ **0.38 %**.
+
+## E.7 Dashboard, charts, warnings and expiring items
+
+- **Quality KPIs page** `/quality/kpis` and the Quality home tiles (profile-aware; RAG against `q_kpi_targets`): construction — K-141 (chip K-142), K-143 / K-144, K-148, K-152, K-153, K-154, K-156; logistics — K-160, K-161 / K-162, K-163, K-164, K-165, K-167, K-168; shared — K-146, K-149, K-155, K-157, K-158, K-159, K-169. The Phase 1 HSE dashboard is unchanged.
+- **Quality band** (live, Quality home): stop-use alerts; open critical NCRs; containment overdue; IRs awaiting inspection today; holds on hold (and zone-level holds); ongoing excursions; M&TE overdue; steps waiting for me.
+- **Charts:** C42 NCRs by month stacked by class with the open-count line; C43 Pareto bars with the cumulative line and an 80 % marker; C44 NCR ageing buckets by class; C45 COPQ by month stacked by cost type with the COPQ % line; C46 K-141 and K-142 by month by discipline; C47 SPC chart (limits, centre, signal markers); C48 zone temperature profile (readings by point, range band, excursion shading, gaps); C49 excursion heat grid (zone × month, worst severity); C50 supplier scores ranked with band colours; C51 sigma level by process. All from the KPI engine only.
+- **Warnings** (monthly job, day 2 07:24, per project): **E26 NCR backlog** — K-146(M) < `ncr_ontime_warning_pct`, or ≥ 1 major / critical NCR older than 90 days at month end, or containment overdue at month end. **E27 First-time quality (construction)** — K-141(M) < `ftpr_warning_pct`, or K-152(M) > `test_fail_warning_pct`, or K-153(M) > `repair_rate_alert_pct`. **E28 Cold chain (logistics)** — a critical excursion in M, or K-162(M) > `tor_warning_pct`, or a storage zone not mapped or a monitoring logger overdue at month end, or K-167(M) < `transport_compliance_warning_pct`. T13 returns them with numerators and denominators, never names.
+- **ExpiringItemKind** (Phase 1 action panel and expiring-items endpoint): `q_mte_calibration_due`, `q_wpq_continuity`, `q_competence_expiry`, `q_document_review`, `q_mapping_validity`, `q_supplier_evaluation`, `q_ncr_target`.
+
+## E.8 Report packs and exports (Q-RPT)
+
+- **Q-RPT-01.** Report packs reuse 6g `rp_packs` (prepare, review, issue, distribution lists, schedules, email delivery, re-issue) with new pack types: `QMR` monthly quality report (both profiles; sections by profile), `QNCR` NCR register pack, `QSUP` supplier scorecard pack, `QMRV` management review minutes. Prepare and issue need 280.
+- **Q-RPT-02.** Every Quality PDF (packs, forms, dossiers, certificates of conformity-type outputs) is rendered EN and AR with the 6g renderer and shows the issue date in Gregorian and Umm al-Qura Hijri (`app.core.hijri`, D-303), whatever the project's `show_hijri`; SBC or standard references print as stored.
+- **Q-RPT-03.** QMR contents: KPI summary against targets; NCRs (new, closed, open, ageing, Pareto, repeats, top 5 open by age); COPQ; construction: IRs, tests, welding, punch, M&TE; logistics: receiving, excursions, TOR and MKT per zone, mapping status, holds, recalls, transport, OTIF, damage, IRA, hygiene; competence; audits and management review; supplier scores; complaints; actions. Charts are rendered as tables (the renderer has no chart drawing).
+- **Q-RPT-04.** Exports go through the 6g dataset registry. Each part registers its own datasets in `DATASETS` (Q0: `quality_ncrs`, `quality_ncr_costs`, `quality_observations`, `quality_complaints`, `quality_suppliers`, `quality_mte`; Q1: `quality_itps`, `quality_irs`, `quality_punch`; Q2: `quality_mars`, `quality_mirs`, `quality_tests`, `quality_welds`, `quality_wpqs`, `quality_calibrations`, `quality_competence`; Q3: `quality_receipts`, `quality_excursions`, `quality_readings_hourly`, `quality_holds`, `quality_recalls`, `quality_trips`, `quality_fefo`, `quality_cycle_counts`; Q4: `quality_documents`, `quality_audits`, `quality_supplier_scores`); Viewer / Client gets aggregates only (EX-9), costs and personal columns follow P8-2.
+- **Q-RPT-05.** Read-only licence mode allows exports and PDFs (D-290); report pack issue is a write and is refused.
+
+## E.9 AI tools (Q-AI; T26–T29)
+
+- **T26 `get_quality_kpis`** (project_ids, period, profile, filters {site, zone, engagement, include_descendants, supplier, discipline, storage_class, test_type}, metrics K-141…K-169, group_by {month, week, discipline, contractor, supplier, category, cause_category, storage_class, zone, test_type, process}) → aggregates only.
+- **T27 `search_ncrs`** (project_ids, filters {status, class, category, cause_category, source_type, supplier, engagement, opened_from / to, overdue, repeat}, limit ≤ 50) → ncr_no, title (P1-8 scanned), class, status, category, cause_category, source_type, responsible contractor name, supplier name, age days, target date, repeat flag, cost_gross only when the user holds 242; never person names, finding or RCA texts, photos.
+- **T28 `get_spc_status`** (chart codes or all, period) → type, centre and limits, provisional flag, last 25 points, signals (rule and date), Cp / Cpk.
+- **T29 `get_cold_chain_summary`** (project_ids, period, zones) → excursions by zone and severity, TOR, coverage, MKT, mapping validity, open holds from excursions, transport compliance.
+- **Q-AI-01.** Every tool checks 238 per project; Viewer / Client gets T26, T28, T29 aggregates and no T27. **Q-AI-02.** No person names, signatures or contact data reach the AI layer (P6, P8-4). **Q-AI-03.** AI limits and the licence AI count are unchanged (D-292); read-only mode blocks the assistant (D-290). **Q-AI-04.** T13 returns E26–E28.
+
+## E.10 Seed consolidation (Q4)
+
+Each part seeds its own records through `SEEDS` (Appendix A). Q4 adds the cross-part links that need several parts (e.g. dossier sections, supplier scores from Q2 and Q3 data, KPI targets, documents, audits, the management review) and a backend test `tests/quality/q4/test_seed_kpis.py` that asserts every value of Appendix A.8 for September 2026; where a generator differs, Q4 adds records in its own seed file only and records the difference in its decisions.
+
+## E.11 Q4 screens, notifications and errors
+
+| Screen | Phone | Desk |
+|---|---|---|
+| Documents `/quality/documents`, Transmittals `/quality/transmittals` | "My acknowledgements" list, read and acknowledge | Register (type, rev, status, review due); revision workflow; distribution and ack %; transmittal builder and cover PDF |
+| Audits `/quality/audits`, Programme `/quality/audit-programme` | 6d conduct runner (domain quality) | Plan, team, independence check, issue, findings → NCRs; programme grid (process × month) |
+| Management reviews `/quality/management-reviews` | — | Input headings with KPI snapshot, outputs → CAs, minutes PDF |
+| Supplier scores `/quality/supplier-scores` (+ tabs on the supplier page) | — | Evaluations; scorecards by period with metric drill-down; ranking C50 |
+| KPIs `/quality/kpis`, SPC `/quality/spc`, Reports `/quality/reports` | Tiles | Tiles with targets, charts C42–C51, SPC chart builder and signals, 6g pack screens filtered to Quality types |
+
+Notifications: document review due (owner, 30 / 0 days); ack due and reminder (members); transmittal response overdue (sender); audit line due 30 / 0 days (process owner, lead auditor); audit report overdue (lead, 239); supplier re-evaluation due (278); supplier band D (279 resolvers); SPC signal (chart owner); management review due (239); E26–E28 (239 holders, QA/QC managers; monthly).
+Errors: 422 `DOCUMENT_FILE_REQUIRED`, `MRV_INPUTS_INCOMPLETE`, `SUPPLIER_EVALUATION_REQUIRED`, `SOD_CONFLICT`, `SPC_SOURCE_INVALID`; 409 `DOCUMENT_IMMUTABLE`.
+
+## E.12 Acceptance criteria — Q4
+1. **AC-Q4-01** (Q-DOC-02) **Given** PQP Rev.B for review authored by Hatem **When** Hatem approves **Then** 422 `SOD_CONFLICT`; approval without any review sign-off **Then** 422; without a PDF **Then** 422 `DOCUMENT_FILE_REQUIRED`.
+2. **AC-Q4-02** (Q-DOC-01, Q-DOC-03) **Given** the PQP's Rev.1 approved **When** Rev.2 is approved **Then** Rev.1 is superseded and downloads with the `-SUPERSEDED` suffix; editing Rev.2 **Then** 409 `DOCUMENT_IMMUTABLE`.
+3. **AC-Q4-03** (Q-DOC-04) **Given** a procedure approved 2026-10-06 **Then** review_due_on 2028-10-05; alerts at 2028-09-05 and 2028-10-05.
+4. **AC-Q4-04** (Q-DOC-05) **Given** distribution role qc_inspector with ack_required **Then** each inspector has a task due in 7 days; acks raise the ack % shown; a second ack is idempotent.
+5. **AC-Q4-05** (Q-DOC-06) **Given** an ITP linked to MS Rev.2 **When** MS Rev.3 is approved **Then** the ITP shows "newer revision available".
+6. **AC-Q4-06** (Q-DOC-07) **Given** a transmittal by email to an external address **Then** an outbox row with the cover PDF and files exists; per-item codes A–D are recorded on response.
+7. **AC-Q4-07** (Q-AUD-01, Q-AUD-05) **Given** a `qms_internal` audit issued in September **Then** it is absent from K-114, K-115 and the 6d programme, and counts in K-158; Noura (194 / 195 only) cannot plan it (403).
+8. **AC-Q4-08** (Q-AUD-02) **Given** process RCV owned by Imran **When** Imran is lead auditor of an audit covering RCV **Then** 422 `SOD_CONFLICT`.
+9. **AC-Q4-09** (Q-AUD-03) **Given** an audit with 2 `major_nc` and 3 `minor_nc` **When** issued **Then** 5 NCRs (source `q_audit_finding`, 2 major, 3 minor) with clause references, and no HSE CA.
+10. **AC-Q4-10** (Q-AUD-04) **Given** the lead auditor issuing **Then** 422 `SOD_CONFLICT`; another resolver issues **Then** EN and AR PDFs with a Hijri date.
+11. **AC-Q4-11** (Q-AUD-06) **Given** a high-risk process **Then** lines in months 3 and 9; an audit with fieldwork_end on the last day of month 9 is on time, a day later is not.
+12. **AC-Q4-12** (Q-MRV-01, Q-MRV-02) **Given** a management review with one heading empty **When** set Held **Then** 422 `MRV_INPUTS_INCOMPLETE`; once Held, its KPI snapshot stays the same after new NCRs are added for that period.
+13. **AC-Q4-13** (Q-SUP-01) **Given** a supplier in pending_approval without an approved evaluation **When** approved **Then** 422 `SUPPLIER_EVALUATION_REQUIRED`.
+14. **AC-Q4-14** (Q-SUP-03, QX19) **Given** QX19 data **Then** score 72.2, band B, M6 left out and weights re-normalised.
+15. **AC-Q4-15** (Q-SUP-04) **Given** a supplier score of 48.0 **Then** band D, a suspension recommendation alert, and the supplier status unchanged.
+16. **AC-Q4-16** (Q-SUP-05) **Given** a supplier linked to contractor RAWABI **Then** the contractor page shows the quality score and RAWABI's 6g HSE scorecard is unchanged.
+17. **AC-Q4-17** (K-141, K-142, QX2) **Given** the seed **Then** ANIA-EXP September K-141 = 80.0 %, K-142 = 19.1 %.
+18. **AC-Q4-18** (K-146, K-144) **Given** the seed **Then** K-146 = 80.0 % and K-144 buckets 8 / 2 / 1 / 0 for ANIA-EXP at 2026-09-30.
+19. **AC-Q4-19** (K-148, QX26) **Given** the seed **Then** K-148 gross 186,450.00, internal 171,200.00, external 15,250.00, COPQ 0.38 %.
+20. **AC-Q4-20** (Q-SIX-02, Q-SIX-03, QX24) **Given** 31 defects in 4,820 opportunities **Then** DPMO 6,431.5 and sigma 3.99; DPMO 6,210 → 4.00; 0 → "> 6.0".
+21. **AC-Q4-21** (Q-SIX-04, QX25) **Given** the September NCRs **Then** the Pareto lists 6 categories with cumulative 42.9 / 64.3 / 78.6 / 85.7 / 92.9 / 100.0 and vital few = 4.
+22. **AC-Q4-22** (Q-SPC-01, Q-SPC-07, QX22) **Given** the 20 sets **Then** UCL_X 49.97, LCL_X 43.63, UCL_R 7.98, Cpk 1.24.
+23. **AC-Q4-23** (Q-SPC-03, QX23) **Given** p̄ 0.1915 **Then** n = 35 gives UCL 0.391 and LCL 0; n = 40 gives LCL 0.005.
+24. **AC-Q4-24** (Q-SPC-04) **Given** 12 subgroups **Then** limits are "provisional"; 6 subgroups **Then** no limits.
+25. **AC-Q4-25** (Q-SPC-05) **Given** 8 consecutive points above the centre **Then** a rule-4 signal; one point above UCL **Then** rule 1; 2 of 3 beyond 2σ on the same side **Then** rule 2; the chart owner is notified and no NCR is created.
+26. **AC-Q4-26** (K-160…K-169, Appendix A.8) **Given** the seed **Then** RUH-CCH September K-160 1.9 %, K-161 0.71, K-162 0.21 %, K-163 93.2 %, K-164 0.022 %, K-165 97.0 %, K-166 97.0 %, K-167 98.9 %, K-168 95.0 %, K-169 3 (2.40 per 1,000).
+27. **AC-Q4-27** (K-161, Q-EXC-11) **Given** a dismissed excursion in September **Then** K-161 and K-162 exclude it and list it separately.
+28. **AC-Q4-28** (§E.7) **Given** September 2026 **Then** E27 is raised for ANIA-EXP (K-141 80.0 < 85.0), no E26 for either project, and no E28 for RUH-CCH; adding a critical excursion on 2026-09-25 **Then** E28 is raised.
+29. **AC-Q4-29** (Q-RPT-01, Q-RPT-02) **Given** a QMR pack for September **Then** it issues through the 6g flow with EN and AR PDFs, both showing the Gregorian and Hijri issue dates even when `show_hijri` is false on the project.
+30. **AC-Q4-30** (Q-RPT-04, P8-2) **Given** Sarah exports `quality_ncrs` **Then** she receives aggregates only; Hatem's export has rows and an `export` audit entry; cost columns are absent for users without 242.
+31. **AC-Q4-31** (Q-AI-01, Q-AI-02) **Given** "which suppliers caused most NCRs this quarter?" **Then** T26 groups by supplier and returns names and counts; "who raised NCR-…-0044?" **Then** no person name is returned; Sarah calling T27 **Then** refused.
+32. **AC-Q4-32** (T29) **Given** "how did the cold rooms perform in September?" **Then** T29 returns per-zone excursions, TOR and MKT matching K-161 / K-162 / QX15.
+33. **AC-Q4-33** (§E.7) **Given** the logistics project **Then** the Quality KPIs page shows logistics and shared tiles only; ANIA-EXP shows construction and shared tiles; the Phase 1 dashboard is unchanged.
+34. **AC-Q4-34** (rule 41) **Given** the Arabic UI **Then** every Q4 label, KPI name, chart axis, pack and AI answer frame is Arabic; numbers, SAR amounts and σ values stay LTR.
+
+---
+
+## 4. Jobs (registry `JOBS`; wired once into `app/scheduler.py` by Q0)
+
+Each part registers its functions in the shared job slots; every function is idempotent (each record and step alerted once, `alerts_sent` lists as earlier phases).
+
+| Job | Time (Riyadh) | Q0 | Q1 | Q2 | Q3 | Q4 |
+|---|---|---|---|---|---|---|
+| `quality_daily` | 00:21 (after `field_daily`) | NCR effectiveness proposals, containment and target overdue flags | — | M&TE status, WPQ continuity, competence expiry, specimen due | mapping validity, near-expiry list, due checks, hold ageing, zone-level holds without lines, transit data due, mock recall due | document review dates, supplier re-evaluation, score finalisation |
+| `quality_alerts` | 07:12 | pending-step reminders, overdue NCR / complaint alerts | IR scheduling and comments overdue | M&TE, OOT, test overdue alerts | expired-not-on-hold, hygiene overdue | document acks, audit lines |
+| `quality_weekly` | Sunday 07:12 | — | punch overdue digest | quarantine ageing | hold ageing | — |
+| `quality_monthly` | day 2, 07:24 | — | — | — | — | E26–E28, supplier scores of closed periods, management review due |
+
+Excursion detection, auto-NCRs and auto-holds run synchronously at import or reading entry (within 60 s), not in a job.
+
+## 5. Changes required in earlier specs (applied by the package named; the integrator updates the version lines and change logs)
+
+| Spec | New version | Change | Applied by |
+|---|---|---|---|
+| `0-foundation.md` | v1.7 | §3.1 project type `logistics`; §3.8 roles qa_qc_manager, quality_engineer, qc_inspector, warehouse_qc, responsible_person (Q-ROL-01…05); §5.10 capability rows 238–280 by reference to §A.11; rule 14 note: an HSE Officer cannot assign quality roles | Q0 |
+| `1-dashboard.md` | v1.13 | §3.8 CA source types `quality_ncr`, `quality_observation`, `quality_complaint`, `quality_audit`, `quality_review`; due-days provider and verifier rule for those sources (Q-CAP-03, -04); quality CAs excluded from K-40…K-43 and the action-panel CA counts; CA register `domain` filter; control-level labels for quality sources (Q-CAP-05); `ExpiringItemKind` values §E.7; AI tools T26–T29, T13 returns E26–E28; charts C42–C51 on Quality pages | Q0 (CA and KPI exclusion), Q4 (AI, charts, expiring kinds) |
+| `2-access-permits.md` | — | No change: hook providers read by Q-CPT-01; vehicles read by Q-TRN-04 | — |
+| `4-third-party-cert.md` | — | No rule change. Seed adds cert types `ndt_rt`, `ndt_ut`, `ndt_mt`, `ndt_pt`, `cwi` through `cert_types` when absent; suppliers may link a TPI | Q2 (seed) |
+| `5-training.md` | — | No rule change. Seed adds courses `CONC-FIELD-TECH`, `MAPPING-LEAD`, `ISO9001-IA`, `GDP-BASIC` | Q2 (seed) |
+| `6d-field-assurance.md` | v1.5 | §3.1 template kind `quality`, columns `quality_type`, `sector_profiles`; capabilities 192 / 193 do not apply to kind `quality` (240 / 239 do); §3.4 response owner types of §A.7; quality responses excluded from K-34…K-36 and K-110…K-117; §3.7 `field_audits.domain`, quality audit types, `auditee_supplier_id`, `process_ids`; K-114, K-115 and programme lines filter `domain = hse` | Q0 (templates, responses), Q4 (audits) |
+| `6g-scorecard-reports.md` | v1.1 | Dataset registry accepts Phase 8 datasets (`DATASETS` hook); pack types QMR, QNCR, QSUP, QMRV; contractor page shows the linked supplier quality score as information | Q0 (hook), Q4 (packs, panel) |
+| `7b-fleet-driver.md` | — | No change (read only, Q-TRN-04) | — |
+
+## 6. Integration notes (package I)
+
+Cross-package tests the integrator adds (handover §7.5), each referring to the rules it proves:
+1. Failed CONC-CYL test linked to an IR → NCR (Q-TST-06) → CA (Q-CAP-02) → IR shows the failure; dossier blocked (Q-DOS-03 e) until the NCR closes.
+2. Pour started against a rejected pre-pour hold IR → 422 (Q-TST-12 with Q1's `HOLD_CHECKS`).
+3. Calibration out of tolerance (Q-CAL-04) lists IR measurements (Q1), test sampling (Q2) and receiving temperatures and logger readings (Q3) → one item decided `ncr`.
+4. Excursion → NCR → hold → impact assessment → NCR disposition approved → hold release (Q-EXC-05…10, Q-HLD-04).
+5. MIR rejected → quarantine → NCR reject_return → quarantine returned → NCR closed (Q-MAT-05, -07, Q-NCR-15).
+6. Competence `block` refuses an IR inspector (Q-IR-07) and a mapping lead (Q-MAP) through Q2's provider.
+7. Supplier gate (Q4) refuses approval without an evaluation; MAR (Q2) and receipt (Q3) warn on a non-approved supplier.
+8. KPIs count records of every part (Appendix A.8 for both projects); quality CAs absent from K-41 / K-42.
+9. Read-only licence: every Quality write → 403 `LICENCE_READ_ONLY`; exports, PDFs and the dossier download still work.
+10. Profile switch (Q-PRF-04) across all parts: other-profile creates refused, open records finishable.
+
+## 7. Open questions for Turki (defaults in place; nothing blocks the build)
+
+| # | Question | Default used |
+|---|---|---|
+| 1 | May a contractor's own QA/QC sign IRs and NCR closures for its own work (self-certification)? | No (`own_tree_allowed` false); a project can allow it per matrix row |
+| 2 | Paper sign-off for external people (consultant signs the paper IR) allowed by default? | Yes, for every step, with the scan required and the share counted |
+| 3 | NCR timing: containment 24 / 72 / 168 h and close targets 21 / 30 / 30 days (critical / major / minor)? | As stated, editable |
+| 4 | Quality CA due days 14 / 30 / 45 / 60 and quality CAs kept out of HSE KPIs K-40…K-43? | Yes |
+| 5 | Concrete acceptance per project: ACI 318 / SBC 304 cylinders or BS EN 206 cubes? | ANIA-EXP cylinders (ACI); both rule sets seeded |
+| 6 | Storage class ranges and severity bands (chilled 0–4 °C, pharma 2–8 °C, frozen ≤ −18 °C) and arrival-temperature limits? | Table §D.1.2 and Q-RCV-01, all `[VERIFY]` |
+| 7 | Do logistics customers need to approve releases after excursions or deviations (3PL owner approval)? | Per customer flag; seeded on for Gulf Frozen Foods and Sahm Pharma |
+| 8 | Medicines in the logistics profile: is a Responsible Pharmacist position needed for 2–8 °C zones? | Yes, position seeded and used for pharma steps |
+| 9 | Temperature mapping: validity 24 months, ≥ 72 h, ≥ 9 loggers, ≤ 5-min interval? | As stated, `[VERIFY]` |
+| 10 | Supplier register org-wide (shared by projects) rather than per project? | Org-wide, like contractors |
+| 11 | COPQ = failure costs only, with labour SAR 85 / h and plant SAR 250 / h? | Yes |
+| 12 | Quality KPIs on the main HSE dashboard too? | No; own Quality pages and home |
+| 13 | Record retention: project life + 10 years (construction), 5 years (logistics)? | Yes, `[VERIFY]` |
+| 14 | Licence: should Quality become a separately sold module? | On in every bundle; an optional `modules` list in the licence payload can switch it off later (D-319) |
+
+---
+
+## Appendix A — Seed data (fictional; `seed_fake = true`; emails `@example.com`, mobiles `+96650000xxxx`)
+
+### A.1 Principles, projects and users
+- Clock `HSE_CLOCK_AT` = 2026-10-06T10:00:00+03:00. Each part seeds its own records through `SEEDS` (`app/seed_quality.py` runs after `seed_scorecard_data`); nothing here changes earlier-phase KPI values. RUH-CCH is created by the Quality seed only; a pre-existing test that counts seeded projects and breaks is fixed by the Q0 builder and recorded in its decisions.
+- **Construction:** ANIA-EXP (existing airport project), profile `construction`, `quality_start_date` 2026-01-01, `show_hijri` true.
+- **Logistics:** new project **RUH-CCH** "Riyadh Cold Chain Hub — Al-Sulay" / "مركز الرياض لسلسلة التبريد — السلي", type `logistics`, client Al-Wahat Logistics Co. (fictional) / شركة الواحة للخدمات اللوجستية, Riyadh, start 2025-11-01, active, Hijri on, default language ar; profile `logistics`, `quality_start_date` 2026-01-01. Site **S-DC1** Distribution Centre 1 / مركز التوزيع 1; contractor **WAHAT** Al-Wahat Logistics Co. / شركة الواحة للخدمات اللوجستية (CR 1010000007, category other, approved) engaged tier 1 on RUH-CCH.
+
+| User (EN / AR) | Email | Mobile | Project · role · scope / position |
+|---|---|---|---|
+| Hatem Al-Shehri / حاتم الشهري | hatem.shehri@example.com | +966500000301 | ANIA-EXP · qa_qc_manager (PMC, no engagement) |
+| Bilal Qureshi / بلال قريشي | bilal.qureshi@example.com | +966500000302 | ANIA-EXP · quality_engineer · engagement RAWABI |
+| Joseph Mathew / جوزيف ماثيو | joseph.mathew@example.com | +966500000303 | ANIA-EXP · qc_inspector · engagement RAWABI |
+| Abdullah Al-Dossary / عبدالله الدوسري | abdullah.dossary@example.com | +966500000304 | ANIA-EXP · responsible_person · position CONSULTANT_RE |
+| Sultan Al-Mutlaq / سلطان المطلق | sultan.mutlaq@example.com | +966500000305 | ANIA-EXP · responsible_person · position CLIENT_REP |
+| Arun Pillai / آرون بيلاي | arun.pillai@example.com | +966500000306 | ANIA-EXP · qc_inspector · engagement NAJD (welding inspector, competence CWI) |
+| Reem Al-Mutairi / ريم المطيري | reem.mutairi@example.com | +966500000311 | RUH-CCH · qa_qc_manager |
+| Imran Siddiq / عمران صديق | imran.siddiq@example.com | +966500000312 | RUH-CCH · warehouse_qc |
+| Saad Al-Anazi / سعد العنزي | saad.anazi@example.com | +966500000313 | RUH-CCH · responsible_person · position WAREHOUSE_MGR |
+| Lama Al-Qarni / لمى القرني | lama.qarni@example.com | +966500000314 | RUH-CCH · responsible_person · position RESP_PHARMACIST |
+| Naveen Kumar / نافين كومار | naveen.kumar@example.com | +966500000315 | RUH-CCH · warehouse_qc · position TRANSPORT_SUP |
+
+Faisal (HSE Manager) has every capability org-wide; Sarah (Viewer) is also assigned viewer_client on RUH-CCH. Each quality user has a linked Phase 2 worker record (for competence checks), without ID numbers beyond the Phase 2 fake pattern.
+
+### A.2 Libraries (org-wide)
+- **Criteria** (Published v1): `COVER-40` (target_tolerance 40 ± 5 mm), `FORM-TOL` (max 5 mm in 3 m), `SLUMP-100` (rule slump_astm_c94, target 100), `CONC-TEMP-32` (max 32 °C `[VERIFY]` project spec), `CURE-7D` (text), `STRIKE-70` (min 70 % f'c), `CONC-ACI-40` (rule aci318_strength, f'c 40), `CONC-ACI-32` (f'c 32), `CONC-EN206-50` (rule en206_strength, fck 50), `CORE-ACI-40` (rule aci318_cores), `COMP-95` and `COMP-98` (min 95 / 98 %), `DFT-125-200` (rule sspc_pa2), `HYDRO-1.5` (rule pressure_hold, factor 1.5, hold 10 min `[VERIFY]` ASME B31.3), `TORQUE-M20` (target_tolerance 400 ± 20 N·m, illustrative), arrival temperatures `ARR-FROZEN`, `ARR-CHILLED`, `ARR-PHARMA` (rule arrival_temperature, Q-RCV-01), `RSL-60` (rule remaining_shelf_life, 60 %), `PRECOOL-FRZ` (max setpoint + 2.0 °C).
+- **Test types:** the 22 of §C.2.1 with specimen plans (CONC-CYL: 2 at 7 d, 2 at 28 d, 1 spare; CONC-CUBE: 3 at 7 d, 3 at 28 d).
+- **Quality checklists** (kind `quality`, Published by Faisal 2026-04-01): `QSTC-FW` formwork (12 items), `QSTC-RB` reinforcement before pour (16 items; critical: cover, bar size and spacing, laps), `QSTC-PR` pour (10), `QSTL-WV` weld visual (12), `QMEP-PT` pressure test (10), `QPUN` punch walkdown (free items), `QMIR` material delivery (14; critical: certificate matches material), `QRCV` receiving vehicle check (15; critical: reefer running and at setpoint, seal intact, no pest signs), `QRPL` reefer pre-load (12; critical items of Q-TRN-02), `QHYG` warehouse hygiene (20), `QPST` pest visit (10), `QRET` return inspection (8), `Q9K` (56), `QSUP` (30), `QGDP` (40).
+- **Competence requirements:** `CONC-FIELD-TECH` (training course CONC-FIELD-TECH, ACI field technician grade I or equivalent `[VERIFY]`), `NDT-RT-L2` / `NDT-UT-L2` (personnel certificates `ndt_rt` / `ndt_ut`, level ≥ 2, ISO 9712), `CWI` (personnel certificate `cwi`), `MAPPING-LEAD` (course MAPPING-LEAD), `QMS-AUDITOR` (course ISO9001-IA), `GDP-BASIC` (course GDP-BASIC, warehouse QC).
+- **Suppliers** (org-wide): `RMX` Riyadh Readymix Concrete Co. (material_supplier, approved) · `ARS` Arabian Rebar & Steel Co. (material_supplier, approved) · `GULFPIPE` Gulf Pipes Industries (manufacturer, **suspended**, reason "2 HDPE rejections Q3 — test data") · `SAHEL` Al-Sahel Waterproofing Est. (material_supplier, approved) · `LAB-RGM` Riyadh Geo-Materials Laboratory (testing_lab, approved; accreditation SAC ISO/IEC 17025 no. TL-0451-TEST, scope CONC-CYL, CONC-CUBE, SLUMP, PROCTOR, FDT-SC, CBR — not CONC-CORE; valid to 2027-05-31) · `CAL-NMS` Najd Metrology Services (calibration_lab, approved; SAC ISO/IEC 17025 CL-0219-TEST) · `DNDT` Desert NDT Services (ndt_provider, approved) · `COOLRD` CoolRoad Transport Est. (carrier, conditional: "logger data to be sent within 24 h") · `SHIELD` Shield Pest Control (pest_control, approved) · `BRIGHT` Bright Hygiene Services (cleaning, approved) · `NDCF` Najd Dairy Factory (shipper, approved). Contacts are fake (`<code>.qa@example.com`, `+9665000004nn`).
+
+### A.3 ANIA-EXP set-up
+- Positions: CONSULTANT_RE (Abdullah), CONSULTANT_INSP (none), CLIENT_REP (Sultan). Matrix = §A.4.2 defaults. Numbering = defaults. `delay_rate_sar_day` 12,000.00.
+- Systems: `SYS-T3-HVAC` Terminal 3 HVAC (HVC), `SYS-T3-FPS` Terminal 3 fire protection (FPS), `SYS-APR-DRN` apron drainage (PLB, zone Z-APR-21).
+- Customers: `ANC` Al-Noor Airport Company (client).
+- ITPs (Approved): `ITP-ANIA-EXP-STC-001` Rev.2 (§B.3.2, RAWABI, Z-PIERB; Rev.0 and Rev.1 Superseded), `ITP-ANIA-EXP-STL-001` Rev.1 structural steel welding (NAJD, Pier B roof), `ITP-ANIA-EXP-AFP-001` Rev.0 asphalt surfacing (GULFPAVE, Z-APR-21, Z-TWB), `ITP-ANIA-EXP-HVC-001` Rev.0 ductwork and pressure tests (RAWABI, SYS-T3-HVAC).
+- M&TE (selected): `MTE-0012` concrete thermometer (calibrated, due 2027-02-14), `MTE-0015` DFT gauge (**overdue**, due 2026-09-30), `MTE-0021` torque wrench (calibrated), `MTE-0030` total station (calibrated), `MTE-0031` nuclear density gauge (calibrated; note NRRC licence `[VERIFY]`), `MTE-0007` slump cone (verification, monthly); 48 active items with a check kind, 46 compliant at 2026-09-30.
+- Floor plan "Pier B Level 1" (current, 4,200 × 2,800 px) with 12 pins.
+
+### A.4 ANIA-EXP records, September 2026 (generator targets and named records)
+- **IRs:** 120 IRs with round 1 decided in September (96 approved or approved with comments, 22 rejected, 2 not ready); 21 re-inspection rounds decided (18 approved, 3 rejected); 4 waived W rounds; 2 cancelled without a decided round; checklist answers in decided rounds: 4,820 applicable scored items, 31 non-compliant (QX24). Named: **IR-ANIA-EXP-2026-00412** (STC-001 point 30, `Level 3 slab, grid C14–C20`, Joseph; round 1 2026-09-14 rejected "spacers missing", NCR not raised; round 2 2026-09-15 approved by Abdullah); **IR-ANIA-EXP-2026-00455** (point 50, pour witness 2026-09-01, approved with one comment, closed); **IR-ANIA-EXP-2026-00461** (HVC-001 W point, witness waived 2026-09-18, reviewed and approved 2026-09-20); one IR approved by a paper sign-off of Abdullah.
+- **Materials:** MAR-ANIA-EXP-2026-0021 ready-mix C40 (RMX, code A); MAR-0022 rebar B500B (ARS, code B); MAR-0027 waterproofing membrane (SAHEL, code C, Revise and Resubmit); 38 MIRs decided in September, 2 with rejections; named **MIR-ANIA-EXP-2026-0112** HDPE pipes (GULFPIPE, 240 m delivered, 180 accepted, 60 rejected for ovality and damaged ends) → **QTN-ANIA-EXP-2026-0009** (60 m) → **NCR-ANIA-EXP-2026-0041** (major, reject_return, return note pending).
+- **Pours and tests:** **POUR-ANIA-EXP-2026-0077** Pier B level 3 slab, 186 m³, C40 (MAR-0021), 2026-09-01, 4 sets (TST-…-00385 … 00388); 28-day result of set 3 (**TST-ANIA-EXP-2026-00388**) mean 33.2 MPa → fail (b) → **NCR-ANIA-EXP-2026-0044** (critical, opened 2026-09-29 11:20 by Bilal, owner Bilal; containment: load restriction and props kept; RCA 8D, cause material; cores TST-…-00431 per QX6; disposition use_as_is approved by Hatem with concession by Abdullah; costs QX1; CA high "tighten water addition control at the batching plant" owned by Bilal's RAWABI colleague; status Disposition Approved at the clock). September test requests with a verdict: 212, failed 6.
+- **Welding:** WPS-NAJD-SMAW-01 Rev.0 (AWS D1.1, SMAW, 5–25 mm, positions 1G–4G, approved), PQR-NAJD-001; welders W-017 and W-021 (NAJD); WPQ for both (SMAW); weld log of the Pier B roof lot "PB-ROOF RT 10 %" per QX8; W-021's last SMAW weld 2026-03-28 (QX9). September first NDT examinations 120, rejected 5.
+- **Calibration:** MTE-0015 last calibrated 2025-10-01 (interval 12, due 2026-09-30); `CAL-ANIA-EXP-2026-0018` for MTE-0012 (CAL-NMS, accepted).
+- **Punch:** 46 items on Pier B level 1 (12 pinned), 30 closed (24 on or before target), 16 open (3 category A, one of them overdue since its target 2026-09-28: **PCH-ANIA-EXP-2026-00318**).
+- **Dossier:** **DOS-ANIA-EXP-2026-0001** Z-PIERB level 3 (Draft; blockers: NCR-…-0044 open, PCH-…-00318 open).
+- **NCRs:** 44 NCRs in 2026 up to the clock (NCR-ANIA-EXP-2026-0001 … 0044). September: 14 opened (9 minor, 4 major, 1 critical; categories QX25; one repeat); 10 closed in September (median 12 days); 10 with target_close_date in September, 8 closed on time; open at 2026-09-30: 11 (age buckets 8 / 2 / 1 / 0); costs QX26; work value September 48,500,000.00. A July NCR (material, RMX, `TT:CONC-CYL`, opened 2026-07-02) supports AC-Q0-38.
+- **Observations, alerts, complaints:** 6 observations in September; **QAL-ANIA-EXP-2026-0003** stop_use "Rebar heat H71203 — do not use pending certificate" (issued 2026-09-10 by Hatem, ack required for qc_inspector on S-LAND, valid to 2026-10-31); **CCM-ANIA-EXP-2026-0002** from ANC "water ponding at stand 23 after rain" (received 2026-09-24, justified, linked NCR, Responded).
+- **Competence:** 64 person-requirement pairs, 60 met at 2026-09-30; one QC inspector's CONC-FIELD-TECH expires 2026-10-20.
+
+### A.5 RUH-CCH set-up
+- Positions WAREHOUSE_MGR (Saad), RESP_PHARMACIST (Lama), TRANSPORT_SUP (Naveen). Matrix = defaults except `q_audit.issue` → user Faisal (the only QA/QC Manager, Reem, leads the audits).
+- Customers (depositors): `NDC` Najd Dairy Co. (owner_release_approval false), `GFF` Gulf Frozen Foods Co. (true), `SAHM` Sahm Pharma Distribution (true).
+- Zones of S-DC1 with storage settings (class defaults unless stated): `Z-DOCK` controlled dock (dock_controlled 8–15 °C), `Z-FRZ1` frozen chamber 1 (frozen, setpoint −22), `Z-CHL1` chilled chamber 1 (chilled 0–4), `Z-PHR1` medicines 2–8 °C (pharma_2_8), `Z-AMB1` controlled ambient (15–25), `Z-DRY1` dry store (≤ 30 °C, ≤ 65 % RH), `Z-QRT` quarantine cage (chilled 0–4); `Z-RET` returns area (no temperature monitoring, not a storage zone). Storage zones = 7. 22 monitoring points (2–4 per zone, 15-min interval) with loggers `MTE-0101`…`MTE-0122` (calibrated by CAL-NMS 2026-03, points −25, 0, +5, +25 °C); probes `MTE-0042` (QX11) and `MTE-0051`.
+- Products (selected): `NDC-1001` fresh laban 1 L (chilled, 14 d), `NDC-Y` yoghurt 170 g (chilled, 30 d), `NDC-5001` UHT milk 1 L (ambient_controlled, 180 d), `GFF-2001` frozen whole chicken 1,000 g (frozen, 180 d), `GFF-2105` frozen mixed vegetables 2.5 kg (frozen, 540 d), `SAHM-3001` insulin pen box (pharma_2_8, 730 d, min remaining 70 %), `SAHM-3100` eye drops (ambient_controlled, 730 d).
+- Mapping: **MAP-RUH-CCH-2026-0004** Z-FRZ1 summer loaded study (2026-07-14…07-21, 27 loggers, 5-min interval, approved 2026-07-28 → valid to 2028-07-27); Z-PHR1 mapped until **2026-10-20** (periodic study planned); Z-CHL1 mapped until 2027-12-31; Z-DOCK, Z-AMB1, Z-DRY1 and Z-QRT mapped until 2027-06-30 (MAP-RUH-CCH-2025-0001…0004).
+- Pest stations: 46 (SHIELD); hygiene schedules: daily dock, weekly chambers (QHYG), monthly pest visits (QPST).
+
+### A.6 RUH-CCH records, September 2026
+- **Readings:** 22 points × 15-min readings for September (logger CSV imports, one batch per point per week), plus twice-daily manual readings; 90 unmonitored minutes in Z-CHL1, 420 in total; out minutes 640 in total (QX18).
+- **Excursions:** Z-CHL1 minor 2026-09-17 08:15–09:15 (QX12); Z-FRZ1 major 2026-09-22 02:00–05:30 (QX13) → NCR-RUH-CCH-2026-0034, HLD-RUH-CCH-2026-0112 (14 lines from the 2026-09-21 23:00 snapshot; impact assessed by Saad, GFF decision file attached; 12 lines released, 2 lines destroyed), Z-DOCK 3 minor; transients in Z-FRZ1 (90 min) and Z-AMB1 (25 min).
+- **Receiving:** 640 receipts decided (12 with a rejected line, 25 with a deviation, 8 with a quarantine); named **RCV-RUH-CCH-2026-01877** (QX14, GFF, 2026-09-14) and **RCV-RUH-CCH-2026-01902** (NDC yoghurt +11.0 °C rejected 2026-09-21 → NCR-RUH-CCH-2026-0031 with supplier NDCF).
+- **Stock:** daily stock snapshots at 23:00; FEFO checks 200 (194 compliant incl. 2 listed exceptions); cycle counts 400 lines (388 within tolerance); throughput 1,860,000 units handled, 412 damaged (damage reports incl. **DMG-RUH-CCH-2026-00207**, 30 yoghurt units destroyed); mock recall **RCL-RUH-CCH-2026-0002** of batch NDC-Y-2609 (QX16, closed 100.0 %).
+- **Transport:** 380 trips delivered with logger data (4 with a transit excursion, incl. **TRP-RUH-CCH-2026-00921** major on 2026-09-26 → NCR-RUH-CCH-2026-0036 and complaint **CCM-RUH-CCH-2026-0005** from GFF "cartons partly thawed at delivery"); 1,250 shipments with promised and delivered times (QX17); 6 pre-load fails, 1 override by Saad.
+- **Hygiene and pest:** 120 due checks in September, 114 done on time; station `RB-14` (Z-DRY1) with activity on the 2026-08-30 and 2026-09-27 visits.
+- **NCRs:** 9 opened in September (6 minor, 3 major), RUH-CCH NCR numbers 0001 … 0036 in 2026; complaints received in September: 3.
+- **Calibration OOT:** QX11 review **OOT-RUH-CCH-2026-0003** open at the clock (35 items proposed no_impact, 2 recheck, 1 NCR decided).
+
+### A.7 Shared Q4 records
+- Documents: ANIA-EXP `ANIA-EXP-QA-PQP-001` Project Quality Plan Rev.1 (approved 2026-03-02) and Rev.B for review (author Hatem); `ANIA-EXP-QA-MS-004` method statement concreting Rev.2 (linked from STC-001); RUH-CCH `RUH-CCH-QA-SOP-001` receiving SOP Rev.0, `RUH-CCH-QA-SOP-007` temperature excursion SOP Rev.1 (distribution warehouse_qc, ack required, 2 of 3 acks).
+- Processes RUH-CCH: RCV receiving (owner Imran, high), STO storage (owner Saad, high), DSP dispatch and transport (medium), CAL calibration (low), NCR nonconformity and CAPA (medium).
+- Audits: **QAU-RUH-CCH-2026-0006** `qms_internal` on RCV and STO (lead Reem, fieldwork 2026-09-15…16, issued 2026-09-21 by Faisal through the RUH-CCH matrix override `q_audit.issue` → user Faisal; 1 major_nc, 2 minor_nc → 3 NCRs); **QAU-ANIA-EXP-2026-0004** `supplier_quality` of RMX (lead Bilal, 2026-09-08, issued 2026-09-12 by Hatem). Programme lines due in September: ANIA-EXP 2 (both on time), RUH-CCH 2 (both on time) → K-158 100.0 %.
+- Management review **MRV-RUH-CCH-2026-0001** (held 2026-07-30, minutes issued).
+- Supplier evaluations: initial approved for every approved supplier; supplier scores Q3 2026 final: RMX 72.2 (B, QX19), ARS 88.4 (A), LAB-RGM 91.0 (A), COOLRD 66.5 (C), NDCF 79.0 (B).
+- KPI targets (both projects): K-141 ≥ 90 %, K-146 ≥ 85 %, K-148 ≤ 0.5 %, K-160 ≤ 2 %, K-162 ≤ 0.5 %, K-163 ≥ 95 %, K-165 ≥ 98 %.
+
+### A.8 Expected September 2026 values (backend test `test_seed_kpis.py` must match)
+
+| KPI | ANIA-EXP | RUH-CCH |
+|---|---|---|
+| K-141 / K-142 | **80.0 % / 19.1 %** (QX2) | — |
+| K-143 | 14 (9 / 4 / 1); open 11 | 9 (6 / 3 / 0) |
+| K-144 at 2026-09-30 | 8 / 2 / 1 / 0 | generator value |
+| K-145 / K-146 | 12 days / **80.0 %** | generator value |
+| K-147 | 7.1 % (1 ÷ 14) | generator value |
+| K-148 | **186,450.00**; COPQ 0.38 % (QX26) | generator value |
+| K-149 (process) | ir_inspection DPMO **6,431.5**, σ **3.99** (QX24) | receiving, picking_fefo, delivery, inventory from the seed |
+| K-150 | QX25, vital few 4 | generator value |
+| K-151 / K-152 / K-153 | 5.3 % (2 ÷ 38) / 2.8 % (6 ÷ 212) / 4.2 % (5 ÷ 120) | — |
+| K-154 / K-155 | 95.8 % (46 ÷ 48) / 93.8 % (60 ÷ 64) | generator value |
+| K-156 | 52.2 % (24 closed on time ÷ 46 with target in September) | — |
+| K-158 | 100.0 % | 100.0 % |
+| K-160 | — | **1.9 %** (12 ÷ 640); deviation 3.9 % |
+| K-161 / K-162 | — | **0.71** (QX21) / **0.21 %** (QX18) |
+| K-163 / K-164 / K-165 | — | **93.2 %** / **0.022 %** / **97.0 %** |
+| K-166 / K-167 / K-168 | — | 97.0 % / 98.9 % (376 ÷ 380) / 95.0 % (114 ÷ 120) |
+| K-169 | 1 | 3 (2.40 per 1,000 shipments) |
+| Warnings | **E27** (K-141 80.0 < 85.0) | none |
+
+"Generator value" = the seed generator's own result, asserted by the test as computed once and recorded in the Q4 decisions (it is not specified here so as not to over-constrain the generator).
+
+## Change log
+
+| Version | Date | Author | Change |
+|---|---|---|---|
+| v1.0 | 2026-10-31 | Quality Consultant Agent | First issue: Parts A–E mapped to packages Q0–Q4 with file, table and route ownership and plug-in registries (§3); two sector profiles; editable responsible-person matrix with positions, segregation and paper sign-off; NCR with containment, RCA (5-Why, Ishikawa, 8D), disposition, CAPA through Phase 1 CAs and cost; ITP / IR with hold and witness rules, punch with plan pins, handover dossier; MAR / MIR / quarantine, test types with ACI 318 / EN 206 rule sets, pours, welding with continuity, NDT % and progressive examination, calibration with OOT review, competence through the Phase 2 hooks; receiving, storage classes, excursions with severity bands and product impact, mapping, hygiene and pest, FEFO, holds, returns, cycle counts, recalls, transport with POD and 7b link; documents, quality audits on 6d, management review, supplier evaluation and scorecards, KPIs K-141…K-169, SPC, COPQ, DPMO and sigma, Pareto, charts C42–C51, warnings E26–E28, AI tools T26–T29, report packs; capabilities 238–280; 185 acceptance criteria; decisions D-308…D-319. |
