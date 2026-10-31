@@ -216,7 +216,7 @@ def invalid(what: str, status: Any, action: str) -> Any:
         ErrorCode.INVALID_TRANSITION,
         f"{what} in status {st} cannot be {action}.",
         "لا يمكن تنفيذ هذا الإجراء في الحالة الحالية للسجل.",
-        status=st,
+        record_status=st,
     )
 
 
@@ -333,6 +333,28 @@ def quality_engineers(db: Session, project: Project) -> list[uuid.UUID]:
     return [a.user_id for a in qc.role_holders(db, project, Role.quality_engineer)]
 
 
+def main_engagement(db: Session, project_id: uuid.UUID) -> uuid.UUID | None:
+    """The project's first tier-1 engagement: the NCR's responsible party when the source has none
+    (an instrument owned by the project, D-343); the NCR owner may change it."""
+    from app.models import ProjectEngagement  # noqa: PLC0415
+
+    return db.scalar(
+        select(ProjectEngagement.id)
+        .where(ProjectEngagement.project_id == project_id)
+        .order_by(ProjectEngagement.tier, ProjectEngagement.id)
+        .limit(1)
+    )
+
+
+def main_site(db: Session, project_id: uuid.UUID) -> uuid.UUID | None:
+    """The project's first site, for an NCR whose source names none (D-343)."""
+    from app.models import Site  # noqa: PLC0415
+
+    return db.scalar(
+        select(Site.id).where(Site.project_id == project_id).order_by(Site.code).limit(1)
+    )
+
+
 def auto_ncr(
     db: Session,
     project: Project,
@@ -370,7 +392,7 @@ def auto_ncr(
         source_id=source_id,
         source_ref=info.ref,
         item_key=info.item_key,
-        site_id=info.site_id,
+        site_id=info.site_id or main_site(db, project.id),
         zone_id=info.zone_id,
         system_id=info.system_id,
         location_ref=info.location_ref,
@@ -382,7 +404,7 @@ def auto_ncr(
         category=category,
         detection_stage=info.detection_stage or QDetectionStage.in_process,
         classification=classification or info.proposed_class or NCR_SOURCE_DEFS[source_type][1],
-        responsible_engagement_id=info.engagement_id,
+        responsible_engagement_id=info.engagement_id or main_engagement(db, project.id),
         supplier_id=info.supplier_id,
         customer_id=info.customer_id,
         quantity=info.quantity,
