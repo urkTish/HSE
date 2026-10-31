@@ -14,12 +14,14 @@ import { Breadcrumbs } from "@/components/common/breadcrumbs";
 import { FieldItem, FieldList } from "@/components/common/field-list";
 import { FormField } from "@/components/common/form-field";
 import { HistoryPanel } from "@/components/common/history-panel";
+import { ListToolbar, SearchFilter } from "@/components/common/list-toolbar";
 import { PageHeader } from "@/components/common/page-header";
 import { EmptyState, ErrorState, LoadingState, MutationError } from "@/components/common/states";
 import { Link, useRouter } from "@/i18n/navigation";
 import { api, unwrap } from "@/lib/api/client";
 import { useAttachments } from "@/lib/api/hse";
 import { useQContinuity, useQPqrs, useQRepairRates, useQWeld, useQWeldLot, useQWeldLots, useQWelders, useQWelds, useQWps, useQWpqs } from "@/lib/api/quality/q2";
+import { useDebounced } from "@/lib/use-debounced";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
 import { QGate, ReasonDialog, useQCaps, useQLabels, useRun, type Project } from "../q0/common";
@@ -64,13 +66,16 @@ function Welds({ project }: { project: Project }) {
   const { l } = useQLabels();
   const caps = useQCaps(project.id);
   const { date } = useFormatters(project.id);
-  const r = useQWelds(project.id, { page_size: 100 });
+  const [search, setSearch] = useState("");
+  const q = useDebounced(search, 300);
+  const r = useQWelds(project.id, { q: q || null, page_size: 100 });
   const [adding, setAdding] = useState(false);
   const items = r.data?.items ?? [];
   return (
     <div>
       {caps.write("welding.record") && !adding ? <Button className="mb-3" onClick={() => setAdding(true)} data-testid="q2-weld-new"><Plus aria-hidden />{t("newWeld")}</Button> : null}
       {adding ? <WeldForm project={project} onDone={() => setAdding(false)} /> : null}
+      <ListToolbar><SearchFilter id="q2-weld-q" value={search} onChange={setSearch} /></ListToolbar>
       {r.isLoading ? <LoadingState /> : items.length ? (
         <Table compact data-testid="q2-weld-table">
           <THead><TR><TH>{t("joint")}</TH><TH>{t("wps")}</TH><TH>{t("welders")}</TH><TH>{t("weldedOn")}</TH><TH>{t("lot")}</TH><TH>{t("selection")}</TH><TH>{tc("status")}</TH></TR></THead>

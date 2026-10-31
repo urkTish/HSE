@@ -63,7 +63,13 @@ def test_AC05_qx7_slump_compaction_dft() -> None:
 
 def test_pressure_hold_and_missing_inputs() -> None:
     p = {"factor": 1.5, "hold_min": 10}
-    ok = {"test_pressure": "15", "design_pressure": "10", "hold_minutes": "10", "pressure_drop": "0", "leak": "no"}
+    ok = {
+        "test_pressure": "15",
+        "design_pressure": "10",
+        "hold_minutes": "10",
+        "pressure_drop": "0",
+        "leak": "no",
+    }
     assert ev.pressure_hold(p, ok).verdict == P
     assert ev.pressure_hold(p, {**ok, "test_pressure": "14"}).verdict == F
     assert ev.pressure_hold(p, {**ok, "leak": "yes"}).verdict == F

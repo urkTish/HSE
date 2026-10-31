@@ -905,9 +905,9 @@ def compute(
                 return QTestVerdict.pending, {}, ["specimen values"]
             values[LIST_RULES[rule]] = vals
         else:
-            key = _first_numeric(tt)
-            if key and key in values:
-                values["value"] = values[key]
+            first = _first_numeric(tt)
+            if first and first in values:
+                values["value"] = values[first]
         v = qcrit.evaluate(crit, values)
         det = {
             **v.detail,
@@ -1157,7 +1157,8 @@ def _raise_ncr(
         "ncr_no": n.ncr_no,
         "at": now().isoformat(),
     }
-    return n.id
+    nid: uuid.UUID = n.id
+    return nid
 
 
 def _failed(

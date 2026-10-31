@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { FormField } from "@/components/common/form-field";
 import { MutationError } from "@/components/common/states";
 import { api, unwrap } from "@/lib/api/client";
+import { useQualityRefresh } from "@/lib/api/quality/q0";
 import { useFormatters } from "@/lib/use-formatters";
 import { qError, type S } from "../q0/common";
 
@@ -132,12 +133,14 @@ export function DecisionDialog({
   const [comment, setComment] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
+  const refresh = useQualityRefresh();
   const short = needsComment(decision) && comment.trim().length < 20;
   async function go() {
     setBusy(true);
     setError(null);
     try {
       await onSubmit(decision, comment.trim());
+      await refresh();
       setComment("");
       onOpenChange(false);
     } catch (e) {

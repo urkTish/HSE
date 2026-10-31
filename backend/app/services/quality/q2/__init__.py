@@ -369,21 +369,21 @@ def open_steps(db: Session, project: Project) -> list[reg.OpenStep]:
                 c.requesters,
             )
         )
-    for x in db.scalars(
+    for mir in db.scalars(
         select(QMir).where(QMir.project_id == pid, QMir.status == QMirStatus.submitted)
     ):
-        c = materials.mir_ctx(x)
+        c = materials.mir_ctx(mir)
         out.append(
             reg.OpenStep(
                 _step(
                     RT.mir,
-                    x.id,
+                    mir.id,
                     pid,
-                    x.mir_no or "MIR",
-                    x.material_description,
+                    mir.mir_no or "MIR",
+                    mir.material_description,
                     "decide",
-                    x.submitted_at,
-                    f"/quality/material-inspections/{x.id}",
+                    mir.submitted_at,
+                    f"/quality/material-inspections/{mir.id}",
                 ),
                 None,
                 c.site_id,
@@ -463,66 +463,66 @@ def open_steps(db: Session, project: Project) -> list[reg.OpenStep]:
                 c.requesters,
             )
         )
-    for x in db.scalars(
+    for pqr in db.scalars(
         select(QPqr).where(QPqr.project_id == pid, QPqr.status == QPqrStatus.draft)
     ):
         out.append(
             reg.OpenStep(
                 _step(
                     RT.pqr,
-                    x.id,
+                    pqr.id,
                     pid,
-                    x.pqr_no,
-                    x.pqr_no,
+                    pqr.pqr_no,
+                    pqr.pqr_no,
                     "approve",
-                    x.created_at,
-                    f"/quality/welding?tab=pqr&id={x.id}",
+                    pqr.created_at,
+                    f"/quality/welding?tab=pqr&id={pqr.id}",
                 ),
                 None,
                 None,
                 None,
-                qc.ids(x.created_by_user_id),
+                qc.ids(pqr.created_by_user_id),
             )
         )
-    for x in db.scalars(
+    for wpq in db.scalars(
         select(QWpq).where(QWpq.project_id == pid, QWpq.status == QWpqStatus.draft)
     ):
         out.append(
             reg.OpenStep(
                 _step(
                     RT.wpq,
-                    x.id,
+                    wpq.id,
                     pid,
-                    x.wpq_no or "WPQ",
-                    f"{x.process.value} WPQ",
+                    wpq.wpq_no or "WPQ",
+                    f"{wpq.process.value} WPQ",
                     "approve",
-                    x.created_at,
-                    f"/quality/welding?tab=wpq&id={x.id}",
+                    wpq.created_at,
+                    f"/quality/welding?tab=wpq&id={wpq.id}",
                 ),
                 None,
                 None,
                 None,
-                qc.ids(x.created_by_user_id),
+                qc.ids(wpq.created_by_user_id),
             )
         )
-    for x in db.scalars(
+    for wd in db.scalars(
         select(QWeld).where(
             QWeld.project_id == pid, QWeld.status == QWeldStatus.rejected, QWeld.repair_count == 1
         )
     ):
-        if welding._awaits_r2(db, x):
-            c = welding.weld_ctx(x)
+        if welding._awaits_r2(db, wd):
+            c = welding.weld_ctx(wd)
             out.append(
                 reg.OpenStep(
                     _step(
                         RT.weld,
-                        x.id,
+                        wd.id,
                         pid,
-                        x.joint_id,
-                        f"Weld {x.joint_id}",
+                        wd.joint_id,
+                        f"Weld {wd.joint_id}",
                         "repair2_approve",
-                        x.updated_at,
-                        f"/quality/welding/welds/{x.id}",
+                        wd.updated_at,
+                        f"/quality/welding/welds/{wd.id}",
                     ),
                     None,
                     c.site_id,
@@ -535,15 +535,15 @@ def open_steps(db: Session, project: Project) -> list[reg.OpenStep]:
             QCalibration.project_id == pid, QCalibration.status == QCalRecordStatus.draft
         )
     ):
-        m = db.get(QMteItem, cal.mte_id)
-        c = calibration.ctx(cal, m)
+        mte = db.get(QMteItem, cal.mte_id)
+        c = calibration.ctx(cal, mte)
         out.append(
             reg.OpenStep(
                 _step(
                     RT.calibration,
                     cal.id,
                     pid,
-                    m.mte_no if m else "CAL",
+                    mte.mte_no if mte else "CAL",
                     f"Calibration {cal.cal_date.isoformat()}",
                     "accept",
                     cal.created_at,
@@ -558,8 +558,8 @@ def open_steps(db: Session, project: Project) -> list[reg.OpenStep]:
     for r in db.scalars(
         select(QOotReview).where(QOotReview.project_id == pid, QOotReview.status == QOotStatus.open)
     ):
-        m = db.get(QMteItem, r.mte_id)
-        c = calibration.review_ctx(r, m)
+        mte = db.get(QMteItem, r.mte_id)
+        c = calibration.review_ctx(r, mte)
         out.append(
             reg.OpenStep(
                 _step(
@@ -567,7 +567,7 @@ def open_steps(db: Session, project: Project) -> list[reg.OpenStep]:
                     r.id,
                     pid,
                     r.oot_no,
-                    f"OOT review {m.mte_no if m else ''}",
+                    f"OOT review {mte.mte_no if mte else ''}",
                     "decide",
                     r.created_at,
                     f"/quality/calibration/oot/{r.id}",

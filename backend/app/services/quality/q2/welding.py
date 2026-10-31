@@ -531,7 +531,7 @@ def last_use(
             QWeld.project_id == project_id,
             QWeld.process == process,
             QWeld.status != W.voided,
-            QWeld.welder_ids.any(welder_id),
+            QWeld.welder_ids.contains([welder_id]),
         )
     )
     dates = list(rows)
@@ -1016,7 +1016,7 @@ def weld_list(
         w = db.scalar(
             select(QWelder).where(QWelder.project_id == project.id, QWelder.stamp == stamp.upper())
         )
-        stmt = stmt.where(Wd.welder_ids.any(w.id)) if w else stmt.where(Wd.id.is_(None))
+        stmt = stmt.where(Wd.welder_ids.contains([w.id])) if w else stmt.where(Wd.id.is_(None))
     if q:
         stmt = stmt.where(Wd.joint_id.ilike(f"%{q.strip()}%"))
     items, total = paginate(db, stmt.order_by(Wd.welded_on.desc(), Wd.joint_id), page, page_size)
