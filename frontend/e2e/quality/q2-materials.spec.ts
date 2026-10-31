@@ -52,6 +52,31 @@ test.describe("Quality Q2 materials", () => {
     await expect(page.getByTestId("q2-qtn-status")).toHaveAttribute("data-status", "quarantined");
   });
 
+  test("MIR-0112 shows its delivery checklist with the failed critical item (§C.3.2)", async ({ page }) => {
+    await openQ(page, QU.hatem, "/quality/material-inspections");
+    await page.locator('[data-testid="q2-mir-row"][data-no="MIR-ANIA-EXP-2026-0112"]').getByRole("link").click();
+    await expect(page.getByTestId("q2-mir-checklist-result")).toHaveAttribute("data-result", "fail");
+    await expect(page.locator('[data-testid="q2-mir-checklist-answer"][data-compliant="0"]')).toHaveCount(1);
+  });
+
+  test("Phone: the inspector fills in the delivery checklist on a new MIR (§A.7)", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openQ(page, QU.joseph, "/quality/material-inspections");
+    await page.getByTestId("q2-mir-new").click();
+    await pickByText(page, "mir-mar", /MAR-ANIA-EXP-2026-0021/);
+    await page.getByTestId("mir-qty").fill("12");
+    await page.getByTestId("mir-unit").fill("t");
+    await page.getByTestId("mir-save").click();
+    await expect(page.getByTestId("q2-mir-detail")).toHaveAttribute("data-status", "draft");
+    await page.getByTestId("q2-mir-checklist-edit").click();
+    const item = page.locator('[data-testid="q2-mir-checklist-item"][data-code="QMIR-03"]');
+    await item.getByTestId("q2-ck-non_compliant").click();
+    await item.getByTestId("q2-ck-note").fill("Two bundles corroded at the ends.");
+    await page.getByTestId("q2-mir-checklist-save").click();
+    await expect(page.getByTestId("q2-mir-checklist-result")).toHaveAttribute("data-result", "fail");
+    await expect(page.getByText(/1 critical item failed/)).toBeVisible();
+  });
+
   test("Arabic: quarantine register is RTL with Arabic labels and LTR tag numbers", async ({ page }) => {
     await openQ(page, QU.hatem, "/quality/quarantine", { locale: "ar" });
     await expect(page.locator("html")).toHaveAttribute("dir", "rtl");

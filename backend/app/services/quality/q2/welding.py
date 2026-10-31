@@ -12,7 +12,7 @@ from datetime import date, datetime, timedelta
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.clock import now
@@ -430,7 +430,8 @@ def pqr_approve(
 # ==== welders and WPQs ==========================================================================
 
 
-def welder_read(db: Session, w: QWelder) -> dict[str, Any]:
+def welder_read(db: Session, w: QWelder, hide: bool = False) -> dict[str, Any]:
+    """`hide`: Viewer / Client (238 P) sees the stamp and contractor, never the person (PDPL)."""
     wk = db.get(Worker, w.worker_id)
     eng = db.get(ProjectEngagement, w.engagement_id)
     from app.models import Contractor  # noqa: PLC0415
@@ -440,9 +441,9 @@ def welder_read(db: Session, w: QWelder) -> dict[str, Any]:
         "id": w.id,
         "project_id": w.project_id,
         "worker_id": w.worker_id,
-        "worker_no": wk.worker_no if wk else None,
-        "full_name_en": wk.full_name_en if wk else "—",
-        "full_name_ar": wk.full_name_ar if wk else "—",
+        "worker_no": None if hide or wk is None else wk.worker_no,
+        "full_name_en": "—" if hide or wk is None else wk.full_name_en,
+        "full_name_ar": None if hide or wk is None else wk.full_name_ar,
         "stamp": w.stamp,
         "engagement_id": w.engagement_id,
         "engagement_code": con.short_code if con else None,
@@ -454,6 +455,7 @@ def welders_list(db: Session, p: Principal, project_id: uuid.UUID) -> list[dict[
     project = qc.get_project(db, p, project_id)
     _view(p, project.id)
     g = p.grant(project.id, C.welding_record) or p.grant(project.id, C.quality_view)
+    hide = base.read_only(p, project.id)
     out = []
     for w in db.scalars(
         select(QWelder).where(QWelder.project_id == project.id).order_by(QWelder.stamp)
@@ -464,7 +466,7 @@ def welders_list(db: Session, p: Principal, project_id: uuid.UUID) -> list[dict[
             or g.engagement_ids is None
             or w.engagement_id in g.engagement_ids
         ):
-            out.append(welder_read(db, w))
+            out.append(welder_read(db, w, hide))
     return out
 
 
@@ -524,32 +526,41 @@ def wpq_ctx(x: QWpq) -> rpm.Ctx:
 
 
 def last_use(
-    db: Session, welder_id: uuid.UUID, process: QWeldProcess, project_id: uuid.UUID
+    db: Session,
+    welder_id: uuid.UUID,
+    process: QWeldProcess,
+    project_id: uuid.UUID,
+    upto: date | None = None,
 ) -> date | None:
-    rows = db.scalars(
-        select(QWeld.welded_on).where(
-            QWeld.project_id == project_id,
-            QWeld.process == process,
-            QWeld.status != W.voided,
-            QWeld.welder_ids.contains([welder_id]),
-        )
+    stmt = select(func.max(QWeld.welded_on)).where(
+        QWeld.project_id == project_id,
+        QWeld.process == process,
+        QWeld.status != W.voided,
+        QWeld.welder_ids.contains([welder_id]),
     )
-    dates = list(rows)
-    return max(dates) if dates else None
+    if upto is not None:
+        stmt = stmt.where(QWeld.welded_on <= upto)
+    return db.scalar(stmt)
 
 
-def continuity(db: Session, x: QWpq) -> tuple[date, date]:
+def continuity(db: Session, x: QWpq, upto: date | None = None) -> tuple[date, date]:
     """Q-WLD-03: last_use(process) = latest welded_on of not-voided welds by the welder with the
     process, or the WPQ test date if later (plus six-monthly confirmations in
-    `weld_log_or_confirmation` mode); continuity_until = add_months(last_use, months) − 1 day."""
+    `weld_log_or_confirmation` mode); continuity_until = add_months(last_use, months) − 1 day.
+    `upto`: only welds and confirmations on or before that day count (a weld dated later cannot
+    keep an earlier weld's qualification alive)."""
     months = int(base.setting(db, x.project_id, "wpq_continuity_months") or 6)
     mode = base.setting(db, x.project_id, "wpq_confirmation_mode")
     cands = [x.test_date]
-    lu = last_use(db, x.welder_id, x.process, x.project_id)
+    lu = last_use(db, x.welder_id, x.process, x.project_id, upto)
     if lu:
         cands.append(lu)
     if mode == "weld_log_or_confirmation":
-        cands += [date.fromisoformat(c["date"]) for c in x.confirmations or [] if c.get("date")]
+        cands += [
+            c
+            for c in (date.fromisoformat(r["date"]) for r in x.confirmations or [] if r.get("date"))
+            if upto is None or c <= upto
+        ]
     use = max(cands)
     return use, base.add_months(use, months) - timedelta(days=1)
 
@@ -611,7 +622,14 @@ def wpq_list(
 ) -> list[dict[str, Any]]:
     project = qc.get_project(db, p, project_id)
     _view(p, project.id)
-    stmt = select(QWpq).where(QWpq.project_id == project.id)
+    stmt = (
+        select(QWpq)
+        .join(QWelder, QWelder.id == QWpq.welder_id)
+        .where(
+            QWpq.project_id == project.id,
+            base.scope_cond(p, project.id, (C.welding_record,), None, QWelder.engagement_id),
+        )
+    )
     if welder_id:
         stmt = stmt.where(QWpq.welder_id == welder_id)
     today = qc.project_day(project)
@@ -845,7 +863,7 @@ def welder_qualified(
             continue
         if diameter is not None and x.diameter_min_mm is not None and diameter < x.diameter_min_mm:
             continue
-        _use, until = continuity(db, x)
+        _use, until = continuity(db, x, on)
         if until < on:
             return f"{welder.stamp} {process.value} continuity ended {until.isoformat()}"
         return None

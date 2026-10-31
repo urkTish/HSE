@@ -90,7 +90,20 @@
     "openTag": "فتح البطاقة الحمراء",
     "submit": "تقديم",
     "decide": "اتخاذ القرار",
-    "empty": "لا توجد طلبات فحص مواد بعد."
+    "empty": "لا توجد طلبات فحص مواد بعد.",
+    "checklist": "قائمة فحص التوريد",
+    "checklistStart": "تعبئة قائمة الفحص",
+    "checklistRedo": "إعادة قائمة الفحص",
+    "checklistSave": "حفظ قائمة الفحص",
+    "checklistPass": "ناجحة",
+    "checklistFail": "راسبة",
+    "checklistScore": "النتيجة {pct} ٪",
+    "checklistCritical": "{n, plural, one {بند حرج واحد غير مطابق} two {بندان حرجان غير مطابقين} few {# بنود حرجة غير مطابقة} many {# بنداً حرجاً غير مطابق} other {# بند حرج غير مطابق}} — يُنبَّه صاحب القرار.",
+    "checklistNote": "ما المشكلة (10 أحرف على الأقل)",
+    "critical": "حرج",
+    "compliant": "مطابق",
+    "nonCompliant": "غير مطابق",
+    "na": "لا ينطبق"
   },
   "qtn": {
     "title": "المواد المحجوزة",

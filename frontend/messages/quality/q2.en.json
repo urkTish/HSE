@@ -90,7 +90,20 @@
     "openTag": "Open the red tag",
     "submit": "Submit",
     "decide": "Decide",
-    "empty": "No material inspections yet."
+    "empty": "No material inspections yet.",
+    "checklist": "Delivery checklist",
+    "checklistStart": "Fill in checklist",
+    "checklistRedo": "Redo checklist",
+    "checklistSave": "Save checklist",
+    "checklistPass": "Passed",
+    "checklistFail": "Failed",
+    "checklistScore": "Score {pct} %",
+    "checklistCritical": "{n, plural, one {# critical item failed} other {# critical items failed}} — the decider is warned.",
+    "checklistNote": "What is wrong (at least 10 characters)",
+    "critical": "critical",
+    "compliant": "OK",
+    "nonCompliant": "Not OK",
+    "na": "N/A"
   },
   "qtn": {
     "title": "Quarantined material",

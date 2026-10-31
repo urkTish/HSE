@@ -7,11 +7,11 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass, field
-from datetime import date, datetime, time, timedelta
+from datetime import date, datetime, time
 from typing import Any
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.core.access_enums import HookProviderStatus, HookSubjectType, WorkerStatus
@@ -25,7 +25,7 @@ from app.core.quality.q2 import (
     QEvidenceKind,
 )
 from app.models import Project, User, Worker
-from app.models.quality.q2 import QCompetenceReq
+from app.models.quality.q2 import QCompetenceCell, QCompetenceReq
 from app.schemas.hse_common import ApiWarning
 from app.services import audit
 from app.services.permissions import Principal, forbidden_error
@@ -313,6 +313,7 @@ def create(db: Session, p: Principal, body: dict[str, Any]) -> dict[str, Any]:
     db.add(r)
     db.flush()
     _audit(db, p, r, AuditAction.create, after={"code": r.code})
+    refresh_all(db)
     return read(r)
 
 
@@ -337,6 +338,7 @@ def update(db: Session, p: Principal, req_id: uuid.UUID, body: dict[str, Any]) -
         {k: str(v) for k, v in before.items()}, {k: str(v) for k, v in read(r).items()}
     )
     _audit(db, p, r, AuditAction.update, before=b, after=a)
+    refresh_all(db)
     return read(r)
 
 
@@ -365,6 +367,12 @@ def check_api(
     req = get_req(db, code)
     if req is None:
         raise not_found("Competence requirement")
+    from app.services.quality.q2 import base  # noqa: PLC0415
+
+    if not base.project_member(db, project, user_id):
+        raise qc.field_err(
+            "user_id", "The user has no role on this project.", "لا دور لهذا المستخدم في المشروع."
+        )
     v = evaluate(db, req, user_id, at or qc.project_day(project))
     return {
         "requirement": code,
@@ -511,4 +519,47 @@ def expiry_alerts(db: Session, at: datetime) -> int:
     return n
 
 
-_ = (timedelta,)
+# ---- matrix snapshot for the export (Q-CPT-03, dataset quality_competence_matrix) ------------
+
+
+def refresh_cells(db: Session, project: Project, on: date) -> int:
+    """Rebuild the project's `q_competence_cells` from the live evaluation."""
+    cs = cells(db, project, on)
+    titles = {r.code: r.title_en for r in db.scalars(select(QCompetenceReq))}
+    db.execute(delete(QCompetenceCell).where(QCompetenceCell.project_id == project.id))
+    for c in cs:
+        db.add(
+            QCompetenceCell(
+                id=uuid.uuid4(),
+                project_id=project.id,
+                holder_user_id=c["user_id"],
+                requirement_code=c["code"],
+                requirement_title=titles.get(c["code"], c["code"])[:150],
+                state=c["state"],
+                valid_until=c["valid_until"],
+                reason=(str(c["reason"])[:60] if c["reason"] else None),
+                as_of=on,
+            )
+        )
+    db.flush()
+    return len(cs)
+
+
+def _profiled_projects(db: Session) -> list[Project]:
+    from app.models.quality import QSettings  # noqa: PLC0415
+
+    out = []
+    for s in db.scalars(select(QSettings).where(QSettings.sector_profile.is_not(None))):
+        project = db.get(Project, s.project_id)
+        if project is not None:
+            out.append(project)
+    return out
+
+
+def refresh_all(db: Session, at: datetime | None = None) -> int:
+    from app.core.clock import now  # noqa: PLC0415
+
+    n = 0
+    for project in _profiled_projects(db):
+        n += refresh_cells(db, project, qc.project_day(project, at or now()))
+    return n

@@ -15204,6 +15204,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/quality/mirs/{mir_id}/checklist": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Record the delivery checklist (6d engine, owner q_mir; §C.3.2) */
+        put: operations["q_mir_checklist"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/mir-checklist": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The material inspection checklist the project proposes (Q-CHK-04) */
+        get: operations["q_mir_checklist_template"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/quality/mirs/{mir_id}/cancel": {
         parameters: {
             query?: never;
@@ -47628,6 +47662,89 @@ export interface components {
          * @enum {string}
          */
         QMaterialCategory: "concrete_mix" | "cement" | "aggregates" | "rebar" | "structural_steel" | "blockwork" | "waterproofing" | "insulation" | "pipes_fittings" | "valves" | "ductwork" | "cables" | "electrical_equipment" | "mechanical_equipment" | "coatings" | "finishes" | "asphalt" | "consumables" | "other";
+        /** QMirChecklistItemRead */
+        QMirChecklistItemRead: {
+            /** Item Code */
+            item_code: string;
+            /** Text En */
+            text_en: string;
+            /** Text Ar */
+            text_ar: string;
+            /** Critical */
+            critical: boolean;
+            /** Answer */
+            answer: string | null;
+            /** Compliant */
+            compliant: boolean | null;
+            /** Note */
+            note: string | null;
+        };
+        /**
+         * QMirChecklistRead
+         * @description §C.3.2 the delivery checklist response (6d engine, owner type q_mir).
+         */
+        QMirChecklistRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Template Code */
+            template_code: string;
+            /** Template Version */
+            template_version: number;
+            /** Completed At */
+            completed_at: string | null;
+            /** Score Pct */
+            score_pct: string | null;
+            /** Result */
+            result: string | null;
+            /** Critical Fail Count */
+            critical_fail_count: number;
+            /** Critical Failures */
+            critical_failures: string[];
+            /** Answers */
+            answers: components["schemas"]["QMirChecklistItemRead"][];
+        };
+        /**
+         * QMirChecklistSave
+         * @description PUT /quality/mirs/{id}/checklist: yes_no answers `compliant` / `non_compliant` / `na`; a
+         *     non-compliant answer needs a note of at least 10 characters (6d EXE-2).
+         */
+        QMirChecklistSave: {
+            /** Template Code */
+            template_code?: string | null;
+            /** Completed At */
+            completed_at?: string | null;
+            /** Answers */
+            answers: components["schemas"]["AnswerInput"][];
+        };
+        /** QMirChecklistTemplate */
+        QMirChecklistTemplate: {
+            /** Template Code */
+            template_code: string;
+            /** Version */
+            version: number;
+            /** Title En */
+            title_en: string;
+            /** Title Ar */
+            title_ar: string;
+            /** Items */
+            items: components["schemas"]["QMirChecklistTemplateItem"][];
+        };
+        /** QMirChecklistTemplateItem */
+        QMirChecklistTemplateItem: {
+            /** Item Code */
+            item_code: string;
+            /** Text En */
+            text_en: string;
+            /** Text Ar */
+            text_ar: string;
+            /** Critical */
+            critical: boolean;
+            /** Na Allowed */
+            na_allowed: boolean;
+        };
         /** QMirCreate */
         QMirCreate: {
             /** Mar Id */
@@ -47765,6 +47882,9 @@ export interface components {
             quarantine_ids: string[];
             /** Certificate Count */
             certificate_count: number;
+            /** Checklist Response Id */
+            checklist_response_id?: string | null;
+            checklist?: components["schemas"]["QMirChecklistRead"] | null;
             /** Actions */
             actions: string[];
             /** Warnings */
@@ -138444,6 +138564,144 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["QMirRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_mir_checklist: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mir_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QMirChecklistSave"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QMirRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_mir_checklist_template: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QMirChecklistTemplate"];
                 };
             };
             /** @description Not authenticated, session expired, or login rejected. */

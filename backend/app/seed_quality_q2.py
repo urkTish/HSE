@@ -622,6 +622,9 @@ def seed_libraries(db: Session) -> None:
 
     fa = _faisal(db)
     pub = at(date(2026, 4, 1))
+    from app.services.quality.q2 import checklists  # noqa: PLC0415
+
+    checklists.ensure_template(db, fa)
     for c in EXTRA_CRITERIA:
         if db.scalar(select(QCriterion.id).where(QCriterion.code == c["code"])) is None:
             db.add(
@@ -1182,6 +1185,28 @@ def _mir_named(c: _Ctx, p: Project, mars: dict[int, QMar]) -> None:
     )
     db.add(x)
     db.flush()
+    from app.schemas.field import AnswerInput  # noqa: PLC0415
+    from app.services.quality.q2 import checklists  # noqa: PLC0415
+
+    answers = [
+        AnswerInput(
+            item_code=f"{checklists.CODE}-{n:02d}",
+            answer="non_compliant" if n == 3 else "compliant",
+            note="Ovality beyond tolerance and damaged ends on 60 m." if n == 3 else None,
+        )
+        for n in range(1, len(checklists.ITEMS) + 1)
+    ]
+    resp = checklists.respond(
+        db,
+        joseph,
+        p,
+        x.site_id or c.site(p, "S-LAND"),
+        None,
+        x.engagement_id,
+        answers,
+        completed_at=when + timedelta(hours=1),
+    )
+    x.checklist_response_id = resp.id
     n41 = c.ncr(p, "NCR-ANIA-EXP-2026-0041")
     q = QQuarantineItem(
         id=uuid.uuid4(),
@@ -1943,6 +1968,10 @@ def seed(db: Session) -> None:
     for m in db.scalars(select(QMteItem).where(QMteItem.project_id.in_([p.id, r.id]))):
         calibration.recompute(db, m, date(2026, 10, 6))
     db.flush()
+    from app.services.quality.q2 import competence  # noqa: PLC0415
+
+    for proj in (p, r):
+        competence.refresh_cells(db, proj, date(2026, 10, 6))
 
 
 # ==== after every part (registry SEEDS) =========================================================

@@ -14,6 +14,7 @@ export const q2k = {
   mar: (id: string) => ["q-mar", id] as const,
   mirs: (pid: string, q: object) => ["q-mirs", pid, q] as const,
   mir: (id: string) => ["q-mir", id] as const,
+  mirChecklist: (pid: string) => ["q-mir-checklist", pid] as const,
   quarantine: (pid: string, q: object) => ["q-quarantine", pid, q] as const,
   quarantineItem: (id: string) => ["q-quarantine-item", id] as const,
   testTypes: (q: object) => ["q-test-types", q] as const,
@@ -53,6 +54,10 @@ export function useQMirs(pid: string, q: QueryOf<"q_list_mirs"> = {}) {
 }
 export function useQMir(id: string) {
   return useQuery({ queryKey: q2k.mir(id), queryFn: () => unwrap(api.GET("/api/v1/quality/mirs/{mir_id}", { params: { path: { mir_id: id } } })), enabled: on(id), retry: false });
+}
+/** §C.3.2 the material inspection checklist the project proposes (Q-CHK-04). */
+export function useQMirChecklistTemplate(pid: string, o: Opt = {}) {
+  return useQuery({ queryKey: q2k.mirChecklist(pid), queryFn: () => unwrap(api.GET("/api/v1/projects/{project_id}/quality/mir-checklist", { params: P(pid) })), enabled: on(pid, o), staleTime: 60_000, retry: false });
 }
 export function useQQuarantine(pid: string, q: QueryOf<"q_list_quarantine"> = {}) {
   return useQuery({ queryKey: q2k.quarantine(pid, q), queryFn: () => unwrap(api.GET("/api/v1/projects/{project_id}/quality/quarantine", { params: { ...P(pid), query: q } })), enabled: on(pid), ...list });

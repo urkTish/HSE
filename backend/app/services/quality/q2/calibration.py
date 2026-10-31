@@ -10,11 +10,11 @@ from __future__ import annotations
 
 import re
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import event, select
+from sqlalchemy import and_, event, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.clock import now
@@ -70,8 +70,6 @@ OOT_SOURCES: list[Any] = []
 
 def due_on(cal_date: date, interval_months: int) -> date:
     """Q-CAL-01 add_months(cal_date, interval) − 1 day (month-end clamp). QX10."""
-    from datetime import timedelta  # noqa: PLC0415
-
     return base.add_months(cal_date, interval_months) - timedelta(days=1)
 
 
@@ -85,8 +83,6 @@ def compute_status(
     """Q-CAL-02: manual out_of_service / limited_use win; check kind none → not_required; the last
     accepted calibration left out of tolerance → out_of_service (Q-CAL-03); never calibrated →
     overdue; past due → overdue; within `mte_due_soon_days` → due_soon; else calibrated."""
-    from datetime import timedelta  # noqa: PLC0415
-
     ov = db.get(QMteCalOverride, m.id) if m.id else None
     if ov is not None:
         return CS(ov.status.value), f"{label('mte_override', ov.status)}: {ov.reason}"
@@ -265,7 +261,9 @@ def read(db: Session, c: QCalibration, p: Principal | None = None) -> dict[str, 
         "next_due": c.next_due,
         "decision_comment": c.decision_comment,
         "decided_at": c.decided_at,
-        "decided_by": base.user_ref(db, c.decided_by_user_id),
+        "decided_by": base.user_ref(
+            db, c.decided_by_user_id, p is None or base.read_only(p, c.project_id)
+        ),
         "status": c.status,
         "certificate_count": base.attachment_count(db, A.q_calibration_cert, c.id),
         "actions": actions,
@@ -299,6 +297,19 @@ def list_for_mte(db: Session, p: Principal, mte_id: uuid.UUID) -> list[dict[str,
     return [read(db, c, p) for c in rows]
 
 
+def _mte_scope(p: Principal, project_id: uuid.UUID) -> Any:
+    """Lists narrow to the instruments of the user's sites and engagement tree (Q-ROL-02); an
+    instrument owned by the project itself (no owner engagement) narrows by site only."""
+    caps = (C.mte_manage, C.calibration_decide)
+    return or_(
+        base.scope_cond(p, project_id, caps, QMteItem.site_id, QMteItem.owner_engagement_id),
+        and_(
+            QMteItem.owner_engagement_id.is_(None),
+            base.scope_cond(p, project_id, caps, QMteItem.site_id, None),
+        ),
+    )
+
+
 def list_page(
     db: Session,
     p: Principal,
@@ -309,7 +320,11 @@ def list_page(
 ) -> dict[str, Any]:
     project = qc.get_project(db, p, project_id)
     base.require_list(p, project.id, C.mte_manage, C.calibration_decide)
-    stmt = select(QCalibration).where(QCalibration.project_id == project.id)
+    stmt = (
+        select(QCalibration)
+        .join(QMteItem, QMteItem.id == QCalibration.mte_id)
+        .where(QCalibration.project_id == project.id, _mte_scope(p, project.id))
+    )
     if status:
         stmt = stmt.where(QCalibration.status == status)
     items, total = paginate(
@@ -591,8 +606,6 @@ def open_review(
     else:
         start = c.cal_date
     err_abs = c.max_found_error or Decimal(0)
-    from datetime import timedelta  # noqa: PLC0415
-
     today = qc.project_day(project)
     r = QOotReview(
         id=uuid.uuid4(),
@@ -769,7 +782,11 @@ def list_reviews(
 ) -> list[dict[str, Any]]:
     project = qc.get_project(db, p, project_id)
     base.require_list(p, project.id, C.mte_manage, C.calibration_decide)
-    stmt = select(QOotReview).where(QOotReview.project_id == project.id)
+    stmt = (
+        select(QOotReview)
+        .join(QMteItem, QMteItem.id == QOotReview.mte_id)
+        .where(QOotReview.project_id == project.id, _mte_scope(p, project.id))
+    )
     if status:
         stmt = stmt.where(QOotReview.status == status)
     out = []
@@ -829,6 +846,14 @@ def decide_item(db: Session, p: Principal, item_id: uuid.UUID, body: dict[str, A
         )
         i.justification = (body.get("justification") or "").strip() or None
     elif i.ncr_id is None:
+        if body.get("owner_id") and uuid.UUID(str(body["owner_id"])) not in qc.holders_of(
+            db, project, C.ncr_manage
+        ):
+            raise qc.field_err(
+                "owner_id",
+                "The NCR owner must be a user on the project holding capability 242.",
+                "يجب أن يكون مسؤول التقرير مستخدماً في المشروع لديه الصلاحية 242.",
+            )
         n = base.auto_ncr(
             db,
             project,

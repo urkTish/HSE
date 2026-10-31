@@ -22,6 +22,8 @@ from app.schemas.quality.q2 import (
     QMarPage,
     QMarRead,
     QMarUpdate,
+    QMirChecklistSave,
+    QMirChecklistTemplate,
     QMirCreate,
     QMirDecide,
     QMirPage,
@@ -208,6 +210,29 @@ def q_submit_mir(mir_id: uuid.UUID, user: CurrentUser, db: DB) -> dict[str, Any]
 def q_decide_mir(mir_id: uuid.UUID, body: QMirDecide, user: CurrentUser, db: DB) -> dict[str, Any]:
     x, w = m.mir_decide(db, user, mir_id, body.model_dump(exclude={"paper"}), paper(body))
     return with_warnings(m.mir_read(db, user, x), w)
+
+
+@router.put(
+    "/quality/mirs/{mir_id}/checklist",
+    response_model=QMirRead,
+    summary="Record the delivery checklist (6d engine, owner q_mir; §C.3.2)",
+    responses=E,
+)
+def q_mir_checklist(
+    mir_id: uuid.UUID, body: QMirChecklistSave, user: CurrentUser, db: DB
+) -> dict[str, Any]:
+    x, w = m.mir_checklist(db, user, mir_id, body.model_dump(exclude={"answers"}), body.answers)
+    return with_warnings(m.mir_read(db, user, x), w)
+
+
+@router.get(
+    "/projects/{project_id}/quality/mir-checklist",
+    response_model=QMirChecklistTemplate,
+    summary="The material inspection checklist the project proposes (Q-CHK-04)",
+    responses=E,
+)
+def q_mir_checklist_template(project_id: uuid.UUID, user: CurrentUser, db: DB) -> dict[str, Any]:
+    return m.mir_checklist_template(db, user, project_id)
 
 
 @router.post(

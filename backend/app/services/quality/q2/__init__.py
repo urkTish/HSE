@@ -34,6 +34,7 @@ from app.models import Project
 from app.models.quality import QMteItem
 from app.models.quality.q2 import (
     QCalibration,
+    QCompetenceCell,
     QMar,
     QMir,
     QOotReview,
@@ -788,6 +789,18 @@ def _datasets() -> None:
             aggregate=True,
             names_cap=C.mte_manage,
         ),
+        Dataset(
+            "quality_competence_matrix",
+            "8",
+            C.quality_view,
+            C.export_quality,
+            "Competence matrix",
+            "مصفوفة الكفاءات",
+            model=QCompetenceCell,
+            date_attr="as_of",
+            aggregate=True,
+            names_cap=C.competence_manage,
+        ),
     ]
     reg.DATASETS.update({d.code: d for d in rows})
 
@@ -802,6 +815,7 @@ def _daily(db: Session, at: datetime) -> dict[str, Any]:
         "mte_status": calibration.daily_status(db, at),
         "wpq_continuity": welding.continuity_job(db, at),
         "competence_expiry": competence.expiry_alerts(db, at),
+        "competence_matrix": competence.refresh_all(db, at),
     }
 
 
@@ -824,7 +838,12 @@ def _weekly(db: Session, at: datetime) -> dict[str, Any]:
 
 def register() -> None:
     """Register Q2's providers (§3.2)."""
-    from app.services.quality.q2 import calibration, competence, evaluators  # noqa: PLC0415
+    from app.services.quality.q2 import (  # noqa: PLC0415
+        calibration,
+        competence,
+        dossier,
+        evaluators,
+    )
 
     LABELS.update(Q2_LABELS)
     _record_types()
@@ -838,6 +857,7 @@ def register() -> None:
     reg.register_job("q2_alerts", reg.JobDef("quality_alerts", _alerts, "Q2"))
     reg.register_job("q2_weekly", reg.JobDef("quality_weekly", _weekly, "Q2"))
     _datasets()
+    dossier.register()
 
     def _seed(db: Session) -> None:
         from app.seed_quality_q2 import seed_after_parts  # noqa: PLC0415

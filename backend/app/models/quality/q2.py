@@ -32,6 +32,7 @@ from app.core.quality.q2 import (
     QCalKind,
     QCalRecordStatus,
     QCompetencePolicy,
+    QCompetenceState,
     QEvaluationMode,
     QJointType,
     QMarStatus,
@@ -65,6 +66,7 @@ VAL = Numeric(18, 6)
 
 __all__ = [
     "QCalibration",
+    "QCompetenceCell",
     "QCompetenceReq",
     "QMar",
     "QMir",
@@ -145,6 +147,10 @@ class QMir(Audited, Base):
     lot_numbers: Mapped[list[str]] = mapped_column(JSONB, default=list)  # tag heats / lots
     cert_heat_numbers: Mapped[list[str]] = mapped_column(JSONB, default=list)
     storage_zone_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("zones.id"))
+    # §C.3.2 / §A.7: the delivery checklist (6d response, owner type q_mir, type mir_inspection)
+    checklist_response_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("checklist_responses.id")
+    )
     accepted_qty: Mapped[Decimal | None] = mapped_column(QTY)
     rejected_qty: Mapped[Decimal | None] = mapped_column(QTY)
     result: Mapped[QMirResult | None] = enum_col(QMirResult, nullable=True)
@@ -254,6 +260,9 @@ class QTestRequest(Audited, Base):
     __table_args__ = (
         Index("ix_q_test_requests_project_status", "project_id", "status"),
         Index("ix_q_test_requests_mix", "project_id", "mix_key"),
+        Index("ix_q_test_requests_verdict", "project_id", "verdict"),
+        Index("ix_q_test_requests_pour", "pour_id"),
+        Index("ix_q_test_requests_lab", "lab_supplier_id"),
     )
 
     project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id"), index=True)
@@ -416,6 +425,7 @@ class QWeld(Audited, Base):
     __table_args__ = (
         UniqueConstraint("project_id", "joint_id"),
         Index("ix_q_welds_lot", "project_id", "lot_code"),
+        Index("ix_q_welds_welder_ids", "welder_ids", postgresql_using="gin"),
     )
 
     project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id"), index=True)
@@ -496,6 +506,7 @@ class QOotReview(Audited, Base):
     """Q-CAL-04 out-of-tolerance impact review."""
 
     __tablename__ = "q_oot_reviews"
+    __table_args__ = (Index("ix_q_oot_reviews_project_status", "project_id", "status"),)
 
     project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id"), index=True)
     oot_no: Mapped[str] = mapped_column(String(40))
@@ -560,3 +571,21 @@ class QCompetenceReq(Audited, Base):
     )
     profile: Mapped[QProfileScope] = enum_col(QProfileScope, default=QProfileScope.both)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
+class QCompetenceCell(Base):
+    """Q-CPT-03 matrix snapshot for the export (246): one row per project, person and requirement,
+    rebuilt by the daily job, the seed and every requirement change (D-344)."""
+
+    __tablename__ = "q_competence_cells"
+    __table_args__ = (UniqueConstraint("project_id", "holder_user_id", "requirement_code"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id"), index=True)
+    holder_user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
+    requirement_code: Mapped[str] = mapped_column(String(20))
+    requirement_title: Mapped[str] = mapped_column(String(150))
+    state: Mapped[QCompetenceState] = enum_col(QCompetenceState)
+    valid_until: Mapped[date | None] = mapped_column(Date)
+    reason: Mapped[str | None] = mapped_column(String(60))
+    as_of: Mapped[date] = mapped_column(Date)

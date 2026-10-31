@@ -759,7 +759,10 @@ def sample(
         raise qc.field_err("sample_ref", "Give the sample reference.")
     tt = db.get(QTestType, t.test_type_id)
     assert tt is not None  # noqa: S101
-    warnings: list[ApiWarning] = []
+    # Q-TST-02: the laboratory's status and accredited scope apply on the sampling date
+    warnings: list[ApiWarning] = _lab_checks(
+        db, t.lab_supplier_id, tt.code, base.local_day(project, at)
+    )
     sampler = body.get("sampled_by_user_id") or p.user.id
     warnings += competence.enforce(
         db, project, sampler, tt.competence_code, base.local_day(project, at), "sampled_by_user_id"

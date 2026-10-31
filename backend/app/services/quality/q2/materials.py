@@ -47,7 +47,7 @@ from app.services.permissions import Principal
 from app.services.quality import common as qc
 from app.services.quality import links, numbering, rpm, suppliers
 from app.services.quality import registry as reg
-from app.services.quality.q2 import base
+from app.services.quality.q2 import base, checklists
 from app.services.quality.q2.evaluators import d
 
 C = Capability
@@ -570,6 +570,8 @@ def mir_actions(db: Session, p: Principal, x: QMir) -> list[str]:
     )
     if sub and x.status == IS.draft:
         out += ["edit", "submit", "cancel"]
+    if sub and x.status in (IS.draft, IS.submitted):
+        out.append("checklist")
     if x.status == IS.submitted and rpm.resolves(
         db, p, base.project_of(db, x.project_id), RT.mir, "decide", mir_ctx(x), record_id=x.id
     ):
@@ -638,6 +640,8 @@ def mir_read(db: Session, p: Principal, x: QMir, full: bool = True) -> dict[str,
         if full
         else [],
         "certificate_count": base.attachment_count(db, A.q_mir, x.id),
+        "checklist_response_id": x.checklist_response_id,
+        "checklist": checklists.read(db, x.checklist_response_id) if full else None,
         "actions": mir_actions(db, p, x) if full else [],
     }
 
@@ -857,7 +861,7 @@ def mir_decide(
     if result != QMirResult.rejected and acc == 0:
         raise qc.field_err("result", "Nothing was accepted; the result is rejected.")
     comment = body.get("comment")
-    warnings = _heat_warning(x)
+    warnings = _heat_warning(x) + _checklist_warning(db, x)
     if result in (QMirResult.accepted_with_comments, QMirResult.rejected) or rej > 0:
         comment = qc.reason(comment, 20, "comment")
     if warnings and result != QMirResult.rejected:
@@ -872,6 +876,63 @@ def mir_decide(
     if rej > 0:
         _reject(db, p, project, x, rej)
     return x, warnings
+
+
+def _checklist_warning(db: Session, x: QMir) -> list[ApiWarning]:
+    """§C.3.2: a critical item of the delivery checklist failed (the decider still decides)."""
+    from app.models.field import ChecklistResponse  # noqa: PLC0415
+
+    r = db.get(ChecklistResponse, x.checklist_response_id) if x.checklist_response_id else None
+    bad = checklists.critical_failures(r)
+    if not bad:
+        return []
+    return [
+        qc.warning(
+            "MIR_CHECKLIST_CRITICAL_FAIL",
+            f"Critical checklist items failed: {', '.join(bad)}.",
+            f"بنود حرجة في قائمة الفحص غير مطابقة: {'، '.join(bad)}",
+            "checklist",
+        )
+    ]
+
+
+def mir_checklist_template(db: Session, p: Principal, project_id: uuid.UUID) -> dict[str, Any]:
+    project = qc.get_project(db, p, project_id)
+    base.require_list(p, project.id, C.material_submit, C.material_decide)
+    return checklists.template_read(db, project)
+
+
+def mir_checklist(
+    db: Session, p: Principal, mir_id: uuid.UUID, body: dict[str, Any], answers: list[Any]
+) -> tuple[QMir, list[ApiWarning]]:
+    """§C.3.2 / §A.7: record (or replace) the delivery checklist of a Draft or Submitted MIR;
+    scored by the 6d engine and stored with owner type `q_mir`."""
+    x = get_mir(db, p, mir_id)
+    project = base.project_of(db, x.project_id)
+    qc.writable(project, p)
+    if x.status not in (IS.draft, IS.submitted):
+        raise base.invalid("The MIR", x.status, "given a checklist")
+    qc.require_cover(p, project.id, C.material_submit, x.site_id, x.engagement_id)
+    site = x.site_id or base.main_site(db, project.id)
+    if site is None:
+        raise qc.field_err("site_id", "Give the MIR a site first.")
+    r = checklists.respond(
+        db,
+        p.user.id,
+        project,
+        site,
+        x.storage_zone_id,
+        x.engagement_id,
+        answers,
+        body.get("template_code"),
+        body.get("completed_at"),
+    )
+    x.checklist_response_id = r.id
+    x.updated_by_user_id = p.user.id
+    db.flush()
+    res = r.result.value if r.result else None
+    base.audit_update(db, p, RT.mir, x, {}, {"checklist": r.template_code, "result": res})
+    return x, _checklist_warning(db, x)
 
 
 def _reject(db: Session, p: Principal, project: Project, x: QMir, qty: Decimal) -> None:

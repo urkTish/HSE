@@ -43,6 +43,7 @@ from app.core.quality.q2 import (
     QWpsStatus,
 )
 from app.schemas.common import ApiModel, StrictInput
+from app.schemas.field import AnswerInput
 from app.schemas.hse_common import ApiWarning, UserRef
 from app.schemas.quality.q0 import QPaperSignoff
 
@@ -848,6 +849,55 @@ class QMirTest(ApiModel):
     status: QTestStatus
 
 
+class QMirChecklistItemRead(ApiModel):
+    item_code: str
+    text_en: str
+    text_ar: str
+    critical: bool
+    answer: str | None
+    compliant: bool | None
+    note: str | None
+
+
+class QMirChecklistRead(ApiModel):
+    """§C.3.2 the delivery checklist response (6d engine, owner type q_mir)."""
+
+    id: uuid.UUID
+    template_code: str
+    template_version: int
+    completed_at: datetime | None
+    score_pct: str | None
+    result: str | None
+    critical_fail_count: int
+    critical_failures: list[str]
+    answers: list[QMirChecklistItemRead]
+
+
+class QMirChecklistTemplateItem(ApiModel):
+    item_code: str
+    text_en: str
+    text_ar: str
+    critical: bool
+    na_allowed: bool
+
+
+class QMirChecklistTemplate(ApiModel):
+    template_code: str
+    version: int
+    title_en: str
+    title_ar: str
+    items: list[QMirChecklistTemplateItem]
+
+
+class QMirChecklistSave(StrictInput):
+    """PUT /quality/mirs/{id}/checklist: yes_no answers `compliant` / `non_compliant` / `na`; a
+    non-compliant answer needs a note of at least 10 characters (6d EXE-2)."""
+
+    template_code: str | None = Field(default=None, max_length=12)
+    completed_at: datetime | None = None
+    answers: list[AnswerInput] = Field(min_length=1, max_length=100)
+
+
 class QMirRead(ApiModel):
     id: uuid.UUID
     project_id: uuid.UUID
@@ -886,6 +936,8 @@ class QMirRead(ApiModel):
     failed_tests: int
     quarantine_ids: list[uuid.UUID]
     certificate_count: int
+    checklist_response_id: uuid.UUID | None = None
+    checklist: QMirChecklistRead | None = None
     actions: list[str]
     warnings: list[ApiWarning] = Field(default_factory=list)
 

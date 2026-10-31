@@ -321,6 +321,12 @@ def add_months(d: date, n: int) -> date:
     return am(d, n)
 
 
+def project_member(db: Session, project: Project, uid: uuid.UUID) -> bool:
+    """An active role on the project (or the organisation-wide HSE Manager)."""
+    day = qc.project_day(project)
+    return any(a.user_id == uid for a in qc._assignments(db, project.id, day))
+
+
 def read_only(p: Principal, project_id: uuid.UUID) -> bool:
     from app.services.quality.ncr.core import read_only_viewer  # noqa: PLC0415
 

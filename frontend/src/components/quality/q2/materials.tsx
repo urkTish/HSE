@@ -24,7 +24,7 @@ import { EmptyState, ErrorState, LoadingState, MutationError } from "@/component
 import { Link, useRouter } from "@/i18n/navigation";
 import { api, unwrap } from "@/lib/api/client";
 import { useQSuppliers } from "@/lib/api/quality/q0";
-import { useQMar, useQMars, useQMir, useQMirs, useQQuarantine, useQQuarantineItem } from "@/lib/api/quality/q2";
+import { useQMar, useQMars, useQMir, useQMirChecklistTemplate, useQMirs, useQQuarantine, useQQuarantineItem } from "@/lib/api/quality/q2";
 import { useDebounced } from "@/lib/use-debounced";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
@@ -361,6 +361,7 @@ function MirDetail({ project, id }: { project: Project; id: string }) {
         <div><h3 className="mb-1 text-sm font-semibold">{t("tagHeats")}</h3><p className="ltr text-sm">{x.lot_numbers.map((h) => <span key={h} className={x.heat_mismatch.includes(h) ? "me-2 font-semibold text-danger" : "me-2"} data-mismatch={x.heat_mismatch.includes(h) ? "1" : "0"}>{h}</span>)}</p></div>
         <div><h3 className="mb-1 text-sm font-semibold">{t("certHeats")}</h3><p className="ltr text-sm">{x.cert_heat_numbers.join(" · ") || "—"}</p></div>
       </CardContent></Card>
+      <MirChecklist project={project} mir={x} canEdit={can("checklist")} />
       {x.tests.length ? <Card className="mb-4"><CardContent className="p-4"><h3 className="mb-2 text-sm font-semibold">{t("tests")}</h3>
         <ul className="text-sm">{x.tests.map((tt) => <li key={tt.id}><Link href={`/quality/tests/${tt.id}`} className="ltr text-primary hover:underline">{tt.test_no}</Link> · {tt.test_type_code} · <Q2Badge value={tt.verdict} label={l("test_verdict", tt.verdict)} /></li>)}</ul></CardContent></Card> : null}
       {x.quarantine_ids.length ? <Card className="mb-4"><CardContent className="p-4"><h3 className="mb-2 text-sm font-semibold">{t("quarantine")}</h3>
@@ -381,6 +382,97 @@ function MirDetail({ project, id }: { project: Project; id: string }) {
         </CardContent></Card>
       ) : null}
     </div>
+  );
+}
+
+type Answer = { answer: string; note: string };
+
+/** §C.3.2 / §A.7 the delivery checklist (6d engine, owner q_mir): one tap per item on the phone; a
+ * non-compliant answer needs a note; a failed critical item warns the decider. */
+function MirChecklist({ project, mir, canEdit }: { project: Project; mir: S["QMirRead"]; canEdit: boolean }) {
+  const t = useTranslations("quality.mir");
+  const tc = useTranslations("common");
+  const pick = useBilingual();
+  const ck = mir.checklist ?? null;
+  const [editing, setEditing] = useState(false);
+  const tpl = useQMirChecklistTemplate(project.id, { enabled: editing });
+  const [answers, setAnswers] = useState<Record<string, Answer>>({});
+  const { run, busy, error } = useRun();
+  if (!ck && !canEdit) return null;
+  const start = () => {
+    const prev: Record<string, Answer> = {};
+    for (const a of ck?.answers ?? []) prev[a.item_code] = { answer: a.answer ?? "compliant", note: a.note ?? "" };
+    setAnswers(prev);
+    setEditing(true);
+  };
+  const items = tpl.data?.items ?? [];
+  const get = (code: string): Answer => answers[code] ?? { answer: "compliant", note: "" };
+  const save = () =>
+    run(() =>
+      unwrap(
+        api.PUT("/api/v1/quality/mirs/{mir_id}/checklist", {
+          params: { path: { mir_id: mir.id } },
+          body: { answers: items.map((it) => ({ item_code: it.item_code, answer: get(it.item_code).answer, note: get(it.item_code).note.trim() || null, photos: [], fixed_on_spot: false, ca_required: false })) },
+        }),
+      ),
+    ).then((o) => { if (o) setEditing(false); });
+  return (
+    <Card className="mb-4" data-testid="q2-mir-checklist"><CardContent className="p-4">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-sm font-semibold">{t("checklist")}{ck ? <span className="ltr ms-2 font-normal text-muted-foreground">{ck.template_code} v{ck.template_version}</span> : null}</h3>
+        {canEdit && !editing ? <Button size="sm" variant="outline" onClick={start} data-testid="q2-mir-checklist-edit">{ck ? t("checklistRedo") : t("checklistStart")}</Button> : null}
+      </div>
+      {ck && !editing ? (
+        <>
+          <p className="mb-2 text-sm" data-testid="q2-mir-checklist-result" data-result={ck.result ?? ""}>
+            <Q2Badge value={ck.result === "pass" ? "pass" : "fail"} label={ck.result === "pass" ? t("checklistPass") : t("checklistFail")} />
+            <span className="ms-2">{t("checklistScore", { pct: ck.score_pct ?? "—" })}</span>
+          </p>
+          {ck.critical_fail_count ? <Alert tone="danger" className="mb-2">{t("checklistCritical", { n: ck.critical_fail_count })}</Alert> : null}
+          <ul className="divide-y text-sm">{ck.answers.map((a) => (
+            <li key={a.item_code} className="flex flex-wrap gap-x-2 py-1" data-testid="q2-mir-checklist-answer" data-compliant={a.compliant === false ? "0" : "1"}>
+              <span className={a.compliant === false ? "font-semibold text-danger" : ""} dir="auto">{pick(a.text_en, a.text_ar)}</span>
+              {a.critical ? <span className="text-xs text-muted-foreground">({t("critical")})</span> : null}
+              <span className="ms-auto">{a.answer === "na" ? t("na") : a.compliant === false ? t("nonCompliant") : t("compliant")}</span>
+              {a.note ? <span className="w-full text-muted-foreground" dir="auto">{a.note}</span> : null}
+            </li>
+          ))}</ul>
+        </>
+      ) : null}
+      {editing ? (
+        tpl.isLoading ? <LoadingState /> : tpl.isError ? <ErrorState error={tpl.error} onRetry={() => tpl.refetch()} /> : (
+          <div className="grid gap-3">
+            {items.map((it) => {
+              const a = get(it.item_code);
+              const choices = it.na_allowed ? ["compliant", "non_compliant", "na"] : ["compliant", "non_compliant"];
+              return (
+                <div key={it.item_code} className="rounded-md border p-3" data-testid="q2-mir-checklist-item" data-code={it.item_code}>
+                  <p className="mb-2 text-sm" dir="auto">{pick(it.text_en, it.text_ar)}{it.critical ? <span className="ms-1 text-xs font-semibold text-danger">({t("critical")})</span> : null}</p>
+                  <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={pick(it.text_en, it.text_ar)}>
+                    {choices.map((v) => (
+                      <Button key={v} size="sm" type="button" role="radio" aria-checked={a.answer === v} variant={a.answer === v ? (v === "non_compliant" ? "destructive" : "default") : "outline"}
+                        onClick={() => setAnswers({ ...answers, [it.item_code]: { ...a, answer: v } })} data-testid={`q2-ck-${v}`}>
+                        {v === "compliant" ? t("compliant") : v === "non_compliant" ? t("nonCompliant") : t("na")}
+                      </Button>
+                    ))}
+                  </div>
+                  {a.answer === "non_compliant" ? (
+                    <FormField id={`ck-note-${it.item_code}`} label={t("checklistNote")} className="mt-2">
+                      <Textarea value={a.note} onChange={(e) => setAnswers({ ...answers, [it.item_code]: { ...a, note: e.target.value } })} rows={2} data-testid="q2-ck-note" />
+                    </FormField>
+                  ) : null}
+                </div>
+              );
+            })}
+            <MutationError error={error} />
+            <div className="flex gap-2">
+              <Button disabled={busy || !items.length} onClick={() => void save()} data-testid="q2-mir-checklist-save">{t("checklistSave")}</Button>
+              <Button variant="outline" onClick={() => setEditing(false)}>{tc("cancel")}</Button>
+            </div>
+          </div>
+        )
+      ) : null}
+    </CardContent></Card>
   );
 }
 

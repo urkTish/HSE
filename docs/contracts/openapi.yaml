@@ -77813,6 +77813,124 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/quality/mirs/{mir_id}/checklist:
+    put:
+      tags:
+      - quality
+      - quality
+      summary: Record the delivery checklist (6d engine, owner q_mir; §C.3.2)
+      operationId: q_mir_checklist
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: mir_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Mir Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QMirChecklistSave'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QMirRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/quality/mir-checklist:
+    get:
+      tags:
+      - quality
+      - quality
+      summary: The material inspection checklist the project proposes (Q-CHK-04)
+      operationId: q_mir_checklist_template
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QMirChecklistTemplate'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/v1/quality/mirs/{mir_id}/cancel:
     post:
       tags:
@@ -143674,6 +143792,181 @@ components:
       - other
       title: QMaterialCategory
       description: List MC.
+    QMirChecklistItemRead:
+      properties:
+        item_code:
+          type: string
+          title: Item Code
+        text_en:
+          type: string
+          title: Text En
+        text_ar:
+          type: string
+          title: Text Ar
+        critical:
+          type: boolean
+          title: Critical
+        answer:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Answer
+        compliant:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Compliant
+        note:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Note
+      type: object
+      required:
+      - item_code
+      - text_en
+      - text_ar
+      - critical
+      - answer
+      - compliant
+      - note
+      title: QMirChecklistItemRead
+    QMirChecklistRead:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        template_code:
+          type: string
+          title: Template Code
+        template_version:
+          type: integer
+          title: Template Version
+        completed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Completed At
+        score_pct:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Score Pct
+        result:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Result
+        critical_fail_count:
+          type: integer
+          title: Critical Fail Count
+        critical_failures:
+          items:
+            type: string
+          type: array
+          title: Critical Failures
+        answers:
+          items:
+            $ref: '#/components/schemas/QMirChecklistItemRead'
+          type: array
+          title: Answers
+      type: object
+      required:
+      - id
+      - template_code
+      - template_version
+      - completed_at
+      - score_pct
+      - result
+      - critical_fail_count
+      - critical_failures
+      - answers
+      title: QMirChecklistRead
+      description: §C.3.2 the delivery checklist response (6d engine, owner type q_mir).
+    QMirChecklistSave:
+      properties:
+        template_code:
+          anyOf:
+          - type: string
+            maxLength: 12
+          - type: 'null'
+          title: Template Code
+        completed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Completed At
+        answers:
+          items:
+            $ref: '#/components/schemas/AnswerInput'
+          type: array
+          maxItems: 100
+          minItems: 1
+          title: Answers
+      additionalProperties: false
+      type: object
+      required:
+      - answers
+      title: QMirChecklistSave
+      description: 'PUT /quality/mirs/{id}/checklist: yes_no answers `compliant` / `non_compliant` / `na`;
+        a
+
+        non-compliant answer needs a note of at least 10 characters (6d EXE-2).'
+    QMirChecklistTemplate:
+      properties:
+        template_code:
+          type: string
+          title: Template Code
+        version:
+          type: integer
+          title: Version
+        title_en:
+          type: string
+          title: Title En
+        title_ar:
+          type: string
+          title: Title Ar
+        items:
+          items:
+            $ref: '#/components/schemas/QMirChecklistTemplateItem'
+          type: array
+          title: Items
+      type: object
+      required:
+      - template_code
+      - version
+      - title_en
+      - title_ar
+      - items
+      title: QMirChecklistTemplate
+    QMirChecklistTemplateItem:
+      properties:
+        item_code:
+          type: string
+          title: Item Code
+        text_en:
+          type: string
+          title: Text En
+        text_ar:
+          type: string
+          title: Text Ar
+        critical:
+          type: boolean
+          title: Critical
+        na_allowed:
+          type: boolean
+          title: Na Allowed
+      type: object
+      required:
+      - item_code
+      - text_en
+      - text_ar
+      - critical
+      - na_allowed
+      title: QMirChecklistTemplateItem
     QMirCreate:
       properties:
         mar_id:
@@ -144018,6 +144311,16 @@ components:
         certificate_count:
           type: integer
           title: Certificate Count
+        checklist_response_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Checklist Response Id
+        checklist:
+          anyOf:
+          - $ref: '#/components/schemas/QMirChecklistRead'
+          - type: 'null'
         actions:
           items:
             type: string
