@@ -123,6 +123,7 @@ def place(
     note: str | None = None,
     p: Principal | None = None,
     at: datetime | None = None,
+    notify: bool = True,
 ) -> QHold:
     """Q-HLD-01: placed by a 270 holder or automatically (receipt quarantine, excursion, recall,
     hygiene, damage, return grade C, expiry)."""
@@ -164,7 +165,8 @@ def place(
 
         links.add(db, project.id, QRecordType.ncr, ncr_id, RT, h.id, QLinkKind.relates, placed_by)
     b.audit_create(db, p, project, RT, h.id, hold_no=h.hold_no, reason=reason.value)
-    _notify_placed(db, project, h)
+    if notify:
+        _notify_placed(db, project, h)
     return h
 
 
