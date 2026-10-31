@@ -35,7 +35,12 @@ def arrival_temperature(params: dict[str, Any], values: dict[str, Any]) -> reg.V
     cls = str(params.get("class") or values.get("storage_class") or "")
     dflt = ARRIVAL_DEFAULTS.get(cls)
     if dflt is None:
-        return reg.Verdict(V.pass_, "No arrival limit for this class.", "لا حد وصول لهذه الفئة.", {"decision": "accept"})
+        return reg.Verdict(
+            V.pass_,
+            "No arrival limit for this class.",
+            "لا حد وصول لهذه الفئة.",
+            {"decision": "accept"},
+        )
     a_min = _d(params.get("accept_min")) if "accept_min" in params else dflt[0]
     a_max = _d(params.get("accept_max")) if "accept_max" in params else dflt[1]
     v_min = _d(params.get("deviation_min")) if "deviation_min" in params else dflt[2]
@@ -46,7 +51,12 @@ def arrival_temperature(params: dict[str, Any], values: dict[str, Any]) -> reg.V
         return (lo is None or t >= lo) and (hi is None or t <= hi)
 
     if inside(a_min, a_max):
-        return reg.Verdict(V.pass_, f"{t} °C within the acceptance band.", f"{t} °م ضمن نطاق القبول.", {"decision": "accept"})
+        return reg.Verdict(
+            V.pass_,
+            f"{t} °C within the acceptance band.",
+            f"{t} °م ضمن نطاق القبول.",
+            {"decision": "accept"},
+        )
     if inside(v_min, v_max):
         return reg.Verdict(
             V.fail,
@@ -54,16 +64,25 @@ def arrival_temperature(params: dict[str, Any], values: dict[str, Any]) -> reg.V
             f"{t} °م ضمن نطاق الانحراف.",
             {"decision": "accept_with_deviation"},
         )
-    return reg.Verdict(V.fail, f"{t} °C outside the limits.", f"{t} °م خارج الحدود.", {"decision": outside})
+    return reg.Verdict(
+        V.fail, f"{t} °C outside the limits.", f"{t} °م خارج الحدود.", {"decision": outside}
+    )
 
 
 def remaining_shelf_life(params: dict[str, Any], values: dict[str, Any]) -> reg.Verdict:
     pct = _d(values.get("remaining_pct"))
     if pct is None:
-        return reg.Verdict(V.not_evaluable, "No expiry or shelf life.", "لا يوجد تاريخ انتهاء أو عمر.")
+        return reg.Verdict(
+            V.not_evaluable, "No expiry or shelf life.", "لا يوجد تاريخ انتهاء أو عمر."
+        )
     lim = _d(values.get("min_pct")) or _d(params.get("min_pct")) or D(60)
     if pct >= lim:
-        return reg.Verdict(V.pass_, f"Remaining shelf life {pct} % ≥ {lim} %.", f"الصلاحية المتبقية {pct} % ≥ {lim} %.", {"decision": "accept"})
+        return reg.Verdict(
+            V.pass_,
+            f"Remaining shelf life {pct} % ≥ {lim} %.",
+            f"الصلاحية المتبقية {pct} % ≥ {lim} %.",
+            {"decision": "accept"},
+        )
     return reg.Verdict(
         V.fail,
         f"Remaining shelf life {pct} % < {lim} %.",
@@ -76,11 +95,19 @@ def precool_setpoint(params: dict[str, Any], values: dict[str, Any]) -> reg.Verd
     """Q-TRN-02: frozen box temperature at loading ≤ setpoint + margin."""
     t, sp = _d(values.get("box_temp_c")), _d(values.get("setpoint_c"))
     if t is None or sp is None:
-        return reg.Verdict(V.not_evaluable, "No box temperature or setpoint.", "لا توجد حرارة الصندوق أو درجة الضبط.")
+        return reg.Verdict(
+            V.not_evaluable,
+            "No box temperature or setpoint.",
+            "لا توجد حرارة الصندوق أو درجة الضبط.",
+        )
     margin = _d(params.get("margin")) or D("2.0")
     if t <= sp + margin:
-        return reg.Verdict(V.pass_, f"Box {t} °C ≤ setpoint + {margin}.", f"الصندوق {t} °م ضمن الحد.")
-    return reg.Verdict(V.fail, f"Box {t} °C above setpoint {sp} + {margin} °C.", f"الصندوق {t} °م أعلى من الحد.")
+        return reg.Verdict(
+            V.pass_, f"Box {t} °C ≤ setpoint + {margin}.", f"الصندوق {t} °م ضمن الحد."
+        )
+    return reg.Verdict(
+        V.fail, f"Box {t} °C above setpoint {sp} + {margin} °C.", f"الصندوق {t} °م أعلى من الحد."
+    )
 
 
 def register() -> None:

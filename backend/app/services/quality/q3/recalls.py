@@ -38,10 +38,10 @@ from app.models.quality.q3 import (
     QHold,
     QHoldLine,
     QProduct,
-    QReceipt,
-    QReceiptLine,
     QRecall,
     QRecallItem,
+    QReceipt,
+    QReceiptLine,
     QShipment,
     QShipmentLine,
     QStockLine,
@@ -70,7 +70,15 @@ def get_recall(db: Session, p: Principal, rid: uuid.UUID) -> tuple[QRecall, Proj
     if r is None or not p.can_see_project(r.project_id):
         raise b.not_found(db, p, RT, rid, r.project_id if r else None)
     project = qc.get_project(db, p, r.project_id)
-    if not b.can_view(db, p, project, RT, r.id, r.site_id, lambda: [("close", ctx(r), None)] if r.status in LIVE else []):
+    if not b.can_view(
+        db,
+        p,
+        project,
+        RT,
+        r.id,
+        r.site_id,
+        lambda: [("close", ctx(r), None)] if r.status in LIVE else [],
+    ):
         raise b.not_found(db, p, RT, rid, project.id)
     return r, project
 
@@ -79,7 +87,7 @@ def keys(r: QRecall) -> set[tuple[str, str]]:
     return {(it["sku"], it["batch"]) for it in r.items or []}
 
 
-# ---- trace (Q-RCL-02) -----------------------------------------------------------------------------
+# ---- trace (Q-RCL-02) ----------------------------------------------------------------------------
 
 
 def trace(db: Session, r: QRecall) -> dict[str, Any]:
@@ -106,7 +114,9 @@ def trace(db: Session, r: QRecall) -> dict[str, Any]:
             on_hand += sl.qty
             on_hand_lines.append(sl)
     shipped = ZERO
-    by_consignee: dict[str, dict[str, Any]] = defaultdict(lambda: {"qty": ZERO, "shipments": 0, "customer_id": None, "first": None, "last": None})
+    by_consignee: dict[str, dict[str, Any]] = defaultdict(
+        lambda: {"qty": ZERO, "shipments": 0, "customer_id": None, "first": None, "last": None}
+    )
     for shl, s in db.execute(
         select(QShipmentLine, QShipment)
         .join(QShipment, QShipment.id == QShipmentLine.shipment_id)
@@ -128,11 +138,22 @@ def trace(db: Session, r: QRecall) -> dict[str, Any]:
     for hl in db.scalars(
         select(QHoldLine)
         .join(QHold, QHold.id == QHoldLine.hold_id)
-        .where(QHold.project_id == r.project_id, QHoldLine.batch.in_(batches), QHoldLine.line_status == QHoldLineStatus.rejected, QHoldLine.final_outcome == QHoldOutcome.destroyed)
+        .where(
+            QHold.project_id == r.project_id,
+            QHoldLine.batch.in_(batches),
+            QHoldLine.line_status == QHoldLineStatus.rejected,
+            QHoldLine.final_outcome == QHoldOutcome.destroyed,
+        )
     ):
         if (hl.sku, hl.batch) in ks:
             destroyed += hl.qty
-    for d in db.scalars(select(QDamageReport).where(QDamageReport.project_id == r.project_id, QDamageReport.batch.in_(batches), QDamageReport.destroyed_on_spot.is_(True))):
+    for d in db.scalars(
+        select(QDamageReport).where(
+            QDamageReport.project_id == r.project_id,
+            QDamageReport.batch.in_(batches),
+            QDamageReport.destroyed_on_spot.is_(True),
+        )
+    ):
         prod = db.get(QProduct, d.product_id)
         if prod is not None and (prod.sku, d.batch) in ks:
             destroyed += d.qty
@@ -146,7 +167,14 @@ def trace(db: Session, r: QRecall) -> dict[str, Any]:
         "snapshot_as_of": snap.as_of if snap else None,
         "snapshot_old": old,
         "consignees": [
-            {"name": k, "customer_id": v["customer_id"], "qty": v["qty"], "shipments": v["shipments"], "first": v["first"], "last": v["last"]}
+            {
+                "name": k,
+                "customer_id": v["customer_id"],
+                "qty": v["qty"],
+                "shipments": v["shipments"],
+                "first": v["first"],
+                "last": v["last"],
+            }
             for k, v in sorted(by_consignee.items())
         ],
         "_lines": on_hand_lines,
@@ -162,7 +190,12 @@ def effectiveness(db: Session, r: QRecall, t: dict[str, Any]) -> Decimal | None:
         num: Decimal = t["on_hand"] + named + t["destroyed"]
     else:
         items = list(db.scalars(select(QRecallItem).where(QRecallItem.recall_id == r.id)))
-        num = t["on_hand"] + sum((i.qty_retrieved for i in items), ZERO) + sum((i.qty_destroyed_by_consignee for i in items), ZERO) + t["destroyed"]
+        num = (
+            t["on_hand"]
+            + sum((i.qty_retrieved for i in items), ZERO)
+            + sum((i.qty_destroyed_by_consignee for i in items), ZERO)
+            + t["destroyed"]
+        )
     received: Decimal = t["received"]
     return (num * 100 / received).quantize(Decimal("0.1"), ROUND_HALF_UP)
 
@@ -187,7 +220,9 @@ def _jsonable(t: dict[str, Any]) -> dict[str, Any]:
 # ---- transitions ---------------------------------------------------------------------------------
 
 
-def create(db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any]) -> dict[str, Any]:
+def create(
+    db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any]
+) -> dict[str, Any]:
     project, g = b.project_for_create(db, p, project_id, RT, C.recall_manage)
     site = b.site_of(db, project, body["site_id"])
     b.require_site(g, site.id)
@@ -196,13 +231,27 @@ def create(db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any
         prod = db.get(QProduct, it["product_id"]) if it.get("product_id") else None
         sku = prod.sku if prod else (it.get("sku") or "").strip()
         if not sku or not (it.get("batch") or "").strip():
-            raise qc.field_err("items", "Each item needs a product and a batch (Q-RCL-01).", "كل بند يحتاج منتجاً ودفعة.")
-        items.append({"product_id": str(prod.id) if prod else None, "sku": sku, "batch": it["batch"].strip()})
+            raise qc.field_err(
+                "items",
+                "Each item needs a product and a batch (Q-RCL-01).",
+                "كل بند يحتاج منتجاً ودفعة.",
+            )
+        items.append(
+            {"product_id": str(prod.id) if prod else None, "sku": sku, "batch": it["batch"].strip()}
+        )
     if not items:
-        raise qc.field_err("items", "A recall needs at least one product and batch (Q-RCL-01).", "الاستدعاء يحتاج منتجاً ودفعة على الأقل.")
+        raise qc.field_err(
+            "items",
+            "A recall needs at least one product and batch (Q-RCL-01).",
+            "الاستدعاء يحتاج منتجاً ودفعة على الأقل.",
+        )
     rtype = QRecallType(body["recall_type"])
     if rtype == QRecallType.regulator and not (body.get("external_ref") or "").strip():
-        raise qc.field_err("external_ref", "A regulator recall needs the external reference (e.g. the SFDA notice).", "استدعاء الجهة الرقابية يحتاج المرجع الخارجي.")
+        raise qc.field_err(
+            "external_ref",
+            "A regulator recall needs the external reference (e.g. the SFDA notice).",
+            "استدعاء الجهة الرقابية يحتاج المرجع الخارجي.",
+        )
     at = body.get("initiated_at") or now()
     r = QRecall(
         id=uuid.uuid4(),
@@ -227,9 +276,10 @@ def create(db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any
     return read(db, p, r)
 
 
-def start_real(db: Session, p: Principal | None, project: Project, r: QRecall, *, notify: bool = True) -> None:
+def start_real(
+    db: Session, p: Principal | None, project: Project, r: QRecall, *, notify: bool = True
+) -> None:
     """Q-RCL-03 hold on every on-hand line of the traced snapshot; Q-RCL-06 critical NCR."""
-    from app.services.quality.ncr import core as ncr  # noqa: PLC0415
 
     t = trace(db, r)
     r.snapshot_id = t["snapshot_id"]
@@ -239,7 +289,7 @@ def start_real(db: Session, p: Principal | None, project: Project, r: QRecall, *
         project,
         site_id=r.site_id,
         reason=QHoldReason.recall,
-        lines=[stock_svc._line_from_stock(x) for x in t["_lines"]],  # noqa: SLF001
+        lines=[stock_svc._line_from_stock(x) for x in t["_lines"]],
         placed_by=uid,
         zone_level=not t["_lines"],
         source=(RT, r.id, r.rcl_no),
@@ -247,23 +297,24 @@ def start_real(db: Session, p: Principal | None, project: Project, r: QRecall, *
         note="Recalled lines may only be rejected (Q-HLD-04).",
     )
     r.hold_id = h.id
-    n = ncr.auto_raise(
+    n = b.raise_ncr(
         db,
         project,
         QNcrSourceType.recall,
         r.id,
-        raised_by=uid,
-        owner_id=b.ncr_owner(db, project, uid),
+        actor=uid,
         classification=QNcrClass.critical,
         category=QNcrCategory.traceability,
-        title=f"Recall {r.rcl_no}: {', '.join(f'{i['sku']} {i['batch']}' for i in r.items)}"[:150],
+        title=f"Recall {r.rcl_no}: {', '.join(f'{i["sku"]} {i["batch"]}' for i in r.items)}"[:150],
     )
     r.ncr_id = n.id
     h.ncr_id = n.id
     if notify:
         users = b.holders(db, project, C.recall_manage, r.site_id)
         users |= set(b.resolvers(db, project, RT, "close", ctx(r), record_id=r.id))
-        users |= set(b.resolvers(db, project, QRecordType.hold, "release", hold_svc.ctx(h), record_id=h.id))
+        users |= set(
+            b.resolvers(db, project, QRecordType.hold, "release", hold_svc.ctx(h), record_id=h.id)
+        )
         b.send(
             db,
             project,
@@ -279,20 +330,31 @@ def start_real(db: Session, p: Principal | None, project: Project, r: QRecall, *
         )
 
 
-def confirm_trace(db: Session, p: Principal, rid: uuid.UUID, body: dict[str, Any]) -> dict[str, Any]:
+def confirm_trace(
+    db: Session, p: Principal, rid: uuid.UUID, body: dict[str, Any]
+) -> dict[str, Any]:
     """Open → Traced: the trace reviewed and confirmed; trace_completed_at set."""
     r, project = get_recall(db, p, rid)
     _, g = b.project_for_progress(db, p, project.id, C.recall_manage)
     b.require_site(g, r.site_id)
     if r.status != ST.open:
-        raise qc.err(409, ErrorCode.INVALID_TRANSITION, "Only an open recall.", "استدعاء مفتوح فقط.")
+        raise qc.err(
+            409, ErrorCode.INVALID_TRANSITION, "Only an open recall.", "استدعاء مفتوح فقط."
+        )
     t = trace(db, r)
     r.trace = _jsonable(t)
     r.trace_completed_at = body.get("completed_at") or now()
     r.effectiveness_pct = effectiveness(db, r, t)
     if r.recall_type != QRecallType.mock:
         for c in t["consignees"]:
-            db.add(QRecallItem(recall_id=r.id, consignee_customer_id=c["customer_id"], consignee_name=c["name"], qty_shipped=c["qty"]))
+            db.add(
+                QRecallItem(
+                    recall_id=r.id,
+                    consignee_customer_id=c["customer_id"],
+                    consignee_name=c["name"],
+                    qty_shipped=c["qty"],
+                )
+            )
     r.status = ST.traced
     b.audit_status(db, p, project, RT, r.id, ST.open, ST.traced)
     return read(db, p, r)
@@ -303,13 +365,20 @@ def recover(db: Session, p: Principal, rid: uuid.UUID) -> dict[str, Any]:
     _, g = b.project_for_progress(db, p, project.id, C.recall_manage)
     b.require_site(g, r.site_id)
     if r.status != ST.traced or r.recall_type == QRecallType.mock:
-        raise qc.err(409, ErrorCode.INVALID_TRANSITION, "A traced real recall moves to recovering.", "الاستدعاء الحقيقي المتتبع فقط.")
+        raise qc.err(
+            409,
+            ErrorCode.INVALID_TRANSITION,
+            "A traced real recall moves to recovering.",
+            "الاستدعاء الحقيقي المتتبع فقط.",
+        )
     r.status = ST.recovering
     b.audit_status(db, p, project, RT, r.id, ST.traced, ST.recovering)
     return read(db, p, r)
 
 
-def update_item(db: Session, p: Principal, item_id: uuid.UUID, body: dict[str, Any]) -> dict[str, Any]:
+def update_item(
+    db: Session, p: Principal, item_id: uuid.UUID, body: dict[str, Any]
+) -> dict[str, Any]:
     it = db.get(QRecallItem, item_id)
     if it is None:
         raise b.not_found(db, p, RT, item_id, None)
@@ -317,7 +386,12 @@ def update_item(db: Session, p: Principal, item_id: uuid.UUID, body: dict[str, A
     _, g = b.project_for_progress(db, p, project.id, C.recall_manage)
     b.require_site(g, r.site_id)
     if r.status not in (ST.traced, ST.recovering):
-        raise qc.err(409, ErrorCode.INVALID_TRANSITION, "Consignee contacts are recorded while traced or recovering.", "تُسجل الاتصالات أثناء التتبع أو الاسترجاع.")
+        raise qc.err(
+            409,
+            ErrorCode.INVALID_TRANSITION,
+            "Consignee contacts are recorded while traced or recovering.",
+            "تُسجل الاتصالات أثناء التتبع أو الاسترجاع.",
+        )
     for k in ("contacted_at", "method", "response"):
         if k in body:
             setattr(it, k, body[k])
@@ -328,7 +402,11 @@ def update_item(db: Session, p: Principal, item_id: uuid.UUID, body: dict[str, A
                 raise qc.field_err(k, "Must be zero or more.", "يجب ألا تكون سالبة.")
             setattr(it, k, v)
     if it.qty_retrieved + it.qty_destroyed_by_consignee > it.qty_shipped:
-        raise qc.field_err("qty_retrieved", "More than was shipped to this consignee.", "أكثر مما شُحن لهذا المستلم.")
+        raise qc.field_err(
+            "qty_retrieved",
+            "More than was shipped to this consignee.",
+            "أكثر مما شُحن لهذا المستلم.",
+        )
     r.effectiveness_pct = effectiveness(db, r, trace(db, r))
     return read(db, p, r)
 
@@ -341,7 +419,12 @@ def close(db: Session, p: Principal, rid: uuid.UUID, body: dict[str, Any]) -> di
     project, _ = b.project_for_progress(db, p, project.id, C.recall_manage, allow_n=True)
     ok_from = ST.traced if r.recall_type == QRecallType.mock else ST.recovering
     if r.status != ok_from:
-        raise qc.err(409, ErrorCode.INVALID_TRANSITION, f"Close from {ok_from.value}.", "لا يمكن الإغلاق من هذه الحالة.")
+        raise qc.err(
+            409,
+            ErrorCode.INVALID_TRANSITION,
+            f"Close from {ok_from.value}.",
+            "لا يمكن الإغلاق من هذه الحالة.",
+        )
     t = trace(db, r)
     eff = effectiveness(db, r, t)
     target = b.dsetting(db, project.id, "recall_effectiveness_target_pct")
@@ -350,12 +433,21 @@ def close(db: Session, p: Principal, rid: uuid.UUID, body: dict[str, Any]) -> di
         raise qc.err(
             422,
             ErrorCode.RECALL_TARGET_NOT_MET,
-            f"Effectiveness {eff} % is below the {target} % target: justify in at least 50 characters.",
+            f"Effectiveness {eff} % is below the {target} % target: justify in at least 50 "
+            "characters.",
             f"الفعالية {eff} % أقل من الهدف {target} %: اكتب مبرراً لا يقل عن 50 حرفاً.",
         )
     if r.recall_type != QRecallType.mock and r.hold_id:
         h = db.get(QHold, r.hold_id)
-        bad = [ln for ln in hold_svc.lines_of(db, h) if ln.line_status != QHoldLineStatus.rejected or ln.final_outcome is None] if h else []
+        bad = (
+            [
+                ln
+                for ln in hold_svc.lines_of(db, h)
+                if ln.line_status != QHoldLineStatus.rejected or ln.final_outcome is None
+            ]
+            if h
+            else []
+        )
         if bad:
             raise qc.err(
                 422,
@@ -387,7 +479,7 @@ def cancel(db: Session, p: Principal, rid: uuid.UUID, body: dict[str, Any]) -> d
     return read(db, p, r)
 
 
-# ---- reads, jobs, NCR source -----------------------------------------------------------------------
+# ---- reads, jobs, NCR source ---------------------------------------------------------------------
 
 
 def trace_minutes(r: QRecall) -> int | None:
@@ -406,10 +498,23 @@ def read(db: Session, p: Principal, r: QRecall) -> dict[str, Any]:
     eff = effectiveness(db, r, live)
     tm = trace_minutes(r)
     target_h = int(b.setting(db, project.id, "recall_trace_target_hours"))
-    items = list(db.scalars(select(QRecallItem).where(QRecallItem.recall_id == r.id).order_by(QRecallItem.consignee_name)))
+    items = list(
+        db.scalars(
+            select(QRecallItem)
+            .where(QRecallItem.recall_id == r.id)
+            .order_by(QRecallItem.consignee_name)
+        )
+    )
     warnings = []
     if live["snapshot_old"]:
-        warnings.append({"code": "SNAPSHOT_OLD", "message": "No snapshot at or after the recall start; the latest before it is used.", "message_ar": "لا توجد لقطة بعد بدء الاستدعاء؛ استُخدمت آخر لقطة قبله."})
+        warnings.append(
+            {
+                "code": "SNAPSHOT_OLD",
+                "message": "No snapshot at or after the recall start; the latest before it is "
+                "used.",
+                "message_ar": "لا توجد لقطة بعد بدء الاستدعاء؛ استُخدمت آخر لقطة قبله.",
+            }
+        )
     return {
         "id": r.id,
         "rcl_no": r.rcl_no,
@@ -451,7 +556,9 @@ def read(db: Session, p: Principal, r: QRecall) -> dict[str, Any]:
         "can_close": r.status in LIVE and b.resolves(db, p, project, RT, r.id, "close", ctx(r)),
         "warnings": warnings,
         "created_by": b.user_ref(db, r.created_by_user_id, hide),
-        "signoffs": [signoff.read(db, s, show_scans=not hide) for s in signoff.signoffs_for(db, RT, r.id)],
+        "signoffs": [
+            signoff.read(db, s, show_scans=not hide) for s in signoff.signoffs_for(db, RT, r.id)
+        ],
     }
 
 
@@ -459,10 +566,21 @@ def list_recalls(db: Session, p: Principal, project_id: uuid.UUID) -> list[dict[
     project = qc.get_project(db, p, project_id)
     g = b.list_grant(p, project.id)
     out = []
-    for r in db.scalars(select(QRecall).where(QRecall.project_id == project.id).order_by(QRecall.initiated_at.desc())):
-        if g.scope.value == "responsible":
-            if not b.can_view(db, p, project, RT, r.id, r.site_id, lambda r=r: [("close", ctx(r), None)] if r.status in LIVE else []):
-                continue
+    for r in db.scalars(
+        select(QRecall)
+        .where(QRecall.project_id == project.id)
+        .order_by(QRecall.initiated_at.desc())
+    ):
+        if g.scope.value == "responsible" and not b.can_view(
+            db,
+            p,
+            project,
+            RT,
+            r.id,
+            r.site_id,
+            lambda r=r: [("close", ctx(r), None)] if r.status in LIVE else [],
+        ):
+            continue
         out.append(
             {
                 "id": r.id,
@@ -481,12 +599,26 @@ def list_recalls(db: Session, p: Principal, project_id: uuid.UUID) -> list[dict[
 
 def open_steps(db: Session, project: Project) -> list[reg.OpenStep]:
     out = []
-    for r in db.scalars(select(QRecall).where(QRecall.project_id == project.id, QRecall.status.in_([ST.recovering, ST.traced]))):
+    for r in db.scalars(
+        select(QRecall).where(
+            QRecall.project_id == project.id, QRecall.status.in_([ST.recovering, ST.traced])
+        )
+    ):
         if r.status == ST.traced and r.recall_type != QRecallType.mock:
             continue
         out.append(
             reg.OpenStep(
-                reg.PendingStep(RT, r.id, project.id, r.rcl_no, f"Recall {r.recall_type.value}", "close", r.trace_completed_at or r.initiated_at, f"/quality/recalls/{r.id}", "Q3"),
+                reg.PendingStep(
+                    RT,
+                    r.id,
+                    project.id,
+                    r.rcl_no,
+                    f"Recall {r.recall_type.value}",
+                    "close",
+                    r.trace_completed_at or r.initiated_at,
+                    f"/quality/recalls/{r.id}",
+                    "Q3",
+                ),
                 None,
                 r.site_id,
                 None,
@@ -509,7 +641,14 @@ def mock_due(db: Session, at: datetime) -> int:
         since = at - timedelta(days=round(months * 30.44))
         for site in db.scalars(select(Site).where(Site.project_id == project.id)):
             last = db.scalar(
-                select(QRecall.closed_at).where(QRecall.site_id == site.id, QRecall.recall_type == QRecallType.mock, QRecall.status == ST.closed).order_by(QRecall.closed_at.desc()).limit(1)
+                select(QRecall.closed_at)
+                .where(
+                    QRecall.site_id == site.id,
+                    QRecall.recall_type == QRecallType.mock,
+                    QRecall.status == ST.closed,
+                )
+                .order_by(QRecall.closed_at.desc())
+                .limit(1)
             )
             if last is not None and last >= since:
                 continue
@@ -529,14 +668,23 @@ def mock_due(db: Session, at: datetime) -> int:
 
 def last_mock(db: Session, project: Project) -> QRecall | None:
     return db.scalar(
-        select(QRecall).where(QRecall.project_id == project.id, QRecall.recall_type == QRecallType.mock, QRecall.status == ST.closed).order_by(QRecall.closed_at.desc()).limit(1)
+        select(QRecall)
+        .where(
+            QRecall.project_id == project.id,
+            QRecall.recall_type == QRecallType.mock,
+            QRecall.status == ST.closed,
+        )
+        .order_by(QRecall.closed_at.desc())
+        .limit(1)
     )
 
 
 def ncr_source(db: Session, project: Project, source_id: uuid.UUID) -> reg.SourceInfo:
     r = db.get(QRecall, source_id)
     if r is None or r.project_id != project.id:
-        raise qc.field_err("source_id", "The recall is not on this project.", "الاستدعاء ليس في المشروع.")
+        raise qc.field_err(
+            "source_id", "The recall is not on this project.", "الاستدعاء ليس في المشروع."
+        )
     return reg.SourceInfo(
         ref=r.rcl_no,
         title=f"Recall {r.rcl_no}",
@@ -544,7 +692,9 @@ def ncr_source(db: Session, project: Project, source_id: uuid.UUID) -> reg.Sourc
         engagement_id=b.operator_engagement(db, project),
         supplier_id=r.supplier_id,
         item_key=f"RCL:{','.join(sorted(i['batch'] for i in r.items))}"[:80],
-        detection_stage=QDetectionStage.regulator if r.recall_type == QRecallType.regulator else QDetectionStage.at_customer,
+        detection_stage=QDetectionStage.regulator
+        if r.recall_type == QRecallType.regulator
+        else QDetectionStage.at_customer,
         requirement_en="Recalled product traced, held and recovered (Q-RCL).",
         requirement_ar="تتبع المنتج المستدعى وحجزه واسترجاعه.",
         finding_en=r.reason,

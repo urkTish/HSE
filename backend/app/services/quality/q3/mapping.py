@@ -63,7 +63,15 @@ def get_study(db: Session, p: Principal, sid: uuid.UUID) -> tuple[QMappingStudy,
         raise b.not_found(db, p, RT, sid, m.project_id if m else None)
     project = qc.get_project(db, p, m.project_id)
     z = db.get(QStorageZone, m.zone_id)
-    if not b.can_view(db, p, project, RT, m.id, z.site_id if z else None, lambda: [("approve", ctx(m), None)] if m.status == ST.evaluated else []):
+    if not b.can_view(
+        db,
+        p,
+        project,
+        RT,
+        m.id,
+        z.site_id if z else None,
+        lambda: [("approve", ctx(m), None)] if m.status == ST.evaluated else [],
+    ):
         raise b.not_found(db, p, RT, sid, project.id)
     return m, project
 
@@ -72,7 +80,9 @@ def _span(m: QMappingStudy) -> tuple[datetime | None, datetime | None]:
     return (m.actual_start or m.planned_start, m.actual_end or m.planned_end)
 
 
-def design_problems(db: Session, project: Project, m: QMappingStudy) -> tuple[list[str], list[ApiWarning]]:
+def design_problems(
+    db: Session, project: Project, m: QMappingStudy
+) -> tuple[list[str], list[ApiWarning]]:
     """Q-MAP-01 (calibration on both dates) and Q-MAP-02 (duration, interval, loggers)."""
     start, end = _span(m)
     warnings: list[ApiWarning] = []
@@ -80,8 +90,15 @@ def design_problems(db: Session, project: Project, m: QMappingStudy) -> tuple[li
     for lg in m.loggers or []:
         it = db.get(QMteItem, uuid.UUID(str(lg["mte_id"])))
         if it is None or it.project_id != project.id:
-            raise qc.field_err("loggers", "A logger is not registered on this project.", "مسجل غير مسجل في المشروع.")
-        bad = it.status != QMteStatus.active or it.cal_status in (QCalStatus.overdue, QCalStatus.out_of_service)
+            raise qc.field_err(
+                "loggers",
+                "A logger is not registered on this project.",
+                "مسجل غير مسجل في المشروع.",
+            )
+        bad = it.status != QMteStatus.active or it.cal_status in (
+            QCalStatus.overdue,
+            QCalStatus.out_of_service,
+        )
         for d in (start, end):
             if d is not None and it.cal_due_on is not None and it.cal_due_on < b.local_day(d):
                 bad = True
@@ -100,7 +117,8 @@ def design_problems(db: Session, project: Project, m: QMappingStudy) -> tuple[li
         raise qc.err(
             422,
             ErrorCode.MAPPING_LOGGER_NOT_CALIBRATED,
-            f"Loggers not calibrated on the study start and end dates: {', '.join(cal_bad)} (Q-MAP-01).",
+            f"Loggers not calibrated on the study start and end dates: {', '.join(cal_bad)} "
+            "(Q-MAP-01).",
             f"مسجلات غير معايرة في تاريخي بداية الدراسة ونهايتها: {', '.join(cal_bad)}.",
             loggers=cal_bad,
         )
@@ -128,15 +146,27 @@ def _design(db: Session, project: Project, m: QMappingStudy) -> list[ApiWarning]
             problems=short,
         )
     if m.lead_user_id is not None:
-        v = reg.competence_check(db, m.lead_user_id, "MAPPING-LEAD", b.local_day(_span(m)[0] or now()))
+        v = reg.competence_check(
+            db, m.lead_user_id, "MAPPING-LEAD", b.local_day(_span(m)[0] or now())
+        )
         if v.met is False:
             if b.setting(db, project.id, "competence_policy") == "block":
                 raise qc.err(422, ErrorCode.COMPETENCE_NOT_MET, v.detail_en, v.detail_ar)
-            warnings.append(qc.warning(ErrorCode.COMPETENCE_NOT_MET, v.detail_en, v.detail_ar, "lead_user_id"))
+            warnings.append(
+                qc.warning(ErrorCode.COMPETENCE_NOT_MET, v.detail_en, v.detail_ar, "lead_user_id")
+            )
     return warnings
 
 
-FIELDS = ("purpose", "season", "load_state", "planned_start", "planned_end", "interval_minutes", "lead_user_id")
+FIELDS = (
+    "purpose",
+    "season",
+    "load_state",
+    "planned_start",
+    "planned_end",
+    "interval_minutes",
+    "lead_user_id",
+)
 
 
 def _apply(m: QMappingStudy, body: dict[str, Any]) -> None:
@@ -153,14 +183,21 @@ def _apply(m: QMappingStudy, body: dict[str, Any]) -> None:
     if "loggers" in body and body["loggers"] is not None:
         codes = [str(x["position_code"]).strip().upper() for x in body["loggers"]]
         if len(set(codes)) != len(codes):
-            raise qc.field_err("loggers", "Each logger needs its own position code.", "لكل مسجل رمز موقع خاص.")
+            raise qc.field_err(
+                "loggers", "Each logger needs its own position code.", "لكل مسجل رمز موقع خاص."
+            )
         m.loggers = [
-            {"mte_id": str(x["mte_id"]), "position_code": str(x["position_code"]).strip().upper(), "description": x.get("description")}
+            {
+                "mte_id": str(x["mte_id"]),
+                "position_code": str(x["position_code"]).strip().upper(),
+                "description": x.get("description"),
+            }
             for x in body["loggers"]
         ]
     if "test_windows" in body and body["test_windows"] is not None:
         m.test_windows = [
-            {"kind": w["kind"], "from": _iso(w["from"]), "to": _iso(w["to"])} for w in body["test_windows"]
+            {"kind": w["kind"], "from": _iso(w["from"]), "to": _iso(w["to"])}
+            for w in body["test_windows"]
         ]
 
 
@@ -168,11 +205,17 @@ def _iso(v: Any) -> str:
     return v.isoformat() if isinstance(v, datetime) else str(v)
 
 
-def create(db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any]) -> dict[str, Any]:
+def create(
+    db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any]
+) -> dict[str, Any]:
     project, g = b.project_for_create(db, p, project_id, RT, C.storage_manage)
     z = db.get(QStorageZone, body["zone_id"])
     if z is None or z.project_id != project.id:
-        raise qc.field_err("zone_id", "The zone has no storage settings on this project.", "المنطقة بلا إعدادات تخزين.")
+        raise qc.field_err(
+            "zone_id",
+            "The zone has no storage settings on this project.",
+            "المنطقة بلا إعدادات تخزين.",
+        )
     b.require_site(g, z.site_id)
     m = QMappingStudy(
         id=uuid.uuid4(),
@@ -197,7 +240,12 @@ def update(db: Session, p: Principal, sid: uuid.UUID, body: dict[str, Any]) -> d
     m, project = get_study(db, p, sid)
     _, g = b.project_for_progress(db, p, project.id, C.storage_manage)
     if m.status not in (ST.draft, ST.data_loaded, ST.evaluated):
-        raise qc.err(409, ErrorCode.INVALID_TRANSITION, "An approved or rejected study cannot change.", "لا يمكن تعديل دراسة معتمدة أو مرفوضة.")
+        raise qc.err(
+            409,
+            ErrorCode.INVALID_TRANSITION,
+            "An approved or rejected study cannot change.",
+            "لا يمكن تعديل دراسة معتمدة أو مرفوضة.",
+        )
     _apply(m, body)
     warnings = _design(db, project, m)
     if m.status == ST.evaluated:
@@ -209,11 +257,19 @@ def update(db: Session, p: Principal, sid: uuid.UUID, body: dict[str, Any]) -> d
 
 def on_data(db: Session, m: QMappingStudy) -> None:
     """Readings imported with the study as target (Q-MAP-03)."""
-    span = db.execute(
-        select(QReading.measured_at)
-        .where(QReading.target_type == QReadingTarget.mapping_study, QReading.target_id == m.id, QReading.voided.is_(False))
-        .order_by(QReading.measured_at)
-    ).scalars().all()
+    span = (
+        db.execute(
+            select(QReading.measured_at)
+            .where(
+                QReading.target_type == QReadingTarget.mapping_study,
+                QReading.target_id == m.id,
+                QReading.voided.is_(False),
+            )
+            .order_by(QReading.measured_at)
+        )
+        .scalars()
+        .all()
+    )
     if not span:
         if m.status == ST.data_loaded:
             m.status = ST.draft
@@ -248,7 +304,12 @@ def evaluate(db: Session, p: Principal, sid: uuid.UUID) -> dict[str, Any]:
     m, project = get_study(db, p, sid)
     _, g = b.project_for_progress(db, p, project.id, C.storage_manage)
     if m.status not in (ST.data_loaded, ST.evaluated):
-        raise qc.err(409, ErrorCode.INVALID_TRANSITION, "Import the logger files first.", "استورد ملفات المسجلات أولاً.")
+        raise qc.err(
+            409,
+            ErrorCode.INVALID_TRANSITION,
+            "Import the logger files first.",
+            "استورد ملفات المسجلات أولاً.",
+        )
     _design(db, project, m)
     z = db.get(QStorageZone, m.zone_id)
     assert z is not None  # noqa: S101
@@ -256,7 +317,9 @@ def evaluate(db: Session, p: Principal, sid: uuid.UUID) -> dict[str, Any]:
     per: dict[str, list[tuple[datetime, Decimal]]] = {}
     for at, ch, v in db.execute(
         select(QReading.measured_at, QReading.channel, QReading.temperature_c).where(
-            QReading.target_type == QReadingTarget.mapping_study, QReading.target_id == m.id, QReading.voided.is_(False)
+            QReading.target_type == QReadingTarget.mapping_study,
+            QReading.target_id == m.id,
+            QReading.voided.is_(False),
         )
     ):
         if v is None:
@@ -270,11 +333,17 @@ def evaluate(db: Session, p: Principal, sid: uuid.UUID) -> dict[str, Any]:
         rows = sorted(per.get(lg["position_code"], []))
         counted = [(at, v) for at, v in rows if not _in_window(m, at)]
         if not rows:
-            results.append({"position_code": lg["position_code"], "mte_id": lg["mte_id"], "readings": 0})
+            results.append(
+                {"position_code": lg["position_code"], "mte_id": lg["mte_id"], "readings": 0}
+            )
             passed = False
             continue
         vals = [v for _, v in counted] or [v for _, v in rows]
-        inr = [v for v in vals if (z.temp_min is None or v >= z.temp_min) and (z.temp_max is None or v <= z.temp_max)]
+        inr = [
+            v
+            for v in vals
+            if (z.temp_min is None or v >= z.temp_min) and (z.temp_max is None or v <= z.temp_max)
+        ]
         ok = len(inr) == len(vals)
         passed = passed and ok
         lo, hi = min(vals), max(vals)
@@ -289,8 +358,12 @@ def evaluate(db: Session, p: Principal, sid: uuid.UUID) -> dict[str, Any]:
                 "readings_in_test_windows": len(rows) - len(counted),
                 "min_c": lo,
                 "max_c": hi,
-                "mean_c": (sum(vals, Decimal(0)) / len(vals)).quantize(Decimal("0.01"), ROUND_HALF_UP),
-                "pct_in_range": (Decimal(len(inr)) * 100 / len(vals)).quantize(Decimal("0.1"), ROUND_HALF_UP),
+                "mean_c": (sum(vals, Decimal(0)) / len(vals)).quantize(
+                    Decimal("0.01"), ROUND_HALF_UP
+                ),
+                "pct_in_range": (Decimal(len(inr)) * 100 / len(vals)).quantize(
+                    Decimal("0.1"), ROUND_HALF_UP
+                ),
                 "in_range": ok,
             }
         )
@@ -298,7 +371,9 @@ def evaluate(db: Session, p: Principal, sid: uuid.UUID) -> dict[str, Any]:
     hot = max(with_data, key=lambda r: r["max_c"]) if with_data else None
     cold = min(with_data, key=lambda r: r["min_c"]) if with_data else None
     m.results = {
-        "loggers": [{k: (str(v) if isinstance(v, Decimal) else v) for k, v in r.items()} for r in results],
+        "loggers": [
+            {k: (str(v) if isinstance(v, Decimal) else v) for k, v in r.items()} for r in results
+        ],
         "zone_min_c": str(zone_min) if zone_min is not None else None,
         "zone_max_c": str(zone_max) if zone_max is not None else None,
         "hot_spot": hot["position_code"] if hot else None,
@@ -308,9 +383,21 @@ def evaluate(db: Session, p: Principal, sid: uuid.UUID) -> dict[str, Any]:
     m.passed = passed and bool(with_data)
     rec: list[dict[str, Any]] = []
     if hot:
-        rec.append({"position": "hot_spot", "position_code": hot["position_code"], "description": hot.get("description")})
+        rec.append(
+            {
+                "position": "hot_spot",
+                "position_code": hot["position_code"],
+                "description": hot.get("description"),
+            }
+        )
     if cold:
-        rec.append({"position": "cold_spot", "position_code": cold["position_code"], "description": cold.get("description")})
+        rec.append(
+            {
+                "position": "cold_spot",
+                "position_code": cold["position_code"],
+                "description": cold.get("description"),
+            }
+        )
     m.recommended_positions = rec
     m.status = ST.evaluated
     m.map_no = m.map_no or b.number(db, project, RT)
@@ -323,11 +410,20 @@ def approve(db: Session, p: Principal, sid: uuid.UUID, body: dict[str, Any]) -> 
     m, project = get_study(db, p, sid)
     project, _ = b.project_for_progress(db, p, project.id, C.storage_manage, allow_n=True)
     if m.status != ST.evaluated:
-        raise qc.err(409, ErrorCode.INVALID_TRANSITION, "Evaluate the study first.", "قيّم الدراسة أولاً.")
+        raise qc.err(
+            409, ErrorCode.INVALID_TRANSITION, "Evaluate the study first.", "قيّم الدراسة أولاً."
+        )
     decision = body.get("decision") or "approved"
     if decision == "approved" and not m.passed:
-        raise qc.err(422, ErrorCode.VALIDATION_ERROR, "A failed study cannot be approved; reject it and repeat.", "لا يمكن اعتماد دراسة غير ناجحة.")
-    s = b.sign(db, p, project, RT, m.id, "approve", ctx(m), decision=decision, comment=body.get("comment"))
+        raise qc.err(
+            422,
+            ErrorCode.VALIDATION_ERROR,
+            "A failed study cannot be approved; reject it and repeat.",
+            "لا يمكن اعتماد دراسة غير ناجحة.",
+        )
+    s = b.sign(
+        db, p, project, RT, m.id, "approve", ctx(m), decision=decision, comment=body.get("comment")
+    )
     z = db.get(QStorageZone, m.zone_id)
     assert z is not None  # noqa: S101
     if decision == "returned":
@@ -343,14 +439,19 @@ def approve(db: Session, p: Principal, sid: uuid.UUID, body: dict[str, Any]) -> 
     m.valid_until = add_months(day, months) - timedelta(days=1)
     m.map_no = m.map_no or b.number(db, project, RT)
     apply_approval(z, m)
-    b.audit_status(db, p, project, RT, m.id, ST.evaluated, ST.approved, valid_until=str(m.valid_until))
+    b.audit_status(
+        db, p, project, RT, m.id, ST.evaluated, ST.approved, valid_until=str(m.valid_until)
+    )
     return read(db, p, m)
 
 
 def apply_approval(z: QStorageZone, m: QMappingStudy) -> None:
     """Q-MAP-04 / -06: the zone is mapped until valid_until; a required re-mapping is cleared only
     by an `after_change` study."""
-    if z.mapping_state == QMappingState.remap_required and m.purpose != QMappingPurpose.after_change:
+    if (
+        z.mapping_state == QMappingState.remap_required
+        and m.purpose != QMappingPurpose.after_change
+    ):
         return
     z.mapping_state = QMappingState.mapped
     z.mapped_until = m.valid_until
@@ -362,7 +463,11 @@ def validity_alerts(db: Session, at: datetime) -> int:
     """Q-MAP-05: alerts at 60 / 30 / 0 days before the zone's mapped_until; an expired mapping
     makes the zone not mapped."""
     n = 0
-    for z in db.scalars(select(QStorageZone).where(QStorageZone.active.is_(True), QStorageZone.mapped_until.is_not(None))):
+    for z in db.scalars(
+        select(QStorageZone).where(
+            QStorageZone.active.is_(True), QStorageZone.mapped_until.is_not(None)
+        )
+    ):
         project = db.get(Project, z.project_id)
         if project is None or z.mapped_until is None:
             continue
@@ -371,8 +476,8 @@ def validity_alerts(db: Session, at: datetime) -> int:
         if left < 0 and z.mapping_state == QMappingState.mapped:
             z.mapping_state = QMappingState.not_mapped
         zone = db.get(Zone, z.zone_id)
-        for th in (60, 30, 0):
-            if left > th or left < th - 30:
+        for th in (0, 30, 60):
+            if not (th - 30 < left <= th):
                 continue
             users = b.holders(db, project, C.storage_manage, z.site_id) | set(
                 b.resolvers(db, project, RT, "approve", rpm.Ctx(site_id=z.site_id))
@@ -382,7 +487,8 @@ def validity_alerts(db: Session, at: datetime) -> int:
                 project,
                 users,
                 f"map:{z.zone_id}:{z.mapped_until}:{th}",
-                f"{zone.code if zone else ''}: temperature mapping valid until {z.mapped_until} ({th} days)",
+                f"{zone.code if zone else ''}: temperature mapping valid until {z.mapped_until} "
+                f"({th} days)",
                 f"{zone.code if zone else ''}: دراسة التوزيع الحراري صالحة حتى {z.mapped_until}",
                 body_en="Plan the periodic study.",
                 body_ar="خطط للدراسة الدورية.",
@@ -396,8 +502,15 @@ def pharma_unmapped(db: Session, project: Project) -> list[QStorageZone]:
     today = qc.project_day(project)
     return [
         z
-        for z in db.scalars(select(QStorageZone).where(QStorageZone.project_id == project.id, QStorageZone.storage_class == QStorageClass.pharma_2_8, QStorageZone.active.is_(True)))
-        if z.mapping_state != QMappingState.mapped or (z.mapped_until is not None and z.mapped_until < today)
+        for z in db.scalars(
+            select(QStorageZone).where(
+                QStorageZone.project_id == project.id,
+                QStorageZone.storage_class == QStorageClass.pharma_2_8,
+                QStorageZone.active.is_(True),
+            )
+        )
+        if z.mapping_state != QMappingState.mapped
+        or (z.mapped_until is not None and z.mapped_until < today)
     ]
 
 
@@ -413,7 +526,15 @@ def read(db: Session, p: Principal, m: QMappingStudy) -> dict[str, Any]:
         "id": m.id,
         "project_id": m.project_id,
         "map_no": m.map_no,
-        "zone": {"zone_id": m.zone_id, "code": zone.code if zone else "", "name_en": zone.name_en if zone else "", "name_ar": zone.name_ar if zone else "", "storage_class": z.storage_class if z else None, "temp_min": z.temp_min if z else None, "temp_max": z.temp_max if z else None},
+        "zone": {
+            "zone_id": m.zone_id,
+            "code": zone.code if zone else "",
+            "name_en": zone.name_en if zone else "",
+            "name_ar": zone.name_ar if zone else "",
+            "storage_class": z.storage_class if z else None,
+            "temp_min": z.temp_min if z else None,
+            "temp_max": z.temp_max if z else None,
+        },
         "purpose": m.purpose,
         "season": m.season,
         "load_state": m.load_state,
@@ -422,7 +543,9 @@ def read(db: Session, p: Principal, m: QMappingStudy) -> dict[str, Any]:
         "actual_start": m.actual_start,
         "actual_end": m.actual_end,
         "interval_minutes": m.interval_minutes,
-        "loggers": [{**lg, "mte": b.mte_ref(db, uuid.UUID(lg["mte_id"]))} for lg in m.loggers or []],
+        "loggers": [
+            {**lg, "mte": b.mte_ref(db, uuid.UUID(lg["mte_id"]))} for lg in m.loggers or []
+        ],
         "test_windows": m.test_windows,
         "lead": b.user_ref(db, m.lead_user_id, hide),
         "results": m.results,
@@ -433,12 +556,17 @@ def read(db: Session, p: Principal, m: QMappingStudy) -> dict[str, Any]:
         "approved_on": m.approved_on,
         "valid_until": m.valid_until,
         "reject_reason": m.reject_reason,
-        "can_approve": m.status == ST.evaluated and b.resolves(db, p, project, RT, m.id, "approve", ctx(m)),
-        "signoffs": [signoff.read(db, s, show_scans=not hide) for s in signoff.signoffs_for(db, RT, m.id)],
+        "can_approve": m.status == ST.evaluated
+        and b.resolves(db, p, project, RT, m.id, "approve", ctx(m)),
+        "signoffs": [
+            signoff.read(db, s, show_scans=not hide) for s in signoff.signoffs_for(db, RT, m.id)
+        ],
     }
 
 
-def list_studies(db: Session, p: Principal, project_id: uuid.UUID, zone_id: uuid.UUID | None = None) -> list[dict[str, Any]]:
+def list_studies(
+    db: Session, p: Principal, project_id: uuid.UUID, zone_id: uuid.UUID | None = None
+) -> list[dict[str, Any]]:
     project = qc.get_project(db, p, project_id)
     g = b.list_grant(p, project.id)
     q = select(QMappingStudy).where(QMappingStudy.project_id == project.id)
@@ -448,7 +576,15 @@ def list_studies(db: Session, p: Principal, project_id: uuid.UUID, zone_id: uuid
     for m in db.scalars(q.order_by(QMappingStudy.created_at.desc())):
         z = db.get(QStorageZone, m.zone_id)
         if g.scope.value == "responsible":
-            if not b.can_view(db, p, project, RT, m.id, z.site_id if z else None, lambda m=m: [("approve", ctx(m), None)] if m.status == ST.evaluated else []):
+            if not b.can_view(
+                db,
+                p,
+                project,
+                RT,
+                m.id,
+                z.site_id if z else None,
+                lambda m=m: [("approve", ctx(m), None)] if m.status == ST.evaluated else [],
+            ):
                 continue
         elif z is not None and not g.covers_site(z.site_id):
             continue
@@ -473,12 +609,28 @@ def list_studies(db: Session, p: Principal, project_id: uuid.UUID, zone_id: uuid
 
 def open_steps(db: Session, project: Project) -> list[reg.OpenStep]:
     out = []
-    for m in db.scalars(select(QMappingStudy).where(QMappingStudy.project_id == project.id, QMappingStudy.status == ST.evaluated, QMappingStudy.passed.is_(True))):
+    for m in db.scalars(
+        select(QMappingStudy).where(
+            QMappingStudy.project_id == project.id,
+            QMappingStudy.status == ST.evaluated,
+            QMappingStudy.passed.is_(True),
+        )
+    ):
         z = db.get(QStorageZone, m.zone_id)
         zone = db.get(Zone, m.zone_id)
         out.append(
             reg.OpenStep(
-                reg.PendingStep(RT, m.id, project.id, m.map_no or "MAP", f"Mapping study {zone.code if zone else ''}", "approve", m.updated_at, f"/quality/mapping/{m.id}", "Q3"),
+                reg.PendingStep(
+                    RT,
+                    m.id,
+                    project.id,
+                    m.map_no or "MAP",
+                    f"Mapping study {zone.code if zone else ''}",
+                    "approve",
+                    m.updated_at,
+                    f"/quality/mapping/{m.id}",
+                    "Q3",
+                ),
                 None,
                 z.site_id if z else None,
                 None,

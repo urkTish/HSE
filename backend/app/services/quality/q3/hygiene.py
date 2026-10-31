@@ -37,7 +37,7 @@ RT = QRecordType.excursion  # audit entity for the hygiene registers (no QRT typ
 COLD = frozenset({QStorageClass.chilled, QStorageClass.frozen, QStorageClass.pharma_2_8})
 
 
-# ---- schedules and due checks (Q-HYG-01) -----------------------------------------------------------
+# ---- schedules and due checks (Q-HYG-01) ---------------------------------------------------------
 
 
 def periods(s: QCheckSchedule, until: date) -> list[tuple[date, date]]:
@@ -76,7 +76,11 @@ def done_dates(db: Session, s: QCheckSchedule, a: date, e: date) -> list[date]:
             ChecklistResponse.completed_date >= a,
             ChecklistResponse.completed_date <= e,
         )
-        q = q.where(ChecklistResponse.zone_id == s.zone_id) if s.zone_id else q.where(ChecklistResponse.site_id == s.site_id)
+        q = (
+            q.where(ChecklistResponse.zone_id == s.zone_id)
+            if s.zone_id
+            else q.where(ChecklistResponse.site_id == s.site_id)
+        )
         return [x for x in db.scalars(q) if x]
     rows = db.scalars(
         select(QPestVisit.visited_at).where(
@@ -89,21 +93,33 @@ def done_dates(db: Session, s: QCheckSchedule, a: date, e: date) -> list[date]:
     return [b.local_day(x) for x in rows]
 
 
-def due_status(db: Session, s: QCheckSchedule, today: date, a: date | None = None, e: date | None = None) -> list[dict[str, Any]]:
+def due_status(
+    db: Session, s: QCheckSchedule, today: date, a: date | None = None, e: date | None = None
+) -> list[dict[str, Any]]:
     """Each period: done (a response in the period), due (current) or overdue (ended, not done)."""
     out = []
     for pa, pe in periods(s, today):
         if (a and pe < a) or (e and pa > e):
             continue
         done = bool(done_dates(db, s, pa, pe))
-        out.append({"from": pa, "to": pe, "status": "done" if done else ("due" if pe >= today else "overdue")})
+        out.append(
+            {
+                "from": pa,
+                "to": pe,
+                "status": "done" if done else ("due" if pe >= today else "overdue"),
+            }
+        )
     return out
 
 
 def compliance(db: Session, project: Project, a: date, e: date, as_of: date) -> tuple[int, int]:
     """K-168: (done in their period, due checks whose period ended in [a, e] and ≤ as_of)."""
     done = total = 0
-    for s in db.scalars(select(QCheckSchedule).where(QCheckSchedule.project_id == project.id, QCheckSchedule.active.is_(True))):
+    for s in db.scalars(
+        select(QCheckSchedule).where(
+            QCheckSchedule.project_id == project.id, QCheckSchedule.active.is_(True)
+        )
+    ):
         for pa, pe in periods(s, min(e, as_of)):
             if pe < a or pe > e or pe > as_of:
                 continue
@@ -137,13 +153,21 @@ def list_schedules(db: Session, p: Principal, project_id: uuid.UUID) -> list[dic
     today = qc.project_day(project)
     return [
         schedule_read(db, s, today)
-        for s in db.scalars(select(QCheckSchedule).where(QCheckSchedule.project_id == project.id).order_by(QCheckSchedule.created_at))
+        for s in db.scalars(
+            select(QCheckSchedule)
+            .where(QCheckSchedule.project_id == project.id)
+            .order_by(QCheckSchedule.created_at)
+        )
         if g.scope.value == "responsible" or g.covers_site(s.site_id)
     ]
 
 
-def create_schedule(db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any]) -> dict[str, Any]:
-    project, g = b.project_for_create(db, p, project_id, QRecordType.mapping_study, C.storage_manage)
+def create_schedule(
+    db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any]
+) -> dict[str, Any]:
+    project, g = b.project_for_create(
+        db, p, project_id, QRecordType.mapping_study, C.storage_manage
+    )
     site = b.site_of(db, project, body["site_id"])
     b.require_site(g, site.id)
     if body.get("zone_id"):
@@ -171,7 +195,9 @@ def create_schedule(db: Session, p: Principal, project_id: uuid.UUID, body: dict
     return schedule_read(db, s, qc.project_day(project))
 
 
-def update_schedule(db: Session, p: Principal, sid: uuid.UUID, body: dict[str, Any]) -> dict[str, Any]:
+def update_schedule(
+    db: Session, p: Principal, sid: uuid.UUID, body: dict[str, Any]
+) -> dict[str, Any]:
     s = db.get(QCheckSchedule, sid)
     if s is None or not p.can_see_project(s.project_id):
         raise b.not_found(db, p, RT, sid, None)
@@ -191,23 +217,45 @@ def run_check(db: Session, p: Principal, sid: uuid.UUID, body: dict[str, Any]) -
     s = db.get(QCheckSchedule, sid)
     if s is None or not p.can_see_project(s.project_id):
         raise b.not_found(db, p, RT, sid, None)
-    project, g = b.project_for_create(db, p, s.project_id, QRecordType.mapping_study, C.storage_manage)
+    project, g = b.project_for_create(
+        db, p, s.project_id, QRecordType.mapping_study, C.storage_manage
+    )
     b.require_site(g, s.site_id)
     if s.check_type != QCheckType.hygiene:
-        raise qc.field_err("check_type", "Pest visits are recorded as visits.", "تُسجل زيارات الآفات كزيارات.")
+        raise qc.field_err(
+            "check_type", "Pest visits are recorded as visits.", "تُسجل زيارات الآفات كزيارات."
+        )
     out = checklists.respond(
-        db, p.user.id, project, ResponseOwnerType.q_hygiene, "hygiene", s.site_id, body["answers"], zone_id=s.zone_id, code=s.template_code, completed_at=body.get("completed_at")
+        db,
+        p.user.id,
+        project,
+        ResponseOwnerType.q_hygiene,
+        "hygiene",
+        s.site_id,
+        body["answers"],
+        zone_id=s.zone_id,
+        code=s.template_code,
+        completed_at=body.get("completed_at"),
     )
     proposals = []
     if out.critical_failures:
         proposals = [
-            {"kind": "ncr", "source_type": "hygiene_pest", "source_id": out.response.id, "items": out.critical_failures},
+            {
+                "kind": "ncr",
+                "source_type": "hygiene_pest",
+                "source_id": out.response.id,
+                "items": out.critical_failures,
+            },
             {"kind": "hold", "reason": "pest_hygiene", "zone_id": s.zone_id},
         ]
-    return {"response": checklists.response_read(out.response), "passed": out.passed, "proposals": proposals}
+    return {
+        "response": checklists.response_read(out.response),
+        "passed": out.passed,
+        "proposals": proposals,
+    }
 
 
-# ---- pest stations and visits (Q-HYG-03, -04) ------------------------------------------------------
+# ---- pest stations and visits (Q-HYG-03, -04) ----------------------------------------------------
 
 
 def station_read(db: Session, st: QPestStation) -> dict[str, Any]:
@@ -227,16 +275,31 @@ def station_read(db: Session, st: QPestStation) -> dict[str, Any]:
 def list_stations(db: Session, p: Principal, project_id: uuid.UUID) -> list[dict[str, Any]]:
     project = qc.get_project(db, p, project_id)
     b.list_grant(p, project.id)
-    return [station_read(db, x) for x in db.scalars(select(QPestStation).where(QPestStation.project_id == project.id).order_by(QPestStation.code))]
+    return [
+        station_read(db, x)
+        for x in db.scalars(
+            select(QPestStation)
+            .where(QPestStation.project_id == project.id)
+            .order_by(QPestStation.code)
+        )
+    ]
 
 
-def create_station(db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any]) -> dict[str, Any]:
-    project, g = b.project_for_create(db, p, project_id, QRecordType.mapping_study, C.storage_manage)
+def create_station(
+    db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any]
+) -> dict[str, Any]:
+    project, g = b.project_for_create(
+        db, p, project_id, QRecordType.mapping_study, C.storage_manage
+    )
     site = b.site_of(db, project, body["site_id"])
     b.require_site(g, site.id)
     code = body["code"].strip().upper()
-    if db.scalar(select(QPestStation.id).where(QPestStation.site_id == site.id, QPestStation.code == code)):
-        raise qc.field_err("code", "This station code is used on the site.", "رمز المحطة مستخدم في الموقع.")
+    if db.scalar(
+        select(QPestStation.id).where(QPestStation.site_id == site.id, QPestStation.code == code)
+    ):
+        raise qc.field_err(
+            "code", "This station code is used on the site.", "رمز المحطة مستخدم في الموقع."
+        )
     st = QPestStation(
         project_id=project.id,
         site_id=site.id,
@@ -256,7 +319,16 @@ def create_station(db: Session, p: Principal, project_id: uuid.UUID, body: dict[
 def _visit_no(db: Session, project: Project, at: datetime) -> str:
     db.execute(select(Project.id).where(Project.id == project.id).with_for_update())
     year = b.local_day(at).year
-    n = len(list(db.scalars(select(QPestVisit.id).where(QPestVisit.project_id == project.id, QPestVisit.visit_no.like(f"PSV-{project.code}-{year}-%")))))
+    n = len(
+        list(
+            db.scalars(
+                select(QPestVisit.id).where(
+                    QPestVisit.project_id == project.id,
+                    QPestVisit.visit_no.like(f"PSV-{project.code}-{year}-%"),
+                )
+            )
+        )
+    )
     return f"PSV-{project.code}-{year}-{n + 1:04d}"
 
 
@@ -265,12 +337,23 @@ def record_visit(
 ) -> tuple[QPestVisit, list[Any], list[dict[str, Any]]]:
     site_id = body["site_id"]
     at: datetime = body.get("visited_at") or now()
-    stations = {x.id: x for x in db.scalars(select(QPestStation).where(QPestStation.site_id == site_id, QPestStation.active.is_(True)))}
+    stations = {
+        x.id: x
+        for x in db.scalars(
+            select(QPestStation).where(
+                QPestStation.site_id == site_id, QPestStation.active.is_(True)
+            )
+        )
+    }
     results = []
     for r in body.get("station_results") or []:
         sid = uuid.UUID(str(r["station_id"]))
         if sid not in stations:
-            raise qc.field_err("station_results", "A station is not active on this site.", "محطة غير نشطة في الموقع.")
+            raise qc.field_err(
+                "station_results",
+                "A station is not active on this site.",
+                "محطة غير نشطة في الموقع.",
+            )
         results.append(
             {
                 "station_id": str(sid),
@@ -314,7 +397,9 @@ def record_visit(
         .order_by(QPestVisit.visited_at.desc())
         .limit(1)
     )
-    prev_active = {r["station_id"] for r in (prev.station_results if prev else []) if r["activity"] != "none"}
+    prev_active = {
+        r["station_id"] for r in (prev.station_results if prev else []) if r["activity"] != "none"
+    }
     for r in results:
         if r["activity"] == "none":
             continue
@@ -329,18 +414,43 @@ def record_visit(
             why.append(f"activity in a {sz.storage_class.value} zone")
         if why:
             st.activity_trend = True
-            proposals.append({"station": st.code, "station_id": st.id, "why": why, "kinds": ["quality_alert", "ncr"], "source_type": "hygiene_pest", "source_id": v.id})
-    v.proposals = [{**x, "station_id": str(x["station_id"]), "source_id": str(x["source_id"])} for x in proposals]
+            proposals.append(
+                {
+                    "station": st.code,
+                    "station_id": st.id,
+                    "why": why,
+                    "kinds": ["quality_alert", "ncr"],
+                    "source_type": "hygiene_pest",
+                    "source_id": v.id,
+                }
+            )
+    v.proposals = [
+        {**x, "station_id": str(x["station_id"]), "source_id": str(x["source_id"])}
+        for x in proposals
+    ]
     return v, warnings, proposals
 
 
-def create_visit(db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any]) -> dict[str, Any]:
-    project, g = b.project_for_create(db, p, project_id, QRecordType.mapping_study, C.storage_manage)
+def create_visit(
+    db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any]
+) -> dict[str, Any]:
+    project, g = b.project_for_create(
+        db, p, project_id, QRecordType.mapping_study, C.storage_manage
+    )
     site = b.site_of(db, project, body["site_id"])
     b.require_site(g, site.id)
     v, warnings, _ = record_visit(db, project, p.user.id, body)
     if body.get("answers"):
-        out = checklists.respond(db, p.user.id, project, ResponseOwnerType.q_pest_visit, "pest_visit", site.id, body["answers"], completed_at=v.visited_at)
+        out = checklists.respond(
+            db,
+            p.user.id,
+            project,
+            ResponseOwnerType.q_pest_visit,
+            "pest_visit",
+            site.id,
+            body["answers"],
+            completed_at=v.visited_at,
+        )
         v.response_id = out.response.id
     if v.proposals:
         b.send(
@@ -358,7 +468,10 @@ def create_visit(db: Session, p: Principal, project_id: uuid.UUID, body: dict[st
 
 def visit_read(db: Session, p: Principal, v: QPestVisit) -> dict[str, Any]:
     hide = b.hide_names(p, v.project_id)
-    codes = {str(x.id): x.code for x in db.scalars(select(QPestStation).where(QPestStation.site_id == v.site_id))}
+    codes = {
+        str(x.id): x.code
+        for x in db.scalars(select(QPestStation).where(QPestStation.site_id == v.site_id))
+    }
     return {
         "id": v.id,
         "visit_no": v.visit_no,
@@ -367,7 +480,9 @@ def visit_read(db: Session, p: Principal, v: QPestVisit) -> dict[str, Any]:
         "visited_at": v.visited_at,
         "technician_name": None if hide else v.technician_name,
         "chemicals": v.chemicals,
-        "station_results": [{**r, "code": codes.get(r["station_id"], "")} for r in v.station_results],
+        "station_results": [
+            {**r, "code": codes.get(r["station_id"], "")} for r in v.station_results
+        ],
         "not_serviced": v.not_serviced,
         "proposals": v.proposals,
         "response_id": v.response_id,
@@ -377,7 +492,15 @@ def visit_read(db: Session, p: Principal, v: QPestVisit) -> dict[str, Any]:
 def list_visits(db: Session, p: Principal, project_id: uuid.UUID) -> list[dict[str, Any]]:
     project = qc.get_project(db, p, project_id)
     b.list_grant(p, project.id)
-    return [visit_read(db, p, v) for v in db.scalars(select(QPestVisit).where(QPestVisit.project_id == project.id).order_by(QPestVisit.visited_at.desc()).limit(100))]
+    return [
+        visit_read(db, p, v)
+        for v in db.scalars(
+            select(QPestVisit)
+            .where(QPestVisit.project_id == project.id)
+            .order_by(QPestVisit.visited_at.desc())
+            .limit(100)
+        )
+    ]
 
 
 def get_visit(db: Session, p: Principal, vid: uuid.UUID) -> dict[str, Any]:
@@ -389,7 +512,7 @@ def get_visit(db: Session, p: Principal, vid: uuid.UUID) -> dict[str, Any]:
     return visit_read(db, p, v)
 
 
-# ---- jobs and the NCR source (list NS `hygiene_pest`) ------------------------------------------------
+# ---- jobs and the NCR source (list NS `hygiene_pest`) --------------------------------------------
 
 
 def overdue_alerts(db: Session, at: datetime) -> int:
@@ -407,7 +530,13 @@ def overdue_alerts(db: Session, at: datetime) -> int:
                 continue
             users = b.holders(db, project, C.storage_manage, s.site_id) | {
                 a.user_id
-                for a in db.scalars(select(RoleAssignment).where(RoleAssignment.project_id == project.id, RoleAssignment.role == s.assignee_role, RoleAssignment.revoked_at.is_(None)))
+                for a in db.scalars(
+                    select(RoleAssignment).where(
+                        RoleAssignment.project_id == project.id,
+                        RoleAssignment.role == s.assignee_role,
+                        RoleAssignment.revoked_at.is_(None),
+                    )
+                )
             }
             zone = db.get(Zone, s.zone_id) if s.zone_id else None
             n += b.send(
@@ -436,13 +565,18 @@ def ncr_source(db: Session, project: Project, source_id: uuid.UUID) -> reg.Sourc
             detection_stage=QDetectionStage.storage,
             requirement_en="No pest activity in the storage areas (pest-control programme).",
             requirement_ar="لا نشاط للآفات في مناطق التخزين.",
-            finding_en="; ".join(f"{x['station']}: {', '.join(x['why'])}" for x in v.proposals) or "Pest activity recorded.",
+            finding_en="; ".join(f"{x['station']}: {', '.join(x['why'])}" for x in v.proposals)
+            or "Pest activity recorded.",
             finding_ar="نشاط آفات مسجل.",
             proposed_class=QNcrClass.minor,
         )
     r = db.get(ChecklistResponse, source_id)
     if r is None or r.project_id != project.id or r.owner_type != ResponseOwnerType.q_hygiene:
-        raise qc.field_err("source_id", "The hygiene check or pest visit is not on this project.", "فحص النظافة أو الزيارة ليس في المشروع.")
+        raise qc.field_err(
+            "source_id",
+            "The hygiene check or pest visit is not on this project.",
+            "فحص النظافة أو الزيارة ليس في المشروع.",
+        )
     return reg.SourceInfo(
         ref=f"{r.template_code} {r.completed_date}",
         title=f"Hygiene check critical failure {r.template_code} {r.completed_date}",
@@ -453,7 +587,10 @@ def ncr_source(db: Session, project: Project, source_id: uuid.UUID) -> reg.Sourc
         detection_stage=QDetectionStage.storage,
         requirement_en="Warehouse hygiene checklist critical items.",
         requirement_ar="البنود الحرجة في قائمة فحص النظافة.",
-        finding_en=", ".join(a["item_code"] for a in r.answers if a.get("critical") and a.get("compliant") is False) or "Critical failure.",
+        finding_en=", ".join(
+            a["item_code"] for a in r.answers if a.get("critical") and a.get("compliant") is False
+        )
+        or "Critical failure.",
         finding_ar="فشل بند حرج.",
         proposed_class=QNcrClass.minor,
     )

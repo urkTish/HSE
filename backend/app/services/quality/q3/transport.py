@@ -78,21 +78,36 @@ def get_trip(db: Session, p: Principal, tid: uuid.UUID) -> tuple[QTrip, Project]
     if t is None or not p.can_see_project(t.project_id):
         raise b.not_found(db, p, RT, tid, t.project_id if t else None)
     project = qc.get_project(db, p, t.project_id)
-    steps = lambda: [("dispatch_override", ctx(t, db), None)] if t.override_requested_at and t.status == ST.preload_checked else []  # noqa: E731
+
+    def steps() -> b.StepList:
+        if t.override_requested_at and t.status == ST.preload_checked:
+            return [("dispatch_override", ctx(t, db), None)]
+        return []
+
     if not b.can_view(db, p, project, RT, t.id, t.site_id, steps):
         raise b.not_found(db, p, RT, tid, project.id)
     return t, project
 
 
 def shipments_of(db: Session, t: QTrip) -> list[QShipment]:
-    return list(db.scalars(select(QShipment).where(QShipment.trip_id == t.id).order_by(QShipment.shipment_ref)))
+    return list(
+        db.scalars(
+            select(QShipment).where(QShipment.trip_id == t.id).order_by(QShipment.shipment_ref)
+        )
+    )
 
 
 def _classes_of(db: Session, s: QShipment) -> set[QStorageClass]:
-    return {ln.storage_class for ln in db.scalars(select(QShipmentLine).where(QShipmentLine.shipment_id == s.id)) if ln.storage_class}
+    return {
+        ln.storage_class
+        for ln in db.scalars(select(QShipmentLine).where(QShipmentLine.shipment_id == s.id))
+        if ln.storage_class
+    }
 
 
-def compute_compartments(db: Session, t: QTrip, raw: list[dict[str, Any]], assign: dict[uuid.UUID, str]) -> list[dict[str, Any]]:
+def compute_compartments(
+    db: Session, t: QTrip, raw: list[dict[str, Any]], assign: dict[uuid.UUID, str]
+) -> list[dict[str, Any]]:
     """Q-TRN-01 and the strictest range per compartment."""
     comps: dict[str, dict[str, Any]] = {}
     for c in raw:
@@ -104,10 +119,16 @@ def compute_compartments(db: Session, t: QTrip, raw: list[dict[str, Any]], assig
             "classes": [],
         }
     if not comps:
-        raise qc.field_err("compartments", "A trip has at least one compartment.", "للرحلة حجرة واحدة على الأقل.")
+        raise qc.field_err(
+            "compartments", "A trip has at least one compartment.", "للرحلة حجرة واحدة على الأقل."
+        )
     for sid, code in assign.items():
         if code not in comps:
-            raise qc.field_err("shipments", f"Compartment {code} is not on the trip.", "الحجرة غير موجودة في الرحلة.")
+            raise qc.field_err(
+                "shipments",
+                f"Compartment {code} is not on the trip.",
+                "الحجرة غير موجودة في الرحلة.",
+            )
         s = db.get(QShipment, sid)
         if s is None:
             continue
@@ -123,7 +144,8 @@ def compute_compartments(db: Session, t: QTrip, raw: list[dict[str, Any]], assig
                     raise qc.err(
                         422,
                         ErrorCode.INCOMPATIBLE_LOAD,
-                        f"Compartment {c['code']}: {a.value} and {z.value} cannot share one compartment (Q-TRN-01).",
+                        f"Compartment {c['code']}: {a.value} and {z.value} cannot share one "
+                        "compartment (Q-TRN-01).",
                         f"الحجرة {c['code']}: لا يمكن جمع {a.value} و{z.value} في حجرة واحدة.",
                     )
         lo: Decimal | None = None
@@ -160,7 +182,9 @@ def readiness(db: Session, t: QTrip) -> tuple[dict[str, Any] | None, list[ApiWar
     state, reasons = sv.readiness(db, v, day)
     from app.models.site_vehicle import VehicleCheck  # noqa: PLC0415
 
-    chk = db.scalar(select(VehicleCheck).where(VehicleCheck.vehicle_id == v.id, VehicleCheck.check_date == day))
+    chk = db.scalar(
+        select(VehicleCheck).where(VehicleCheck.vehicle_id == v.id, VehicleCheck.check_date == day)
+    )
     auth = None
     if t.driver_worker_id is not None:
         auth = sv.covering_auth(db, t.project_id, t.driver_worker_id, v.driver_group, day)
@@ -173,11 +197,17 @@ def readiness(db: Session, t: QTrip) -> tuple[dict[str, Any] | None, list[ApiWar
         "driver_authorised": None if t.driver_worker_id is None else auth is not None,
     }
     warnings = []
-    if state.value != "ready" or (chk is not None and not chk.passed) or (t.driver_worker_id is not None and auth is None):
+    if (
+        state.value != "ready"
+        or (chk is not None and not chk.passed)
+        or (t.driver_worker_id is not None and auth is None)
+    ):
         warnings.append(
             qc.warning(
                 ErrorCode.VEHICLE_NOT_READY,
-                f"{v.vehicle_no}: 7b readiness {state.value}" + (f" ({', '.join(reasons)})" if reasons else "") + ".",
+                f"{v.vehicle_no}: 7b readiness {state.value}"
+                + (f" ({', '.join(reasons)})" if reasons else "")
+                + ".",
                 f"{v.vehicle_no}: جاهزية المركبة {state.value}.",
                 "vehicle_id",
             )
@@ -185,19 +215,27 @@ def readiness(db: Session, t: QTrip) -> tuple[dict[str, Any] | None, list[ApiWar
     return info, warnings
 
 
-def _assign(db: Session, project: Project, t: QTrip, rows: list[dict[str, Any]]) -> dict[uuid.UUID, str]:
+def _assign(
+    db: Session, project: Project, t: QTrip, rows: list[dict[str, Any]]
+) -> dict[uuid.UUID, str]:
     out: dict[uuid.UUID, str] = {}
     for r in rows:
         s = db.get(QShipment, r["shipment_id"])
         if s is None or s.project_id != project.id:
-            raise qc.field_err("shipments", "A shipment is not on this project.", "شحنة ليست في المشروع.")
+            raise qc.field_err(
+                "shipments", "A shipment is not on this project.", "شحنة ليست في المشروع."
+            )
         if s.trip_id is not None and s.trip_id != t.id:
-            raise qc.field_err("shipments", f"{s.shipment_ref} is on another trip.", "الشحنة ضمن رحلة أخرى.")
+            raise qc.field_err(
+                "shipments", f"{s.shipment_ref} is on another trip.", "الشحنة ضمن رحلة أخرى."
+            )
         out[s.id] = str(r.get("compartment") or "C1").strip().upper()
     return out
 
 
-def create(db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any]) -> dict[str, Any]:
+def create(
+    db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any]
+) -> dict[str, Any]:
     project, g = b.project_for_create(db, p, project_id, RT, C.transport_record)
     site = b.site_of(db, project, body["site_id"])
     b.require_site(g, site.id)
@@ -227,13 +265,17 @@ def create(db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any
     if t.vehicle_id is not None:
         v = db.get(Vehicle, t.vehicle_id)
         if v is None or v.project_id != project.id:
-            raise qc.field_err("vehicle_id", "The vehicle is not on this project.", "المركبة ليست في المشروع.")
+            raise qc.field_err(
+                "vehicle_id", "The vehicle is not on this project.", "المركبة ليست في المشروع."
+            )
     if t.driver_worker_id is not None and db.get(Worker, t.driver_worker_id) is None:
         raise qc.field_err("driver_worker_id", "Unknown worker.", "عامل غير معروف.")
     for mid in t.logger_mte_ids:
         b.mte_of(db, project, mid, "logger_mte_ids")
     assign = _assign(db, project, t, body["shipments"])
-    t.compartments = compute_compartments(db, t, body.get("compartments") or [{"code": "C1"}], assign)
+    t.compartments = compute_compartments(
+        db, t, body.get("compartments") or [{"code": "C1"}], assign
+    )
     db.add(t)
     db.flush()
     for sid, code in assign.items():
@@ -245,7 +287,9 @@ def create(db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any
     t.readiness = info
     warnings += b.supplier_warnings(db, t.carrier_id)
     for mid in t.logger_mte_ids:
-        _, w = mte_svc.record_usage(db, project, mid, RT, t.id, p.user.id, t.planned_departure, "trip logger")
+        _, w = mte_svc.record_usage(
+            db, project, mid, RT, t.id, p.user.id, t.planned_departure, "trip logger"
+        )
         warnings += w
     b.audit_create(db, p, project, RT, t.id, trip_no=t.trip_no)
     return {**read(db, p, t), "warnings": b.warn_dump(warnings)}
@@ -260,7 +304,16 @@ def preload(db: Session, p: Principal, tid: uuid.UUID, body: dict[str, Any]) -> 
     b.require_site(g, t.site_id)
     if t.status != ST.planned:
         raise qc.err(409, ErrorCode.INVALID_TRANSITION, "Only a planned trip.", "رحلة مخططة فقط.")
-    out = checklists.respond(db, p.user.id, project, ResponseOwnerType.q_trip_preload, "reefer_preload", t.site_id, body["answers"], code=body.get("template_code"))
+    out = checklists.respond(
+        db,
+        p.user.id,
+        project,
+        ResponseOwnerType.q_trip_preload,
+        "reefer_preload",
+        t.site_id,
+        body["answers"],
+        code=body.get("template_code"),
+    )
     failures = list(out.critical_failures)
     box = body.get("box_temp_c")
     if box is not None:
@@ -273,7 +326,9 @@ def preload(db: Session, p: Principal, tid: uuid.UUID, body: dict[str, Any]) -> 
             if strictest(comp) == QStorageClass.frozen and sp is not None:
                 from app.services.quality.q3 import rules  # noqa: PLC0415
 
-                pv = rules.precool_setpoint(_precool_params(db), {"box_temp_c": box, "setpoint_c": sp})
+                pv = rules.precool_setpoint(
+                    _precool_params(db), {"box_temp_c": box, "setpoint_c": sp}
+                )
                 ok = ok and pv.verdict.value == "pass"
             if not ok:
                 failures.append(f"PRECOOL:{comp['code']}")
@@ -285,9 +340,16 @@ def preload(db: Session, p: Principal, tid: uuid.UUID, body: dict[str, Any]) -> 
         sid = uuid.UUID(str(lt["shipment_id"]))
         s = ships.get(sid)
         if s is None:
-            raise qc.field_err("loading_temps", "A shipment is not on this trip.", "شحنة ليست في الرحلة.")
+            raise qc.field_err(
+                "loading_temps", "A shipment is not on this trip.", "شحنة ليست في الرحلة."
+            )
         if lt.get("mte_id") is None:
-            raise qc.err(422, ErrorCode.MTE_REQUIRED, "Each loading temperature needs the instrument used (Q-TRN-03).", "كل حرارة تحميل تحتاج الجهاز المستخدم.")
+            raise qc.err(
+                422,
+                ErrorCode.MTE_REQUIRED,
+                "Each loading temperature needs the instrument used (Q-TRN-03).",
+                "كل حرارة تحميل تحتاج الجهاز المستخدم.",
+            )
         b.mte_of(db, project, lt["mte_id"])
         comp = next((c for c in t.compartments if c["code"] == s.compartment), t.compartments[0])
         v = Decimal(str(lt["temp_c"]))
@@ -296,21 +358,50 @@ def preload(db: Session, p: Principal, tid: uuid.UUID, body: dict[str, Any]) -> 
         ok = (lo is None or v >= lo) and (hi is None or v <= hi)
         if not ok:
             s.stopped = True  # Q-TRN-03: the shipment is stopped (hold proposed)
-        mte_svc.record_usage(db, project, lt["mte_id"], RT, t.id, p.user.id, None, f"loading {s.shipment_ref} {v} °C")
-        temps.append({"shipment_id": str(sid), "compartment": s.compartment, "temp_c": str(v), "mte_id": str(lt["mte_id"]), "ok": ok})
+        mte_svc.record_usage(
+            db, project, lt["mte_id"], RT, t.id, p.user.id, None, f"loading {s.shipment_ref} {v} °C"
+        )
+        temps.append(
+            {
+                "shipment_id": str(sid),
+                "compartment": s.compartment,
+                "temp_c": str(v),
+                "mte_id": str(lt["mte_id"]),
+                "ok": ok,
+            }
+        )
         seen.add(sid)
     missing = [s.shipment_ref for s in ships.values() if s.id not in seen]
     if missing:
-        raise qc.field_err("loading_temps", f"Loading temperature missing for: {', '.join(missing)} (Q-TRN-03).", "حرارة التحميل ناقصة لبعض الشحنات.")
+        raise qc.field_err(
+            "loading_temps",
+            f"Loading temperature missing for: {', '.join(missing)} (Q-TRN-03).",
+            "حرارة التحميل ناقصة لبعض الشحنات.",
+        )
     t.loading_temps = temps
     t.preload_response_id = out.response.id
     t.preload_passed = not failures
     t.preload_failures = failures
     t.status = ST.preload_checked
-    b.audit_status(db, p, project, RT, t.id, ST.planned, ST.preload_checked, passed=str(t.preload_passed))
+    b.audit_status(
+        db, p, project, RT, t.id, ST.planned, ST.preload_checked, passed=str(t.preload_passed)
+    )
     if failures:
-        users = b.resolvers(db, project, RT, "dispatch_override", rpm.Ctx(site_id=t.site_id), record_id=t.id)
-        b.send(db, project, users, f"trp:{t.id}:preload_failed", f"Pre-load failed: {t.trip_no}", f"فشل فحص ما قبل التحميل: {t.trip_no}", rt=RT, rid=t.id, path=f"/quality/transport/{t.id}", email=False)
+        users = b.resolvers(
+            db, project, RT, "dispatch_override", rpm.Ctx(site_id=t.site_id), record_id=t.id
+        )
+        b.send(
+            db,
+            project,
+            users,
+            f"trp:{t.id}:preload_failed",
+            f"Pre-load failed: {t.trip_no}",
+            f"فشل فحص ما قبل التحميل: {t.trip_no}",
+            rt=RT,
+            rid=t.id,
+            path=f"/quality/transport/{t.id}",
+            email=False,
+        )
     return read(db, p, t)
 
 
@@ -321,7 +412,10 @@ def _precool_params(db: Session) -> dict[str, Any]:
 
     c = db.scalar(
         select(QCriterion)
-        .where(QCriterion.rule_code == "precool_setpoint", QCriterion.status == QCriterionStatus.published)
+        .where(
+            QCriterion.rule_code == "precool_setpoint",
+            QCriterion.status == QCriterionStatus.published,
+        )
         .order_by(QCriterion.version.desc())
         .limit(1)
     )
@@ -329,7 +423,11 @@ def _precool_params(db: Session) -> dict[str, Any]:
 
 
 def override_allowed(t: QTrip) -> bool:
-    return all(STORAGE_CLASSES[QStorageClass(c)].dispatch_override_allowed for comp in t.compartments for c in comp.get("classes") or [])
+    return all(
+        STORAGE_CLASSES[QStorageClass(c)].dispatch_override_allowed
+        for comp in t.compartments
+        for c in comp.get("classes") or []
+    )
 
 
 def dispatch(db: Session, p: Principal, tid: uuid.UUID, body: dict[str, Any]) -> dict[str, Any]:
@@ -339,14 +437,21 @@ def dispatch(db: Session, p: Principal, tid: uuid.UUID, body: dict[str, Any]) ->
     t, project = get_trip(db, p, tid)
     project, g = b.project_for_progress(db, p, project.id, C.transport_record, allow_n=True)
     if t.status != ST.preload_checked:
-        raise qc.err(409, ErrorCode.INVALID_TRANSITION, "Complete the pre-load check first.", "أكمل فحص ما قبل التحميل أولاً.")
+        raise qc.err(
+            409,
+            ErrorCode.INVALID_TRANSITION,
+            "Complete the pre-load check first.",
+            "أكمل فحص ما قبل التحميل أولاً.",
+        )
     if not t.preload_passed:
         reason = (body.get("override_reason") or "").strip()
         if not reason and not body.get("request_override"):
             raise qc.err(
                 422,
                 ErrorCode.PRELOAD_FAILED,
-                "The pre-load check failed (" + ", ".join(t.preload_failures) + "); dispatch needs an override by the transport responsible person.",
+                "The pre-load check failed ("
+                + ", ".join(t.preload_failures)
+                + "); dispatch needs an override by the transport responsible person.",
                 "فشل فحص ما قبل التحميل؛ الإرسال يتطلب تجاوزاً من المسؤول.",
                 failures=t.preload_failures,
             )
@@ -357,11 +462,26 @@ def dispatch(db: Session, p: Principal, tid: uuid.UUID, body: dict[str, Any]) ->
                 "A loaded class does not allow a dispatch override (medicines 2–8 °C).",
                 "إحدى الفئات المحملة لا تسمح بتجاوز منع الإرسال.",
             )
-        if body.get("request_override") and not b.resolves(db, p, project, RT, t.id, "dispatch_override", ctx(t, db)):
+        if body.get("request_override") and not b.resolves(
+            db, p, project, RT, t.id, "dispatch_override", ctx(t, db)
+        ):
             t.override_requested_at = now()
             t.override_requested_by_user_id = p.user.id
-            users = b.resolvers(db, project, RT, "dispatch_override", rpm.Ctx(site_id=t.site_id), record_id=t.id)
-            b.send(db, project, users, f"trp:{t.id}:override_req", f"Override requested: {t.trip_no}", f"طلب تجاوز: {t.trip_no}", rt=RT, rid=t.id, path=f"/quality/transport/{t.id}", email=False)
+            users = b.resolvers(
+                db, project, RT, "dispatch_override", rpm.Ctx(site_id=t.site_id), record_id=t.id
+            )
+            b.send(
+                db,
+                project,
+                users,
+                f"trp:{t.id}:override_req",
+                f"Override requested: {t.trip_no}",
+                f"طلب تجاوز: {t.trip_no}",
+                rt=RT,
+                rid=t.id,
+                path=f"/quality/transport/{t.id}",
+                email=False,
+            )
             return read(db, p, t)
         why = qc.reason(reason, 20, "override_reason")
         b.sign(db, p, project, RT, t.id, "dispatch_override", ctx(t, db), comment=why)
@@ -376,7 +496,16 @@ def dispatch(db: Session, p: Principal, tid: uuid.UUID, body: dict[str, Any]) ->
         if not s.stopped:
             s.dispatched_at = s.dispatched_at or t.departed_at
     t.status = ST.dispatched
-    b.audit_status(db, p, project, RT, t.id, ST.preload_checked, ST.dispatched, override=str(bool(t.override_reason)))
+    b.audit_status(
+        db,
+        p,
+        project,
+        RT,
+        t.id,
+        ST.preload_checked,
+        ST.dispatched,
+        override=str(bool(t.override_reason)),
+    )
     return {**read(db, p, t), "warnings": b.warn_dump(warnings)}
 
 
@@ -385,16 +514,36 @@ def add_pod(db: Session, p: Principal, tid: uuid.UUID, body: dict[str, Any]) -> 
     _, g = b.project_for_progress(db, p, project.id, C.transport_record)
     b.require_site(g, t.site_id)
     if t.status != ST.dispatched:
-        raise qc.err(409, ErrorCode.INVALID_TRANSITION, "PODs are recorded on a dispatched trip.", "يُسجل إثبات التسليم لرحلة منطلقة.")
+        raise qc.err(
+            409,
+            ErrorCode.INVALID_TRANSITION,
+            "PODs are recorded on a dispatched trip.",
+            "يُسجل إثبات التسليم لرحلة منطلقة.",
+        )
     s = db.get(QShipment, body["shipment_id"])
     if s is None or s.trip_id != t.id:
-        raise qc.field_err("shipment_id", "The shipment is not on this trip.", "الشحنة ليست في الرحلة.")
+        raise qc.field_err(
+            "shipment_id", "The shipment is not on this trip.", "الشحنة ليست في الرحلة."
+        )
     if db.scalar(select(QPod.id).where(QPod.shipment_id == s.id)):
         raise qc.field_err("shipment_id", "This shipment already has a POD.", "للشحنة إثبات تسليم.")
-    sig = b.attachment_on(db, body.get("signature_attachment_id"), A.q_pod, t.id, "signature_attachment_id")
+    sig = b.attachment_on(
+        db, body.get("signature_attachment_id"), A.q_pod, t.id, "signature_attachment_id"
+    )
     if sig is None:
-        raise qc.field_err("signature_attachment_id", "Capture the signature or a photo of the signed delivery note.", "التقط التوقيع أو صورة مذكرة التسليم الموقعة.")
-    exc = [{"kind": QPodException(x["kind"]).value, "qty": str(x.get("qty")) if x.get("qty") is not None else None, "note": x.get("note")} for x in body.get("exceptions") or []]
+        raise qc.field_err(
+            "signature_attachment_id",
+            "Capture the signature or a photo of the signed delivery note.",
+            "التقط التوقيع أو صورة مذكرة التسليم الموقعة.",
+        )
+    exc = [
+        {
+            "kind": QPodException(x["kind"]).value,
+            "qty": str(x.get("qty")) if x.get("qty") is not None else None,
+            "note": x.get("note"),
+        }
+        for x in body.get("exceptions") or []
+    ]
     pod = QPod(
         trip_id=t.id,
         shipment_id=s.id,
@@ -411,17 +560,33 @@ def add_pod(db: Session, p: Principal, tid: uuid.UUID, body: dict[str, Any]) -> 
         created_at=now(),
     )
     if pod.product_temp_c is not None and pod.mte_id is None:
-        raise qc.err(422, ErrorCode.MTE_REQUIRED, "A delivery temperature needs the instrument used.", "حرارة التسليم تحتاج الجهاز.")
+        raise qc.err(
+            422,
+            ErrorCode.MTE_REQUIRED,
+            "A delivery temperature needs the instrument used.",
+            "حرارة التسليم تحتاج الجهاز.",
+        )
     db.add(pod)
     s.delivered_at = pod.delivered_at
     for ln in db.scalars(select(QShipmentLine).where(QShipmentLine.shipment_id == s.id)):
         if ln.delivered_qty is None:
-            short = sum(Decimal(x["qty"]) for x in exc if x["kind"] in ("shortage", "refused", "damage") and x["qty"])
+            short = sum(
+                Decimal(x["qty"])
+                for x in exc
+                if x["kind"] in ("shortage", "refused", "damage") and x["qty"]
+            )
             ln.delivered_qty = max(ln.ordered_qty - short, Decimal(0)) if short else ln.ordered_qty
     db.flush()
     out = read(db, p, t)
     if exc:
-        out["proposals"] = [{"kind": "ncr", "source_type": "trip", "source_id": t.id, "shipment_ref": s.shipment_ref}]
+        out["proposals"] = [
+            {
+                "kind": "ncr",
+                "source_type": "trip",
+                "source_id": t.id,
+                "shipment_ref": s.shipment_ref,
+            }
+        ]
     return out
 
 
@@ -431,7 +596,9 @@ def deliver(db: Session, p: Principal, tid: uuid.UUID) -> dict[str, Any]:
     _, g = b.project_for_progress(db, p, project.id, C.transport_record)
     b.require_site(g, t.site_id)
     if t.status != ST.dispatched:
-        raise qc.err(409, ErrorCode.INVALID_TRANSITION, "Only a dispatched trip.", "رحلة منطلقة فقط.")
+        raise qc.err(
+            409, ErrorCode.INVALID_TRANSITION, "Only a dispatched trip.", "رحلة منطلقة فقط."
+        )
     pods = {x.shipment_id: x for x in db.scalars(select(QPod).where(QPod.trip_id == t.id))}
     missing = [s.shipment_ref for s in shipments_of(db, t) if not s.stopped and s.id not in pods]
     if missing:
@@ -454,7 +621,12 @@ def cancel(db: Session, p: Principal, tid: uuid.UUID, body: dict[str, Any]) -> d
     _, g = b.project_for_progress(db, p, project.id, C.transport_record)
     b.require_site(g, t.site_id)
     if t.status not in (ST.planned, ST.preload_checked):
-        raise qc.err(409, ErrorCode.INVALID_TRANSITION, "Only a planned or pre-load-checked trip.", "رحلة مخططة أو مفحوصة فقط.")
+        raise qc.err(
+            409,
+            ErrorCode.INVALID_TRANSITION,
+            "Only a planned or pre-load-checked trip.",
+            "رحلة مخططة أو مفحوصة فقط.",
+        )
     t.cancel_reason = qc.reason(body.get("reason"))
     before = t.status
     t.status = ST.cancelled
@@ -465,7 +637,18 @@ def cancel(db: Session, p: Principal, tid: uuid.UUID, body: dict[str, Any]) -> d
 
 
 def has_transit_data(db: Session, t: QTrip) -> bool:
-    return db.scalar(select(QReading.id).where(QReading.target_type == QReadingTarget.trip, QReading.target_id == t.id, QReading.voided.is_(False)).limit(1)) is not None
+    return (
+        db.scalar(
+            select(QReading.id)
+            .where(
+                QReading.target_type == QReadingTarget.trip,
+                QReading.target_id == t.id,
+                QReading.voided.is_(False),
+            )
+            .limit(1)
+        )
+        is not None
+    )
 
 
 def on_transit_data(db: Session, t: QTrip) -> None:
@@ -495,26 +678,46 @@ def transit_due(db: Session, at: datetime) -> int:
         hours = int(b.setting(db, project.id, "transit_data_due_hours"))
         if at < t.delivered_at + timedelta(hours=hours):
             continue
-        users = b.resolvers(db, project, RT, "dispatch_override", rpm.Ctx(site_id=t.site_id), record_id=t.id)
-        n += b.send(db, project, users, f"trp:{t.id}:nodata", f"{t.trip_no}: no transit data {hours} h after delivery", f"{t.trip_no}: لا توجد بيانات نقل بعد {hours} ساعة من التسليم", rt=RT, rid=t.id, path=f"/quality/transport/{t.id}", email=False)
+        users = b.resolvers(
+            db, project, RT, "dispatch_override", rpm.Ctx(site_id=t.site_id), record_id=t.id
+        )
+        n += b.send(
+            db,
+            project,
+            users,
+            f"trp:{t.id}:nodata",
+            f"{t.trip_no}: no transit data {hours} h after delivery",
+            f"{t.trip_no}: لا توجد بيانات نقل بعد {hours} ساعة من التسليم",
+            rt=RT,
+            rid=t.id,
+            path=f"/quality/transport/{t.id}",
+            email=False,
+        )
     return n
 
 
-# ---- NCR source (list NS `trip`) and reads ---------------------------------------------------------
+# ---- NCR source (list NS `trip`) and reads -------------------------------------------------------
 
 
 def ncr_source(db: Session, project: Project, source_id: uuid.UUID) -> reg.SourceInfo:
     t = db.get(QTrip, source_id)
     if t is None or t.project_id != project.id:
-        raise qc.field_err("source_id", "The trip is not on this project.", "الرحلة ليست في المشروع.")
+        raise qc.field_err(
+            "source_id", "The trip is not on this project.", "الرحلة ليست في المشروع."
+        )
     x = db.scalar(
         select(QExcursion)
-        .where(QExcursion.trip_id == t.id, QExcursion.transient.is_(False), QExcursion.status != QExcursionStatus.voided)
+        .where(
+            QExcursion.trip_id == t.id,
+            QExcursion.transient.is_(False),
+            QExcursion.status != QExcursionStatus.voided,
+        )
         .order_by(QExcursion.severity.desc(), QExcursion.started_at)
         .limit(1)
     )
     finding = (
-        f"Transit excursion from {b.local(x.started_at):%Y-%m-%d %H:%M}, {x.duration_min} min, peak {x.peak_value} °C ({x.severity.value})."
+        f"Transit excursion from {b.local(x.started_at):%Y-%m-%d %H:%M}, {x.duration_min} min, "
+        f"peak {x.peak_value} °C ({x.severity.value})."
         if x
         else "Transport finding (pre-load, delivery exception)."
     )
@@ -525,7 +728,9 @@ def ncr_source(db: Session, project: Project, source_id: uuid.UUID) -> reg.Sourc
         engagement_id=b.operator_engagement(db, project),
         supplier_id=t.carrier_id,
         item_key=f"TRP:{t.carrier_id or 'own'}",
-        detection_stage=QDetectionStage.at_customer if t.status in (ST.delivered, ST.closed) else QDetectionStage.in_process,
+        detection_stage=QDetectionStage.at_customer
+        if t.status in (ST.delivered, ST.closed)
+        else QDetectionStage.in_process,
         requirement_en="Keep the load within the compartment range in transit (Q-TRN-05).",
         requirement_ar="الحفاظ على الحمولة ضمن نطاق الحجرة أثناء النقل.",
         finding_en=finding,
@@ -543,7 +748,13 @@ def read(db: Session, p: Principal, t: QTrip) -> dict[str, Any]:
     hide = b.hide_names(p, project.id)
     pods = {x.shipment_id: x for x in db.scalars(select(QPod).where(QPod.trip_id == t.id))}
     resp = db.get(ChecklistResponse, t.preload_response_id) if t.preload_response_id else None
-    excs = list(db.scalars(select(QExcursion).where(QExcursion.trip_id == t.id, QExcursion.status != QExcursionStatus.voided).order_by(QExcursion.started_at)))
+    excs = list(
+        db.scalars(
+            select(QExcursion)
+            .where(QExcursion.trip_id == t.id, QExcursion.status != QExcursionStatus.voided)
+            .order_by(QExcursion.started_at)
+        )
+    )
     ships = []
     for s in shipments_of(db, t):
         pod = pods.get(s.id)
@@ -572,7 +783,11 @@ def read(db: Session, p: Principal, t: QTrip) -> dict[str, Any]:
                 },
             }
         )
-    can_override = t.status == ST.preload_checked and not t.preload_passed and b.resolves(db, p, project, RT, t.id, "dispatch_override", ctx(t, db))
+    can_override = (
+        t.status == ST.preload_checked
+        and not t.preload_passed
+        and b.resolves(db, p, project, RT, t.id, "dispatch_override", ctx(t, db))
+    )
     return {
         "id": t.id,
         "project_id": t.project_id,
@@ -606,12 +821,34 @@ def read(db: Session, p: Principal, t: QTrip) -> dict[str, Any]:
         "status": t.status,
         "cancel_reason": t.cancel_reason,
         "shipments": ships,
-        "excursions": [{"id": x.id, "exc_no": x.exc_no, "compartment": x.compartment, "severity": x.severity, "status": x.status, "transient": x.transient, "started_at": x.started_at, "duration_min": x.duration_min, "ncr_id": x.ncr_id} for x in excs],
-        "signoffs": [signoff.read(db, s, show_scans=not hide) for s in signoff.signoffs_for(db, RT, t.id)],
+        "excursions": [
+            {
+                "id": x.id,
+                "exc_no": x.exc_no,
+                "compartment": x.compartment,
+                "severity": x.severity,
+                "status": x.status,
+                "transient": x.transient,
+                "started_at": x.started_at,
+                "duration_min": x.duration_min,
+                "ncr_id": x.ncr_id,
+            }
+            for x in excs
+        ],
+        "signoffs": [
+            signoff.read(db, s, show_scans=not hide) for s in signoff.signoffs_for(db, RT, t.id)
+        ],
     }
 
 
-def list_trips(db: Session, p: Principal, project_id: uuid.UUID, page_no: int, size: int, status: QTripStatus | None = None) -> dict[str, Any]:
+def list_trips(
+    db: Session,
+    p: Principal,
+    project_id: uuid.UUID,
+    page_no: int,
+    size: int,
+    status: QTripStatus | None = None,
+) -> dict[str, Any]:
     project = qc.get_project(db, p, project_id)
     g = b.list_grant(p, project.id)
     q = select(QTrip).where(QTrip.project_id == project.id)
@@ -620,7 +857,11 @@ def list_trips(db: Session, p: Principal, project_id: uuid.UUID, page_no: int, s
     items = []
     for t in db.scalars(q.order_by(QTrip.created_at.desc()).limit(2000)):
         if g.scope.value == "responsible":
-            if not (t.override_requested_at and t.status == ST.preload_checked and b.resolves(db, p, project, RT, t.id, "dispatch_override", ctx(t, db))) and not b.signed_by(db, RT, t.id, p.user.id):
+            if not (
+                t.override_requested_at
+                and t.status == ST.preload_checked
+                and b.resolves(db, p, project, RT, t.id, "dispatch_override", ctx(t, db))
+            ) and not b.signed_by(db, RT, t.id, p.user.id):
                 continue
         elif not g.covers_site(t.site_id):
             continue
@@ -637,13 +878,24 @@ def list_trips(db: Session, p: Principal, project_id: uuid.UUID, page_no: int, s
                 "shipments": len(shipments_of(db, t)),
                 "preload_passed": t.preload_passed,
                 "overridden": t.override_reason is not None,
-                "transit_excursions": db.scalar(select(QExcursion.id).where(QExcursion.trip_id == t.id, QExcursion.transient.is_(False), QExcursion.status != QExcursionStatus.voided).limit(1)) is not None,
+                "transit_excursions": db.scalar(
+                    select(QExcursion.id)
+                    .where(
+                        QExcursion.trip_id == t.id,
+                        QExcursion.transient.is_(False),
+                        QExcursion.status != QExcursionStatus.voided,
+                    )
+                    .limit(1)
+                )
+                is not None,
             }
         )
     return b.page(items, page_no, size)
 
 
-def list_shipments(db: Session, p: Principal, project_id: uuid.UUID, unassigned: bool = False) -> list[dict[str, Any]]:
+def list_shipments(
+    db: Session, p: Principal, project_id: uuid.UUID, unassigned: bool = False
+) -> list[dict[str, Any]]:
     project = qc.get_project(db, p, project_id)
     b.list_grant(p, project.id)
     q = select(QShipment).where(QShipment.project_id == project.id)
@@ -669,13 +921,29 @@ def list_shipments(db: Session, p: Principal, project_id: uuid.UUID, unassigned:
 def open_steps(db: Session, project: Project) -> list[reg.OpenStep]:
     return [
         reg.OpenStep(
-            reg.PendingStep(RT, t.id, project.id, t.trip_no, "Dispatch override requested", "dispatch_override", t.override_requested_at or t.created_at, f"/quality/transport/{t.id}", "Q3"),
+            reg.PendingStep(
+                RT,
+                t.id,
+                project.id,
+                t.trip_no,
+                "Dispatch override requested",
+                "dispatch_override",
+                t.override_requested_at or t.created_at,
+                f"/quality/transport/{t.id}",
+                "Q3",
+            ),
             None,
             t.site_id,
             None,
             ctx(t, db).requesters,
         )
-        for t in db.scalars(select(QTrip).where(QTrip.project_id == project.id, QTrip.status == ST.preload_checked, QTrip.override_requested_at.is_not(None)))
+        for t in db.scalars(
+            select(QTrip).where(
+                QTrip.project_id == project.id,
+                QTrip.status == ST.preload_checked,
+                QTrip.override_requested_at.is_not(None),
+            )
+        )
     ]
 
 

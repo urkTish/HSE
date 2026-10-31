@@ -96,7 +96,11 @@ def get_receipt(db: Session, p: Principal, rid: uuid.UUID) -> tuple[QReceipt, Pr
     if r is None or not p.can_see_project(r.project_id):
         raise b.not_found(db, p, RT, rid, r.project_id if r else None)
     project = qc.get_project(db, p, r.project_id)
-    if r.status == ST.draft and r.created_by_user_id != p.user.id and p.grant(project.id, C.receiving_record) is None:
+    if (
+        r.status == ST.draft
+        and r.created_by_user_id != p.user.id
+        and p.grant(project.id, C.receiving_record) is None
+    ):
         raise b.not_found(db, p, RT, rid, project.id)
     if not b.can_view(db, p, project, RT, r.id, r.site_id, lambda: _steps(db, r)):
         raise b.not_found(db, p, RT, rid, project.id)
@@ -104,7 +108,13 @@ def get_receipt(db: Session, p: Principal, rid: uuid.UUID) -> tuple[QReceipt, Pr
 
 
 def lines_of(db: Session, r: QReceipt) -> list[QReceiptLine]:
-    return list(db.scalars(select(QReceiptLine).where(QReceiptLine.receipt_id == r.id).order_by(QReceiptLine.line_no)))
+    return list(
+        db.scalars(
+            select(QReceiptLine)
+            .where(QReceiptLine.receipt_id == r.id)
+            .order_by(QReceiptLine.line_no)
+        )
+    )
 
 
 def temp_controlled(db: Session, r: QReceipt) -> bool:
@@ -136,27 +146,42 @@ HEADER = (
 )
 
 
-def _apply_header(db: Session, project: Project, r: QReceipt, body: dict[str, Any]) -> list[ApiWarning]:
+def _apply_header(
+    db: Session, project: Project, r: QReceipt, body: dict[str, Any]
+) -> list[ApiWarning]:
     warnings: list[ApiWarning] = []
     for k in HEADER:
-        if k in body and (body[k] is not None or k in ("supplier_id", "carrier_id", "qty_deviation_note")):
+        if k in body and (
+            body[k] is not None or k in ("supplier_id", "carrier_id", "qty_deviation_note")
+        ):
             setattr(r, k, body[k])
     if "customer_id" in body and body["customer_id"] is not None:
         r.customer_id = b.customer_of(db, project, body["customer_id"]).id
     zone = db.get(Zone, r.dock_zone_id)
     if zone is None or zone.site_id != r.site_id:
-        raise qc.field_err("dock_zone_id", "The dock must be a zone of the site.", "يجب أن يكون الرصيف منطقة في الموقع.")
+        raise qc.field_err(
+            "dock_zone_id",
+            "The dock must be a zone of the site.",
+            "يجب أن يكون الرصيف منطقة في الموقع.",
+        )
     seq = [x for x in (r.arrived_at, r.unload_start, r.unload_end) if x is not None]
     if seq != sorted(seq):
-        raise qc.field_err("unload_start", "Times must be in order: arrival, unloading start, unloading end.", "يجب أن تكون الأوقات بالترتيب.")
-    r.seal_flag = (not r.seal_intact) or bool(r.seal_expected and r.seal_actual and r.seal_expected.strip() != r.seal_actual.strip())
+        raise qc.field_err(
+            "unload_start",
+            "Times must be in order: arrival, unloading start, unloading end.",
+            "يجب أن تكون الأوقات بالترتيب.",
+        )
+    r.seal_flag = (not r.seal_intact) or bool(
+        r.seal_expected and r.seal_actual and r.seal_expected.strip() != r.seal_actual.strip()
+    )
     for sid in (r.supplier_id, r.carrier_id):
         warnings += b.supplier_warnings(db, sid)
     if r.seal_flag:
         warnings.append(
             qc.warning(
                 "SEAL_MISMATCH",
-                "Seal broken or not matching: any acceptance needs the receipt.deviation sign-off (Q-RCV-06).",
+                "Seal broken or not matching: any acceptance needs the receipt.deviation sign-off "
+                "(Q-RCV-06).",
                 "الختم مكسور أو غير مطابق: أي قبول يتطلب توقيع الانحراف.",
                 "seal_actual",
             )
@@ -183,7 +208,9 @@ def dwell(db: Session, project: Project, r: QReceipt) -> list[ApiWarning]:
     return []
 
 
-def create(db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any]) -> dict[str, Any]:
+def create(
+    db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any]
+) -> dict[str, Any]:
     project, g = b.project_for_create(db, p, project_id, RT, C.receiving_record)
     site = b.site_of(db, project, body["site_id"])
     b.require_site(g, site.id)
@@ -214,7 +241,12 @@ def update(db: Session, p: Principal, rid: uuid.UUID, body: dict[str, Any]) -> d
     _, g = b.project_for_progress(db, p, project.id, C.receiving_record)
     b.require_site(g, r.site_id)
     if r.status not in (ST.draft, ST.inspected):
-        raise qc.err(409, ErrorCode.INVALID_TRANSITION, "A decided or cancelled receipt cannot change.", "لا يمكن تعديل استلام مقرر أو ملغى.")
+        raise qc.err(
+            409,
+            ErrorCode.INVALID_TRANSITION,
+            "A decided or cancelled receipt cannot change.",
+            "لا يمكن تعديل استلام مقرر أو ملغى.",
+        )
     warnings = _apply_header(db, project, r, body)
     r.updated_by_user_id = p.user.id
     return {**read(db, p, r), "warnings": b.warn_dump(warnings)}
@@ -225,7 +257,12 @@ def cancel(db: Session, p: Principal, rid: uuid.UUID, body: dict[str, Any]) -> d
     _, g = b.project_for_progress(db, p, project.id, C.receiving_record)
     b.require_site(g, r.site_id)
     if r.status not in (ST.draft, ST.inspected) or any(ln.decision for ln in lines_of(db, r)):
-        raise qc.err(409, ErrorCode.INVALID_TRANSITION, "Only a receipt without decided lines can be cancelled.", "يمكن إلغاء استلام بلا بنود مقررة فقط.")
+        raise qc.err(
+            409,
+            ErrorCode.INVALID_TRANSITION,
+            "Only a receipt without decided lines can be cancelled.",
+            "يمكن إلغاء استلام بلا بنود مقررة فقط.",
+        )
     r.cancel_reason = qc.reason(body.get("reason"))
     before = r.status
     r.status = ST.cancelled
@@ -273,28 +310,50 @@ def propose(db: Session, project: Project, r: QReceipt, ln: QReceiptLine) -> Non
     if ln.product_temp_c is not None:
         c = _criterion(db, "arrival_temperature", prod.storage_class.value)
         if c is not None:
-            v = crit_svc.evaluate(c, {"temperature_c": ln.product_temp_c, "storage_class": prod.storage_class.value})
+            v = crit_svc.evaluate(
+                c, {"temperature_c": ln.product_temp_c, "storage_class": prod.storage_class.value}
+            )
             pinned["arrival_temperature"] = {"code": c.code, "version": c.version}
         else:
             from app.services.quality.q3 import rules  # noqa: PLC0415
 
-            v = rules.arrival_temperature({"class": prod.storage_class.value}, {"temperature_c": ln.product_temp_c})
+            v = rules.arrival_temperature(
+                {"class": prod.storage_class.value}, {"temperature_c": ln.product_temp_c}
+            )
         dec = (v.detail or {}).get("decision")
         if dec:
             add(LD(dec), "arrival_temperature", v.reason_en, v.reason_ar)
     pct = remaining_pct(db, r, ln, prod)
     ln.remaining_shelf_life_pct = pct
     if pct is not None:
-        lim = prod.min_remaining_shelf_life_pct or b.dsetting(db, project.id, "min_remaining_shelf_life_pct")
+        lim = prod.min_remaining_shelf_life_pct or b.dsetting(
+            db, project.id, "min_remaining_shelf_life_pct"
+        )
         c = _criterion(db, "remaining_shelf_life")
         from app.services.quality.q3 import rules  # noqa: PLC0415
 
-        v = rules.remaining_shelf_life(dict(c.params or {}) if c else {}, {"remaining_pct": pct, "min_pct": lim})
+        v = rules.remaining_shelf_life(
+            dict(c.params or {}) if c else {}, {"remaining_pct": pct, "min_pct": lim}
+        )
         if c is not None:
-            pinned["remaining_shelf_life"] = {"code": c.code, "version": c.version, "min_pct": str(lim)}
-        add(LD((v.detail or {}).get("decision") or "accept_with_deviation"), "remaining_shelf_life", v.reason_en, v.reason_ar)
+            pinned["remaining_shelf_life"] = {
+                "code": c.code,
+                "version": c.version,
+                "min_pct": str(lim),
+            }
+        add(
+            LD((v.detail or {}).get("decision") or "accept_with_deviation"),
+            "remaining_shelf_life",
+            v.reason_en,
+            v.reason_ar,
+        )
     if ln.condition in QUARANTINE_CONDITIONS:
-        add(LD.quarantine, "condition", f"Condition: {ln.condition.value}.", "حالة البضاعة تتطلب العزل.")
+        add(
+            LD.quarantine,
+            "condition",
+            f"Condition: {ln.condition.value}.",
+            "حالة البضاعة تتطلب العزل.",
+        )
     if not ln.labels_ok:
         add(LD.accept_with_deviation, "labels", "Labels not acceptable.", "الملصقات غير مقبولة.")
     ln.proposed_decision = worst
@@ -303,42 +362,92 @@ def propose(db: Session, project: Project, r: QReceipt, ln: QReceiptLine) -> Non
 
 
 def _save_line(
-    db: Session, p: Principal, project: Project, r: QReceipt, ln: QReceiptLine | None, raw: dict[str, Any]
+    db: Session,
+    p: Principal,
+    project: Project,
+    r: QReceipt,
+    ln: QReceiptLine | None,
+    raw: dict[str, Any],
 ) -> list[ApiWarning]:
     prod = db.get(QProduct, raw.get("product_id") or (ln.product_id if ln else None))
     if prod is None or prod.project_id != project.id:
-        raise qc.field_err("product_id", "The product is not on this project.", "المنتج ليس في المشروع.")
+        raise qc.field_err(
+            "product_id", "The product is not on this project.", "المنتج ليس في المشروع."
+        )
     if prod.owner_customer_id != r.customer_id:
-        raise qc.field_err("product_id", "The product belongs to another owner.", "المنتج يخص مالكاً آخر.")
+        raise qc.field_err(
+            "product_id", "The product belongs to another owner.", "المنتج يخص مالكاً آخر."
+        )
     if ln is None:
         n = len(lines_of(db, r)) + 1
-        ln = QReceiptLine(receipt_id=r.id, line_no=n, product_id=prod.id, recorded_by_user_id=p.user.id, photo_ids=[], proposal_reasons=[], criteria_versions={})
+        ln = QReceiptLine(
+            receipt_id=r.id,
+            line_no=n,
+            product_id=prod.id,
+            recorded_by_user_id=p.user.id,
+            photo_ids=[],
+            proposal_reasons=[],
+            criteria_versions={},
+        )
         db.add(ln)
     elif ln.decision is not None:
-        raise qc.err(409, ErrorCode.INVALID_TRANSITION, "A decided line cannot change.", "لا يمكن تعديل بند مقرر.")
+        raise qc.err(
+            409,
+            ErrorCode.INVALID_TRANSITION,
+            "A decided line cannot change.",
+            "لا يمكن تعديل بند مقرر.",
+        )
     ln.product_id = prod.id
-    for k in ("batch", "expiry_date", "production_date", "qty_expected", "qty_received", "unit", "labels_ok", "product_temp_c", "mte_id", "sample_count"):
+    for k in (
+        "batch",
+        "expiry_date",
+        "production_date",
+        "qty_expected",
+        "qty_received",
+        "unit",
+        "labels_ok",
+        "product_temp_c",
+        "mte_id",
+        "sample_count",
+    ):
         if k in raw:
             setattr(ln, k, raw[k])
     if raw.get("condition"):
         ln.condition = QLineCondition(raw["condition"])
     if not ln.batch or ln.qty_received is None:
-        raise qc.field_err("batch", "Each line needs a batch and the received quantity.", "كل بند يحتاج دفعة وكمية مستلمة.")
+        raise qc.field_err(
+            "batch",
+            "Each line needs a batch and the received quantity.",
+            "كل بند يحتاج دفعة وكمية مستلمة.",
+        )
     if prod.dated and ln.expiry_date is None:
-        raise qc.field_err("expiry_date", "Dated products need the expiry date.", "المنتجات المؤرخة تحتاج تاريخ الانتهاء.")
+        raise qc.field_err(
+            "expiry_date",
+            "Dated products need the expiry date.",
+            "المنتجات المؤرخة تحتاج تاريخ الانتهاء.",
+        )
     warnings: list[ApiWarning] = []
-    if prod.storage_class in TEMP_CONTROLLED:
-        if ln.product_temp_c is None or ln.mte_id is None:
-            raise qc.err(
-                422,
-                ErrorCode.MTE_REQUIRED,
-                f"{prod.storage_class.value} lines need the product temperature measured with a registered instrument (Q-RCV-07).",
-                "البنود المبردة تحتاج حرارة المنتج مقاسة بجهاز مسجل.",
-            )
+    if prod.storage_class in TEMP_CONTROLLED and (ln.product_temp_c is None or ln.mte_id is None):
+        raise qc.err(
+            422,
+            ErrorCode.MTE_REQUIRED,
+            f"{prod.storage_class.value} lines need the product temperature measured with a "
+            "registered instrument (Q-RCV-07).",
+            "البنود المبردة تحتاج حرارة المنتج مقاسة بجهاز مسجل.",
+        )
     if ln.mte_id is not None:
         b.mte_of(db, project, ln.mte_id)
         db.flush()
-        _, w = mte_svc.record_usage(db, project, ln.mte_id, RT, r.id, p.user.id, None, f"line {ln.line_no} {ln.product_temp_c} °C")
+        _, w = mte_svc.record_usage(
+            db,
+            project,
+            ln.mte_id,
+            RT,
+            r.id,
+            p.user.id,
+            None,
+            f"line {ln.line_no} {ln.product_temp_c} °C",
+        )
         warnings += w
     ln.recorded_by_user_id = p.user.id
     db.flush()
@@ -347,7 +456,8 @@ def _save_line(
         warnings.append(
             qc.warning(
                 "QTY_DIFFERENCE",
-                f"Line {ln.line_no}: received {ln.qty_received}, ASN {ln.qty_expected} — a quantity deviation, not a quality rejection (Q-RCV-09).",
+                f"Line {ln.line_no}: received {ln.qty_received}, ASN {ln.qty_expected} — a "
+                "quantity deviation, not a quality rejection (Q-RCV-09).",
                 "فرق كمية: انحراف كمي وليس رفض جودة.",
             )
         )
@@ -355,12 +465,19 @@ def _save_line(
     return warnings
 
 
-def save_line(db: Session, p: Principal, rid: uuid.UUID, line_id: uuid.UUID | None, body: dict[str, Any]) -> dict[str, Any]:
+def save_line(
+    db: Session, p: Principal, rid: uuid.UUID, line_id: uuid.UUID | None, body: dict[str, Any]
+) -> dict[str, Any]:
     r, project = get_receipt(db, p, rid)
     _, g = b.project_for_progress(db, p, project.id, C.receiving_record)
     b.require_site(g, r.site_id)
     if r.status not in (ST.draft, ST.inspected):
-        raise qc.err(409, ErrorCode.INVALID_TRANSITION, "The receipt is decided or cancelled.", "الاستلام مقرر أو ملغى.")
+        raise qc.err(
+            409,
+            ErrorCode.INVALID_TRANSITION,
+            "The receipt is decided or cancelled.",
+            "الاستلام مقرر أو ملغى.",
+        )
     ln = None
     if line_id is not None:
         ln = db.get(QReceiptLine, line_id)
@@ -371,14 +488,29 @@ def save_line(db: Session, p: Principal, rid: uuid.UUID, line_id: uuid.UUID | No
     return {**read(db, p, r), "warnings": b.warn_dump(warnings)}
 
 
-def vehicle_check(db: Session, p: Principal, rid: uuid.UUID, body: dict[str, Any]) -> dict[str, Any]:
+def vehicle_check(
+    db: Session, p: Principal, rid: uuid.UUID, body: dict[str, Any]
+) -> dict[str, Any]:
     r, project = get_receipt(db, p, rid)
     _, g = b.project_for_progress(db, p, project.id, C.receiving_record)
     b.require_site(g, r.site_id)
     if r.status not in (ST.draft, ST.inspected):
-        raise qc.err(409, ErrorCode.INVALID_TRANSITION, "The receipt is decided or cancelled.", "الاستلام مقرر أو ملغى.")
+        raise qc.err(
+            409,
+            ErrorCode.INVALID_TRANSITION,
+            "The receipt is decided or cancelled.",
+            "الاستلام مقرر أو ملغى.",
+        )
     out = checklists.respond(
-        db, p.user.id, project, ResponseOwnerType.q_receipt, "receiving", r.site_id, body["answers"], zone_id=r.dock_zone_id, code=body.get("template_code")
+        db,
+        p.user.id,
+        project,
+        ResponseOwnerType.q_receipt,
+        "receiving",
+        r.site_id,
+        body["answers"],
+        zone_id=r.dock_zone_id,
+        code=body.get("template_code"),
     )
     r.vehicle_response_id = out.response.id
     r.vehicle_check_passed = out.passed
@@ -391,14 +523,20 @@ def inspect(db: Session, p: Principal, rid: uuid.UUID) -> dict[str, Any]:
     _, g = b.project_for_progress(db, p, project.id, C.receiving_record)
     b.require_site(g, r.site_id)
     if r.status != ST.draft:
-        raise qc.err(409, ErrorCode.INVALID_TRANSITION, "Only a draft receipt.", "استلام مسودة فقط.")
+        raise qc.err(
+            409, ErrorCode.INVALID_TRANSITION, "Only a draft receipt.", "استلام مسودة فقط."
+        )
     ls = lines_of(db, r)
     if not ls:
         raise qc.field_err("lines", "Add at least one line.", "أضف بنداً واحداً على الأقل.")
     if r.unload_start is None or r.unload_end is None:
-        raise qc.field_err("unload_end", "Record the unloading start and end.", "سجّل بدء التفريغ وانتهاءه.")
+        raise qc.field_err(
+            "unload_end", "Record the unloading start and end.", "سجّل بدء التفريغ وانتهاءه."
+        )
     if r.vehicle_response_id is None:
-        raise qc.field_err("vehicle_check", "Complete the vehicle check (QRCV).", "أكمل فحص المركبة.")
+        raise qc.field_err(
+            "vehicle_check", "Complete the vehicle check (QRCV).", "أكمل فحص المركبة."
+        )
     for ln in ls:
         propose(db, project, r, ln)
     r.rcv_no = b.number(db, project, RT, r.arrived_at)
@@ -409,7 +547,7 @@ def inspect(db: Session, p: Principal, rid: uuid.UUID) -> dict[str, Any]:
     return {**read(db, p, r), "warnings": b.warn_dump(dwell(db, project, r))}
 
 
-# ---- decisions (Q-RCV-02…06) -----------------------------------------------------------------------
+# ---- decisions (Q-RCV-02…06) ---------------------------------------------------------------------
 
 
 def step_for(d: LD) -> str:
@@ -433,14 +571,33 @@ def decide(db: Session, p: Principal, line_id: uuid.UUID, body: dict[str, Any]) 
     if ln is None:
         raise b.not_found(db, p, RT, line_id, None)
     r, project = get_receipt(db, p, ln.receipt_id)
-    project, g = b.project_for_progress(db, p, project.id, C.receiving_record if p.grant(project.id, C.receiving_record) else C.receiving_decide, allow_n=True)
+    project, g = b.project_for_progress(
+        db,
+        p,
+        project.id,
+        C.receiving_record if p.grant(project.id, C.receiving_record) else C.receiving_decide,
+        allow_n=True,
+    )
     if r.status != ST.inspected:
-        raise qc.err(409, ErrorCode.INVALID_TRANSITION, "Inspect the receipt first.", "افحص الاستلام أولاً.")
+        raise qc.err(
+            409, ErrorCode.INVALID_TRANSITION, "Inspect the receipt first.", "افحص الاستلام أولاً."
+        )
     if ln.decision is not None:
-        raise qc.err(409, ErrorCode.INVALID_TRANSITION, "The line is already decided.", "البند مقرر.")
+        raise qc.err(
+            409, ErrorCode.INVALID_TRANSITION, "The line is already decided.", "البند مقرر."
+        )
     d = LD(body.get("decision") or (ln.requested_decision.value if ln.requested_decision else ""))
     why = (body.get("reason") or ln.reason or "").strip() or None
-    owner_file = b.attachment_on(db, body.get("owner_approval_attachment_id"), A.q_receipt, r.id, "owner_approval_attachment_id") or ln.owner_approval_attachment_id
+    owner_file = (
+        b.attachment_on(
+            db,
+            body.get("owner_approval_attachment_id"),
+            A.q_receipt,
+            r.id,
+            "owner_approval_attachment_id",
+        )
+        or ln.owner_approval_attachment_id
+    )
     claim = (body.get("claim_ref") or ln.claim_ref or "").strip() or None
     ncr_id = body.get("ncr_id") or ln.ncr_id
     raise_ncr = bool(body.get("raise_ncr"))
@@ -452,55 +609,77 @@ def decide(db: Session, p: Principal, line_id: uuid.UUID, body: dict[str, Any]) 
             "الرفض يتطلب تقرير عدم مطابقة أو رقم مطالبة.",
         )
     cust = db.get(QCustomer, r.customer_id)
-    if d == LD.accept_with_deviation and cust is not None and cust.owner_release_approval and owner_file is None:
+    if (
+        d == LD.accept_with_deviation
+        and cust is not None
+        and cust.owner_release_approval
+        and owner_file is None
+    ):
         raise qc.err(
             422,
             ErrorCode.OWNER_DECISION_REQUIRED,
-            f"{cust.name_en} approves deviations on its goods: attach the owner's written approval (Q-RCV-03).",
+            f"{cust.name_en} approves deviations on its goods: attach the owner's written "
+            "approval (Q-RCV-03).",
             f"يعتمد {cust.name_ar} الانحرافات على بضاعته: أرفق موافقة المالك المكتوبة.",
         )
     step = needs_step(r, ln, d)
-    better = ln.proposed_decision is not None and DECISION_RANK[d] < DECISION_RANK[ln.proposed_decision]
+    better = (
+        ln.proposed_decision is not None and DECISION_RANK[d] < DECISION_RANK[ln.proposed_decision]
+    )
     if better and len(why or "") < 20:
         raise qc.err(
             422,
             ErrorCode.DECISION_BETTER_THAN_CRITERIA,
-            f"The criteria propose {ln.proposed_decision.value}; a better decision needs the receipt.deviation sign-off with a reason of at least 20 characters (Q-RCV-02).",  # type: ignore[union-attr]
+            f"The criteria propose {ln.proposed_decision}; a better decision needs the "
+            "receipt.deviation sign-off with a reason of at least 20 characters "
+            "(Q-RCV-02).",
             "القرار أفضل من مقترح المعايير: يتطلب توقيع الانحراف مع سبب لا يقل عن 20 حرفاً.",
         )
     if ncr_id is not None:
         n = db.get(QNcr, ncr_id)
         if n is None or n.project_id != project.id:
-            raise qc.field_err("ncr_id", "The NCR is not on this project.", "التقرير ليس في المشروع.")
+            raise qc.field_err(
+                "ncr_id", "The NCR is not on this project.", "التقرير ليس في المشروع."
+            )
     c = ctx(r, ln)
     signed = None
     if step is not None:
-        if not b.resolves(db, p, project, RT, r.id, step, c):
-            if body.get("request"):
-                if g.scope.value == "responsible":
-                    raise forbidden_error()
-                ln.requested_decision = d
-                ln.requested_by_user_id = p.user.id
-                ln.requested_at = now()
-                ln.reason = why
-                ln.claim_ref = claim
-                ln.ncr_id = ncr_id
-                ln.owner_approval_attachment_id = owner_file
-                users = b.resolvers(db, project, RT, step, rpm.Ctx(site_id=r.site_id), record_id=r.id)
-                b.send(
-                    db,
-                    project,
-                    users,
-                    f"rcv:{ln.id}:{step}:{d.value}",
-                    f"{r.rcv_no}: {d.value} needs your sign-off",
-                    f"{r.rcv_no}: القرار يحتاج توقيعك",
-                    rt=RT,
-                    rid=r.id,
-                    path=f"/quality/receiving/{r.id}",
-                    email=False,
-                )
-                return read(db, p, r)
-        signed = b.sign(db, p, project, RT, r.id, step, c, decision="approved", comment=why, evidence=[x for x in [owner_file] if x])
+        if not b.resolves(db, p, project, RT, r.id, step, c) and body.get("request"):
+            if g.scope.value == "responsible":
+                raise forbidden_error()
+            ln.requested_decision = d
+            ln.requested_by_user_id = p.user.id
+            ln.requested_at = now()
+            ln.reason = why
+            ln.claim_ref = claim
+            ln.ncr_id = ncr_id
+            ln.owner_approval_attachment_id = owner_file
+            users = b.resolvers(db, project, RT, step, rpm.Ctx(site_id=r.site_id), record_id=r.id)
+            b.send(
+                db,
+                project,
+                users,
+                f"rcv:{ln.id}:{step}:{d.value}",
+                f"{r.rcv_no}: {d.value} needs your sign-off",
+                f"{r.rcv_no}: القرار يحتاج توقيعك",
+                rt=RT,
+                rid=r.id,
+                path=f"/quality/receiving/{r.id}",
+                email=False,
+            )
+            return read(db, p, r)
+        signed = b.sign(
+            db,
+            p,
+            project,
+            RT,
+            r.id,
+            step,
+            c,
+            decision="approved",
+            comment=why,
+            evidence=[x for x in [owner_file] if x],
+        )
     elif g.scope.value == "responsible":
         raise forbidden_error()
     if raise_ncr and ncr_id is None:
@@ -527,7 +706,9 @@ def decide(db: Session, p: Principal, line_id: uuid.UUID, body: dict[str, Any]) 
     return out
 
 
-def _quarantine(db: Session, p: Principal | None, project: Project, r: QReceipt, ln: QReceiptLine) -> None:
+def _quarantine(
+    db: Session, p: Principal | None, project: Project, r: QReceipt, ln: QReceiptLine
+) -> None:
     """Q-RCV-04: quarantine creates a hold (reason receiving) with the line."""
     prod = db.get(QProduct, ln.product_id)
     h = hold_svc.place(
@@ -549,7 +730,9 @@ def _quarantine(db: Session, p: Principal | None, project: Project, r: QReceipt,
         ],
         placed_by=ln.decided_by_user_id,
         zone_id=r.dock_zone_id,
-        storage_class=QStorageClass.pharma_2_8 if prod and prod.storage_class == QStorageClass.pharma_2_8 else None,
+        storage_class=QStorageClass.pharma_2_8
+        if prod and prod.storage_class == QStorageClass.pharma_2_8
+        else None,
         source=(RT, r.id, r.rcv_no),
         ncr_id=ln.ncr_id,
         p=p,
@@ -557,20 +740,29 @@ def _quarantine(db: Session, p: Principal | None, project: Project, r: QReceipt,
     ln.hold_id = h.id
 
 
-def _raise_ncr(db: Session, p: Principal, project: Project, r: QReceipt, ln: QReceiptLine, d: LD) -> QNcr:
-    from app.services.quality.ncr import core as ncr  # noqa: PLC0415
+def _raise_ncr(
+    db: Session, p: Principal, project: Project, r: QReceipt, ln: QReceiptLine, d: LD
+) -> QNcr:
 
     prod = db.get(QProduct, ln.product_id)
-    temp = any(x.get("code") == "arrival_temperature" and x.get("decision") != "accept" for x in ln.proposal_reasons or [])
-    n = ncr.auto_raise(
+    temp = any(
+        x.get("code") == "arrival_temperature" and x.get("decision") != "accept"
+        for x in ln.proposal_reasons or []
+    )
+    n = b.raise_ncr(
         db,
         project,
         QNcrSourceType.receipt,
         r.id,
-        raised_by=p.user.id,
-        owner_id=b.ncr_owner(db, project, p.user.id),
+        actor=p.user.id,
         classification=QNcrClass.major if d == LD.reject else QNcrClass.minor,
-        category=QNcrCategory.temperature if temp else (QNcrCategory.expiry_shelf_life if any(x.get("code") == "remaining_shelf_life" for x in ln.proposal_reasons or []) else QNcrCategory.material),
+        category=QNcrCategory.temperature
+        if temp
+        else (
+            QNcrCategory.expiry_shelf_life
+            if any(x.get("code") == "remaining_shelf_life" for x in ln.proposal_reasons or [])
+            else QNcrCategory.material
+        ),
         title=f"{prod.sku if prod else ''} {ln.batch} {d.value} at receiving — {r.rcv_no}"[:150],
     )
     n.item_key = f"SKU:{prod.sku}" if prod else n.item_key
@@ -580,13 +772,15 @@ def _raise_ncr(db: Session, p: Principal, project: Project, r: QReceipt, ln: QRe
     return n
 
 
-# ---- NCR source adapter (list NS `receipt`) ---------------------------------------------------------
+# ---- NCR source adapter (list NS `receipt`) ------------------------------------------------------
 
 
 def ncr_source(db: Session, project: Project, source_id: uuid.UUID) -> reg.SourceInfo:
     r = db.get(QReceipt, source_id)
     if r is None or r.project_id != project.id:
-        raise qc.field_err("source_id", "The receipt is not on this project.", "الاستلام ليس في المشروع.")
+        raise qc.field_err(
+            "source_id", "The receipt is not on this project.", "الاستلام ليس في المشروع."
+        )
     ls = lines_of(db, r)
     bad = [ln for ln in ls if (ln.decision or ln.proposed_decision) not in (None, LD.accept)]
     ln = bad[-1] if bad else (ls[0] if ls else None)
@@ -604,7 +798,8 @@ def ncr_source(db: Session, project: Project, source_id: uuid.UUID) -> reg.Sourc
         detection_stage=QDetectionStage.receiving,
         requirement_en="Receiving criteria of the storage class and the owner (Q-RCV-01).",
         requirement_ar="معايير الاستلام لفئة التخزين والمالك.",
-        finding_en=f"{prod.sku if prod else ''} batch {ln.batch if ln else ''}: {reasons or 'see the receipt'}",
+        finding_en=f"{prod.sku if prod else ''} batch {ln.batch if ln else ''}: "
+        f"{reasons or 'see the receipt'}",
         finding_ar=f"{prod.sku if prod else ''} الدفعة {ln.batch if ln else ''}",
         proposed_class=QNcrClass.minor,
         quantity=ln.qty_received if ln else None,
@@ -614,7 +809,7 @@ def ncr_source(db: Session, project: Project, source_id: uuid.UUID) -> reg.Sourc
     )
 
 
-# ---- read model -----------------------------------------------------------------------------------
+# ---- read model ----------------------------------------------------------------------------------
 
 
 def line_read(db: Session, ln: QReceiptLine) -> dict[str, Any]:
@@ -704,7 +899,9 @@ def read(db: Session, p: Principal, r: QReceipt) -> dict[str, Any]:
         "created_by": b.user_ref(db, r.created_by_user_id, hide),
         "lines": [line_read(db, ln) for ln in lines_of(db, r)],
         "my_steps": steps,
-        "signoffs": [signoff.read(db, s, show_scans=not hide) for s in signoff.signoffs_for(db, RT, r.id)],
+        "signoffs": [
+            signoff.read(db, s, show_scans=not hide) for s in signoff.signoffs_for(db, RT, r.id)
+        ],
     }
 
 
@@ -729,10 +926,18 @@ def list_page(
     if status:
         stmt = stmt.where(QReceipt.status == status)
     if q:
-        stmt = stmt.where(QReceipt.rcv_no.ilike(f"%{q}%") | QReceipt.asn_ref.ilike(f"%{q}%") | QReceipt.po_ref.ilike(f"%{q}%"))
+        stmt = stmt.where(
+            QReceipt.rcv_no.ilike(f"%{q}%")
+            | QReceipt.asn_ref.ilike(f"%{q}%")
+            | QReceipt.po_ref.ilike(f"%{q}%")
+        )
     items = []
     for r in db.scalars(stmt.order_by(QReceipt.arrived_at.desc()).limit(2000)):
-        if r.status == ST.draft and r.created_by_user_id != p.user.id and g.scope.value == "responsible":
+        if (
+            r.status == ST.draft
+            and r.created_by_user_id != p.user.id
+            and g.scope.value == "responsible"
+        ):
             continue
         if g.scope.value == "responsible":
             if not b.can_view(db, p, project, RT, r.id, r.site_id, lambda r=r: _steps(db, r)):
@@ -760,7 +965,10 @@ def list_page(
                 "pending_signoff": any(ln.requested_decision for ln in ls),
                 "seal_flag": r.seal_flag,
                 "dwell_minutes": r.dwell_minutes,
-                "dwell_long": bool(r.dwell_minutes and r.dwell_minutes > int(b.setting(db, project.id, "dock_dwell_max_minutes"))),
+                "dwell_long": bool(
+                    r.dwell_minutes
+                    and r.dwell_minutes > int(b.setting(db, project.id, "dock_dwell_max_minutes"))
+                ),
             }
         )
     return b.page(items, page_no, size)
@@ -771,7 +979,11 @@ def open_steps(db: Session, project: Project) -> list[reg.OpenStep]:
     rows = db.execute(
         select(QReceiptLine, QReceipt)
         .join(QReceipt, QReceipt.id == QReceiptLine.receipt_id)
-        .where(QReceipt.project_id == project.id, QReceiptLine.requested_decision.is_not(None), QReceiptLine.decision.is_(None))
+        .where(
+            QReceipt.project_id == project.id,
+            QReceiptLine.requested_decision.is_not(None),
+            QReceiptLine.decision.is_(None),
+        )
     ).all()
     for ln, r in rows:
         c = ctx(r, ln)

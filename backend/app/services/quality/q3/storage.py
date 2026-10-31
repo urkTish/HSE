@@ -134,19 +134,33 @@ EDIT_KEYS = (
 
 def _check_zone(z: QStorageZone) -> None:
     if z.temp_min is not None and z.temp_max is not None and z.temp_min >= z.temp_max:
-        raise qc.field_err("temp_min", "The minimum must be below the maximum.", "يجب أن يكون الحد الأدنى أقل من الأعلى.")
+        raise qc.field_err(
+            "temp_min",
+            "The minimum must be below the maximum.",
+            "يجب أن يكون الحد الأدنى أقل من الأعلى.",
+        )
     if z.d1 <= 0 or z.d2 < z.d1 or z.t1 <= 0 or z.t2 < z.t1 or z.alarm_delay_minutes < 0:
-        raise qc.field_err("d1", "Bands must be positive and d1 ≤ d2, t1 ≤ t2.", "يجب أن تكون الحدود موجبة ومتصاعدة.")
+        raise qc.field_err(
+            "d1",
+            "Bands must be positive and d1 ≤ d2, t1 ≤ t2.",
+            "يجب أن تكون الحدود موجبة ومتصاعدة.",
+        )
     if z.interval_minutes < 1 or z.interval_minutes > 240:
-        raise qc.field_err("interval_minutes", "Interval 1–240 minutes.", "الفاصل بين 1 و240 دقيقة.")
+        raise qc.field_err(
+            "interval_minutes", "Interval 1–240 minutes.", "الفاصل بين 1 و240 دقيقة."
+        )
 
 
-def create_zone(db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any]) -> dict[str, Any]:
+def create_zone(
+    db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any]
+) -> dict[str, Any]:
     project, g = b.project_for_create(db, p, project_id, RT.mapping_study, C.storage_manage)
     zone = b.zone_of(db, project, body["zone_id"])
     b.require_site(g, zone.site_id)
     if db.get(QStorageZone, zone.id) is not None:
-        raise qc.field_err("zone_id", "This zone already has storage settings.", "لهذه المنطقة إعدادات تخزين.")
+        raise qc.field_err(
+            "zone_id", "This zone already has storage settings.", "لهذه المنطقة إعدادات تخزين."
+        )
     sc = QStorageClass(body["storage_class"])
     vals = defaults_for(sc)
     t = now()
@@ -175,7 +189,9 @@ def create_zone(db: Session, p: Principal, project_id: uuid.UUID, body: dict[str
     return zone_read(db, p, z)
 
 
-def update_zone(db: Session, p: Principal, zone_id: uuid.UUID, body: dict[str, Any]) -> dict[str, Any]:
+def update_zone(
+    db: Session, p: Principal, zone_id: uuid.UUID, body: dict[str, Any]
+) -> dict[str, Any]:
     z, project = zone_row(db, p, zone_id)
     _, g = b.project_for_progress(db, p, project.id, C.storage_manage)
     b.require_site(g, z.site_id)
@@ -210,7 +226,9 @@ def update_zone(db: Session, p: Principal, zone_id: uuid.UUID, body: dict[str, A
     return zone_read(db, p, z)
 
 
-def change_note(db: Session, p: Principal, zone_id: uuid.UUID, body: dict[str, Any]) -> dict[str, Any]:
+def change_note(
+    db: Session, p: Principal, zone_id: uuid.UUID, body: dict[str, Any]
+) -> dict[str, Any]:
     """Q-MAP-06: a layout or HVAC change note sets `remap_required`."""
     z, project = zone_row(db, p, zone_id)
     _, g = b.project_for_progress(db, p, project.id, C.storage_manage)
@@ -219,7 +237,10 @@ def change_note(db: Session, p: Principal, zone_id: uuid.UUID, body: dict[str, A
     if kind not in ("layout", "hvac"):
         raise qc.field_err("kind", "Kind is layout or hvac.", "النوع: تخطيط أو تكييف.")
     note = qc.reason(body.get("note"), 20, "note")
-    z.change_notes = [*z.change_notes, {"kind": kind, "note": note, "by": str(p.user.id), "at": now().isoformat()}]
+    z.change_notes = [
+        *z.change_notes,
+        {"kind": kind, "note": note, "by": str(p.user.id), "at": now().isoformat()},
+    ]
     z.mapping_state = QMappingState.remap_required
     z.remap_reason = f"{kind}_change"
     z.updated_at = now()
@@ -244,12 +265,16 @@ def live_status(db: Session, z: QStorageZone, at: datetime | None = None) -> str
     gr = zone_grid(db, z, t - timedelta(minutes=gmin), t)
     if gr.n and gr.mon.count(1) == 0:
         return "gap"
-    if z.mapping_state != QMappingState.mapped or (z.mapped_until and z.mapped_until < qc.project_day(db.get(Project, z.project_id))):  # type: ignore[arg-type]
+    project = db.get(Project, z.project_id)
+    stale = bool(project and z.mapped_until and z.mapped_until < qc.project_day(project))
+    if z.mapping_state != QMappingState.mapped or stale:
         return "not_mapped"
     return "in_range"
 
 
-def zone_read(db: Session, p: Principal | None, z: QStorageZone, *, status: bool = False) -> dict[str, Any]:
+def zone_read(
+    db: Session, p: Principal | None, z: QStorageZone, *, status: bool = False
+) -> dict[str, Any]:
     zone = db.get(Zone, z.zone_id)
     pts = points_of(db, z.zone_id, active=False)
     out: dict[str, Any] = {
@@ -315,12 +340,18 @@ def point_read(db: Session, pt: QMonitoringPoint) -> dict[str, Any]:
     }
 
 
-def create_point(db: Session, p: Principal, zone_id: uuid.UUID, body: dict[str, Any]) -> dict[str, Any]:
+def create_point(
+    db: Session, p: Principal, zone_id: uuid.UUID, body: dict[str, Any]
+) -> dict[str, Any]:
     z, project = zone_row(db, p, zone_id)
     _, g = b.project_for_create(db, p, project.id, RT.mapping_study, C.storage_manage)
     b.require_site(g, z.site_id)
     code = body["code"].strip().upper()
-    if db.scalar(select(QMonitoringPoint.id).where(QMonitoringPoint.project_id == project.id, QMonitoringPoint.code == code)):
+    if db.scalar(
+        select(QMonitoringPoint.id).where(
+            QMonitoringPoint.project_id == project.id, QMonitoringPoint.code == code
+        )
+    ):
         raise qc.field_err("code", "This point code is already used.", "رمز النقطة مستخدم.")
     pt = QMonitoringPoint(
         project_id=project.id,
@@ -338,7 +369,9 @@ def create_point(db: Session, p: Principal, zone_id: uuid.UUID, body: dict[str, 
     return point_read(db, pt)
 
 
-def point_row(db: Session, p: Principal, point_id: uuid.UUID) -> tuple[QMonitoringPoint, QStorageZone, Project]:
+def point_row(
+    db: Session, p: Principal, point_id: uuid.UUID
+) -> tuple[QMonitoringPoint, QStorageZone, Project]:
     pt = db.get(QMonitoringPoint, point_id)
     if pt is None:
         raise b.not_found(db, p, RT.excursion, point_id, None)
@@ -346,7 +379,9 @@ def point_row(db: Session, p: Principal, point_id: uuid.UUID) -> tuple[QMonitori
     return pt, z, project
 
 
-def update_point(db: Session, p: Principal, point_id: uuid.UUID, body: dict[str, Any]) -> dict[str, Any]:
+def update_point(
+    db: Session, p: Principal, point_id: uuid.UUID, body: dict[str, Any]
+) -> dict[str, Any]:
     pt, z, project = point_row(db, p, point_id)
     _, g = b.project_for_progress(db, p, project.id, C.storage_manage)
     b.require_site(g, z.site_id)
@@ -357,7 +392,9 @@ def update_point(db: Session, p: Principal, point_id: uuid.UUID, body: dict[str,
     return point_read(db, pt)
 
 
-def assign_logger(db: Session, p: Principal, point_id: uuid.UUID, body: dict[str, Any]) -> dict[str, Any]:
+def assign_logger(
+    db: Session, p: Principal, point_id: uuid.UUID, body: dict[str, Any]
+) -> dict[str, Any]:
     """Q-STO-03: a logger assignment records M&TE usage for its period; an overdue or
     out-of-service logger warns or blocks per `mte_use_policy` (Q-SHR-04)."""
     pt, z, project = point_row(db, p, point_id)
@@ -367,9 +404,7 @@ def assign_logger(db: Session, p: Principal, point_id: uuid.UUID, body: dict[str
     start: datetime = body.get("from") or now()
     loggers = []
     for lg in pt.loggers or []:
-        if lg.get("to") is None:
-            lg = {**lg, "to": start.isoformat()}
-        loggers.append(lg)
+        loggers.append({**lg, "to": start.isoformat()} if lg.get("to") is None else lg)
     _, warnings = mte_svc.record_usage(
         db, project, m.id, RT.mapping_study, pt.id, p.user.id, start, f"logger at {pt.code}"
     )
@@ -378,11 +413,15 @@ def assign_logger(db: Session, p: Principal, point_id: uuid.UUID, body: dict[str
     return {**point_read(db, pt), "warnings": b.warn_dump(warnings)}
 
 
-def point_for_serial(db: Session, project_id: uuid.UUID, serial: str, at: datetime) -> QMonitoringPoint | None:
+def point_for_serial(
+    db: Session, project_id: uuid.UUID, serial: str, at: datetime
+) -> QMonitoringPoint | None:
     """The point a logger (by serial) was assigned to at `at` (logger files name the serial)."""
     from app.models.quality import QMteItem  # noqa: PLC0415
 
-    m = db.scalar(select(QMteItem).where(QMteItem.project_id == project_id, QMteItem.serial_no == serial))
+    m = db.scalar(
+        select(QMteItem).where(QMteItem.project_id == project_id, QMteItem.serial_no == serial)
+    )
     if m is None:
         return None
     for pt in db.scalars(select(QMonitoringPoint).where(QMonitoringPoint.project_id == project_id)):
@@ -399,7 +438,9 @@ def point_for_serial(db: Session, project_id: uuid.UUID, serial: str, at: dateti
 # ---- manual readings (Q-STO-02) ------------------------------------------------------------------
 
 
-def manual_reading(db: Session, p: Principal, point_id: uuid.UUID, body: dict[str, Any]) -> dict[str, Any]:
+def manual_reading(
+    db: Session, p: Principal, point_id: uuid.UUID, body: dict[str, Any]
+) -> dict[str, Any]:
     from app.services.quality.q3 import excursions  # noqa: PLC0415
 
     pt, z, project = point_row(db, p, point_id)
@@ -423,10 +464,14 @@ def manual_reading(db: Session, p: Principal, point_id: uuid.UUID, body: dict[st
             f"لا يمكن إدخال قراءة يدوية أقدم من {max_age} ساعة؛ استورد ملف المسجل.",
         )
     if body.get("temperature_c") is None and body.get("humidity_pct") is None:
-        raise qc.field_err("temperature_c", "Enter a temperature or a humidity.", "أدخل الحرارة أو الرطوبة.")
+        raise qc.field_err(
+            "temperature_c", "Enter a temperature or a humidity.", "أدخل الحرارة أو الرطوبة."
+        )
     mte_id = body.get("mte_id")
     if mte_id is None:
-        raise qc.err(422, ErrorCode.MTE_REQUIRED, "Scan or pick the probe used.", "اختر المجس المستخدم.")
+        raise qc.err(
+            422, ErrorCode.MTE_REQUIRED, "Scan or pick the probe used.", "اختر المجس المستخدم."
+        )
     b.mte_of(db, project, mte_id)
     exists = db.scalar(
         select(QReading.id).where(
@@ -438,7 +483,9 @@ def manual_reading(db: Session, p: Principal, point_id: uuid.UUID, body: dict[st
         )
     )
     if exists is not None:
-        raise qc.field_err("measured_at", "A reading at this time already exists.", "توجد قراءة في هذا الوقت.")
+        raise qc.field_err(
+            "measured_at", "A reading at this time already exists.", "توجد قراءة في هذا الوقت."
+        )
     r = QReading(
         project_id=project.id,
         target_type=QReadingTarget.point,
@@ -456,8 +503,12 @@ def manual_reading(db: Session, p: Principal, point_id: uuid.UUID, body: dict[st
     )
     db.add(r)
     db.flush()
-    _, warnings = mte_svc.record_usage(db, project, mte_id, RT.excursion, pt.id, p.user.id, at, f"reading {r.id}")
-    found = excursions.detect_zone(db, project, z, at - timedelta(hours=1), at + timedelta(minutes=1), p.user.id, manual=True)
+    _, warnings = mte_svc.record_usage(
+        db, project, mte_id, RT.excursion, pt.id, p.user.id, at, f"reading {r.id}"
+    )
+    found = excursions.detect_zone(
+        db, project, z, at - timedelta(hours=1), at + timedelta(minutes=1), p.user.id, manual=True
+    )
     return {
         "reading": reading_read(r),
         "excursions": [excursions.brief(x) for x in found],
@@ -497,11 +548,15 @@ def reading_read(r: QReading) -> dict[str, Any]:
 # ---- zone report: profile chart, coverage, TOR, MKT ---------------------------------------------
 
 
-def zone_report(db: Session, p: Principal, zone_id: uuid.UUID, start: datetime, end: datetime) -> dict[str, Any]:
+def zone_report(
+    db: Session, p: Principal, zone_id: uuid.UUID, start: datetime, end: datetime
+) -> dict[str, Any]:
     """C48 profile chart data plus coverage %, TOR %, gaps and MKT for a period."""
     z, project = zone_row(db, p, zone_id)
     if end <= start or end - start > timedelta(days=62):
-        raise qc.field_err("end", "Choose a period of up to 62 days.", "اختر فترة لا تتجاوز 62 يوماً.")
+        raise qc.field_err(
+            "end", "Choose a period of up to 62 days.", "اختر فترة لا تتجاوز 62 يوماً."
+        )
     gr = zone_grid(db, z, start, end)
     period, mon, out = eng.coverage(gr)
     gmin = int(b.setting(db, project.id, "monitoring_gap_alert_minutes"))
@@ -509,7 +564,12 @@ def zone_report(db: Session, p: Principal, zone_id: uuid.UUID, start: datetime, 
     series = []
     for pt in pts:
         rows = db.execute(
-            select(QReading.measured_at, QReading.temperature_c, QReading.humidity_pct, QReading.probe_fault)
+            select(
+                QReading.measured_at,
+                QReading.temperature_c,
+                QReading.humidity_pct,
+                QReading.probe_fault,
+            )
             .where(
                 QReading.target_type == QReadingTarget.point,
                 QReading.target_id == pt.id,
@@ -524,9 +584,7 @@ def zone_report(db: Session, p: Principal, zone_id: uuid.UUID, start: datetime, 
             {
                 "point_id": pt.id,
                 "code": pt.code,
-                "values": [
-                    {"t": r[0], "c": r[1], "rh": r[2], "fault": r[3]} for r in rows[::step]
-                ],
+                "values": [{"t": r[0], "c": r[1], "rh": r[2], "fault": r[3]} for r in rows[::step]],
                 "mkt": point_mkt(db, z, pt, start, end),
             }
         )
@@ -549,7 +607,9 @@ def zone_report(db: Session, p: Principal, zone_id: uuid.UUID, start: datetime, 
         "out_minutes": out,
         "coverage_pct": b.q1(Decimal(mon) * 100 / period) if period else None,
         "tor_pct": b.q2(Decimal(out) * 100 / mon) if mon else None,
-        "gaps": [{"from": gr.at(a), "to": gr.at(e), "minutes": e - a} for a, e in eng.gaps(gr, gmin)],
+        "gaps": [
+            {"from": gr.at(a), "to": gr.at(e), "minutes": e - a} for a, e in eng.gaps(gr, gmin)
+        ],
         "series": series,
         "excursions": [
             {
@@ -566,7 +626,9 @@ def zone_report(db: Session, p: Principal, zone_id: uuid.UUID, start: datetime, 
     }
 
 
-def point_mkt(db: Session, z: QStorageZone, pt: QMonitoringPoint, start: datetime, end: datetime) -> dict[str, Any] | None:
+def point_mkt(
+    db: Session, z: QStorageZone, pt: QMonitoringPoint, start: datetime, end: datetime
+) -> dict[str, Any] | None:
     if z.storage_class not in MKT_CLASSES:
         return None
     rows = db.execute(

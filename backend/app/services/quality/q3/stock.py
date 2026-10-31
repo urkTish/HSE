@@ -58,7 +58,11 @@ RT = QRecordType
 def latest_before(db: Session, site_id: uuid.UUID, t: datetime) -> QStockSnapshot | None:
     return db.scalar(
         select(QStockSnapshot)
-        .where(QStockSnapshot.site_id == site_id, QStockSnapshot.voided.is_(False), QStockSnapshot.as_of <= t)
+        .where(
+            QStockSnapshot.site_id == site_id,
+            QStockSnapshot.voided.is_(False),
+            QStockSnapshot.as_of <= t,
+        )
         .order_by(QStockSnapshot.as_of.desc())
         .limit(1)
     )
@@ -67,7 +71,11 @@ def latest_before(db: Session, site_id: uuid.UUID, t: datetime) -> QStockSnapsho
 def first_at_or_after(db: Session, site_id: uuid.UUID, t: datetime) -> QStockSnapshot | None:
     return db.scalar(
         select(QStockSnapshot)
-        .where(QStockSnapshot.site_id == site_id, QStockSnapshot.voided.is_(False), QStockSnapshot.as_of >= t)
+        .where(
+            QStockSnapshot.site_id == site_id,
+            QStockSnapshot.voided.is_(False),
+            QStockSnapshot.as_of >= t,
+        )
         .order_by(QStockSnapshot.as_of)
         .limit(1)
     )
@@ -85,14 +93,21 @@ def old_warning(snap: QStockSnapshot | None, at: datetime) -> list[ApiWarning]:
     return [
         qc.warning(
             "SNAPSHOT_OLD",
-            f"The stock snapshot used is from {b.local(snap.as_of):%Y-%m-%d %H:%M} (older than 24 h).",
+            f"The stock snapshot used is from {b.local(snap.as_of):%Y-%m-%d %H:%M} (older than 24 "
+            "h).",
             "لقطة المخزون المستخدمة أقدم من 24 ساعة.",
         )
     ]
 
 
 def snapshot_read(db: Session, s: QStockSnapshot) -> dict[str, Any]:
-    return {"id": s.id, "site": b.site_ref(db, s.site_id), "as_of": s.as_of, "line_count": s.line_count, "batch_id": s.batch_id}
+    return {
+        "id": s.id,
+        "site": b.site_ref(db, s.site_id),
+        "as_of": s.as_of,
+        "line_count": s.line_count,
+        "batch_id": s.batch_id,
+    }
 
 
 def list_snapshots(db: Session, p: Principal, project_id: uuid.UUID) -> list[dict[str, Any]]:
@@ -119,7 +134,9 @@ def held_keys(db: Session, project_id: uuid.UUID) -> set[tuple[str, str]]:
     return {(r[0], r[1]) for r in rows}
 
 
-def near_expiry(db: Session, p: Principal, project_id: uuid.UUID, site_id: uuid.UUID | None = None) -> dict[str, Any]:
+def near_expiry(
+    db: Session, p: Principal, project_id: uuid.UUID, site_id: uuid.UUID | None = None
+) -> dict[str, Any]:
     project = qc.get_project(db, p, project_id)
     b.list_grant(p, project.id)
     return _near_expiry(db, project, site_id)
@@ -141,7 +158,9 @@ def _near_expiry(db: Session, project: Project, site_id: uuid.UUID | None = None
         if snap is None:
             continue
         snaps.append(snapshot_read(db, snap))
-        prods = {x.id: x for x in db.scalars(select(QProduct).where(QProduct.project_id == project.id))}
+        prods = {
+            x.id: x for x in db.scalars(select(QProduct).where(QProduct.project_id == project.id))
+        }
         for ln in lines(db, snap):
             if ln.expiry_date is None:
                 continue
@@ -150,11 +169,12 @@ def _near_expiry(db: Session, project: Project, site_id: uuid.UUID | None = None
             kind = None
             if ln.expiry_date < today:
                 kind = "expired"
-            elif left <= days:
+            elif left <= days or (
+                prod is not None
+                and prod.shelf_life_days
+                and Decimal(left) * 100 / prod.shelf_life_days <= pct
+            ):
                 kind = "near_expiry"
-            elif prod is not None and prod.shelf_life_days:
-                if Decimal(left) * 100 / prod.shelf_life_days <= pct:
-                    kind = "near_expiry"
             if kind is None:
                 continue
             out.append(
@@ -179,8 +199,10 @@ def _near_expiry(db: Session, project: Project, site_id: uuid.UUID | None = None
     return {"snapshots": snaps, "items": out, "near_expiry_days": days, "near_expiry_pct": pct}
 
 
-def place_expiry_hold(db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any]) -> dict[str, Any]:
-    """"Place hold" from the near-expiry list (reason expiry)."""
+def place_expiry_hold(
+    db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any]
+) -> dict[str, Any]:
+    """ "Place hold" from the near-expiry list (reason expiry)."""
     project, g = b.project_for_create(db, p, project_id, RT.hold, C.hold_manage)
     rows = [db.get(QStockLine, i) for i in body.get("stock_line_ids") or []]
     if not rows or any(r is None for r in rows):
@@ -214,8 +236,14 @@ def _line_from_stock(ln: QStockLine) -> dict[str, Any]:
     }
 
 
-def stock_hold_lines(db: Session, snap: QStockSnapshot | None, zone_code: str | None) -> list[dict[str, Any]]:
-    return [_line_from_stock(ln) for ln in lines(db, snap) if zone_code is None or ln.zone_code == zone_code]
+def stock_hold_lines(
+    db: Session, snap: QStockSnapshot | None, zone_code: str | None
+) -> list[dict[str, Any]]:
+    return [
+        _line_from_stock(ln)
+        for ln in lines(db, snap)
+        if zone_code is None or ln.zone_code == zone_code
+    ]
 
 
 def expired_alerts(db: Session, at: datetime) -> int:
@@ -246,7 +274,7 @@ def expired_alerts(db: Session, at: datetime) -> int:
     return n
 
 
-# ---- FEFO / FIFO (Q-STK-04, -05) -------------------------------------------------------------------
+# ---- FEFO / FIFO (Q-STK-04, -05) -----------------------------------------------------------------
 
 
 def eligible_earliest(
@@ -278,13 +306,17 @@ def eligible_earliest(
     return (best[0], best[1]) if best else (None, None)
 
 
-def create_fefo(db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any]) -> dict[str, Any]:
+def create_fefo(
+    db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any]
+) -> dict[str, Any]:
     project, g = b.project_for_create(db, p, project_id, RT.fefo_check, C.stock_record)
     site = b.site_of(db, project, body["site_id"])
     b.require_site(g, site.id)
     prod = db.get(QProduct, body["product_id"])
     if prod is None or prod.project_id != project.id:
-        raise qc.field_err("product_id", "The product is not on this project.", "المنتج ليس في المشروع.")
+        raise qc.field_err(
+            "product_id", "The product is not on this project.", "المنتج ليس في المشروع."
+        )
     at: datetime = body.get("checked_at") or now()
     snap = latest_before(db, site.id, at)
     today = qc.project_day(project, at)
@@ -336,9 +368,19 @@ def confirm_fefo(db: Session, p: Principal, check_id: uuid.UUID) -> dict[str, An
     project, g = b.project_for_progress(db, p, x.project_id, C.storage_manage)
     b.require_site(g, x.site_id)
     if x.exception_reason != QFefoException.other or x.confirmed_at is not None:
-        raise qc.err(409, ErrorCode.INVALID_TRANSITION, "Only an unconfirmed 'other' exception.", "فقط استثناء 'أخرى' غير مؤكد.")
+        raise qc.err(
+            409,
+            ErrorCode.INVALID_TRANSITION,
+            "Only an unconfirmed 'other' exception.",
+            "فقط استثناء 'أخرى' غير مؤكد.",
+        )
     if x.created_by_user_id == p.user.id:
-        raise qc.err(422, ErrorCode.SOD_CONFLICT, "Another person confirms your exception.", "يؤكد الاستثناء شخص آخر.")
+        raise qc.err(
+            422,
+            ErrorCode.SOD_CONFLICT,
+            "Another person confirms your exception.",
+            "يؤكد الاستثناء شخص آخر.",
+        )
     x.confirmed_by_user_id = p.user.id
     x.confirmed_at = now()
     _ = project
@@ -362,7 +404,15 @@ def fefo_read(db: Session, p: Principal, x: QFefoCheck) -> dict[str, Any]:
         "site_id": x.site_id,
         "checked_at": x.checked_at,
         "order_ref": x.order_ref,
-        "product": {"id": prod.id, "sku": prod.sku, "description_en": prod.description_en, "description_ar": prod.description_ar, "dated": prod.dated} if prod else None,
+        "product": {
+            "id": prod.id,
+            "sku": prod.sku,
+            "description_en": prod.description_en,
+            "description_ar": prod.description_ar,
+            "dated": prod.dated,
+        }
+        if prod
+        else None,
         "picked_batch": x.picked_batch,
         "picked_expiry": x.picked_expiry,
         "picked_receipt_date": x.picked_receipt_date,
@@ -378,27 +428,45 @@ def fefo_read(db: Session, p: Principal, x: QFefoCheck) -> dict[str, Any]:
     }
 
 
-def list_fefo(db: Session, p: Principal, project_id: uuid.UUID, page_no: int, size: int, result: QFefoResult | None = None) -> dict[str, Any]:
+def list_fefo(
+    db: Session,
+    p: Principal,
+    project_id: uuid.UUID,
+    page_no: int,
+    size: int,
+    result: QFefoResult | None = None,
+) -> dict[str, Any]:
     project = qc.get_project(db, p, project_id)
     b.list_grant(p, project.id)
     q = select(QFefoCheck).where(QFefoCheck.project_id == project.id)
     if result:
         q = q.where(QFefoCheck.result == result)
     total = db.scalar(select(func.count()).select_from(q.subquery())) or 0
-    rows = db.scalars(q.order_by(QFefoCheck.checked_at.desc()).offset((page_no - 1) * size).limit(size))
-    return {"items": [fefo_read(db, p, x) for x in rows], "total": total, "page": page_no, "page_size": size}
+    rows = db.scalars(
+        q.order_by(QFefoCheck.checked_at.desc()).offset((page_no - 1) * size).limit(size)
+    )
+    return {
+        "items": [fefo_read(db, p, x) for x in rows],
+        "total": total,
+        "page": page_no,
+        "page_size": size,
+    }
 
 
 # ---- damage reports (Q-STK-07) -------------------------------------------------------------------
 
 
-def create_damage(db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any]) -> dict[str, Any]:
+def create_damage(
+    db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any]
+) -> dict[str, Any]:
     project, g = b.project_for_create(db, p, project_id, RT.damage_report, C.stock_record)
     site = b.site_of(db, project, body["site_id"])
     b.require_site(g, site.id)
     prod = db.get(QProduct, body["product_id"])
     if prod is None or prod.project_id != project.id:
-        raise qc.field_err("product_id", "The product is not on this project.", "المنتج ليس في المشروع.")
+        raise qc.field_err(
+            "product_id", "The product is not on this project.", "المنتج ليس في المشروع."
+        )
     qty = Decimal(str(body["qty"]))
     if qty <= 0:
         raise qc.field_err("qty", "Quantity must be positive.", "يجب أن تكون الكمية موجبة.")
@@ -428,7 +496,9 @@ def create_damage(db: Session, p: Principal, project_id: uuid.UUID, body: dict[s
     return damage_read(db, p, d)
 
 
-def finish_damage(db: Session, p: Principal | None, project: Project, d: QDamageReport, photo_count: int = 0) -> None:
+def finish_damage(
+    db: Session, p: Principal | None, project: Project, d: QDamageReport, photo_count: int = 0
+) -> None:
     """A damage report creates a hold unless the units are destroyed on the spot with photo
     evidence and owner notification (Q-STK-07). The photo is uploaded to the report afterwards
     (`q_damage`); destroyed-on-spot requires the owner notification time now."""
@@ -446,7 +516,16 @@ def finish_damage(db: Session, p: Principal | None, project: Project, d: QDamage
         project,
         site_id=d.site_id,
         reason=QHoldReason.damage,
-        lines=[{"product_id": d.product_id, "batch": d.batch, "qty": d.qty, "unit": d.unit, "location": d.location, "owner_customer_id": prod.owner_customer_id if prod else None}],
+        lines=[
+            {
+                "product_id": d.product_id,
+                "batch": d.batch,
+                "qty": d.qty,
+                "unit": d.unit,
+                "location": d.location,
+                "owner_customer_id": prod.owner_customer_id if prod else None,
+            }
+        ],
         placed_by=d.created_by_user_id,
         zone_id=d.zone_id,
         source=(RT.damage_report, d.id, d.dmg_no),
@@ -484,7 +563,14 @@ def damage_read(db: Session, p: Principal, d: QDamageReport) -> dict[str, Any]:
         "site_id": d.site_id,
         "zone": b.zone_ref(db, d.zone_id),
         "stage": d.stage,
-        "product": {"id": prod.id, "sku": prod.sku, "description_en": prod.description_en, "description_ar": prod.description_ar} if prod else None,
+        "product": {
+            "id": prod.id,
+            "sku": prod.sku,
+            "description_en": prod.description_en,
+            "description_ar": prod.description_ar,
+        }
+        if prod
+        else None,
         "batch": d.batch,
         "qty": d.qty,
         "unit": d.unit,
@@ -499,13 +585,22 @@ def damage_read(db: Session, p: Principal, d: QDamageReport) -> dict[str, Any]:
     }
 
 
-def list_damage(db: Session, p: Principal, project_id: uuid.UUID, page_no: int, size: int) -> dict[str, Any]:
+def list_damage(
+    db: Session, p: Principal, project_id: uuid.UUID, page_no: int, size: int
+) -> dict[str, Any]:
     project = qc.get_project(db, p, project_id)
     b.list_grant(p, project.id)
     q = select(QDamageReport).where(QDamageReport.project_id == project.id)
     total = db.scalar(select(func.count()).select_from(q.subquery())) or 0
-    rows = db.scalars(q.order_by(QDamageReport.reported_at.desc()).offset((page_no - 1) * size).limit(size))
-    return {"items": [damage_read(db, p, d) for d in rows], "total": total, "page": page_no, "page_size": size}
+    rows = db.scalars(
+        q.order_by(QDamageReport.reported_at.desc()).offset((page_no - 1) * size).limit(size)
+    )
+    return {
+        "items": [damage_read(db, p, d) for d in rows],
+        "total": total,
+        "page": page_no,
+        "page_size": size,
+    }
 
 
 # ---- cycle counts (Q-STK-09) ---------------------------------------------------------------------
@@ -563,13 +658,23 @@ def create_count(
     return cc
 
 
-def create_count_api(db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any]) -> dict[str, Any]:
+def create_count_api(
+    db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any]
+) -> dict[str, Any]:
     project, g = b.project_for_create(db, p, project_id, RT.cycle_count, C.stock_record)
     site = b.site_of(db, project, body["site_id"])
     b.require_site(g, site.id)
     if not body.get("lines"):
         raise qc.field_err("lines", "Add the counted lines.", "أضف البنود المعدودة.")
-    cc = create_count(db, project, site.id, body.get("counted_at") or now(), body["lines"], p.user.id, body.get("zone_codes"))
+    cc = create_count(
+        db,
+        project,
+        site.id,
+        body.get("counted_at") or now(),
+        body["lines"],
+        p.user.id,
+        body.get("zone_codes"),
+    )
     return count_read(db, cc)
 
 
@@ -609,7 +714,10 @@ def list_counts(db: Session, p: Principal, project_id: uuid.UUID) -> list[dict[s
     project = qc.get_project(db, p, project_id)
     b.list_grant(p, project.id)
     rows = db.scalars(
-        select(QCycleCount).where(QCycleCount.project_id == project.id, QCycleCount.voided.is_(False)).order_by(QCycleCount.counted_at.desc()).limit(100)
+        select(QCycleCount)
+        .where(QCycleCount.project_id == project.id, QCycleCount.voided.is_(False))
+        .order_by(QCycleCount.counted_at.desc())
+        .limit(100)
     )
     return [count_read(db, c, with_lines=False) for c in rows]
 
@@ -617,13 +725,17 @@ def list_counts(db: Session, p: Principal, project_id: uuid.UUID) -> list[dict[s
 # ---- throughput (Q-STK-03) -----------------------------------------------------------------------
 
 
-def upsert_throughput(db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any]) -> dict[str, Any]:
+def upsert_throughput(
+    db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any]
+) -> dict[str, Any]:
     project, g = b.project_for_create(db, p, project_id, RT.cycle_count, C.stock_record)
     site = b.site_of(db, project, body["site_id"])
     b.require_site(g, site.id)
     m: date = body["month"]
     m = m.replace(day=1)
-    row = db.scalar(select(QThroughput).where(QThroughput.site_id == site.id, QThroughput.month == m))
+    row = db.scalar(
+        select(QThroughput).where(QThroughput.site_id == site.id, QThroughput.month == m)
+    )
     if row is None:
         row = QThroughput(project_id=project.id, site_id=site.id, month=m)
         db.add(row)
@@ -654,7 +766,14 @@ def throughput_read(t: QThroughput) -> dict[str, Any]:
 def list_throughput(db: Session, p: Principal, project_id: uuid.UUID) -> list[dict[str, Any]]:
     project = qc.get_project(db, p, project_id)
     b.list_grant(p, project.id)
-    return [throughput_read(t) for t in db.scalars(select(QThroughput).where(QThroughput.project_id == project.id).order_by(QThroughput.month.desc()))]
+    return [
+        throughput_read(t)
+        for t in db.scalars(
+            select(QThroughput)
+            .where(QThroughput.project_id == project.id)
+            .order_by(QThroughput.month.desc())
+        )
+    ]
 
 
 _ = (QCustomer, AttachmentOwner)

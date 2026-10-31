@@ -63,8 +63,8 @@ from app.services.quality import rpm
 from app.services.quality.q3 import base as b
 from app.services.quality.q3 import engine as eng
 from app.services.quality.q3 import holds as hold_svc
-from app.services.quality.q3 import storage
 from app.services.quality.q3 import stock as stock_svc
+from app.services.quality.q3 import storage
 
 C = Capability
 RT = QRecordType.excursion
@@ -154,7 +154,11 @@ def detect_zone(
     last = _last_reading(db, [p.id for p in pts])
     t1 = b.floor_minute(t_to) + DAY
     if last is not None:
-        t1 = min(t1, b.floor_minute(last) + timedelta(minutes=max([p.interval_minutes for p in pts] or [15]) * 4))
+        t1 = min(
+            t1,
+            b.floor_minute(last)
+            + timedelta(minutes=max([p.interval_minutes for p in pts] or [15]) * 4),
+        )
     t1 = max(t1, b.floor_minute(t_to) + timedelta(minutes=1))
     lim = storage.limits(z)
     gr = storage.zone_grid(db, z, t0, t1)
@@ -166,7 +170,9 @@ def detect_zone(
         t1 = min(t1 + timedelta(days=7), b.floor_minute(last) + timedelta(minutes=60))
         gr = storage.zone_grid(db, z, t0, t1)
         found = eng.runs(gr, storage.bands(z), lim)
-    return _reconcile(db, project, z, None, None, gr, found, t0, t1, actor, manual=manual, notify=notify)
+    return _reconcile(
+        db, project, z, None, None, gr, found, t0, t1, actor, manual=manual, notify=notify
+    )
 
 
 def _reconcile(
@@ -183,6 +189,7 @@ def _reconcile(
     *,
     manual: bool,
     notify: bool,
+    auto: bool = True,
     sc: QStorageClass | None = None,
     lim: eng.Limits | None = None,
 ) -> list[QExcursion]:
@@ -207,7 +214,9 @@ def _reconcile(
     dismissed = [x for x in existing if x.status == ST.dismissed]
     for r in found:
         start, end = gr.at(r.start), gr.at(r.end)
-        if any(x.started_at < end and (x.ended_at is None or x.ended_at > start) for x in dismissed):
+        if any(
+            x.started_at < end and (x.ended_at is None or x.ended_at > start) for x in dismissed
+        ):
             continue  # a dismissed excursion is never re-detected (Q-EXC-11)
         match = next(
             (
@@ -255,7 +264,11 @@ def _reconcile(
             continue
         if x.exc_no is None:
             x.exc_no = b.number(db, project, RT, x.started_at)
-        if was_transient or before_sev is None or SEVERITY_RANK[x.severity] > SEVERITY_RANK[before_sev]:
+        if auto and (
+            was_transient
+            or before_sev is None
+            or SEVERITY_RANK[x.severity] > SEVERITY_RANK[before_sev]
+        ):
             _on_detected(db, project, x, actor, manual=manual and r.ongoing, notify=notify)
         changed.append(x)
     for x in existing:
@@ -268,7 +281,13 @@ def _reconcile(
 
 
 def _on_detected(
-    db: Session, project: Project, x: QExcursion, actor: uuid.UUID | None, *, manual: bool, notify: bool
+    db: Session,
+    project: Project,
+    x: QExcursion,
+    actor: uuid.UUID | None,
+    *,
+    manual: bool,
+    notify: bool,
 ) -> None:
     """Q-EXC-04 alerts and Q-EXC-05 NCR + hold for major / critical (once each)."""
     serious = x.severity != SEV.minor
@@ -277,15 +296,12 @@ def _on_detected(
     if not serious or x.status not in EXCURSION_LIVE:
         return
     if x.ncr_id is None:
-        from app.services.quality.ncr import core as ncr  # noqa: PLC0415
-
-        n = ncr.auto_raise(
+        n = b.raise_ncr(
             db,
             project,
             QNcrSourceType.excursion if x.kind != QExcursionKind.transit else QNcrSourceType.trip,
             x.id if x.kind != QExcursionKind.transit else x.trip_id,  # type: ignore[arg-type]
-            raised_by=actor,
-            owner_id=b.ncr_owner(db, project, actor),
+            actor=actor,
             classification=QNcrClass(x.severity.value),
             category=QNcrCategory.temperature,
             title=_title(db, x),
@@ -310,7 +326,9 @@ def _on_detected(
             storage_class=x.storage_class if x.storage_class == QStorageClass.pharma_2_8 else None,
             source=(RT, x.id, x.exc_no),
             ncr_id=x.ncr_id,
-            note=f"Stock of the {b.local(snap.as_of):%Y-%m-%d %H:%M} snapshot" if snap else "Zone-level hold: add the lines (Q-HLD-02)",
+            note=f"Stock of the {b.local(snap.as_of):%Y-%m-%d %H:%M} snapshot"
+            if snap
+            else "Zone-level hold: add the lines (Q-HLD-02)",
         )
         x.hold_id = h.id
 
@@ -356,7 +374,14 @@ def _notify_consignees(db: Session, x: QExcursion) -> None:
             s.notify_consignee = True
 
 
-def detect_trip(db: Session, project: Project, trip: QTrip, actor: uuid.UUID | None, notify: bool = True) -> list[QExcursion]:
+def detect_trip(
+    db: Session,
+    project: Project,
+    trip: QTrip,
+    actor: uuid.UUID | None,
+    notify: bool = True,
+    auto: bool = True,
+) -> list[QExcursion]:
     """Q-TRN-05: transit excursions per compartment with the compartment range and the bands of
     its strictest class."""
     from app.services.quality.q3 import transport  # noqa: PLC0415
@@ -365,7 +390,9 @@ def detect_trip(db: Session, project: Project, trip: QTrip, actor: uuid.UUID | N
     for comp in trip.compartments or []:
         code = comp["code"]
         rows = db.execute(
-            select(QReading.measured_at, QReading.temperature_c, QReading.id, QReading.probe_fault).where(
+            select(
+                QReading.measured_at, QReading.temperature_c, QReading.id, QReading.probe_fault
+            ).where(
                 QReading.target_type == QReadingTarget.trip,
                 QReading.target_id == trip.id,
                 QReading.channel == code,
@@ -388,7 +415,23 @@ def detect_trip(db: Session, project: Project, trip: QTrip, actor: uuid.UUID | N
         factor = b.dsetting(db, project.id, "reading_gap_factor")
         gr = eng.grid(readings, {pid: interval}, factor, lim, t0, t1)
         found = eng.runs(gr, eng.Bands(d.alarm_delay, d.d1, d.d2, d.t1, d.t2), lim)
-        out += _reconcile(db, project, None, trip, code, gr, found, t0, t1, actor, manual=False, notify=notify, sc=sc, lim=lim)
+        out += _reconcile(
+            db,
+            project,
+            None,
+            trip,
+            code,
+            gr,
+            found,
+            t0,
+            t1,
+            actor,
+            manual=False,
+            notify=notify,
+            sc=sc,
+            lim=lim,
+            auto=auto,
+        )
     return out
 
 
@@ -397,7 +440,12 @@ def detect_trip(db: Session, project: Project, trip: QTrip, actor: uuid.UUID | N
 
 def _live(x: QExcursion, *allowed: QExcursionStatus) -> None:
     if x.transient or x.status not in allowed:
-        raise qc.err(409, ErrorCode.INVALID_TRANSITION, f"Not allowed while {x.status.value}.", "غير مسموح في هذه الحالة.")
+        raise qc.err(
+            409,
+            ErrorCode.INVALID_TRANSITION,
+            f"Not allowed while {x.status.value}.",
+            "غير مسموح في هذه الحالة.",
+        )
 
 
 def _assessor(db: Session, p: Principal, project: Project, x: QExcursion) -> None:
@@ -434,7 +482,9 @@ def set_cause(db: Session, p: Principal, exc_id: uuid.UUID, body: dict[str, Any]
         raise qc.field_err("cause_note", "Describe the cause.", "صف السبب.")
     if x.status == ST.detected:
         x.status = ST.under_assessment
-        b.audit_status(db, p, project, RT, x.id, ST.detected, ST.under_assessment, cause=x.cause.value)
+        b.audit_status(
+            db, p, project, RT, x.id, ST.detected, ST.under_assessment, cause=x.cause.value
+        )
     return read(db, p, x)
 
 
@@ -445,25 +495,37 @@ def hold_lines(db: Session, x: QExcursion) -> list[QHoldLine]:
 
 
 def _check_line(db: Session, ln: QHoldLine, imp: QExcursionImpact) -> None:
-    if imp.decision == QImpactDecision.release and imp.evidence_attachment_id is None and len((imp.justification or "").strip()) < 50:
+    if (
+        imp.decision == QImpactDecision.release
+        and imp.evidence_attachment_id is None
+        and len((imp.justification or "").strip()) < 50
+    ):
         raise qc.err(
             422,
             ErrorCode.IMPACT_EVIDENCE_REQUIRED,
-            f"{ln.sku} {ln.batch}: a release needs stability evidence or a justification of at least 50 characters (Q-EXC-08).",
+            f"{ln.sku} {ln.batch}: a release needs stability evidence or a justification of "
+            "at least 50 characters (Q-EXC-08).",
             f"{ln.sku} {ln.batch}: الإفراج يتطلب دليل ثبات أو مبرراً لا يقل عن 50 حرفاً.",
         )
     if imp.decision in (QImpactDecision.release, QImpactDecision.destroy):
         cust = db.get(QCustomer, ln.owner_customer_id) if ln.owner_customer_id else None
-        if cust is not None and cust.owner_release_approval and imp.owner_decision_attachment_id is None:
+        if (
+            cust is not None
+            and cust.owner_release_approval
+            and imp.owner_decision_attachment_id is None
+        ):
             raise qc.err(
                 422,
                 ErrorCode.OWNER_DECISION_REQUIRED,
-                f"{cust.name_en} decides on {ln.sku} {ln.batch}: attach the owner's written decision (Q-EXC-09).",
+                f"{cust.name_en} decides on {ln.sku} {ln.batch}: attach the owner's written "
+                "decision (Q-EXC-09).",
                 f"يقرر {cust.name_ar} بشأن {ln.sku} {ln.batch}: أرفق قرار المالك المكتوب.",
             )
 
 
-def save_impacts(db: Session, p: Principal, exc_id: uuid.UUID, body: dict[str, Any]) -> dict[str, Any]:
+def save_impacts(
+    db: Session, p: Principal, exc_id: uuid.UUID, body: dict[str, Any]
+) -> dict[str, Any]:
     x, project = get_exc(db, p, exc_id)
     qc.writable(project, p)
     _assessor(db, p, project, x)
@@ -474,17 +536,30 @@ def save_impacts(db: Session, p: Principal, exc_id: uuid.UUID, body: dict[str, A
 
 def _save(db: Session, p: Principal, x: QExcursion, rows: list[dict[str, Any]]) -> None:
     by_line = {ln.id: ln for ln in hold_lines(db, x)}
-    have = {i.hold_line_id: i for i in db.scalars(select(QExcursionImpact).where(QExcursionImpact.excursion_id == x.id))}
+    have = {
+        i.hold_line_id: i
+        for i in db.scalars(select(QExcursionImpact).where(QExcursionImpact.excursion_id == x.id))
+    }
     for r in rows:
         ln = by_line.get(r["hold_line_id"])
         if ln is None:
-            raise qc.field_err("lines", "A line is not on this excursion's hold.", "بند ليس ضمن حجز هذا الانحراف.")
-        imp = have.get(ln.id) or QExcursionImpact(excursion_id=x.id, hold_line_id=ln.id, created_at=now(), created_by_user_id=p.user.id)
+            raise qc.field_err(
+                "lines", "A line is not on this excursion's hold.", "بند ليس ضمن حجز هذا الانحراف."
+            )
+        imp = have.get(ln.id) or QExcursionImpact(
+            excursion_id=x.id, hold_line_id=ln.id, created_at=now(), created_by_user_id=p.user.id
+        )
         imp.decision = QImpactDecision(r["decision"])
         imp.justification = (r.get("justification") or "").strip() or None
-        imp.evidence_attachment_id = b.attachment_on(db, r.get("evidence_attachment_id"), A.q_hold, ln.hold_id, "evidence_attachment_id")
+        imp.evidence_attachment_id = b.attachment_on(
+            db, r.get("evidence_attachment_id"), A.q_hold, ln.hold_id, "evidence_attachment_id"
+        )
         imp.owner_decision_attachment_id = b.attachment_on(
-            db, r.get("owner_decision_attachment_id"), A.q_hold, ln.hold_id, "owner_decision_attachment_id"
+            db,
+            r.get("owner_decision_attachment_id"),
+            A.q_hold,
+            ln.hold_id,
+            "owner_decision_attachment_id",
         )
         imp.owner_contact_name = r.get("owner_contact_name")
         imp.owner_decision_date = r.get("owner_decision_date")
@@ -506,20 +581,35 @@ def assess(db: Session, p: Principal, exc_id: uuid.UUID, body: dict[str, Any]) -
     if body.get("lines"):
         _save(db, p, x, body["lines"])
     lines = hold_lines(db, x)
-    imps = {i.hold_line_id: i for i in db.scalars(select(QExcursionImpact).where(QExcursionImpact.excursion_id == x.id))}
+    imps = {
+        i.hold_line_id: i
+        for i in db.scalars(select(QExcursionImpact).where(QExcursionImpact.excursion_id == x.id))
+    }
     missing = [ln for ln in lines if ln.id not in imps]
     if x.hold_id is None or not lines or missing:
         raise qc.err(
             422,
             ErrorCode.IMPACT_LINES_INCOMPLETE,
-            f"Decide every line of the hold: {len(lines) - len(missing)} of {len(lines)} decided (Q-EXC-07).",
+            f"Decide every line of the hold: {len(lines) - len(missing)} of {len(lines)} "
+            "decided (Q-EXC-07).",
             f"قرر كل بنود الحجز: {len(lines) - len(missing)} من {len(lines)}.",
             missing=[str(ln.id) for ln in missing],
         )
     for ln in lines:
         _check_line(db, ln, imps[ln.id])
     decision = body.get("decision") or "approved"
-    s = b.sign(db, p, project, RT, x.id, "impact", ctx(x), decision=decision, comment=body.get("comment"), qualifier=qualifier(x))
+    s = b.sign(
+        db,
+        p,
+        project,
+        RT,
+        x.id,
+        "impact",
+        ctx(x),
+        decision=decision,
+        comment=body.get("comment"),
+        qualifier=qualifier(x),
+    )
     if decision == "returned":
         return read(db, p, x)
     x.status = ST.assessed
@@ -550,7 +640,9 @@ def reopen(db: Session, p: Principal, exc_id: uuid.UUID, body: dict[str, Any]) -
     return read(db, p, x)
 
 
-def close_no_impact(db: Session, p: Principal, exc_id: uuid.UUID, body: dict[str, Any]) -> dict[str, Any]:
+def close_no_impact(
+    db: Session, p: Principal, exc_id: uuid.UUID, body: dict[str, Any]
+) -> dict[str, Any]:
     """Under Assessment → Closed for an excursion that needs no assessment (Q-EXC-06)."""
     x, project = get_exc(db, p, exc_id)
     qc.writable(project, p)
@@ -580,14 +672,31 @@ def dismiss(db: Session, p: Principal, exc_id: uuid.UUID, body: dict[str, Any]) 
     _live(x, ST.detected, ST.under_assessment)
     kind = body.get("evidence_kind")
     if kind not in ("calibration_check", "second_instrument"):
-        raise qc.field_err("evidence_kind", "Evidence is a calibration check or a second instrument's readings.", "الدليل: فحص معايرة أو قراءات جهاز ثانٍ.")
+        raise qc.field_err(
+            "evidence_kind",
+            "Evidence is a calibration check or a second instrument's readings.",
+            "الدليل: فحص معايرة أو قراءات جهاز ثانٍ.",
+        )
     m = b.mte_of(db, project, body["mte_id"])
     note = qc.reason(body.get("note"), 20, "note")
     if kind == "second_instrument" and body.get("second_mte_id") is None:
         raise qc.field_err("second_mte_id", "Name the second instrument.", "حدد الجهاز الثاني.")
     if kind == "calibration_check" and body.get("error_c") is None:
-        raise qc.field_err("error_c", "Enter the error found on the check (°C).", "أدخل الخطأ المكتشف (°م).")
-    s = b.sign(db, p, project, RT, x.id, "impact", ctx(x), decision="approved", comment=f"Dismissed: {note}", qualifier=qualifier(x))
+        raise qc.field_err(
+            "error_c", "Enter the error found on the check (°C).", "أدخل الخطأ المكتشف (°م)."
+        )
+    s = b.sign(
+        db,
+        p,
+        project,
+        RT,
+        x.id,
+        "impact",
+        ctx(x),
+        decision="approved",
+        comment=f"Dismissed: {note}",
+        qualifier=qualifier(x),
+    )
     end = x.ended_at or now()
     pts = [pt.id for pt in storage.points_of(db, x.zone_id, active=False)] if x.zone_id else []
     flagged = 0
@@ -655,15 +764,19 @@ def maybe_close(db: Session, x: QExcursion) -> None:
         b.audit_status(db, None, project, RT, x.id, ST.assessed, ST.closed)
 
 
-# ---- NCR source adapter (list NS `excursion`) -------------------------------------------------------
+# ---- NCR source adapter (list NS `excursion`) ----------------------------------------------------
 
 
 def ncr_source(db: Session, project: Project, source_id: uuid.UUID) -> reg.SourceInfo:
     x = db.get(QExcursion, source_id)
     if x is None or x.project_id != project.id:
-        raise qc.field_err("source_id", "The excursion is not on this project.", "الانحراف ليس في المشروع.")
+        raise qc.field_err(
+            "source_id", "The excursion is not on this project.", "الانحراف ليس في المشروع."
+        )
     zone = db.get(Zone, x.zone_id) if x.zone_id else None
-    rng = f"{x.range_min if x.range_min is not None else '—'} … {x.range_max if x.range_max is not None else '—'} °C"
+    lo = x.range_min if x.range_min is not None else "—"
+    hi = x.range_max if x.range_max is not None else "—"
+    rng = f"{lo} … {hi} °C"
     return reg.SourceInfo(
         ref=x.exc_no,
         title=_title(db, x),
@@ -699,7 +812,13 @@ def ncr_close_check(db: Session, n: QNcr) -> list[reg.Blocker]:
     if h is None:
         return []
     if any(ln.line_status == QHoldLineStatus.on_hold for ln in hold_svc.lines_of(db, h)):
-        return [reg.Blocker("HOLD_NOT_DECIDED", f"{h.hold_no}: lines are still on hold.", f"{h.hold_no}: بنود ما زالت محجوزة.")]
+        return [
+            reg.Blocker(
+                "HOLD_NOT_DECIDED",
+                f"{h.hold_no}: lines are still on hold.",
+                f"{h.hold_no}: بنود ما زالت محجوزة.",
+            )
+        ]
     return []
 
 
@@ -731,7 +850,10 @@ def read(db: Session, p: Principal, x: QExcursion) -> dict[str, Any]:
     project = db.get(Project, x.project_id)
     assert project is not None  # noqa: S101
     hide = b.hide_names(p, project.id)
-    imps = {i.hold_line_id: i for i in db.scalars(select(QExcursionImpact).where(QExcursionImpact.excursion_id == x.id))}
+    imps = {
+        i.hold_line_id: i
+        for i in db.scalars(select(QExcursionImpact).where(QExcursionImpact.excursion_id == x.id))
+    }
     lines = hold_lines(db, x)
     pt = db.get(QMonitoringPoint, x.peak_point_id) if x.peak_point_id else None
     trip = db.get(QTrip, x.trip_id) if x.trip_id else None
@@ -787,22 +909,39 @@ def read(db: Session, p: Principal, x: QExcursion) -> dict[str, Any]:
         "detected_at": x.detected_at,
         "assessed_at": x.assessed_at,
         "closed_at": x.closed_at,
-        "ncr": {"id": n.id, "ncr_no": n.ncr_no, "status": n.status, "classification": n.classification} if n else None,
-        "hold": {"id": h.id, "hold_no": h.hold_no, "status": h.status, "zone_level": h.zone_level} if h else None,
+        "ncr": {
+            "id": n.id,
+            "ncr_no": n.ncr_no,
+            "status": n.status,
+            "classification": n.classification,
+        }
+        if n
+        else None,
+        "hold": {"id": h.id, "hold_no": h.hold_no, "status": h.status, "zone_level": h.zone_level}
+        if h
+        else None,
         "impact_lines": [
             {
                 "hold_line": hold_svc.line_read(db, ln),
                 "decision": imps[ln.id].decision if ln.id in imps else None,
                 "justification": imps[ln.id].justification if ln.id in imps else None,
-                "evidence_attachment_id": imps[ln.id].evidence_attachment_id if ln.id in imps else None,
-                "owner_decision_attachment_id": imps[ln.id].owner_decision_attachment_id if ln.id in imps else None,
-                "owner_contact_name": None if hide or ln.id not in imps else imps[ln.id].owner_contact_name,
+                "evidence_attachment_id": imps[ln.id].evidence_attachment_id
+                if ln.id in imps
+                else None,
+                "owner_decision_attachment_id": imps[ln.id].owner_decision_attachment_id
+                if ln.id in imps
+                else None,
+                "owner_contact_name": None
+                if hide or ln.id not in imps
+                else imps[ln.id].owner_contact_name,
                 "owner_decision_date": imps[ln.id].owner_decision_date if ln.id in imps else None,
             }
             for ln in lines
         ],
         "allowed_actions": actions,
-        "signoffs": [signoff.read(db, s, show_scans=not hide) for s in signoff.signoffs_for(db, RT, x.id)],
+        "signoffs": [
+            signoff.read(db, s, show_scans=not hide) for s in signoff.signoffs_for(db, RT, x.id)
+        ],
     }
 
 
@@ -821,7 +960,9 @@ def list_page(
 ) -> dict[str, Any]:
     project = qc.get_project(db, p, project_id)
     g = b.list_grant(p, project.id)
-    q = select(QExcursion).where(QExcursion.project_id == project.id, QExcursion.transient.is_(transients))
+    q = select(QExcursion).where(
+        QExcursion.project_id == project.id, QExcursion.transient.is_(transients)
+    )
     if statuses:
         q = q.where(QExcursion.status.in_(statuses))
     else:
@@ -870,7 +1011,17 @@ def open_steps(db: Session, project: Project) -> list[reg.OpenStep]:
             continue
         out.append(
             reg.OpenStep(
-                reg.PendingStep(RT, x.id, project.id, x.exc_no or "EXC", _title(db, x), "impact", x.detected_at, f"/quality/excursions/{x.id}", "Q3"),
+                reg.PendingStep(
+                    RT,
+                    x.id,
+                    project.id,
+                    x.exc_no or "EXC",
+                    _title(db, x),
+                    "impact",
+                    x.detected_at,
+                    f"/quality/excursions/{x.id}",
+                    "Q3",
+                ),
                 qualifier(x),
                 x.site_id,
                 None,

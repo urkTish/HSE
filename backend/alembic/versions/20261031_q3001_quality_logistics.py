@@ -1,4 +1,10 @@
-"""quality logistics
+"""Phase 8 Quality, package Q3: logistics (spec 8-quality Part D, §3.3 Q3 row).
+
+Products and CSV import batches, storage zones, monitoring points and readings, excursions and
+impact lines, mapping studies, check schedules, pest stations and visits, receipts and lines,
+stock snapshots and lines, FEFO checks, holds and lines, damage reports, returns, cycle counts,
+recalls and consignee contacts, shipments, trips, PODs and throughput. Sits on q0001 like q1001 /
+q2001; the integrator re-chains them.
 
 Revision ID: q3001
 Revises: q0001

@@ -53,7 +53,6 @@ from app.core.quality.q3 import (
     QMappingStatus,
     QPestStationType,
     QPointPosition,
-    QReadingTarget,
     QRecallStatus,
     QRecallType,
     QReceiptStatus,
@@ -73,7 +72,6 @@ from app.models.quality.q3 import (
     QExcursion,
     QExcursionImpact,
     QFefoCheck,
-    QHoldLine,
     QImportBatch,
     QMappingStudy,
     QMonitoringPoint,
@@ -131,15 +129,31 @@ PRODUCTS: list[tuple[str, str, str, str, QStorageClass, int, int | None]] = [
     ("NDC-1001", "NDC", "Fresh laban 1 L", "لبن طازج 1 لتر", SC.chilled, 14, None),
     ("NDC-Y", "NDC", "Yoghurt 170 g", "زبادي 170 غ", SC.chilled, 30, None),
     ("NDC-5001", "NDC", "UHT milk 1 L", "حليب طويل الأجل 1 لتر", SC.ambient_controlled, 180, None),
-    ("GFF-2001", "GFF", "Frozen whole chicken 1,000 g", "دجاج كامل مجمد 1000 غ", SC.frozen, 180, None),
-    ("GFF-2105", "GFF", "Frozen mixed vegetables 2.5 kg", "خضار مشكلة مجمدة 2.5 كغ", SC.frozen, 540, None),
+    (
+        "GFF-2001",
+        "GFF",
+        "Frozen whole chicken 1,000 g",
+        "دجاج كامل مجمد 1000 غ",
+        SC.frozen,
+        180,
+        None,
+    ),
+    (
+        "GFF-2105",
+        "GFF",
+        "Frozen mixed vegetables 2.5 kg",
+        "خضار مشكلة مجمدة 2.5 كغ",
+        SC.frozen,
+        540,
+        None,
+    ),
     ("SAHM-3001", "SAHM", "Insulin pen box", "علبة أقلام إنسولين", SC.pharma_2_8, 730, 70),
     ("SAHM-3100", "SAHM", "Eye drops", "قطرة عين", SC.ambient_controlled, 730, None),
 ]
 SEPT = date(2026, 9, 1)
 
 
-def L(d: date, hh: int = 0, mm: int = 0) -> datetime:
+def L(d: date, hh: int = 0, mm: int = 0) -> datetime:  # noqa: N802
     """Riyadh local wall time → UTC."""
     return datetime.combine(d, time(hh, mm), RIYADH).astimezone(UTC)
 
@@ -147,16 +161,28 @@ def L(d: date, hh: int = 0, mm: int = 0) -> datetime:
 class _Ctx:
     def __init__(self, db: Session) -> None:
         self.db = db
-        self.p = db.scalar(select(Project).where(Project.code == "RUH-CCH"))
-        assert self.p is not None  # noqa: S101
-        self.site = db.scalar(select(Site).where(Site.project_id == self.p.id, Site.code == "S-DC1"))
-        assert self.site is not None  # noqa: S101
-        self.zones = {z.code: z for z in db.scalars(select(Zone).where(Zone.site_id == self.site.id))}
+        p = db.scalar(select(Project).where(Project.code == "RUH-CCH"))
+        assert p is not None  # noqa: S101
+        self.p: Project = p
+        site = db.scalar(select(Site).where(Site.project_id == p.id, Site.code == "S-DC1"))
+        assert site is not None  # noqa: S101
+        self.site: Site = site
+        self.zones = {
+            z.code: z for z in db.scalars(select(Zone).where(Zone.site_id == self.site.id))
+        }
         self.users = {u.email.split("@")[0]: u.id for u in db.scalars(select(User))}
-        self.cust = {c.code: c for c in db.scalars(select(QCustomer).where(QCustomer.project_id == self.p.id))}
+        self.cust = {
+            c.code: c
+            for c in db.scalars(select(QCustomer).where(QCustomer.project_id == self.p.id))
+        }
         self.sup = {s.supplier_code: s for s in db.scalars(select(QSupplier))}
-        self.mte = {m.mte_no: m for m in db.scalars(select(QMteItem).where(QMteItem.project_id == self.p.id))}
-        self.prod = {x.sku: x for x in db.scalars(select(QProduct).where(QProduct.project_id == self.p.id))}
+        self.mte = {
+            m.mte_no: m
+            for m in db.scalars(select(QMteItem).where(QMteItem.project_id == self.p.id))
+        }
+        self.prod = {
+            x.sku: x for x in db.scalars(select(QProduct).where(QProduct.project_id == self.p.id))
+        }
 
     def u(self, who: str) -> uuid.UUID:
         return self.users[who]
@@ -177,6 +203,7 @@ def seed_setup(db: Session) -> None:
     t0 = L(date(2025, 11, 1))
     from app.services.quality.q3.storage import defaults_for  # noqa: PLC0415
 
+    _instruments(db, c, faisal)
     logger_no = 101
     for code, sc, role, sp, npts in ZONES:
         z = c.zones[code]
@@ -203,7 +230,11 @@ def seed_setup(db: Session) -> None:
         db.flush()
         for i in range(1, npts + 1):
             m = c.mte[f"MTE-{logger_no:04d}"]
-            pos = QPointPosition.hot_spot if i == 1 else (QPointPosition.cold_spot if i == 2 else QPointPosition.general)
+            pos = (
+                QPointPosition.hot_spot
+                if i == 1
+                else (QPointPosition.cold_spot if i == 2 else QPointPosition.general)
+            )
             db.add(
                 QMonitoringPoint(
                     project_id=c.p.id,
@@ -212,34 +243,15 @@ def seed_setup(db: Session) -> None:
                     position=pos,
                     position_note=f"{pos.value.replace('_', ' ')} from mapping",
                     interval_minutes=15,
-                    loggers=[{"mte_id": str(m.id), "from": L(date(2026, 3, 1)).isoformat(), "to": None}],
+                    loggers=[
+                        {"mte_id": str(m.id), "from": L(date(2026, 3, 1)).isoformat(), "to": None}
+                    ],
                     active=True,
                     created_by_user_id=faisal,
                     seed_fake=True,
                 )
             )
             logger_no += 1
-    # five spare mapping loggers (A.5: the Z-FRZ1 study used 27); calibration status unknown until Q2
-    for no in range(123, 128):
-        if f"MTE-{no:04d}" not in c.mte:
-            db.add(
-                QMteItem(
-                    project_id=c.p.id,
-                    mte_no=f"MTE-{no:04d}",
-                    mte_type=QMteType.temp_logger,
-                    description=f"Mapping logger {no}",
-                    manufacturer="Generic",
-                    model="temp_logger",
-                    serial_no=f"RUH-CCH-SN-{no:05d}",
-                    site_id=c.site.id,
-                    check_kind=QMteCheckKind.calibration,
-                    interval_months=12,
-                    cal_status=QCalStatus.unknown,
-                    created_by_user_id=faisal,
-                    seed_fake=True,
-                )
-            )
-    db.flush()
     from app.services.quality import numbering  # noqa: PLC0415
 
     numbering.bump_to(db, c.p, QRecordType.mte, 2026, 127)
@@ -262,7 +274,15 @@ def seed_setup(db: Session) -> None:
             )
         )
     shield = c.sup["SHIELD"].id
-    stations = [("Z-DRY1", 14), ("Z-AMB1", 8), ("Z-DOCK", 8), ("Z-FRZ1", 4), ("Z-CHL1", 4), ("Z-PHR1", 4), ("Z-QRT", 4)]
+    stations = [
+        ("Z-DRY1", 14),
+        ("Z-AMB1", 8),
+        ("Z-DOCK", 8),
+        ("Z-FRZ1", 4),
+        ("Z-CHL1", 4),
+        ("Z-PHR1", 4),
+        ("Z-QRT", 4),
+    ]
     n = 0
     for zc, k in stations:
         for _ in range(k):
@@ -273,7 +293,9 @@ def seed_setup(db: Session) -> None:
                     site_id=c.site.id,
                     zone_id=c.zones[zc].id,
                     code=f"RB-{n:02d}",
-                    station_type=QPestStationType.rodent_bait if n % 3 else QPestStationType.insect_light_trap,
+                    station_type=QPestStationType.rodent_bait
+                    if n % 3
+                    else QPestStationType.insect_light_trap,
                     location_note=f"{zc} wall {n}",
                     provider_supplier_id=shield,
                     active=True,
@@ -281,19 +303,20 @@ def seed_setup(db: Session) -> None:
                     seed_fake=True,
                 )
             )
-    for zc, ct, code, fr, start in (
+    schedules: list[tuple[str | None, QCheckType, str, QCheckFrequency, date]] = [
         ("Z-DOCK", QCheckType.hygiene, "QHYG", QCheckFrequency.daily, date(2026, 1, 1)),
         ("Z-FRZ1", QCheckType.hygiene, "QHYG", QCheckFrequency.daily, date(2026, 1, 1)),
         ("Z-PHR1", QCheckType.hygiene, "QHYG", QCheckFrequency.daily, date(2026, 1, 1)),
         ("Z-AMB1", QCheckType.hygiene, "QHYG", QCheckFrequency.daily, date(2026, 1, 1)),
         ("Z-CHL1", QCheckType.hygiene, "QHYG", QCheckFrequency.weekly, date(2026, 9, 27)),
         (None, QCheckType.pest_visit, "QPST", QCheckFrequency.monthly, date(2026, 10, 1)),
-    ):
+    ]
+    for szc, ct, code, fr, start in schedules:
         db.add(
             QCheckSchedule(
                 project_id=c.p.id,
                 site_id=c.site.id,
-                zone_id=c.zones[zc].id if zc else None,
+                zone_id=c.zones[szc].id if szc else None,
                 check_type=ct,
                 template_code=code,
                 frequency=fr,
@@ -305,6 +328,38 @@ def seed_setup(db: Session) -> None:
                 seed_fake=True,
             )
         )
+    db.flush()
+
+
+def _instruments(db: Session, c: _Ctx, author: uuid.UUID) -> None:
+    """Loggers MTE-0101…0122 (points), MTE-0123…0127 (spare mapping loggers, A.5: the Z-FRZ1
+    study used 27) and the probes MTE-0042 / MTE-0051 in the Q0 M&TE register, when the Q0 data
+    layer has not created them; their calibration status stays `unknown` until Q2 is installed."""
+    rows = [(n, QMteType.temp_logger, f"Temperature logger {n}") for n in range(101, 128)]
+    rows += [
+        (42, QMteType.temp_probe, "Receiving probe thermometer"),
+        (51, QMteType.temp_probe, "Dispatch probe thermometer"),
+    ]
+    for no, typ, desc in rows:
+        if f"MTE-{no:04d}" in c.mte:
+            continue
+        m = QMteItem(
+            project_id=c.p.id,
+            mte_no=f"MTE-{no:04d}",
+            mte_type=typ,
+            description=desc,
+            manufacturer="Generic",
+            model=typ.value,
+            serial_no=f"RUH-CCH-SN-{no:05d}",
+            site_id=c.site.id,
+            check_kind=QMteCheckKind.calibration,
+            interval_months=12,
+            cal_status=QCalStatus.unknown,
+            created_by_user_id=author,
+            seed_fake=True,
+        )
+        db.add(m)
+        c.mte[m.mte_no] = m
     db.flush()
 
 
@@ -332,7 +387,10 @@ def seed(db: Session) -> None:
 
 
 def _points(db: Session, c: _Ctx) -> dict[str, QMonitoringPoint]:
-    return {p.code: p for p in db.scalars(select(QMonitoringPoint).where(QMonitoringPoint.project_id == c.p.id))}
+    return {
+        p.code: p
+        for p in db.scalars(select(QMonitoringPoint).where(QMonitoringPoint.project_id == c.p.id))
+    }
 
 
 def _readings(db: Session, c: _Ctx) -> None:
@@ -357,7 +415,11 @@ def _readings(db: Session, c: _Ctx) -> None:
                     "id": bid,
                     "project_id": c.p.id,
                     "kind": QImportKind.readings,
-                    "profile": {"columns": {"time": "time", "temperature": "temperature"}, "timezone": "Asia/Riyadh", "unit": "C"},
+                    "profile": {
+                        "columns": {"time": "time", "temperature": "temperature"},
+                        "timezone": "Asia/Riyadh",
+                        "unit": "C",
+                    },
                     "file_name": f"{code}_{wk.isoformat()}.csv",
                     "sha256": uuid.uuid5(bid, "sha").hex + uuid.uuid5(bid, "sha2").hex,
                     "target_type": QImportTarget.point,
@@ -387,23 +449,47 @@ def _readings(db: Session, c: _Ctx) -> None:
                     temperature_c, humidity_pct, source, batch_id, entered_by_user_id, probe_fault,
                     voided, created_at)
                 SELECT :pid, 'point', :tid, '', t,
-                    round((:base + :amp * sin(extract(epoch from t) / 43200.0 * pi() + :ph))::numeric, 2),
-                    CASE WHEN :hum THEN round((45 + 5 * sin(extract(epoch from t) / 86400.0 * pi()))::numeric, 2) END,
+                    round((:base + :amp * sin(extract(epoch from t) / 43200.0 * pi() + :ph))
+                        ::numeric, 2),
+                    CASE WHEN :hum THEN round((45 + 5 * sin(extract(epoch from t) / 86400.0
+                        * pi()))::numeric, 2) END,
                     'import', NULL, :uid, false, false, now()
-                FROM generate_series(CAST(:a AS timestamptz), CAST(:b AS timestamptz), interval '15 minutes') AS t
+                FROM generate_series(CAST(:a AS timestamptz), CAST(:b AS timestamptz),
+                    interval '15 minutes') AS t
                 """
             ),
-            {"pid": c.p.id, "tid": pt.id, "base": base, "amp": amp, "ph": phase, "hum": zc in ("Z-AMB1", "Z-DRY1"), "uid": reem, "a": start, "b": end},
+            {
+                "pid": c.p.id,
+                "tid": pt.id,
+                "base": base,
+                "amp": amp,
+                "ph": phase,
+                "hum": zc in ("Z-AMB1", "Z-DRY1"),
+                "uid": reem,
+                "a": start,
+                "b": end,
+            },
         )
         for wk in weeks:
             db.execute(
-                text("UPDATE q_readings SET batch_id = :bid WHERE target_id = :tid AND measured_at >= :a AND measured_at < :b"),
-                {"bid": batch_of[(pt.id, wk)], "tid": pt.id, "a": L(wk), "b": L(wk + timedelta(days=7))},
+                text(
+                    "UPDATE q_readings SET batch_id = :bid WHERE target_id = :tid AND measured_at "
+                    ">= :a AND measured_at < :b"
+                ),
+                {
+                    "bid": batch_of[(pt.id, wk)],
+                    "tid": pt.id,
+                    "a": L(wk),
+                    "b": L(wk + timedelta(days=7)),
+                },
             )
 
     def setv(code: str, d: date, hh: int, mm: int, v: float) -> None:
         db.execute(
-            text("UPDATE q_readings SET temperature_c = :v WHERE target_id = :tid AND measured_at = :t"),
+            text(
+                "UPDATE q_readings SET temperature_c = :v WHERE target_id = :tid AND measured_at "
+                "= :t"
+            ),
             {"v": v, "tid": pts[code].id, "t": L(d, hh, mm)},
         )
 
@@ -414,7 +500,14 @@ def _readings(db: Session, c: _Ctx) -> None:
                 temperature_c, source, mte_id, entered_by_user_id, probe_fault, voided, created_at)
                 VALUES (:pid, 'point', :tid, '', :t, :v, 'manual', :m, :uid, false, false, now())"""
             ),
-            {"pid": c.p.id, "tid": pts[code].id, "t": L(d, hh, mm), "v": v, "m": c.mte[probe].id, "uid": reem},
+            {
+                "pid": c.p.id,
+                "tid": pts[code].id,
+                "t": L(d, hh, mm),
+                "v": v,
+                "m": c.mte[probe].id,
+                "uid": reem,
+            },
         )
 
     def gap(zone: str, d: date, hh: int, mm: int, minutes: int) -> None:
@@ -423,12 +516,19 @@ def _readings(db: Session, c: _Ctx) -> None:
         for code, pt in pts.items():
             if "Z-" + code.split("-P")[0] == zone:
                 db.execute(
-                    text("DELETE FROM q_readings WHERE target_id = :tid AND measured_at >= :a AND measured_at < :b"),
+                    text(
+                        "DELETE FROM q_readings WHERE target_id = :tid AND measured_at >= :a AND "
+                        "measured_at < :b"
+                    ),
                     {"tid": pt.id, "a": a, "b": a + timedelta(minutes=minutes)},
                 )
 
     # QX12 Z-CHL1 2026-09-17 on CHL1-P2: run 08:15–09:15, 60 min, minor
-    for (hh, mm), v in zip(((8, 0), (8, 15), (8, 30), (8, 45), (9, 0), (9, 15)), (3.6, 4.4, 5.1, 5.6, 4.8, 3.9), strict=True):
+    for (hh, mm), v in zip(
+        ((8, 0), (8, 15), (8, 30), (8, 45), (9, 0), (9, 15)),
+        (3.6, 4.4, 5.1, 5.6, 4.8, 3.9),
+        strict=True,
+    ):
         setv("CHL1-P2", date(2026, 9, 17), hh, mm, v)
     # Z-CHL1 transients: 7 × 10 min + 1 × 5 min = 75 (a manual in-range reading cuts each run)
     for i, cut in enumerate((10, 10, 10, 10, 10, 10, 10, 5)):
@@ -436,7 +536,22 @@ def _readings(db: Session, c: _Ctx) -> None:
         setv("CHL1-P3", d, 14, 0, 4.6)
         manual("CHL1-P3", d, 14, cut, 3.2)
     # QX13 Z-FRZ1 2026-09-22 02:00–05:30 on FRZ1-P1 (defrost failure), peak −13.8, major
-    vals = [-17.6, -17.0, -16.4, -15.8, -15.1, -14.6, -14.2, -13.8, -14.0, -14.5, -15.2, -16.0, -16.9, -17.6]
+    vals = [
+        -17.6,
+        -17.0,
+        -16.4,
+        -15.8,
+        -15.1,
+        -14.6,
+        -14.2,
+        -13.8,
+        -14.0,
+        -14.5,
+        -15.2,
+        -16.0,
+        -16.9,
+        -17.6,
+    ]
     for k, v in enumerate(vals):
         t = L(date(2026, 9, 22), 2) + timedelta(minutes=15 * k)
         lt = t.astimezone(RIYADH)
@@ -487,12 +602,16 @@ def _excursions(db: Session, c: _Ctx) -> None:
     db.flush()
     for i, x in enumerate(rows):
         x.exc_no = f"EXC-RUH-CCH-2026-{38 + i:04d}"
-        x.cause = QExcursionCause.defrost if x.severity.value == "major" else QExcursionCause.door_open
+        x.cause = (
+            QExcursionCause.defrost if x.severity.value == "major" else QExcursionCause.door_open
+        )
         x.acknowledged_by_user_id = imran
         x.acknowledged_at = x.started_at + timedelta(minutes=20)
         if x.severity.value == "minor":
             x.status = QExcursionStatus.closed
-            x.no_impact_note = "Short door-open excursion within the product's tolerance; no product impact."
+            x.no_impact_note = (
+                "Short door-open excursion within the product's tolerance; no product impact."
+            )
             x.closed_at = x.started_at + timedelta(hours=6)
     _ = excursions
 
@@ -504,12 +623,9 @@ def _detect_quiet(db: Session, project: Project, z: QStorageZone, uid: uuid.UUID
     a, e = L(SEPT) - timedelta(minutes=1), L(date(2026, 10, 6), 10)
     gr = storage.zone_grid(db, z, a, e)
     found = eng.runs(gr, storage.bands(z), storage.limits(z))
-    orig = excursions._on_detected  # noqa: SLF001
-    excursions._on_detected = lambda *_a, **_k: None  # type: ignore[assignment]  # noqa: SLF001
-    try:
-        excursions._reconcile(db, project, z, None, None, gr, found, a, e, uid, manual=False, notify=False)  # noqa: SLF001
-    finally:
-        excursions._on_detected = orig  # type: ignore[method-assign]  # noqa: SLF001
+    excursions._reconcile(
+        db, project, z, None, None, gr, found, a, e, uid, manual=False, notify=False, auto=False
+    )
 
 
 def _snapshot_lines(c: _Ctx, d: date) -> list[dict[str, Any]]:
@@ -536,16 +652,44 @@ def _snapshot_lines(c: _Ctx, d: date) -> list[dict[str, Any]]:
         )
 
     for i in range(7):
-        add("GFF-2001", f"GFF-C-26{i + 1:02d}", date(2026, 12, 20) + timedelta(days=10 * i), date(2026, 8, 1) + timedelta(days=4 * i), f"FRZ1-A{i + 1:02d}", "Z-FRZ1", 240 + 20 * i)
-        add("GFF-2105", f"GFF-V-26{i + 1:02d}", date(2027, 11, 1) + timedelta(days=15 * i), date(2026, 7, 20) + timedelta(days=5 * i), f"FRZ1-B{i + 1:02d}", "Z-FRZ1", 180 + 10 * i)
-    add("NDC-Y", "NDC-Y-2609", date(2026, 10, 2), date(2026, 9, 2), "CHL1-C01", "Z-CHL1", 1150 if d >= date(2026, 9, 8) else 1600)
+        add(
+            "GFF-2001",
+            f"GFF-C-26{i + 1:02d}",
+            date(2026, 12, 20) + timedelta(days=10 * i),
+            date(2026, 8, 1) + timedelta(days=4 * i),
+            f"FRZ1-A{i + 1:02d}",
+            "Z-FRZ1",
+            240 + 20 * i,
+        )
+        add(
+            "GFF-2105",
+            f"GFF-V-26{i + 1:02d}",
+            date(2027, 11, 1) + timedelta(days=15 * i),
+            date(2026, 7, 20) + timedelta(days=5 * i),
+            f"FRZ1-B{i + 1:02d}",
+            "Z-FRZ1",
+            180 + 10 * i,
+        )
+    add(
+        "NDC-Y",
+        "NDC-Y-2609",
+        date(2026, 10, 2),
+        date(2026, 9, 2),
+        "CHL1-C01",
+        "Z-CHL1",
+        1150 if d >= date(2026, 9, 8) else 1600,
+    )
     add("NDC-Y", "NDC-Y-2611", date(2026, 10, 30), date(2026, 9, 30), "CHL1-C02", "Z-CHL1", 600)
     add("NDC-1001", "NDC-L-2640", date(2026, 10, 9), date(2026, 9, 25), "CHL1-C03", "Z-CHL1", 300)
-    add("NDC-1001", "NDC-L-2633", date(2026, 10, 3), date(2026, 9, 19), "CHL1-C04", "Z-CHL1", 40)  # expired at the clock
+    add(
+        "NDC-1001", "NDC-L-2633", date(2026, 10, 3), date(2026, 9, 19), "CHL1-C04", "Z-CHL1", 40
+    )  # expired at the clock
     add("SAHM-3001", "SAHM-I-2602", date(2028, 2, 1), date(2026, 3, 1), "PHR1-D01", "Z-PHR1", 120)
     add("SAHM-3100", "SAHM-E-2601", date(2028, 1, 15), date(2026, 1, 20), "AMB1-E01", "Z-AMB1", 400)
     add("NDC-5001", "NDC-U-2608", date(2027, 2, 10), date(2026, 8, 14), "AMB1-E02", "Z-AMB1", 900)
-    add("NDC-5001", "NDC-U-2604", date(2026, 10, 25), date(2026, 4, 28), "AMB1-E03", "Z-AMB1", 160)  # near expiry
+    add(
+        "NDC-5001", "NDC-U-2604", date(2026, 10, 25), date(2026, 4, 28), "AMB1-E03", "Z-AMB1", 160
+    )  # near expiry
     return out
 
 
@@ -554,7 +698,16 @@ def _snapshots(db: Session, c: _Ctx) -> None:
     while d <= date(2026, 10, 5):
         sid = uuid.uuid4()
         ls = _snapshot_lines(c, d)
-        db.add(QStockSnapshot(id=sid, project_id=c.p.id, site_id=c.site.id, as_of=L(d, 23), line_count=len(ls), created_at=L(d, 23, 5)))
+        db.add(
+            QStockSnapshot(
+                id=sid,
+                project_id=c.p.id,
+                site_id=c.site.id,
+                as_of=L(d, 23),
+                line_count=len(ls),
+                created_at=L(d, 23, 5),
+            )
+        )
         db.flush()
         db.execute(insert(QStockLine), [{**x, "id": uuid.uuid4(), "snapshot_id": sid} for x in ls])
         d += timedelta(days=1)
@@ -600,7 +753,16 @@ def _hold_0112(db: Session, c: _Ctx) -> None:
     if n34 is not None:
         x.ncr_id = n34.id
         n34.source_id = x.id
-        links.add(db, c.p.id, QRecordType.ncr, n34.id, QRecordType.excursion, x.id, QLinkKind.raised_from, c.u("imran.siddiq"))
+        links.add(
+            db,
+            c.p.id,
+            QRecordType.ncr,
+            n34.id,
+            QRecordType.excursion,
+            x.id,
+            QLinkKind.raised_from,
+            c.u("imran.siddiq"),
+        )
     saad = c.u("saad.anazi")
     for i, ln in enumerate(holds.lines_of(db, h)):
         dec = QImpactDecision.destroy if i < 2 else QImpactDecision.release
@@ -609,7 +771,10 @@ def _hold_0112(db: Session, c: _Ctx) -> None:
                 excursion_id=x.id,
                 hold_line_id=ln.id,
                 decision=dec,
-                justification="Peak −13.8 °C for 210 min: within the owner's frozen-poultry budget; cartons at the coil face destroyed." if dec == QImpactDecision.release else "Cartons next to the evaporator coil partly thawed.",
+                justification="Peak −13.8 °C for 210 min: within the owner's frozen-poultry "
+                "budget; cartons at the coil face destroyed."
+                if dec == QImpactDecision.release
+                else "Cartons next to the evaporator coil partly thawed.",
                 owner_contact_name="GFF Quality Manager",
                 owner_decision_date=date(2026, 9, 23),
                 created_by_user_id=saad,
@@ -618,8 +783,8 @@ def _hold_0112(db: Session, c: _Ctx) -> None:
         )
         ln.proposed_decision = dec
     db.flush()
-    from app.models.quality import QSignoff  # noqa: PLC0415
     from app.core.quality.common import QSignoffChannel  # noqa: PLC0415
+    from app.models.quality import QSignoff  # noqa: PLC0415
 
     db.add(
         QSignoff(
@@ -693,12 +858,29 @@ def _receipts(db: Session, c: _Ctx) -> None:
         if i == 100:
             temp, exp = -16.5, date(2026, 12, 20)
             reasons = [
-                {"code": "arrival_temperature", "decision": "accept_with_deviation", "en": "-16.5 °C in the deviation band.", "ar": "-16.5 °م ضمن نطاق الانحراف."},
-                {"code": "remaining_shelf_life", "decision": "accept_with_deviation", "en": "Remaining shelf life 53.9 % < 60 %.", "ar": "الصلاحية المتبقية 53.9 % < 60 %."},
+                {
+                    "code": "arrival_temperature",
+                    "decision": "accept_with_deviation",
+                    "en": "-16.5 °C in the deviation band.",
+                    "ar": "-16.5 °م ضمن نطاق الانحراف.",
+                },
+                {
+                    "code": "remaining_shelf_life",
+                    "decision": "accept_with_deviation",
+                    "en": "Remaining shelf life 53.9 % < 60 %.",
+                    "ar": "الصلاحية المتبقية 53.9 % < 60 %.",
+                },
             ]
         if i == 101:
             temp = 11.0
-            reasons = [{"code": "arrival_temperature", "decision": "reject", "en": "11.0 °C outside the limits.", "ar": "11.0 °م خارج الحدود."}]
+            reasons = [
+                {
+                    "code": "arrival_temperature",
+                    "decision": "reject",
+                    "en": "11.0 °C outside the limits.",
+                    "ar": "11.0 °م خارج الحدود.",
+                }
+            ]
         start = arrived + timedelta(minutes=12)
         dwell = 23 + i % 12
         rec_rows.append(
@@ -739,7 +921,9 @@ def _receipts(db: Session, c: _Ctx) -> None:
             "qty_expected": D(qty),
             "qty_received": D(qty),
             "unit": "unit",
-            "condition": QLineCondition.damaged if decision == QLineDecision.quarantine else QLineCondition.good,
+            "condition": QLineCondition.damaged
+            if decision == QLineDecision.quarantine
+            else QLineCondition.good,
             "labels_ok": decision != QLineDecision.accept_with_deviation or i >= 40,
             "product_temp_c": D(str(temp)) if temp is not None else None,
             "mte_id": probe if temp is not None else None,
@@ -749,8 +933,12 @@ def _receipts(db: Session, c: _Ctx) -> None:
             "proposal_reasons": reasons,
             "criteria_versions": {},
             "decision": decision,
-            "reason": "Accepted with the owner's approval on file." if decision == QLineDecision.accept_with_deviation else None,
-            "claim_ref": f"CLM-COOLRD-{i:04d}" if decision == QLineDecision.reject and i != 101 else None,
+            "reason": "Accepted with the owner's approval on file."
+            if decision == QLineDecision.accept_with_deviation
+            else None,
+            "claim_ref": f"CLM-COOLRD-{i:04d}"
+            if decision == QLineDecision.reject and i != 101
+            else None,
             "recorded_by_user_id": imran,
             "decided_by_user_id": reem if decision != QLineDecision.accept else imran,
             "decided_at": start + timedelta(minutes=dwell + 10),
@@ -771,7 +959,16 @@ def _receipts(db: Session, c: _Ctx) -> None:
             c.p,
             site_id=c.site.id,
             reason=QHoldReason.receiving,
-            lines=[{"owner_customer_id": r.customer_id, "product_id": line["product_id"], "batch": line["batch"], "qty": line["qty_received"], "location": "QRT-01", "receipt_line_id": lid}],
+            lines=[
+                {
+                    "owner_customer_id": r.customer_id,
+                    "product_id": line["product_id"],
+                    "batch": line["batch"],
+                    "qty": line["qty_received"],
+                    "location": "QRT-01",
+                    "receipt_line_id": lid,
+                }
+            ],
             placed_by=imran,
             zone_id=c.zones["Z-QRT"].id,
             source=(QRecordType.receipt, rid, r.rcv_no),
@@ -790,7 +987,16 @@ def _receipts(db: Session, c: _Ctx) -> None:
     if n31 is not None and r1902 is not None:
         n31.source_id = r1902.id
         db.scalar(select(QReceiptLine).where(QReceiptLine.receipt_id == r1902.id)).ncr_id = n31.id  # type: ignore[union-attr]
-        links.add(db, c.p.id, QRecordType.ncr, n31.id, QRecordType.receipt, r1902.id, QLinkKind.raised_from, imran)
+        links.add(
+            db,
+            c.p.id,
+            QRecordType.ncr,
+            n31.id,
+            QRecordType.receipt,
+            r1902.id,
+            QLinkKind.raised_from,
+            imran,
+        )
     db.flush()
 
 
@@ -820,7 +1026,8 @@ def _stock_checks(db: Session, c: _Ctx) -> None:
                 "product_id": prod.id,
                 "picked_batch": f"PICK-{i:04d}",
                 "picked_expiry": date(2027, 1, 1) + timedelta(days=i),
-                "eligible_earliest": date(2027, 1, 1) + timedelta(days=i - (5 if res != QFefoResult.compliant else 0)),
+                "eligible_earliest": date(2027, 1, 1)
+                + timedelta(days=i - (5 if res != QFefoResult.compliant else 0)),
                 "eligible_batch": f"ELIG-{i:04d}",
                 "result": res,
                 "exception_reason": exc,
@@ -831,12 +1038,37 @@ def _stock_checks(db: Session, c: _Ctx) -> None:
     db.execute(insert(QFefoCheck), rows)
     for k in range(8):
         cid = uuid.uuid4()
-        db.add(QCycleCount(id=cid, project_id=c.p.id, cc_no=f"CC-RUH-CCH-2026-{k + 21:04d}", site_id=c.site.id, counted_at=L(date(2026, 9, 3 + k * 3), 20), zone_codes=["Z-AMB1", "Z-DRY1"], created_by_user_id=imran, seed_fake=True))
+        db.add(
+            QCycleCount(
+                id=cid,
+                project_id=c.p.id,
+                cc_no=f"CC-RUH-CCH-2026-{k + 21:04d}",
+                site_id=c.site.id,
+                counted_at=L(date(2026, 9, 3 + k * 3), 20),
+                zone_codes=["Z-AMB1", "Z-DRY1"],
+                created_by_user_id=imran,
+                seed_fake=True,
+            )
+        )
         db.flush()
         lines = []
         for j in range(50):
             off = 2 if (k * 50 + j) % 33 == 0 and (k * 50 + j) < 396 else 0
-            lines.append({"id": uuid.uuid4(), "cc_id": cid, "sku": "NDC-5001", "batch": f"NDC-U-{j:03d}", "location": f"AMB1-{j:03d}", "system_qty": D(100), "counted_qty": D(100 + off), "unit": "unit", "tolerance": D(0), "within_tolerance": off == 0, "variance_reason": "picking error" if off else None})
+            lines.append(
+                {
+                    "id": uuid.uuid4(),
+                    "cc_id": cid,
+                    "sku": "NDC-5001",
+                    "batch": f"NDC-U-{j:03d}",
+                    "location": f"AMB1-{j:03d}",
+                    "system_qty": D(100),
+                    "counted_qty": D(100 + off),
+                    "unit": "unit",
+                    "tolerance": D(0),
+                    "within_tolerance": off == 0,
+                    "variance_reason": "picking error" if off else None,
+                }
+            )
         db.execute(insert(QCycleCountLine), lines)
     dmg = []
     qtys = [30] + [20] * 19 + [2]  # 30 + 380 + 2 = 412
@@ -864,7 +1096,20 @@ def _stock_checks(db: Session, c: _Ctx) -> None:
             }
         )
     db.execute(insert(QDamageReport), dmg)
-    db.add(QThroughput(project_id=c.p.id, site_id=c.site.id, month=SEPT, units_received=940_000, units_dispatched=920_000, deliveries=1250, shipments=1250, entered_by_user_id=c.u("reem.mutairi"), updated_at=L(date(2026, 10, 1), 9), seed_fake=True))
+    db.add(
+        QThroughput(
+            project_id=c.p.id,
+            site_id=c.site.id,
+            month=SEPT,
+            units_received=940_000,
+            units_dispatched=920_000,
+            deliveries=1250,
+            shipments=1250,
+            entered_by_user_id=c.u("reem.mutairi"),
+            updated_at=L(date(2026, 10, 1), 9),
+            seed_fake=True,
+        )
+    )
     db.flush()
 
 
@@ -877,8 +1122,10 @@ def _shipments_trips(db: Session, c: _Ctx) -> None:
     from app.services.quality.q3 import excursions  # noqa: PLC0415
 
     imran, naveen = c.u("imran.siddiq"), c.u("naveen.kumar")
-    consignees = [f"Hyper Market {k + 1:02d}" for k in range(14)] + [f"Grocery {k + 1:02d}" for k in range(16)]
-    trips = []
+    consignees = [f"Hyper Market {k + 1:02d}" for k in range(14)] + [
+        f"Grocery {k + 1:02d}" for k in range(16)
+    ]
+    trips: list[dict[str, Any]] = []
     for t in range(380):
         d = SEPT + timedelta(days=t * 30 // 380)
         dep = L(d, 4 + t % 14, 15)
@@ -899,7 +1146,16 @@ def _shipments_trips(db: Session, c: _Ctx) -> None:
                 "own_fleet": False,
                 "plate_text": f"{7000 + t} KSA",
                 "reefer_serial": f"TK-{t:05d}",
-                "compartments": [{"code": "C1", "setpoint": "-20" if frozen else "3", "interval_minutes": 5, "classes": ["frozen" if frozen else "chilled"], "range_min": "-30" if frozen else "0", "range_max": "-18" if frozen else "4"}],
+                "compartments": [
+                    {
+                        "code": "C1",
+                        "setpoint": "-20" if frozen else "3",
+                        "interval_minutes": 5,
+                        "classes": ["frozen" if frozen else "chilled"],
+                        "range_min": "-30" if frozen else "0",
+                        "range_max": "-18" if frozen else "4",
+                    }
+                ],
                 "driver_name": f"Driver {t % 25 + 1}",
                 "logger_mte_ids": [],
                 "seal_numbers": [f"S{900000 + t}"],
@@ -907,7 +1163,10 @@ def _shipments_trips(db: Session, c: _Ctx) -> None:
                 "preload_passed": t not in (11, 57, 102, 160, 233, 301),
                 "preload_failures": [] if t not in (11, 57, 102, 160, 233, 301) else ["QRPL-01"],
                 "loading_temps": [],
-                "override_reason": "Box 1.5 °C above range at loading; pre-cooled 20 min more and re-checked before the doors closed." if t == 57 else None,
+                "override_reason": "Box 1.5 °C above range at loading; pre-cooled 20 min more and "
+                "re-checked before the doors closed."
+                if t == 57
+                else None,
                 "override_by_user_id": naveen if t == 57 else None,
                 "departed_at": dep,
                 "delivered_at": dep + timedelta(hours=3),
@@ -930,7 +1189,9 @@ def _shipments_trips(db: Session, c: _Ctx) -> None:
         promised = tr["departed_at"] + timedelta(hours=3)
         on_time = i < 1190
         not_full = (14 <= i < 39) or (1190 <= i < 1205)
-        delivered = promised - timedelta(minutes=20) if on_time else promised + timedelta(minutes=95)
+        delivered = (
+            promised - timedelta(minutes=20) if on_time else promised + timedelta(minutes=95)
+        )
         sid = uuid.uuid4()
         frozen = tr["compartments"][0]["classes"] == ["frozen"]
         sku = "GFF-2001" if frozen else "NDC-1001"
@@ -959,8 +1220,36 @@ def _shipments_trips(db: Session, c: _Ctx) -> None:
                 "seed_fake": True,
             }
         )
-        lines.append({"id": uuid.uuid4(), "shipment_id": sid, "product_id": c.prod[sku].id, "sku": sku, "batch": batch, "storage_class": c.prod[sku].storage_class, "ordered_qty": qty, "delivered_qty": qty - 5 if not_full else qty, "unit": "unit"})
-        pods.append({"id": uuid.uuid4(), "trip_id": tr["id"], "shipment_id": sid, "delivered_at": delivered, "receiver_name": f"Receiver {i % 40 + 1}", "receiver_role": "store keeper", "seal_intact": True, "exceptions": [{"kind": "shortage", "qty": "5", "note": "5 short"}] if not_full else [], "photo_ids": [], "recorded_by_user_id": naveen, "created_at": delivered})
+        lines.append(
+            {
+                "id": uuid.uuid4(),
+                "shipment_id": sid,
+                "product_id": c.prod[sku].id,
+                "sku": sku,
+                "batch": batch,
+                "storage_class": c.prod[sku].storage_class,
+                "ordered_qty": qty,
+                "delivered_qty": qty - 5 if not_full else qty,
+                "unit": "unit",
+            }
+        )
+        pods.append(
+            {
+                "id": uuid.uuid4(),
+                "trip_id": tr["id"],
+                "shipment_id": sid,
+                "delivered_at": delivered,
+                "receiver_name": f"Receiver {i % 40 + 1}",
+                "receiver_role": "store keeper",
+                "seal_intact": True,
+                "exceptions": [{"kind": "shortage", "qty": "5", "note": "5 short"}]
+                if not_full
+                else [],
+                "photo_ids": [],
+                "recorded_by_user_id": naveen,
+                "created_at": delivered,
+            }
+        )
     db.execute(insert(QShipment), ships)
     db.execute(insert(QShipmentLine), lines)
     db.execute(insert(QPod), pods)
@@ -972,42 +1261,77 @@ def _shipments_trips(db: Session, c: _Ctx) -> None:
                 """INSERT INTO q_readings (project_id, target_type, target_id, channel, measured_at,
                 temperature_c, source, probe_fault, voided, created_at)
                 SELECT :pid, 'trip', :tid, 'C1', t, :v, 'import', false, false, now()
-                FROM generate_series(CAST(:a AS timestamptz), CAST(:b AS timestamptz), interval '5 minutes') AS t"""
+                FROM generate_series(CAST(:a AS timestamptz), CAST(:b AS timestamptz),
+                    interval '5 minutes') AS t"""
             ),
-            {"pid": c.p.id, "tid": tr["id"], "v": base, "a": tr["departed_at"], "b": tr["departed_at"] + timedelta(hours=2)},
+            {
+                "pid": c.p.id,
+                "tid": tr["id"],
+                "v": base,
+                "a": tr["departed_at"],
+                "b": tr["departed_at"] + timedelta(hours=2),
+            },
         )
     # 4 transit excursions: TRP-00921 major (frozen at −14 °C for 100 min) and 3 minor
     bad = {321: (-14.0, 100), 40: (5.2, 20), 130: (5.0, 15), 250: (5.4, 25)}
     for t, (v, mins) in bad.items():
         tr = trips[t]
         if t == 321 and tr["compartments"][0]["classes"] != ["frozen"]:
-            tr["compartments"] = [{"code": "C1", "setpoint": "-20", "interval_minutes": 5, "classes": ["frozen"], "range_min": "-30", "range_max": "-18"}]
-            db.execute(text("UPDATE q_trips SET compartments = CAST(:c AS jsonb) WHERE id = :id"), {"c": __import__("json").dumps(tr["compartments"]), "id": tr["id"]})
-            db.execute(text("UPDATE q_readings SET temperature_c = -21 WHERE target_id = :id"), {"id": tr["id"]})
-        if tr["compartments"][0]["classes"] == ["frozen"] and t != 321:
-            v = -16.5
+            tr["compartments"] = [
+                {
+                    "code": "C1",
+                    "setpoint": "-20",
+                    "interval_minutes": 5,
+                    "classes": ["frozen"],
+                    "range_min": "-30",
+                    "range_max": "-18",
+                }
+            ]
+            db.execute(
+                text("UPDATE q_trips SET compartments = CAST(:c AS jsonb) WHERE id = :id"),
+                {"c": __import__("json").dumps(tr["compartments"]), "id": tr["id"]},
+            )
+            db.execute(
+                text("UPDATE q_readings SET temperature_c = -21 WHERE target_id = :id"),
+                {"id": tr["id"]},
+            )
+        val = -16.5 if tr["compartments"][0]["classes"] == ["frozen"] and t != 321 else v
         a = tr["departed_at"] + timedelta(minutes=30)
         db.execute(
-            text("UPDATE q_readings SET temperature_c = :v WHERE target_id = :id AND measured_at >= :a AND measured_at < :b"),
-            {"v": v, "id": tr["id"], "a": a, "b": a + timedelta(minutes=mins)},
+            text(
+                "UPDATE q_readings SET temperature_c = :v WHERE target_id = :id AND measured_at "
+                ">= :a AND measured_at < :b"
+            ),
+            {"v": val, "id": tr["id"], "a": a, "b": a + timedelta(minutes=mins)},
         )
     db.flush()
-    orig = excursions._on_detected  # noqa: SLF001
-    excursions._on_detected = lambda *_a, **_k: None  # type: ignore[assignment]  # noqa: SLF001
-    try:
-        for t in bad:
-            trow = db.get(QTrip, trips[t]["id"])
-            assert trow is not None  # noqa: S101
-            excursions.detect_trip(db, c.p, trow, imran, notify=False)
-    finally:
-        excursions._on_detected = orig  # type: ignore[method-assign]  # noqa: SLF001
-    xs = list(db.scalars(select(QExcursion).where(QExcursion.project_id == c.p.id, QExcursion.trip_id.is_not(None), QExcursion.transient.is_(False)).order_by(QExcursion.started_at)))
+    for t in bad:
+        trow = db.get(QTrip, trips[t]["id"])
+        assert trow is not None  # noqa: S101
+        excursions.detect_trip(db, c.p, trow, imran, notify=False, auto=False)
+    xs = list(
+        db.scalars(
+            select(QExcursion)
+            .where(
+                QExcursion.project_id == c.p.id,
+                QExcursion.trip_id.is_not(None),
+                QExcursion.transient.is_(False),
+            )
+            .order_by(QExcursion.started_at)
+        )
+    )
     for k, x in enumerate(xs):
         x.exc_no = f"EXC-RUH-CCH-2026-{43 + k:04d}"
-        x.status = QExcursionStatus.closed if x.severity.value == "minor" else QExcursionStatus.under_assessment
+        x.status = (
+            QExcursionStatus.closed
+            if x.severity.value == "minor"
+            else QExcursionStatus.under_assessment
+        )
         x.cause = QExcursionCause.loading_delay
         if x.severity.value == "minor":
-            x.no_impact_note = "Short rise during unloading at the consignee; product within tolerance."
+            x.no_impact_note = (
+                "Short rise during unloading at the consignee; product within tolerance."
+            )
             x.closed_at = x.started_at + timedelta(hours=8)
     t921 = db.scalar(select(QTrip).where(QTrip.trip_no == "TRP-RUH-CCH-2026-00921"))
     n36 = db.scalar(select(QNcr).where(QNcr.ncr_no == "NCR-RUH-CCH-2026-0036"))
@@ -1018,7 +1342,16 @@ def _shipments_trips(db: Session, c: _Ctx) -> None:
                 x.ncr_id = n36.id
         for s in db.scalars(select(QShipment).where(QShipment.trip_id == t921.id)):
             s.notify_consignee = True
-        links.add(db, c.p.id, QRecordType.ncr, n36.id, QRecordType.trip, t921.id, QLinkKind.raised_from, imran)
+        links.add(
+            db,
+            c.p.id,
+            QRecordType.ncr,
+            n36.id,
+            QRecordType.trip,
+            t921.id,
+            QLinkKind.raised_from,
+            imran,
+        )
     _ = eng
     db.flush()
 
@@ -1048,7 +1381,7 @@ def _recall(db: Session, c: _Ctx) -> None:
     db.flush()
     t = recalls.trace(db, r)
     r.snapshot_id = t["snapshot_id"]
-    r.trace = recalls._jsonable(t)  # noqa: SLF001
+    r.trace = recalls._jsonable(t)
     r.effectiveness_pct = recalls.effectiveness(db, r, t)
     numbering.bump_to(db, c.p, QRecordType.recall, 2026, 2)
 
@@ -1060,7 +1393,14 @@ def _hygiene(db: Session, c: _Ctx) -> None:
 
     t = checklists.template(db, "hygiene", "QHYG")
     imran = c.u("imran.siddiq")
-    missed = {("Z-DOCK", 4), ("Z-DOCK", 18), ("Z-FRZ1", 12), ("Z-PHR1", 22), ("Z-AMB1", 7), ("Z-AMB1", 26)}
+    missed = {
+        ("Z-DOCK", 4),
+        ("Z-DOCK", 18),
+        ("Z-FRZ1", 12),
+        ("Z-PHR1", 22),
+        ("Z-AMB1", 7),
+        ("Z-AMB1", 26),
+    }
     rows = []
     for zc in ("Z-DOCK", "Z-FRZ1", "Z-PHR1", "Z-AMB1"):
         for i in range(30):
@@ -1085,7 +1425,16 @@ def _hygiene(db: Session, c: _Ctx) -> None:
                     "completed_date": d,
                     "received_at": at,
                     "inspector_id": imran,
-                    "answers": [{"item_code": it["item_code"], "answer": "compliant", "compliant": True, "critical": it["critical"], "applicable": True} for it in t.items],
+                    "answers": [
+                        {
+                            "item_code": it["item_code"],
+                            "answer": "compliant",
+                            "compliant": True,
+                            "critical": it["critical"],
+                            "applicable": True,
+                        }
+                        for it in t.items
+                    ],
                     "applicable_count": len(t.items),
                     "compliant_count": len(t.items),
                     "applicable_weight": D(sum(int(it["weight"]) for it in t.items)),
@@ -1102,10 +1451,37 @@ def _hygiene(db: Session, c: _Ctx) -> None:
                 }
             )
     db.execute(insert(ChecklistResponse), rows)
-    stations = list(db.scalars(select(QPestStation).where(QPestStation.site_id == c.site.id).order_by(QPestStation.code)))
+    stations = list(
+        db.scalars(
+            select(QPestStation)
+            .where(QPestStation.site_id == c.site.id)
+            .order_by(QPestStation.code)
+        )
+    )
     for n, d in enumerate((date(2026, 8, 30), date(2026, 9, 27)), start=1):
-        res = [{"station_id": str(s.id), "activity": "low" if s.code == "RB-14" else "none", "pest_type": "rodent" if s.code == "RB-14" else None, "bait_consumed_pct": 30 if s.code == "RB-14" else 0, "action": "bait replaced" if s.code == "RB-14" else None} for s in stations]
-        props = [{"station": "RB-14", "station_id": str(next(s.id for s in stations if s.code == "RB-14")), "why": ["activity on 2 consecutive visits"], "kinds": ["quality_alert", "ncr"], "source_type": "hygiene_pest"}] if n == 2 else []
+        res = [
+            {
+                "station_id": str(s.id),
+                "activity": "low" if s.code == "RB-14" else "none",
+                "pest_type": "rodent" if s.code == "RB-14" else None,
+                "bait_consumed_pct": 30 if s.code == "RB-14" else 0,
+                "action": "bait replaced" if s.code == "RB-14" else None,
+            }
+            for s in stations
+        ]
+        props = (
+            [
+                {
+                    "station": "RB-14",
+                    "station_id": str(next(s.id for s in stations if s.code == "RB-14")),
+                    "why": ["activity on 2 consecutive visits"],
+                    "kinds": ["quality_alert", "ncr"],
+                    "source_type": "hygiene_pest",
+                }
+            ]
+            if n == 2
+            else []
+        )
         v = QPestVisit(
             id=uuid.uuid4(),
             project_id=c.p.id,
@@ -1114,7 +1490,13 @@ def _hygiene(db: Session, c: _Ctx) -> None:
             provider_supplier_id=c.sup["SHIELD"].id,
             visited_at=L(d, 10),
             technician_name="Shield technician",
-            chemicals=[{"product": "Brodifacoum block 0.005 %", "registration_no": "[VERIFY]", "quantity": "2 kg"}],
+            chemicals=[
+                {
+                    "product": "Brodifacoum block 0.005 %",
+                    "registration_no": "[VERIFY]",
+                    "quantity": "2 kg",
+                }
+            ],
             station_results=res,
             not_serviced=[],
             proposals=[],
@@ -1137,11 +1519,22 @@ def _mapping(db: Session, c: _Ctx) -> None:
     from app.services.quality import numbering  # noqa: PLC0415
 
     loggers = [m for k, m in sorted(c.mte.items()) if 101 <= int(k[4:]) <= 127]
-    mtes = loggers + [db.scalar(select(QMteItem).where(QMteItem.project_id == c.p.id, QMteItem.mte_no == f"MTE-{n:04d}")) for n in range(123, 128) if f"MTE-{n:04d}" not in c.mte]
-    mtes = [m for m in mtes if m is not None][:27]
+    mtes = loggers[:27]
     res = []
     for k, m in enumerate(mtes):
-        res.append({"position_code": f"L{k + 1:02d}", "mte_id": str(m.id), "readings": 2016, "readings_in_test_windows": 12 if k < 3 else 0, "min_c": str(-25.8 + (k % 5) * 0.2), "max_c": str(-19.4 - (k % 4) * 0.3), "mean_c": "-22.1", "pct_in_range": "100.0", "in_range": True})
+        res.append(
+            {
+                "position_code": f"L{k + 1:02d}",
+                "mte_id": str(m.id),
+                "readings": 2016,
+                "readings_in_test_windows": 12 if k < 3 else 0,
+                "min_c": str(-25.8 + (k % 5) * 0.2),
+                "max_c": str(-19.4 - (k % 4) * 0.3),
+                "mean_c": "-22.1",
+                "pct_in_range": "100.0",
+                "in_range": True,
+            }
+        )
     reem, faisal = c.u("reem.mutairi"), c.u("faisal.harbi")
     db.add(
         QMappingStudy(
@@ -1156,12 +1549,36 @@ def _mapping(db: Session, c: _Ctx) -> None:
             actual_start=L(date(2026, 7, 14), 8),
             actual_end=L(date(2026, 7, 21), 8),
             interval_minutes=5,
-            loggers=[{"mte_id": str(m.id), "position_code": f"L{k + 1:02d}", "description": f"Grid {k // 9 + 1}-{k % 9 + 1}, height {('low', 'mid', 'high')[k % 3]}"} for k, m in enumerate(mtes)],
-            test_windows=[{"kind": "door_open", "from": L(date(2026, 7, 16), 10).isoformat(), "to": L(date(2026, 7, 16), 11).isoformat()}],
+            loggers=[
+                {
+                    "mte_id": str(m.id),
+                    "position_code": f"L{k + 1:02d}",
+                    "description": f"Grid {k // 9 + 1}-{k % 9 + 1}, height "
+                    f"{('low', 'mid', 'high')[k % 3]}",
+                }
+                for k, m in enumerate(mtes)
+            ],
+            test_windows=[
+                {
+                    "kind": "door_open",
+                    "from": L(date(2026, 7, 16), 10).isoformat(),
+                    "to": L(date(2026, 7, 16), 11).isoformat(),
+                }
+            ],
             lead_user_id=reem,
-            results={"loggers": res, "zone_min_c": "-25.8", "zone_max_c": "-19.4", "hot_spot": "L01", "cold_spot": "L05", "evaluated_at": L(date(2026, 7, 23), 9).isoformat()},
+            results={
+                "loggers": res,
+                "zone_min_c": "-25.8",
+                "zone_max_c": "-19.4",
+                "hot_spot": "L01",
+                "cold_spot": "L05",
+                "evaluated_at": L(date(2026, 7, 23), 9).isoformat(),
+            },
             passed=True,
-            recommended_positions=[{"position": "hot_spot", "position_code": "L01"}, {"position": "cold_spot", "position_code": "L05"}],
+            recommended_positions=[
+                {"position": "hot_spot", "position_code": "L01"},
+                {"position": "cold_spot", "position_code": "L05"},
+            ],
             status=QMappingStatus.approved,
             approved_at=L(date(2026, 7, 28), 11),
             approved_on=date(2026, 7, 28),
@@ -1180,7 +1597,14 @@ def _mapping(db: Session, c: _Ctx) -> None:
             planned_start=L(date(2026, 10, 12), 8),
             planned_end=L(date(2026, 10, 15), 8),
             interval_minutes=5,
-            loggers=[{"mte_id": str(m.id), "position_code": f"P{k + 1:02d}", "description": f"Shelf {k + 1}"} for k, m in enumerate(mtes[:9])],
+            loggers=[
+                {
+                    "mte_id": str(m.id),
+                    "position_code": f"P{k + 1:02d}",
+                    "description": f"Shelf {k + 1}",
+                }
+                for k, m in enumerate(mtes[:9])
+            ],
             test_windows=[],
             lead_user_id=reem,
             recommended_positions=[],

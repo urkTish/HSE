@@ -840,9 +840,7 @@ class QTrip(Audited, Base):
     override_reason: Mapped[str | None] = mapped_column(String(500))
     override_by_user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))
     override_requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    override_requested_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("users.id")
-    )
+    override_requested_by_user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))
     readiness: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     departed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

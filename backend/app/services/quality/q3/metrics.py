@@ -62,11 +62,22 @@ def month(db: Session, project: Project, year: int, mon: int) -> dict[str, Any]:
     out: dict[str, Any] = {"year": year, "month": mon}
 
     # K-160 receiving
-    rec = list(db.scalars(select(QReceipt).where(QReceipt.project_id == project.id, QReceipt.status == QReceiptStatus.decided, QReceipt.decided_at >= a, QReceipt.decided_at < e)))
+    rec = list(
+        db.scalars(
+            select(QReceipt).where(
+                QReceipt.project_id == project.id,
+                QReceipt.status == QReceiptStatus.decided,
+                QReceipt.decided_at >= a,
+                QReceipt.decided_at < e,
+            )
+        )
+    )
     ids = [r.id for r in rec]
     decs: dict[uuid.UUID, set[QLineDecision]] = {}
     n_lines = n_rej_lines = 0
-    for ln in db.scalars(select(QReceiptLine).where(QReceiptLine.receipt_id.in_(ids or [uuid.uuid4()]))):
+    for ln in db.scalars(
+        select(QReceiptLine).where(QReceiptLine.receipt_id.in_(ids or [uuid.uuid4()]))
+    ):
         decs.setdefault(ln.receipt_id, set()).add(ln.decision)  # type: ignore[arg-type]
         n_lines += 1
         n_rej_lines += ln.decision == QLineDecision.reject
@@ -74,15 +85,30 @@ def month(db: Session, project: Project, year: int, mon: int) -> dict[str, Any]:
     out["k160"] = {
         "receipts": len(rec),
         "rejected": sum(1 for r in rec if QLineDecision.reject in decs.get(r.id, set())),
-        "value": pct(sum(1 for r in rec if QLineDecision.reject in decs.get(r.id, set())), len(rec)),
-        "deviation_rate": pct(sum(1 for r in rec if QLineDecision.accept_with_deviation in decs.get(r.id, set())), len(rec)),
-        "quarantine_rate": pct(sum(1 for r in rec if QLineDecision.quarantine in decs.get(r.id, set())), len(rec)),
+        "value": pct(
+            sum(1 for r in rec if QLineDecision.reject in decs.get(r.id, set())), len(rec)
+        ),
+        "deviation_rate": pct(
+            sum(1 for r in rec if QLineDecision.accept_with_deviation in decs.get(r.id, set())),
+            len(rec),
+        ),
+        "quarantine_rate": pct(
+            sum(1 for r in rec if QLineDecision.quarantine in decs.get(r.id, set())), len(rec)
+        ),
         "line_rejection_pct": pct(n_rej_lines, n_lines),
-        "dock_dwell_over_limit": sum(1 for r in rec if r.dwell_minutes is not None and r.dwell_minutes > lim),
+        "dock_dwell_over_limit": sum(
+            1 for r in rec if r.dwell_minutes is not None and r.dwell_minutes > lim
+        ),
     }
 
     # K-161 / K-162 storage
-    zones = list(db.scalars(select(QStorageZone).where(QStorageZone.project_id == project.id, QStorageZone.active.is_(True))))
+    zones = list(
+        db.scalars(
+            select(QStorageZone).where(
+                QStorageZone.project_id == project.id, QStorageZone.active.is_(True)
+            )
+        )
+    )
     mon_total = out_total = period_total = 0
     zone_months = 0
     per_zone = []
@@ -97,7 +123,15 @@ def month(db: Session, project: Project, year: int, mon: int) -> dict[str, Any]:
         out_total += o_
         period_total += p_
         gaps += len(eng.gaps(gr, gmin))
-        per_zone.append({"zone_id": z.zone_id, "monitored": m_, "out": o_, "tor_pct": pct(o_, m_, "0.01"), "coverage_pct": pct(m_, p_)})
+        per_zone.append(
+            {
+                "zone_id": z.zone_id,
+                "monitored": m_,
+                "out": o_,
+                "tor_pct": pct(o_, m_, "0.01"),
+                "coverage_pct": pct(m_, p_),
+            }
+        )
     excs = list(
         db.scalars(
             select(QExcursion).where(
@@ -113,10 +147,25 @@ def month(db: Session, project: Project, year: int, mon: int) -> dict[str, Any]:
     out["k161"] = {
         "excursions": len(storage_x),
         "zone_months": zone_months,
-        "value": (D(len(storage_x)) / zone_months).quantize(D("0.01"), ROUND_HALF_UP) if zone_months else None,
-        "by_severity": {s: sum(1 for x in storage_x if x.severity.value == s) for s in ("minor", "major", "critical")},
+        "value": (D(len(storage_x)) / zone_months).quantize(D("0.01"), ROUND_HALF_UP)
+        if zone_months
+        else None,
+        "by_severity": {
+            s: sum(1 for x in storage_x if x.severity.value == s)
+            for s in ("minor", "major", "critical")
+        },
         "transit_excursions": sum(1 for x in excs if x.kind == QExcursionKind.transit),
-        "dismissed": db.scalar(select(func.count()).select_from(QExcursion).where(QExcursion.project_id == project.id, QExcursion.status == QExcursionStatus.dismissed, QExcursion.started_at >= a, QExcursion.started_at < e)) or 0,
+        "dismissed": db.scalar(
+            select(func.count())
+            .select_from(QExcursion)
+            .where(
+                QExcursion.project_id == project.id,
+                QExcursion.status == QExcursionStatus.dismissed,
+                QExcursion.started_at >= a,
+                QExcursion.started_at < e,
+            )
+        )
+        or 0,
     }
     out["k162"] = {
         "monitored_minutes": mon_total,
@@ -131,38 +180,91 @@ def month(db: Session, project: Project, year: int, mon: int) -> dict[str, Any]:
 
     # K-163 OTIF (Q-TRN-08)
     window = timedelta(minutes=int(b.setting(db, project.id, "otif_window_minutes")))
-    ships = list(db.scalars(select(QShipment).where(QShipment.project_id == project.id, QShipment.delivered_at >= a, QShipment.delivered_at < e, QShipment.promised_at.is_not(None))))
+    ships = list(
+        db.scalars(
+            select(QShipment).where(
+                QShipment.project_id == project.id,
+                QShipment.delivered_at >= a,
+                QShipment.delivered_at < e,
+                QShipment.promised_at.is_not(None),
+            )
+        )
+    )
     on_time = in_full = both = 0
     for s in ships:
         ot = s.delivered_at <= s.promised_at + window  # type: ignore[operator]
         lines = list(db.scalars(select(QShipmentLine).where(QShipmentLine.shipment_id == s.id)))
-        inf = all(ln.delivered_qty is not None and ln.delivered_qty >= ln.ordered_qty for ln in lines)
+        inf = all(
+            ln.delivered_qty is not None and ln.delivered_qty >= ln.ordered_qty for ln in lines
+        )
         on_time += ot
         in_full += inf
         both += ot and inf
-    out["k163"] = {"shipments": len(ships), "on_time": on_time, "in_full": in_full, "otif": both, "value": pct(both, len(ships))}
+    out["k163"] = {
+        "shipments": len(ships),
+        "on_time": on_time,
+        "in_full": in_full,
+        "otif": both,
+        "value": pct(both, len(ships)),
+    }
 
     # K-164 damage
-    dmg = db.scalar(select(func.coalesce(func.sum(QDamageReport.qty), 0)).where(QDamageReport.project_id == project.id, QDamageReport.reported_at >= a, QDamageReport.reported_at < e)) or 0
+    dmg = (
+        db.scalar(
+            select(func.coalesce(func.sum(QDamageReport.qty), 0)).where(
+                QDamageReport.project_id == project.id,
+                QDamageReport.reported_at >= a,
+                QDamageReport.reported_at < e,
+            )
+        )
+        or 0
+    )
     thr = db.execute(
-        select(func.coalesce(func.sum(QThroughput.units_received), 0), func.coalesce(func.sum(QThroughput.units_dispatched), 0)).where(QThroughput.project_id == project.id, QThroughput.month == first)
+        select(
+            func.coalesce(func.sum(QThroughput.units_received), 0),
+            func.coalesce(func.sum(QThroughput.units_dispatched), 0),
+        ).where(QThroughput.project_id == project.id, QThroughput.month == first)
     ).one()
     handled = int(thr[0]) + int(thr[1])
     out["k164"] = {
         "units_damaged": D(dmg),
         "units_handled": handled,
         "value": pct(D(dmg), handled, "0.001"),
-        "ppm": (D(dmg) * 1_000_000 / handled).quantize(D("0.1"), ROUND_HALF_UP) if handled else None,
+        "ppm": (D(dmg) * 1_000_000 / handled).quantize(D("0.1"), ROUND_HALF_UP)
+        if handled
+        else None,
     }
 
     # K-165 inventory record accuracy
-    cc_ids = [c.id for c in db.scalars(select(QCycleCount).where(QCycleCount.project_id == project.id, QCycleCount.voided.is_(False), QCycleCount.counted_at >= a, QCycleCount.counted_at < e))]
-    cc_lines = list(db.scalars(select(QCycleCountLine).where(QCycleCountLine.cc_id.in_(cc_ids or [uuid.uuid4()]))))
+    cc_ids = [
+        c.id
+        for c in db.scalars(
+            select(QCycleCount).where(
+                QCycleCount.project_id == project.id,
+                QCycleCount.voided.is_(False),
+                QCycleCount.counted_at >= a,
+                QCycleCount.counted_at < e,
+            )
+        )
+    ]
+    cc_lines = list(
+        db.scalars(
+            select(QCycleCountLine).where(QCycleCountLine.cc_id.in_(cc_ids or [uuid.uuid4()]))
+        )
+    )
     within = sum(1 for x in cc_lines if x.within_tolerance)
     out["k165"] = {"lines": len(cc_lines), "within": within, "value": pct(within, len(cc_lines))}
 
     # K-166 FEFO
-    checks = list(db.scalars(select(QFefoCheck).where(QFefoCheck.project_id == project.id, QFefoCheck.checked_at >= a, QFefoCheck.checked_at < e)))
+    checks = list(
+        db.scalars(
+            select(QFefoCheck).where(
+                QFefoCheck.project_id == project.id,
+                QFefoCheck.checked_at >= a,
+                QFefoCheck.checked_at < e,
+            )
+        )
+    )
     ok = sum(1 for x in checks if stock_svc.fefo_counts(x))
     out["k166"] = {
         "checks": len(checks),
@@ -173,7 +275,16 @@ def month(db: Session, project: Project, year: int, mon: int) -> dict[str, Any]:
     }
 
     # K-167 transport temperature
-    trips = list(db.scalars(select(QTrip).where(QTrip.project_id == project.id, QTrip.status.in_([QTripStatus.delivered, QTripStatus.closed]), QTrip.delivered_at >= a, QTrip.delivered_at < e)))
+    trips = list(
+        db.scalars(
+            select(QTrip).where(
+                QTrip.project_id == project.id,
+                QTrip.status.in_([QTripStatus.delivered, QTripStatus.closed]),
+                QTrip.delivered_at >= a,
+                QTrip.delivered_at < e,
+            )
+        )
+    )
     with_data = [t for t in trips if t.transit_data]
     bad = {x.trip_id for x in excs if x.kind == QExcursionKind.transit}
     out["k167"] = {
@@ -192,7 +303,9 @@ def month(db: Session, project: Project, year: int, mon: int) -> dict[str, Any]:
     return out
 
 
-def month_api(db: Session, p: Principal, project_id: uuid.UUID, year: int, mon: int) -> dict[str, Any]:
+def month_api(
+    db: Session, p: Principal, project_id: uuid.UUID, year: int, mon: int
+) -> dict[str, Any]:
     project = qc.get_project(db, p, project_id)
     g = b.list_grant(p, project.id)
     if g.scope.value == "responsible":

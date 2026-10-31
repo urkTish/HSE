@@ -60,7 +60,12 @@ TWO = Decimal("0.01")
 MAX_ERRORS = 1000
 
 DEFAULT_COLUMNS: dict[QImportKind, dict[str, str]] = {
-    QImportKind.readings: {"time": "time", "temperature": "temperature", "humidity": "humidity", "channel": "channel"},
+    QImportKind.readings: {
+        "time": "time",
+        "temperature": "temperature",
+        "humidity": "humidity",
+        "channel": "channel",
+    },
     QImportKind.stock_snapshot: {
         "owner": "owner",
         "sku": "sku",
@@ -126,7 +131,7 @@ class RowError(Exception):
     pass
 
 
-# ---- profile and parsing --------------------------------------------------------------------------
+# ---- profile and parsing -------------------------------------------------------------------------
 
 
 def _tz(name: str | None) -> Any:
@@ -141,7 +146,9 @@ def _tz(name: str | None) -> Any:
     try:
         return ZoneInfo(name)
     except (ZoneInfoNotFoundError, ValueError) as e:
-        raise qc.field_err("profile", f"Unknown time zone {name}.", "منطقة زمنية غير معروفة.") from e
+        raise qc.field_err(
+            "profile", f"Unknown time zone {name}.", "منطقة زمنية غير معروفة."
+        ) from e
 
 
 def normalise_profile(kind: QImportKind, raw: dict[str, Any] | None) -> dict[str, Any]:
@@ -152,7 +159,9 @@ def normalise_profile(kind: QImportKind, raw: dict[str, Any] | None) -> dict[str
         raise qc.field_err("profile", "Unit is C or F.", "الوحدة C أو F.")
     dec = raw.get("decimal") or "."
     if dec not in (".", ","):
-        raise qc.field_err("profile", "Decimal separator is '.' or ','.", "الفاصل العشري '.' أو ','.")
+        raise qc.field_err(
+            "profile", "Decimal separator is '.' or ','.", "الفاصل العشري '.' أو ','."
+        )
     tzname = raw.get("timezone") or "Asia/Riyadh"
     _tz(tzname)
     return {
@@ -173,7 +182,7 @@ def parse_time(v: str, prof: dict[str, Any]) -> datetime:
     dt: datetime | None = None
     if prof.get("date_format"):
         try:
-            dt = datetime.strptime(s, prof["date_format"])  # noqa: DTZ007 (zone applied below)
+            dt = datetime.strptime(s, prof["date_format"])
         except ValueError as e:
             raise RowError(f"time '{s}' does not match {prof['date_format']}") from e
     else:
@@ -182,7 +191,7 @@ def parse_time(v: str, prof: dict[str, Any]) -> datetime:
         except ValueError:
             for f in FORMATS:
                 try:
-                    dt = datetime.strptime(s, f)  # noqa: DTZ007
+                    dt = datetime.strptime(s, f)
                     break
                 except ValueError:
                     continue
@@ -193,7 +202,9 @@ def parse_time(v: str, prof: dict[str, Any]) -> datetime:
     return dt.astimezone(UTC)
 
 
-def parse_date(v: str | None, prof: dict[str, Any], what: str, required: bool = False) -> date | None:
+def parse_date(
+    v: str | None, prof: dict[str, Any], what: str, required: bool = False
+) -> date | None:
     s = (v or "").strip()
     if not s:
         if required:
@@ -201,13 +212,15 @@ def parse_date(v: str | None, prof: dict[str, Any], what: str, required: bool = 
         return None
     for f in ("%Y-%m-%d", "%d/%m/%Y", "%d.%m.%Y", "%Y/%m/%d"):
         try:
-            return datetime.strptime(s, f).date()  # noqa: DTZ007
+            return datetime.strptime(s, f).date()
         except ValueError:
             continue
     raise RowError(f"{what} '{s}' is not a date")
 
 
-def parse_dec(v: str | None, prof: dict[str, Any], what: str, required: bool = False) -> Decimal | None:
+def parse_dec(
+    v: str | None, prof: dict[str, Any], what: str, required: bool = False
+) -> Decimal | None:
     s = (v or "").strip()
     if not s:
         if required:
@@ -258,27 +271,37 @@ def gtin_ok(g: str) -> bool:
     return (10 - total % 10) % 10 == check
 
 
-# ---- entry point ----------------------------------------------------------------------------------
+# ---- entry point ---------------------------------------------------------------------------------
 
 
-def _target(db: Session, project: Project, kind: QImportKind, ttype: QImportTarget, tid: uuid.UUID) -> tuple[Any, uuid.UUID | None]:
+def _target(
+    db: Session, project: Project, kind: QImportKind, ttype: QImportTarget, tid: uuid.UUID
+) -> tuple[Any, uuid.UUID | None]:
     """The target row and its site."""
     if kind == QImportKind.readings:
         if ttype == QImportTarget.point:
             pt = db.get(QMonitoringPoint, tid)
             if pt is None or pt.project_id != project.id:
-                raise qc.field_err("target_id", "The monitoring point is not on this project.", "نقطة المراقبة ليست في المشروع.")
+                raise qc.field_err(
+                    "target_id",
+                    "The monitoring point is not on this project.",
+                    "نقطة المراقبة ليست في المشروع.",
+                )
             z = db.get(QStorageZone, pt.zone_id)
             return pt, z.site_id if z else None
         if ttype == QImportTarget.trip:
             t = db.get(QTrip, tid)
             if t is None or t.project_id != project.id:
-                raise qc.field_err("target_id", "The trip is not on this project.", "الرحلة ليست في المشروع.")
+                raise qc.field_err(
+                    "target_id", "The trip is not on this project.", "الرحلة ليست في المشروع."
+                )
             return t, t.site_id
         if ttype == QImportTarget.mapping_study:
             m = db.get(QMappingStudy, tid)
             if m is None or m.project_id != project.id:
-                raise qc.field_err("target_id", "The study is not on this project.", "الدراسة ليست في المشروع.")
+                raise qc.field_err(
+                    "target_id", "The study is not on this project.", "الدراسة ليست في المشروع."
+                )
             z = db.get(QStorageZone, m.zone_id)
             return m, z.site_id if z else None
         if ttype == QImportTarget.receipt:
@@ -286,12 +309,20 @@ def _target(db: Session, project: Project, kind: QImportKind, ttype: QImportTarg
 
             r = db.get(QReceipt, tid)
             if r is None or r.project_id != project.id:
-                raise qc.field_err("target_id", "The receipt is not on this project.", "الاستلام ليس في المشروع.")
+                raise qc.field_err(
+                    "target_id", "The receipt is not on this project.", "الاستلام ليس في المشروع."
+                )
             return r, r.site_id
-        raise qc.field_err("target_type", "Readings go to a point, a trip, a study or a receipt.", "هدف القراءات غير صالح.")
+        raise qc.field_err(
+            "target_type",
+            "Readings go to a point, a trip, a study or a receipt.",
+            "هدف القراءات غير صالح.",
+        )
     if kind == QImportKind.products:
         if tid != project.id:
-            raise qc.field_err("target_id", "Products are imported for the project.", "تُستورد المنتجات للمشروع.")
+            raise qc.field_err(
+                "target_id", "Products are imported for the project.", "تُستورد المنتجات للمشروع."
+            )
         return project, None
     site = b.site_of(db, project, tid)
     return site, site.id
@@ -405,7 +436,15 @@ def import_file(
         )
         batch.attachment_id = att.id
     if p is not None:
-        b.audit_create(db, p, project, QRecordType.excursion, batch.id, kind=kind.value, rows=batch.rows_accepted)
+        b.audit_create(
+            db,
+            p,
+            project,
+            QRecordType.excursion,
+            batch.id,
+            kind=kind.value,
+            rows=batch.rows_accepted,
+        )
     db.flush()
     return {**batch_read(db, batch), **extra}
 
@@ -473,7 +512,10 @@ def _readings(
             if rh is not None and not (Decimal(0) <= rh <= Decimal(100)):
                 raise RowError(f"humidity {rh} % outside 0…100")
             ch = (col(prof, row, "channel") or "").strip() or default_channel
-            if prof.get("logger_serial_column") and batch.target_type == QImportTarget.mapping_study:
+            if (
+                prof.get("logger_serial_column")
+                and batch.target_type == QImportTarget.mapping_study
+            ):
                 ch = (row.get(prof["logger_serial_column"]) or "").strip() or ch
             key = (ch, at)
             if key in seen:
@@ -500,7 +542,12 @@ def _readings(
         keep = []
         for x in parsed:
             if (x[4], x[1]) in stored:
-                errors.append({"row": x[0], "reason": "a reading at this time is already stored for the target"})
+                errors.append(
+                    {
+                        "row": x[0],
+                        "reason": "a reading at this time is already stored for the target",
+                    }
+                )
             else:
                 keep.append(x)
         parsed = keep
@@ -540,7 +587,9 @@ def _readings(
     return {"excursions": [excursions.brief(x) for x in found if not x.transient]}
 
 
-def recompute(db: Session, project: Project, batch: QImportBatch, uid: uuid.UUID | None, notify: bool = True) -> list[Any]:
+def recompute(
+    db: Session, project: Project, batch: QImportBatch, uid: uuid.UUID | None, notify: bool = True
+) -> list[Any]:
     from app.services.quality.q3 import excursions, mapping  # noqa: PLC0415
 
     if batch.first_at is None or batch.last_at is None:
@@ -550,7 +599,9 @@ def recompute(db: Session, project: Project, batch: QImportBatch, uid: uuid.UUID
         z = db.get(QStorageZone, pt.zone_id) if pt else None
         if z is None:
             return []
-        return excursions.detect_zone(db, project, z, batch.first_at, batch.last_at, uid, notify=notify)
+        return excursions.detect_zone(
+            db, project, z, batch.first_at, batch.last_at, uid, notify=notify
+        )
     if batch.target_type in (QImportTarget.trip,):
         t = db.get(QTrip, batch.target_id)
         if t is None:
@@ -577,7 +628,9 @@ def recompute(db: Session, project: Project, batch: QImportBatch, uid: uuid.UUID
 
 
 def _owners(db: Session, project: Project) -> dict[str, QCustomer]:
-    return {c.code: c for c in db.scalars(select(QCustomer).where(QCustomer.project_id == project.id))}
+    return {
+        c.code: c for c in db.scalars(select(QCustomer).where(QCustomer.project_id == project.id))
+    }
 
 
 def _products_by(db: Session, project: Project) -> dict[tuple[uuid.UUID | None, str], QProduct]:
@@ -591,11 +644,20 @@ def _products_by(db: Session, project: Project) -> dict[tuple[uuid.UUID | None, 
 def _zones(db: Session, project: Project) -> dict[str, uuid.UUID]:
     return {
         z.code: z.id
-        for z in db.scalars(select(Zone).join(Site, Site.id == Zone.site_id).where(Site.project_id == project.id))
+        for z in db.scalars(
+            select(Zone).join(Site, Site.id == Zone.site_id).where(Site.project_id == project.id)
+        )
     }
 
 
-def _snapshot(db: Session, project: Project, batch: QImportBatch, rows: list[dict[str, str]], prof: dict[str, Any], as_of: datetime) -> dict[str, Any]:
+def _snapshot(
+    db: Session,
+    project: Project,
+    batch: QImportBatch,
+    rows: list[dict[str, str]],
+    prof: dict[str, Any],
+    as_of: datetime,
+) -> dict[str, Any]:
     owners, prods, zones = _owners(db, project), _products_by(db, project), _zones(db, project)
     errors: list[dict[str, Any]] = []
     out = []
@@ -619,12 +681,16 @@ def _snapshot(db: Session, project: Project, batch: QImportBatch, rows: list[dic
             prod = prods.get((owner.id if owner else None, sku))
             out.append(
                 {
-                    "owner_customer_id": owner.id if owner else (prod.owner_customer_id if prod else None),
+                    "owner_customer_id": owner.id
+                    if owner
+                    else (prod.owner_customer_id if prod else None),
                     "product_id": prod.id if prod else None,
                     "sku": sku,
                     "batch": bt,
                     "expiry_date": parse_date(col(prof, row, "expiry"), prof, "expiry"),
-                    "receipt_date": parse_date(col(prof, row, "receipt_date"), prof, "receipt_date"),
+                    "receipt_date": parse_date(
+                        col(prof, row, "receipt_date"), prof, "receipt_date"
+                    ),
                     "location": loc,
                     "zone_code": zc,
                     "zone_id": zones.get(zc) if zc else None,
@@ -648,13 +714,21 @@ def _snapshot(db: Session, project: Project, batch: QImportBatch, rows: list[dic
     db.add(snap)
     db.flush()
     if out:
-        db.execute(insert(QStockLine), [{**x, "id": uuid.uuid4(), "snapshot_id": snap.id} for x in out])
+        db.execute(
+            insert(QStockLine), [{**x, "id": uuid.uuid4(), "snapshot_id": snap.id} for x in out]
+        )
     batch.rows_accepted = len(out)
     batch.first_at = batch.last_at = as_of
     return {"snapshot_id": snap.id}
 
 
-def _shipments(db: Session, project: Project, batch: QImportBatch, rows: list[dict[str, str]], prof: dict[str, Any]) -> dict[str, Any]:
+def _shipments(
+    db: Session,
+    project: Project,
+    batch: QImportBatch,
+    rows: list[dict[str, str]],
+    prof: dict[str, Any],
+) -> dict[str, Any]:
     owners, prods = _owners(db, project), _products_by(db, project)
     trips = {t.trip_no: t for t in db.scalars(select(QTrip).where(QTrip.project_id == project.id))}
     errors: list[dict[str, Any]] = []
@@ -679,9 +753,15 @@ def _shipments(db: Session, project: Project, batch: QImportBatch, rows: list[di
                 "owner_customer_id": owner.id if owner else None,
                 "consignee_customer_id": cons_c.id if cons_c else None,
                 "consignee_name": (cons_c.name_en if cons_c else cons) or "—",
-                "promised_at": parse_time(col(prof, row, "promised_at") or "", prof) if (col(prof, row, "promised_at") or "").strip() else None,
-                "dispatched_at": parse_time(col(prof, row, "dispatched_at") or "", prof) if (col(prof, row, "dispatched_at") or "").strip() else None,
-                "delivered_at": parse_time(col(prof, row, "delivered_at") or "", prof) if (col(prof, row, "delivered_at") or "").strip() else None,
+                "promised_at": parse_time(col(prof, row, "promised_at") or "", prof)
+                if (col(prof, row, "promised_at") or "").strip()
+                else None,
+                "dispatched_at": parse_time(col(prof, row, "dispatched_at") or "", prof)
+                if (col(prof, row, "dispatched_at") or "").strip()
+                else None,
+                "delivered_at": parse_time(col(prof, row, "delivered_at") or "", prof)
+                if (col(prof, row, "delivered_at") or "").strip()
+                else None,
                 "trip_id": trips[tn].id if tn else None,
                 "compartment": (col(prof, row, "compartment") or "").strip() or None,
             }
@@ -695,15 +775,23 @@ def _shipments(db: Session, project: Project, batch: QImportBatch, rows: list[di
                     "sku": sku,
                     "batch": (col(prof, row, "batch") or "").strip() or None,
                     "storage_class": prod.storage_class if prod else None,
-                    "ordered_qty": parse_dec(col(prof, row, "ordered_qty"), prof, "ordered_qty", True),
-                    "delivered_qty": parse_dec(col(prof, row, "delivered_qty"), prof, "delivered_qty"),
+                    "ordered_qty": parse_dec(
+                        col(prof, row, "ordered_qty"), prof, "ordered_qty", True
+                    ),
+                    "delivered_qty": parse_dec(
+                        col(prof, row, "delivered_qty"), prof, "delivered_qty"
+                    ),
                 }
             )
         except RowError as e:
             errors.append({"row": i, "reason": str(e)})
     existing = {
         s.shipment_ref: s
-        for s in db.scalars(select(QShipment).where(QShipment.project_id == project.id, QShipment.shipment_ref.in_(list(groups))))
+        for s in db.scalars(
+            select(QShipment).where(
+                QShipment.project_id == project.id, QShipment.shipment_ref.in_(list(groups))
+            )
+        )
     }
     for ref in groups:
         if ref in existing:
@@ -712,7 +800,16 @@ def _shipments(db: Session, project: Project, batch: QImportBatch, rows: list[di
     t = now()
     created = 0
     for ref, ls in groups.items():
-        s = QShipment(id=uuid.uuid4(), project_id=project.id, site_id=batch.target_id, shipment_ref=ref, batch_id=batch.id, created_at=t, seed_fake=batch.seed_fake, **heads[ref])
+        s = QShipment(
+            id=uuid.uuid4(),
+            project_id=project.id,
+            site_id=batch.target_id,
+            shipment_ref=ref,
+            batch_id=batch.id,
+            created_at=t,
+            seed_fake=batch.seed_fake,
+            **heads[ref],
+        )
         db.add(s)
         created += 1
         db.flush()
@@ -723,9 +820,19 @@ def _shipments(db: Session, project: Project, batch: QImportBatch, rows: list[di
     return {"shipments": created}
 
 
-def _products(db: Session, project: Project, batch: QImportBatch, rows: list[dict[str, str]], prof: dict[str, Any], uid: uuid.UUID | None) -> dict[str, Any]:
+def _products(
+    db: Session,
+    project: Project,
+    batch: QImportBatch,
+    rows: list[dict[str, str]],
+    prof: dict[str, Any],
+    uid: uuid.UUID | None,
+) -> dict[str, Any]:
     owners = _owners(db, project)
-    have = {(x.owner_customer_id, x.sku): x for x in db.scalars(select(QProduct).where(QProduct.project_id == project.id))}
+    have = {
+        (x.owner_customer_id, x.sku): x
+        for x in db.scalars(select(QProduct).where(QProduct.project_id == project.id))
+    }
     errors: list[dict[str, Any]] = []
     out = []
     for i, row in enumerate(rows, start=2):
@@ -770,7 +877,13 @@ def _products(db: Session, project: Project, batch: QImportBatch, rows: list[dic
         cust_o: QCustomer = x.pop("owner")  # type: ignore[assignment]
         prow = have.get((cust_o.id, str(x["sku"])))
         if prow is None:
-            prow = QProduct(project_id=project.id, owner_customer_id=cust_o.id, active=True, created_by_user_id=uid, seed_fake=batch.seed_fake)
+            prow = QProduct(
+                project_id=project.id,
+                owner_customer_id=cust_o.id,
+                active=True,
+                created_by_user_id=uid,
+                seed_fake=batch.seed_fake,
+            )
             db.add(prow)
             n_new += 1
         for k, v in x.items():
@@ -780,7 +893,15 @@ def _products(db: Session, project: Project, batch: QImportBatch, rows: list[dic
     return {"products_created": n_new, "products_updated": len(out) - n_new}
 
 
-def _cycle_count(db: Session, project: Project, batch: QImportBatch, rows: list[dict[str, str]], prof: dict[str, Any], at: datetime, uid: uuid.UUID | None) -> dict[str, Any]:
+def _cycle_count(
+    db: Session,
+    project: Project,
+    batch: QImportBatch,
+    rows: list[dict[str, str]],
+    prof: dict[str, Any],
+    at: datetime,
+    uid: uuid.UUID | None,
+) -> dict[str, Any]:
     from app.services.quality.q3 import stock  # noqa: PLC0415
 
     prods = _products_by(db, project)
@@ -801,7 +922,9 @@ def _cycle_count(db: Session, project: Project, batch: QImportBatch, rows: list[
                     "location": loc,
                     "zone_code": (col(prof, row, "zone") or "").strip() or None,
                     "system_qty": parse_dec(col(prof, row, "system_qty"), prof, "system_qty", True),
-                    "counted_qty": parse_dec(col(prof, row, "counted_qty"), prof, "counted_qty", True),
+                    "counted_qty": parse_dec(
+                        col(prof, row, "counted_qty"), prof, "counted_qty", True
+                    ),
                     "recount_qty": parse_dec(col(prof, row, "recount_qty"), prof, "recount_qty"),
                     "tolerance": parse_dec(col(prof, row, "tolerance"), prof, "tolerance"),
                     "variance_reason": (col(prof, row, "variance_reason") or "").strip() or None,
@@ -816,7 +939,7 @@ def _cycle_count(db: Session, project: Project, batch: QImportBatch, rows: list[
     return {"cycle_count_id": cc.id}
 
 
-# ---- void (Q-IMP-05) ------------------------------------------------------------------------------
+# ---- void (Q-IMP-05) -----------------------------------------------------------------------------
 
 
 def void(db: Session, p: Principal, batch_id: uuid.UUID, body: dict[str, Any]) -> dict[str, Any]:
@@ -830,16 +953,24 @@ def void(db: Session, p: Principal, batch_id: uuid.UUID, body: dict[str, Any]) -
         raise forbidden_error()
     why = qc.reason(body.get("reason"))
     if bt.status != QImportStatus.imported:
-        raise qc.err(409, ErrorCode.INVALID_TRANSITION, "The batch is not imported.", "الدفعة غير مستوردة.")
+        raise qc.err(
+            409, ErrorCode.INVALID_TRANSITION, "The batch is not imported.", "الدفعة غير مستوردة."
+        )
     if now() > bt.imported_at + timedelta(hours=24):
         raise qc.err(
             409,
             ErrorCode.INVALID_TRANSITION,
-            "A batch can only be voided within 24 h of import; later, imported data are never changed (Q-IMP-05).",
+            "A batch can only be voided within 24 h of import; later, imported data are never "
+            "changed (Q-IMP-05).",
             "يمكن إلغاء الدفعة خلال 24 ساعة من الاستيراد فقط.",
         )
     if bt.kind == QImportKind.products:
-        raise qc.err(409, ErrorCode.INVALID_TRANSITION, "Product imports are corrected by editing the products.", "تُصحح المنتجات بتعديلها.")
+        raise qc.err(
+            409,
+            ErrorCode.INVALID_TRANSITION,
+            "Product imports are corrected by editing the products.",
+            "تُصحح المنتجات بتعديلها.",
+        )
     bt.status = QImportStatus.voided
     bt.voided_at = now()
     bt.voided_by_user_id = p.user.id
@@ -858,7 +989,12 @@ def void(db: Session, p: Principal, batch_id: uuid.UUID, body: dict[str, Any]) -
     elif bt.kind == QImportKind.shipments:
         for shp in db.scalars(select(QShipment).where(QShipment.batch_id == bt.id)):
             if shp.trip_id is not None:
-                raise qc.err(409, ErrorCode.INVALID_TRANSITION, f"{shp.shipment_ref} is on a trip; it stays.", "الشحنة ضمن رحلة.")
+                raise qc.err(
+                    409,
+                    ErrorCode.INVALID_TRANSITION,
+                    f"{shp.shipment_ref} is on a trip; it stays.",
+                    "الشحنة ضمن رحلة.",
+                )
             for ln in db.scalars(select(QShipmentLine).where(QShipmentLine.shipment_id == shp.id)):
                 db.delete(ln)
             db.delete(shp)
@@ -890,11 +1026,20 @@ def batch_read(db: Session, bt: QImportBatch) -> dict[str, Any]:
         "imported_at": bt.imported_at,
         "voided_at": bt.voided_at,
         "void_reason": bt.void_reason,
-        "voidable": bt.status == QImportStatus.imported and now() <= bt.imported_at + timedelta(hours=24) and bt.kind != QImportKind.products,
+        "voidable": bt.status == QImportStatus.imported
+        and now() <= bt.imported_at + timedelta(hours=24)
+        and bt.kind != QImportKind.products,
     }
 
 
-def list_batches(db: Session, p: Principal, project_id: uuid.UUID, page_no: int, size: int, kind: QImportKind | None = None) -> dict[str, Any]:
+def list_batches(
+    db: Session,
+    p: Principal,
+    project_id: uuid.UUID,
+    page_no: int,
+    size: int,
+    kind: QImportKind | None = None,
+) -> dict[str, Any]:
     project = qc.get_project(db, p, project_id)
     g = b.list_grant(p, project.id)
     if g.scope.value == "responsible":
@@ -917,21 +1062,29 @@ def preview(content: bytes, kind: QImportKind, profile: dict[str, Any] | None) -
             try:
                 at = parse_time(col(prof, row, "time") or "", prof)
                 tv = parse_dec(col(prof, row, "temperature"), prof, "temperature")
-                item.update({"measured_at": at, "temperature_c": to_c(tv, prof) if tv is not None else None})
+                item.update(
+                    {"measured_at": at, "temperature_c": to_c(tv, prof) if tv is not None else None}
+                )
             except RowError as e:
                 item["error"] = str(e)
         sample.append(item)
     return {"columns": fields, "rows": len(rows), "sample": sample, "profile": prof}
 
 
-def profiles(db: Session, p: Principal, project_id: uuid.UUID, kind: QImportKind) -> list[dict[str, Any]]:
+def profiles(
+    db: Session, p: Principal, project_id: uuid.UUID, kind: QImportKind
+) -> list[dict[str, Any]]:
     """Saved column mappings: the distinct profiles of the recent batches of a kind."""
     project = qc.get_project(db, p, project_id)
     b.list_grant(p, project.id)
     out: list[dict[str, Any]] = []
     for bt in db.scalars(
         select(QImportBatch)
-        .where(QImportBatch.project_id == project.id, QImportBatch.kind == kind, QImportBatch.status == QImportStatus.imported)
+        .where(
+            QImportBatch.project_id == project.id,
+            QImportBatch.kind == kind,
+            QImportBatch.status == QImportStatus.imported,
+        )
         .order_by(QImportBatch.imported_at.desc())
         .limit(50)
     ):

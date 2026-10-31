@@ -20,7 +20,7 @@ from app.core.errors import ErrorCode
 from app.core.hse_enums import AttachmentOwner
 from app.core.quality.common import QRecordType
 from app.models import Attachment, Project, ProjectEngagement, RoleAssignment, Site, Zone
-from app.models.quality import QCustomer, QMteItem, QRpRule, QSignoff, QSupplier
+from app.models.quality import QCustomer, QMteItem, QNcr, QRpRule, QSignoff, QSupplier
 from app.schemas.hse_common import ApiWarning
 from app.services import audit
 from app.services.permissions import Grant, Principal, deny, forbidden_error
@@ -125,7 +125,9 @@ def can_view(
     if signed_by(db, rt, rid, p.user.id):
         return True
     for step, ctx, qual in steps() if steps else []:
-        if rpm.resolves(db, p, project, rt, step, ctx, qualifier=qual, record_id=rid, can_act=False):
+        if rpm.resolves(
+            db, p, project, rt, step, ctx, qualifier=qual, record_id=rid, can_act=False
+        ):
             return True
     return False
 
@@ -202,7 +204,9 @@ def rule_for(
 # ---- people -------------------------------------------------------------------------------------
 
 
-def holders(db: Session, project: Project, cap: Capability, site_id: uuid.UUID | None = None) -> set[uuid.UUID]:
+def holders(
+    db: Session, project: Project, cap: Capability, site_id: uuid.UUID | None = None
+) -> set[uuid.UUID]:
     """Real holders of a capability on the project (not the responsible-person scope N; the
     HSE Manager included), limited to a site when the assignment is site-limited."""
     from app.services.permissions import MATRIX  # noqa: PLC0415
@@ -361,12 +365,15 @@ def site_of(db: Session, project: Project, site_id: uuid.UUID) -> Site:
 
 def zone_of(db: Session, project: Project, zone_id: uuid.UUID, field: str = "zone_id") -> Zone:
     z = db.get(Zone, zone_id)
-    if z is None or db.get(Site, z.site_id) is None or db.get(Site, z.site_id).project_id != project.id:  # type: ignore[union-attr]
+    site = db.get(Site, z.site_id) if z is not None else None
+    if z is None or site is None or site.project_id != project.id:
         raise qc.field_err(field, "The zone is not on this project.", "المنطقة ليست في المشروع.")
     return z
 
 
-def customer_of(db: Session, project: Project, cid: uuid.UUID, field: str = "customer_id") -> QCustomer:
+def customer_of(
+    db: Session, project: Project, cid: uuid.UUID, field: str = "customer_id"
+) -> QCustomer:
     c = db.get(QCustomer, cid)
     if c is None or c.project_id != project.id:
         raise qc.field_err(field, "The customer is not on this project.", "العميل ليس في المشروع.")
@@ -376,7 +383,11 @@ def customer_of(db: Session, project: Project, cid: uuid.UUID, field: str = "cus
 def mte_of(db: Session, project: Project, mid: uuid.UUID, field: str = "mte_id") -> QMteItem:
     m = db.get(QMteItem, mid)
     if m is None or m.project_id != project.id:
-        raise qc.field_err(field, "The instrument is not registered on this project.", "الجهاز غير مسجل في المشروع.")
+        raise qc.field_err(
+            field,
+            "The instrument is not registered on this project.",
+            "الجهاز غير مسجل في المشروع.",
+        )
     return m
 
 
@@ -481,6 +492,7 @@ def audit_status(
 ) -> None:
     from app.core.enums import AuditAction  # noqa: PLC0415
     from app.core.quality.common import entity_type_value  # noqa: PLC0415
+
     audit.record(
         db,
         AuditAction.status_change,
@@ -495,10 +507,16 @@ def audit_status(
 
 
 def audit_create(
-    db: Session, p: Principal | None, project: Project, rt: QRecordType, rid: uuid.UUID, **after: Any
+    db: Session,
+    p: Principal | None,
+    project: Project,
+    rt: QRecordType,
+    rid: uuid.UUID,
+    **after: Any,
 ) -> None:
     from app.core.enums import AuditAction  # noqa: PLC0415
     from app.core.quality.common import entity_type_value  # noqa: PLC0415
+
     audit.record(
         db,
         AuditAction.create,
@@ -516,11 +534,112 @@ def warn_dump(ws: list[ApiWarning]) -> list[dict[str, Any]]:
 
 def page(items: list[Any], page_no: int, size: int) -> dict[str, Any]:
     start = (page_no - 1) * size
-    return {"items": items[start : start + size], "total": len(items), "page": page_no, "page_size": size}
+    return {
+        "items": items[start : start + size],
+        "total": len(items),
+        "page": page_no,
+        "page_size": size,
+    }
 
 
 def minutes(a: datetime, b: datetime) -> int:
     return int((b - a) / timedelta(minutes=1))
+
+
+# ---- NCRs raised by Q3 (list NS raise mode `auto`) -----------------------------------------------
+
+
+def raise_ncr(
+    db: Session,
+    project: Project,
+    source_type: Any,
+    source_id: uuid.UUID,
+    *,
+    actor: uuid.UUID | None,
+    classification: Any,
+    category: Any,
+    title: str,
+) -> QNcr:
+    """Open an NCR from a Q3 source (Q0 `auto_raise`). A critical NCR needs evidence before it can
+    open (Q-NCR-03); the system has none, so a critical one is kept as a Draft that its owner
+    completes with the evidence and opens (D-354), and the owner is told at once."""
+    from app.core.quality.common import (  # noqa: PLC0415
+        NCR_SOURCE_DEFS,
+        QDetectionStage,
+        QLinkKind,
+        QNcrStatus,
+    )
+    from app.services.quality import links  # noqa: PLC0415
+    from app.services.quality import registry as reg  # noqa: PLC0415
+    from app.services.quality.ncr import core as ncr  # noqa: PLC0415
+
+    owner = ncr_owner(db, project, actor)
+    try:
+        with db.begin_nested():
+            return ncr.auto_raise(
+                db,
+                project,
+                source_type,
+                source_id,
+                raised_by=actor,
+                owner_id=owner,
+                classification=classification,
+                category=category,
+                title=title,
+            )
+    except Exception as e:
+        if getattr(e, "code", None) != ErrorCode.EVIDENCE_REQUIRED:
+            raise
+    info = reg.NCR_SOURCES[source_type].resolve(db, project, source_id)
+    n = QNcr(
+        id=uuid.uuid4(),
+        project_id=project.id,
+        profile=qc.require_profile(db, project),
+        source_type=source_type,
+        source_id=source_id,
+        source_ref=info.ref,
+        item_key=info.item_key,
+        site_id=info.site_id,
+        zone_id=info.zone_id,
+        location_ref=info.location_ref,
+        title=title[:150],
+        requirement_en=info.requirement_en,
+        requirement_ar=info.requirement_ar,
+        finding_en=info.finding_en,
+        finding_ar=info.finding_ar,
+        category=category,
+        detection_stage=info.detection_stage or QDetectionStage.storage,
+        classification=classification or NCR_SOURCE_DEFS[source_type][1],
+        responsible_engagement_id=info.engagement_id,
+        supplier_id=info.supplier_id,
+        customer_id=info.customer_id,
+        quantity=info.quantity,
+        unit=info.unit,
+        lot_refs=list(info.lot_refs),
+        raised_by_user_id=owner,
+        owner_id=owner,
+        status=QNcrStatus.draft,
+        alerts_sent=[],
+        created_by_user_id=owner,
+    )
+    db.add(n)
+    db.flush()
+    if info.record_type is not None:
+        links.add(
+            db, project.id, RT.ncr, n.id, info.record_type, source_id, QLinkKind.raised_from, actor
+        )
+    send(
+        db,
+        project,
+        [owner],
+        f"ncr:{n.id}:critical_draft",
+        f"Critical NCR from {info.ref}: attach the evidence and open it",
+        f"تقرير عدم مطابقة حرج من {info.ref}: أرفق الدليل وافتحه",
+        rt=RT.ncr,
+        rid=n.id,
+        path=f"/quality/ncrs/{n.id}",
+    )
+    return n
 
 
 _ = now

@@ -13,7 +13,7 @@ from enum import StrEnum
 D = Decimal
 
 
-# ---- storage classes (list SCL, §D.1.2) -----------------------------------------------------------
+# ---- storage classes (list SCL, §D.1.2) ----------------------------------------------------------
 
 
 class QStorageClass(StrEnum):
@@ -45,9 +45,7 @@ SC = QStorageClass
 STORAGE_CLASSES: dict[QStorageClass, StorageClassDef] = {
     SC.frozen: StorageClassDef(SC.frozen, D(-30), D(-18), 30, D(3), D(6), 120, 480, None, True),
     SC.chilled: StorageClassDef(SC.chilled, D(0), D(4), 15, D(2), D(5), 60, 240, None, True),
-    SC.pharma_2_8: StorageClassDef(
-        SC.pharma_2_8, D(2), D(8), 10, D(1), D(3), 30, 120, None, False
-    ),
+    SC.pharma_2_8: StorageClassDef(SC.pharma_2_8, D(2), D(8), 10, D(1), D(3), 30, 120, None, False),
     SC.ambient_controlled: StorageClassDef(
         SC.ambient_controlled, D(15), D(25), 30, D(3), D(7), 240, 1440, D(65), True
     ),
@@ -69,7 +67,7 @@ def incompatible(a: QStorageClass, b: QStorageClass) -> bool:
     return SC.pharma_2_8 in pair and bool(pair & FOOD_CLASSES)
 
 
-# ---- zones, points, readings, imports -------------------------------------------------------------
+# ---- zones, points, readings, imports ------------------------------------------------------------
 
 
 class QZoneRole(StrEnum):
@@ -124,7 +122,7 @@ class QImportTarget(StrEnum):
     site = "site"
 
 
-# ---- excursions -----------------------------------------------------------------------------------
+# ---- excursions ----------------------------------------------------------------------------------
 
 
 class QExcursionKind(StrEnum):
@@ -179,7 +177,7 @@ class QImpactDecision(StrEnum):
     return_to_owner = "return_to_owner"
 
 
-# ---- mapping --------------------------------------------------------------------------------------
+# ---- mapping -------------------------------------------------------------------------------------
 
 
 class QMappingPurpose(StrEnum):
@@ -213,7 +211,7 @@ class QTestWindowKind(StrEnum):
     other = "other"
 
 
-# ---- hygiene and pest -----------------------------------------------------------------------------
+# ---- hygiene and pest ----------------------------------------------------------------------------
 
 
 class QCheckFrequency(StrEnum):
@@ -253,7 +251,7 @@ class QPestType(StrEnum):
     other = "other"
 
 
-# ---- receiving ------------------------------------------------------------------------------------
+# ---- receiving -----------------------------------------------------------------------------------
 
 
 class QReceiptStatus(StrEnum):
@@ -294,7 +292,7 @@ DECISION_RANK = {
 }
 
 
-# ---- stock ----------------------------------------------------------------------------------------
+# ---- stock ---------------------------------------------------------------------------------------
 
 
 class QFefoResult(StrEnum):
@@ -381,7 +379,7 @@ class QReturnStatus(StrEnum):
     confirmed = "confirmed"
 
 
-# ---- recalls --------------------------------------------------------------------------------------
+# ---- recalls -------------------------------------------------------------------------------------
 
 
 class QRecallType(StrEnum):
@@ -405,7 +403,7 @@ class QRecallStatus(StrEnum):
     cancelled = "cancelled"
 
 
-# ---- transport ------------------------------------------------------------------------------------
+# ---- transport -----------------------------------------------------------------------------------
 
 
 class QTripStatus(StrEnum):
@@ -425,7 +423,7 @@ class QPodException(StrEnum):
     other = "other"
 
 
-# ---- labels (D-327) -------------------------------------------------------------------------------
+# ---- labels (D-327) ------------------------------------------------------------------------------
 
 LABELS_Q3: dict[str, dict[str, tuple[str, str]]] = {
     "storage_class": {
@@ -504,7 +502,11 @@ LABELS_Q3: dict[str, dict[str, tuple[str, str]]] = {
         "periodic": ("Periodic", "دورية"),
         "after_change": ("After a change", "بعد تغيير"),
     },
-    "season": {"summer": ("Summer", "صيف"), "winter": ("Winter", "شتاء"), "n_a": ("N/A", "لا ينطبق")},
+    "season": {
+        "summer": ("Summer", "صيف"),
+        "winter": ("Winter", "شتاء"),
+        "n_a": ("N/A", "لا ينطبق"),
+    },
     "load_state": {"empty": ("Empty", "فارغ"), "loaded": ("Loaded", "محمّل")},
     "mapping_status": {
         "draft": ("Draft", "مسودة"),
@@ -643,7 +645,11 @@ LABELS_Q3: dict[str, dict[str, tuple[str, str]]] = {
         "owner": ("Owner", "المالك"),
         "mock": ("Mock recall", "استدعاء تجريبي"),
     },
-    "recall_class": {"I": ("Class I", "الفئة I"), "II": ("Class II", "الفئة II"), "III": ("Class III", "الفئة III")},
+    "recall_class": {
+        "I": ("Class I", "الفئة I"),
+        "II": ("Class II", "الفئة II"),
+        "III": ("Class III", "الفئة III"),
+    },
     "recall_status": {
         "open": ("Open", "مفتوح"),
         "traced": ("Traced", "تم التتبع"),

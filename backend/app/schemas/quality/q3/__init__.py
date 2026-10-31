@@ -9,7 +9,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Any, Literal
 
-from pydantic import Field
+from pydantic import ConfigDict, Field
 
 from app.core.quality.common import QCalStatus
 from app.core.quality.q3 import (
@@ -242,7 +242,7 @@ class Q3LoggerAssignment(ApiModel):
     to: str | None
     mte: Q3MteRef | None
 
-    model_config = {"populate_by_name": True, "from_attributes": True}
+    model_config = ConfigDict(populate_by_name=True, from_attributes=True)
 
 
 class Q3PointRead(ApiModel):
@@ -343,7 +343,7 @@ class Q3LoggerAssign(StrictInput):
     mte_id: uuid.UUID
     from_: datetime | None = Field(default=None, alias="from")
 
-    model_config = {"extra": "forbid", "populate_by_name": True}
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
 
 class Q3PointWithWarnings(Q3PointRead):
@@ -392,7 +392,9 @@ class Q3ZoneReport(ApiModel):
     coverage_pct: Decimal | None
     tor_pct: Decimal | None
     gaps: list[dict[str, Any]]
-    series: list[dict[str, Any]] = Field(description="Per point: {point_id, code, values: [{t, c, rh, fault}], mkt}.")
+    series: list[dict[str, Any]] = Field(
+        description="Per point: {point_id, code, values: [{t, c, rh, fault}], mkt}."
+    )
     excursions: list[dict[str, Any]]
 
 
@@ -688,8 +690,8 @@ class Q3ReceiptHeader(StrictInput):
 
 class Q3ReceiptCreate(Q3ReceiptHeader):
     site_id: uuid.UUID
-    dock_zone_id: uuid.UUID  # type: ignore[assignment]
-    customer_id: uuid.UUID  # type: ignore[assignment]
+    dock_zone_id: uuid.UUID
+    customer_id: uuid.UUID
     lines: list[Q3ReceiptLineInput] = Field(default_factory=list, max_length=200)
 
 
@@ -700,7 +702,10 @@ class Q3LineDecide(StrictInput):
     claim_ref: str | None = Field(default=None, max_length=40)
     ncr_id: uuid.UUID | None = None
     raise_ncr: bool = False
-    request: bool = Field(default=False, description="Ask the responsible person to sign when you do not resolve for the step.")
+    request: bool = Field(
+        default=False,
+        description="Ask the responsible person to sign when you do not resolve for the step.",
+    )
 
 
 class Q3ReceiptLineRead(ApiModel):
@@ -719,7 +724,9 @@ class Q3ReceiptLineRead(ApiModel):
     mte: Q3MteRef | None
     remaining_shelf_life_pct: Decimal | None
     sample_count: int | None
-    sample_hint: int | None = Field(description="ISO 2859-1 general level II single sampling `[VERIFY]`.")
+    sample_hint: int | None = Field(
+        description="ISO 2859-1 general level II single sampling `[VERIFY]`."
+    )
     proposed_decision: QLineDecision | None
     proposal_reasons: list[dict[str, Any]]
     criteria_versions: dict[str, Any]
@@ -806,7 +813,7 @@ class Q3TestWindow(StrictInput):
     from_: datetime = Field(alias="from")
     to: datetime
 
-    model_config = {"extra": "forbid", "populate_by_name": True}
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
 
 class Q3MappingInput(StrictInput):
@@ -823,7 +830,7 @@ class Q3MappingInput(StrictInput):
 
 class Q3MappingCreate(Q3MappingInput):
     zone_id: uuid.UUID
-    purpose: QMappingPurpose  # type: ignore[assignment]
+    purpose: QMappingPurpose
 
 
 class Q3ApproveInput(StrictInput):
@@ -901,7 +908,7 @@ class Q3SchedulePeriod(ApiModel):
     to: date
     status: Literal["done", "due", "overdue"]
 
-    model_config = {"populate_by_name": True, "from_attributes": True}
+    model_config = ConfigDict(populate_by_name=True, from_attributes=True)
 
 
 class Q3ScheduleRead(ApiModel):
@@ -1277,7 +1284,10 @@ class Q3RecallRead(ApiModel):
     supplier: Q3SupplierRef | None
     initiated_at: datetime
     status: QRecallStatus
-    trace: dict[str, Any] = Field(description="Live trace: received, on_hand, shipped, destroyed, unaccounted, consignees, snapshot.")
+    trace: dict[str, Any] = Field(
+        description="Live trace: received, on_hand, shipped, destroyed, unaccounted, consignees, "
+        "snapshot."
+    )
     trace_confirmed: dict[str, Any] | None
     trace_completed_at: datetime | None
     trace_minutes: int | None

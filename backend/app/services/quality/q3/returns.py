@@ -45,16 +45,30 @@ def get_return(db: Session, p: Principal, rid: uuid.UUID) -> tuple[QReturn, Proj
     if r is None or not p.can_see_project(r.project_id):
         raise b.not_found(db, p, RT, rid, r.project_id if r else None)
     project = qc.get_project(db, p, r.project_id)
-    if not b.can_view(db, p, project, RT, r.id, r.site_id, lambda: [("disposition", ctx(r), None)] if r.status == ST.graded else []):
+    if not b.can_view(
+        db,
+        p,
+        project,
+        RT,
+        r.id,
+        r.site_id,
+        lambda: [("disposition", ctx(r), None)] if r.status == ST.graded else [],
+    ):
         raise b.not_found(db, p, RT, rid, project.id)
     return r, project
 
 
 def lines_of(db: Session, r: QReturn) -> list[QReturnLine]:
-    return list(db.scalars(select(QReturnLine).where(QReturnLine.return_id == r.id).order_by(QReturnLine.id)))
+    return list(
+        db.scalars(
+            select(QReturnLine).where(QReturnLine.return_id == r.id).order_by(QReturnLine.id)
+        )
+    )
 
 
-def create(db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any]) -> dict[str, Any]:
+def create(
+    db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any]
+) -> dict[str, Any]:
     project, g = b.project_for_create(db, p, project_id, RT, C.stock_record)
     site = b.site_of(db, project, body["site_id"])
     b.require_site(g, site.id)
@@ -98,7 +112,15 @@ def inspection(db: Session, p: Principal, rid: uuid.UUID, body: dict[str, Any]) 
     r, project = get_return(db, p, rid)
     _, g = b.project_for_progress(db, p, project.id, C.stock_record)
     b.require_site(g, r.site_id)
-    out = checklists.respond(db, p.user.id, project, ResponseOwnerType.q_return, "return_inspection", r.site_id, body["answers"])
+    out = checklists.respond(
+        db,
+        p.user.id,
+        project,
+        ResponseOwnerType.q_return,
+        "return_inspection",
+        r.site_id,
+        body["answers"],
+    )
     r.response_id = out.response.id
     return read(db, p, r)
 
@@ -108,7 +130,9 @@ def grade(db: Session, p: Principal, rid: uuid.UUID, body: dict[str, Any]) -> di
     _, g = b.project_for_progress(db, p, project.id, C.stock_record)
     b.require_site(g, r.site_id)
     if r.status == ST.confirmed:
-        raise qc.err(409, ErrorCode.INVALID_TRANSITION, "The grades are confirmed.", "التصنيف مؤكد.")
+        raise qc.err(
+            409, ErrorCode.INVALID_TRANSITION, "The grades are confirmed.", "التصنيف مؤكد."
+        )
     by_id = {ln.id: ln for ln in lines_of(db, r)}
     for raw in body.get("lines") or []:
         ln = by_id.get(raw["line_id"])
@@ -117,15 +141,27 @@ def grade(db: Session, p: Principal, rid: uuid.UUID, body: dict[str, Any]) -> di
         if "temp_history" in raw and raw["temp_history"] is not None:
             ln.temp_history = bool(raw["temp_history"])
         if raw.get("temp_history_attachment_id"):
-            ln.temp_history_attachment_id = b.attachment_on(db, raw["temp_history_attachment_id"], A.q_return, r.id, "temp_history_attachment_id")
+            ln.temp_history_attachment_id = b.attachment_on(
+                db,
+                raw["temp_history_attachment_id"],
+                A.q_return,
+                r.id,
+                "temp_history_attachment_id",
+            )
             ln.temp_history = True
         gr = QReturnGrade(raw["grade"])
         prod = db.get(QProduct, ln.product_id)
-        if gr == QReturnGrade.A and prod is not None and prod.storage_class in TEMP_CONTROLLED and not ln.temp_history:
+        if (
+            gr == QReturnGrade.A
+            and prod is not None
+            and prod.storage_class in TEMP_CONTROLLED
+            and not ln.temp_history
+        ):
             raise qc.err(
                 422,
                 ErrorCode.COLD_RETURN_NO_HISTORY,
-                f"{prod.sku} {ln.batch}: a temperature-controlled return without temperature history cannot be graded A (Q-STK-08).",
+                f"{prod.sku} {ln.batch}: a temperature-controlled return without temperature "
+                "history cannot be graded A (Q-STK-08).",
                 f"{prod.sku} {ln.batch}: لا يمكن تصنيف مرتجع مبرد بلا سجل حرارة بالدرجة أ.",
             )
         ln.grade = gr
@@ -141,7 +177,9 @@ def confirm(db: Session, p: Principal, rid: uuid.UUID, body: dict[str, Any]) -> 
     r, project = get_return(db, p, rid)
     project, _ = b.project_for_progress(db, p, project.id, C.stock_record, allow_n=True)
     if r.status != ST.graded:
-        raise qc.err(409, ErrorCode.INVALID_TRANSITION, "Grade every line first.", "صنّف كل البنود أولاً.")
+        raise qc.err(
+            409, ErrorCode.INVALID_TRANSITION, "Grade every line first.", "صنّف كل البنود أولاً."
+        )
     s = b.sign(db, p, project, RT, r.id, "disposition", ctx(r), comment=body.get("comment"))
     held = [ln for ln in lines_of(db, r) if ln.grade == QReturnGrade.C]
     if held:
@@ -150,7 +188,17 @@ def confirm(db: Session, p: Principal, rid: uuid.UUID, body: dict[str, Any]) -> 
             project,
             site_id=r.site_id,
             reason=QHoldReason.owner_request,
-            lines=[{"product_id": ln.product_id, "batch": ln.batch, "qty": ln.qty, "unit": ln.unit, "owner_customer_id": r.customer_id, "location": "RETURNS"} for ln in held],
+            lines=[
+                {
+                    "product_id": ln.product_id,
+                    "batch": ln.batch,
+                    "qty": ln.qty,
+                    "unit": ln.unit,
+                    "owner_customer_id": r.customer_id,
+                    "location": "RETURNS",
+                }
+                for ln in held
+            ],
             placed_by=p.user.id,
             source=(RT, r.id, r.ret_no),
             note="Return grade C: hold for the owner's decision",
@@ -176,7 +224,15 @@ def read(db: Session, p: Principal, r: QReturn) -> dict[str, Any]:
         out_lines.append(
             {
                 "id": ln.id,
-                "product": {"id": prod.id, "sku": prod.sku, "description_en": prod.description_en, "description_ar": prod.description_ar, "storage_class": prod.storage_class} if prod else None,
+                "product": {
+                    "id": prod.id,
+                    "sku": prod.sku,
+                    "description_en": prod.description_en,
+                    "description_ar": prod.description_ar,
+                    "storage_class": prod.storage_class,
+                }
+                if prod
+                else None,
                 "batch": ln.batch,
                 "qty": ln.qty,
                 "unit": ln.unit,
@@ -198,18 +254,36 @@ def read(db: Session, p: Principal, r: QReturn) -> dict[str, Any]:
         "inspection": checklists.response_read(resp),
         "lines": out_lines,
         "hold_id": r.hold_id,
-        "can_confirm": r.status == ST.graded and b.resolves(db, p, project, RT, r.id, "disposition", ctx(r)),
-        "signoffs": [signoff.read(db, s, show_scans=not hide) for s in signoff.signoffs_for(db, RT, r.id)],
+        "can_confirm": r.status == ST.graded
+        and b.resolves(db, p, project, RT, r.id, "disposition", ctx(r)),
+        "signoffs": [
+            signoff.read(db, s, show_scans=not hide) for s in signoff.signoffs_for(db, RT, r.id)
+        ],
     }
 
 
-def list_returns(db: Session, p: Principal, project_id: uuid.UUID, page_no: int, size: int) -> dict[str, Any]:
+def list_returns(
+    db: Session, p: Principal, project_id: uuid.UUID, page_no: int, size: int
+) -> dict[str, Any]:
     project = qc.get_project(db, p, project_id)
     g = b.list_grant(p, project.id)
     items = []
-    for r in db.scalars(select(QReturn).where(QReturn.project_id == project.id).order_by(QReturn.received_at.desc()).limit(1000)):
+    for r in db.scalars(
+        select(QReturn)
+        .where(QReturn.project_id == project.id)
+        .order_by(QReturn.received_at.desc())
+        .limit(1000)
+    ):
         if g.scope.value == "responsible":
-            if not b.can_view(db, p, project, RT, r.id, r.site_id, lambda r=r: [("disposition", ctx(r), None)] if r.status == ST.graded else []):
+            if not b.can_view(
+                db,
+                p,
+                project,
+                RT,
+                r.id,
+                r.site_id,
+                lambda r=r: [("disposition", ctx(r), None)] if r.status == ST.graded else [],
+            ):
                 continue
         elif not g.covers_site(r.site_id):
             continue
@@ -232,20 +306,34 @@ def list_returns(db: Session, p: Principal, project_id: uuid.UUID, page_no: int,
 def open_steps(db: Session, project: Project) -> list[reg.OpenStep]:
     return [
         reg.OpenStep(
-            reg.PendingStep(RT, r.id, project.id, r.ret_no, f"Return {r.rma_ref or ''}", "disposition", r.updated_at, f"/quality/returns/{r.id}", "Q3"),
+            reg.PendingStep(
+                RT,
+                r.id,
+                project.id,
+                r.ret_no,
+                f"Return {r.rma_ref or ''}",
+                "disposition",
+                r.updated_at,
+                f"/quality/returns/{r.id}",
+                "Q3",
+            ),
             None,
             r.site_id,
             None,
             ctx(r).requesters,
         )
-        for r in db.scalars(select(QReturn).where(QReturn.project_id == project.id, QReturn.status == ST.graded))
+        for r in db.scalars(
+            select(QReturn).where(QReturn.project_id == project.id, QReturn.status == ST.graded)
+        )
     ]
 
 
 def ncr_source(db: Session, project: Project, source_id: uuid.UUID) -> reg.SourceInfo:
     r = db.get(QReturn, source_id)
     if r is None or r.project_id != project.id:
-        raise qc.field_err("source_id", "The return is not on this project.", "المرتجع ليس في المشروع.")
+        raise qc.field_err(
+            "source_id", "The return is not on this project.", "المرتجع ليس في المشروع."
+        )
     return reg.SourceInfo(
         ref=r.ret_no,
         title=f"Return inspection — {r.ret_no}",

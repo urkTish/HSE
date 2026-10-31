@@ -51,11 +51,19 @@ def qualifier(h: QHold) -> str | None:
 
 
 def ctx(h: QHold) -> rpm.Ctx:
-    return rpm.Ctx(site_id=h.site_id, requesters=qc.ids(h.placed_by_user_id), qualifier=qualifier(h))
+    return rpm.Ctx(
+        site_id=h.site_id, requesters=qc.ids(h.placed_by_user_id), qualifier=qualifier(h)
+    )
 
 
 def lines_of(db: Session, h: QHold) -> list[QHoldLine]:
-    return list(db.scalars(select(QHoldLine).where(QHoldLine.hold_id == h.id).order_by(QHoldLine.created_at, QHoldLine.sku, QHoldLine.batch)))
+    return list(
+        db.scalars(
+            select(QHoldLine)
+            .where(QHoldLine.hold_id == h.id)
+            .order_by(QHoldLine.created_at, QHoldLine.sku, QHoldLine.batch)
+        )
+    )
 
 
 def _steps(h: QHold) -> b.StepList:
@@ -75,18 +83,20 @@ def get_hold(db: Session, p: Principal, hold_id: uuid.UUID) -> tuple[QHold, Proj
 # ---- placing ------------------------------------------------------------------------------------
 
 
-def _line(
-    db: Session, project: Project, h: QHold, raw: dict[str, Any], t: datetime
-) -> QHoldLine:
+def _line(db: Session, project: Project, h: QHold, raw: dict[str, Any], t: datetime) -> QHoldLine:
     prod = db.get(QProduct, raw["product_id"]) if raw.get("product_id") else None
     if prod is not None and prod.project_id != project.id:
         raise qc.field_err("lines", "A product is not on this project.", "منتج ليس في المشروع.")
     sku = raw.get("sku") or (prod.sku if prod else None)
     if not sku or not raw.get("batch"):
-        raise qc.field_err("lines", "Each line needs a product (sku) and a batch.", "كل بند يحتاج منتجاً ودفعة.")
+        raise qc.field_err(
+            "lines", "Each line needs a product (sku) and a batch.", "كل بند يحتاج منتجاً ودفعة."
+        )
     qty = Decimal(str(raw.get("qty") or 0))
     if qty <= 0:
-        raise qc.field_err("lines", "Each line needs a positive quantity.", "كل بند يحتاج كمية موجبة.")
+        raise qc.field_err(
+            "lines", "Each line needs a positive quantity.", "كل بند يحتاج كمية موجبة."
+        )
     owner = raw.get("owner_customer_id") or (prod.owner_customer_id if prod else None)
     if prod is not None and prod.storage_class == QStorageClass.pharma_2_8:
         h.storage_class = QStorageClass.pharma_2_8
@@ -136,7 +146,9 @@ def place(
         zone_id=zone_id,
         reason=reason,
         reason_note=note,
-        source_type=(source[0].value if isinstance(source[0], QRecordType) else source[0]) if source else None,
+        source_type=(source[0].value if isinstance(source[0], QRecordType) else source[0])
+        if source
+        else None,
         source_id=source[1] if source else None,
         source_ref=source[2] if source else None,
         ncr_id=ncr_id,
@@ -155,13 +167,13 @@ def place(
         db.add(_line(db, project, h, raw, t))
     db.flush()
     if source is not None and isinstance(source[0], QRecordType):
-        from app.services.quality import links  # noqa: PLC0415
         from app.core.quality.common import QLinkKind  # noqa: PLC0415
+        from app.services.quality import links  # noqa: PLC0415
 
         links.add(db, project.id, RT, h.id, source[0], source[1], QLinkKind.raised_from, placed_by)
     if ncr_id is not None:
-        from app.services.quality import links  # noqa: PLC0415
         from app.core.quality.common import QLinkKind  # noqa: PLC0415
+        from app.services.quality import links  # noqa: PLC0415
 
         links.add(db, project.id, QRecordType.ncr, ncr_id, RT, h.id, QLinkKind.relates, placed_by)
     b.audit_create(db, p, project, RT, h.id, hold_no=h.hold_no, reason=reason.value)
@@ -171,7 +183,9 @@ def place(
 
 
 def _notify_placed(db: Session, project: Project, h: QHold) -> None:
-    users = set(b.resolvers(db, project, RT, "release", ctx(h), qualifier=qualifier(h), record_id=h.id))
+    users = set(
+        b.resolvers(db, project, RT, "release", ctx(h), qualifier=qualifier(h), record_id=h.id)
+    )
     if h.placed_by_user_id:
         users.add(h.placed_by_user_id)
     b.send(
@@ -189,7 +203,9 @@ def _notify_placed(db: Session, project: Project, h: QHold) -> None:
     )
 
 
-def create_api(db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any]) -> dict[str, Any]:
+def create_api(
+    db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any]
+) -> dict[str, Any]:
     project, g = b.project_for_create(db, p, project_id, RT, C.hold_manage)
     site = b.site_of(db, project, body["site_id"])
     b.require_site(g, site.id)
@@ -198,9 +214,15 @@ def create_api(db: Session, p: Principal, project_id: uuid.UUID, body: dict[str,
         b.zone_of(db, project, zone_id)
     lines = body.get("lines") or []
     if not lines and not body.get("zone_level"):
-        raise qc.field_err("lines", "Add the held lines, or place a zone-level hold.", "أضف البنود أو ضع حجزاً على مستوى المنطقة.")
+        raise qc.field_err(
+            "lines",
+            "Add the held lines, or place a zone-level hold.",
+            "أضف البنود أو ضع حجزاً على مستوى المنطقة.",
+        )
     if body.get("zone_level") and zone_id is None:
-        raise qc.field_err("zone_id", "A zone-level hold names the zone.", "حدد المنطقة للحجز على مستوى المنطقة.")
+        raise qc.field_err(
+            "zone_id", "A zone-level hold names the zone.", "حدد المنطقة للحجز على مستوى المنطقة."
+        )
     sc = None
     if zone_id is not None:
         from app.models.quality.q3 import QStorageZone  # noqa: PLC0415
@@ -211,7 +233,9 @@ def create_api(db: Session, p: Principal, project_id: uuid.UUID, body: dict[str,
     if ncr_id is not None:
         n = db.get(QNcr, ncr_id)
         if n is None or n.project_id != project.id:
-            raise qc.field_err("ncr_id", "The NCR is not on this project.", "التقرير ليس في المشروع.")
+            raise qc.field_err(
+                "ncr_id", "The NCR is not on this project.", "التقرير ليس في المشروع."
+            )
     h = place(
         db,
         project,
@@ -229,7 +253,9 @@ def create_api(db: Session, p: Principal, project_id: uuid.UUID, body: dict[str,
     return read(db, p, h)
 
 
-def add_lines(db: Session, p: Principal, hold_id: uuid.UUID, body: dict[str, Any]) -> dict[str, Any]:
+def add_lines(
+    db: Session, p: Principal, hold_id: uuid.UUID, body: dict[str, Any]
+) -> dict[str, Any]:
     """Q-HLD-02: a zone-level hold gets its lines."""
     h, project = get_hold(db, p, hold_id)
     _, g = b.project_for_progress(db, p, project.id, C.hold_manage)
@@ -249,15 +275,21 @@ def add_lines(db: Session, p: Principal, hold_id: uuid.UUID, body: dict[str, Any
     return read(db, p, h)
 
 
-def segregate(db: Session, p: Principal, hold_id: uuid.UUID, body: dict[str, Any]) -> dict[str, Any]:
+def segregate(
+    db: Session, p: Principal, hold_id: uuid.UUID, body: dict[str, Any]
+) -> dict[str, Any]:
     """Q-HLD-03: segregation with a photo."""
     h, project = get_hold(db, p, hold_id)
     _, g = b.project_for_progress(db, p, project.id, C.hold_manage)
     b.require_site(g, h.site_id)
     seg = QSegregation(body["segregation"])
-    photo = b.attachment_on(db, body.get("photo_attachment_id"), A.q_hold, h.id, "photo_attachment_id")
+    photo = b.attachment_on(
+        db, body.get("photo_attachment_id"), A.q_hold, h.id, "photo_attachment_id"
+    )
     if photo is None:
-        raise qc.field_err("photo_attachment_id", "A segregation photo is required.", "صورة العزل مطلوبة.")
+        raise qc.field_err(
+            "photo_attachment_id", "A segregation photo is required.", "صورة العزل مطلوبة."
+        )
     if seg == QSegregation.moved_to_quarantine and not body.get("location"):
         raise qc.field_err("location", "Name the quarantine location.", "حدد موقع العزل.")
     h.segregation = seg
@@ -277,7 +309,7 @@ def wms_confirmed(db: Session, p: Principal, hold_id: uuid.UUID) -> dict[str, An
     return read(db, p, h)
 
 
-# ---- release / reject (Q-HLD-04, -05) -------------------------------------------------------------
+# ---- release / reject (Q-HLD-04, -05) ------------------------------------------------------------
 
 
 def _linked_ncrs(db: Session, h: QHold) -> list[QNcr]:
@@ -313,7 +345,9 @@ def open_recalls_for(db: Session, project_id: uuid.UUID, sku: str, batch: str) -
         select(QRecall).where(
             QRecall.project_id == project_id,
             QRecall.recall_type != QRecallType.mock,
-            QRecall.status.in_([QRecallStatus.open, QRecallStatus.traced, QRecallStatus.recovering]),
+            QRecall.status.in_(
+                [QRecallStatus.open, QRecallStatus.traced, QRecallStatus.recovering]
+            ),
         )
     ):
         if any(it.get("batch") == batch and it.get("sku") == sku for it in r.items or []):
@@ -322,10 +356,19 @@ def open_recalls_for(db: Session, project_id: uuid.UUID, sku: str, batch: str) -
 
 
 NCR_NOT_APPROVED = frozenset({QNcrStatus.draft, QNcrStatus.open, QNcrStatus.disposition_proposed})
-EXC_ASSESSED = frozenset({QExcursionStatus.assessed, QExcursionStatus.closed, QExcursionStatus.dismissed, QExcursionStatus.voided})
+EXC_ASSESSED = frozenset(
+    {
+        QExcursionStatus.assessed,
+        QExcursionStatus.closed,
+        QExcursionStatus.dismissed,
+        QExcursionStatus.voided,
+    }
+)
 
 
-def blockers(db: Session, h: QHold, line: QHoldLine | None = None, *, rejecting: bool = False) -> list[reg.Blocker]:
+def blockers(
+    db: Session, h: QHold, line: QHoldLine | None = None, *, rejecting: bool = False
+) -> list[reg.Blocker]:
     out: list[reg.Blocker] = []
     for n in _linked_ncrs(db, h):
         if n.status in NCR_NOT_APPROVED:
@@ -377,32 +420,52 @@ def _blocked(bl: list[reg.Blocker]) -> Any:
 def decide(db: Session, p: Principal, hold_id: uuid.UUID, body: dict[str, Any]) -> dict[str, Any]:
     """Release or reject lines (hold.release / hold.reject through the matrix)."""
     h, project = get_hold(db, p, hold_id)
-    project, g = b.project_for_progress(db, p, project.id, C.hold_manage, allow_n=True)
+    project, _ = b.project_for_progress(db, p, project.id, C.hold_manage, allow_n=True)
     if b.place_only(db, p, project.id):
-        raise forbidden_error("Warehouse QC may place holds; a responsible person releases or rejects them.")
+        raise forbidden_error(
+            "Warehouse QC may place holds; a responsible person releases or rejects them."
+        )
     action = body.get("action")
     if action not in ("release", "reject"):
         raise qc.field_err("action", "Action is release or reject.", "الإجراء: إفراج أو رفض.")
     ids = set(body.get("line_ids") or [])
-    lines = [ln for ln in lines_of(db, h) if ln.line_status == L.on_hold and (not ids or ln.id in ids)]
+    lines = [
+        ln for ln in lines_of(db, h) if ln.line_status == L.on_hold and (not ids or ln.id in ids)
+    ]
     if not lines:
-        raise qc.err(409, ErrorCode.INVALID_TRANSITION, "No line on hold to decide.", "لا يوجد بند محجوز لاتخاذ القرار.")
+        raise qc.err(
+            409,
+            ErrorCode.INVALID_TRANSITION,
+            "No line on hold to decide.",
+            "لا يوجد بند محجوز لاتخاذ القرار.",
+        )
     rejecting = action == "reject"
-    why: str | None = qc.reason(body.get("reason"), 20) if rejecting else ((body.get("reason") or "").strip() or None)
+    why: str | None = (
+        qc.reason(body.get("reason"), 20)
+        if rejecting
+        else ((body.get("reason") or "").strip() or None)
+    )
     bl: list[reg.Blocker] = []
     for ln in lines:
         bl += blockers(db, h, ln, rejecting=rejecting)
     if bl:
         raise _blocked(list({(x.code, x.detail_en): x for x in bl}.values()))
-    owner_file = b.attachment_on(db, body.get("owner_decision_attachment_id"), A.q_hold, h.id, "owner_decision_attachment_id")
+    owner_file = b.attachment_on(
+        db, body.get("owner_decision_attachment_id"), A.q_hold, h.id, "owner_decision_attachment_id"
+    )
     if not rejecting:
         for ln in lines:
             cust = db.get(QCustomer, ln.owner_customer_id) if ln.owner_customer_id else None
-            if cust is not None and cust.owner_release_approval and not (owner_file or ln.owner_decision_attachment_id):
+            if (
+                cust is not None
+                and cust.owner_release_approval
+                and not (owner_file or ln.owner_decision_attachment_id)
+            ):
                 raise qc.err(
                     422,
                     ErrorCode.OWNER_DECISION_REQUIRED,
-                    f"{cust.name_en} decides on its goods: attach the owner's written decision (Q-HLD-05).",
+                    f"{cust.name_en} decides on its goods: attach the owner's written decision "
+                    "(Q-HLD-05).",
                     f"يقرر {cust.name_ar} بشأن بضاعته: أرفق قرار المالك المكتوب.",
                 )
     s = b.sign(
@@ -441,7 +504,12 @@ def rehold(db: Session, p: Principal, line_id: uuid.UUID, body: dict[str, Any]) 
     _, g = b.project_for_progress(db, p, project.id, C.hold_manage)
     b.require_site(g, h.site_id)
     if ln.line_status != L.released:
-        raise qc.err(409, ErrorCode.INVALID_TRANSITION, "Only a released line can be held again.", "يمكن إعادة حجز بند مُفرج عنه فقط.")
+        raise qc.err(
+            409,
+            ErrorCode.INVALID_TRANSITION,
+            "Only a released line can be held again.",
+            "يمكن إعادة حجز بند مُفرج عنه فقط.",
+        )
     ln.reason = qc.reason(body.get("reason"))
     ln.line_status = L.on_hold
     h.closed_at = None
@@ -458,8 +526,15 @@ def outcome(db: Session, p: Principal, line_id: uuid.UUID, body: dict[str, Any])
     _, g = b.project_for_progress(db, p, project.id, C.stock_record)
     b.require_site(g, h.site_id)
     if ln.line_status != L.rejected or ln.final_outcome is not None:
-        raise qc.err(409, ErrorCode.INVALID_TRANSITION, "Only a rejected line without an outcome.", "فقط بند مرفوض بلا نتيجة نهائية.")
-    ev = b.attachment_on(db, body.get("evidence_attachment_id"), A.q_hold, h.id, "evidence_attachment_id")
+        raise qc.err(
+            409,
+            ErrorCode.INVALID_TRANSITION,
+            "Only a rejected line without an outcome.",
+            "فقط بند مرفوض بلا نتيجة نهائية.",
+        )
+    ev = b.attachment_on(
+        db, body.get("evidence_attachment_id"), A.q_hold, h.id, "evidence_attachment_id"
+    )
     if ev is None:
         raise qc.field_err(
             "evidence_attachment_id",
@@ -481,7 +556,11 @@ def close(db: Session, p: Principal, hold_id: uuid.UUID) -> dict[str, Any]:
     problems = []
     if not lines or any(ln.line_status == L.on_hold for ln in lines):
         problems.append(("lines", "Lines are still on hold.", "ما زالت بنود محجوزة."))
-    if any(ln.line_status == L.rejected and (ln.final_outcome is None or ln.evidence_attachment_id is None) for ln in lines):
+    if any(
+        ln.line_status == L.rejected
+        and (ln.final_outcome is None or ln.evidence_attachment_id is None)
+        for ln in lines
+    ):
         problems.append(
             (
                 "lines",
@@ -490,7 +569,9 @@ def close(db: Session, p: Principal, hold_id: uuid.UUID) -> dict[str, Any]:
             )
         )
     if problems:
-        raise qc.field_err(problems[0][0], " ".join(x[1] for x in problems), " ".join(x[2] for x in problems))
+        raise qc.field_err(
+            problems[0][0], " ".join(x[1] for x in problems), " ".join(x[2] for x in problems)
+        )
     h.status = QHoldStatus.closed
     h.closed_at = now()
     after_change(db, h)
@@ -528,7 +609,8 @@ def after_change(db: Session, h: QHold) -> None:
 
 def final(db: Session, h: QHold) -> bool:
     return all(
-        ln.line_status == L.released or (ln.line_status == L.rejected and ln.final_outcome is not None)
+        ln.line_status == L.released
+        or (ln.line_status == L.rejected and ln.final_outcome is not None)
         for ln in lines_of(db, h)
     )
 
@@ -605,9 +687,13 @@ def read(db: Session, p: Principal, h: QHold) -> dict[str, Any]:
         "status": h.status,
         "age_days": age_days(h, qc.project_day(project)),
         "lines": [line_read(db, ln) for ln in lines],
-        "blockers": [{"code": x.code, "detail_en": x.detail_en, "detail_ar": x.detail_ar} for x in bl],
+        "blockers": [
+            {"code": x.code, "detail_en": x.detail_en, "detail_ar": x.detail_ar} for x in bl
+        ],
         "allowed_actions": actions,
-        "signoffs": [signoff.read(db, s, show_scans=not hide) for s in signoff.signoffs_for(db, RT, h.id)],
+        "signoffs": [
+            signoff.read(db, s, show_scans=not hide) for s in signoff.signoffs_for(db, RT, h.id)
+        ],
     }
 
 
@@ -653,7 +739,9 @@ def list_page(
                 "age_days": age_days(h, today),
                 "lines": len(lines),
                 "lines_on_hold": sum(1 for ln in lines if ln.line_status == L.on_hold),
-                "qty_on_hold": sum((ln.qty for ln in lines if ln.line_status == L.on_hold), Decimal(0)),
+                "qty_on_hold": sum(
+                    (ln.qty for ln in lines if ln.line_status == L.on_hold), Decimal(0)
+                ),
                 "blocked": bool(blockers(db, h)) if h.status == QHoldStatus.on_hold else False,
                 "segregated": h.segregation is not None,
                 "wms_confirmed": h.wms_confirmed,
@@ -669,18 +757,37 @@ def export_csv(db: Session, p: Principal, project_id: uuid.UUID) -> bytes:
     buf = io.StringIO()
     w = csv.writer(buf)
     w.writerow(["owner", "sku", "batch", "location", "qty", "unit", "hold_no", "status"])
-    for h in db.scalars(select(QHold).where(QHold.project_id == project.id).order_by(QHold.hold_no)):
+    for h in db.scalars(
+        select(QHold).where(QHold.project_id == project.id).order_by(QHold.hold_no)
+    ):
         for ln in lines_of(db, h):
             cust = db.get(QCustomer, ln.owner_customer_id) if ln.owner_customer_id else None
-            w.writerow([cust.code if cust else "", ln.sku, ln.batch, ln.location or "", ln.qty, ln.unit, h.hold_no, ln.line_status.value])
+            w.writerow(
+                [
+                    cust.code if cust else "",
+                    ln.sku,
+                    ln.batch,
+                    ln.location or "",
+                    ln.qty,
+                    ln.unit,
+                    h.hold_no,
+                    ln.line_status.value,
+                ]
+            )
     from app.core.enums import AuditAction  # noqa: PLC0415
     from app.services import audit  # noqa: PLC0415
 
-    audit.record(db, AuditAction.export, p.actor(project.id), project_id=project.id, details={"dataset": "quality_holds_wms"})
+    audit.record(
+        db,
+        AuditAction.export,
+        p.actor(project.id),
+        project_id=project.id,
+        details={"dataset": "quality_holds_wms"},
+    )
     return buf.getvalue().encode("utf-8-sig")
 
 
-# ---- deadlines (Q-HLD-02, -03, -07) ---------------------------------------------------------------
+# ---- deadlines (Q-HLD-02, -03, -07) --------------------------------------------------------------
 
 
 def deadlines(db: Session, at: datetime) -> int:
@@ -732,7 +839,9 @@ def ageing(db: Session, at: datetime) -> int:
         if at < h.placed_at + timedelta(days=days):
             continue
         week = b.local_day(at).isocalendar()
-        users = b.resolvers(db, project, RT, "release", ctx(h), qualifier=qualifier(h), record_id=h.id)
+        users = b.resolvers(
+            db, project, RT, "release", ctx(h), qualifier=qualifier(h), record_id=h.id
+        )
         n += b.send(
             db,
             project,
@@ -749,13 +858,25 @@ def ageing(db: Session, at: datetime) -> int:
 
 def open_steps(db: Session, project: Project) -> list[reg.OpenStep]:
     out = []
-    for h in db.scalars(select(QHold).where(QHold.project_id == project.id, QHold.status == QHoldStatus.on_hold)):
+    for h in db.scalars(
+        select(QHold).where(QHold.project_id == project.id, QHold.status == QHoldStatus.on_hold)
+    ):
         if blockers(db, h):
             continue
         c = ctx(h)
         out.append(
             reg.OpenStep(
-                reg.PendingStep(RT, h.id, project.id, h.hold_no, f"{h.reason.value} hold", "release", h.placed_at, f"/quality/holds/{h.id}", "Q3"),
+                reg.PendingStep(
+                    RT,
+                    h.id,
+                    project.id,
+                    h.hold_no,
+                    f"{h.reason.value} hold",
+                    "release",
+                    h.placed_at,
+                    f"/quality/holds/{h.id}",
+                    "Q3",
+                ),
                 qualifier(h),
                 h.site_id,
                 None,

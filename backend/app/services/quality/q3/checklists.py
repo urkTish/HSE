@@ -15,7 +15,14 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.clock import now
-from app.core.field_enums import ItemType, ResponseOwnerType, ResponseResult, StopRule, TemplateKind, VersionStatus
+from app.core.field_enums import (
+    ItemType,
+    ResponseOwnerType,
+    ResponseResult,
+    StopRule,
+    TemplateKind,
+    VersionStatus,
+)
 from app.models import Project
 from app.models.field import ChecklistResponse, ChecklistTemplate
 from app.services.field import execution, scoring
@@ -42,7 +49,11 @@ TEMPLATES: dict[str, tuple[str, str, str, list[tuple[str, str, bool]]]] = {
             ("Driver hygiene acceptable", "نظافة السائق مقبولة", False),
             ("No water or condensation on cartons", "لا ماء أو تكاثف على الكراتين", False),
             ("Pallets in good condition", "الطبالي بحالة جيدة", False),
-            ("Labels readable, Arabic label present", "الملصقات مقروءة والملصق العربي موجود", False),
+            (
+                "Labels readable, Arabic label present",
+                "الملصقات مقروءة والملصق العربي موجود",
+                False,
+            ),
             ("Dock door seal fitted during unloading", "عازل باب الرصيف مركب أثناء التفريغ", False),
             ("Unloading started within the dock slot", "بدأ التفريغ ضمن موعد الرصيف", False),
         ],
@@ -52,32 +63,51 @@ TEMPLATES: dict[str, tuple[str, str, str, list[tuple[str, str, bool]]]] = {
         "Reefer pre-load check",
         "فحص الشاحنة المبردة قبل التحميل",
         [
-            ("Pre-cooled: box temperature within the compartment range", "تبريد مسبق: حرارة الصندوق ضمن نطاق الحجرة", True),
+            (
+                "Pre-cooled: box temperature within the compartment range",
+                "تبريد مسبق: حرارة الصندوق ضمن نطاق الحجرة",
+                True,
+            ),
             ("Clean and odour-free", "نظيف وخالٍ من الروائح", True),
             ("Doors, gaskets and insulation undamaged", "الأبواب والجوانات والعزل سليمة", True),
             ("Airflow clear (no blocked return air)", "مسار الهواء غير مسدود", True),
             ("Logger placed and scanned", "المسجل موضوع وممسوح", True),
             ("Seal applied after loading", "الختم مركب بعد التحميل", True),
-            ("Reefer fuel or power sufficient for the trip", "وقود أو طاقة وحدة التبريد كافية", False),
+            (
+                "Reefer fuel or power sufficient for the trip",
+                "وقود أو طاقة وحدة التبريد كافية",
+                False,
+            ),
             ("Load plan respects compartment classes", "خطة التحميل تراعي فئات الحجرات", False),
             ("No damaged pallets loaded", "لا طبالي تالفة محملة", False),
             ("Driver has the delivery documents", "مستندات التسليم مع السائق", False),
             ("Vehicle pre-use check done today", "فحص ما قبل الاستخدام منجز اليوم", False),
-            ("Spare logger or display reading recorded", "قراءة الشاشة أو المسجل الاحتياطي مسجلة", False),
+            (
+                "Spare logger or display reading recorded",
+                "قراءة الشاشة أو المسجل الاحتياطي مسجلة",
+                False,
+            ),
         ],
     ),
     "QHYG": (
         "hygiene",
         "Warehouse hygiene check",
         "فحص نظافة المستودع",
-        [("No pest evidence", "لا آثار للآفات", True), ("No product contamination", "لا تلوث للمنتجات", True), ("Chemicals stored away from food", "المواد الكيميائية بعيدة عن الأغذية", True)]
+        [
+            ("No pest evidence", "لا آثار للآفات", True),
+            ("No product contamination", "لا تلوث للمنتجات", True),
+            ("Chemicals stored away from food", "المواد الكيميائية بعيدة عن الأغذية", True),
+        ]
         + [(f"Hygiene item {i}", f"بند نظافة {i}", False) for i in range(4, 21)],
     ),
     "QPST": (
         "pest_visit",
         "Pest-control visit",
         "زيارة مكافحة الآفات",
-        [("All stations serviced", "خدمة جميع المحطات", True), ("Only registered chemicals used", "استخدام مواد مسجلة فقط", True)]
+        [
+            ("All stations serviced", "خدمة جميع المحطات", True),
+            ("Only registered chemicals used", "استخدام مواد مسجلة فقط", True),
+        ]
         + [(f"Pest visit item {i}", f"بند زيارة {i}", False) for i in range(3, 11)],
     ),
     "QRET": (
@@ -85,7 +115,11 @@ TEMPLATES: dict[str, tuple[str, str, str, list[tuple[str, str, bool]]]] = {
         "Return inspection",
         "فحص المرتجعات",
         [
-            ("Temperature history available for cold goods", "سجل الحرارة متوفر للبضائع المبردة", True),
+            (
+                "Temperature history available for cold goods",
+                "سجل الحرارة متوفر للبضائع المبردة",
+                True,
+            ),
             ("Packaging intact", "التغليف سليم", False),
             ("Seal or tamper evidence intact", "الختم أو دليل العبث سليم", False),
             ("Batch and expiry readable", "الدفعة والانتهاء مقروءة", False),
@@ -137,7 +171,12 @@ def items_for(code: str) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
 def ensure_templates(db: Session, author: uuid.UUID | None) -> dict[str, ChecklistTemplate]:
     out = {}
     for code, (qtype, en, ar, _) in TEMPLATES.items():
-        t = db.scalar(select(ChecklistTemplate).where(ChecklistTemplate.template_code == code).order_by(ChecklistTemplate.version.desc()).limit(1))
+        t = db.scalar(
+            select(ChecklistTemplate)
+            .where(ChecklistTemplate.template_code == code)
+            .order_by(ChecklistTemplate.version.desc())
+            .limit(1)
+        )
         if t is None:
             secs, items = items_for(code)
             t = ChecklistTemplate(
@@ -176,11 +215,15 @@ def template(db: Session, quality_type: str, code: str | None = None) -> Checkli
     )
     if code:
         q = q.where(ChecklistTemplate.template_code == code)
-    t = db.scalar(q.order_by(ChecklistTemplate.published_at.desc(), ChecklistTemplate.version.desc()).limit(1))
+    t = db.scalar(
+        q.order_by(ChecklistTemplate.published_at.desc(), ChecklistTemplate.version.desc()).limit(1)
+    )
     if t is None:
         if code is None and quality_type in {v[0] for v in TEMPLATES.values()}:
             ensure_templates(db, None)
-            return template(db, quality_type, next(k for k, v in TEMPLATES.items() if v[0] == quality_type))
+            return template(
+                db, quality_type, next(k for k, v in TEMPLATES.items() if v[0] == quality_type)
+            )
         raise qc.field_err(
             "template_code",
             f"No published quality checklist of type {quality_type}.",
@@ -245,12 +288,22 @@ def respond(
     )
     db.add(r)
     db.flush()
-    by_code = {a.item_code: (i, a) for i, a in enumerate(answers)} if answers and hasattr(answers[0], "item_code") else {}
+    by_code = (
+        {a.item_code: (i, a) for i, a in enumerate(answers)}
+        if answers and hasattr(answers[0], "item_code")
+        else {}
+    )
     if by_code:
         r.answers = execution.store_answers(db, user_id, r, sc, by_code, [])
     else:
         r.answers = [
-            {"item_code": ev.code, "answer": (ev.answer or {}).get("answer") if hasattr(ev, "answer") else None, "compliant": ev.compliant, "critical": ev.critical, "applicable": ev.applicable}
+            {
+                "item_code": ev.code,
+                "answer": (ev.answer or {}).get("answer") if hasattr(ev, "answer") else None,
+                "compliant": ev.compliant,
+                "critical": ev.critical,
+                "applicable": ev.applicable,
+            }
             for ev in sc.evals
         ]
     crit = [ev.code for ev in sc.evals if ev.critical and ev.compliant is False]
