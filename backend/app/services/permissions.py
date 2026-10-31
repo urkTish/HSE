@@ -740,7 +740,126 @@ PHASE7B_MATRIX: dict[Role, dict[Capability, CapabilityScope]] = {
 for _role, _caps in PHASE7B_MATRIX.items():
     MATRIX[_role].update(_caps)
 
-SCOPE_RANK = {S.own_engagement: 1, S.contractor_tree: 2, S.sites: 3, S.project: 4, S.all: 5}
+# Phase 8 Quality 8-quality §A.11 (capabilities 238-280), transcribed column by column from the
+# spec table: QA/QC Mgr · Q Eng · QC Insp · Whse QC · Resp. Person · HSE Mgr · HSE Off · Site Eng ·
+# C-HSE Rep · Viewer. P project · S sites · C contractor tree · N responsible-person only
+# (Q-ROL-04) · R read-only issued (services) · A all (the manager holds every capability) · -.
+# Parenthesised narrowing (Viewer aggregates without names or costs, "P (view)", "P (MIR)",
+# "P (place only)", R) is enforced in the Quality services; "P (not contractor-assigned)" for
+# 239 / 244 and the engagement narrowing of Q-ROL-02 are applied in `build_principal`.
+QUALITY_ROLES: tuple[Role, ...] = (
+    Role.qa_qc_manager,
+    Role.quality_engineer,
+    Role.qc_inspector,
+    Role.warehouse_qc,
+    Role.responsible_person,
+)
+_PHASE8_COLUMNS: tuple[Role | None, ...] = (
+    *QUALITY_ROLES,
+    None,  # HSE Manager: org-wide grant (MANAGER_CAPABILITIES)
+    Role.hse_officer,
+    Role.site_engineer,
+    Role.contractor_hse_rep,
+    Role.viewer_client,
+)
+_PHASE8_TABLE = """
+238 quality.view                P P P P N A P S C P
+239 quality.settings            P - - - - A - - - -
+240 quality.author              P P - - - A - - - -
+241 ncr.raise                   P P P P N A P S - -
+242 ncr.manage                  P P P P - A - - - -
+243 ncr.approve                 P P - - N A - - - -
+244 quality.void                P - - - - A - - - -
+245 complaint.manage            P P - P - A - - - -
+246 export.quality              P P P P - A P S C P
+247 itp.author                  P P - - - A - - - -
+248 itp.approve                 P P - - N A - - - -
+249 ir.submit                   P P P - - A - S - -
+250 ir.inspect                  P P P - N A - - - -
+251 punch.record                P P P - N A - S - -
+252 punch.verify                P P P - N A - - - -
+253 dossier.compile             P P - - - A - - - -
+254 dossier.accept              P - - - N A - - - -
+255 material.submit             P P P - - A - S - -
+256 material.decide             P P P - N A - - - -
+257 test.record                 P P P P - A - S - -
+258 test.verify                 P P - - N A - - - -
+259 welding.record              P P P - - A - - - -
+260 welding.approve             P P - - N A - - - -
+261 mte.manage                  P P P P - A - - - -
+262 calibration.decide          P P - - N A - - - -
+263 competence.manage           P P P P - A - - - -
+264 receiving.record            P P P P - A - - - -
+265 receiving.decide            P P - P N A - - - -
+266 storage.manage              P P - P - A - - - -
+267 reading.record              P P P P - A - - - -
+268 excursion.assess            P P - P N A - - - -
+269 stock.record                P P - P - A - - - -
+270 hold.manage                 P P - P N A - - - -
+271 recall.manage               P P - P N A - - - -
+272 transport.record            P P P P N A - - - -
+273 document.author             P P - P - A - - - -
+274 document.approve            P P - - N A - - - -
+275 quality.acknowledge         P P P P P A P P P -
+276 quality_audit.conduct       P P - - - A - - - -
+277 quality_audit.issue         P - - - N A - - - -
+278 supplier.manage             P P - P - A - - - -
+279 supplier.approve            P - - - N A - - - -
+280 quality_report_pack.manage  P P - - - A R - - R
+"""
+_LETTER: dict[str, CapabilityScope] = {
+    "P": S.project,
+    "S": S.sites,
+    "C": S.contractor_tree,
+    "N": S.responsible,
+    "R": S.project,
+}
+
+
+def _phase8_matrix() -> dict[Role, dict[Capability, CapabilityScope]]:
+    out: dict[Role, dict[Capability, CapabilityScope]] = {r: {} for r in _PHASE8_COLUMNS if r}
+    for line in _PHASE8_TABLE.strip().splitlines():
+        _num, cap, *cells = line.split()
+        assert len(cells) == len(_PHASE8_COLUMNS), line  # noqa: S101
+        for role, cell in zip(_PHASE8_COLUMNS, cells, strict=True):
+            if role is not None and cell in _LETTER:
+                out[role][Capability(cap)] = _LETTER[cell]
+    return out
+
+
+PHASE8_MATRIX = _phase8_matrix()
+# Phase 0 reads the quality roles need to work on their project (A.1: project roles).
+_QUALITY_BASE: dict[Capability, CapabilityScope] = {
+    C.project_view: S.project,
+    C.site_zone_view: S.project,
+    C.contractor_view: S.project,
+    C.user_view_directory: S.project,
+    C.settings_view: S.project,
+    C.history_view: S.project,
+    C.profile_edit_own: S.all,
+}
+for _role in QUALITY_ROLES:
+    MATRIX[_role] = (
+        {C.project_view: S.project, C.site_zone_view: S.project, C.profile_edit_own: S.all}
+        if _role == Role.responsible_person
+        else dict(_QUALITY_BASE)
+    )
+for _role, _caps in PHASE8_MATRIX.items():
+    MATRIX[_role].update(_caps)
+PHASE8_CAPABILITIES: frozenset[Capability] = frozenset(
+    c for caps in PHASE8_MATRIX.values() for c in caps
+)
+# Q-ROL-03: a contractor-assigned quality role never edits Quality settings or voids records.
+CONTRACTOR_QUALITY_EXCLUDED = frozenset({C.quality_settings, C.quality_void})
+
+SCOPE_RANK = {
+    S.responsible: 0,
+    S.own_engagement: 1,
+    S.contractor_tree: 2,
+    S.sites: 3,
+    S.project: 4,
+    S.all: 5,
+}
 ROLE_RANK = {r: i for i, r in enumerate(Role)}  # lower index = more senior
 OFFICER_ASSIGNABLE = frozenset(
     {
@@ -775,6 +894,9 @@ FULL = Grant(S.all)
 def _merge(a: Grant | None, b: Grant) -> Grant:
     if a is None:
         return b
+    # Phase 8 N (Q-ROL-04) is not a wider scope: any other grant replaces it
+    if S.responsible in (a.scope, b.scope):
+        return a if b.scope == S.responsible else b
     scope = a.scope if SCOPE_RANK[a.scope] >= SCOPE_RANK[b.scope] else b.scope
     sites = None if a.site_ids is None or b.site_ids is None else a.site_ids | b.site_ids
     engs = (
@@ -963,8 +1085,21 @@ def build_principal(db: Session, user: User, session: UserSession | None) -> Pri
             continue
         scope = projects.setdefault(a.project_id, ProjectScope(a.project_id, codes[a.project_id]))
         scope.assignments.append(a)
-        for cap, cap_scope in MATRIX[a.role].items():
+        quality_eng = a.role in QUALITY_ROLES and a.contractor_engagement_id is not None
+        for cap, role_scope in MATRIX[a.role].items():
+            cap_scope = role_scope
+            if quality_eng and cap in PHASE8_CAPABILITIES:
+                # Q-ROL-02 / Q-ROL-03: narrowed to the engagement tree; no settings, no void
+                if cap in CONTRACTOR_QUALITY_EXCLUDED:
+                    continue
+                if cap_scope != S.responsible:
+                    cap_scope = S.contractor_tree
             engs: frozenset[uuid.UUID] | None = None
+            if quality_eng and cap_scope == S.responsible and a.contractor_engagement_id:
+                eid = a.contractor_engagement_id
+                if eid not in tree_cache:
+                    tree_cache[eid] = frozenset(engagement_descendants(db, eid))
+                engs = tree_cache[eid]
             if cap_scope == S.contractor_tree and a.contractor_engagement_id:
                 eid = a.contractor_engagement_id
                 if eid not in tree_cache:

@@ -9,6 +9,7 @@ class TemplateKind(StrEnum):
 
     inspection = "inspection"
     audit = "audit"
+    quality = "quality"  # 6d v1.5 (8-quality Q-CHK-01): author 240, publish 239
 
 
 class AuditType(StrEnum):
@@ -106,6 +107,15 @@ class ResponseOwnerType(StrEnum):
     inspection = "inspection"
     audit = "audit"
     vehicle_check = "vehicle_check"  # 6d v1.1 (7b §11.7): pre-use check on a site vehicle
+    # 6d v1.5 (8-quality §A.7): quality checklist responses, owned by the Quality parts
+    q_ir_round = "q_ir_round"
+    q_punch_walkdown = "q_punch_walkdown"
+    q_mir = "q_mir"
+    q_receipt = "q_receipt"
+    q_trip_preload = "q_trip_preload"
+    q_hygiene = "q_hygiene"
+    q_pest_visit = "q_pest_visit"
+    q_return = "q_return"
 
 
 class Rotation(StrEnum):

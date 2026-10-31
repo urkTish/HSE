@@ -199,6 +199,7 @@ from app.models.ptw import (
     ZoneAdjacency,
     ZonePtwProfile,
 )
+from app.models.quality import q0 as _quality  # noqa: F401  (Phase 8 tables, all parts)
 from app.models.scorecard import (
     RpDelivery,
     RpPack,

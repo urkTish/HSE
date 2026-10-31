@@ -95,6 +95,12 @@ def main() -> None:
     sched.add_job(_job, "cron", hour=3, minute=0, args=["export_purge"])
     # Option 7b (spec 7b-fleet-driver §4, §7, DA-3; prototype)
     sched.add_job(_job, "cron", hour=0, minute=30, args=["site_vehicle_daily"])
+    # Phase 8 Quality (spec 8-quality §4; parts register into these slots)
+    sched.add_job(_job, "cron", hour=0, minute=21, args=["quality_daily"])
+    sched.add_job(_job, "cron", hour=7, minute=12, args=["quality_alerts"])
+    sched.add_job(_job, "cron", day_of_week="sun", hour=7, minute=12, second=30,
+                  args=["quality_weekly"])  # fmt: skip
+    sched.add_job(_job, "cron", day=2, hour=7, minute=24, args=["quality_monthly"])
     sched.start()
 
 

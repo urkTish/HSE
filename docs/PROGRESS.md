@@ -27,6 +27,9 @@
 
 ## Done
 
+### Quality (phase 8) — spec, wave 0 (2026-10-31, branch `claude/quality-spec`)
+- `docs/specs/8-quality.md` v1.2: Parts A–E = packages Q0–Q4 (handover `docs/HANDOVER-quality.md` §5); §3 sets file, table and route ownership per part and the Q0 plug-in registries so Q1, Q2 and Q3 can build in parallel. 186 acceptance criteria; capabilities 238–280; KPIs K-141…K-169; warnings E26–E28; AI tools T26–T29; charts C42–C51; decisions D-308…D-319; open questions for Turki in §7 (defaults in place). Docs only, no code; next: Fable spec review, then Q0.
+
 ### Trial readiness A + B + C combined (contract v0.17.0, 2026-10-22, branch `claude/trial-integration`)
 - One branch with packages A (#4), B (#5) and C (#6) merged for a single merge; decision D-307. Merge this instead of the three package PRs.
 - Migrations in one line: 0023 → `a_0024_email_sender` → `b_0024_licence` → `c0024` → `c0025` (`alembic heads` = `c0025`; upgrade, `alembic check` and a downgrade to 0023 / upgrade round trip are clean).

@@ -17,6 +17,13 @@ class Role(StrEnum):
     contractor_hse_rep = "contractor_hse_rep"
     viewer_client = "viewer_client"
     oh_practitioner = "oh_practitioner"  # 6a §3.0 (assigned by the HSE Manager only, OH-1)
+    # Phase 8 Quality (8-quality §A.1, Q-ROL-01…05): project roles; a quality role may carry a
+    # contractor engagement (then every Quality grant is narrowed to that tree, Q-ROL-02)
+    qa_qc_manager = "qa_qc_manager"
+    quality_engineer = "quality_engineer"
+    qc_inspector = "qc_inspector"
+    warehouse_qc = "warehouse_qc"
+    responsible_person = "responsible_person"  # scope N only (Q-ROL-04)
 
 
 class Capability(StrEnum):
@@ -296,6 +303,52 @@ class Capability(StrEnum):
     driver_auth_manage = "driver_auth.manage"  # 235 activate … revoke (C: propose)
     pre_use_record = "pre_use.record"  # 236 pre-use checks; journey plans
     site_vehicle_settings = "site_vehicle.settings"  # 237 7b settings (HSE Manager)
+    # ---- Phase 8 Quality (8-quality §A.11, capabilities 238-280; Q0 adds all) ----
+    quality_view = "quality.view"  # 238 Quality home, registers, NCRs, KPIs (profile-aware)
+    quality_settings = "quality.settings"  # 239 settings, profile, positions, matrix, numbering,
+    # publish criteria and quality checklists, assign quality roles
+    quality_author = "quality.author"  # 240 criteria and quality checklist drafts
+    ncr_raise = "ncr.raise"  # 241 raise NCRs and observations
+    ncr_manage = "ncr.manage"  # 242 owner work: containment, RCA, CA plan, disposition, costs
+    ncr_approve = "ncr.approve"  # 243 approve disposition / concession / close (RPM); verify CAs
+    quality_void = "quality.void"  # 244 void Quality records
+    complaint_manage = "complaint.manage"  # 245 customer complaints
+    export_quality = "export.quality"  # 246 export Quality registers
+    itp_author = "itp.author"  # 247
+    itp_approve = "itp.approve"  # 248 (RPM)
+    ir_submit = "ir.submit"  # 249 raise and submit IRs; respond to IR comments
+    ir_inspect = "ir.inspect"  # 250 schedule, inspect and decide IRs (RPM)
+    punch_record = "punch.record"  # 251
+    punch_verify = "punch.verify"  # 252 (RPM)
+    dossier_compile = "dossier.compile"  # 253
+    dossier_accept = "dossier.accept"  # 254 (RPM)
+    material_submit = "material.submit"  # 255 MARs and MIRs
+    material_decide = "material.decide"  # 256 MAR / MIR decisions, quarantine disposal (RPM)
+    test_record = "test.record"  # 257 test requests, sampling, specimens, results, pours
+    test_verify = "test.verify"  # 258 verify and amend test results (RPM)
+    welding_record = "welding.record"  # 259
+    welding_approve = "welding.approve"  # 260 WPS, PQR, WPQ (RPM)
+    mte_manage = "mte.manage"  # 261 M&TE register and calibration records
+    calibration_decide = "calibration.decide"  # 262 accept calibrations, OOT reviews (RPM)
+    competence_manage = "competence.manage"  # 263 (QC Insp / Whse QC: view)
+    receiving_record = "receiving.record"  # 264
+    receiving_decide = "receiving.decide"  # 265 deviation and rejection decisions (RPM)
+    storage_manage = "storage.manage"  # 266 zones, points, mapping, schedules, pest, hygiene
+    reading_record = "reading.record"  # 267 manual readings, logger CSV import
+    excursion_assess = "excursion.assess"  # 268 (RPM for approval)
+    stock_record = "stock.record"  # 269 imports, FEFO, damage, returns, cycle counts
+    hold_manage = "hold.manage"  # 270 place holds; release / reject (RPM)
+    recall_manage = "recall.manage"  # 271 recalls and mock recalls
+    transport_record = "transport.record"  # 272 trips, pre-load, transit readings, POD
+    document_author = "document.author"  # 273
+    document_approve = "document.approve"  # 274 (RPM)
+    quality_acknowledge = "quality.acknowledge"  # 275 documents and quality alerts (named
+    # distribution members only, enforced in the services)
+    quality_audit_conduct = "quality_audit.conduct"  # 276
+    quality_audit_issue = "quality_audit.issue"  # 277 (RPM)
+    supplier_manage = "supplier.manage"  # 278 supplier register, evaluations, scorecards
+    supplier_approve = "supplier.approve"  # 279 approve, suspend, disqualify (RPM)
+    quality_report_pack = "quality_report_pack.manage"  # 280 (Viewer / HSE Officer: issued)
 
 
 class CapabilityScope(StrEnum):
@@ -307,6 +360,9 @@ class CapabilityScope(StrEnum):
     sites = "sites"
     contractor_tree = "contractor_tree"
     own_engagement = "own_engagement"
+    # Phase 8 "N" (8-quality §A.11, Q-ROL-04): only records where the user resolves as the
+    # responsible person for a pending or signed step (enforced in the Quality services)
+    responsible = "responsible"
 
 
 class ProjectType(StrEnum):
@@ -314,6 +370,7 @@ class ProjectType(StrEnum):
     building_highrise = "building_highrise"
     infrastructure = "infrastructure"
     industrial = "industrial"
+    logistics = "logistics"  # 8-quality Q-PRF-06 (D-309): defaults the Quality profile
     other = "other"
 
 
@@ -726,6 +783,53 @@ class EntityType(StrEnum):
     journey_plan = "journey_plan"
     # Trial readiness, package B (D-289)
     licence = "licence"
+    # Phase 8 Quality (8-quality §3.1): Q0 registers and every record type of list QRT
+    q_settings = "q_settings"
+    q_position = "q_position"
+    q_rp_rule = "q_rp_rule"
+    q_numbering = "q_numbering"
+    q_criterion = "q_criterion"
+    q_system = "q_system"
+    q_customer = "q_customer"
+    q_link = "q_link"
+    q_signoff = "q_signoff"
+    q_mte_usage = "q_mte_usage"
+    q_ncr = "q_ncr"
+    q_observation = "q_observation"
+    q_quality_alert = "q_quality_alert"
+    q_complaint = "q_complaint"
+    q_itp = "q_itp"
+    q_ir = "q_ir"
+    q_punch_item = "q_punch_item"
+    q_dossier = "q_dossier"
+    q_mar = "q_mar"
+    q_mir = "q_mir"
+    q_quarantine = "q_quarantine"
+    q_test_request = "q_test_request"
+    q_pour = "q_pour"
+    q_wps = "q_wps"
+    q_pqr = "q_pqr"
+    q_wpq = "q_wpq"
+    q_weld = "q_weld"
+    q_mte = "q_mte"
+    q_calibration = "q_calibration"
+    q_oot_review = "q_oot_review"
+    q_receipt = "q_receipt"
+    q_excursion = "q_excursion"
+    q_mapping_study = "q_mapping_study"
+    q_hold = "q_hold"
+    q_return = "q_return"
+    q_recall = "q_recall"
+    q_damage_report = "q_damage_report"
+    q_fefo_check = "q_fefo_check"
+    q_cycle_count = "q_cycle_count"
+    q_trip = "q_trip"
+    q_document = "q_document"
+    q_transmittal = "q_transmittal"
+    q_audit = "q_audit"
+    q_management_review = "q_management_review"
+    q_supplier = "q_supplier"
+    q_supplier_evaluation = "q_supplier_evaluation"
 
 
 class ExportDataset(StrEnum):
@@ -1089,3 +1193,5 @@ class NotificationKind(StrEnum):
     site_vehicle_doc_expiry = "site_vehicle_doc_expiry"  # SV-2 30 / 14 / 7 / 0 days
     driver_auth_expiry = "driver_auth_expiry"  # 30 / 7 / 0 days
     vehicle_defect_hold = "vehicle_defect_hold"  # PU-3 set / cleared
+    # ---- Phase 8 Quality (8-quality §A.13): one kind for every Quality alert ----
+    quality = "quality"

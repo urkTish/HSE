@@ -703,6 +703,13 @@ class CaSourceType(StrEnum):
     lesson = "lesson"  # 1-dashboard v1.9: 6f effectiveness check (EF-5)
     scorecard = "scorecard"  # 1-dashboard v1.10: 6g watch-list entry (WL-2, WL-3)
     site_vehicle = "site_vehicle"  # 1-dashboard v1.12: 7b pre-use check critical fail (PU-3)
+    # 1-dashboard v1.13 (8-quality Q-CAP-01, D-312): CAPA of Quality records; excluded from the
+    # HSE KPIs K-40…K-43, the HSE action panel and 6g scorecard inputs (Q-CAP-06)
+    quality_ncr = "quality_ncr"
+    quality_observation = "quality_observation"
+    quality_complaint = "quality_complaint"
+    quality_audit = "quality_audit"
+    quality_review = "quality_review"
     ai_recommendation = "ai_recommendation"
     other = "other"
 
@@ -833,6 +840,59 @@ class AttachmentOwner(StrEnum):
     # Option 7a (VA-14, VA-15): Najm / police report files archived with the incident (personal
     # bucket, capability 29 only, superseded versions kept, no delete after Closed, never exported)
     incident_accident_report = "incident_accident_report"
+    # Phase 8 Quality (8-quality §A.8.7, list QAO; Q0 adds all, each part resolves its own
+    # through the quality ATTACHMENT_OWNERS registry)
+    q_ncr = "q_ncr"
+    q_ncr_evidence = "q_ncr_evidence"
+    q_observation = "q_observation"
+    q_alert = "q_alert"
+    q_complaint = "q_complaint"
+    q_signoff_scan = "q_signoff_scan"
+    q_supplier_doc = "q_supplier_doc"
+    q_mte_doc = "q_mte_doc"
+    q_itp = "q_itp"
+    q_ir_round = "q_ir_round"
+    q_punch = "q_punch"
+    q_floor_plan = "q_floor_plan"
+    q_dossier = "q_dossier"
+    q_mar = "q_mar"
+    q_mir = "q_mir"
+    q_quarantine = "q_quarantine"
+    q_test_report = "q_test_report"
+    q_wps = "q_wps"
+    q_wpq = "q_wpq"
+    q_weld = "q_weld"
+    q_calibration_cert = "q_calibration_cert"
+    q_receipt = "q_receipt"
+    q_import_file = "q_import_file"
+    q_mapping_report = "q_mapping_report"
+    q_pest_visit = "q_pest_visit"
+    q_hold = "q_hold"
+    q_damage = "q_damage"
+    q_return = "q_return"
+    q_recall = "q_recall"
+    q_trip = "q_trip"
+    q_pod = "q_pod"
+    q_document_file = "q_document_file"
+    q_transmittal = "q_transmittal"
+    q_audit_report = "q_audit_report"
+    q_mgmt_review = "q_mgmt_review"
+    q_supplier_eval = "q_supplier_eval"
+    q_report_pack = "q_report_pack"
+
+
+QUALITY_ATTACHMENT_OWNERS: frozenset[AttachmentOwner] = frozenset(
+    a for a in AttachmentOwner if a.value.startswith("q_")
+)
+QUALITY_CA_SOURCES: frozenset[CaSourceType] = frozenset(
+    {
+        CaSourceType.quality_ncr,
+        CaSourceType.quality_observation,
+        CaSourceType.quality_complaint,
+        CaSourceType.quality_audit,
+        CaSourceType.quality_review,
+    }
+)
 
 
 class ScanStatus(StrEnum):

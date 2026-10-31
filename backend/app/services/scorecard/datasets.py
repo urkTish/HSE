@@ -425,7 +425,26 @@ def native_columns(ds: Dataset) -> list[Col]:
     return out
 
 
+_QUALITY_LOADED: list[bool] = []
+
+
+def _quality() -> None:
+    """8-quality §3.2 `DATASETS`: the Quality parts' datasets, appended once to NATIVE."""
+    if _QUALITY_LOADED:
+        return
+    _QUALITY_LOADED.append(True)
+    from app.services.quality import ensure_registered  # noqa: PLC0415
+    from app.services.quality import registry as q_reg  # noqa: PLC0415
+
+    ensure_registered()
+    for d in q_reg.DATASETS.values():
+        if d.code not in NATIVE_BY_CODE:
+            NATIVE.append(d)
+            NATIVE_BY_CODE[d.code] = d
+
+
 def get(code: str) -> Dataset | None:
+    _quality()
     if code in NATIVE_BY_CODE:
         return NATIVE_BY_CODE[code]
     try:
@@ -505,6 +524,7 @@ LEGACY_LABELS: dict[str, tuple[str, str]] = {
 
 
 def all_codes() -> list[str]:
+    _quality()
     return [*[d.value for d in ExportDataset if d.value not in NATIVE_BY_CODE], *NATIVE_BY_CODE]
 
 

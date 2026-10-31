@@ -16,6 +16,7 @@ from app.core.config import API_PREFIX, get_settings
 from app.core.enums import AuditAction, Capability, EntityType
 from app.core.errors import ApiError, ErrorCode, not_found
 from app.core.hse_enums import (
+    QUALITY_ATTACHMENT_OWNERS,
     AttachmentOwner,
     CaStatus,
     IncidentStatus,
@@ -71,6 +72,7 @@ PERSONAL = frozenset(
         AttachmentOwner.xp_export_file,  # 6g EX-8 (encrypted bucket)
         AttachmentOwner.sc_remark_file,  # 6g P6g-1
         AttachmentOwner.incident_accident_report,  # 7a VA-14 / P7a-1
+        AttachmentOwner.q_signoff_scan,  # 8-quality P8-6
     }
 )
 PTW_OWNERS = frozenset(
@@ -136,6 +138,15 @@ DOCUMENT_OWNERS = frozenset(
         AttachmentOwner.consignment_ticket,
         AttachmentOwner.fu_evidence,
         AttachmentOwner.sc_remark_file,
+        # 8-quality §A.8.7: signed forms, certificates, test reports, delivery notes (scan profile)
+        AttachmentOwner.q_signoff_scan,
+        AttachmentOwner.q_ncr_evidence,
+        AttachmentOwner.q_supplier_doc,
+        AttachmentOwner.q_mte_doc,
+        AttachmentOwner.q_calibration_cert,
+        AttachmentOwner.q_test_report,
+        AttachmentOwner.q_document_file,
+        AttachmentOwner.q_pod,
     }
 )
 
@@ -245,6 +256,10 @@ def _owner(
         if write and p.user.id != ca.owner_id and not ca_svc._staff(p, ca):
             raise forbidden_error()
         return ca.project_id, ca.status in (CaStatus.open, CaStatus.in_progress)
+    if owner_type in QUALITY_ATTACHMENT_OWNERS:  # 8-quality §A.8.7 (registry ATTACHMENT_OWNERS)
+        from app.services.quality import files as q_files  # noqa: PLC0415
+
+        return q_files.owner(db, p, owner_type, owner_id, write)
     if owner_type in PTW_OWNERS:
         return _ptw_owner(db, p, owner_type, owner_id, write)
     if owner_type == AttachmentOwner.fitness_scan:

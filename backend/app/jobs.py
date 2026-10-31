@@ -38,6 +38,7 @@ from app.ptw_jobs import PHASE3_JOBS
 from app.scorecard_jobs import PHASE6G_JOBS
 from app.services import audit, mailer, notify
 from app.services.audit import SYSTEM
+from app.services.quality.jobs import QUALITY_JOBS
 from app.services.users import _active_manager_ids, deactivate
 from app.site_vehicle_jobs import PHASE7B_JOBS
 from app.train_jobs import PHASE5_JOBS
@@ -318,6 +319,7 @@ JOBS: dict[str, Callable[[Session], dict[str, Any]]] = {
     **PHASE6F_JOBS,
     **PHASE6G_JOBS,
     **PHASE7B_JOBS,
+    **QUALITY_JOBS,  # 8-quality §4 (every part's jobs run inside these slots)
 }
 
 
