@@ -219,7 +219,7 @@ function MarDetail({ project, id }: { project: Project; id: string }) {
       <HistoryPanel entityType="q_mar" entityId={m.id} projectId={project.id} />
       <DecisionDialog open={deciding} onOpenChange={setDeciding} title={t("decide")} testId="q2-mar-decide-dialog"
         options={["A", "B", "C", "D"].map((c) => ({ value: c, label: l("mar_code", c) }))} needsComment={(v) => v !== "A"}
-        extra={m.with_deviations ? <label className="flex items-center gap-2 text-sm"><Checkbox checked={accept} onCheckedChange={(v) => setAccept(Boolean(v))} data-testid="q2-accept-deviations" />{t("acceptDeviations")}</label> : null}
+        extra={m.with_deviations ? <label className="flex items-center gap-2 text-sm"><Checkbox checked={accept} onChange={(e) => setAccept(e.target.checked)} data-testid="q2-accept-deviations" />{t("acceptDeviations")}</label> : null}
         onSubmit={(d, c) => unwrap(api.POST("/api/v1/quality/mars/{mar_id}/decide", { ...path, body: { approval_code: d as "A", comment: c || null, accept_deviations: accept } })).then(() => q.refetch())} />
       <ReasonDialog open={withdrawing} onOpenChange={setWithdrawing} title={t("withdraw")} confirm={t("withdraw")}
         onSubmit={(reason) => unwrap(api.POST("/api/v1/quality/mars/{mar_id}/withdraw", { ...path, body: { reason } })).then(() => q.refetch())} />

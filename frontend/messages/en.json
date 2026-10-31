@@ -1665,7 +1665,25 @@
       "HUMAN_ERROR_NOT_ROOT_CAUSE": "\"Operator error\" is not a root cause: ask why the error was possible.",
       "DETECTION_ONLY_ACTION": "Extra inspection only detects the problem; add an action that removes the cause.",
       "COMPETENCE_NOT_MET": "The person does not meet the competence requirement.",
-      "BEFORE_QUALITY_START": "Before the project's Quality start date (excluded from KPIs)."
+      "BEFORE_QUALITY_START": "Before the project's Quality start date (excluded from KPIs).",
+      "TEST_RESULT_INCOMPLETE": "The test results are incomplete (lab report file, report number or a result field).",
+      "SIGNOFF_REQUIRED": "This step needs the responsible person's sign-off first.",
+      "MAR_INCOMPLETE": "The material approval request is incomplete.",
+      "MAR_NOT_APPROVED": "This material needs an approved material approval request first.",
+      "MIR_QTY_MISMATCH": "Accepted and rejected quantities must add up to the delivered quantity.",
+      "QUARANTINE_RELEASE_BLOCKED": "Release needs a linked NCR with an approved use-as-is, repair or rework disposition.",
+      "HOLD_POINT_NOT_RELEASED": "The pre-pour hold point is not released.",
+      "WPS_RANGE_EXCEEDED": "The WPS does not cover this joint.",
+      "WELDER_NOT_QUALIFIED": "The welder is not qualified for this joint (WPQ or continuity).",
+      "CALIBRATION_CERT_REQUIRED": "Attach the calibration certificate before accepting.",
+      "OOT_REVIEW_INCOMPLETE": "Decide every item of the out-of-tolerance review first.",
+      "RESULT_VERIFIED": "Verified results are never edited; record an amendment instead.",
+      "EARLY_STRENGTH_LOW": "The early-age strength is low.",
+      "POUR_SAMPLING_SHORT": "Fewer strength sets were taken than required.",
+      "HOLD_STATUS_UNKNOWN": "The hold point release could not be checked.",
+      "HEAT_NUMBER_MISMATCH": "Heat numbers on the tags are not on the certificates.",
+      "CAL_RANGE_NOT_COVERED": "The calibration points do not cover the range of use.",
+      "WELDER_RECORDED_WITH_OVERRIDE": "Recorded with an unqualified welder; an NCR was opened."
     }
   },
   "theme": {
