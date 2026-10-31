@@ -217,6 +217,8 @@ def update_zone(
         # Q-STO-01 / Q-MAP-06: a range change requires a new study of purpose after_change
         z.mapping_state = QMappingState.remap_required
         z.remap_reason = "range_change"
+    if changed & set(RANGE_KEYS):
+        invalidate_days(db, z.zone_id)  # coverage and TOR follow the new limits (D-351)
     z.updated_at = now()
     if changed:
         audit.record(
@@ -373,6 +375,7 @@ def create_point(
     )
     db.add(pt)
     db.flush()
+    invalidate_days(db, z.zone_id)
     return point_read(db, pt)
 
 
@@ -392,9 +395,13 @@ def update_point(
     pt, z, project = point_row(db, p, point_id)
     _, g = b.project_for_progress(db, p, project.id, C.storage_manage)
     b.require_site(g, z.site_id)
+    before = (pt.interval_minutes, pt.active)
     for k in ("position", "position_note", "interval_minutes", "active"):
         if k in body and body[k] is not None:
             setattr(pt, k, body[k])
+    if (pt.interval_minutes, pt.active) != before:
+        db.flush()
+        invalidate_days(db, z.zone_id)  # which points cover a minute changed (D-351)
     pt.updated_by_user_id = p.user.id
     return point_read(db, pt)
 
@@ -692,6 +699,12 @@ def _compute_days(db: Session, z: QStorageZone, d_from: date, d_to: date) -> dic
     return out
 
 
+def invalidate_days(db: Session, zone_id: uuid.UUID) -> None:
+    """A change of the zone's limits or of its points' intervals / active flags changes every
+    day's coverage and TOR: the summaries are dropped and recomputed on first use (D-351)."""
+    db.execute(delete(QZoneDay).where(QZoneDay.zone_id == zone_id))
+
+
 def refresh_days(db: Session, z: QStorageZone, d_from: date, d_to: date) -> None:
     """Recompute the stored summaries of the days the new data touched; days not over yet are
     never stored (they are computed when asked)."""
@@ -789,7 +802,10 @@ def sync_gaps(
         )
     }
     for at, g in rows.items():
-        if at not in found:
+        # only a stored gap the window sees whole (with monitored minutes around it, as `found`
+        # needs) can have vanished; one that touches or passes the window's edges is not judged
+        # by a smaller window
+        if at not in found and at > t0 and g.ended_at < t1:
             db.delete(g)
     new: list[QMonitoringGap] = []
     for at, (end, minutes) in found.items():

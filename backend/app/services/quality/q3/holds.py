@@ -753,6 +753,8 @@ def list_page(
     stmt = select(QHold).where(QHold.project_id == project.id)
     if statuses:
         stmt = stmt.where(QHold.status.in_(statuses))
+    else:  # voided holds (D-352) only when the filter asks for them
+        stmt = stmt.where(QHold.status != QHoldStatus.voided)
     if reason:
         stmt = stmt.where(QHold.reason == reason)
     if q:
@@ -798,7 +800,9 @@ def export_csv(db: Session, p: Principal, project_id: uuid.UUID) -> bytes:
     w = csv.writer(buf)
     w.writerow(["owner", "sku", "batch", "location", "qty", "unit", "hold_no", "status"])
     for h in db.scalars(
-        select(QHold).where(QHold.project_id == project.id).order_by(QHold.hold_no)
+        select(QHold)
+        .where(QHold.project_id == project.id, QHold.status != QHoldStatus.voided)
+        .order_by(QHold.hold_no)
     ):
         for ln in lines_of(db, h):
             cust = db.get(QCustomer, ln.owner_customer_id) if ln.owner_customer_id else None

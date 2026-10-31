@@ -171,8 +171,10 @@ def detect_zone(
     t1 = max(t1, b.floor_minute(t_to) + timedelta(minutes=1))
     out = sync_zone(db, project, z, t0, t1, actor, manual=manual, notify=notify, last=last)
     # the day summaries of the days the new data touched (the day before too: its last reading
-    # may now be followed by a closer one)
-    storage.refresh_days(db, z, b.local_day(t_from) - timedelta(days=1), b.local_day(t_to))
+    # may now be followed by a closer one; and the day after, which a late reading covers into)
+    storage.refresh_days(
+        db, z, b.local_day(t_from) - timedelta(days=1), b.local_day(t_to) + timedelta(days=1)
+    )
     return out
 
 
@@ -830,7 +832,10 @@ def dismiss(db: Session, p: Principal, exc_id: uuid.UUID, body: dict[str, Any]) 
             # flagged readings are never out: the day summaries change (K-161 / K-162)
             db.flush()
             storage.refresh_days(
-                db, zrow, b.local_day(x.started_at - timedelta(minutes=60)), b.local_day(end)
+                db,
+                zrow,
+                b.local_day(x.started_at - timedelta(minutes=60)),
+                b.local_day(end) + timedelta(days=1),
             )
     m.cal_status = QCalStatus.out_of_service
     m.cal_status_reason = f"Probe fault found on {x.exc_no} ({kind})"

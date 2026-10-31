@@ -448,7 +448,7 @@ def _attachment_owners() -> None:
             A.q_hold: _owner(
                 holds.get_hold,
                 C.hold_manage,
-                lambda h: h.status != QHoldStatus.closed,
+                lambda h: h.status not in (QHoldStatus.closed, QHoldStatus.voided),
                 allow_n=True,
             ),
             A.q_damage: _owner(_damage_get, C.stock_record, lambda _d: True),
@@ -654,6 +654,7 @@ def home_tiles(db: Session, p: Principal, project: Project) -> list[reg.HomeCoun
 
 
 def _datasets() -> None:
+    from app.core.quality.q3 import QHoldStatus  # noqa: PLC0415
     from app.core.scorecard_enums import XpMaskMode, XpPdpl  # noqa: PLC0415
     from app.models.quality.q3 import (  # noqa: PLC0415
         QDamageReport,
@@ -667,7 +668,13 @@ def _datasets() -> None:
     from app.services.scorecard.datasets import Col, Dataset  # noqa: PLC0415
 
     def ds(
-        code: str, en: str, ar: str, model: Any, dattr: str, special: list[Any] | None = None
+        code: str,
+        en: str,
+        ar: str,
+        model: Any,
+        dattr: str,
+        special: list[Any] | None = None,
+        where: Any = None,
     ) -> Any:
         return Dataset(
             code,
@@ -681,6 +688,7 @@ def _datasets() -> None:
             aggregate=True,
             names_cap=C.stock_record,
             special=special or [],
+            where=where,
         )
 
     rows = [
@@ -692,7 +700,14 @@ def _datasets() -> None:
             QExcursion,
             "started_at",
         ),
-        ds("quality_holds", "Holds", "الحجوزات", QHold, "placed_at"),
+        ds(
+            "quality_holds",
+            "Holds",
+            "الحجوزات",
+            QHold,
+            "placed_at",
+            where=lambda m: m.status != QHoldStatus.voided,
+        ),
         ds("quality_fefo_checks", "FEFO checks", "فحوص الأقدم انتهاءً", QFefoCheck, "checked_at"),
         ds(
             "quality_damage_reports", "Damage reports", "بلاغات التلف", QDamageReport, "reported_at"

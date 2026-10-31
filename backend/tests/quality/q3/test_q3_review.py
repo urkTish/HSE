@@ -2,6 +2,7 @@
 on read and the QX16 mock recall on the seed (spec 8-quality Q-STO-04, Q-EXC-03, Q-HLD-02 / -03,
 AC-Q3-31, AC-Q3-35; D-351, D-352, D-355). Clock 2026-10-06 10:00 Riyadh."""
 
+import uuid
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 
@@ -29,7 +30,7 @@ def test_pending_run_is_not_an_excursion_yet() -> None:
     """An out run still open at the end of the data and shorter than the alarm delay is pending,
     neither transient nor an excursion (Q-EXC-03)."""
     t0 = datetime(2026, 10, 5, 6, 0, tzinfo=RIYADH)
-    pid = __import__("uuid").uuid4()
+    pid = uuid.uuid4()
     rows = [eng.Reading(pid, t0 + timedelta(minutes=15 * i), D(v)) for i, v in enumerate([3, 3, 9])]
     lim = eng.Limits(D(0), D(4))
     g = eng.grid(rows, {pid: 15}, D(2), lim, t0, t0 + timedelta(minutes=45))
@@ -264,3 +265,60 @@ def test_seed_hold_0112_released_and_destroyed(q_seed: None, db) -> None:  # typ
     assert n.disposition_approved_at is not None
     assert n.disposition_approved_at.astimezone(RIYADH).date() == date(2026, 9, 24)
     _ = UTC_MIN
+
+
+def test_day_summaries_follow_range_and_point_changes(q3setup: None, api: Api, db) -> None:  # type: ignore[no-untyped-def]
+    """D-351: the stored day summaries are dropped when the zone's range or a point's interval /
+    active flag changes, and recomputed on first use with the new limits."""
+    from app.models.quality.q3 import QZoneDay
+    from app.services.quality.q3 import storage
+
+    r = R(db)
+    c = api.as_("reem.mutairi")
+    zid = r.zone("Z-CHL1")
+    day = date(2026, 10, 4)
+    vals = [3.0] * 4 + [4.5] * 4 + [3.0] * 4  # 06:00 … 08:45: 60 min at 4.5 °C
+    ok(
+        import_readings(
+            c, r.pid, "point", r.point("CHL1-P1"), readings_csv(series(L(day, 6), vals))
+        ),
+        201,
+    )
+    db.expire_all()
+    row = db.get(QZoneDay, (uuid.UUID(zid), day))
+    assert row is not None and row.out_minutes == 60
+
+    def days() -> int:
+        db.expire_all()
+        return len(list(db.scalars(select(QZoneDay).where(QZoneDay.zone_id == zid))))
+
+    assert days() > 0
+    ok(c.patch(f"{API}/quality/storage-zones/{zid}", json={"temp_max": "5"}))
+    assert days() == 0
+    z = db.get(QStorageZone, uuid.UUID(zid))
+    assert z is not None
+    assert storage.zone_days(db, z, day, day)[day][2] == 0  # recomputed with the new limit
+    db.commit()
+    assert days() == 1
+    ok(c.patch(f"{API}/quality/monitoring-points/{r.point('CHL1-P2')}", json={"active": False}))
+    assert days() == 0
+
+
+def test_gap_reaching_past_a_smaller_window_is_kept(q3setup: None, api: Api, db) -> None:  # type: ignore[no-untyped-def]
+    """A stored gap is only removed by a window that sees it whole: a later, smaller window that
+    ends inside the gap (where the gap is not "found") leaves it alone."""
+    from app.services.quality.q3 import storage
+
+    r = R(db)
+    c = api.as_("imran.siddiq")
+    day = date(2026, 10, 5)
+    rows = series(L(day, 6), [3.0] * 9) + series(L(day, 9, 20), [3.0] * 4)
+    ok(import_readings(c, r.pid, "point", r.point("CHL1-P1"), readings_csv(rows)), 201)
+    db.expire_all()
+    assert [g.minutes for g in db.scalars(select(QMonitoringGap))] == [65]
+    z = db.get(QStorageZone, uuid.UUID(r.zone("Z-CHL1")))
+    assert z is not None
+    for t0, t1 in ((L(day, 7), L(day, 9)), (L(day, 8), L(day, 9, 30)), (L(day, 8, 15), L(day, 11))):
+        storage.sync_gaps(db, r.project, z, storage.zone_grid(db, z, t0, t1), notify=False)
+    db.flush()
+    assert [g.minutes for g in db.scalars(select(QMonitoringGap))] == [65]
