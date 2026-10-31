@@ -1,8 +1,11 @@
-"""HTTP routes of package Q2 materials, testing and lab, welding, calibration, competence (Part C).
-
-Stub created by Q0 (§3.3a): `app.api.routers.quality` includes this router, so Q2 adds
-routes here (or in modules it includes here) without touching `app/main.py`."""
+"""HTTP routes of package Q2 materials, testing and lab, welding, calibration, competence
+(spec 8-quality Part C). `app.api.routers.quality` includes this router, so Q2 adds routes here
+without touching `app/main.py`."""
 
 from fastapi import APIRouter
 
+from app.api.routers.quality.q2 import calibration, competence, materials, testing, welding
+
 router = APIRouter(tags=["quality"])
+for _m in (materials, testing, welding, calibration, competence):
+    router.include_router(_m.router)
