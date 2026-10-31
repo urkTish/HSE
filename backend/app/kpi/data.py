@@ -28,6 +28,7 @@ from sqlalchemy.sql.elements import TextClause
 from app.core.access_enums import InductionResult, InductionType
 from app.core.config import get_settings
 from app.core.hse_enums import (
+    QUALITY_CA_SOURCES,
     CaStatus,
     IncidentStatus,
     InspectionStatus,
@@ -764,7 +765,11 @@ def _load(
             A.priority,
             A.source_type,
             A.project_id,
-        ).where(A.project_id.in_(pids))
+        ).where(
+            A.project_id.in_(pids),
+            # 8-quality Q-CAP-06: quality CAs never enter the HSE KPIs K-40…K-43
+            A.source_type.notin_(list(QUALITY_CA_SOURCES)),
+        )
     ):
         status = ca_row[3]
         facts.cas.append(

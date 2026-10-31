@@ -6,13 +6,14 @@ from collections.abc import Sequence
 from datetime import date, timedelta
 from typing import Any
 
-from sqlalchemy import Select, and_, false, func, or_, select
+from sqlalchemy import Select, and_, false, func, or_, select, true
 from sqlalchemy.orm import Session
 
 from app.core.clock import now
 from app.core.enums import AuditAction, Capability, EntityType, NotificationKind, Role
 from app.core.errors import ApiError, ErrorCode, not_found, validation_error
 from app.core.hse_enums import (
+    QUALITY_CA_SOURCES,
     AttachmentOwner,
     CaPriority,
     CaSourceType,
@@ -149,6 +150,14 @@ def summaries(
 def can_view(p: Principal, ca: CorrectiveAction) -> bool:
     if p.user.id in (ca.owner_id, ca.verifier_id, ca.created_by_user_id):
         return True
+    if ca.source_type in QUALITY_CA_SOURCES:  # 8-quality Q-CAP-06: also 238 holders in scope
+        g = p.grant(ca.project_id, Capability.quality_view)
+        if (
+            g is not None
+            and g.scope.value != "responsible"
+            and covers(g, ca.site_id, ca.responsible_engagement_id)
+        ):
+            return True
     return covers(
         p.grant(ca.project_id, Capability.incident_view), ca.site_id, ca.responsible_engagement_id
     )
@@ -161,23 +170,36 @@ def get_ca(db: Session, p: Principal, ca_id: uuid.UUID) -> CorrectiveAction:
     return ca
 
 
-def scoped_query(p: Principal, project: Project) -> Select[Any]:
+def _grant_cond(g: Any) -> Any:
     C = CorrectiveAction  # noqa: N806
-    stmt = select(C).where(C.project_id == project.id)
-    uid = p.user.id
-    own = or_(C.owner_id == uid, C.verifier_id == uid, C.created_by_user_id == uid)
-    g = p.grant(project.id, Capability.incident_view)
-    if g is None:
-        return stmt.where(own)
+    if g is None or g.scope.value == "responsible":
+        return false()
     conds: list[Any] = []
     if g.site_ids is not None:
         conds.append(C.site_id.in_(g.site_ids) if g.site_ids else false())
     if g.engagement_ids is not None:
         engs = list(g.engagement_ids)
         conds.append(C.responsible_engagement_id.in_(engs) if engs else false())
-    if conds:
-        stmt = stmt.where(or_(and_(*conds), own))
-    return stmt
+    return and_(*conds) if conds else None  # None = the whole project
+
+
+def scoped_query(p: Principal, project: Project) -> Select[Any]:
+    C = CorrectiveAction  # noqa: N806
+    stmt = select(C).where(C.project_id == project.id)
+    uid = p.user.id
+    own = or_(C.owner_id == uid, C.verifier_id == uid, C.created_by_user_id == uid)
+    g = p.grant(project.id, Capability.incident_view)
+    qg = p.grant(project.id, Capability.quality_view)  # 8-quality Q-CAP-06
+    if g is None and qg is None:
+        return stmt.where(own)
+    g_cond = _grant_cond(g)
+    if g is not None and qg is None and g_cond is None:
+        return stmt
+    q_cond = _grant_cond(qg)
+    quality = and_(
+        C.source_type.in_(list(QUALITY_CA_SOURCES)), true() if q_cond is None else q_cond
+    )
+    return stmt.where(or_(true() if g_cond is None else g_cond, quality, own))
 
 
 # ---- read ----------------------------------------------------------------------------------------
@@ -210,6 +232,10 @@ def _source_ref(db: Session, ca: CorrectiveAction) -> CaSourceRef:
 
         vc = db.get(VehicleCheck, ca.source_id)
         ref = vc.check_no if vc else None
+    elif ca.source_type in QUALITY_CA_SOURCES and ca.source_id:
+        from app.services.quality.ncr import capa  # noqa: PLC0415
+
+        ref = capa.source_ref(db, ca.source_type, ca.source_id)
     return CaSourceRef(type=ca.source_type, id=ca.source_id, ref=ref)
 
 
@@ -321,6 +347,7 @@ def _check_people(
     verifier_id: uuid.UUID,
     priority: CaPriority,
     engagement_id: uuid.UUID,
+    source_type: CaSourceType | None = None,
 ) -> None:
     owner = db.get(User, owner_id)
     if owner is None or not user_roles(db, owner_id, project.id):
@@ -332,6 +359,19 @@ def _check_people(
             "The verifier cannot be the owner of the action (CA-5).",
             "لا يمكن أن يكون المُحقِّق هو المسؤول عن التنفيذ.",
         )
+    if source_type in QUALITY_CA_SOURCES:
+        # 8-quality Q-CAP-04: a holder of 243 on the project or the HSE Manager
+        from app.services.quality.ncr import capa  # noqa: PLC0415
+
+        if not capa.verifier_ok(db, project, verifier_id):
+            raise ApiError(
+                422,
+                ErrorCode.VERIFIER_ROLE_NOT_ALLOWED,
+                "Quality actions are verified by a holder of capability 243 on the project or "
+                "the HSE Manager (Q-CAP-04).",
+                "يتحقق من إجراءات الجودة حامل الصلاحية 243 في المشروع أو مدير الصحة والسلامة.",
+            )
+        return
     roles = user_roles(db, verifier_id, project.id)
     allowed_roles = {Role.hse_officer, Role.hse_manager}
     if priority not in HIGH:
@@ -377,6 +417,10 @@ def _resolve_source(
         from app.services.ptw import audits  # noqa: PLC0415
 
         return audits.ca_source(db, project.id, source_id)
+    if source_type in QUALITY_CA_SOURCES:
+        from app.services.quality.ncr import capa  # noqa: PLC0415
+
+        return capa.resolve_source(db, project, source_type, source_id)
     if source_type == CaSourceType.equipment_defect:
         # 1-dashboard v1.3 (4-third-party-cert DF-10): raised manually from a defect
         from app.models import EquipmentDefect  # noqa: PLC0415
@@ -426,10 +470,18 @@ def new_ca(
             "responsible_engagement_id", "The responsible contractor is required."
         )
     check_engagement(db, project, eng_id, "responsible_engagement_id")
-    _check_people(db, project, inline.owner_id, inline.verifier_id, inline.priority, eng_id)
+    _check_people(
+        db, project, inline.owner_id, inline.verifier_id, inline.priority, eng_id, source_type
+    )
     s = hse_settings.get(db, project.id)
     created = project_today(project)
-    default_due = created + timedelta(days=hse_settings.ca_due_days(s, inline.priority))
+    if source_type in QUALITY_CA_SOURCES:  # 8-quality Q-CAP-03: quality_ca_due_days
+        from app.services.quality.ncr import capa  # noqa: PLC0415
+
+        due_days = capa.due_days(db, project.id, inline.priority)
+    else:
+        due_days = hse_settings.ca_due_days(s, inline.priority)
+    default_due = created + timedelta(days=due_days)
     due = inline.due_date or default_due
     if due < created:
         raise validation_error("due_date", "The due date cannot be before today.")
@@ -603,7 +655,13 @@ def update(db: Session, p: Principal, ca_id: uuid.UUID, body: CaUpdate) -> CaRea
         ca.zone_id = ch["zone_id"]
     if {"owner_id", "verifier_id", "priority"} & set(ch):
         _check_people(
-            db, project, ca.owner_id, ca.verifier_id, ca.priority, ca.responsible_engagement_id
+            db,
+            project,
+            ca.owner_id,
+            ca.verifier_id,
+            ca.priority,
+            ca.responsible_engagement_id,
+            ca.source_type,
         )
     ca.updated_at = now()
     db.flush()
@@ -672,6 +730,11 @@ def settle_source(db: Session, ca: CorrectiveAction) -> None:
     from app.services import incidents  # noqa: PLC0415
 
     if ca.source_id is None:
+        return
+    if ca.source_type in QUALITY_CA_SOURCES:  # 8-quality Q-CAP-07
+        from app.services.quality.ncr import capa  # noqa: PLC0415
+
+        capa.on_settled(db, ca)
         return
     if ca.source_type == CaSourceType.incident:
         incidents.settle_after_ca(db, ca.source_id)
@@ -884,6 +947,18 @@ def decide_extension(
     return to_read(db, p, ca)
 
 
+def default_domain(p: Principal, project_id: uuid.UUID) -> str:
+    """Q-CAP-06: Quality for users whose only roles on the project are quality roles, HSE
+    otherwise."""
+    from app.services.permissions import QUALITY_ROLES  # noqa: PLC0415
+
+    if p.is_manager:
+        return "hse"
+    scope = p.projects.get(project_id)
+    roles = scope.roles if scope else set()
+    return "quality" if roles and roles <= set(QUALITY_ROLES) else "hse"
+
+
 def list_page(
     db: Session,
     p: Principal,
@@ -909,11 +984,18 @@ def list_page(
     as_of: date | None = None,
     q: str | None = None,
     sort: str = "due_date",
+    domain: str | None = None,
 ) -> CaPage:
     project = projects.get_visible(db, p, project_id)
     C = CorrectiveAction  # noqa: N806
     day = as_of or project_today(project)
     stmt = scoped_query(p, project)
+    # 8-quality Q-CAP-06: domain filter (HSE · Quality · All); the default follows the roles
+    dom = domain or ("all" if source_type or source_id else default_domain(p, project.id))
+    if dom == "hse":
+        stmt = stmt.where(C.source_type.notin_(list(QUALITY_CA_SOURCES)))
+    elif dom == "quality":
+        stmt = stmt.where(C.source_type.in_(list(QUALITY_CA_SOURCES)))
     if statuses:
         stmt = stmt.where(C.status.in_(statuses))
     if overdue is not None:

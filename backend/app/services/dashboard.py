@@ -16,6 +16,7 @@ from app.core.config import API_PREFIX
 from app.core.enums import Capability, EntityType
 from app.core.errors import validation_error
 from app.core.hse_enums import (
+    QUALITY_CA_SOURCES,
     ActionPanelItem,
     CaStatus,
     ExpiringItemKind,
@@ -374,7 +375,8 @@ def expiring_items(
 
     for ca in db.scalars(
         ca_svc.scoped_query(p, project).where(
-            CorrectiveAction.status.in_([CaStatus.open, CaStatus.in_progress])
+            CorrectiveAction.status.in_([CaStatus.open, CaStatus.in_progress]),
+            CorrectiveAction.source_type.notin_(list(QUALITY_CA_SOURCES)),  # Q-CAP-06
         )
     ):
         if keep(ca.due_date):

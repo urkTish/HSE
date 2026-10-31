@@ -54,6 +54,13 @@ def list_corrective_actions(
     as_of: Annotated[date | None, Query(description="Evaluate overdue at this date.")] = None,
     q: Annotated[str | None, Query(max_length=100)] = None,
     sort: Literal["due_date", "-due_date", "created_at", "-created_at", "priority"] = "due_date",
+    domain: Annotated[
+        Literal["hse", "quality", "all"] | None,
+        Query(
+            description="8-quality Q-CAP-06: HSE (default for HSE roles), Quality (default for "
+            "quality-only roles) or all; a source filter implies all."
+        ),
+    ] = None,
 ) -> CaPage:
     return svc.list_page(
         db,
@@ -79,6 +86,7 @@ def list_corrective_actions(
         as_of=as_of,
         q=q,
         sort=sort,
+        domain=domain,
     )
 
 

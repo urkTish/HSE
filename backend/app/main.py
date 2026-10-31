@@ -79,6 +79,7 @@ from app.api.routers import (
     ptw_appointments,
     ptw_audits,
     ptw_config,
+    quality,
     report_packs,
     scaffolds,
     scorecards,
@@ -338,6 +339,8 @@ def create_app() -> FastAPI:
         licence,
         # Trial readiness C: first-time setup (D-306)
         first_setup,
+        # Phase 8 Quality, every part (8-quality §3.3a)
+        quality,
     ):
         app.include_router(module.router, prefix=API_PREFIX)
     app.include_router(auth.public_router, prefix=API_PREFIX)

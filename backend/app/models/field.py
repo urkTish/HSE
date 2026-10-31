@@ -74,6 +74,9 @@ class ChecklistTemplate(Audited, Base):
     kind: Mapped[TemplateKind] = enum_col(TemplateKind)
     inspection_type: Mapped[InspectionType | None] = enum_col(InspectionType, nullable=True)
     audit_type: Mapped[AuditType | None] = enum_col(AuditType, nullable=True)
+    # 6d v1.5 (8-quality Q-CHK-01): kind `quality` only — list QCT and the sector profiles
+    quality_type: Mapped[str | None] = mapped_column(String(40))
+    sector_profiles: Mapped[str | None] = mapped_column(String(20))
     title_en: Mapped[str] = mapped_column(String(150))
     title_ar: Mapped[str] = mapped_column(String(150), default="")
     sections: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list)
