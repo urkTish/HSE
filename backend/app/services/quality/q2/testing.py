@@ -1074,14 +1074,14 @@ def _verified() -> Any:
     )
 
 
-def _complete(db: Session, t: QTestRequest, tt: QTestType, after: datetime | None = None) -> None:
+def _complete(db: Session, t: QTestRequest, tt: QTestType, more_than: int = 0) -> None:
     """Q-TST-04: the lab report file and number and every result field of the tested specimens
     (all acceptance-age specimens) or of the test."""
     problems: list[str] = []
     if not (t.report_no or "").strip():
         problems.append("report_no")
-    if base.attachment_count(db, A.q_test_report, t.id, after) == 0:
-        problems.append("lab report file" + (" (amended)" if after else ""))
+    if base.attachment_count(db, A.q_test_report, t.id) <= more_than:
+        problems.append("lab report file" + (" (amended)" if more_than else ""))
     keys = [str(f["key"]) for f in tt.result_fields or []]
     specs = specimens_of(db, t)
     if specs:
@@ -1089,9 +1089,11 @@ def _complete(db: Session, t: QTestRequest, tt: QTestType, after: datetime | Non
             if s.spare:
                 continue
             due_at_acc = tt.acceptance_age_days is None or s.age_days == tt.acceptance_age_days
-            if (s.tested_on or due_at_acc) and any(
-                (s.values or {}).get(k) in (None, "") for k in keys
-            ) and (due_at_acc or s.tested_on):
+            if (
+                (s.tested_on or due_at_acc)
+                and any((s.values or {}).get(k) in (None, "") for k in keys)
+                and (due_at_acc or s.tested_on)
+            ):
                 problems.append(f"specimen {s.specimen_ref}")
     else:
         problems += [k for k in keys if (t.results or {}).get(k) in (None, "")]
@@ -1134,12 +1136,11 @@ def _ncr_class(tt: QTestType, detail: dict[str, Any]) -> QNcrClass:
 def _raise_ncr(
     db: Session, project: Project, t: QTestRequest, tt: QTestType, user_id: uuid.UUID | None
 ) -> uuid.UUID:
-    from app.services.quality.ncr import core as ncr_core  # noqa: PLC0415
 
     pour = db.get(QPour, t.pour_id) if t.pour_id else None
     owner = (pour.quality_engineer_id if pour else None) or t.requested_by_user_id or user_id
     assert owner is not None  # noqa: S101
-    n = ncr_core.auto_raise(
+    n = base.auto_ncr(
         db,
         project,
         QNcrSourceType.test_result,
@@ -1148,6 +1149,7 @@ def _raise_ncr(
         owner_id=owner,
         classification=_ncr_class(tt, t.verdict_detail or {}),
         category=QNcrCategory.testing_failure,
+        evidence=((A.q_test_report, t.id),),
     )
     t.ncr_decision = {
         "mode": "raised",
@@ -1310,6 +1312,11 @@ def verify(
         base.set_status(db, p, RT.test_request, t, ST.at_lab, comment=text)
         return t
     t.verified_at, t.verified_by_user_id = now(), p.user.id
+    # the amended report must be a new file (Q-TST-09): remember how many were verified
+    t.verdict_detail = {
+        **(t.verdict_detail or {}),
+        "reports_at_verify": base.attachment_count(db, A.q_test_report, t.id),
+    }
     base.set_status(db, p, RT.test_request, t, ST.verified)
     return t
 
@@ -1349,7 +1356,7 @@ def amend(
         _apply_specimens(db, t, tt, body["specimens"])
     if body.get("results"):
         t.results = {**(t.results or {}), **_clean_values(tt, body["results"], "results")}
-    _complete(db, t, tt, after=t.verified_at)
+    _complete(db, t, tt, more_than=int((t.verdict_detail or {}).get("reports_at_verify") or 1))
     verdict, detail, missing = compute(db, t, True)
     if missing:
         raise qc.err(

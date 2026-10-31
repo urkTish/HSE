@@ -251,6 +251,17 @@ def sign(
         return signoff.sign_paper(
             db, p, project, rt, rid, step, decision, comment, paper, ctx, qualifier=qualifier
         )
+    # Q-RPM-06 first: the user who entered the result being decided never signs it, whether or
+    # not they would resolve (AC-Q2-08)
+    first = rpm.effective_rule(db, project.id, rt, step, qualifier=qualifier, record_id=rid)
+    if first is not None and not first.self_approval_allowed and p.user.id in ctx.requesters:
+        raise qc.err(
+            422,
+            ErrorCode.SOD_CONFLICT,
+            "You created, requested or recorded this record, so another responsible person "
+            "must sign this step (Q-RPM-06).",
+            "أنت من أنشأ السجل أو طلبه أو سجّل نتيجته؛ يجب أن يوقّع شخص مسؤول آخر هذه الخطوة.",
+        )
     rule, capacity = rpm.check_signer(
         db, p, project, rt, step, ctx, qualifier=qualifier, record_id=rid
     )
@@ -320,3 +331,103 @@ def quality_engineers(db: Session, project: Project) -> list[uuid.UUID]:
     from app.core.enums import Role  # noqa: PLC0415
 
     return [a.user_id for a in qc.role_holders(db, project, Role.quality_engineer)]
+
+
+def auto_ncr(
+    db: Session,
+    project: Project,
+    source_type: Any,
+    source_id: uuid.UUID,
+    *,
+    raised_by: uuid.UUID | None,
+    owner_id: uuid.UUID,
+    classification: Any,
+    category: Any,
+    title: str | None = None,
+    evidence: tuple[tuple[AttachmentOwner, uuid.UUID], ...] = (),
+) -> Any:
+    """— → Open by the System like `ncr.core.auto_raise`, with the source's files (lab report,
+    certificates, NDT report) copied as NCR evidence first, so a critical NCR meets Q-NCR-03."""
+    from app.core.quality.common import (  # noqa: PLC0415
+        NCR_SOURCE_DEFS,
+        QDetectionStage,
+        QLinkKind,
+        QNcrStatus,
+    )
+    from app.models.quality import QNcr  # noqa: PLC0415
+    from app.services import attachments  # noqa: PLC0415
+    from app.services.quality import ensure_registered, links  # noqa: PLC0415
+    from app.services.quality import registry as reg  # noqa: PLC0415
+    from app.services.quality.ncr import core  # noqa: PLC0415
+
+    ensure_registered()
+    info = reg.NCR_SOURCES[source_type].resolve(db, project, source_id)
+    n = QNcr(
+        id=uuid.uuid4(),
+        project_id=project.id,
+        profile=qc.require_profile(db, project),
+        source_type=source_type,
+        source_id=source_id,
+        source_ref=info.ref,
+        item_key=info.item_key,
+        site_id=info.site_id,
+        zone_id=info.zone_id,
+        system_id=info.system_id,
+        location_ref=info.location_ref,
+        title=(title or info.title or info.ref or source_type.value)[:150],
+        requirement_en=info.requirement_en or "See the source record.",
+        requirement_ar=info.requirement_ar,
+        finding_en=info.finding_en or info.title or "See the source record.",
+        finding_ar=info.finding_ar,
+        category=category,
+        detection_stage=info.detection_stage or QDetectionStage.in_process,
+        classification=classification or info.proposed_class or NCR_SOURCE_DEFS[source_type][1],
+        responsible_engagement_id=info.engagement_id,
+        supplier_id=info.supplier_id,
+        customer_id=info.customer_id,
+        quantity=info.quantity,
+        unit=info.unit,
+        lot_refs=list(info.lot_refs),
+        raised_by_user_id=raised_by,
+        owner_id=owner_id,
+        status=QNcrStatus.draft,
+        alerts_sent=[],
+        created_by_user_id=raised_by,
+    )
+    db.add(n)
+    db.flush()
+    for owner, oid in evidence:
+        for a in list(
+            db.scalars(
+                select(Attachment).where(
+                    Attachment.owner_type == owner,
+                    Attachment.owner_id == oid,
+                    Attachment.superseded_at.is_(None),
+                )
+            )
+        ):
+            attachments.store(
+                db,
+                AttachmentOwner.q_ncr_evidence,
+                n.id,
+                project.id,
+                a.file_name,
+                attachments.read_content(a),
+                a.content_type,
+                raised_by or a.uploaded_by_user_id,
+                shrink=False,
+                generated=True,
+            )
+    if info.record_type is not None:
+        links.add(
+            db,
+            project.id,
+            RT.ncr,
+            n.id,
+            info.record_type,
+            source_id,
+            QLinkKind.raised_from,
+            raised_by,
+        )
+    core._do_open(db, None, project, n)
+    return n

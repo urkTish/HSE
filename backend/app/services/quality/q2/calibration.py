@@ -829,9 +829,7 @@ def decide_item(db: Session, p: Principal, item_id: uuid.UUID, body: dict[str, A
         )
         i.justification = (body.get("justification") or "").strip() or None
     elif i.ncr_id is None:
-        from app.services.quality.ncr import core as ncr_core  # noqa: PLC0415
-
-        n = ncr_core.auto_raise(
+        n = base.auto_ncr(
             db,
             project,
             QNcrSourceType.oot_review,
@@ -841,6 +839,7 @@ def decide_item(db: Session, p: Principal, item_id: uuid.UUID, body: dict[str, A
             classification=QNcrClass.major,
             category=QNcrCategory.calibration,
             title=f"{r.oot_no}: {i.ref or i.record_type} measured with {m.mte_no} out of tolerance",
+            evidence=((A.q_calibration_cert, r.calibration_id),),
         )
         i.ncr_id = n.id
         i.justification = (body.get("justification") or "").strip() or None

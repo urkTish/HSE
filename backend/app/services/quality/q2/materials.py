@@ -879,7 +879,7 @@ def _reject(db: Session, p: Principal, project: Project, x: QMir, qty: Decimal) 
 
     q = new_quarantine(db, project, p.user.id, x.material_description, qty, x.unit, mir=x)
     owner = x.submitted_by_user_id or p.user.id
-    n = ncr_core.auto_raise(
+    n = base.auto_ncr(
         db,
         project,
         QNcrSourceType.mir,
@@ -888,6 +888,7 @@ def _reject(db: Session, p: Principal, project: Project, x: QMir, qty: Decimal) 
         owner_id=owner,
         classification=QNcrClass.major,
         category=QNcrCategory.material,
+        evidence=((A.q_mir, x.id),),
     )
     q.ncr_id = n.id
     links.add(db, project.id, RT.quarantine, q.id, RT.ncr, n.id, QLinkKind.relates, p.user.id)

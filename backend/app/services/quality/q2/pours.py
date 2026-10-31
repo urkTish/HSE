@@ -95,7 +95,8 @@ def mix_status(db: Session, x: QPour) -> dict[str, Any]:
     marks every pour of that window."""
     if not x.mix_key:
         return {"tests": [], "flagged_pour_ids": [], "flagged": False}
-    rows = list(db.scalars(
+    rows = list(
+        db.scalars(
             select(QTestRequest).where(
                 QTestRequest.project_id == x.project_id,
                 QTestRequest.mix_key == x.mix_key,
@@ -104,7 +105,8 @@ def mix_status(db: Session, x: QPour) -> dict[str, Any]:
                 ),
                 QTestRequest.retest_of_id.is_(None),
             )
-        ))
+        )
+    )
     rows.sort(key=lambda t: (t.cast_date or datetime.min.date(), t.created_at))
     flagged: set[uuid.UUID] = set()
     out = []

@@ -1181,7 +1181,6 @@ def weld_create(
 
 
 def _weld_ncr(db: Session, p: Principal | None, project: Project, x: QWeld, why: str) -> None:
-    from app.services.quality.ncr import core as ncr_core  # noqa: PLC0415
 
     titles = {
         "override": f"Weld {x.joint_id} recorded with an unqualified welder",
@@ -1190,7 +1189,7 @@ def _weld_ncr(db: Session, p: Principal | None, project: Project, x: QWeld, why:
     }
     owner = (p.user.id if p else None) or x.created_by_user_id
     assert owner is not None  # noqa: S101
-    ncr_core.auto_raise(
+    base.auto_ncr(
         db,
         project,
         QNcrSourceType.weld,
@@ -1200,6 +1199,7 @@ def _weld_ncr(db: Session, p: Principal | None, project: Project, x: QWeld, why:
         classification=QNcrClass.major,
         category=QNcrCategory.workmanship,
         title=titles[why],
+        evidence=((A.q_weld, x.id),),
     )
 
 
