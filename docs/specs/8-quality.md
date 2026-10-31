@@ -319,7 +319,7 @@ All Quality files go through `attachments.store` (virus scan D-302, photo shrink
 | profile | القطاع | enum | sys | profile at raise | construction | none |
 | source_type / source_id / source_ref | المصدر | enum / UUID / string | Y / cond. / sys | list NS; id required except `manual`; ref copied (Q-NCR-02) | test_result / … / TST-ANIA-EXP-2026-0388 | none |
 | site_id / zone_id / system_id / location_ref | الموقع / المنطقة / النظام / الموقع التفصيلي | FK / FK / FK / string(120) | Y / N / N / N | from the source when it has them | S-LAND / Z-PIERB / — / Level 3 slab, grid C14–C20 | none |
-| title | العنوان | string(150) | Y | — | 28-day cube strength below acceptance, pour POUR-0077 | none |
+| title | العنوان | string(150) | Y | — | 28-day cylinder strength below acceptance, pour POUR-ANIA-EXP-2026-0077 | none |
 | requirement_en / _ar | المتطلب | text(1000) | Y (one language) | what was required: criterion, spec clause, drawing | f'c 40 MPa; ACI 318 §26.12.3.1 `[VERIFY]` | none |
 | finding_en / _ar | الوضع الفعلي | text(2000) | Y (one language) | what was found; hint "no names or ID numbers" (P1-8 scan) | Set 3 average 33.2 MPa < 36.0 MPa | none |
 | category | فئة العيب | enum | Y | list NCAT | material | none |
@@ -327,7 +327,7 @@ All Quality files go through `attachments.store` (virus scan D-302, photo shrink
 | classification | التصنيف | enum | Y at Open | list NC; Q-NCR-04/05 | critical | none |
 | responsible_engagement_id | الجهة المسؤولة | FK | Y | engagement on the project; default from the source | RAWABI@ANIA-EXP | none |
 | supplier_id / customer_id | المورد / العميل | FK / FK | N / N | Q-SHR-02 | Riyadh Readymix | none |
-| item_key | مفتاح البند | string(80) | sys | from the source adapter (e.g. `ITP:CIV-001:30`, `TT:CONC-CUBE`, `SKU:NDC-1001`) | TT:CONC-CUBE | none |
+| item_key | مفتاح البند | string(80) | sys | from the source adapter (e.g. `ITP:STC-001:30`, `TT:CONC-CYL`, `SKU:NDC-1001`) | TT:CONC-CYL | none |
 | quantity / unit / lot_refs | الكمية / الوحدة / الدفعات | decimal / string(10) / string[] | N | lots, heats, batches, serials (≤ 50) | 186 / m3 / [mix C40-B12] | none |
 | raised_by / opened_at | أعدّه / تاريخ الفتح | FK / timestamptz | sys | — | Bilal / 2026-09-29 11:20 | personal |
 | owner_id | مسؤول المعالجة | FK | Y at Open | user on the project holding 242 | Bilal | personal |
@@ -335,7 +335,7 @@ All Quality files go through `attachments.store` (virus scan D-302, photo shrink
 | cause_category | فئة السبب الجذري | enum | cond. | list 6M; required to leave Open | material | none |
 | rca_id | تحليل السبب | FK | cond. | Q-NCR-09 | — | none |
 | disposition_lines | المعالجة | list {disposition, quantity, note} | cond. | list DP; Q-NCR-11 | [{use_as_is, 186 m3}] | none |
-| disposition_justification_en / _ar | مبرر المعالجة | text(2000) | cond. | ≥ 50 chars for use_as_is / repair | Cores avg 37.9 MPa ≥ 0.85 f'c… | none |
+| disposition_justification_en / _ar | مبرر المعالجة | text(2000) | cond. | ≥ 50 chars for use_as_is / repair | Cores avg 34.9 MPa ≥ 0.85 f'c (34.0), min 33.6 ≥ 0.75 f'c… | none |
 | implementation_note / implemented_at | تنفيذ المعالجة | text(1000) / timestamptz | cond. | at Pending Verification | — | none |
 | supplier_response | رد المورد | {requested_at, due_on, received_at, accepted, note, file} | N | SCAR (Q-NCR-13) | — | none |
 | repeat_of_id | تكرار لـ | FK | sys | Q-NCR-16 | — | none |
@@ -607,7 +607,7 @@ Fixtures: the Phase 0–7b seed plus Appendix A; clock `HSE_CLOCK_AT` = **2026-1
 35. **AC-Q0-35** (Q-CAP-06) **Given** the September seed **Then** K-41 and K-42 for ANIA-EXP equal their pre-Phase-8 values (quality CAs excluded) and the CA register with domain Quality lists the quality CAs only.
 36. **AC-Q0-36** (Q-NCR-15) **Given** an NCR with an open CA, a reject_scrap line without destruction evidence and no cost line **When** close is attempted **Then** 422 `NCR_CLOSE_BLOCKED` listing the three blockers.
 37. **AC-Q0-37** (Q-COST-01, QX1) **Given** QX1 lines **Then** gross 20,010.00, recovered 4,250.00, failure class internal; a delay line with `delay_rate_sar_day` null → 422 `DELAY_RATE_NOT_SET`.
-38. **AC-Q0-38** (Q-NCR-16) **Given** NCR A (material, Riyadh Readymix, `TT:CONC-CUBE`) opened 2026-07-02 **When** NCR B with the same key opens 2026-09-29 (89 days) **Then** B is a repeat, raised to major and RCA `simple` refused; opened on 2026-10-01 (91 days) **Then** not a repeat.
+38. **AC-Q0-38** (Q-NCR-16) **Given** NCR A (material, Riyadh Readymix, `TT:CONC-CYL`) opened 2026-07-02 **When** NCR B with the same key opens 2026-09-29 (89 days) **Then** B is a repeat, raised to major and RCA `simple` refused; opened on 2026-10-01 (91 days) **Then** not a repeat.
 39. **AC-Q0-39** (Q-NCR-17) **Given** an NCR closed 2026-07-01 and no repeat since **Then** on 2026-09-29 the job proposes "effective"; with a repeat on 2026-08-15 **Then** "not effective" is proposed.
 40. **AC-Q0-40** (Q-NCR-18) **Given** an NCR opened 2026-08-10 and still open at the clock **Then** age 57 days; closed 2026-09-15 with target 2026-09-09 **Then** closure_days 36, not on time.
 41. **AC-Q0-41** (Q-NCR-19) **Given** an NCR **When** the PDF is generated in AR **Then** it is RTL, shows the Hijri date of issue (from `app.core.hijri`), sign-offs and cost totals; for a user without 242 rates are absent.
@@ -620,3 +620,457 @@ Fixtures: the Phase 0–7b seed plus Appendix A; clock `HSE_CLOCK_AT` = **2026-1
 46. **AC-Q0-46** (D-290, D-319) **Given** the licence is read-only **Then** every Quality POST / PATCH / PUT → 403 `LICENCE_READ_ONLY`, while `GET` registers, NCR PDFs and `POST /exports` of Quality datasets work.
 47. **AC-Q0-47** (P8-2, P8-4) **Given** Sarah (Viewer) **Then** Quality registers show no person names, no photos, no costs and no supplier contacts; an export with names by Hatem writes an `export` audit row.
 48. **AC-Q0-48** (rule 41) **Given** the UI in Arabic **Then** every Q0 label, status, list value, error, email and PDF has AR text; numbers, codes and dates stay LTR inside RTL; the i18n check covers `messages/quality/*.json`.
+
+---
+
+# Part B — Q1: construction — ITP, inspection requests, punch lists, handover dossier
+
+Profile: construction. Every write in this part needs the project profile `construction` (Q-PRF-04 for leftovers).
+
+## B.1 Lists
+
+**DSC — disciplines** (code used in `{DISC}`): `CIV` civil works أعمال مدنية · `STC` structural concrete خرسانة إنشائية · `STL` structural steel حديد إنشائي · `ARC` architectural معماري · `HVC` HVAC تكييف وتهوية · `PLB` plumbing and drainage سباكة وصرف · `FPS` fire protection حماية من الحريق · `ELE` electrical كهرباء · `ELV` low current / ELV تيار منخفض · `RDS` roads and infrastructure طرق وبنية تحتية · `AFP` airfield pavement رصف المطارات · `GEO` geotechnical and earthworks أعمال ترابية وجيوتقنية · `LSC` landscape تنسيق الموقع · `OTH` other أخرى. Labels editable; codes fixed.
+
+**PT — ITP point types:** `H` Hold point نقطة توقف (work may not proceed past it until the responsible person approves) · `W` Witness point نقطة شهادة (the responsible person is notified and may attend; work may proceed after the notice if they do not, Q-IR-10) · `R` Review point نقطة مراجعة (records reviewed, no attendance) · `S` Surveillance نقطة مراقبة (random or periodic check without notice). Strictness order H > W > R > S.
+
+## B.2 Q1 settings (registry keys)
+
+| Key | AR label | Type | Default | Allowed |
+|---|---|---|---|---|
+| `ir_notice_hours` | مهلة الإشعار المسبق | {H, W} hours | 24 / 24 ASSUMPTION | 0–168 |
+| `ir_schedule_hours` | مهلة الجدولة | hours | 24 | 2–168 |
+| `witness_wait_minutes` | مدة انتظار الشاهد | minutes | 60 | 15–480 |
+| `witness_review_days` | مهلة مراجعة نقطة الشهادة المتنازل عنها | days | 3 | 1–14 |
+| `ir_max_points` | الحد الأقصى للنقاط في الطلب | int | 5 | 1–10 |
+| `ir_comment_close_days` | مهلة إغلاق ملاحظات الاعتماد | days | 14 | 1–60 |
+| `punch_target_days` | مهلة إغلاق النواقص | {A, B} days | 14 / 30 | 1–180 |
+| `dossier_blockers` | شروط اكتمال الملف | set | all of Q-DOS-03 (a)–(f) | subset; a removed blocker becomes a warning |
+
+## B.3 Inspection and Test Plan (ITP) — خطة الفحص والاختبار
+
+### B.3.1 Entities
+`q_itps`:
+
+| Field | AR label | Type | Req | Validation | Example | PDPL |
+|---|---|---|---|---|---|---|
+| itp_no / revision | رقم الخطة / المراجعة | string / int | sys | Q-NUM (`{DISC}`); revision 0, 1, 2 … | ITP-ANIA-EXP-STC-001 Rev.2 | none |
+| title_en / _ar | العنوان | string(150) ×2 | Y | both required to submit | Cast-in-situ concrete, Pier B / الخرسانة المصبوبة في الموقع، الرصيف B | none |
+| discipline | التخصص | enum | Y | list DSC | STC | none |
+| work_package_en / _ar | حزمة العمل / النشاط | string(150) | Y (one language) | — | Pier B superstructure | none |
+| engagement_id | المقاول المنفذ | FK | Y | engagement on the project | RAWABI@ANIA-EXP | none |
+| zone_ids / system_ids | المناطق / الأنظمة | FK[] | N | empty = whole project | [Z-PIERB] | none |
+| spec_refs / code_refs | مراجع المواصفات / الكود | string(120)[] ×2 | N | ≤ 20 each | [03 30 00 Cast-in-place concrete] / [SBC 304] | none |
+| method_statement_ref | بيان طريقة العمل | link | N | Q4 document via `q_links` (`requires`) or text | MS-ANIA-EXP-STC-004 | none |
+| points | النقاط | list §B.3.2 | Y | ≥ 1 point; ≥ 1 H or W | 9 points | none |
+| change_note | ملاحظة التغيير | text(500) | cond. | required for revision ≥ 1 | Point 50 adds concrete temperature ≤ 32 °C | none |
+| approval_code | رمز الاعتماد | enum | sys | `A` approved · `B` approved as noted · `C` revise and resubmit · `D` rejected | B | none |
+| prepared_by / submitted_at | أعدّها / تاريخ التقديم | FK / timestamptz | sys | 247 holder | Bilal | personal |
+| status | الحالة | enum | Y | §B.3.3 | approved | none |
+
+`q_itp_points` (one row per point and revision): seq (10, 20, … unique in the revision), activity_en / _ar, characteristic_en / _ar (what is checked), point_type (list PT), criteria (criteria library version ids, ≥ 0) and/or acceptance_text_en / _ar, reference (spec clause or drawing, ≤ 120), verifying_record (`ir` · `test_request` · `mir` · `document` · `none`), checklist_template_code (quality kind, `quality_type` `ir_inspection`, optional), test_type_codes (codes of Q2 test types as text; validated only when Q2 is installed), frequency_text (e.g. "each pour", "every 500 m²") and frequency_qty / unit (optional), performer (fixed: contractor QC), rp_override (optional assignee spec, Q-RPM-02), notice_hours override (optional), competence_code (optional, Q2 requirement code).
+
+### B.3.2 Example points (ITP-ANIA-EXP-STC-001 Rev.2, seed)
+| Seq | Activity | Type | Criteria / acceptance | Verifying record |
+|---|---|---|---|---|
+| 10 | Approved mix design and materials | R | MAR approved (A or B) | document / MAR |
+| 20 | Formwork, line and level | W | ± 5 mm in 3 m (criterion `FORM-TOL`) | IR (checklist QSTC-FW) |
+| 30 | Reinforcement before pour (size, spacing, cover, laps) | **H** | Cover 40 ± 5 mm (`COVER-40`), spacers, laps per drawing | IR (checklist QSTC-RB) |
+| 40 | Embedded items and MEP sleeves | W | as drawings | IR |
+| 50 | Pour: slump, concrete temperature, sampling | W | `SLUMP-100`, `CONC-TEMP-32`, sampling per pour | IR + test requests |
+| 60 | Curing for 7 days | S | wet curing, `CURE-7D` | IR |
+| 70 | Striking of formwork | H | ≥ 70 % f'c by cubes or 7 days (`STRIKE-70`) | IR + test |
+| 80 | 28-day strength | R | `CONC-ACI-40` | test request |
+| 90 | Surface finish and dimensions | W | as specification | IR |
+
+### B.3.3 ITP states
+| From → To | AR | Who | Trigger / condition |
+|---|---|---|---|
+| — → Draft | مسودة | 247 | new ITP, or new revision copied from the current Approved revision |
+| Draft → Submitted | مُقدَّمة | 247 | Q-ITP-02 |
+| Submitted → Approved | معتمدة | 248 + RPM `itp.approve` | code A or B (B needs a comment); the previous Approved revision → Superseded |
+| Submitted → Revise and Resubmit | تعاد للتعديل | 248 + RPM | code C, comment ≥ 20 chars; the author edits and resubmits the same revision |
+| Revise and Resubmit → Submitted | مُقدَّمة | 247 | Q-ITP-02 again |
+| Submitted → Rejected | مرفوضة | 248 + RPM | code D, comment ≥ 20 chars; terminal for that revision |
+| Approved → Superseded | مستبدلة | System | a later revision is approved |
+| Approved → Withdrawn | مسحوبة | 239 | reason ≥ 20 chars; no new IRs |
+
+### B.3.4 Rules (Q-ITP)
+- **Q-ITP-01.** An ITP belongs to one engagement and one discipline; several ITPs may cover one zone.
+- **Q-ITP-02.** Submit completeness (`ITP_INCOMPLETE`): title EN and AR; ≥ 1 point; every point has activity, characteristic, type, and either ≥ 1 criterion or acceptance text; ≥ 1 point of type H or W; seq values unique.
+- **Q-ITP-03.** An Approved revision is immutable (`ITP_IMMUTABLE`, 409); changes make a new revision with a change note.
+- **Q-ITP-04.** IRs pin the ITP revision current at submission. An IR open on a revision that becomes Superseded continues on its revision; new IRs must use the current Approved revision (`ITP_NOT_APPROVED`).
+- **Q-ITP-05.** Point identity across revisions is its seq. Q-IR-08 hold checks match by seq and treat a hold point approved on an earlier revision as released when the point's seq and type are unchanged in the later revision.
+- **Q-ITP-06.** The ITP page shows a coverage grid: points × location keys used by its IRs, with the latest IR status in each cell (approved, approved with comments, rejected, scheduled, waived, not started).
+
+## B.4 Inspection Request (IR) — طلب فحص
+
+### B.4.1 Entities
+`q_irs`:
+
+| Field | AR label | Type | Req | Validation | Example | PDPL |
+|---|---|---|---|---|---|---|
+| ir_no | رقم الطلب | string | sys | Q-NUM at submit | IR-ANIA-EXP-2026-00412 | none |
+| itp_id + revision / point_seqs | الخطة / النقاط | FK / int[] | Y | current Approved revision; 1…`ir_max_points` points of that ITP | ITP-…-STC-001 Rev.2 / [30] | none |
+| governing_type | نوع النقطة الحاكم | enum | sys | strictest type of the points | H | none |
+| site_id / zone_id / system_id | الموقع / المنطقة / النظام | FK | Y / N / N | inside the ITP's zones / systems when set | S-LAND / Z-PIERB | none |
+| location_ref / location_key | الموقع التفصيلي / مفتاح الموقع | string(120) / sys | Y / sys | key = zone code (or system code) + "\|" + lower-cased, trimmed, single-spaced location_ref | Level 3 slab, grid C14–C20 / `Z-PIERB\|level 3 slab, grid c14–c20` | none |
+| extent | النطاق | string(150) | N | quantity description | 420 m², 62 t rebar | none |
+| requested_by / submitted_at | مقدم الطلب | FK / timestamptz | sys | 249 holder | Joseph | personal |
+| proposed_at | الموعد المقترح | timestamptz | Y | Q-IR-03 | 2026-09-14 08:00 | none |
+| self_check_done / self_check_note | الفحص الذاتي للمقاول | bool / text(500) | Y / N | must be true to submit (Q-IR-04) | true | none |
+| attachments | المرفقات | files | N | shop drawings, contractor checklist, survey | — | none |
+| responsible_set | الأشخاص المسؤولون | sys | sys | resolved at submit (Q-RPM-02; point rp_override) | [Abdullah] | personal |
+| current_round | الجولة الحالية | int | sys | 1, 2, … | 2 | none |
+| short_notice / short_notice_reason | إشعار قصير | bool / text | sys / cond. | Q-IR-03 | false | none |
+| status / status_reason | الحالة | enum / text | Y | §B.4.2 | approved | none |
+
+`q_ir_rounds`: round_no, scheduled_at, scheduled_by, inspector_id (must resolve for `ir.inspect`), attended_at, inspected_at, client_uuid, response_id (6d checklist response, owner type `q_ir_round`), measurements (list {name, value, unit, criterion version, mte_id, verdict}; each M&TE use → `q_mte_usage`), photos (≤ 20), result (list IRR), reject_category (NCAT, required when rejected), ncr_ids (sys), signoff_id (sys), waived_by / waived_at / waiver_evidence (W only), close_comments_before_next_hold (bool).
+`q_ir_comments`: ir, round, text EN / AR, status `open` مفتوحة → `responded` تم الرد (249, response text, photo) → `closed` مغلقة (250 + RPM) or back to `open`; due_on = round date + `ir_comment_close_days`.
+
+**IRR — round results:** `approved` معتمد · `approved_with_comments` معتمد مع ملاحظات · `rejected` مرفوض · `not_ready` غير جاهز (works not ready on arrival; a failed round, no NCR) · `waived` تم التنازل عن الحضور (W only, Q-IR-10).
+
+### B.4.2 IR states
+| From → To | AR | Who | Trigger / condition |
+|---|---|---|---|
+| — → Draft | مسودة | 249 | — |
+| Draft → Submitted | مُقدَّم | 249 | Q-IR-02 … Q-IR-04, Q-IR-08; number assigned; responsible set resolved and notified |
+| Submitted → Draft | مسودة | 250 + RPM `ir.inspect` | returned (documents missing), comment ≥ 20 chars |
+| Submitted → Scheduled | مجدول | 250 + RPM | scheduled_at, inspector (a resolver); expected within `ir_schedule_hours` (else alert) |
+| Scheduled → Scheduled | — | 250 + RPM | re-schedule with reason (counted, shown) |
+| Scheduled → Approved / Approved with Comments / Rejected | معتمد / معتمد مع ملاحظات / مرفوض | 250 + RPM (the inspector) | round result recorded (Q-IR-05, Q-IR-06); sign-off written; `not_ready` also leads to Rejected |
+| Scheduled → Witness Waived | تم التنازل عن الشهادة | 249 | governing type W; inspector absent at scheduled_at + `witness_wait_minutes` (Q-IR-10) |
+| Witness Waived → Approved / Approved with Comments / Rejected | — | 250 + RPM | records reviewed within `witness_review_days` |
+| Rejected → Re-inspection Requested | إعادة فحص مطلوبة | 249 | correction done (note ≥ 20 chars, photo); a new round is created |
+| Re-inspection Requested → Scheduled | مجدول | 250 + RPM | as above |
+| Draft / Submitted / Scheduled / Rejected → Cancelled | ملغى | 249 (own) or 250 | reason ≥ 20 chars (e.g. works removed, superseded by another IR) |
+| Approved / Approved with Comments → Voided | باطل | 244 | reason ≥ 20 chars; leaves KPIs; the hold it released is no longer released (Q-IR-08) |
+
+### B.4.3 Rules (Q-IR)
+- **Q-IR-01.** IRs are raised by 249 holders for points of an Approved ITP of an engagement in their scope; a contractor-assigned user raises IRs only for their engagement tree.
+- **Q-IR-02.** All points of one IR belong to the same ITP revision and location; the governing type is the strictest of them.
+- **Q-IR-03.** **Notice:** for governing type H or W, proposed_at ≥ submitted_at + notice hours (point override, else `ir_notice_hours`) (`IR_NOTICE_TOO_SHORT`); R and S need no notice. An urgent IR may be submitted with less notice with a reason ≥ 20 chars; it is flagged "short notice" and counted (K-141 chip).
+- **Q-IR-04.** **Contractor self-check:** `self_check_done` must be true (`SELF_CHECK_REQUIRED`). The contractor may fill the point's checklist as a pre-inspection (round 0); round 0 is never scored in KPIs.
+- **Q-IR-05.** **Decision:** a round needs the point's checklist response when the point has a template (6d EXE-2 completeness), every criterion-linked measurement entered, and ≥ 1 photo for `rejected`. A checklist critical failure or a failed criterion makes `approved` / `approved_with_comments` impossible (`IR_RESULT_INCONSISTENT`). `approved_with_comments` needs ≥ 1 comment.
+- **Q-IR-06.** **Rejection outcome:** a `rejected` round offers "Raise NCR" (source `ir`, class minor proposed, category from reject_category) and "Request re-inspection". An NCR is required (`NCR_REQUIRED`) when the same IR is rejected in round ≥ 2 or the reject category is `material` or `testing_failure`. `not_ready` never raises an NCR.
+- **Q-IR-07.** **Competence:** when a point has a `competence_code`, scheduling and deciding check the inspector through registry `COMPETENCE` (warn or block per `competence_policy`; `COMPETENCE_NOT_MET`). Without Q2 the check returns "not configured" and passes with an info note.
+- **Q-IR-08.** **Hold points block the next step.** For an IR whose points include seq s on ITP I at location key L: every point of I with type H and seq < s must have an IR at L in state Approved or Approved with Comments (not voided) before this IR can be submitted (`HOLD_POINT_NOT_RELEASED`, listing the holds). Q1 registers `HOLD_CHECKS["itp_point"]` with the same logic for other parts (Q2 pours, Q-TST-12). Voiding the releasing IR re-blocks later IRs that are not yet decided and notifies their requesters.
+- **Q-IR-09.** Hold points are never waived: an IR with governing type H cannot enter Witness Waived (`HOLD_NOT_WAIVABLE`).
+- **Q-IR-10.** **Witness waived:** for governing type W, if no inspector has recorded attendance by scheduled_at + `witness_wait_minutes` (`WITNESS_WAIT_NOT_OVER` before that), the requester may record "witness waived" with their own checklist response and ≥ 1 photo; the work may proceed. The responsible person reviews within `witness_review_days` (overdue alert); a rejection after a waiver proposes an NCR. Waived rounds are not first-time passes (K-141) and are counted in their own chip.
+- **Q-IR-11.** **Approved with comments:** open comments do not block later points unless the inspector ticks "close comments before the next hold point" on the round; then Q-IR-08 also requires those comments closed. Open comments block dossier completion (Q-DOS-03).
+- **Q-IR-12.** **First-time pass** (K-141): the IR's round 1 result is `approved` or `approved_with_comments`. An IR cancelled without a decided round is excluded; an IR whose round 1 is `waived` is excluded from K-141 and counted in the waiver chip.
+- **Q-IR-13.** **Forms:** the IR PDF (EN / AR, Hijri date, project and contractor, ITP point, location, rounds, checklist answers, measurements with M&TE numbers and calibration due dates, sign-offs including paper sign-offs) uses the 6g renderer.
+- **Q-IR-14.** **Offline:** a round may be recorded on the phone without signal under 6d EXE-6 rules (client_uuid, `OFFLINE_SUBMIT_TOO_LATE`, `CLOCK_SKEW`). Hold-point and M&TE checks run again at sync; a conflict (e.g. the releasing IR was voided meanwhile) stores the round as "needs confirmation", shows it to the inspector and does not count it as decided until confirmed.
+
+## B.5 Punch list — قائمة النواقص
+
+`q_punch_items`:
+
+| Field | AR label | Type | Req | Validation | Example | PDPL |
+|---|---|---|---|---|---|---|
+| punch_no | رقم البند | string | sys | Q-NUM | PCH-ANIA-EXP-2026-0318 | none |
+| site_id / zone_id / system_id / location_ref | الموقع | FK / FK / FK / string(120) | Y / Y / N / Y | — | S-LAND / Z-PIERB / — / Gate B4 lounge, column C17 | none |
+| discipline | التخصص | enum | Y | list DSC | ARC | none |
+| description_en / _ar | الوصف | text(500) | Y (one language) | P1-8 scan | Ceiling tile damaged and stained | none |
+| category | الفئة | enum | Y | `A` must be closed before acceptance / handover (يجب إغلاقه قبل التسليم) · `B` may be closed after handover by agreement (يمكن إغلاقه بعد التسليم) | B | none |
+| raised_during | مرحلة الرصد | enum | Y | `walkdown` · `pre_handover` · `client_inspection` · `ir` · `other` | pre_handover | none |
+| responsible_engagement_id | المقاول المسؤول | FK | Y | — | RAWABI@ANIA-EXP | none |
+| target_date | التاريخ المستهدف | date | sys / editable | raised date + `punch_target_days` | 2026-10-09 | none |
+| photos_before / photos_after | صور قبل / بعد | files | Y / cond. | ≥ 1 before; ≥ 1 after for Ready for Review | — | personal (photos) |
+| pin | موقع على المخطط | {floor_plan_id, x_pct, y_pct} | N | 0.0–100.0 each | {Pier B Level 1, 41.2, 63.8} | none |
+| status | الحالة | enum | Y | below | ready_for_review | none |
+
+States: `open` مفتوح → `ready_for_review` جاهز للمراجعة (251, after photo and note) → `closed` مغلق (252 + RPM `punch_item.verify`) or back to `open` (252 + RPM, comment); `open` / `ready_for_review` → `voided` ملغى (244, reason). An open item may be escalated to an NCR (source `punch_item`; the item stays open and linked).
+
+- **Q-PUN-01.** Items are raised one by one or in a walkdown session (one checklist response of type `punch_walkdown`; each non-compliant answer or free entry becomes an item).
+- **Q-PUN-02.** Ready for Review needs ≥ 1 after photo and a note ≥ 10 chars (`PUNCH_EVIDENCE_REQUIRED`). Q-RPM-06 applies: the user who marked it ready cannot close it.
+- **Q-PUN-03.** Overdue = not closed and today > target_date; counted in K-156; the engagement's quality contacts get a weekly digest.
+- **Q-PUN-04.** Category A items open in a dossier's scope block dossier submission (Q-DOS-03 c); B items are listed in the dossier as "agreed open items".
+
+## B.6 Floor plans and pins — المخططات
+
+`q_floor_plans`: zone, level label, title EN / AR, revision, image (PNG or JPEG ≤ 10 MB, long edge ≤ 6000 px; PDF is not accepted: export the sheet as an image) (`PLAN_IMAGE_INVALID`), width_px / height_px (sys), status current / superseded.
+- **Q-PIN-01.** Pins store percentages of image width and height, so a plan revision with the same aspect ratio (± 1 %) keeps every pin; a revision with another aspect ratio marks the pins "check position" until moved or confirmed.
+- **Q-PIN-02.** The plan view shows pins coloured by status (open red, ready amber, closed green) with the category letter; tapping a pin opens the item. Pins are optional; items without a pin are listed beside the plan. No measuring, scale or layers (no BIM, handover §4).
+
+## B.7 Handover dossier — ملف التسليم
+
+`q_dossiers`: dossier_no, title EN / AR, scope (zone_ids and / or system_ids, ≥ 1), sections (codes from registry `DOSSIER_SECTIONS`, default all), status, compiled_at, compiled_by, snapshot (index JSON with every item ref, revision, status and file SHA-256), index_file_en / _ar (PDF), package_file (ZIP), submitted_at, revision (1, 2, …). `q_asbuilt_items`: dossier or scope, drawing_no, title, revision, date, status `submitted` · `approved`, file (optional).
+
+**Sections** (registry `DOSSIER_SECTIONS`; Q1 provides `itp`, `ir`, `punch`, `asbuilt`; Q0 provides `ncr`; Q2 provides `mar`, `mir`, `tests`, `welding`, `calibration`; Q4 provides `documents`): each returns its items in scope and its blockers.
+
+States: `draft` مسودة → `compiled` مُجمَّع (253; snapshot and files made) → `submitted` مُقدَّم (253; no blocker) → `accepted` مقبول (254 + RPM `dossier.accept`) or `returned` مُعاد (254 + RPM, comment) → `draft` (recompile). Accepted is final; a later change makes revision + 1.
+
+- **Q-DOS-01.** A record belongs to a dossier when its zone is in the scope zones or its system is in the scope systems.
+- **Q-DOS-02.** Compiling takes a snapshot at that moment; records changed later do not change the compiled files (the snapshot keeps each file's SHA-256).
+- **Q-DOS-03.** **Blockers** (each listed with links; setting `dossier_blockers` may turn any into a warning): (a) an ITP point of type H or W with verifying record `ir` and no approved IR at a location key in scope used by any IR of that ITP; (b) an NCR in scope not Closed or Voided; (c) an open category A punch item; (d) an open IR comment; (e) from Q2: a failed test result without a closed NCR, or a rejected MIR whose quarantine item is not disposed; (f) an empty as-built list or an as-built item not approved.
+- **Q-DOS-04.** Files: the index PDF (EN and AR, Hijri date, project, scope, each section with item refs, statuses and dates, a sign-off summary) and a ZIP holding the index PDFs and each referenced file under `NN-<section>/<ref>-<filename>`. No PDF-merging library is added (D-319). A package over 2 GB is refused (`DOSSIER_TOO_LARGE`; split the scope).
+- **Q-DOS-05.** Viewer / Client may download an accepted dossier's index PDF (no photos); the ZIP needs 253 or 254.
+
+## B.8 Q1 screens
+
+| Screen | Phone | Desk |
+|---|---|---|
+| ITPs `/quality/itps` | Read the points of an ITP | Register (no, rev, discipline, engagement, status); builder: points table with drag order, type chips H / W / R / S, criteria picker, template picker; revision compare (changed points highlighted); coverage grid (Q-ITP-06) |
+| Inspection requests `/quality/inspection-requests` | Raise IR (pick ITP point, location autocomplete from earlier keys, self-check); "My inspections today"; inspection run: 6d checklist runner, measurements with M&TE scan or pick, photos, result buttons, sign | Board by status and date; calendar of scheduled inspections per inspector; IR detail with rounds, comments, sign-offs, links (tests, NCRs); PDF |
+| Punch `/quality/punch` | Walkdown mode: plan view, tap to drop a pin, photo, description; contractor "mark fixed" with after photo | Register with filters (zone, category, engagement, overdue); plan view; verify one by one (one sign-off per item) |
+| Floor plans `/quality/floor-plans` | View | Upload, revision, pin check |
+| Dossiers `/quality/dossiers` | Read status | Scope picker, section selection, blocker list with links, compile, download, submit, accept / return |
+
+## B.9 Q1 notifications
+| Trigger | Recipient | Timing | Channel |
+|---|---|---|---|
+| IR submitted | resolved responsible persons | immediately | in-app + email |
+| IR not scheduled within `ir_schedule_hours` | resolvers; 239 holders | at the deadline | in-app + email |
+| IR scheduled / rescheduled | requester | immediately | in-app + push |
+| IR decided | requester; engagement quality contacts | immediately | in-app + email |
+| Witness waived; review due | resolvers | at waiver; at the review deadline | in-app + email |
+| Hold re-blocked by a void (Q-IR-08) | requesters of affected IRs | immediately | in-app + email |
+| IR comment overdue | requester; engagement quality contacts | day after due | in-app |
+| Punch items overdue | engagement quality contacts | weekly, Sunday 07:12 | in-app + email |
+| Dossier submitted / decided | `dossier.accept` resolvers / compiler | immediately | in-app + email |
+
+## B.10 Q1 errors
+422 `ITP_INCOMPLETE`, `ITP_NOT_APPROVED`, `IR_NOTICE_TOO_SHORT`, `SELF_CHECK_REQUIRED`, `IR_RESULT_INCONSISTENT`, `NCR_REQUIRED`, `HOLD_POINT_NOT_RELEASED`, `HOLD_NOT_WAIVABLE`, `WITNESS_WAIT_NOT_OVER`, `PUNCH_EVIDENCE_REQUIRED`, `DOSSIER_BLOCKED`, `DOSSIER_TOO_LARGE`, `PLAN_IMAGE_INVALID`; 409 `ITP_IMMUTABLE`, `DOSSIER_IMMUTABLE`.
+
+## B.11 Acceptance criteria — Q1
+1. **AC-Q1-01** (Q-ITP-02) **Given** an ITP draft with only R and S points **When** submitted **Then** 422 `ITP_INCOMPLETE`; with point 30 changed to H **Then** Submitted.
+2. **AC-Q1-02** (§B.3.3, Q-RPM-06) **Given** ITP-…-STC-001 Rev.2 submitted by Bilal **When** Abdullah (CONSULTANT_RE) approves with code B and a comment **Then** Approved, Rev.1 Superseded, a sign-off stored; Bilal approving **Then** 422 `SOD_CONFLICT`.
+3. **AC-Q1-03** (Q-ITP-03) **Given** an Approved revision **When** a point is edited **Then** 409 `ITP_IMMUTABLE`.
+4. **AC-Q1-04** (Q-ITP-04) **Given** an IR submitted on Rev.1 and Rev.2 approved afterwards **Then** the IR continues on Rev.1; a new IR on Rev.1 **Then** 422 `ITP_NOT_APPROVED`.
+5. **AC-Q1-05** (Q-IR-03) **Given** a point 30 (H) IR submitted 2026-10-06 10:00 with proposed_at 2026-10-06 18:00 **Then** 422 `IR_NOTICE_TOO_SHORT`; 2026-10-07 10:00 **Then** accepted; short notice with a reason **Then** accepted and flagged.
+6. **AC-Q1-06** (Q-IR-04) **Given** self_check_done false **Then** 422 `SELF_CHECK_REQUIRED`.
+7. **AC-Q1-07** (Q-IR-08) **Given** point 30 (H) at key `Z-PIERB|level 3 slab, grid c14–c20` not yet approved **When** Joseph submits a point 40 IR at "Level 3 Slab,  grid C14–C20" (other case and spacing) **Then** 422 `HOLD_POINT_NOT_RELEASED` naming point 30; after IR-…-00412 round 2 is approved **Then** the point 40 IR is accepted.
+8. **AC-Q1-08** (Q-IR-08) **Given** IR-…-00412 approved and later voided **Then** a submitted, undecided point 50 IR at the same key is re-blocked and Joseph is notified.
+9. **AC-Q1-09** (Q-IR-05) **Given** a round with `COVER-40` measurement 33 mm **When** recorded as approved **Then** 422 `IR_RESULT_INCONSISTENT`; as rejected without a photo **Then** 422.
+10. **AC-Q1-10** (Q-IR-06) **Given** IR-…-00412 round 1 rejected (spacers missing, workmanship) **Then** an NCR is offered and optional; round 2 rejected **Then** `NCR_REQUIRED`; a `not_ready` round **Then** no NCR prompt.
+11. **AC-Q1-11** (Q-RPM-03) **Given** a point 60 (S) IR **Then** qc_inspector holders resolve; Abdullah does not unless a matrix row names him.
+12. **AC-Q1-12** (Q-IR-09, Q-IR-10) **Given** a W IR scheduled 2026-10-06 08:00 with no attendance **When** Joseph records waived at 08:50 **Then** 422 `WITNESS_WAIT_NOT_OVER`; at 09:05 with checklist and photo **Then** Witness Waived; on an H IR **Then** 422 `HOLD_NOT_WAIVABLE`; review not done by 2026-10-09 **Then** Abdullah is alerted.
+13. **AC-Q1-13** (Q-IR-11) **Given** an approved-with-comments round with "close comments before the next hold point" and one open comment **Then** the next H-gated IR **Then** 422 `HOLD_POINT_NOT_RELEASED` listing the comment.
+14. **AC-Q1-14** (Q-IR-07) **Given** point 50 with competence_code `CONC-FIELD-TECH`, `competence_policy` block and an inspector without it **Then** scheduling **Then** 422 `COMPETENCE_NOT_MET`; with the registry default (Q2 absent) **Then** allowed with an info note.
+15. **AC-Q1-15** (Q-IR-12, QX2) **Given** the Appendix A.4 September IR set **Then** K-141 = 80.0 % and K-142 = 19.1 %.
+16. **AC-Q1-16** (Q-SHR-04) **Given** a measurement with MTE-0015 (overdue) **Then** the round saves with warning `MTE_NOT_CALIBRATED` and a `q_mte_usage` row exists.
+17. **AC-Q1-17** (Q-IR-13) **Given** an IR approved by a paper sign-off **Then** the AR PDF shows "Signed on paper by …", the Hijri date and the M&TE numbers of the measurements.
+18. **AC-Q1-18** (Q-IR-14) **Given** a round recorded offline at 08:10 and synced at 11:00 after its hold point was voided **Then** the round is stored as "needs confirmation", shown to the inspector, and not counted as decided.
+19. **AC-Q1-19** (Q-PUN-02) **Given** an open punch item **When** marked ready without an after photo **Then** 422 `PUNCH_EVIDENCE_REQUIRED`; the user who marked it ready closing it **Then** 422 `SOD_CONFLICT`; Abdullah closes **Then** Closed.
+20. **AC-Q1-20** (Q-PIN-01) **Given** the plan "Pier B Level 1" with 12 pins **When** a revision with the same aspect ratio is uploaded **Then** pins keep their positions; another aspect ratio **Then** pins show "check position".
+21. **AC-Q1-21** (Q-PUN-03) **Given** a category A item with target 2026-10-01 still open **Then** it is overdue on 2026-10-06 and is in the next Sunday digest to RAWABI quality contacts.
+22. **AC-Q1-22** (Q-DOS-03) **Given** DOS-ANIA-EXP-2026-0001 (Z-PIERB) with one open NCR and one open A item **When** submitted **Then** 422 `DOSSIER_BLOCKED` listing both; with `dossier_blockers` excluding (c) **Then** the A item is a warning only.
+23. **AC-Q1-23** (Q-DOS-02, Q-DOS-04) **Given** a compiled dossier **When** a test report in scope is amended later **Then** the ZIP and snapshot hashes are unchanged; index PDFs exist in EN and AR with a Hijri date.
+24. **AC-Q1-24** (§B.7) **Given** an accepted dossier **When** compile is attempted **Then** 409 `DOSSIER_IMMUTABLE`; "new revision" makes revision 2 in Draft.
+25. **AC-Q1-25** (Q-DOS-05) **Given** Sarah (Viewer) **Then** she can download the accepted index PDF and not the ZIP.
+26. **AC-Q1-26** (Q-PRF-04) **Given** RUH-CCH (logistics) **When** an ITP is created **Then** 409 `PROFILE_INACTIVE`.
+27. **AC-Q1-27** (rule 41) **Given** the Arabic UI **Then** every Q1 label, point type, status, PDF and email is in Arabic; ITP and IR numbers, grid references and measurements stay LTR.
+
+---
+
+# Part C — Q2: materials, testing and lab, welding, calibration, competence
+
+Profiles: materials (MAR, MIR, quarantine), pours and welding are construction only; test requests, calibration and competence serve both profiles (test types carry a profile, e.g. hygiene swabs for logistics).
+
+## C.1 Q2 settings and lists
+
+| Key | AR label | Type | Default | Allowed |
+|---|---|---|---|---|
+| `mar_review_days` | مهلة مراجعة طلب الاعتماد | days | 14 | 3–60 |
+| `mar_required_categories` | فئات تتطلب اعتماد مواد | set of list MC | all except `consumables` | subset |
+| `quarantine_ageing_days` | مدة الحجز قبل التنبيه | days | 14 | 3–90 |
+| `test_auto_ncr` | إنشاء تقرير عدم مطابقة تلقائياً للاختبار الفاشل | enum | `auto` | `auto` · `prompt` |
+| `test_overdue_days` | مهلة إدخال النتيجة | days after due | 1 | 0–14 |
+| `early_age_warning_ratio` | نسبة التحذير المبكر للمقاومة | decimal | 0.65 ASSUMPTION | 0.40–0.90 |
+| `pour_sampling_m3` | حجم الصبّة لكل مجموعة عينات | m³ | 50 ASSUMPTION (ACI minimum: once a day, once per 110 m³, once per 460 m² `[VERIFY]`) | 10–150 |
+| `wpq_continuity_months` | مدة استمرارية تأهيل اللحّام | months | 6 (`[VERIFY]` ASME IX QW-322.1, AWS D1.1, ISO 9606-1) | 3–12 |
+| `wpq_confirmation_mode` | تأكيد استمرارية اللحّام | enum | `weld_log` | `weld_log` · `weld_log_or_confirmation` (ISO 9606-1 six-monthly confirmation) |
+| `repair_rate_alert_pct` | حد نسبة الإصلاح للّحام | % | 5.0 ASSUMPTION | 1.0–20.0 |
+| `progressive_exam` | الفحص التصاعدي | bool | true | — |
+| `mte_due_soon_days` | تنبيه قرب المعايرة | days | 30 | 7–90 |
+| `oot_review_days` | مهلة مراجعة الخروج عن التفاوت | days | 14 | 3–60 |
+| `competence_expiry_warning_days` | تنبيه انتهاء الكفاءة | days | 30 | 7–90 |
+
+**MC — material categories:** `concrete_mix` خلطة خرسانية · `cement` إسمنت · `aggregates` ركام · `rebar` حديد تسليح · `structural_steel` حديد إنشائي · `blockwork` بلوك · `waterproofing` عزل مائي · `insulation` عزل حراري · `pipes_fittings` أنابيب وتجهيزات · `valves` صمامات · `ductwork` مجاري هواء · `cables` كابلات · `electrical_equipment` معدات كهربائية · `mechanical_equipment` معدات ميكانيكية · `coatings` دهانات وطلاءات · `finishes` تشطيبات · `asphalt` إسفلت · `consumables` مستهلكات · `other` أخرى.
+
+## C.2 Testing and lab — الاختبارات والمختبرات (Q-TST)
+
+### C.2.1 Test types (data) — `q_test_types`
+code (`^[A-Z0-9-]{2,16}$`), version, name EN / AR, discipline (DSC) or `logistics`, profile, standard reference (text, e.g. "ASTM C39 / SBC 304"), specimen plan (list {age_days or null, count}), result fields (list {key, label EN / AR, unit, kind `numeric` · `text` · `pass_fail`}), evaluation (`fields` = one criterion per field, or `rule` = a criterion of kind `rule`), `ncr_class_on_fail` (minor / major / critical; may depend on which rule clause failed), competence code (optional), status (6d-style versions).
+
+Seeded test types (Appendix A.2 has their criteria): `CONC-CYL` concrete cylinders (ASTM C31 / C39), `CONC-CUBE` concrete cubes (BS EN 12390-3), `CONC-CORE` cores (ASTM C42), `SLUMP` (ASTM C143), `CONC-TEMP` (ASTM C1064), `PROCTOR` (ASTM D1557), `FDT-SC` field density, sand cone (ASTM D1556), `FDT-NDG` field density, nuclear gauge (ASTM D6938), `CBR` (ASTM D1883), `PSD` grading (ASTM D6913), `ASPH-CORE` asphalt core density and thickness (ASTM D2726), `ASPH-MARSHALL` (ASTM D6927), `REBAR-TENSILE` (ASTM A615 / A370 `[VERIFY]` SASO equivalent), `HYDRO` hydrostatic pressure test (ASME B31.3 §345.4 `[VERIFY]`), `PNEU` pneumatic test, `DUCT-LEAK` duct leakage, `TORQUE` bolt torque, `DFT` coating dry-film thickness (SSPC-PA 2), `PULL-OFF` adhesion (ASTM D4541), `PILE-PIT` pile integrity (ASTM D5882); logistics: `ATP-SWAB` hygiene swab (RLU), `WATER-MICRO` water microbiology.
+
+### C.2.2 Test request — طلب اختبار (`q_test_requests`, `q_test_specimens`)
+| Field | AR label | Type | Req | Validation | Example | PDPL |
+|---|---|---|---|---|---|---|
+| test_no | رقم الطلب | string | sys | Q-NUM | TST-ANIA-EXP-2026-0388 | none |
+| test_type + version | نوع الاختبار | FK | Y | Published; profile matches | CONC-CYL v1 | none |
+| site / zone / system / location_ref | الموقع | FK / FK / FK / string | Y / N / N / Y | — | S-LAND / Z-PIERB / — / Level 3 slab bay C14 | none |
+| lab_supplier_id | المختبر | FK | Y | category `testing_lab` (or `ndt_provider`); Q-SHR-02 / -03 | LAB-RGM | none |
+| sampled_at / sampled_by / sample_ref | أخذ العينة | timestamptz / FK / string(40) | cond. | at Sampled | 2026-09-01 10:40 / Joseph / S-0077-3 | personal (by) |
+| mte_ids | الأجهزة المستخدمة | FK[] | N | M&TE usage (Q-SHR-04) | [MTE-0012] | none |
+| specimens | العينات | list {specimen_ref, age_days, due_on, tested_on, values} | sys / Y | from the plan; due_on = cast date + age | 3 at 7 d, 2 at 28 d … | none |
+| report_no / report_file / tested_by_name | تقرير المختبر | string / file / string(120) | Y at Results Entered | lab report PDF | RGM-26-11873 | personal (name) |
+| verdict / verdict_detail | الحكم | enum / JSON | sys | Q-CRT-01; `pass` · `fail` · `indicative` · `pending` | fail | none |
+| linked | الارتباطات | `q_links` | N | IR, MIR, pour, weld, NCR | IR-…-00455, POUR-…-0077 | none |
+| status | الحالة | enum | Y | §C.2.3 | verified | none |
+
+### C.2.3 States
+Requested مطلوب (257) → Sampled أُخذت العينة (257) → At Lab في المختبر (257) → Results Entered أُدخلت النتائج (257; automatic verdict) → Verified معتمدة (258 + RPM `test_request.verify`). Verified → Amended معدّلة (258 + RPM; Q-TST-09; then Verified again). Requested / Sampled → Cancelled ملغى (257, reason). Any → Voided باطل (244, reason).
+
+### C.2.4 Rules
+- **Q-TST-01.** Test types, specimen plans, fields and acceptance are data (Q-CRT-03). A project may add its own versions; records pin the version.
+- **Q-TST-02.** The lab must be a supplier of category `testing_lab` or `ndt_provider`; Q-SHR-02 and Q-SHR-03 apply on the sampling date.
+- **Q-TST-03.** Specimen due dates come from the plan; an untested specimen past due_on + `test_overdue_days` alerts the requester (daily job).
+- **Q-TST-04.** Results Entered needs the lab report file, the report no and every result field of the tested specimens (`TEST_RESULT_INCOMPLETE`); the verdict is computed at once (Q-CRT-01) and stored with the criterion version.
+- **Q-TST-05.** Verification (RPM) checks the report against the entries; Q-RPM-06 applies (the user who entered the results cannot verify).
+- **Q-TST-06.** **Failed verdict:** with `test_auto_ncr` = auto, an NCR (source `test_result`, class per `ncr_class_on_fail`, category `testing_failure`) is opened by System at Results Entered (not waiting for verification, so containment starts at once); with `prompt`, the user must raise it or record why not (reason ≥ 20 chars, counted). A failed test linked to an IR shows on the IR.
+- **Q-TST-07.** **Indicative results** (e.g. 7-day strength) never fail; a 7-day strength < `early_age_warning_ratio` × f'c gives warning `EARLY_STRENGTH_LOW` to the requester and the pour's quality engineer.
+- **Q-TST-08.** **Concrete strength rules** (criteria kind `rule`, params editable):
+  - `aci318_strength` (cylinders; `[VERIFY]` ACI 318-19 §26.12.3.1 and SBC 304): a *strength test* = mean of the 28-day specimens of one set (2 × 150 × 300 mm or 3 × 100 × 200 mm). Per mix (MAR + grade), tests in cast-date order: (a) every mean of 3 consecutive tests ≥ f'c; (b) no test < f'c − 3.5 MPa when f'c ≤ 35 MPa, or < 0.90 f'c when f'c > 35 MPa. A test fails when it breaks (b), or completes a run of 3 that breaks (a). (a) is `pending` for the first two tests of a mix.
+  - `en206_strength` (cubes; `[VERIFY]` BS EN 206 initial production): groups of 3 consecutive results: mean ≥ fck + 4 MPa and each result ≥ fck − 4 MPa.
+  - `aci318_cores` (`[VERIFY]` ACI 318 §26.12.6): mean of 3 cores ≥ 0.85 f'c and no core < 0.75 f'c.
+- **Q-TST-09.** **Amendments** (ISO/IEC 17025 7.8.8 idea): a Verified result is never edited. An amendment (lab's amended report, reason ≥ 20 chars) creates a new result version, re-evaluates, and keeps the original visible ("Amended on … — original: fail"). An NCR opened by the original failure stays open; its owner decides (void it with reason "result amended" through 244, or keep it).
+- **Q-TST-10.** **Retests** (e.g. cores after failed cylinders) are new test requests linked `relates` to the original; the original verdict never changes.
+- **Q-TST-11.** **Pours** (`q_pours`, construction): pour_no, element, site / zone / location_ref, MAR (approved concrete mix), grade (f'c or fck), volume_m3, supplier (ready-mix), started_at / finished_at, ambient temperature, linked IRs (pre-pour hold and pour witness, via `q_links`), test requests (sets). Required sets = max(1, ⌈volume_m3 ÷ `pour_sampling_m3`⌉) per pour and mix; closing a pour with fewer sets gives warning `POUR_SAMPLING_SHORT` (counted in K-152 chip).
+- **Q-TST-12.** **Pour start and the hold point:** starting a pour requires the linked pre-pour hold IR to be released: registry `HOLD_CHECKS["itp_point"]` returns True → allowed; False → 422 `HOLD_POINT_NOT_RELEASED`; None (Q1 not installed, or no link) → warning `HOLD_STATUS_UNKNOWN`.
+- **Q-TST-13.** Strength evaluation (Q-TST-08) groups tests by mix across pours; a mix whose 3-test window fails marks every pour of that window on the pour page.
+- **Q-TST-14.** Other evaluators: `slump_astm_c94` (target T: T ≤ 50 mm → ± 15; 50 < T ≤ 100 → ± 25; T > 100 → ± 40 `[VERIFY]` ASTM C94); `ratio_min` (field dry density ÷ maximum dry density × 100 ≥ x); `sspc_pa2` (spot = mean of 3 gauge readings; every spot within [0.8 × min, 1.2 × max]; area mean within [min, max] `[VERIFY]` SSPC-PA 2 restriction level); `pressure_hold` (test pressure ≥ factor × design pressure, hold ≥ minutes, pressure drop ≤ allowed, no visible leak).
+
+**Worked examples (backend unit tests must match):**
+- **QX4 — ACI 318, f'c = 32 MPa** (≤ 35 → (b) limit 28.5): tests 34.1, 31.2, 33.0, 30.4, 27.9. Test 1, 2: (b) pass, (a) pending → **pass**. Test 3: mean(34.1, 31.2, 33.0) = 32.77 → **pass**. Test 4: mean(31.2, 33.0, 30.4) = 31.53 < 32 → **fail** (a). Test 5: 27.9 < 28.5 → **fail** (b); mean 30.43 also breaks (a). Variant f'c = 40 (> 35 → (b) limit 36.0): a test of 33.2 → **fail** (b) → NCR class critical (CONC-CYL `ncr_class_on_fail` (b) = critical, (a) = major).
+- **QX5 — EN 206, fck,cube = 50:** group 58.5, 55.0, 51.5 → mean 55.0 ≥ 54, min 51.5 ≥ 46 → **pass**; group 53.0, 54.5, 52.0 → mean 53.17 < 54 → **fail**.
+- **QX6 — cores, f'c = 40:** 36.1, 34.9, 33.6 → mean 34.87 ≥ 34.0 and min 33.6 ≥ 30.0 → **acceptable** (supports a use-as-is disposition, NCR-…-0044).
+- **QX7 — slump** target 100 mm: 75 and 125 pass, 130 fails. **Compaction** MDD 2.150 g/cm³: 2.068 → 96.19 % ≥ 95 → pass; 2.030 → 94.42 % → fail. **DFT** spec 125–200 µm: spot means 124, 141, 132, 119, 136 → all within [100, 240], area mean 130.4 within [125, 200] → **pass**; a spot of 96 → **fail**.
+
+## C.3 Materials — المواد (Q-MAT)
+
+### C.3.1 Material Approval Request (MAR) — طلب اعتماد مواد
+`q_mars`: mar_no + revision, title EN / AR, category (MC), spec section ref, manufacturer, supplier (Q-SHR-02), country of origin, brand / model, compliance table (list {requirement, offered, result `complies` · `deviation` · `not_applicable`, note}), deviations note (required when any row is `deviation`), documents (technical data sheet, test certificates, conformity certificate e.g. SABER `[VERIFY]`, sample ref), approval code (A / B / C / D, §B.3.1 meanings), comments, status.
+
+States: Draft مسودة (255) → Submitted مُقدَّم (255) → Approved معتمد (A) / Approved as Noted معتمد مع ملاحظات (B) / Revise and Resubmit يعاد للتعديل (C) / Rejected مرفوض (D) (256 + RPM `mar.approve`; B, C, D need a comment ≥ 20 chars). C → the author resubmits a new revision (revision + 1, copied). Approved / Approved as Noted → Superseded (a later revision approved) or Withdrawn (239, reason).
+- **Q-MAT-01.** Submit needs ≥ 1 compliance row and the technical data sheet (`MAR_INCOMPLETE`); a `deviation` row needs the deviations note and marks the MAR "with deviations", which the approver must accept explicitly (checkbox recorded in the sign-off).
+- **Q-MAT-02.** Not decided within `mar_review_days` of submission → alert to the resolvers and 239 holders.
+
+### C.3.2 Material Inspection Request on delivery (MIR) — طلب فحص المواد الموردة
+`q_mirs`: mir_no, MAR + revision (Q-MAT-03), delivery note no, PO no, supplier, delivered_at, quantity + unit, batch / heat / lot numbers (list), certificate heat numbers (list, from the mill certificates, EN 10204 type 3.1 / 3.2 for steel), certificates (files), storage zone, checklist response (`quality_type` `mir_inspection`), samples (→ linked test requests), accepted_qty / rejected_qty, result `accepted` مقبول · `accepted_with_comments` مقبول مع ملاحظات · `rejected` مرفوض, status Draft → Submitted → Decided (256 + RPM `mir.decide`) / Cancelled.
+- **Q-MAT-03.** A MIR needs a MAR of the same material in Approved or Approved as Noted when the category is in `mar_required_categories` (`MAR_NOT_APPROVED`).
+- **Q-MAT-04.** Heat numbers on the material tags that are not on any certificate give warning `HEAT_NUMBER_MISMATCH`; accepting such a MIR needs a comment ≥ 20 chars.
+- **Q-MAT-05.** accepted_qty + rejected_qty = quantity (`MIR_QTY_MISMATCH`). A rejected quantity > 0 creates a quarantine item and an NCR (source `mir`, class major) automatically.
+- **Q-MAT-06.** "Accepted subject to tests": accepted_with_comments with linked pending test requests; a later failed result shows on the MIR and the NCR prompt offers "quarantine the remaining stock" (creates a quarantine item with the entered quantity).
+
+### C.3.3 Quarantine — المواد المحجوزة
+`q_quarantine_items`: tag_no (`QTN` numbering, printed on a red tag label with QR to the record), material description, MIR or source link, quantity + unit, zone / location, photos, NCR link, status `quarantined` محجوز → `released` مُفرج عنه · `returned` مُعاد للمورد · `scrapped` متلف (256 + RPM `quarantine.dispose`).
+- **Q-MAT-07.** Release needs a linked NCR whose disposition (use_as_is, repair or rework) is Approved (`QUARANTINE_RELEASE_BLOCKED`); returned needs the return note no; scrapped needs disposal evidence.
+- **Q-MAT-08.** Items quarantined longer than `quarantine_ageing_days` alert the NCR owner weekly.
+
+## C.4 Calibration of measuring and test equipment — معايرة أجهزة القياس (Q-CAL)
+
+**MT — M&TE types** (for `q_mte_items`): `tape_rule` · `caliper_micrometer` · `level_theodolite` · `total_station` · `gnss_survey` · `thermometer` · `temp_probe` · `temp_logger` · `humidity_logger` · `infrared_thermometer` · `pressure_gauge` · `torque_wrench` · `dft_gauge` · `holiday_detector` · `hardness_tester` · `compression_machine` · `slump_cone` (verification) · `cube_mould` (verification) · `nuclear_density_gauge` (`[VERIFY]` NRRC licence and leak test) · `scale_balance` · `multimeter_insulation_tester` · `ultrasonic_thickness` · `other`.
+**CS — calibration status:** `calibrated` معاير · `due_soon` قريب الاستحقاق · `overdue` متأخر · `out_of_service` خارج الخدمة · `limited_use` استخدام محدود · `not_required` لا يتطلب معايرة · `unknown` غير معروف (only before Q2 is installed).
+
+`q_calibrations`: cal_no, mte, kind (`calibration` · `verification`), cal_date, provider (supplier of category `calibration_lab`, or `in_house` with the reference standard's MTE no), certificate no and file (required for calibration), points (list {nominal, as_found, as_left, error = as_found − nominal, tolerance, in_tolerance}), as_found_ok / as_left_ok (sys: every point in tolerance), traceability statement (e.g. "traceable to SI through a national metrology institute" `[VERIFY]` SASO NMCC), uncertainty (optional), next_due (sys), status `draft` → `accepted` (262 + RPM `calibration.accept`) · `rejected` (certificate not acceptable, comment).
+
+- **Q-CAL-01.** Accepting a calibration sets the M&TE's last calibration and `cal_due_on` = add_months(cal_date, interval_months) − 1 day (month-end clamp, as 6d §6.4).
+- **Q-CAL-02.** **Status** (recomputed on every change and by the daily job): manual `out_of_service` / `limited_use` (with reason) win; `check_kind` none → `not_required`; never calibrated → `overdue`; today > cal_due_on → `overdue`; today ≥ cal_due_on − `mte_due_soon_days` → `due_soon`; else `calibrated`.
+- **Q-CAL-03.** A calibration with as_left out of tolerance sets the M&TE `out_of_service` until a later accepted calibration is in tolerance.
+- **Q-CAL-04.** **Out-of-tolerance review:** an accepted calibration with as_found out of tolerance opens one `q_oot_reviews` record: period from the last accepted calibration whose as_left was in tolerance (or the first usage) to this cal_date; items = every `q_mte_usage` row of that M&TE in the period, plus readings of monitoring points to which the logger was assigned in the period (Q3 provides them through `RECORD_TYPES`). Each item gets a decision: `no_impact` (justify; the screen shows the margin between the recorded value and the nearest criterion limit next to |as-found error|, and proposes no_impact when margin > |error|), `recheck` (link the new inspection or test), or `ncr` (raise an NCR, source `oot_review`). The review closes when every item is decided (262 + RPM `oot_review.decide`); due within `oot_review_days`.
+- **Q-CAL-05.** A printable status label (EN / AR): MTE no, status colour, calibration date, due date, QR with the record URL (opens after sign-in; not a token).
+- **Q-CAL-06.** Verification-only items (slump cone, cube moulds) use kind `verification` with a checklist or measured dimensions instead of a certificate.
+- **Q-CAL-07.** A logger or probe assigned to a monitoring point (Q3) or used in a mapping study should have a calibration point within ± 5 °C of the zone's range ASSUMPTION; otherwise warning `CAL_RANGE_NOT_COVERED`.
+- **Worked examples. QX10:** cal_date 2026-01-15, interval 12 → due **2027-01-14**; due_soon from 2026-12-15 (30 days). **QX11:** probe MTE-0042 (tolerance ± 0.5 °C) as-found error **+1.2 °C** at the 0 °C point on 2026-09-10; last in-tolerance calibration 2026-03-08 → 37 receiving checks in the period; 35 have margin > 1.2 °C (no_impact proposed), 2 were within 1.2 °C of the limit → `recheck` of the receipt records → 1 NCR (frozen line at −18.4 °C recorded, true value possibly −17.2 °C).
+
+## C.5 Competence — الكفاءة (Q-CPT)
+
+`q_competence_reqs`: code (`^[A-Z0-9-]{3,20}$`, e.g. `CONC-FIELD-TECH`, `NDT-RT-L2`, `CWI`, `MAPPING-LEAD`, `QMS-AUDITOR`), title EN / AR, applies_to (list CA), filters (discipline, test type, NDT method, storage class), evidence: `any_of` and optional `all_of` lists of {hook kind `training_course` or `personnel_certificate`, code, minimum level}, policy (`inherit` · `warn` · `block`), profile.
+**CA — applies to:** `ir_inspector` · `test_technician` · `ndt_technician` · `welding_inspector` · `receiving_inspector` · `mapping_lead` · `auditor` · `calibration_acceptor` · `warehouse_qc` · `pharmacist` · `other`.
+
+- **Q-CPT-01.** `check(user, code, at)`: the user's linked worker (Phase 2 `workers.user_id`) is evaluated through the Phase 2 hook providers (`app/services/access/hooks.py`: `training_course` from Phase 5, `personnel_certificate` from Phase 4, with their in-force predicates) at `at`; met ⇔ the `any_of` list has one met item and every `all_of` item is met; valid_until = the earliest valid_until of the evidence used. No linked worker → not met, reason `HOLDER_NOT_LINKED`. Q2 registers this as `COMPETENCE`.
+- **Q-CPT-02.** Phase 8 stores no copy of a certificate or training record; it reads them.
+- **Q-CPT-03.** The competence matrix lists people (users holding quality roles, named inspectors, NDT technicians) × requirements: met (until date) · expiring (≤ `competence_expiry_warning_days`) · not met · not applicable; exportable (246).
+- **Q-CPT-04.** Expiring competence alerts the person and 239 holders at 30 / 7 / 0 days.
+- **Q-CPT-05.** Policy `block` refuses the action (`COMPETENCE_NOT_MET`); `warn` stores it with the warning (counted in K-155).
+- **Q-CPT-06.** Welders are qualified by WPQ (Q-WLD), not by requirement rows.
+
+## C.6 Welding — اللحام (Q-WLD)
+
+**WP — processes:** `SMAW` · `GTAW` · `GMAW` · `FCAW` · `SAW` · `other`. Positions: plate `1G`–`4G`, `1F`–`4F`; pipe `1G`, `2G`, `5G`, `6G`, `6GR`.
+
+| Entity | Main fields | States |
+|---|---|---|
+| `q_wps` — WPS مواصفة إجراء اللحام | wps_no + revision, standard (`AWS_D1_1` · `ASME_IX` · `ISO_15614_1` · `other`), processes, joint types, base material group (P-No / group), thickness range mm, diameter range mm, positions, filler (classification, F-No, A-No), preheat min °C, interpass max °C, PWHT (none / parameters), gas, `prequalified` (AWS D1.1), supporting PQRs | Draft → Submitted → Approved (260 + RPM `wps.approve`) → Superseded / Withdrawn |
+| `q_pqrs` — PQR سجل تأهيل الإجراء | pqr_no, standard, process, test date, results (tensile, bend, impact, macro, hardness: value + pass / fail), lab (supplier), certificate | Draft → Approved (260 + RPM) |
+| `q_welders` — اللحّامون | worker_id (Phase 2, required), welder stamp (`^[A-Z0-9-]{2,10}$`, unique per project), engagement, status active / inactive; no ID number copied (P2-7) | — |
+| `q_wpqs` — WPQ تأهيل اللحّام | wpq_no, welder, standard, process, test WPS, test date, coupon (thickness, diameter, position), qualified ranges (positions, thickness, diameter min, F-No), test method (`RT` · `bend` · `fracture` · `macro`), result, examiner (supplier or TPI), certificate file, optional Phase 4 personnel certificate link, last_use (sys, per process), continuity_until (sys), revalidation_due (ISO 9606-1, `[VERIFY]` 2 or 3 years) | Draft → Active (260 + RPM `wpq.approve`) → Lapsed (continuity, System) · Expired (revalidation, System) · Revoked (259 + RPM, reason) |
+| `q_welds` — سجل اللحام | joint_id (`^[A-Z0-9-]{3,30}$`, unique per project, e.g. `PB-RT-T12-J07`), drawing ref, zone, system, WPS, joint type (`butt` · `fillet` · `branch` · `socket`), diameter, thickness, length mm, welders (list {welder, passes root / fill / cap}), welded_on, visual result (VT accept / reject), NDT lot code and method, selected_for_ndt (with reason `random` · `progressive` · `100pct`), NDT results (list {method `RT` · `UT` · `MT` · `PT`, report no, file, result accept / reject, defect type, defect length mm, examined length mm, technician name}), repair_count | Welded → Visual Accepted → NDT Pending → Accepted / Rejected → Repaired (R1, R2) → NDT Pending … → Accepted / Cut Out |
+
+- **Q-WLD-01.** A weld needs an Approved WPS whose process, position and thickness / diameter ranges cover the joint (`WPS_RANGE_EXCEEDED`).
+- **Q-WLD-02.** Every welder on a weld needs an Active WPQ for the process whose positions and ranges cover the joint, with continuity valid on welded_on (`WELDER_NOT_QUALIFIED`). Recording with an override (reason ≥ 20 chars, 260 holder) is possible for a late discovery and raises an NCR (Q-WLD-10).
+- **Q-WLD-03.** **Continuity:** last_use(process) = the latest welded_on of not-voided welds by the welder with that process, or the WPQ test date if later; with mode `weld_log_or_confirmation`, a recorded six-monthly confirmation (date, quality engineer) also counts. continuity_until = add_months(last_use, `wpq_continuity_months`) − 1 day; the day after, the WPQ becomes Lapsed for that process (System, daily job), and a new test re-activates it.
+- **Q-WLD-04.** **NDT percentage per lot:** for a lot with required r % for a method: n = welds of the lot with visual accepted; e = welds examined by that method at first NDT; achieved = e ÷ n × 100; shortfall = ⌈r × n ÷ 100⌉ − e when > 0, listed on the lot page. "Pick welds" proposes a random selection covering every welder of the lot at least once where possible.
+- **Q-WLD-05.** **Progressive examination** (`[VERIFY]` ASME B31.3 §341.3.4) with `progressive_exam`: a rejected random weld adds 2 welds by the same welder in the lot (reason `progressive`); if either is rejected, 2 more for each rejected one; if any of those is rejected, all remaining welds of that welder in the lot are selected (`100pct`).
+- **Q-WLD-06.** **Repairs:** a rejected weld is repaired (R1) and re-examined by the same method; a second repair (R2) needs a quality engineer's approval comment; a weld rejected after R2 is cut out.
+- **Q-WLD-07.** **Repair rate** per welder and period: rejected first examinations ÷ first examinations × 100 (by joint); by length when lengths are recorded: Σ defect length of rejected first examinations ÷ Σ examined length × 100. Re-examinations of repairs are not counted twice. A welder above `repair_rate_alert_pct` with ≥ 10 first examinations in 90 days alerts the quality engineer (suggest retest or revoke).
+- **Q-WLD-08.** NDT technicians must meet the competence requirement for the method and level (e.g. `NDT-RT-L2`, ISO 9712) through `COMPETENCE` (Q-CPT-05 policy).
+- **Q-WLD-09.** The weld log and the lot summary export to CSV / XLSX (246) and feed the dossier section `welding`.
+- **Q-WLD-10.** NCR (source `weld`, class major) is opened by System when: a weld is cut out; progressive examination reaches 100 % for a welder in a lot; or a weld was recorded with the Q-WLD-02 override.
+- **Worked examples. QX8:** lot "PB-ROOF RT 10 %", welder W-017, 40 welds visual accepted → required ⌈4.0⌉ = 4; 4 examined, J07 rejected → progressive: 2 more of W-017 examined, both accepted → lot met (6 of 40 = 15.0 % achieved); J07 repaired R1 and accepted. Repair rate W-017 = 1 ÷ 6 = **16.7 %** (above 5.0 % but fewer than 10 first examinations → no alert). **QX9:** W-021 last SMAW weld 2026-03-28 → continuity_until **2026-09-27**; on 2026-09-28 the WPQ is Lapsed; a weld by W-021 on 2026-10-02 → 422 `WELDER_NOT_QUALIFIED`.
+
+## C.7 Q2 screens
+
+| Screen | Phone | Desk |
+|---|---|---|
+| Materials (MAR) `/quality/materials` | Read status | Register; form with compliance table; revision history; approval codes |
+| Material inspections (MIR) `/quality/material-inspections` | Delivery check at the gate or store: checklist, photos, heat numbers, quantities, accept / reject | Register; certificate comparison panel |
+| Quarantine `/quality/quarantine` | Scan the red tag, see status | Register with ageing; release / return / scrap |
+| Tests `/quality/tests` and Test types `/quality/test-types` | Sampling entry (time, sample refs, slump, temperature with M&TE) | Specimen calendar (due today / overdue); results entry with automatic verdict; amendment history; test type editor (240 / 239) |
+| Pours `/quality/pours` | Pour log entry | Pour list with sets required vs taken and mix strength status |
+| Welding `/quality/welding` (WPS, PQR, welders, WPQs, weld log, NDT lots) | Weld entry by stamp, visual result | Continuity board (welder × process, days left), lot NDT %, repair rates |
+| M&TE `/quality/mte` and Calibration `/quality/calibration` | Scan the label, see status | Register with status chips and due list; calibration entry; OOT reviews with item decisions |
+| Competence `/quality/competence` | — | Requirements editor; matrix |
+
+## C.8 Q2 notifications
+| Trigger | Recipient | Timing | Channel |
+|---|---|---|---|
+| MAR submitted / not decided in time | resolvers / resolvers + 239 | immediately / at `mar_review_days` | in-app + email |
+| MIR rejected; quarantine ageing | NCR owner; engagement quality contacts | immediately; weekly | in-app + email |
+| Specimen test overdue | requester | daily 07:12 | in-app |
+| Failed or early-low result | requester; quality engineer; NCR owner | at Results Entered | in-app + email |
+| M&TE due soon / overdue | custodian; quality engineers | at 30 / 7 / 0 days; then weekly | in-app + email |
+| OOT review opened / overdue | resolvers | immediately / at the deadline | in-app + email |
+| WPQ continuity ending | welder's engagement quality contacts; quality engineers | 30 / 7 / 0 days | in-app |
+| Repair rate over the limit | quality engineers | at detection | in-app + email |
+| Competence expiring | the person; 239 holders | 30 / 7 / 0 days | in-app + email |
+
+## C.9 Q2 errors
+422 `TEST_RESULT_INCOMPLETE`, `MAR_INCOMPLETE`, `MAR_NOT_APPROVED`, `MIR_QTY_MISMATCH`, `QUARANTINE_RELEASE_BLOCKED`, `HOLD_POINT_NOT_RELEASED`, `WPS_RANGE_EXCEEDED`, `WELDER_NOT_QUALIFIED`, `COMPETENCE_NOT_MET`, `CALIBRATION_CERT_REQUIRED`; 409 `RESULT_VERIFIED` (edit after verification). Warnings: `EARLY_STRENGTH_LOW`, `POUR_SAMPLING_SHORT`, `HOLD_STATUS_UNKNOWN`, `HEAT_NUMBER_MISMATCH`, `CAL_RANGE_NOT_COVERED`, `LAB_NOT_ACCREDITED_FOR_SCOPE`.
+
+## C.10 Acceptance criteria — Q2
+1. **AC-Q2-01** (Q-TST-08, QX4) **Given** five CONC-CYL tests of one mix with f'c 32 as QX4 **Then** verdicts pass, pass, pass, fail, fail with the reasons (a) and (b) as stated.
+2. **AC-Q2-02** (Q-TST-08) **Given** f'c 40 and a test of 33.2 MPa **Then** fail (b) and an NCR of class critical is opened by System at Results Entered (`test_auto_ncr` auto).
+3. **AC-Q2-03** (QX5) **Given** `en206_strength` fck 50 **Then** group (58.5, 55.0, 51.5) passes and (53.0, 54.5, 52.0) fails.
+4. **AC-Q2-04** (QX6, Q-TST-10) **Given** cores 36.1, 34.9, 33.6 on a retest linked to the failed cylinder test **Then** acceptable; the original cylinder verdict stays fail.
+5. **AC-Q2-05** (QX7) **Given** the slump, compaction and DFT values of QX7 **Then** each verdict is as stated.
+6. **AC-Q2-06** (Q-TST-07) **Given** a 7-day mean of 24.0 MPa with f'c 40 (0.60 < 0.65) **Then** verdict indicative and warning `EARLY_STRENGTH_LOW` to the requester.
+7. **AC-Q2-07** (Q-TST-04) **Given** results without the lab report file **Then** 422 `TEST_RESULT_INCOMPLETE`.
+8. **AC-Q2-08** (Q-TST-05) **Given** Joseph entered the results **When** Joseph verifies **Then** 422 `SOD_CONFLICT`; Bilal verifies **Then** Verified with a sign-off.
+9. **AC-Q2-09** (Q-TST-09) **Given** a Verified fail **When** a field is edited **Then** 409 `RESULT_VERIFIED`; an amendment with reason and file **Then** a new version, the original shown, and the NCR still open.
+10. **AC-Q2-10** (Q-TST-06) **Given** `test_auto_ncr` prompt and a failed result **When** the user declines without a reason **Then** 422; with a reason ≥ 20 chars **Then** saved and counted.
+11. **AC-Q2-11** (Q-TST-02, Q-SHR-03) **Given** LAB-RGM accreditation without CONC-CORE in scope **Then** a CONC-CORE request warns `LAB_NOT_ACCREDITED_FOR_SCOPE`; a disqualified lab → 422 `SUPPLIER_DISQUALIFIED`.
+12. **AC-Q2-12** (Q-TST-03) **Given** a 28-day specimen due 2026-10-04 without a result **Then** on 2026-10-06 07:12 the requester is alerted once.
+13. **AC-Q2-13** (Q-TST-11) **Given** POUR-…-0077 of 186 m³ with 3 sets **When** closed **Then** warning `POUR_SAMPLING_SHORT` (required 4).
+14. **AC-Q2-14** (Q-TST-12) **Given** a pour linked to an IR of point 30 that is Rejected **When** started **Then** 422 `HOLD_POINT_NOT_RELEASED`; without Q1's registry entry **Then** warning `HOLD_STATUS_UNKNOWN`.
+15. **AC-Q2-15** (Q-MAT-01) **Given** a MAR with a deviation row and no deviations note **Then** 422 `MAR_INCOMPLETE`; approval code C without comment **Then** 422.
+16. **AC-Q2-16** (Q-MAT-03) **Given** MAR-…-0027 (waterproofing) in Revise and Resubmit **When** a MIR for it is submitted **Then** 422 `MAR_NOT_APPROVED`; for category consumables without a MAR **Then** allowed.
+17. **AC-Q2-17** (Q-MAT-05) **Given** MIR-…-0112 with quantity 240 m, accepted 180, rejected 60 **Then** a quarantine item of 60 m and an NCR (source mir, major) exist; 180 + 50 → 422 `MIR_QTY_MISMATCH`.
+18. **AC-Q2-18** (Q-MAT-04) **Given** a rebar MIR with tag heat H71203 absent from the certificates **Then** warning `HEAT_NUMBER_MISMATCH` and acceptance needs a comment.
+19. **AC-Q2-19** (Q-MAT-07) **Given** the quarantine item of AC-Q2-17 and its NCR not yet Disposition Approved **When** released **Then** 422 `QUARANTINE_RELEASE_BLOCKED`; returned with a return note no. **Then** Returned.
+20. **AC-Q2-20** (Q-CAL-01, Q-CAL-02, QX10) **Given** a calibration on 2026-01-15 with interval 12 **Then** due 2027-01-14, status due_soon from 2026-12-15 and overdue on 2027-01-15; an M&TE never calibrated is overdue.
+21. **AC-Q2-21** (Q-CAL-03) **Given** a calibration with as_left out of tolerance **When** accepted **Then** the M&TE is out_of_service and usage warns / blocks per policy.
+22. **AC-Q2-22** (Q-CAL-04, QX11) **Given** MTE-0042 as-found +1.2 °C on 2026-09-10 **Then** an OOT review covers 2026-03-08…2026-09-10 with 37 receiving items; 35 proposed no_impact; the review cannot close until all 37 are decided; one `ncr` decision opens an NCR with source `oot_review`.
+23. **AC-Q2-23** (Q-CAL-07) **Given** a logger calibrated only at +5 and +25 °C assigned to the frozen zone (−25 to −18) **Then** warning `CAL_RANGE_NOT_COVERED`.
+24. **AC-Q2-24** (Q-CAL) **Given** a calibration without a certificate file **When** accepted **Then** 422 `CALIBRATION_CERT_REQUIRED`; a verification of a slump cone without a certificate **Then** accepted.
+25. **AC-Q2-25** (Q-CPT-01) **Given** requirement `NDT-RT-L2` (personnel certificate `ndt_rt` level ≥ 2) and an NDT technician whose certificate ended 2026-09-30 **Then** check on 2026-10-06 → not met; a user without a linked worker → not met `HOLDER_NOT_LINKED`.
+26. **AC-Q2-26** (Q-CPT-03, Q-CPT-04) **Given** a QC inspector whose course expires 2026-10-20 **Then** the matrix shows expiring and alerts were sent at 30 days (2026-09-20) and are due at 7 days.
+27. **AC-Q2-27** (Q-WLD-01, Q-WLD-02) **Given** WPS-NAJD-SMAW-01 (thickness 5–25 mm) and a 32 mm joint **Then** 422 `WPS_RANGE_EXCEEDED`; a welder without an Active WPQ **Then** 422 `WELDER_NOT_QUALIFIED`.
+28. **AC-Q2-28** (Q-WLD-03, QX9) **Given** W-021's last SMAW weld 2026-03-28 **Then** continuity_until 2026-09-27; the job on 2026-09-28 sets the WPQ Lapsed; a weld on 2026-10-02 → 422.
+29. **AC-Q2-29** (Q-WLD-04, Q-WLD-05, QX8) **Given** QX8 **Then** required 4, progressive selections 2 with reason `progressive`, achieved 15.0 %, W-017 repair rate 16.7 % and no alert (fewer than 10 examinations).
+30. **AC-Q2-30** (Q-WLD-05) **Given** both progressive welds rejected **Then** 2 more for each are selected and, after one more rejection, all remaining W-017 welds of the lot are selected `100pct` and an NCR (source weld) opens.
+31. **AC-Q2-31** (Q-WLD-06) **Given** J07 rejected after R1 **When** R2 is recorded without a quality engineer comment **Then** 422; rejected after R2 **Then** Cut Out and an NCR opens.
+32. **AC-Q2-32** (Q-PRF-04) **Given** RUH-CCH (logistics) **Then** creating a MAR, pour or weld → 409 `PROFILE_INACTIVE`; creating an `ATP-SWAB` test request and an M&TE item succeeds.
+33. **AC-Q2-33** (rule 41) **Given** the Arabic UI **Then** every Q2 label, list value, status, label print and PDF is in Arabic; joint ids, heat numbers and values stay LTR.
