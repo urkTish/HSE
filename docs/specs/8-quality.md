@@ -1,6 +1,6 @@
 # Module Spec — Phase 8: Quality (QA/QC) — NCR, ITP and inspection requests, materials and testing, welding, calibration, competence, cold-chain logistics, documents, audits, suppliers, KPIs, SPC, COPQ
 
-**Version:** v1.0 · **Date:** 2026-10-31 · **Author:** Quality Consultant Agent · **Status:** Draft. Turki (owner) asked to build everything and review afterwards (handover §1); defaults are chosen so the build can start (§7).
+**Version:** v1.1 · **Date:** 2026-10-31 · **Author:** Quality Consultant Agent · **Status:** Draft. Turki (owner) asked to build everything and review afterwards (handover §1); defaults are chosen so the build can start (§7).
 **Builds on:**
 - `docs/HANDOVER-quality.md` (sections 2 and 4 are binding; section 5 sets the packages Q0–Q4 and the integration package I).
 - `0-foundation.md` v1.6: projects, sites, zones, engagement tree, roles and scoping legend, rules 8–16, 22, 28, 33–35, 48, PDPL P1–P13, the capability matrix (7b ends at 237).
@@ -111,13 +111,18 @@ Every part owns the files below and edits no other part's files. "Stub" = Q0 cre
 
 | Part | Tables (all new; prefix `q_`) | Backend files | Frontend route folders under `src/app/[locale]/(app)/quality/` | Tests and e2e |
 |---|---|---|---|---|
-| **Q0** | `q_settings`, `q_positions`, `q_position_holders`, `q_rp_rules`, `q_numbering`, `q_criteria`, `q_systems`, `q_suppliers`, `q_supplier_accreditations`, `q_customers`, `q_mte_items`, `q_mte_usage`, `q_links`, `q_signoffs`, `q_ncrs`, `q_ncr_lines`, `q_ncr_costs`, `q_ncr_rca`, `q_observations`, `q_alerts`, `q_alert_acks`, `q_complaints`; columns added to `checklist_templates` (`quality_type`, `sector_profiles`) | `app/core/quality/common.py`; `app/models/quality/__init__.py`, `q0.py`; `app/schemas/quality/q0/`; `app/services/quality/{registry,settings,rpm,numbering,criteria,signoff,links,suppliers,customers,systems,mte,files,jobs}.py`, `app/services/quality/ncr/`, `alerts.py`, `complaints.py`; `app/api/routers/quality/__init__.py`, `q0/`; `app/seed_quality.py`; migration `q0_…` on `c0025`; one-line hooks in `main.py`, `scheduler.py`, `models/__init__.py`, `attachments.py`, `corrective_actions.py`, `permissions.py`, `kpi/data.py`, `dashboard.py`, `scorecard/datasets.py` | `ncrs/`, `observations/`, `alerts/`, `complaints/`, `settings/`, `criteria/`, `suppliers/`, `customers/`, `systems/`, `awaiting/`, `page.tsx` (Quality home) | `tests/quality/q0/`; `e2e/quality/q0-*.spec.ts` |
+| **Q0** | `q_settings`, `q_positions`, `q_position_holders`, `q_rp_rules`, `q_numbering`, `q_criteria`, `q_systems`, `q_suppliers`, `q_supplier_accreditations`, `q_customers`, `q_mte_items`, `q_mte_usage`, `q_links`, `q_signoffs`, `q_ncrs`, `q_ncr_lines`, `q_ncr_costs`, `q_ncr_rca`, `q_observations`, `q_alerts`, `q_alert_acks`, `q_complaints`; columns added to `checklist_templates` (`quality_type`, `sector_profiles`) | `app/core/quality/common.py`; `app/models/quality/__init__.py`, `q0.py`; `app/schemas/quality/q0/`; `app/services/quality/{registry,settings,rpm,numbering,criteria,signoff,links,suppliers,customers,systems,mte,files,jobs}.py`, `app/services/quality/ncr/`, `alerts.py`, `complaints.py`; `app/api/routers/quality/__init__.py`, `q0/`; `app/seed_quality.py`; migration `q0_…` on `c0025`; one-line hooks in `main.py`, `scheduler.py`, `models/__init__.py`, `attachments.py`, `corrective_actions.py`, `permissions.py`, `kpi/data.py`, `dashboard.py`, `scorecard/datasets.py` | `ncrs/`, `observations/`, `alerts/`, `complaints/`, `settings/`, `criteria/`, `suppliers/`, `customers/`, `systems/`, `mte/` (M&TE register list and detail; Q2 adds tabs), `awaiting/`, `page.tsx` (Quality home) | `tests/quality/q0/`; `e2e/quality/q0-*.spec.ts` |
 | **Q1** | `q_itps`, `q_itp_points`, `q_irs`, `q_ir_rounds`, `q_ir_comments`, `q_floor_plans`, `q_punch_items`, `q_dossiers`, `q_asbuilt_items` | `app/core/quality/q1.py`, `app/models/quality/q1.py`, `app/schemas/quality/q1/`, `app/services/quality/q1/`, `app/api/routers/quality/q1/`, `app/seed_quality_q1.py`, migration `q1_…` | `itps/`, `inspection-requests/`, `punch/`, `floor-plans/`, `dossiers/` | `tests/quality/q1/`; `e2e/quality/q1-*.spec.ts` |
-| **Q2** | `q_mars`, `q_mirs`, `q_quarantine_items`, `q_test_types`, `q_test_requests`, `q_test_specimens`, `q_pours`, `q_wps`, `q_pqrs`, `q_welders`, `q_wpqs`, `q_welds`, `q_calibrations`, `q_oot_reviews`, `q_oot_items`, `q_competence_reqs` | same pattern with `q2` | `materials/`, `material-inspections/`, `quarantine/`, `tests/`, `test-types/`, `pours/`, `welding/`, `mte/`, `calibration/`, `competence/` | `tests/quality/q2/`; `e2e/quality/q2-*.spec.ts` |
+| **Q2** | `q_mars`, `q_mirs`, `q_quarantine_items`, `q_test_types`, `q_test_requests`, `q_test_specimens`, `q_pours`, `q_wps`, `q_pqrs`, `q_welders`, `q_wpqs`, `q_welds`, `q_calibrations`, `q_oot_reviews`, `q_oot_items`, `q_competence_reqs` | same pattern with `q2` | `materials/`, `material-inspections/`, `quarantine/`, `tests/`, `test-types/`, `pours/`, `welding/`, `calibration/`, `competence/` | `tests/quality/q2/`; `e2e/quality/q2-*.spec.ts` |
 | **Q3** | `q_products`, `q_import_batches`, `q_storage_zones`, `q_monitoring_points`, `q_readings`, `q_excursions`, `q_excursion_impacts`, `q_mapping_studies`, `q_check_schedules`, `q_pest_stations`, `q_pest_visits`, `q_receipts`, `q_receipt_lines`, `q_stock_snapshots`, `q_stock_lines`, `q_fefo_checks`, `q_holds`, `q_hold_lines`, `q_damage_reports`, `q_returns`, `q_return_lines`, `q_recalls`, `q_recall_items`, `q_cycle_counts`, `q_cycle_count_lines`, `q_shipments`, `q_shipment_lines`, `q_trips`, `q_pods`, `q_throughput` | same pattern with `q3` | `receiving/`, `storage/`, `readings/`, `excursions/`, `mapping/`, `hygiene/`, `pest/`, `stock/`, `holds/`, `returns/`, `recalls/`, `transport/`, `imports/`, `products/` | `tests/quality/q3/`; `e2e/quality/q3-*.spec.ts` |
 | **Q4** | `q_documents`, `q_document_revisions`, `q_doc_distribution`, `q_doc_acks`, `q_transmittals`, `q_transmittal_items`, `q_processes`, `q_audit_programme_lines`, `q_management_reviews`, `q_supplier_evaluations`, `q_supplier_scores`, `q_kpi_targets`, `q_spc_charts`, `q_work_value`; columns added to `field_audits` (`domain`, `auditee_supplier_id`, `process_ids`) | same pattern with `q4`; plus `app/kpi/quality.py`, `app/kpi/quality_views.py`, AI tools in `app/ai/tools.py`, 6d audit and KPI edits (§E.2), 6g pack types | `documents/`, `transmittals/`, `audits/`, `audit-programme/`, `management-reviews/`, `supplier-scores/`, `kpis/`, `spc/`, `reports/` | `tests/quality/q4/`; `e2e/quality/q4-*.spec.ts` |
 
 Shared files that wave-2 parts may still touch (all known to the integrator, handover §3): their own Alembic file (re-chained by the integrator), `docs/contracts/openapi.yaml` and `frontend/src/lib/api/schema.d.ts` (regenerated by the integrator; packages regenerate locally but never bump `CONTRACT_VERSION`), `docs/DECISIONS.md` (own range only, appended) and `docs/PROGRESS.md` (own section only). Nothing else. Q4 runs alone in wave 3 and may edit Q0 files and the 6d / 6g / KPI / AI files listed in its row.
+
+### 3.3a Stubs Q0 creates (each owned and filled by the named part)
+- Backend: `app/core/quality/q1.py` … `q4.py` (empty enum modules); `app/models/quality/__init__.py` importing `q0.py` and the stub modules `q1.py` … `q4.py` (each with `__all__ = []`), so Alembic autogenerate sees the wave-2 tables once a part adds them; `app/schemas/quality/q1/` … `q4/` packages; `app/services/quality/q1/__init__.py` … `q4/__init__.py`, each with an empty `register()` that `app/services/quality/__init__.py` calls; `app/api/routers/quality/__init__.py` defining one `router` that includes `q0.router` and the empty `APIRouter`s of `q1/` … `q4/` (the only router module added to `main.py`); `app/seed_quality_q1.py` … `q4.py` with an empty `seed(db)`; `tests/quality/q1/` … `q4/` with an empty `conftest.py`.
+- Frontend: `src/components/quality/nav/q1.ts` … `q4.ts` (empty arrays) and `nav/index.ts`; `src/components/quality/registry/tabs-q1.tsx` … `tabs-q4.tsx` (empty tab lists); `messages/quality/q0.en.json`, `q0.ar.json` … `q4.en.json`, `q4.ar.json` (`{}` for q1…q4); `src/lib/api/quality/q1.ts` … `q4.ts`.
+- i18n wiring: today `src/i18n/request.ts` imports only `messages/{locale}.json` and `scripts/check-i18n.mjs` reads only `en.json` / `ar.json`. Q0 extends `request.ts` to deep-merge the five `messages/quality/q<n>.{locale}.json` files under the `quality` namespace (a key defined twice fails the build), and extends `check-i18n.mjs` to check EN / AR parity and empty values in those files too; Q0 adds a check (script test or CI step) that a key missing from `q1.ar.json` fails.
 
 ### 3.4 Cross-part links without foreign keys
 
@@ -213,7 +218,7 @@ A **position** is a project title that is not a platform role, e.g. "Consultant 
 | `pour` | Concrete Pour / صبّة خرسانية | Q2 | construction | POUR | — |
 | `wps` / `pqr` | Welding Procedure Spec. / Procedure Qualification Record / مواصفة إجراء اللحام / سجل تأهيل الإجراء | Q2 | construction | WPS / PQR | `approve` (position CONSULTANT_RE) |
 | `wpq` | Welder Qualification / تأهيل اللحّام | Q2 | construction | WPQ | `approve` (role quality_engineer) |
-| `weld` | Weld Joint / وصلة لحام | Q2 | construction | (joint id) | — |
+| `weld` | Weld Joint / وصلة لحام | Q2 | construction | (joint id) | `repair2_approve` (role quality_engineer) |
 | `mte` | Measuring and Test Equipment / جهاز قياس واختبار | Q0 table, Q2 rules | both | MTE | — |
 | `calibration` | Calibration Record / سجل معايرة | Q2 | both | CAL | `accept` (role quality_engineer) |
 | `oot_review` | Out-of-Tolerance Review / مراجعة الخروج عن التفاوت | Q2 | both | OOT | `decide` (role qa_qc_manager) |
@@ -244,7 +249,7 @@ Seeded positions per profile: construction CONSULTANT_RE (Consultant Resident En
 - **Q-RPM-04.** The resolved set may contain several users (e.g. two position holders); any one of them may act; the sign-off records who did.
 - **Q-RPM-05.** A responsible-person action writes one `q_signoffs` row: record type, record id, step, decision (from the step's list, e.g. approved / approved_with_comments / rejected / returned), comment, signed_by_user_id, signed_at, signer's role or position at that time, `channel` (`in_app` · `paper`), evidence attachment ids, and the matrix row used. Rows are append-only.
 - **Q-RPM-06.** **Segregation:** the user who created, requested or last submitted the record, or recorded the result being decided, cannot sign its step (`SOD_CONFLICT`) unless the matrix row has `self_approval_allowed`. The HSE Manager is not exempt.
-- **Q-RPM-07.** A contractor-assigned user (Q-ROL-02) cannot sign a step on a record whose responsible engagement is in their own tree unless the row has `own_tree_allowed` (contractor self-certification is a project decision, not a default).
+- **Q-RPM-07.** A contractor-assigned user (Q-ROL-02) cannot sign a step on a record whose responsible engagement is in their own tree unless the row has `own_tree_allowed` (contractor self-certification is a project decision, not a default). The record's responsible engagement is its field `responsible_engagement_id` or `engagement_id` where the type has one; else the engagement of its linked source record (pour, IR, MIR, receipt, trip); else none, and this rule does not apply.
 - **Q-RPM-08.** **External sign-off.** A person without an account is invited as a user with role `responsible_person` (Phase 0 invite flow, 72 h token, privacy notice) and added as position holder. Where the row has `paper_allowed`, a holder of the step's capability may instead record the decision **on behalf of** a named external signatory: name, organisation, position, signed date and ≥ 1 scanned signed form (PDF / image). The sign-off is stored with channel `paper` and shown "Signed on paper by <name> (<organisation>), recorded by <user>". Paper sign-offs are counted (K-141 chip, §E.4).
 - **Q-RPM-09.** The HSE Manager and 239 holders may **re-assign** the responsible person of one pending step on one record (reason ≥ 20 chars, audited); they never sign in the resolved person's place unless they resolve themselves.
 - **Q-RPM-10.** A matrix change applies to steps not yet signed; signed steps keep their sign-off. Open records whose resolved set becomes empty are listed on the Quality home ("steps without a responsible person").
@@ -296,7 +301,7 @@ Org-wide, like contractors (Phase 0 §3.4). `q_suppliers`: supplier_code (`^[A-Z
 `q_customers` (per project): code, name EN / AR, kind (`client` العميل · `depositor` مالك البضاعة · `consignee` المستلم · `end_user` المستخدم النهائي), contact name / mobile / email (personal), approval-required flags (`owner_release_approval` for depositors, Q-EXC-09), status active / inactive.
 
 ### A.8.4 M&TE master — سجل أجهزة القياس والاختبار
-Q0 owns the table so every part can cite instruments; Q2 owns calibration behaviour (§C.4). `q_mte_items`: mte_no (numbering `MTE`), type (list MT, §C.4), description, manufacturer, model, serial_no (unique with manufacturer per project), range, resolution, tolerance (± value and unit), owner (`own` · engagement · supplier), site / zone, custodian user, `check_kind` (`calibration` · `verification` · `none`), interval_months, `cal_status` (sys, list CS §C.4), `cal_due_on` (sys), `last_calibration_id` (sys), `equipment_item_id` (optional Phase 4 link), status `active` · `retired` · `lost`, label printed at.
+Q0 owns the table, its CRUD endpoints (`/projects/{id}/quality/mte`, `/quality/mte/{id}`), the `/quality/mte` register screens and usage recording, so Q2 and Q3 can create and cite instruments in parallel (Q3 needs its loggers). Until Q2 is installed `cal_status` stays `unknown`. Q2 owns calibration records, OOT reviews, the status recomputation (Q-CAL-02), the status label print (Q-CAL-05) and the `calibration/` route, and adds its M&TE tabs through `tabs-q2.tsx` (§C.4). `q_mte_items`: mte_no (numbering `MTE`), type (list MT, §C.4), description, manufacturer, model, serial_no (unique with manufacturer per project), range, resolution, tolerance (± value and unit), owner (`own` · engagement · supplier), site / zone, custodian user, `check_kind` (`calibration` · `verification` · `none`), interval_months, `cal_status` (sys, list CS §C.4), `cal_due_on` (sys), `last_calibration_id` (sys), `equipment_item_id` (optional Phase 4 link), status `active` · `retired` · `lost`, label printed at.
 
 `q_mte_usage`: mte_id, project_id, record_type, record_id, used_at, verdict at use (`ok` · `warned` · `blocked_overridden`), recorded_by. **Q-SHR-04.** Any part that records a measurement with an instrument calls `mte.record_usage(...)`. With `cal_status` `overdue` or `out_of_service`, or a status `retired` / `lost`, the call warns `MTE_NOT_CALIBRATED` (policy `warn`) or refuses (policy `block`, 422 `MTE_NOT_CALIBRATED`). `unknown` (Q2 not yet installed) always warns.
 
@@ -407,7 +412,7 @@ Attachments (`q_ncr` photos, `q_ncr_evidence` evidence files). Every change audi
 - **Q-NCR-09.** **RCA** (`q_ncr_rca`): the method must be allowed for the class by `rca_method_by_class` (`RCA_METHOD_NOT_ALLOWED`). Completeness (`RCA_INCOMPLETE`): `simple` — a cause statement ≥ 30 chars; `five_why` — 3 to 7 "why" answers of ≥ 10 chars and a root-cause statement; `ishikawa` — causes in ≥ 2 of the 6M categories and ≥ 1 cause marked root; `eight_d` — D1 team (≥ 2 users), D2 problem statement (what, where, when, how many; is / is not), D3 containment (= Q-NCR-07), D4 root cause and escape point (why it was not detected), D5 chosen permanent actions (≥ 1 CA), D6 implementation and validation dates, D7 prevention of recurrence (process, ITP, procedure or FMEA change, optionally linked to a Q4 document), D8 closure note. The root cause's 6M category becomes `cause_category`.
 - **Q-NCR-10.** RCA texts get the P1-8 scan and the hint "describe causes, not people"; a 5-Why answer "operator error" (or AR equivalent) shows warning `HUMAN_ERROR_NOT_ROOT_CAUSE` ("ask why the error was possible").
 - **Q-NCR-11.** **Disposition lines** cover the affected quantity: the sum of line quantities equals the NCR quantity when a quantity is given (`DISPOSITION_QTY_MISMATCH`). `use_as_is` and `repair` need a justification ≥ 50 chars and ≥ 1 evidence file (e.g. calculation, core results, stability data) (`CONCESSION_EVIDENCE_REQUIRED`); `repair` names the repair procedure (document or text); `reject_return` names the return note or supplier claim no. by closure; `reject_scrap` needs destruction evidence by closure (for food or medicine: a certificate from a licensed disposal provider `[VERIFY]` MWAN / SFDA).
-- **Q-NCR-12.** **Approval** of the disposition is one sign-off per required step: `ncr.disposition` always; plus `ncr.concession` when any line is use_as_is or repair; a step may resolve to the same user (one sign-off then covers both only if the matrix rows name the same assignee). Q-RPM-06 applies: the owner and the raiser cannot approve.
+- **Q-NCR-12.** **Approval** of the disposition is one sign-off per required step: `ncr.disposition` always; plus `ncr.concession` when any line is use_as_is or repair; `ncr.disposition` and `ncr.concession` are two sign-off rows even when the same user resolves for both; the UI offers them together. Q-RPM-06 applies: the owner and the raiser cannot approve.
 - **Q-NCR-13.** **Supplier response (SCAR):** when supplier_id is set, the owner may request a supplier response (due date, default +14 days); the received response (file, e.g. the supplier's 8D) is accepted or rejected by the owner. A missing or late response feeds the supplier score (§E.3), never blocks closure on its own.
 - **Q-NCR-14.** **Costs** are entered at any time before closure (§A.9.6). Closure needs ≥ 1 cost line or the confirmation "no cost incurred" with a reason (`COST_NOT_RECORDED`).
 - **Q-NCR-15.** **Close** needs: disposition implemented; every linked CA Closed or Cancelled (cancelled with reason); every `reject_return` / `reject_scrap` line evidenced; costs recorded (Q-NCR-14); and no blocker from the source adapter's `close_check` (e.g. a rework IR not yet approved, a hold not released or rejected). The verifier is the user who resolves for `ncr.close`; Q-RPM-06 applies.
@@ -439,7 +444,7 @@ Attachments (`q_ncr` photos, `q_ncr_evidence` evidence files). Every change audi
 ## A.10 Observations, quality alerts and customer complaints
 
 ### A.10.1 Quality observation — ملاحظة جودة (Q-OBS)
-`q_observations`: obs_no, site / zone / system / location_ref, category (NCAT), description (P1-8 scan), photos, suggested action, raised_by, status `open` مفتوحة → `actioned` تم اتخاذ إجراء (CA source `quality_observation`, or escalated to an NCR source `observation`) · `closed` مغلقة (RPM `observation.close`, reason).
+`q_observations`: obs_no, site / zone / system / location_ref, category (NCAT), description (P1-8 scan), photos, suggested action, raised_by, status `open` مفتوحة → `actioned` تم اتخاذ إجراء (CA source `quality_observation`, or escalated to an NCR source `observation`) · `closed` مغلقة (RPM `observation.close`, reason). Quality observations are kept apart from Phase 1 observations (`observations`), which are safety observations feeding the HSE leading indicators and HSE CAs; a quality observation never enters HSE KPIs (Q-OBS-02).
 - **Q-OBS-01.** An observation is a weakness or risk that does not yet breach a requirement; if a requirement is breached the screen asks "Raise an NCR instead?" and offers the conversion (the observation closes as `actioned` with the link).
 - **Q-OBS-02.** Observations never count as NCRs; they feed K-169's chip and the Pareto when the setting `pareto_include_observations` (Q4) is true.
 
@@ -568,7 +573,7 @@ Fixtures: the Phase 0–7b seed plus Appendix A; clock `HSE_CLOCK_AT` = **2026-1
 2. **AC-Q0-02** (Q-ROL-03) **Given** Bilal **When** he PATCHes Quality settings or voids an NCR **Then** 403.
 3. **AC-Q0-03** (Q-ROL-04) **Given** Abdullah (responsible_person) **When** he lists NCRs **Then** he sees only NCRs with a step where he resolves or has signed; `GET /quality/kpis` → 403.
 4. **AC-Q0-04** (Q-PRF-01) **Given** a new project with no profile **When** a user raises an NCR **Then** 422 `PROFILE_REQUIRED`; after Hatem sets `construction` it succeeds.
-5. **AC-Q0-05** (Q-PRF-03, Q-PRF-04) **Given** ANIA-EXP switched to `logistics` with reason **Then** the change is audited with old / new; creating an IR → 409 `PROFILE_INACTIVE`; deciding an IR that was Scheduled before the switch succeeds; the NCR register still lists construction NCRs.
+5. **AC-Q0-05** (Q-PRF-03, Q-PRF-04) **Given** ANIA-EXP switched to `logistics` with reason **Then** the change is audited with old / new; creating a system (a construction-only Q0 register) → 409 `PROFILE_INACTIVE`; creating an NCR (shared type) still works; the NCR register still lists construction NCRs. Creating and finishing IRs after a switch is integration test §6 #10.
 6. **AC-Q0-06** (Q-PRF-06) **Given** a project created with type `logistics` **Then** its Quality profile defaults to logistics; a `building_highrise` project defaults to construction.
 7. **AC-Q0-07** (Q-SET-01) **Given** `GET /quality/settings/schema` **Then** every key of §A.3 and of §B.2, §C.1, §D.1, §E.1 is listed with default and range; PATCH `ncr_repeat_days` = 20 → 422 `SETTING_OUT_OF_RANGE`; 120 → saved and audited.
 
@@ -581,7 +586,7 @@ Fixtures: the Phase 0–7b seed plus Appendix A; clock `HSE_CLOCK_AT` = **2026-1
 13. **AC-Q0-13** (Q-RPM-08) **Given** a row with `paper_allowed` **When** Hatem records an external approval without a scan **Then** 422; with name, organisation, position, date and a PDF **Then** a sign-off with channel `paper` is stored and printed "Signed on paper by …, recorded by Hatem"; with `paper_allowed` false **Then** 422.
 14. **AC-Q0-14** (Q-RPM-09) **Given** Faisal (HSE Manager) who does not resolve **When** he approves a step **Then** 403; when he re-assigns the step to Sultan with a reason **Then** Sultan resolves for that record only and an audit entry exists.
 15. **AC-Q0-15** (Q-RPM-05) **Given** any sign-off **When** an UPDATE or DELETE is attempted through the API **Then** 405 / no route exists; the row is shown on the record with role or position at signing.
-16. **AC-Q0-16** (Q-RPM-11) **Given** Abdullah resolves for 3 pending steps (an IR, an ITP, an NCR concession) **Then** "Awaiting my sign-off" lists the 3, oldest first, with the badge 3.
+16. **AC-Q0-16** (Q-RPM-11) **Given** Abdullah resolves for 3 pending NCR steps (two `ncr.concession`, one `ncr.disposition` re-assigned to him by Q-RPM-09) **Then** "Awaiting my sign-off" lists the 3, oldest first, with the badge 3; a test-only `PENDING_STEPS` provider registered in `tests/quality/q0/` adds a fourth item and the list merges it in date order.
 
 **Numbering, criteria, checklists, shared registers**
 17. **AC-Q0-17** (Q-NUM-03) **Given** two NCRs opened concurrently on ANIA-EXP **Then** they get consecutive, different numbers; a voided NCR's number is never reused.
@@ -590,7 +595,7 @@ Fixtures: the Phase 0–7b seed plus Appendix A; clock `HSE_CLOCK_AT` = **2026-1
 20. **AC-Q0-20** (Q-CRT-02) **Given** a record pinned to COMP-95 v1 **When** v2 (98.0 %) is published **Then** the record's verdict is unchanged.
 21. **AC-Q0-21** (Q-CHK-01, Q-CHK-02) **Given** a quality template draft with a `stop_work` item **Then** publish → 422 `STOP_RULE_NOT_ALLOWED`; Noura (HSE Officer, holds 6d capability 192 but not 240) creating a kind `quality` draft → 403; Faisal publishing a clean draft → Published.
 22. **AC-Q0-22** (Q-CHK-03) **Given** quality checklist responses in September **Then** K-34, K-35 and K-110 for September are unchanged.
-23. **AC-Q0-23** (Q-SHR-02) **Given** supplier GULFPIPE suspended **When** a MAR names it **Then** warning `SUPPLIER_NOT_APPROVED`; a disqualified supplier → 422 `SUPPLIER_DISQUALIFIED`.
+23. **AC-Q0-23** (Q-SHR-02) **Given** supplier GULFPIPE suspended **When** an NCR sets supplier_id = GULFPIPE **Then** warning `SUPPLIER_NOT_APPROVED`; a disqualified supplier → 422 `SUPPLIER_DISQUALIFIED`.
 24. **AC-Q0-24** (Q-SHR-04) **Given** M&TE MTE-0015 with cal_status overdue and `mte_use_policy` warn **When** a usage is recorded **Then** stored with verdict `warned` and warning `MTE_NOT_CALIBRATED`; with policy `block` **Then** 422.
 25. **AC-Q0-25** (Q-SHR-05) **Given** a link from an NCR on ANIA-EXP to a record on RUH-CCH **Then** 422 `LINK_NOT_ALLOWED`.
 
@@ -616,7 +621,7 @@ Fixtures: the Phase 0–7b seed plus Appendix A; clock `HSE_CLOCK_AT` = **2026-1
 42. **AC-Q0-42** (Q-OBS-01) **Given** an observation converted to an NCR **Then** the NCR has source `observation`, a `raised_from` link, and the observation is `actioned`.
 43. **AC-Q0-43** (Q-OBS-03, Q-OBS-04) **Given** a stop_use alert with ack_required to role qc_inspector on S-LAND **Then** Joseph sees the banner and acknowledges once; a second ack is idempotent; non-ackers get one reminder on day 3.
 44. **AC-Q0-44** (Q-CMP) **Given** a complaint marked justified without an NCR **When** responded **Then** 422 `NCR_REQUIRED_FOR_JUSTIFIED`; acknowledgement 25 h after receipt with `complaint_ack_hours` 24 **Then** the overdue alert was sent at 24 h.
-45. **AC-Q0-45** (Q-NAV-01) **Given** RUH-CCH (logistics) **Then** the Quality group shows no ITP, IR, MAR or welding items; ANIA-EXP shows no receiving, storage or transport items; both show NCRs, suppliers and documents.
+45. **AC-Q0-45** (Q-NAV-01) **Given** RUH-CCH (logistics) **Then** the Quality group hides construction-only items (in Q0 alone: Systems; once Q1 / Q2 register theirs: ITP, IR, MAR, welding) and ANIA-EXP hides logistics-only items (registered by Q3); both show NCRs, suppliers and complaints.
 46. **AC-Q0-46** (D-290, D-319) **Given** the licence is read-only **Then** every Quality POST / PATCH / PUT → 403 `LICENCE_READ_ONLY`, while `GET` registers, NCR PDFs and `POST /exports` of Quality datasets work.
 47. **AC-Q0-47** (P8-2, P8-4) **Given** Sarah (Viewer) **Then** Quality registers show no person names, no photos, no costs and no supplier contacts; an export with names by Hatem writes an `export` audit row.
 48. **AC-Q0-48** (rule 41) **Given** the UI in Arabic **Then** every Q0 label, status, list value, error, email and PDF has AR text; numbers, codes and dates stay LTR inside RTL; the i18n check covers `messages/quality/*.json`.
@@ -843,7 +848,7 @@ States: `draft` مسودة → `compiled` مُجمَّع (253; snapshot and file
 8. **AC-Q1-08** (Q-IR-08) **Given** IR-…-00412 approved and later voided **Then** a submitted, undecided point 50 IR at the same key is re-blocked and Joseph is notified.
 9. **AC-Q1-09** (Q-IR-05) **Given** a round with `COVER-40` measurement 33 mm **When** recorded as approved **Then** 422 `IR_RESULT_INCONSISTENT`; as rejected without a photo **Then** 422.
 10. **AC-Q1-10** (Q-IR-06) **Given** IR-…-00412 round 1 rejected (spacers missing, workmanship) **Then** an NCR is offered and optional; round 2 rejected **Then** `NCR_REQUIRED`; a `not_ready` round **Then** no NCR prompt.
-11. **AC-Q1-11** (Q-RPM-03) **Given** a point 60 (S) IR **Then** qc_inspector holders resolve; Abdullah does not unless a matrix row names him.
+11. **AC-Q1-11** (Q-RPM-03) **Given** a RAWABI point 60 (S) IR **Then** Mazen (qc_inspector, no engagement) resolves; Joseph (qc_inspector, RAWABI-assigned) does not (Q-RPM-07); Abdullah does not unless a matrix row names him.
 12. **AC-Q1-12** (Q-IR-09, Q-IR-10) **Given** a W IR scheduled 2026-10-06 08:00 with no attendance **When** Joseph records waived at 08:50 **Then** 422 `WITNESS_WAIT_NOT_OVER`; at 09:05 with checklist and photo **Then** Witness Waived; on an H IR **Then** 422 `HOLD_NOT_WAIVABLE`; review not done by 2026-10-09 **Then** Abdullah is alerted.
 13. **AC-Q1-13** (Q-IR-11) **Given** an approved-with-comments round with "close comments before the next hold point" and one open comment **Then** the next H-gated IR **Then** 422 `HOLD_POINT_NOT_RELEASED` listing the comment.
 14. **AC-Q1-14** (Q-IR-07) **Given** point 50 with competence_code `CONC-FIELD-TECH`, `competence_policy` block and an inspector without it **Then** scheduling **Then** 422 `COMPETENCE_NOT_MET`; with the registry default (Q2 absent) **Then** allowed with an info note.
@@ -901,6 +906,7 @@ Seeded test types (Appendix A.2 has their criteria): `CONC-CYL` concrete cylinde
 | test_no | رقم الطلب | string | sys | Q-NUM | TST-ANIA-EXP-2026-00388 | none |
 | test_type + version | نوع الاختبار | FK | Y | Published; profile matches | CONC-CYL v1 | none |
 | site / zone / system / location_ref | الموقع | FK / FK / FK / string | Y / N / N / Y | — | S-LAND / Z-PIERB / — / Level 3 slab bay C14 | none |
+| engagement_id | المقاول | FK | N | engagement on the project; default from the linked pour, IR or MIR (Q-RPM-07) | RAWABI@ANIA-EXP | none |
 | lab_supplier_id | المختبر | FK | Y | category `testing_lab` (or `ndt_provider`); Q-SHR-02 / -03 | LAB-RGM | none |
 | sampled_at / sampled_by / sample_ref | أخذ العينة | timestamptz / FK / string(40) | cond. | at Sampled | 2026-09-01 10:40 / Joseph / S-0077-3 | personal (by) |
 | mte_ids | الأجهزة المستخدمة | FK[] | N | M&TE usage (Q-SHR-04) | [MTE-0012] | none |
@@ -911,7 +917,18 @@ Seeded test types (Appendix A.2 has their criteria): `CONC-CYL` concrete cylinde
 | status | الحالة | enum | Y | §C.2.3 | verified | none |
 
 ### C.2.3 States
-Requested مطلوب (257) → Sampled أُخذت العينة (257) → At Lab في المختبر (257) → Results Entered أُدخلت النتائج (257; automatic verdict) → Verified معتمدة (258 + RPM `test_request.verify`). Verified → Amended معدّلة (258 + RPM; Q-TST-09; then Verified again). Requested / Sampled → Cancelled ملغى (257, reason). Any → Voided باطل (244, reason).
+| From → To | AR | Who | Condition / error |
+|---|---|---|---|
+| — → Requested | مطلوب | 257 | Published test type of the project's profile; lab per Q-TST-02 (`SUPPLIER_DISQUALIFIED`) |
+| Requested → Sampled | أُخذت العينة | 257 | sampled_at, sample_ref; M&TE usage (Q-SHR-04, `MTE_NOT_CALIBRATED` in block mode); specimens and due dates created |
+| Sampled → At Lab | في المختبر | 257 | delivery to the lab recorded (date) |
+| At Lab → Results Entered | أُدخلت النتائج | 257 | results of the acceptance age entered (earlier ages are indicative and may be entered while At Lab); Q-TST-04 (`TEST_RESULT_INCOMPLETE`); verdict computed; Q-TST-06 NCR |
+| Results Entered → At Lab | في المختبر | 258 + RPM `test_request.verify` | returned for an entry error, comment ≥ 20 chars |
+| Results Entered → Verified | معتمدة | 258 + RPM `test_request.verify` | Q-TST-05 (`SOD_CONFLICT`) |
+| Verified → Amended | معدّلة | 258 + RPM | amended lab report and reason ≥ 20 chars (Q-TST-09); any other edit → 409 `RESULT_VERIFIED` |
+| Amended → Verified | معتمدة | 258 + RPM | new version re-evaluated and verified; Q-RPM-06 |
+| Requested / Sampled → Cancelled | ملغى | 257 | reason ≥ 20 chars |
+| any (not Voided) → Voided | باطل | 244 | reason ≥ 20 chars; leaves KPIs; linked NCRs stay |
 
 ### C.2.4 Rules
 - **Q-TST-01.** Test types, specimen plans, fields and acceptance are data (Q-CRT-03). A project may add its own versions; records pin the version.
@@ -978,7 +995,7 @@ States: Draft مسودة (255) → Submitted مُقدَّم (255) → Approved �
 ## C.5 Competence — الكفاءة (Q-CPT)
 
 `q_competence_reqs`: code (`^[A-Z0-9-]{3,20}$`, e.g. `CONC-FIELD-TECH`, `NDT-RT-L2`, `CWI`, `MAPPING-LEAD`, `QMS-AUDITOR`), title EN / AR, applies_to (list CA), filters (discipline, test type, NDT method, storage class), evidence: `any_of` and optional `all_of` lists of {hook kind `training_course` or `personnel_certificate`, code, minimum level}, policy (`inherit` · `warn` · `block`), profile.
-**CA — applies to:** `ir_inspector` · `test_technician` · `ndt_technician` · `welding_inspector` · `receiving_inspector` · `mapping_lead` · `auditor` · `calibration_acceptor` · `warehouse_qc` · `pharmacist` · `other`.
+**CA — applies to:** `ir_inspector` · `test_technician` · `ndt_technician` · `welding_inspector` · `receiving_inspector` · `mapping_lead` · `auditor` · `calibration_acceptor` · `warehouse_qc` · `pharmacist` · `equipment_operator` مشغل معدات · `other`.
 
 - **Q-CPT-01.** `check(user, code, at)`: the user's linked worker (Phase 2 `workers.user_id`) is evaluated through the Phase 2 hook providers (`app/services/access/hooks.py`: `training_course` from Phase 5, `personnel_certificate` from Phase 4, with their in-force predicates) at `at`; met ⇔ the `any_of` list has one met item and every `all_of` item is met; valid_until = the earliest valid_until of the evidence used. No linked worker → not met, reason `HOLDER_NOT_LINKED`. Q2 registers this as `COMPETENCE`.
 - **Q-CPT-02.** Phase 8 stores no copy of a certificate or training record; it reads them.
@@ -997,14 +1014,31 @@ States: Draft مسودة (255) → Submitted مُقدَّم (255) → Approved �
 | `q_pqrs` — PQR سجل تأهيل الإجراء | pqr_no, standard, process, test date, results (tensile, bend, impact, macro, hardness: value + pass / fail), lab (supplier), certificate | Draft → Approved (260 + RPM) |
 | `q_welders` — اللحّامون | worker_id (Phase 2, required), welder stamp (`^[A-Z0-9-]{2,10}$`, unique per project), engagement, status active / inactive; no ID number copied (P2-7) | — |
 | `q_wpqs` — WPQ تأهيل اللحّام | wpq_no, welder, standard, process, test WPS, test date, coupon (thickness, diameter, position), qualified ranges (positions, thickness, diameter min, F-No), test method (`RT` · `bend` · `fracture` · `macro`), result, examiner (supplier or TPI), certificate file, optional Phase 4 personnel certificate link, last_use (sys, per process), continuity_until (sys), revalidation_due (ISO 9606-1, `[VERIFY]` 2 or 3 years) | Draft → Active (260 + RPM `wpq.approve`) → Lapsed (continuity, System) · Expired (revalidation, System) · Revoked (259 + RPM, reason) |
-| `q_welds` — سجل اللحام | joint_id (`^[A-Z0-9-]{3,30}$`, unique per project, e.g. `PB-RT-T12-J07`), drawing ref, zone, system, WPS, joint type (`butt` · `fillet` · `branch` · `socket`), diameter, thickness, length mm, welders (list {welder, passes root / fill / cap}), welded_on, visual result (VT accept / reject), NDT lot code and method, selected_for_ndt (with reason `random` · `progressive` · `100pct`), NDT results (list {method `RT` · `UT` · `MT` · `PT`, report no, file, result accept / reject, defect type, defect length mm, examined length mm, technician name}), repair_count | Welded → Visual Accepted → NDT Pending → Accepted / Rejected → Repaired (R1, R2) → NDT Pending … → Accepted / Cut Out |
+| `q_welds` — سجل اللحام | joint_id (`^[A-Z0-9-]{3,30}$`, unique per project, e.g. `PB-RT-T12-J07`), drawing ref, zone, system, WPS, joint type (`butt` · `fillet` · `branch` · `socket`), diameter, thickness, length mm, welders (list {welder, passes root / fill / cap}), welded_on, visual result (VT accept / reject), NDT lot code and method, selected_for_ndt (with reason `random` · `progressive` · `100pct`), NDT results (list {method `RT` · `UT` · `MT` · `PT`, report no, file, result accept / reject, defect type, defect length mm, examined length mm, technician name}), repair_count | transition table below |
+
+
+**Weld transitions:**
+
+| From → To | AR | Who | Condition / error |
+|---|---|---|---|
+| — → Welded | منفّذ | 259 | Q-WLD-01 (`WPS_RANGE_EXCEEDED`), Q-WLD-02 (`WELDER_NOT_QUALIFIED`) |
+| Welded → Visual Accepted | مقبول بصرياً | 259 | VT accept; a weld not selected for NDT stays Visual Accepted and counts as accepted |
+| Welded → Visual Rejected | مرفوض بصرياً | 259 | VT reject with defect type |
+| Visual Accepted → NDT Pending | بانتظار الفحص غير الإتلافي | 259 | selected for NDT (`random` · `progressive` · `100pct`, Q-WLD-04 / -05) |
+| NDT Pending → Accepted | مقبول | 259 | NDT result accept with report no and file; technician competence (Q-WLD-08, `COMPETENCE_NOT_MET` in block mode) |
+| NDT Pending → Rejected | مرفوض | 259 | NDT reject with defect type and length; progressive selections created (Q-WLD-05) |
+| Visual Rejected / Rejected (repair_count 0) → Repaired R1 | إصلاح أول | 259 | repair recorded by a qualified welder (Q-WLD-02) |
+| Rejected (repair_count 1) → Repaired R2 | إصلاح ثانٍ | 259 + RPM `weld.repair2_approve` | Q-WLD-06 (`SIGNOFF_REQUIRED`) |
+| Repaired R1 / R2 → NDT Pending (or Visual Accepted for VT-only welds) | — | 259 | re-examination by the same method |
+| Rejected (repair_count 2) → Cut Out | مقطوع | 259 | Q-WLD-10 NCR opened by System |
+| any (not Voided) → Voided | باطل | 244 | reason ≥ 20 chars; leaves KPIs and continuity |
 
 - **Q-WLD-01.** A weld needs an Approved WPS whose process, position and thickness / diameter ranges cover the joint (`WPS_RANGE_EXCEEDED`).
 - **Q-WLD-02.** Every welder on a weld needs an Active WPQ for the process whose positions and ranges cover the joint, with continuity valid on welded_on (`WELDER_NOT_QUALIFIED`). Recording with an override (reason ≥ 20 chars, 260 holder) is possible for a late discovery and raises an NCR (Q-WLD-10).
 - **Q-WLD-03.** **Continuity:** last_use(process) = the latest welded_on of not-voided welds by the welder with that process, or the WPQ test date if later; with mode `weld_log_or_confirmation`, a recorded six-monthly confirmation (date, quality engineer) also counts. continuity_until = add_months(last_use, `wpq_continuity_months`) − 1 day; the day after, the WPQ becomes Lapsed for that process (System, daily job), and a new test re-activates it.
 - **Q-WLD-04.** **NDT percentage per lot:** for a lot with required r % for a method: n = welds of the lot with visual accepted; e = welds examined by that method at first NDT; achieved = e ÷ n × 100; shortfall = ⌈r × n ÷ 100⌉ − e when > 0, listed on the lot page. "Pick welds" proposes a random selection covering every welder of the lot at least once where possible.
 - **Q-WLD-05.** **Progressive examination** (`[VERIFY]` ASME B31.3 §341.3.4) with `progressive_exam`: a rejected random weld adds 2 welds by the same welder in the lot (reason `progressive`); if either is rejected, 2 more for each rejected one; if any of those is rejected, all remaining welds of that welder in the lot are selected (`100pct`).
-- **Q-WLD-06.** **Repairs:** a rejected weld is repaired (R1) and re-examined by the same method; a second repair (R2) needs a quality engineer's approval comment; a weld rejected after R2 is cut out.
+- **Q-WLD-06.** **Repairs:** a rejected weld is repaired (R1) and re-examined by the same method; a second repair (R2) needs a sign-off of `weld.repair2_approve` (RPM; seeded default role quality_engineer) with a comment ≥ 20 chars; a weld rejected after R2 is cut out.
 - **Q-WLD-07.** **Repair rate** per welder and period: rejected first examinations ÷ first examinations × 100 (by joint); by length when lengths are recorded: Σ defect length of rejected first examinations ÷ Σ examined length × 100. Re-examinations of repairs are not counted twice. A welder above `repair_rate_alert_pct` with ≥ 10 first examinations in 90 days alerts the quality engineer (suggest retest or revoke).
 - **Q-WLD-08.** NDT technicians must meet the competence requirement for the method and level (e.g. `NDT-RT-L2`, ISO 9712) through `COMPETENCE` (Q-CPT-05 policy).
 - **Q-WLD-09.** The weld log and the lot summary export to CSV / XLSX (246) and feed the dossier section `welding`.
@@ -1021,7 +1055,7 @@ States: Draft مسودة (255) → Submitted مُقدَّم (255) → Approved �
 | Tests `/quality/tests` and Test types `/quality/test-types` | Sampling entry (time, sample refs, slump, temperature with M&TE) | Specimen calendar (due today / overdue); results entry with automatic verdict; amendment history; test type editor (240 / 239) |
 | Pours `/quality/pours` | Pour log entry | Pour list with sets required vs taken and mix strength status |
 | Welding `/quality/welding` (WPS, PQR, welders, WPQs, weld log, NDT lots) | Weld entry by stamp, visual result | Continuity board (welder × process, days left), lot NDT %, repair rates |
-| M&TE `/quality/mte` and Calibration `/quality/calibration` | Scan the label, see status | Register with status chips and due list; calibration entry; OOT reviews with item decisions |
+| M&TE tabs (calibrations, OOT, label) on the Q0 `/quality/mte` page, and Calibration `/quality/calibration` | Scan the label, see status | Register with status chips and due list; calibration entry; OOT reviews with item decisions |
 | Competence `/quality/competence` | — | Requirements editor; matrix |
 
 ## C.8 Q2 notifications
@@ -1038,7 +1072,7 @@ States: Draft مسودة (255) → Submitted مُقدَّم (255) → Approved �
 | Competence expiring | the person; 239 holders | 30 / 7 / 0 days | in-app + email |
 
 ## C.9 Q2 errors
-422 `TEST_RESULT_INCOMPLETE`, `MAR_INCOMPLETE`, `MAR_NOT_APPROVED`, `MIR_QTY_MISMATCH`, `QUARANTINE_RELEASE_BLOCKED`, `HOLD_POINT_NOT_RELEASED`, `WPS_RANGE_EXCEEDED`, `WELDER_NOT_QUALIFIED`, `COMPETENCE_NOT_MET`, `CALIBRATION_CERT_REQUIRED`; 409 `RESULT_VERIFIED` (edit after verification). Warnings: `EARLY_STRENGTH_LOW`, `POUR_SAMPLING_SHORT`, `HOLD_STATUS_UNKNOWN`, `HEAT_NUMBER_MISMATCH`, `CAL_RANGE_NOT_COVERED`, `LAB_NOT_ACCREDITED_FOR_SCOPE`.
+422 `TEST_RESULT_INCOMPLETE`, `SIGNOFF_REQUIRED`, `MAR_INCOMPLETE`, `MAR_NOT_APPROVED`, `MIR_QTY_MISMATCH`, `QUARANTINE_RELEASE_BLOCKED`, `HOLD_POINT_NOT_RELEASED`, `WPS_RANGE_EXCEEDED`, `WELDER_NOT_QUALIFIED`, `COMPETENCE_NOT_MET`, `CALIBRATION_CERT_REQUIRED`; 409 `RESULT_VERIFIED` (edit after verification). Warnings: `EARLY_STRENGTH_LOW`, `POUR_SAMPLING_SHORT`, `HOLD_STATUS_UNKNOWN`, `HEAT_NUMBER_MISMATCH`, `CAL_RANGE_NOT_COVERED`, `LAB_NOT_ACCREDITED_FOR_SCOPE`.
 
 ## C.10 Acceptance criteria — Q2
 1. **AC-Q2-01** (Q-TST-08, QX4) **Given** five CONC-CYL tests of one mix with f'c 32 as QX4 **Then** verdicts pass, pass, pass, fail, fail with the reasons (a) and (b) as stated.
@@ -1048,7 +1082,7 @@ States: Draft مسودة (255) → Submitted مُقدَّم (255) → Approved �
 5. **AC-Q2-05** (QX7) **Given** the slump, compaction and DFT values of QX7 **Then** each verdict is as stated.
 6. **AC-Q2-06** (Q-TST-07) **Given** a 7-day mean of 24.0 MPa with f'c 40 (0.60 < 0.65) **Then** verdict indicative and warning `EARLY_STRENGTH_LOW` to the requester.
 7. **AC-Q2-07** (Q-TST-04) **Given** results without the lab report file **Then** 422 `TEST_RESULT_INCOMPLETE`.
-8. **AC-Q2-08** (Q-TST-05) **Given** Joseph entered the results **When** Joseph verifies **Then** 422 `SOD_CONFLICT`; Bilal verifies **Then** Verified with a sign-off.
+8. **AC-Q2-08** (Q-TST-05) **Given** Joseph entered the results of a RAWABI pour test (engagement from the pour) **When** Joseph verifies **Then** 422 `SOD_CONFLICT`; Bilal (RAWABI-assigned) verifies **Then** 422 `SOD_CONFLICT` (Q-RPM-07); Hatem verifies **Then** Verified with a sign-off.
 9. **AC-Q2-09** (Q-TST-09) **Given** a Verified fail **When** a field is edited **Then** 409 `RESULT_VERIFIED`; an amendment with reason and file **Then** a new version, the original shown, and the NCR still open.
 10. **AC-Q2-10** (Q-TST-06) **Given** `test_auto_ncr` prompt and a failed result **When** the user declines without a reason **Then** 422; with a reason ≥ 20 chars **Then** saved and counted.
 11. **AC-Q2-11** (Q-TST-02, Q-SHR-03) **Given** LAB-RGM accreditation without CONC-CORE in scope **Then** a CONC-CORE request warns `LAB_NOT_ACCREDITED_FOR_SCOPE`; a disqualified lab → 422 `SUPPLIER_DISQUALIFIED`.
@@ -1071,7 +1105,7 @@ States: Draft مسودة (255) → Submitted مُقدَّم (255) → Approved �
 28. **AC-Q2-28** (Q-WLD-03, QX9) **Given** W-021's last SMAW weld 2026-03-28 **Then** continuity_until 2026-09-27; the job on 2026-09-28 sets the WPQ Lapsed; a weld on 2026-10-02 → 422.
 29. **AC-Q2-29** (Q-WLD-04, Q-WLD-05, QX8) **Given** QX8 **Then** required 4, progressive selections 2 with reason `progressive`, achieved 15.0 %, W-017 repair rate 16.7 % and no alert (fewer than 10 examinations).
 30. **AC-Q2-30** (Q-WLD-05) **Given** both progressive welds rejected **Then** 2 more for each are selected and, after one more rejection, all remaining W-017 welds of the lot are selected `100pct` and an NCR (source weld) opens.
-31. **AC-Q2-31** (Q-WLD-06) **Given** J07 rejected after R1 **When** R2 is recorded without a quality engineer comment **Then** 422; rejected after R2 **Then** Cut Out and an NCR opens.
+31. **AC-Q2-31** (Q-WLD-06) **Given** J07 rejected after R1 **When** R2 is recorded without a `weld.repair2_approve` sign-off **Then** 422 `SIGNOFF_REQUIRED`; with the sign-off of a resolver (the test sets the row to user Hatem; Bilal, RAWABI-assigned, is refused for this NAJD weld by Q-RPM-07) **Then** R2 is recorded; rejected after R2 **Then** Cut Out and an NCR opens.
 32. **AC-Q2-32** (Q-PRF-04) **Given** RUH-CCH (logistics) **Then** creating a MAR, pour or weld → 409 `PROFILE_INACTIVE`; creating an `ATP-SWAB` test request and an M&TE item succeeds.
 33. **AC-Q2-33** (rule 41) **Given** the Arabic UI **Then** every Q2 label, list value, status, label print and PDF is in Arabic; joint ids, heat numbers and values stay LTR.
 
@@ -1107,14 +1141,14 @@ Profile: logistics (temperature-controlled storage, dry storage and transportati
 | `import_max_rows` | الحد الأقصى للصفوف | int | 200,000 | 1,000–1,000,000 |
 
 ### D.1.2 Storage classes (list SCL; defaults copied into each storage zone and editable there)
-| Code | EN / AR | Range °C (min / max) | Alarm delay (min) | Deviation bands d1 / d2 (°C) | Duration bands t1 / t2 (min) | Humidity |
-|---|---|---|---|---|---|---|
-| `frozen` | Frozen / مجمد | −30 / −18 | 30 (defrost) | 3 / 6 | 120 / 480 | — |
-| `chilled` | Chilled / مبرد | 0 / 4 | 15 | 2 / 5 | 60 / 240 | — |
-| `pharma_2_8` | Medicines 2–8 °C / أدوية 2–8 | 2 / 8 | 10 | 1 / 3 | 30 / 120 | — |
-| `ambient_controlled` | Controlled ambient 15–25 °C / محيط مضبوط | 15 / 25 | 30 | 3 / 7 | 240 / 1,440 | ≤ 65 % ASSUMPTION |
-| `dry` | Dry ambient / جاف | — / 30 | 60 | 3 / 7 | 480 / 2,880 | ≤ 65 % ASSUMPTION |
-| `dock_controlled` | Controlled dock / رصيف مبرد | 8 / 15 | 30 | 3 / 6 | 60 / 240 | — |
+| Code | EN / AR | Range °C (min / max) | Alarm delay (min) | Deviation bands d1 / d2 (°C) | Duration bands t1 / t2 (min) | Humidity | Dispatch override allowed (`dispatch_override_allowed`) |
+|---|---|---|---|---|---|---|---|
+| `frozen` | Frozen / مجمد | −30 / −18 | 30 (defrost) | 3 / 6 | 120 / 480 | — | yes |
+| `chilled` | Chilled / مبرد | 0 / 4 | 15 | 2 / 5 | 60 / 240 | — | yes |
+| `pharma_2_8` | Medicines 2–8 °C / أدوية 2–8 | 2 / 8 | 10 | 1 / 3 | 30 / 120 | — | no |
+| `ambient_controlled` | Controlled ambient 15–25 °C / محيط مضبوط | 15 / 25 | 30 | 3 / 7 | 240 / 1,440 | ≤ 65 % ASSUMPTION | yes |
+| `dry` | Dry ambient / جاف | — / 30 | 60 | 3 / 7 | 480 / 2,880 | ≤ 65 % ASSUMPTION | yes |
+| `dock_controlled` | Controlled dock / رصيف مبرد | 8 / 15 | 30 | 3 / 6 | 60 / 240 | — | yes |
 
 All defaults are ASSUMPTION `[VERIFY]` against the goods owner's requirements, SFDA rules and the product labels; they are data.
 
@@ -1179,12 +1213,22 @@ Kinds: `readings` (logger files), `stock_snapshot`, `shipments`, `products`, `cy
 
 `q_excursions`: exc_no, kind (`storage` · `transit` · `humidity`), zone or trip, started_at, ended_at (null = ongoing), duration_min, peak value and point, max_deviation (°C beyond the nearest limit), degree_minutes, severity (list ES), data_gap (bool), cause (`door_open` · `defrost` · `power_failure` · `equipment_failure` · `overload` · `loading_delay` · `probe_fault` · `unknown` · `other`), NCR link, hold link, status.
 `q_excursion_impacts`: excursion, lines (owner, sku, batch, qty, location — from the hold), per line: stability evidence (file) or justification, decision (`release` · `extend_hold` · `destroy` · `return_to_owner`), owner decision file / owner contact name / date (when required).
-**ES — severity:** `minor` طفيف · `major` جوهري · `critical` حرج. **States:** Detected مُكتشف → Under Assessment قيد التقييم (268; cause entered) → Assessed مُقيَّم (268 + RPM `excursion.impact`) → Closed مغلق (System, when its hold lines are final and its NCR, if any, is Closed); Detected / Under Assessment → Dismissed مستبعد (268 + RPM, Q-EXC-11).
+**ES — severity:** `minor` طفيف · `major` جوهري · `critical` حرج. 
+
+| From → To | AR | Who | Condition / error |
+|---|---|---|---|
+| — → Detected | مُكتشف | System | Q-EXC-01 / -02; alerts Q-EXC-04; NCR and hold Q-EXC-05 |
+| Detected → Under Assessment | قيد التقييم | 268 | cause entered |
+| Under Assessment → Assessed | مُقيَّم | 268 + RPM `excursion.impact` (storage-class qualifier) | Q-EXC-06…09 (`IMPACT_LINES_INCOMPLETE`, `IMPACT_EVIDENCE_REQUIRED`, `OWNER_DECISION_REQUIRED`) |
+| Assessed → Under Assessment | قيد التقييم | 268 + RPM | reopened (new stock or stability information), reason ≥ 20 chars |
+| Under Assessment → Closed | مغلق | 268 | minor excursion outside `pharma_2_8` only, "no product impact" note ≥ 20 chars (Q-EXC-06) |
+| Assessed → Closed | مغلق | System | every line of the linked hold final and the linked NCR (if any) Closed |
+| Detected / Under Assessment → Dismissed | مستبعد | 268 + RPM `excursion.impact` | Q-EXC-11 evidence; readings flagged `probe_fault`; M&TE out_of_service |
 
 - **Q-EXC-01.** **Detection** runs after every import and manual reading, per zone (storage) or trip (transit): a run of out minutes (Q-STO-05) starts at the first out reading's time and ends at the time of the first later reading at which every covering point is in range; duration = end − start. A run with no later in-range reading is ongoing. Runs separated by fewer than `alarm_delay_minutes` of in-range minutes are one excursion.
 - **Q-EXC-02.** **Severity** = the worse of: deviation level (max_deviation ≤ d1 → minor, ≤ d2 → major, > d2 → critical) and duration level (duration ≤ t1 → minor, ≤ t2 → major, > t2 → critical). degree_minutes = Σ over out readings of (deviation × that reading's covered minutes). A data gap inside the run counts as out time (conservative) and sets `data_gap`.
 - **Q-EXC-03.** A run shorter than `alarm_delay_minutes` is a **transient**: stored, shown on the chart, counted in TOR, not an excursion.
-- **Q-EXC-04.** A major or critical excursion alerts within 60 s of detection the 268 holders of the site, the WAREHOUSE_MGR position and, for `pharma_2_8`, RESP_PHARMACIST (in-app + email + push). An ongoing excursion found by a manual reading alerts the same way at once.
+- **Q-EXC-04.** A major or critical excursion alerts within 60 s of detection the 268 holders of the site and the users who resolve for `excursion.impact` with the zone's storage class as qualifier (seeded defaults: position WAREHOUSE_MGR; RESP_PHARMACIST for `pharma_2_8`) (in-app + email + push). An ongoing excursion found by a manual reading alerts the same way at once.
 - **Q-EXC-05.** Major and critical excursions open an NCR (source `excursion`, class = severity, category `temperature`) and, with `excursion_auto_hold`, a hold (reason `excursion`) with the stock lines of the zone in the latest stock snapshot taken before started_at; without a snapshot, a zone-level hold that the warehouse completes with lines (Q-HLD-02).
 - **Q-EXC-06.** Impact assessment is required for major and critical excursions, and for any excursion in a `pharma_2_8` zone when `pharma_impact_all_excursions`; a minor excursion elsewhere may be closed with a "no product impact" note.
 - **Q-EXC-07.** The assessment covers every line of the linked hold (`IMPACT_LINES_INCOMPLETE`).
@@ -1233,6 +1277,16 @@ Kinds: `readings` (logger files), `stock_snapshot`, `shipments`, `products`, `cy
 
 ### D.7.3 Holds and quarantine — الحجز والعزل (Q-HLD)
 `q_holds`: hold_no, site, reason (`excursion` · `receiving` · `damage` · `expiry` · `recall` · `pest_hygiene` · `owner_request` · `contamination` · `other`), source link, zone-level flag, segregation (`moved_to_quarantine` with location · `tagged_in_place`), segregation photo, WMS hold confirmed (bool, time), placed_by / placed_at, status. `q_hold_lines`: owner, product, batch, qty, unit, location, line status `on_hold` محجوز · `released` مُفرج عنه · `rejected` مرفوض, final outcome (`destroyed` أُتلف · `returned_to_owner` أعيد للمالك · `returned_to_supplier` أعيد للمورد), evidence.
+**Hold line transitions:**
+
+| From → To | AR | Who | Condition / error |
+|---|---|---|---|
+| — → On Hold | محجوز | 270 (Warehouse QC may place) or System | Q-HLD-01; segregation Q-HLD-03 |
+| On Hold → Released | مُفرج عنه | 270 + RPM `hold.release` | Q-HLD-04 (`HOLD_RELEASE_BLOCKED`), Q-HLD-05 (`OWNER_DECISION_REQUIRED`) |
+| On Hold → Rejected | مرفوض | 270 + RPM `hold.reject` | reason ≥ 20 chars; Q-HLD-04 blockers except an open recall (recalled lines may only be rejected) |
+| Released → On Hold | محجوز | 270 | re-held on new information, reason ≥ 20 chars |
+| Rejected → Destroyed / Returned to Owner / Returned to Supplier | أُتلف / أعيد للمالك / أعيد للمورد | 269 | evidence file (destruction certificate, return note) (Q-HLD-06) |
+
 Hold status (derived): On Hold محجوز (any line on hold) → Released مُفرج عنه (all lines released) · Rejected مرفوض (all lines rejected) · Partly Released مُفرج جزئياً (mix, none on hold) → Closed مغلق (every rejected line has its final outcome evidenced).
 
 - **Q-HLD-01.** Holds are placed by 270 holders (Warehouse QC included) or automatically: receipt quarantine (Q-RCV-04), excursion (Q-EXC-05), recall (Q-RCL-03), hygiene (Q-HYG-02).
@@ -1241,7 +1295,7 @@ Hold status (derived): On Hold محجوز (any line on hold) → Released مُف
 - **Q-HLD-04.** **Release and reject** by line need RPM `hold.release` / `hold.reject` and are refused (`HOLD_RELEASE_BLOCKED`) while: a linked NCR exists whose disposition is not Approved; a linked excursion is not Assessed; or the batch is in an open recall (recalled lines may only be rejected).
 - **Q-HLD-05.** Release of a line owned by a customer with `owner_release_approval` needs the owner's decision file (Q-EXC-09 logic).
 - **Q-HLD-06.** A rejected line closes only with its final outcome and evidence (destruction certificate, return note).
-- **Q-HLD-07.** Holds on hold longer than `hold_ageing_days` alert the WAREHOUSE_MGR position weekly.
+- **Q-HLD-07.** Holds on hold longer than `hold_ageing_days` alert the users who resolve for `hold.release` on that hold, weekly.
 - **Q-HLD-08.** The hold list exports to CSV in a WMS-friendly layout (owner, sku, batch, location, qty, hold no, status); "WMS hold confirmed" is ticked by the user after the WMS update.
 
 ### D.7.4 Damage reports, returns and cycle counts
@@ -1251,11 +1305,19 @@ Hold status (derived): On Hold محجوز (any line on hold) → Released مُف
 
 ## D.8 Recalls and mock recalls — استدعاء المنتجات (Q-RCL)
 
-`q_recalls`: rcl_no, type (`supplier` · `regulator` · `owner` · `mock`), class (`I` · `II` · `III` `[VERIFY]` SFDA recall classes), products and batches (list), reason, external ref (e.g. SFDA notice), initiated_at, trace (sys and confirmed), trace_completed_at, consignee contacts (`q_recall_items`: consignee, qty shipped, contacted_at, method, response, qty retrieved, qty confirmed destroyed by consignee), effectiveness (sys), status: Open مفتوح → Traced تم التتبع (271; trace confirmed) → Recovering قيد الاسترجاع (not for mock) → Closed مغلق (271 + RPM `recall.close`) · Cancelled ملغى (reason).
+`q_recalls`: rcl_no, type (`supplier` · `regulator` · `owner` · `mock`), class (`I` · `II` · `III` `[VERIFY]` SFDA recall classes), products and batches (list), reason, external ref (e.g. SFDA notice), initiated_at, trace (sys and confirmed), trace_completed_at, consignee contacts (`q_recall_items`: consignee, qty shipped, contacted_at, method, response, qty retrieved, qty confirmed destroyed by consignee), effectiveness (sys), status (table below).
+
+| From → To | AR | Who | Condition / error |
+|---|---|---|---|
+| — → Open | مفتوح | 271 | Q-RCL-01; real recalls: hold (Q-RCL-03) and NCR (Q-RCL-06) |
+| Open → Traced | تم التتبع | 271 | trace (Q-RCL-02) reviewed and confirmed; trace_completed_at set |
+| Traced → Recovering | قيد الاسترجاع | 271 | real recalls only; consignee contacts started |
+| Recovering → Closed (real) · Traced → Closed (mock) | مغلق | 271 + RPM `recall.close` | Q-RCL-04 (`RECALL_TARGET_NOT_MET` without justification); every recalled hold line rejected with its outcome (real) |
+| Open / Traced / Recovering → Cancelled | ملغى | 271 + RPM `recall.close` | reason ≥ 20 chars (e.g. withdrawn by the issuer); its holds stay for a hold decision |
 
 - **Q-RCL-01.** Opening a recall needs ≥ 1 product and batch; type regulator needs the external ref.
 - **Q-RCL-02.** **Trace** (system, from Q3 data only): received = Σ receipt lines of the batches; on hand = the latest snapshot at or after initiated_at (or the latest before it with warning `SNAPSHOT_OLD`); shipped = Σ shipment lines of the batches by consignee and date; destroyed = rejected hold lines and damage reports of the batches with outcome destroyed; unaccounted = received − on hand − shipped − destroyed. trace_time = trace_completed_at − initiated_at.
-- **Q-RCL-03.** A recall (not mock) places a hold (reason `recall`) on every on-hand line of the batches at once; those lines may only be rejected (Q-HLD-04).
+- **Q-RCL-03.** A recall (not mock) places a hold (reason `recall`) at once on every on-hand line of the batches in the snapshot used by Q-RCL-02 (the latest at or after initiated_at, else the latest before it with `SNAPSHOT_OLD`, as Q-STK-01); those lines may only be rejected (Q-HLD-04).
 - **Q-RCL-04.** effectiveness % = (on hand + retrieved + confirmed destroyed by consignees + destroyed in the warehouse) ÷ received × 100 for a real recall; for a mock recall = (on hand + shipped and traced to a named consignee + destroyed) ÷ received × 100. Closing below `recall_effectiveness_target_pct` needs a justification ≥ 50 chars (`RECALL_TARGET_NOT_MET`); a trace slower than `recall_trace_target_hours` is flagged.
 - **Q-RCL-05.** A site without a closed mock recall in the last `mock_recall_months` alerts 239 holders monthly; counted in the K-166 chip set.
 - **Q-RCL-06.** A real recall is class `critical` for its NCR (source `recall`, auto), linked to the supplier when known.
@@ -1263,16 +1325,26 @@ Hold status (derived): On Hold محجوز (any line on hold) → Released مُف
 
 ## D.9 Transport — النقل (Q-TRN)
 
-`q_trips`: trip_no, carrier (supplier `carrier`) or own fleet, vehicle (Phase 2 `vehicles` id, optional; else plate text), reefer unit serial, compartments (1 or more, each with setpoint and class), driver (worker link or name; personal), shipments (imported, linked), range (sys: per compartment, the strictest range of the classes loaded), logger M&TE ids, seal numbers, planned departure, preload response (template QRPL, `quality_type` `reefer_preload`), loading product temperatures (list {shipment, °C, M&TE}), departed_at, PODs (`q_pods`), transit readings (imported or manual, target = trip), status Planned مخطط → Preload Checked تم الفحص قبل التحميل → Dispatched انطلقت → Delivered تم التسليم → Closed مغلقة; Cancelled ملغاة.
+`q_trips`: trip_no, carrier (supplier `carrier`) or own fleet, vehicle (Phase 2 `vehicles` id, optional; else plate text), reefer unit serial, compartments (1 or more, each with setpoint and class), driver (worker link or name; personal), shipments (imported, linked), range (sys: per compartment, the strictest range of the classes loaded), logger M&TE ids, seal numbers, planned departure, preload response (template QRPL, `quality_type` `reefer_preload`), loading product temperatures (list {shipment, °C, M&TE}), departed_at, PODs (`q_pods`), transit readings (imported or manual, target = trip), status (table below).
+
+| From → To | AR | Who | Condition / error |
+|---|---|---|---|
+| — → Planned | مخطط | 272 | shipments linked; Q-TRN-01 (`INCOMPATIBLE_LOAD`) |
+| Planned → Preload Checked | تم الفحص قبل التحميل | 272 | QRPL response submitted; loading temperatures (Q-TRN-03) |
+| Preload Checked → Dispatched | انطلقت | 272 (+ RPM `trip.dispatch_override` after a critical failure) | Q-TRN-02 (`PRELOAD_FAILED`, `OVERRIDE_NOT_ALLOWED`); Q-TRN-04 warning `VEHICLE_NOT_READY` |
+| Dispatched → Delivered | تم التسليم | 272 | a POD for every shipment (Q-TRN-06, `POD_REQUIRED`) |
+| Delivered → Closed | مغلقة | System | readings imported when a logger is named; transit excursions evaluated (Q-TRN-05, Q-TRN-07) |
+| Planned / Preload Checked → Cancelled | ملغاة | 272 | reason ≥ 20 chars |
+
 `q_pods` (per shipment): delivered_at, receiver name and role (personal), signature image or photo of the signed delivery note, seal intact, product temperature at delivery (optional, M&TE), exceptions (list {kind `shortage` · `damage` · `temperature` · `refused` · `other`, qty, note}), photos.
 
 - **Q-TRN-01.** Products of classes that cannot share one compartment (frozen with chilled, pharma_2_8 with food) in one compartment give 422 `INCOMPATIBLE_LOAD`.
-- **Q-TRN-02.** Dispatch needs a submitted pre-load checklist. Seeded critical items: pre-cooled (box temperature at loading within the compartment range, frozen ≤ setpoint + 2.0 °C ASSUMPTION `[VERIFY]`), clean and odour-free, doors / gaskets / insulation undamaged, airflow clear, logger placed (M&TE scanned), seal applied. A critical failure blocks dispatch (`PRELOAD_FAILED`) unless RPM `trip.dispatch_override` with a reason ≥ 20 chars; no override when any compartment carries `pharma_2_8` (`OVERRIDE_NOT_ALLOWED`).
+- **Q-TRN-02.** Dispatch needs a submitted pre-load checklist. Seeded critical items: pre-cooled (box temperature at loading within the compartment range, frozen ≤ setpoint + 2.0 °C ASSUMPTION `[VERIFY]`), clean and odour-free, doors / gaskets / insulation undamaged, airflow clear, logger placed (M&TE scanned), seal applied. A critical failure blocks dispatch (`PRELOAD_FAILED`) unless RPM `trip.dispatch_override` with a reason ≥ 20 chars; no override when any loaded class has `dispatch_override_allowed` = no (seeded: `pharma_2_8`) (`OVERRIDE_NOT_ALLOWED`).
 - **Q-TRN-03.** Loading temperatures: ≥ 1 per shipment and class, with an M&TE; a value outside the class range stops that shipment (hold proposed).
 - **Q-TRN-04.** **Link to 7b:** when the trip names a Phase 2 vehicle that has 7b readiness data, the trip shows readiness (document validity, today's pre-use check result) and the driver's authorisation status when the driver is a worker; not ready → warning `VEHICLE_NOT_READY` (7b owns readiness; Phase 8 creates no 7b record and never blocks on it).
 - **Q-TRN-05.** **Transit temperature:** readings come from the trip logger file (import, target = trip) or manual entries; excursions use Q-EXC-01…03 with the compartment range and its class bands. A transit excursion of severity major or critical opens an NCR (source `trip`, class = severity) and a "notify consignee" task on the shipments delivered after its start.
 - **Q-TRN-06.** **POD:** each shipment needs a POD to reach Delivered (`POD_REQUIRED`); a POD with an exception proposes an NCR (source `trip`) and lets a later customer complaint link to it.
-- **Q-TRN-07.** A trip with a logger and no readings imported `transit_data_due_hours` after delivery alerts the TRANSPORT_SUP position; the trip closes when PODs and (if a logger is named) readings are in.
+- **Q-TRN-07.** A trip with a logger and no readings imported `transit_data_due_hours` after delivery alerts the users who resolve for `trip.dispatch_override`; the trip closes when PODs and (if a logger is named) readings are in.
 - **Q-TRN-08.** **OTIF data:** an imported shipment counts for K-163 when it has promised_at and delivered_at; on time ⇔ delivered_at ≤ promised_at + `otif_window_minutes`; in full ⇔ delivered qty ≥ ordered qty on every line.
 
 ## D.10 Q3 screens
@@ -1293,17 +1365,17 @@ Hold status (derived): On Hold محجوز (any line on hold) → Released مُف
 ## D.11 Q3 notifications
 | Trigger | Recipient | Timing | Channel |
 |---|---|---|---|
-| Excursion major / critical (Q-EXC-04) | 268 holders of the site; WAREHOUSE_MGR; RESP_PHARMACIST (pharma) | within 60 s of detection | in-app + email + push |
+| Excursion major / critical (Q-EXC-04) | 268 holders of the site; `excursion.impact` resolvers (storage-class qualifier) | within 60 s of detection | in-app + email + push |
 | Monitoring gap ≥ limit | 266 holders | at detection | in-app + push |
 | Receiving rejection / deviation needing sign-off | `receipt.*` resolvers | immediately | in-app + push |
-| Hold placed / zone-level hold without lines after 24 h / ageing | WAREHOUSE_MGR; placer | immediately / at 24 h / weekly | in-app + email |
+| Hold placed / zone-level hold without lines after 24 h / ageing | `hold.release` resolvers; placer | immediately / at 24 h / weekly | in-app + email |
 | Expired stock not on hold | 269 holders | daily 07:12 | in-app |
-| Mapping valid until in 60 / 30 / 0 days | 266 holders; qa_qc_manager | 07:12 | in-app + email |
+| Mapping valid until in 60 / 30 / 0 days | 266 holders; `mapping_study.approve` resolvers | 07:12 | in-app + email |
 | Hygiene / pest check overdue; pest activity trend | assignee role; 266 holders | next morning 07:12; at visit entry | in-app |
-| Recall opened (real) | 271 holders; qa_qc_manager; WAREHOUSE_MGR | immediately | in-app + email + push |
+| Recall opened (real) | 271 holders; `recall.close` resolvers; `hold.release` resolvers of the recall hold | immediately | in-app + email + push |
 | Mock recall due | 239 holders | monthly | in-app |
-| No transit data after delivery | TRANSPORT_SUP | at `transit_data_due_hours` | in-app |
-| Pre-load failed / override requested | TRANSPORT_SUP; `trip.dispatch_override` resolvers | immediately | in-app + push |
+| No transit data after delivery | `trip.dispatch_override` resolvers | at `transit_data_due_hours` | in-app |
+| Pre-load failed / override requested | `trip.dispatch_override` resolvers | immediately | in-app + push |
 
 ## D.12 Q3 errors
 422 `IMPORT_ROWS_INVALID`, `IMPORT_TOO_LARGE`, `DECISION_BETTER_THAN_CRITERIA`, `OWNER_DECISION_REQUIRED`, `REJECT_NEEDS_NCR_OR_CLAIM`, `MTE_REQUIRED`, `READING_TOO_OLD`, `CLOCK_SKEW`, `IMPACT_LINES_INCOMPLETE`, `IMPACT_EVIDENCE_REQUIRED`, `MAPPING_LOGGER_NOT_CALIBRATED`, `MAPPING_DESIGN_INSUFFICIENT`, `HOLD_RELEASE_BLOCKED`, `COLD_RETURN_NO_HISTORY`, `RECALL_TARGET_NOT_MET`, `INCOMPATIBLE_LOAD`, `PRELOAD_FAILED`, `OVERRIDE_NOT_ALLOWED`, `POD_REQUIRED`; 409 `IMPORT_DUPLICATE_FILE`. Warnings: `DOCK_DWELL_LONG`, `SNAPSHOT_OLD`, `MKT_ABOVE_RANGE`, `STATION_NOT_SERVICED`, `VEHICLE_NOT_READY`.
@@ -1383,7 +1455,16 @@ KPI targets (quality objectives, ISO 9001 6.2) live in `q_kpi_targets`: project,
 ### E.1.2 Documents
 `q_documents`: doc_no (Q-NUM), type (list DT), title EN / AR, profile, discipline or process, owner user, current revision (sys), review_due_on (sys), status (sys, from the current revision).
 **DT — document types (prefix):** `pqp` Project Quality Plan خطة الجودة للمشروع (PQP) · `quality_manual` دليل الجودة (QM) · `procedure` إجراء (PRC) · `work_instruction` تعليمات عمل (WI) · `sop` إجراء تشغيل قياسي (SOP) · `method_statement` بيان طريقة العمل (MS) · `specification` مواصفة (SPC) · `form` نموذج (FRM) · `other` أخرى (DOC).
-`q_document_revisions`: rev code, file (PDF required to approve), source file (optional), change summary, effective_date, reviewers and approver (sys, from sign-offs), status `draft` مسودة → `for_review` قيد المراجعة → `approved` معتمدة → `superseded` مستبدلة; `for_review` → `draft` (returned with comments); `approved` → `obsolete` ملغاة (239, reason; the document is withdrawn).
+`q_document_revisions`: rev code, file (PDF required to approve), source file (optional), change summary, effective_date, reviewers and approver (sys, from sign-offs), status (table below; review sign-offs happen while For Review and do not change the state).
+
+| From → To | AR | Who | Condition / error |
+|---|---|---|---|
+| — → Draft | مسودة | 273 | new document, or new revision copied from the current approved one |
+| Draft → For Review | قيد المراجعة | 273 | PDF attached (`DOCUMENT_FILE_REQUIRED`) |
+| For Review → Draft | مسودة | 274 + RPM `document.review` or `document.approve` | returned, comment ≥ 20 chars |
+| For Review → Approved | معتمدة | 274 + RPM `document.approve` | ≥ 1 `document.review` sign-off; Q-RPM-06 (`SOD_CONFLICT`); previous approved revision → Superseded; acknowledgement tasks (Q-DOC-05) |
+| Approved → Superseded | مستبدلة | System | a later revision approved |
+| Approved → Obsolete | ملغاة | 239 | reason ≥ 20 chars; the document is withdrawn |
 `q_doc_distribution`: document, members (roles, positions, engagements, users), ack_required. `q_doc_acks`: revision, user, acked_at.
 
 - **Q-DOC-01.** Revision codes follow `doc_revision_scheme`; the first approved revision is 0 (or 1 with `numbers`).
@@ -1416,7 +1497,15 @@ Quality audits are rows of 6d `field_audits` with a new column `domain` (`hse` d
 
 ## E.3 Supplier evaluation and quality scorecards (Q-SUP)
 
-`q_supplier_evaluations`: sev_no, supplier, kind (`initial` · `periodic` · `for_cause`), method (`questionnaire` · `audit` (linked quality audit) · `document_review` · `trial_order`), criteria (list {criterion, weight, score 0–100}), total (sys, weighted mean), recommendation (`approve` · `conditional` · `reject` · `suspend`), conditions, evaluated_at, status `draft` → `submitted` → `approved` (278 / 279 + RPM `supplier_evaluation.approve`).
+`q_supplier_evaluations`: sev_no, supplier, kind (`initial` · `periodic` · `for_cause`), method (`questionnaire` · `audit` (linked quality audit) · `document_review` · `trial_order`), criteria (list {criterion, weight, score 0–100}), total (sys, weighted mean), recommendation (`approve` · `conditional` · `reject` · `suspend`), conditions, evaluated_at, status (table below).
+
+| From → To | AR | Who | Condition / error |
+|---|---|---|---|
+| — → Draft | مسودة | 278 | — |
+| Draft → Submitted | مُقدَّم | 278 | ≥ 1 criterion with weight > 0; recommendation set |
+| Submitted → Approved | معتمد | 279 + RPM `supplier_evaluation.approve` | Q-RPM-06 (`SOD_CONFLICT`); sets next_evaluation_due (Q-SUP-02) |
+| Submitted → Draft | مسودة | 279 + RPM | returned, comment ≥ 20 chars |
+| Draft / Submitted → Cancelled | ملغى | 278 | reason ≥ 20 chars |
 `q_supplier_scores`: supplier, period, metric values and points, score, band, recommendation, status `provisional` → `final` (System, 10 days after period end).
 
 - **Q-SUP-01.** Q4 registers a `SUPPLIER_GATES` blocker: pending_approval → approved needs an approved evaluation with recommendation `approve` within the last 12 months (`conditional` for the conditional status) (`SUPPLIER_EVALUATION_REQUIRED`); labs also show Q-SHR-03 accreditation status.
@@ -1669,7 +1758,7 @@ Cross-package tests the integrator adds (handover §7.5), each referring to the 
 ## Appendix A — Seed data (fictional; `seed_fake = true`; emails `@example.com`, mobiles `+96650000xxxx`)
 
 ### A.1 Principles, projects and users
-- Clock `HSE_CLOCK_AT` = 2026-10-06T10:00:00+03:00. Each part seeds its own records through `SEEDS` (`app/seed_quality.py` runs after `seed_scorecard_data`); nothing here changes earlier-phase KPI values. RUH-CCH is created by the Quality seed only; a pre-existing test that counts seeded projects and breaks is fixed by the Q0 builder and recorded in its decisions.
+- Clock `HSE_CLOCK_AT` = 2026-10-06T10:00:00+03:00. Each part seeds its own records through `SEEDS` (`app/seed_quality.py` runs after `seed_scorecard_data`); nothing here changes earlier-phase KPI values. RUH-CCH is created by the Quality seed only. Known impact: `backend/tests/test_auth.py:294` asserts `len(sarah["projects"]) == 2`; Q0 updates it to 3 (Sarah is also Viewer on RUH-CCH). Q0 runs `test_auth.py`, `test_org.py`, `test_scoping.py`, `test_kpi_engine.py` and the data-completeness and leading-warning tests after seeding, because a project with no workforce or incident data may add completeness warnings org-wide; RUH-CCH either gets monthly workforce rows of 0 hours or is excluded from the HSE completeness job, and Q0 records the choice in D-320…D-329.
 - **Construction:** ANIA-EXP (existing airport project), profile `construction`, `quality_start_date` 2026-01-01, `show_hijri` true.
 - **Logistics:** new project **RUH-CCH** "Riyadh Cold Chain Hub — Al-Sulay" / "مركز الرياض لسلسلة التبريد — السلي", type `logistics`, client Al-Wahat Logistics Co. (fictional) / شركة الواحة للخدمات اللوجستية, Riyadh, start 2025-11-01, active, Hijri on, default language ar; profile `logistics`, `quality_start_date` 2026-01-01. Site **S-DC1** Distribution Centre 1 / مركز التوزيع 1; contractor **WAHAT** Al-Wahat Logistics Co. / شركة الواحة للخدمات اللوجستية (CR 1010000007, category other, approved) engaged tier 1 on RUH-CCH.
 
@@ -1681,6 +1770,7 @@ Cross-package tests the integrator adds (handover §7.5), each referring to the 
 | Abdullah Al-Dossary / عبدالله الدوسري | abdullah.dossary@example.com | +966500000304 | ANIA-EXP · responsible_person · position CONSULTANT_RE |
 | Sultan Al-Mutlaq / سلطان المطلق | sultan.mutlaq@example.com | +966500000305 | ANIA-EXP · responsible_person · position CLIENT_REP |
 | Arun Pillai / آرون بيلاي | arun.pillai@example.com | +966500000306 | ANIA-EXP · qc_inspector · engagement NAJD (welding inspector, competence CWI) |
+| Mazen Al-Harbi / مازن الحربي | mazen.harbi@example.com | +966500000307 | ANIA-EXP · qc_inspector (PMC, no engagement; resolves for S points through the default `ir.inspect` S row) |
 | Reem Al-Mutairi / ريم المطيري | reem.mutairi@example.com | +966500000311 | RUH-CCH · qa_qc_manager |
 | Imran Siddiq / عمران صديق | imran.siddiq@example.com | +966500000312 | RUH-CCH · warehouse_qc |
 | Saad Al-Anazi / سعد العنزي | saad.anazi@example.com | +966500000313 | RUH-CCH · responsible_person · position WAREHOUSE_MGR |
@@ -1772,3 +1862,4 @@ Faisal (HSE Manager) has every capability org-wide; Sarah (Viewer) is also assig
 | Version | Date | Author | Change |
 |---|---|---|---|
 | v1.0 | 2026-10-31 | Quality Consultant Agent | First issue: Parts A–E mapped to packages Q0–Q4 with file, table and route ownership and plug-in registries (§3); two sector profiles; editable responsible-person matrix with positions, segregation and paper sign-off; NCR with containment, RCA (5-Why, Ishikawa, 8D), disposition, CAPA through Phase 1 CAs and cost; ITP / IR with hold and witness rules, punch with plan pins, handover dossier; MAR / MIR / quarantine, test types with ACI 318 / EN 206 rule sets, pours, welding with continuity, NDT % and progressive examination, calibration with OOT review, competence through the Phase 2 hooks; receiving, storage classes, excursions with severity bands and product impact, mapping, hygiene and pest, FEFO, holds, returns, cycle counts, recalls, transport with POD and 7b link; documents, quality audits on 6d, management review, supplier evaluation and scorecards, KPIs K-141…K-169, SPC, COPQ, DPMO and sigma, Pareto, charts C42–C51, warnings E26–E28, AI tools T26–T29, report packs; capabilities 238–280; 185 acceptance criteria; decisions D-308…D-319. |
+| v1.1 | 2026-10-31 | Quality Consultant Agent | Spec review fixes: Q0 acceptance criteria no longer depend on Q1–Q4 records (AC-Q0-05, -16, -23, -45); Q-RPM-07 defines the record's responsible engagement and test requests gain `engagement_id`; PMC-side QC inspector Mazen seeded, AC-Q1-11 and AC-Q2-08 use non-contractor signers; excursion, hold, transport and recall recipients and the R2 weld repair approval go through the responsible-person matrix (new step `weld.repair2_approve`); M&TE register CRUD and screens moved to Q0 (`cal_status` unknown until Q2); full transition tables for test requests, welds, excursions, hold lines, recalls, trips, document revisions and supplier evaluations; §3.3a lists the stubs Q0 creates and the i18n merge / parity-check extension; Appendix A.1 names `test_auth.py:294` and the tests Q0 re-runs; `equipment_operator` in list CA; `dispatch_override_allowed` per storage class; why quality observations are separate; recall hold snapshot; two sign-off rows for disposition and concession. |
