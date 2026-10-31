@@ -152,8 +152,8 @@ def q3_import(
     profile: Annotated[str | None, Form()] = None,
     as_of: Annotated[datetime | None, Form()] = None,
 ) -> dict[str, Any]:
-    content = file.file.read(get_settings().attachment_max_bytes + 1)
-    prof = json.loads(profile) if profile else None
+    content = _content(file)
+    prof = _profile(profile)
     return imports.import_file(
         db,
         user,
@@ -182,11 +182,50 @@ def q3_import_preview(
     file: Annotated[UploadFile, File()],
     profile: Annotated[str | None, Form()] = None,
 ) -> dict[str, Any]:
+    from app.core.enums import Capability  # noqa: PLC0415
     from app.services.quality import common as qc  # noqa: PLC0415
 
-    qc.get_project(db, user, project_id)
-    content = file.file.read(get_settings().attachment_max_bytes + 1)
-    return imports.preview(content, kind, json.loads(profile) if profile else None)
+    project = qc.get_project(db, user, project_id)
+    user.require(
+        project.id,
+        Capability.reading_record if kind == QImportKind.readings else Capability.stock_record,
+    )
+    return imports.preview(_content(file), kind, _profile(profile))
+
+
+def _content(file: UploadFile) -> bytes:
+    """The file is checked against the size limit before anything is parsed."""
+    from app.core.errors import ErrorCode  # noqa: PLC0415
+    from app.services.quality import common as qc  # noqa: PLC0415
+
+    limit = get_settings().attachment_max_bytes
+    content = file.file.read(limit + 1)
+    if len(content) > limit:
+        raise qc.err(
+            422,
+            ErrorCode.IMPORT_TOO_LARGE,
+            f"The file is larger than {limit // (1024 * 1024)} MB (Q-IMP-04).",
+            f"الملف أكبر من {limit // (1024 * 1024)} ميغابايت.",
+        )
+    return content
+
+
+def _profile(raw: str | None) -> dict[str, Any] | None:
+    from app.services.quality import common as qc  # noqa: PLC0415
+
+    if not raw:
+        return None
+    try:
+        out = json.loads(raw)
+    except ValueError:
+        out = None
+    if not isinstance(out, dict):
+        raise qc.field_err(
+            "profile",
+            "The column mapping is not valid JSON (an object is expected).",
+            "تعيين الأعمدة ليس JSON صالحاً (مطلوب كائن).",
+        )
+    return out
 
 
 @router.get(P + "/imports", response_model=Q3ImportPage, summary="Import history", responses=E)

@@ -687,25 +687,48 @@ def test_ac40_transit_excursion_ncr_and_notify(q3setup: None, api: Api, db) -> N
     assert tr["shipments"][0]["notify_consignee"] is True and tr["transit_data"] is True
 
 
-def test_ac39_vehicle_readiness_warning(q3setup: None, api: Api, db, monkeypatch) -> None:  # type: ignore[no-untyped-def]
+def test_ac39_vehicle_readiness_warning(q3setup: None, api: Api, db) -> None:  # type: ignore[no-untyped-def]
     """Q-TRN-04: a named site vehicle that is not ready warns VEHICLE_NOT_READY; nothing in 7b is
     created and the trip is not blocked."""
-    from app.core.site_vehicle_enums import SiteVehReadiness
-    from app.models import Vehicle
+    from app.core.access_enums import PlateType, VehicleCategory, VehicleOwnerType
+    from app.core.site_vehicle_enums import SiteVehReadiness, SiteVehScope
+    from app.models import ProjectEngagement, Vehicle
     from app.models.quality.q3 import QTrip
     from app.models.site_vehicle import VehicleCheck
     from app.services.quality.q3 import transport
     from app.services.site_vehicle import common as sv
 
-    v = db.scalar(select(Vehicle).limit(1))
-    if v is None:
-        return
-    monkeypatch.setattr(sv, "is_site", lambda _v: True)
-    monkeypatch.setattr(
-        sv,
-        "readiness",
-        lambda _db, _v, _d=None: (SiteVehReadiness.docs_expired, ["istimara:2026-09-30"]),
+    r = R(db)
+    # a Phase 2 site vehicle of RUH-CCH whose Istimara expired on 2026-09-30
+    v = Vehicle(
+        seq=9301,
+        vehicle_no="VEH-9301",
+        project_id=r.project.id,
+        engagement_id=db.scalar(
+            select(ProjectEngagement.id).where(ProjectEngagement.project_id == r.project.id)
+        ),
+        owner_type=VehicleOwnerType.company,
+        category=VehicleCategory.light_vehicle,
+        plate_type=PlateType.transport,
+        plate_letters_ar="أبح",
+        plate_digits="9301",
+        fleet_no="TEST-RF-01",
+        serial_or_vin="TESTQ3VIN000009301",
+        make_model="Reefer truck (test)",
+        year_built=2022,
+        colour="White",
+        travel_height_m=D("3.20"),
+        max_working_height_m_agl=D("3.20"),
+        istimara_expiry=date(2026, 9, 30),
+        insurance_policy_no="TEST-POL-9301",
+        insurance_expiry=date(2027, 1, 31),
+        mvpi_expiry=date(2027, 1, 31),
+        site_scope=SiteVehScope.site,
     )
+    db.add(v)
+    db.flush()
+    assert db.scalar(select(Vehicle.id).where(Vehicle.id == v.id)) is not None
+    assert sv.readiness(db, v)[0] == SiteVehReadiness.docs_expired  # the real 7b answer
     before = db.scalar(select(VehicleCheck.id).limit(1))
     t = QTrip(
         project_id=v.project_id,

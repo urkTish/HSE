@@ -72,7 +72,7 @@ function ExcursionsList({ project }: { project: Project }) {
                 <TD label={t("where")}><span className="ltr">{x.zone?.code ?? (x.trip_id ? t("trip") : "—")}</span> · {l("storage_class", x.storage_class)}</TD>
                 <TD label={t("started")}>{dateTime(x.started_at)}</TD>
                 <TD label={t("duration")}><span dir="ltr">{x.duration_min} min{x.ended_at ? "" : " …"}</span>{x.data_gap ? <Badge tone="warning" className="ms-1">{t("dataGap")}</Badge> : null}</TD>
-                <TD label={t("peak")}><Temp v={x.peak_value} /> <span className="text-xs text-muted-foreground" dir="ltr">(+{x.max_deviation})</span></TD>
+                <TD label={t("peak")}><Temp v={x.peak_value} unit={unitOf(x.kind)} /> <span className="text-xs text-muted-foreground" dir="ltr">(+{x.max_deviation})</span></TD>
                 <TD label={t("severity")}><SeverityBadge value={x.severity} label={l("excursion_severity", x.severity)} />{!x.acknowledged && x.exc_no ? <Badge tone="danger" className="ms-1">{t("unack")}</Badge> : null}</TD>
                 <TD label={tc("status")}><StatusBadge kind="excursion_status" value={x.status} /></TD>
               </TR>
@@ -83,6 +83,11 @@ function ExcursionsList({ project }: { project: Project }) {
       ) : <EmptyState message={t("empty")} />}
     </div>
   );
+}
+
+/** Humidity excursions are in %RH, the others in °C (D-352). */
+function unitOf(kind: string): string {
+  return kind === "humidity" ? "%RH" : "°C";
 }
 
 export function ExcursionDetailPage({ id }: { id: string }) {
@@ -128,13 +133,13 @@ function ExcursionDetail({ project, id }: { project: Project; id: string }) {
         <FieldList>
           <FieldItem label={t("where")}>{x.zone ? <Link className="ltr text-primary hover:underline" href={`/quality/storage/${x.zone.id}`}>{x.zone.code}</Link> : x.trip ? <Link className="ltr text-primary hover:underline" href={`/quality/transport/${x.trip.id}`}>{x.trip.trip_no}</Link> : "—"}</FieldItem>
           <FieldItem label={t("class")}>{l("storage_class", x.storage_class)}</FieldItem>
-          <FieldItem label={t("range")}><Temp v={x.range_min} /> … <Temp v={x.range_max} /></FieldItem>
+          <FieldItem label={t("range")}><Temp v={x.range_min} unit={unitOf(x.kind)} /> … <Temp v={x.range_max} unit={unitOf(x.kind)} /></FieldItem>
           <FieldItem label={t("started")}>{dateTime(x.started_at)}</FieldItem>
           <FieldItem label={t("ended")}>{x.ended_at ? dateTime(x.ended_at) : t("ongoing")}</FieldItem>
           <FieldItem label={t("duration")}><span dir="ltr" data-testid="q3-exc-duration">{x.duration_min} min</span></FieldItem>
-          <FieldItem label={t("peak")}><Temp v={x.peak_value} /> {x.peak_point ? <span className="ltr text-xs">({x.peak_point})</span> : null}</FieldItem>
-          <FieldItem label={t("maxDev")}><span dir="ltr">{x.max_deviation} °C</span></FieldItem>
-          <FieldItem label={t("degreeMinutes")}><span dir="ltr" data-testid="q3-exc-dm">{x.degree_minutes} °C·min</span></FieldItem>
+          <FieldItem label={t("peak")}><Temp v={x.peak_value} unit={unitOf(x.kind)} /> {x.peak_point ? <span className="ltr text-xs">({x.peak_point})</span> : null}</FieldItem>
+          <FieldItem label={t("maxDev")}><span dir="ltr">{x.max_deviation} {unitOf(x.kind)}</span></FieldItem>
+          <FieldItem label={t("degreeMinutes")}><span dir="ltr" data-testid="q3-exc-dm">{x.degree_minutes} {unitOf(x.kind)}·min</span></FieldItem>
           <FieldItem label={t("cause")}>{x.cause ? l("excursion_cause", x.cause) : "—"}</FieldItem>
           <FieldItem label={t("ncr")}>{x.ncr ? <Link className="ltr text-primary hover:underline" href={`/quality/ncrs/${x.ncr.id}`}>{x.ncr.ncr_no ?? t("ncrDraft")}</Link> : "—"}</FieldItem>
           <FieldItem label={t("hold")}>{x.hold ? <Link className="ltr text-primary hover:underline" href={`/quality/holds/${x.hold.id}`}>{x.hold.hold_no}</Link> : "—"}</FieldItem>

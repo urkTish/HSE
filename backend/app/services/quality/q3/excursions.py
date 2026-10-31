@@ -109,12 +109,18 @@ def get_exc(db: Session, p: Principal, exc_id: uuid.UUID) -> tuple[QExcursion, P
 # ---- detection ----------------------------------------------------------------------------------
 
 
-def _window_rows(db: Session, z: QStorageZone, t0: datetime, t1: datetime) -> list[QExcursion]:
+def _window_rows(
+    db: Session,
+    z: QStorageZone,
+    t0: datetime,
+    t1: datetime,
+    kind: QExcursionKind = QExcursionKind.storage,
+) -> list[QExcursion]:
     return list(
         db.scalars(
             select(QExcursion).where(
                 QExcursion.zone_id == z.zone_id,
-                QExcursion.kind == QExcursionKind.storage,
+                QExcursion.kind == kind,
                 QExcursion.status != ST.voided,
                 QExcursion.started_at < t1,
                 (QExcursion.ended_at.is_(None)) | (QExcursion.ended_at > t0),
@@ -149,8 +155,11 @@ def detect_zone(
     transients) found or changed."""
     pts = storage.points_of(db, z.zone_id)
     t0 = b.floor_minute(t_from) - DAY
-    for x in _window_rows(db, z, t0, t0 + timedelta(minutes=1)):
-        t0 = min(t0, b.floor_minute(x.started_at) - timedelta(minutes=z.alarm_delay_minutes + 1))
+    for kind in (QExcursionKind.storage, QExcursionKind.humidity):
+        for x in _window_rows(db, z, t0, t0 + timedelta(minutes=1), kind):
+            t0 = min(
+                t0, b.floor_minute(x.started_at) - timedelta(minutes=z.alarm_delay_minutes + 1)
+            )
     last = _last_reading(db, [p.id for p in pts])
     t1 = b.floor_minute(t_to) + DAY
     if last is not None:
@@ -160,6 +169,28 @@ def detect_zone(
             + timedelta(minutes=max([p.interval_minutes for p in pts] or [15]) * 4),
         )
     t1 = max(t1, b.floor_minute(t_to) + timedelta(minutes=1))
+    out = sync_zone(db, project, z, t0, t1, actor, manual=manual, notify=notify, last=last)
+    # the day summaries of the days the new data touched (the day before too: its last reading
+    # may now be followed by a closer one)
+    storage.refresh_days(db, z, b.local_day(t_from) - timedelta(days=1), b.local_day(t_to))
+    return out
+
+
+def sync_zone(
+    db: Session,
+    project: Project,
+    z: QStorageZone,
+    t0: datetime,
+    t1: datetime,
+    actor: uuid.UUID | None,
+    *,
+    manual: bool = False,
+    notify: bool = True,
+    auto: bool = True,
+    last: datetime | None = None,
+) -> list[QExcursion]:
+    """Temperature runs, humidity runs (zones with a humidity range) and monitoring gaps of a
+    zone over [t0, t1), reconciled with what is stored."""
     lim = storage.limits(z)
     gr = storage.zone_grid(db, z, t0, t1)
     found = eng.runs(gr, storage.bands(z), lim)
@@ -170,9 +201,50 @@ def detect_zone(
         t1 = min(t1 + timedelta(days=7), b.floor_minute(last) + timedelta(minutes=60))
         gr = storage.zone_grid(db, z, t0, t1)
         found = eng.runs(gr, storage.bands(z), lim)
-    return _reconcile(
-        db, project, z, None, None, gr, found, t0, t1, actor, manual=manual, notify=notify
+    out = _reconcile(
+        db,
+        project,
+        z,
+        None,
+        None,
+        gr,
+        found,
+        t0,
+        t1,
+        actor,
+        manual=manual,
+        notify=notify,
+        auto=auto,
     )
+    storage.sync_gaps(db, project, z, gr, notify=notify)
+    hl = storage.humidity_limits(z)
+    if hl.lo is not None or hl.hi is not None:
+        hgr = storage.zone_grid(db, z, t0, t1, humidity=True)
+        found_h = eng.runs(hgr, humidity_bands(z), hl)
+        out += _reconcile(
+            db,
+            project,
+            z,
+            None,
+            None,
+            hgr,
+            found_h,
+            t0,
+            t1,
+            actor,
+            manual=manual,
+            notify=notify,
+            auto=auto,
+            kind=QExcursionKind.humidity,
+            lim=hl,
+        )
+    return out
+
+
+def humidity_bands(z: QStorageZone) -> eng.Bands:
+    """%RH deviation bands of the zone's class with the zone's alarm delay and duration bands."""
+    d = STORAGE_CLASSES[z.storage_class]
+    return eng.Bands(z.alarm_delay_minutes, d.h1, d.h2, z.t1, z.t2)
 
 
 def _reconcile(
@@ -192,11 +264,13 @@ def _reconcile(
     auto: bool = True,
     sc: QStorageClass | None = None,
     lim: eng.Limits | None = None,
+    kind: QExcursionKind | None = None,
 ) -> list[QExcursion]:
+    kind = kind or (QExcursionKind.transit if trip else QExcursionKind.storage)
     if z is not None:
-        existing = _window_rows(db, z, t0, t1)
+        existing = _window_rows(db, z, t0, t1, kind)
         sc = z.storage_class
-        lim = storage.limits(z)
+        lim = lim or storage.limits(z)
     else:
         assert trip is not None  # noqa: S101
         existing = list(
@@ -232,7 +306,7 @@ def _reconcile(
         x = match or QExcursion(
             id=uuid.uuid4(),
             project_id=project.id,
-            kind=QExcursionKind.transit if trip else QExcursionKind.storage,
+            kind=kind,
             site_id=z.site_id if z else trip.site_id,  # type: ignore[union-attr]
             zone_id=z.zone_id if z else None,
             trip_id=trip.id if trip else None,
@@ -245,7 +319,10 @@ def _reconcile(
         )
         before_sev = x.severity if match else None
         was_transient = x.transient if match else True
-        x.transient = r.transient
+        was_live = match is not None and not match.transient and match.exc_no is not None
+        # an ongoing run shorter than the alarm delay is not an excursion yet, unless a person
+        # measured it by hand (Q-EXC-03)
+        x.transient = r.transient or (r.pending and not manual)
         x.started_at = start
         x.ended_at = None if r.ongoing else end
         x.duration_min = r.duration
@@ -261,6 +338,8 @@ def _reconcile(
         used.add(x.id)
         db.flush()
         if x.transient:
+            if was_live:
+                _became_transient(db, project, x)
             continue
         if x.exc_no is None:
             x.exc_no = b.number(db, project, RT, x.started_at)
@@ -278,6 +357,31 @@ def _reconcile(
             b.audit_status(db, None, project, RT, x.id, "live", "voided", reason="readings voided")
     db.flush()
     return changed
+
+
+TRANSIENT_REASON = "Run became transient: it ended within the alarm delay (Q-EXC-03)."
+
+
+def _became_transient(db: Session, project: Project, x: QExcursion) -> None:
+    """A live excursion whose run now ends within the alarm delay: the automatic NCR is voided
+    and the automatic hold too while nothing on them was decided (D-352)."""
+    from app.services.quality.ncr import core as ncr_core  # noqa: PLC0415
+
+    if x.ncr_id is not None:
+        n = db.get(QNcr, x.ncr_id)
+        if n is not None and n.status in (
+            QNcrStatus.draft,
+            QNcrStatus.open,
+            QNcrStatus.disposition_proposed,
+        ):
+            n.status_reason = TRANSIENT_REASON
+            ncr_core._status(db, None, n, QNcrStatus.voided, reason=TRANSIENT_REASON)
+            x.ncr_id = None
+    if x.hold_id is not None:
+        h = db.get(QHold, x.hold_id)
+        if h is not None and hold_svc.void_auto(db, project, h, TRANSIENT_REASON):
+            x.hold_id = None
+    b.audit_status(db, None, project, RT, x.id, "live", "transient", reason=TRANSIENT_REASON)
 
 
 def _on_detected(
@@ -303,7 +407,9 @@ def _on_detected(
             x.id if x.kind != QExcursionKind.transit else x.trip_id,  # type: ignore[arg-type]
             actor=actor,
             classification=QNcrClass(x.severity.value),
-            category=QNcrCategory.temperature,
+            category=QNcrCategory.other
+            if x.kind == QExcursionKind.humidity
+            else QNcrCategory.temperature,
             title=_title(db, x),
         )
         x.ncr_id = n.id
@@ -342,21 +448,28 @@ def _title(db: Session, x: QExcursion) -> str:
         t = db.get(QTrip, x.trip_id)
         where = t.trip_no if t else ""
     end = f"{b.local(x.ended_at):%H:%M}" if x.ended_at else "ongoing"
-    return f"{where} excursion {b.local(x.started_at):%Y-%m-%d %H:%M}–{end} ({x.severity.value})"
+    what = "humidity excursion" if x.kind == QExcursionKind.humidity else "excursion"
+    return f"{where} {what} {b.local(x.started_at):%Y-%m-%d %H:%M}–{end} ({x.severity.value})"
+
+
+def unit(x: QExcursion) -> str:
+    return "%RH" if x.kind == QExcursionKind.humidity else "°C"
 
 
 def _alert(db: Session, project: Project, x: QExcursion) -> None:
     users = b.holders(db, project, C.excursion_assess, x.site_id) | set(
         b.resolvers(db, project, RT, "impact", ctx(x), qualifier=qualifier(x), record_id=x.id)
     )
-    peak = f"{x.peak_value} °C" if x.peak_value is not None else ""
+    peak = f"{x.peak_value} {unit(x)}" if x.peak_value is not None else ""
     b.send(
         db,
         project,
         users,
         f"exc:{x.id}:alert:{x.severity.value}",
-        f"Temperature excursion {x.exc_no} ({x.severity.value})",
-        f"انحراف حراري {x.exc_no} ({x.severity.value})",
+        f"{'Humidity' if x.kind == QExcursionKind.humidity else 'Temperature'} excursion "
+        f"{x.exc_no} ({x.severity.value})",
+        f"{'انحراف رطوبة' if x.kind == QExcursionKind.humidity else 'انحراف حراري'} {x.exc_no} "
+        f"({x.severity.value})",
         body_en=f"{_title(db, x)}; peak {peak}. Check the product and record the cause.",
         body_ar=f"{_title(db, x)}؛ الذروة {peak}. افحص المنتج وسجّل السبب.",
         rt=RT,
@@ -711,6 +824,14 @@ def dismiss(db: Session, p: Principal, exc_id: uuid.UUID, body: dict[str, Any]) 
         if r.mte_id == m.id or _logger_at(db, r.target_id, m.id, r.measured_at):
             r.probe_fault = True
             flagged += 1
+    if x.zone_id:
+        zrow = db.get(QStorageZone, x.zone_id)
+        if zrow is not None:
+            # flagged readings are never out: the day summaries change (K-161 / K-162)
+            db.flush()
+            storage.refresh_days(
+                db, zrow, b.local_day(x.started_at - timedelta(minutes=60)), b.local_day(end)
+            )
     m.cal_status = QCalStatus.out_of_service
     m.cal_status_reason = f"Probe fault found on {x.exc_no} ({kind})"
     x.dismissal = {

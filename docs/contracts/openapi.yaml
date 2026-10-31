@@ -148506,6 +148506,7 @@ components:
       - rejected
       - partly_released
       - closed
+      - voided
       title: QHoldStatus
     QHolderCreate:
       properties:

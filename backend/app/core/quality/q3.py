@@ -25,6 +25,10 @@ class QStorageClass(StrEnum):
     dock_controlled = "dock_controlled"
 
 
+RH_BAND_1 = Decimal(5)  # %RH beyond the limit: minor up to here
+RH_BAND_2 = Decimal(15)  # major up to here, critical beyond
+
+
 @dataclass(frozen=True)
 class StorageClassDef:
     """Defaults copied into a storage zone (Q-STO-01) and used for transit compartments."""
@@ -39,6 +43,10 @@ class StorageClassDef:
     t2: int
     humidity_max: Decimal | None
     dispatch_override_allowed: bool
+    # relative-humidity deviation bands in %RH for humidity excursions (D-352); the duration
+    # bands t1 / t2 and the alarm delay are the class's own
+    h1: Decimal = RH_BAND_1
+    h2: Decimal = RH_BAND_2
 
 
 SC = QStorageClass
@@ -343,6 +351,7 @@ class QHoldStatus(StrEnum):
     rejected = "rejected"
     partly_released = "partly_released"
     closed = "closed"
+    voided = "voided"  # an automatic hold whose source no longer needs it (D-352)
 
 
 HOLD_OPEN = frozenset({QHoldStatus.on_hold})
@@ -611,6 +620,7 @@ LABELS_Q3: dict[str, dict[str, tuple[str, str]]] = {
         "rejected": ("Rejected", "مرفوض"),
         "partly_released": ("Partly released", "مُفرج جزئياً"),
         "closed": ("Closed", "مغلق"),
+        "voided": ("Voided (source became a transient)", "ملغى (أصبح المصدر عابراً)"),
     },
     "damage_stage": {
         "receiving": ("Receiving", "الاستلام"),

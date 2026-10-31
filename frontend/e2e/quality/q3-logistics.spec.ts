@@ -39,24 +39,23 @@ test.describe("Quality Q3 logistics", () => {
     await expect(page.getByTestId("q3-exc-duration")).toBeVisible();
   });
 
-  test("holds: HLD-0112 lines, blockers and the WMS export (Q-HLD)", async ({ page }) => {
+  test("holds: HLD-0112 lines, outcome and the WMS export (Q-HLD)", async ({ page }) => {
     await openQ(page, QU.reem, "/quality/holds", { project: "RUH-CCH" });
     const row = page.locator('[data-testid="q3-hold-row"][data-no="HLD-RUH-CCH-2026-0112"]');
     await expect(row).toBeVisible();
     await expect(page.getByTestId("q3-hold-export")).toBeVisible();
     await row.getByRole("link").first().click();
-    await expect(page.getByTestId("q3-hold-detail")).toBeVisible();
+    // Appendix A.6 / D-358: 12 lines released and 2 destroyed after NCR-0034's disposition approval
+    await expect(page.getByTestId("q3-hold-detail")).toHaveAttribute("data-status", "closed");
     await expect(page.getByTestId("q3-hold-line")).toHaveCount(14);
-    // NCR-0034's disposition is not approved in the Q0 seed, so release is blocked (Q-HLD-04, D-358).
-    await expect(page.getByTestId("q3-hold-blockers")).toContainText("NCR-RUH-CCH-2026-0034");
+    await expect(page.getByTestId("q3-hold-blockers")).toHaveCount(0);
   });
 
   test("stock: September KPIs and the expired batch on the expiry tab (K-160…K-168, Q-STK-02)", async ({ page }) => {
-    await openQ(page, QU.reem, "/quality/stock", { project: "RUH-CCH" });
-    await page.getByTestId("q3-stock-tab-metrics").click();
+    // a fixed month in the URL, so the spec does not depend on today's date
+    await openQ(page, QU.reem, "/quality/stock?tab=metrics&ym=2026-09", { project: "RUH-CCH" });
     await expect(page.getByTestId("q3-metrics")).toBeVisible();
-    // The month is computed from about 70,000 readings on the minute grid (D-351): allow for it.
-    await expect(page.getByTestId("k161")).toContainText("0.71", { timeout: 30_000 });
+    await expect(page.getByTestId("k161")).toContainText("0.71");
     await expect(page.getByTestId("k163")).toContainText("93.2");
     await page.getByTestId("q3-stock-tab-expiry").click();
     const expired = page.locator('[data-testid="q3-expiry-row"][data-batch="NDC-L-2633"]');

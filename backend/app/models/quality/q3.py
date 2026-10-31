@@ -210,6 +210,44 @@ class QStorageZone(Base):
     seed_fake: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
+class QMonitoringGap(Base):
+    """Q-STO-04 "monitoring gap" entry: a stretch of at least `monitoring_gap_alert_minutes` in
+    which no active point of the zone covered a minute (bounded by monitored minutes on both
+    sides); kept in step with the readings by the detection (D-351)."""
+
+    __tablename__ = "q_monitoring_gaps"
+    __table_args__ = (UniqueConstraint("zone_id", "started_at"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id"), index=True)
+    site_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("sites.id"))
+    zone_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("q_storage_zones.zone_id"))
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    ended_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    minutes: Mapped[int] = mapped_column(Integer)
+    notified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class QZoneDay(Base):
+    """Per zone and local day: period, monitored and out minutes of the minute model (D-351), so
+    month coverage, time out of range and K-161 / K-162 are sums. Recomputed by the detection for
+    the days it touches (imports, manual readings, voids, probe-fault dismissals) and filled on
+    first use for days not yet summarised."""
+
+    __tablename__ = "q_zone_days"
+
+    zone_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("q_storage_zones.zone_id"), primary_key=True
+    )
+    day: Mapped[date] = mapped_column(Date, primary_key=True)
+    project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id"), index=True)
+    period_minutes: Mapped[int] = mapped_column(Integer)
+    monitored_minutes: Mapped[int] = mapped_column(Integer)
+    out_minutes: Mapped[int] = mapped_column(Integer)
+    computed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
 class QMonitoringPoint(Audited, Base):
     """§D.3 a monitoring point of a storage zone with its logger assignments."""
 
@@ -274,6 +312,7 @@ class QExcursion(Audited, Base):
     __table_args__ = (
         UniqueConstraint("project_id", "exc_no"),
         Index("ix_q_excursions_zone_start", "zone_id", "started_at"),
+        Index("ix_q_excursions_project_start", "project_id", "started_at"),
     )
 
     project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id"), index=True)
@@ -421,7 +460,10 @@ class QPestVisit(Audited, Base):
 
 class QReceipt(Audited, Base):
     __tablename__ = "q_receipts"
-    __table_args__ = (UniqueConstraint("project_id", "rcv_no"),)
+    __table_args__ = (
+        UniqueConstraint("project_id", "rcv_no"),
+        Index("ix_q_receipts_project_decided", "project_id", "decided_at"),
+    )
 
     project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id"), index=True)
     rcv_no: Mapped[str | None] = mapped_column(String(40))
@@ -608,6 +650,7 @@ class QHold(Audited, Base):
 
 class QHoldLine(Base):
     __tablename__ = "q_hold_lines"
+    __table_args__ = (Index("ix_q_hold_lines_sku_batch", "sku", "batch"),)
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     hold_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("q_holds.id"), index=True)
@@ -774,7 +817,10 @@ class QShipment(Base):
     """Imported shipment (Q-IMP shipments) with its delivery facts for OTIF (Q-TRN-08)."""
 
     __tablename__ = "q_shipments"
-    __table_args__ = (UniqueConstraint("project_id", "shipment_ref"),)
+    __table_args__ = (
+        UniqueConstraint("project_id", "shipment_ref"),
+        Index("ix_q_shipments_project_delivered", "project_id", "delivered_at"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id"), index=True)
@@ -812,7 +858,10 @@ class QShipmentLine(Base):
 
 class QTrip(Audited, Base):
     __tablename__ = "q_trips"
-    __table_args__ = (UniqueConstraint("project_id", "trip_no"),)
+    __table_args__ = (
+        UniqueConstraint("project_id", "trip_no"),
+        Index("ix_q_trips_project_delivered", "project_id", "delivered_at"),
+    )
 
     project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id"), index=True)
     trip_no: Mapped[str] = mapped_column(String(40))

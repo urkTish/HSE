@@ -562,7 +562,9 @@ def raise_ncr(
 ) -> QNcr:
     """Open an NCR from a Q3 source (Q0 `auto_raise`). A critical NCR needs evidence before it can
     open (Q-NCR-03); the system has none, so a critical one is kept as a Draft that its owner
-    completes with the evidence and opens (D-354), and the owner is told at once."""
+    completes with the evidence and opens (D-354): the raiser stays the user (or the system) whose
+    action raised it, the owner is told at once, and the draft waits in the owner's "Awaiting
+    me" and on the Quality home until it is opened."""
     from app.core.quality.common import (  # noqa: PLC0415
         NCR_SOURCE_DEFS,
         QDetectionStage,
@@ -616,11 +618,11 @@ def raise_ncr(
         quantity=info.quantity,
         unit=info.unit,
         lot_refs=list(info.lot_refs),
-        raised_by_user_id=owner,
+        raised_by_user_id=actor,
         owner_id=owner,
         status=QNcrStatus.draft,
         alerts_sent=[],
-        created_by_user_id=owner,
+        created_by_user_id=actor,
     )
     db.add(n)
     db.flush()

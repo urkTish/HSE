@@ -10,7 +10,7 @@ from datetime import date, datetime, timedelta
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.core.clock import now
@@ -28,7 +28,14 @@ from app.core.quality.q3 import (
     QZoneRole,
 )
 from app.models import Project, Site, Zone
-from app.models.quality.q3 import QExcursion, QMonitoringPoint, QReading, QStorageZone
+from app.models.quality.q3 import (
+    QExcursion,
+    QMonitoringGap,
+    QMonitoringPoint,
+    QReading,
+    QStorageZone,
+    QZoneDay,
+)
 from app.services import audit
 from app.services.permissions import Principal, forbidden_error
 from app.services.quality import common as qc
@@ -552,14 +559,13 @@ def zone_report(
     db: Session, p: Principal, zone_id: uuid.UUID, start: datetime, end: datetime
 ) -> dict[str, Any]:
     """C48 profile chart data plus coverage %, TOR %, gaps and MKT for a period."""
-    z, project = zone_row(db, p, zone_id)
+    z, _project = zone_row(db, p, zone_id)
     if end <= start or end - start > timedelta(days=62):
         raise qc.field_err(
             "end", "Choose a period of up to 62 days.", "اختر فترة لا تتجاوز 62 يوماً."
         )
     gr = zone_grid(db, z, start, end)
     period, mon, out = eng.coverage(gr)
-    gmin = int(b.setting(db, project.id, "monitoring_gap_alert_minutes"))
     pts = points_of(db, z.zone_id, active=False)
     series = []
     for pt in pts:
@@ -607,9 +613,7 @@ def zone_report(
         "out_minutes": out,
         "coverage_pct": b.q1(Decimal(mon) * 100 / period) if period else None,
         "tor_pct": b.q2(Decimal(out) * 100 / mon) if mon else None,
-        "gaps": [
-            {"from": gr.at(a), "to": gr.at(e), "minutes": e - a} for a, e in eng.gaps(gr, gmin)
-        ],
+        "gaps": gap_rows(db, z, start, end),
         "series": series,
         "excursions": [
             {
@@ -653,9 +657,195 @@ def point_mkt(
 
 def month_tor(db: Session, z: QStorageZone, year: int, month: int) -> tuple[int, int, int]:
     """(period, monitored, out) minutes of a zone in a Riyadh calendar month (K-162 inputs);
-    dismissed excursions' readings carry `probe_fault` and are never out (Q-EXC-11)."""
-    a, e = b.month_bounds(year, month)
-    return eng.coverage(zone_grid(db, z, a, e))
+    dismissed excursions' readings carry `probe_fault` and are never out (Q-EXC-11). Summed from
+    the day summaries (D-351)."""
+    first = date(year, month, 1)
+    nxt = date(year + (month == 12), month % 12 + 1, 1)
+    days = zone_days(db, z, first, nxt - timedelta(days=1))
+    return (
+        sum(v[0] for v in days.values()),
+        sum(v[1] for v in days.values()),
+        sum(v[2] for v in days.values()),
+    )
+
+
+# ---- day summaries (D-351) ----------------------------------------------------------------------
+
+Coverage = tuple[int, int, int]
+
+
+def _compute_days(db: Session, z: QStorageZone, d_from: date, d_to: date) -> dict[date, Coverage]:
+    """(period, monitored, out) for each local day in [d_from, d_to] from one grid; the grid runs
+    a little past the last day so its last reading's coverage is the same as in a longer grid."""
+    a, e = b.day_start(d_from), b.day_start(d_to + timedelta(days=1))
+    pts = points_of(db, z.zone_id)
+    factor = b.dsetting(db, z.project_id, "reading_gap_factor")
+    ahead = timedelta(minutes=int(max([x.interval_minutes for x in pts] or [15]) * factor) + 1)
+    gr = zone_grid(db, z, a, e + ahead)
+    out: dict[date, Coverage] = {}
+    d = d_from
+    while d <= d_to:
+        i0 = gr.index(b.day_start(d))
+        i1 = gr.index(b.day_start(d + timedelta(days=1)))
+        out[d] = eng.coverage(gr, i0, i1)
+        d += timedelta(days=1)
+    return out
+
+
+def refresh_days(db: Session, z: QStorageZone, d_from: date, d_to: date) -> None:
+    """Recompute the stored summaries of the days the new data touched; days not over yet are
+    never stored (they are computed when asked)."""
+    today = b.local_day(now())
+    d_to = min(d_to, today - timedelta(days=1))
+    db.execute(
+        delete(QZoneDay).where(
+            QZoneDay.zone_id == z.zone_id, QZoneDay.day >= d_from, QZoneDay.day <= d_to
+        )
+    )
+    if d_to < d_from:
+        return
+    t = now()
+    for d, (period, mon, out) in _compute_days(db, z, d_from, d_to).items():
+        db.add(
+            QZoneDay(
+                zone_id=z.zone_id,
+                day=d,
+                project_id=z.project_id,
+                period_minutes=period,
+                monitored_minutes=mon,
+                out_minutes=out,
+                computed_at=t,
+            )
+        )
+    db.flush()
+
+
+def zone_days(db: Session, z: QStorageZone, d_from: date, d_to: date) -> dict[date, Coverage]:
+    """Day summaries of [d_from, d_to]: stored ones as they are, missing past days computed and
+    stored, today and later days computed only."""
+    have = {
+        r.day: (r.period_minutes, r.monitored_minutes, r.out_minutes)
+        for r in db.scalars(
+            select(QZoneDay).where(
+                QZoneDay.zone_id == z.zone_id, QZoneDay.day >= d_from, QZoneDay.day <= d_to
+            )
+        )
+    }
+    missing = []
+    d = d_from
+    while d <= d_to:
+        if d not in have:
+            missing.append(d)
+        d += timedelta(days=1)
+    if missing:
+        today = b.local_day(now())
+        got = _compute_days(db, z, missing[0], missing[-1])
+        t = now()
+        for d in missing:
+            have[d] = got[d]
+            if d < today:
+                period, mon, out = got[d]
+                db.add(
+                    QZoneDay(
+                        zone_id=z.zone_id,
+                        day=d,
+                        project_id=z.project_id,
+                        period_minutes=period,
+                        monitored_minutes=mon,
+                        out_minutes=out,
+                        computed_at=t,
+                    )
+                )
+        db.flush()
+    return have
+
+
+# ---- monitoring gaps (Q-STO-04) ----------------------------------------------------------------
+
+
+def sync_gaps(
+    db: Session,
+    project: Project,
+    z: QStorageZone,
+    gr: eng.Grid,
+    *,
+    notify: bool = True,
+) -> list[QMonitoringGap]:
+    """Keep the "monitoring gap" entries of the grid's window in step with the readings and alert
+    the 266 holders of the zone's site once per new gap (push and in-app, no e-mail). Only gaps
+    with monitored minutes on both sides inside the window count: the minutes after the last
+    reading are not a gap yet, and the start of a window is not the start of the data."""
+    gmin = int(b.setting(db, project.id, "monitoring_gap_alert_minutes"))
+    t0, t1 = gr.t0, gr.at(gr.n)
+    found = {gr.at(a): (gr.at(e), e - a) for a, e in eng.gaps(gr, gmin) if a > 0 and e < gr.n}
+    rows = {
+        g.started_at: g
+        for g in db.scalars(
+            select(QMonitoringGap).where(
+                QMonitoringGap.zone_id == z.zone_id,
+                QMonitoringGap.started_at >= t0,
+                QMonitoringGap.started_at < t1,
+            )
+        )
+    }
+    for at, g in rows.items():
+        if at not in found:
+            db.delete(g)
+    new: list[QMonitoringGap] = []
+    for at, (end, minutes) in found.items():
+        old = rows.get(at)
+        if old is not None:
+            old.ended_at, old.minutes = end, minutes
+            continue
+        g = QMonitoringGap(
+            project_id=project.id,
+            site_id=z.site_id,
+            zone_id=z.zone_id,
+            started_at=at,
+            ended_at=end,
+            minutes=minutes,
+            created_at=now(),
+        )
+        db.add(g)
+        new.append(g)
+    db.flush()
+    if notify and new:
+        zone = db.get(Zone, z.zone_id)
+        code = zone.code if zone else ""
+        users = b.holders(db, project, C.storage_manage, z.site_id)
+        for g in new:
+            sent = b.send(
+                db,
+                project,
+                users,
+                f"gap:{z.zone_id}:{g.started_at.isoformat()}",
+                f"Monitoring gap in {code}: {g.minutes} min without readings",
+                f"انقطاع مراقبة في {code}: {g.minutes} دقيقة بلا قراءات",
+                body_en=f"No reading covered {code} from {b.local(g.started_at):%Y-%m-%d %H:%M} "
+                f"to {b.local(g.ended_at):%H:%M}. Check the loggers.",
+                body_ar=f"لم تغطِّ أي قراءة {code} من {b.local(g.started_at):%Y-%m-%d %H:%M} "
+                f"إلى {b.local(g.ended_at):%H:%M}. افحص المسجلات.",
+                path=f"/quality/storage/{z.zone_id}",
+                email=False,
+            )
+            if sent:
+                g.notified_at = now()
+    return new
+
+
+def gap_rows(db: Session, z: QStorageZone, start: datetime, end: datetime) -> list[dict[str, Any]]:
+    return [
+        {"from": g.started_at, "to": g.ended_at, "minutes": g.minutes}
+        for g in db.scalars(
+            select(QMonitoringGap)
+            .where(
+                QMonitoringGap.zone_id == z.zone_id,
+                QMonitoringGap.started_at < end,
+                QMonitoringGap.ended_at > start,
+            )
+            .order_by(QMonitoringGap.started_at)
+        )
+    ]
 
 
 def zone_for_code(db: Session, project_id: uuid.UUID, code: str | None) -> QStorageZone | None:

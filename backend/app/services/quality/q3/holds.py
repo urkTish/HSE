@@ -260,8 +260,7 @@ def add_lines(
     h, project = get_hold(db, p, hold_id)
     _, g = b.project_for_progress(db, p, project.id, C.hold_manage)
     b.require_site(g, h.site_id)
-    if h.status == QHoldStatus.closed:
-        raise qc.err(409, ErrorCode.INVALID_TRANSITION, "The hold is closed.", "الحجز مغلق.")
+    _editable(h)
     t = now()
     lines = body.get("lines") or []
     if not lines:
@@ -282,6 +281,7 @@ def segregate(
     h, project = get_hold(db, p, hold_id)
     _, g = b.project_for_progress(db, p, project.id, C.hold_manage)
     b.require_site(g, h.site_id)
+    _editable(h)
     seg = QSegregation(body["segregation"])
     photo = b.attachment_on(
         db, body.get("photo_attachment_id"), A.q_hold, h.id, "photo_attachment_id"
@@ -339,20 +339,26 @@ def _linked_excursions(db: Session, h: QHold) -> list[QExcursion]:
     return rows
 
 
-def open_recalls_for(db: Session, project_id: uuid.UUID, sku: str, batch: str) -> list[QRecall]:
-    out = []
-    for r in db.scalars(
-        select(QRecall).where(
-            QRecall.project_id == project_id,
-            QRecall.recall_type != QRecallType.mock,
-            QRecall.status.in_(
-                [QRecallStatus.open, QRecallStatus.traced, QRecallStatus.recovering]
-            ),
+def _open_recalls(db: Session, project_id: uuid.UUID) -> list[QRecall]:
+    return list(
+        db.scalars(
+            select(QRecall).where(
+                QRecall.project_id == project_id,
+                QRecall.recall_type != QRecallType.mock,
+                QRecall.status.in_(
+                    [QRecallStatus.open, QRecallStatus.traced, QRecallStatus.recovering]
+                ),
+            )
         )
-    ):
-        if any(it.get("batch") == batch and it.get("sku") == sku for it in r.items or []):
-            out.append(r)
-    return out
+    )
+
+
+def open_recalls_for(db: Session, project_id: uuid.UUID, sku: str, batch: str) -> list[QRecall]:
+    return [
+        r
+        for r in _open_recalls(db, project_id)
+        if any(it.get("batch") == batch and it.get("sku") == sku for it in r.items or [])
+    ]
 
 
 NCR_NOT_APPROVED = frozenset({QNcrStatus.draft, QNcrStatus.open, QNcrStatus.disposition_proposed})
@@ -364,6 +370,30 @@ EXC_ASSESSED = frozenset(
         QExcursionStatus.voided,
     }
 )
+
+
+def _editable(h: QHold) -> None:
+    if h.status in (QHoldStatus.closed, QHoldStatus.voided):
+        raise qc.err(
+            409,
+            ErrorCode.INVALID_TRANSITION,
+            "The hold is closed or voided.",
+            "الحجز مغلق أو ملغى.",
+        )
+
+
+def void_auto(db: Session, project: Project, h: QHold, reason: str) -> bool:
+    """An automatic hold whose source no longer needs it (an excursion that became a transient,
+    Q-EXC-03) is voided while nothing on it has been decided; afterwards it stays for the
+    responsible person (D-352)."""
+    lines = lines_of(db, h)
+    if h.status != QHoldStatus.on_hold or any(ln.line_status != L.on_hold for ln in lines):
+        return False
+    before = h.status
+    h.status = QHoldStatus.voided
+    h.closed_at = now()
+    b.audit_status(db, None, project, RT, h.id, before, QHoldStatus.voided, reason=reason)
+    return True
 
 
 def blockers(
@@ -389,8 +419,13 @@ def blockers(
                 )
             )
     if not rejecting:
+        recalls = _open_recalls(db, h.project_id)
         for ln in [line] if line else lines_of(db, h):
-            for r in open_recalls_for(db, h.project_id, ln.sku, ln.batch):
+            for r in recalls:
+                if not any(
+                    it.get("batch") == ln.batch and it.get("sku") == ln.sku for it in r.items or []
+                ):
+                    continue
                 out.append(
                     reg.Blocker(
                         "BATCH_IN_OPEN_RECALL",
@@ -425,6 +460,7 @@ def decide(db: Session, p: Principal, hold_id: uuid.UUID, body: dict[str, Any]) 
         raise forbidden_error(
             "Warehouse QC may place holds; a responsible person releases or rejects them."
         )
+    _editable(h)
     action = body.get("action")
     if action not in ("release", "reject"):
         raise qc.field_err("action", "Action is release or reject.", "الإجراء: إفراج أو رفض.")
@@ -503,6 +539,7 @@ def rehold(db: Session, p: Principal, line_id: uuid.UUID, body: dict[str, Any]) 
     h, project = get_hold(db, p, ln.hold_id)
     _, g = b.project_for_progress(db, p, project.id, C.hold_manage)
     b.require_site(g, h.site_id)
+    _editable(h)
     if ln.line_status != L.released:
         raise qc.err(
             409,
@@ -590,6 +627,8 @@ def derived(lines: list[QHoldLine]) -> QHoldStatus:
 
 
 def refresh(db: Session, h: QHold) -> QHoldStatus:
+    if h.status == QHoldStatus.voided:
+        return h.status
     st = derived(lines_of(db, h))
     if st != h.status:
         h.status = st
@@ -710,6 +749,7 @@ def list_page(
 ) -> dict[str, Any]:
     project = qc.get_project(db, p, project_id)
     g = b.list_grant(p, project.id)
+    deadlines(db, now(), project.id)  # Q-HLD-02 / -03 on time without an hourly slot (D-355)
     stmt = select(QHold).where(QHold.project_id == project.id)
     if statuses:
         stmt = stmt.where(QHold.status.in_(statuses))
@@ -790,11 +830,15 @@ def export_csv(db: Session, p: Principal, project_id: uuid.UUID) -> bytes:
 # ---- deadlines (Q-HLD-02, -03, -07) --------------------------------------------------------------
 
 
-def deadlines(db: Session, at: datetime) -> int:
+def deadlines(db: Session, at: datetime, project_id: uuid.UUID | None = None) -> int:
     """Zone-level holds without lines 24 h after placing; segregation not recorded 4 h after
-    placing; checked by the jobs and on every hold list read (D-355)."""
+    placing; checked by the jobs, on every hold list read and with the Quality home tiles (each
+    alert once, D-355)."""
     n = 0
-    for h in db.scalars(select(QHold).where(QHold.status == QHoldStatus.on_hold)):
+    q = select(QHold).where(QHold.status == QHoldStatus.on_hold)
+    if project_id is not None:
+        q = q.where(QHold.project_id == project_id)
+    for h in db.scalars(q):
         project = db.get(Project, h.project_id)
         if project is None:
             continue

@@ -383,6 +383,7 @@ def seed(db: Session) -> None:
     _hygiene(db, c)
     _mapping(db, c)
     _counters(db, c)
+    _zone_days(db, c)
     db.flush()
 
 
@@ -617,15 +618,23 @@ def _excursions(db: Session, c: _Ctx) -> None:
 
 
 def _detect_quiet(db: Session, project: Project, z: QStorageZone, uid: uuid.UUID) -> None:
-    from app.services.quality.q3 import engine as eng  # noqa: PLC0415
-    from app.services.quality.q3 import excursions, storage  # noqa: PLC0415
+    """Excursions, humidity excursions and monitoring gaps of the seeded data, without alerts,
+    automatic NCRs or holds."""
+    from app.services.quality.q3 import excursions  # noqa: PLC0415
 
     a, e = L(SEPT) - timedelta(minutes=1), L(date(2026, 10, 6), 10)
-    gr = storage.zone_grid(db, z, a, e)
-    found = eng.runs(gr, storage.bands(z), storage.limits(z))
-    excursions._reconcile(
-        db, project, z, None, None, gr, found, a, e, uid, manual=False, notify=False, auto=False
-    )
+    excursions.sync_zone(db, project, z, a, e, uid, notify=False, auto=False)
+
+
+def _zone_days(db: Session, c: _Ctx) -> None:
+    """Day summaries of the minute model up to yesterday (D-351), so the KPI pages read sums."""
+    from app.core.clock import now  # noqa: PLC0415
+    from app.services.quality.q3 import storage  # noqa: PLC0415
+    from app.services.quality.q3.base import local_day  # noqa: PLC0415
+
+    last = min(local_day(now()) - timedelta(days=1), date(2026, 12, 31))
+    for z in db.scalars(select(QStorageZone).where(QStorageZone.project_id == c.p.id)):
+        storage.zone_days(db, z, SEPT, last)
 
 
 def _snapshot_lines(c: _Ctx, d: date) -> list[dict[str, Any]]:
@@ -717,7 +726,8 @@ def _snapshots(db: Session, c: _Ctx) -> None:
 def _hold_0112(db: Session, c: _Ctx) -> None:
     """QX13 → NCR-0034 and HLD-RUH-CCH-2026-0112 with the 14 Z-FRZ1 lines of the 2026-09-21 23:00
     snapshot; impact assessed by Saad (WAREHOUSE_MGR) with the GFF decision on file: 12 lines
-    proposed for release, 2 for destruction (the release waits for the NCR disposition)."""
+    released and 2 destroyed (Appendix A.6) after NCR-0034's disposition was approved on
+    2026-09-24 through the Q0 NCR services (D-358)."""
     from app.services.quality import links, numbering, signoff  # noqa: PLC0415
     from app.services.quality.q3 import holds, stock  # noqa: PLC0415
 
@@ -802,6 +812,142 @@ def _hold_0112(db: Session, c: _Ctx) -> None:
         )
     )
     _ = signoff
+    if n34 is not None:
+        db.flush()
+        _settle_0112(db, c, h, n34)
+
+
+PDF = b"%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n"
+
+
+def _settle_0112(db: Session, c: _Ctx, h: Any, n34: QNcr) -> None:
+    """NCR-0034 through the Q0 NCR services, dated as in Appendix A.6: Imran (owner) records the
+    5-why and the disposition (12 lines use as is on the GFF decision, 2 lines scrap) and
+    proposes it on 2026-09-23; Reem approves the disposition and Saad the concession on
+    2026-09-24; Saad then releases the 12 lines and rejects the 2, which are destroyed with a
+    certificate on 2026-09-25 (D-358)."""
+    from app.core.clock import frozen  # noqa: PLC0415
+    from app.core.hse_enums import AttachmentOwner  # noqa: PLC0415
+    from app.services import attachments  # noqa: PLC0415
+    from app.services.permissions import build_principal  # noqa: PLC0415
+    from app.services.quality.ncr import core as ncr  # noqa: PLC0415
+    from app.services.quality.ncr import disposition, rca  # noqa: PLC0415
+    from app.services.quality.q3 import holds  # noqa: PLC0415
+
+    def who(u: str) -> Any:
+        user = db.get(User, c.u(u))
+        assert user is not None  # noqa: S101
+        return build_principal(db, user, None)
+
+    def pdf(owner: AttachmentOwner, oid: uuid.UUID, name: str, uid: uuid.UUID) -> uuid.UUID:
+        a = attachments.store(
+            db, owner, oid, c.p.id, name, PDF, "application/pdf", uid, generated=True
+        )
+        return a.id
+
+    lines = holds.lines_of(db, h)
+    destroy = [ln for ln in lines if ln.proposed_decision == QImpactDecision.destroy]
+    release = [ln for ln in lines if ln.proposed_decision == QImpactDecision.release]
+
+    def qty(ls: list[Any]) -> Decimal:
+        return sum((ln.qty for ln in ls), Decimal(0))
+
+    with frozen(L(date(2026, 9, 23), 15)):
+        imran = who("imran.siddiq")
+        rca.save(
+            db,
+            imran,
+            n34.id,
+            {
+                "method": "five_why",
+                "data": {
+                    "whys": [
+                        "The Z-FRZ1 evaporator iced up and the air flow stopped.",
+                        "The defrost cycle did not start at 01:30 as planned.",
+                        "The defrost timer relay had failed and was not on the checklist.",
+                    ],
+                    "root_cause": "Defrost timer relay not covered by preventive maintenance.",
+                },
+                "root_cause": "Defrost timer relay not covered by preventive maintenance.",
+                "cause_category": "machine",
+                "final": True,
+            },
+        )
+        pdf(AttachmentOwner.q_ncr_evidence, n34.id, "GFF-decision-2026-09-23.pdf", imran.user.id)
+        disposition.save(
+            db,
+            imran,
+            n34.id,
+            {
+                "disposition_justification_en": "GFF's written decision of 2026-09-23 accepts "
+                "the 12 lines away from the coil: peak −13.8 °C for 210 min stays within the "
+                "owner's frozen-poultry budget (impact assessment of EXC-RUH-CCH-2026-0041).",
+                "lines": [
+                    {
+                        "disposition": "use_as_is",
+                        "quantity": str(qty(release)),
+                        "note": "12 hold lines released on the impact assessment.",
+                    },
+                    {
+                        "disposition": "reject_scrap",
+                        "quantity": str(qty(destroy)),
+                        "note": "2 hold lines next to the coil destroyed.",
+                    },
+                ],
+            },
+        )
+        ncr.propose(db, imran, n34.id)
+    with frozen(L(date(2026, 9, 24), 10, 30)):
+        ncr.sign_step(
+            db,
+            who("reem.mutairi"),
+            n34.id,
+            "disposition",
+            "approved",
+            "Disposition approved on the signed impact assessment and the GFF decision.",
+        )
+        ncr.sign_step(
+            db,
+            who("saad.anazi"),
+            n34.id,
+            "concession",
+            "approved",
+            "Owner GFF accepts the 12 lines in writing.",
+        )
+    with frozen(L(date(2026, 9, 24), 11, 30)):
+        saad = who("saad.anazi")
+        owner_file = pdf(AttachmentOwner.q_hold, h.id, "GFF-decision-2026-09-23.pdf", saad.user.id)
+        holds.decide(
+            db,
+            saad,
+            h.id,
+            {
+                "action": "release",
+                "line_ids": [ln.id for ln in release],
+                "owner_decision_attachment_id": owner_file,
+                "comment": "Released on the impact assessment and NCR-0034's disposition.",
+            },
+        )
+        holds.decide(
+            db,
+            saad,
+            h.id,
+            {
+                "action": "reject",
+                "line_ids": [ln.id for ln in destroy],
+                "reason": "Cartons next to the evaporator coil partly thawed.",
+            },
+        )
+    with frozen(L(date(2026, 9, 25), 9)):
+        imran = who("imran.siddiq")
+        cert = pdf(AttachmentOwner.q_hold, h.id, "Destruction-certificate-0112.pdf", imran.user.id)
+        for ln in destroy:
+            holds.outcome(
+                db, imran, ln.id, {"outcome": "destroyed", "evidence_attachment_id": cert}
+            )
+        for nl in ncr.lines_of(db, n34):
+            if nl.disposition.value == "reject_scrap":
+                disposition.update_line(db, imran, nl.id, {"destruction_evidenced": True})
 
 
 def _receipts(db: Session, c: _Ctx) -> None:

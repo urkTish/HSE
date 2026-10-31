@@ -153,7 +153,19 @@ def _tz(name: str | None) -> Any:
 
 def normalise_profile(kind: QImportKind, raw: dict[str, Any] | None) -> dict[str, Any]:
     raw = dict(raw or {})
-    cols = {**DEFAULT_COLUMNS[kind], **(raw.get("columns") or {})}
+    given = raw.get("columns") or {}
+    texts = ("unit", "decimal", "timezone", "date_format", "delimiter", "logger_serial_column")
+    if (
+        not isinstance(given, dict)
+        or not all(isinstance(k, str) and isinstance(v, str) for k, v in given.items())
+        or any(raw.get(k) is not None and not isinstance(raw.get(k), str) for k in texts)
+    ):
+        raise qc.field_err(
+            "profile",
+            "The column mapping must map field names to column headings (text).",
+            "يجب أن يربط تعيين الأعمدة أسماء الحقول بعناوين الأعمدة (نص).",
+        )
+    cols = {**DEFAULT_COLUMNS[kind], **given}
     unit = (raw.get("unit") or "C").upper().replace("°", "")
     if unit not in ("C", "F"):
         raise qc.field_err("profile", "Unit is C or F.", "الوحدة C أو F.")

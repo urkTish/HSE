@@ -303,7 +303,58 @@ def pending(db: Session, p: Principal, project_id: uuid.UUID) -> list[reg.Pendin
     project = db.get(Project, project_id)
     if project is None or qc.profile_of(db, project.id) is None:
         return []
-    return rpm.pending_from_open(db, p, project, open_steps(db, project))
+    return rpm.pending_from_open(db, p, project, open_steps(db, project)) + draft_ncrs(
+        db, p, project
+    )
+
+
+Q3_NCR_SOURCES = (
+    "receipt",
+    "excursion",
+    "stock_check",
+    "return",
+    "recall",
+    "trip",
+    "hygiene_pest",
+)
+
+
+def _draft_rows(db: Session, user_id: uuid.UUID, project_id: uuid.UUID) -> list[Any]:
+    from sqlalchemy import select  # noqa: PLC0415
+
+    from app.core.quality.common import QNcrStatus  # noqa: PLC0415
+    from app.models.quality import QNcr  # noqa: PLC0415
+
+    return list(
+        db.scalars(
+            select(QNcr).where(
+                QNcr.project_id == project_id,
+                QNcr.owner_id == user_id,
+                QNcr.status == QNcrStatus.draft,
+                QNcr.source_type.in_([QNcrSourceType(x) for x in Q3_NCR_SOURCES]),
+                QNcr.source_id.is_not(None),
+            )
+        )
+    )
+
+
+def draft_ncrs(db: Session, p: Principal, project: Project) -> list[reg.PendingStep]:
+    """D-354: a critical NCR that Q3 raised as a Draft (no evidence yet) waits in its owner's
+    "Awaiting me" until the owner attaches the evidence and opens it."""
+    return [
+        reg.PendingStep(
+            QRecordType.ncr,
+            n.id,
+            project.id,
+            n.source_ref or "NCR (draft)",
+            n.title,
+            "open",
+            n.created_at,
+            f"/quality/ncrs/{n.id}",
+            "Q3",
+        )
+        for n in _draft_rows(db, p.user.id, project.id)
+    ]
 
 
 # ---- attachment owners ---------------------------------------------------------------------------
@@ -459,9 +510,16 @@ def _monthly(db: Session, at: datetime) -> dict[str, Any]:
 def home_tiles(db: Session, p: Principal, project: Project) -> list[reg.HomeCount]:
     from sqlalchemy import func, select  # noqa: PLC0415
 
+    from app.core.clock import now  # noqa: PLC0415
     from app.core.quality.common import QSectorProfile  # noqa: PLC0415
     from app.core.quality.q3 import EXCURSION_LIVE, QHoldStatus  # noqa: PLC0415
-    from app.models.quality.q3 import QExcursion, QHold, QReceiptLine  # noqa: PLC0415
+    from app.models.quality.q3 import (  # noqa: PLC0415
+        QExcursion,
+        QHold,
+        QReceipt,
+        QReceiptLine,
+    )
+    from app.services.quality.q3 import holds as holds_svc  # noqa: PLC0415
     from app.services.quality.q3 import mapping, stock  # noqa: PLC0415
 
     if qc.profile_of(db, project.id) != QSectorProfile.logistics:
@@ -505,10 +563,17 @@ def home_tiles(db: Session, p: Principal, project: Project) -> list[reg.HomeCoun
         db.scalar(
             select(func.count())
             .select_from(QReceiptLine)
-            .where(QReceiptLine.requested_decision.is_not(None), QReceiptLine.decision.is_(None))
+            .join(QReceipt, QReceipt.id == QReceiptLine.receipt_id)
+            .where(
+                QReceipt.project_id == project.id,
+                QReceiptLine.requested_decision.is_not(None),
+                QReceiptLine.decision.is_(None),
+            )
         )
         or 0
     )
+    holds_svc.deadlines(db, now(), project.id)  # Q-HLD-02 / -03 without an hourly slot (D-355)
+    drafts = len(_draft_rows(db, p.user.id, project.id))
     ne = stock._near_expiry(db, project)["items"]
     expired = sum(1 for x in ne if x["kind"] == "expired" and not x["on_hold"])
     unmapped = mapping.pharma_unmapped(db, project)
@@ -562,6 +627,18 @@ def home_tiles(db: Session, p: Principal, project: Project) -> list[reg.HomeCoun
             "neutral",
         ),
     ]
+    if drafts:
+        out.insert(
+            0,
+            reg.HomeCount(
+                "q3_ncr_drafts",
+                "Critical NCR drafts to open (attach the evidence)",
+                "تقارير حرجة مسودة بانتظار الفتح (أرفق الدليل)",
+                drafts,
+                "/quality/ncrs",
+                "danger",
+            ),
+        )
     if unmapped:
         out.append(
             reg.HomeCount(

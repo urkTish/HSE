@@ -81,6 +81,9 @@ class Run:
     out_minutes: int
     data_gap: bool
     transient: bool = False
+    # still out at the end of the data but shorter than the alarm delay: it may yet end as a
+    # transient, so it is not an excursion yet (Q-EXC-03)
+    pending: bool = False
     peak: Decimal | None = None
     peak_point: uuid.UUID | None = None
     max_deviation: Decimal = Decimal(0)
@@ -229,6 +232,7 @@ def runs(g: Grid, bands: Bands, limits: Limits) -> list[Run]:
             merged.append(r)
     for r in merged:
         r.transient = r.duration < bands.alarm_delay and not r.ongoing
+        r.pending = r.duration < bands.alarm_delay and r.ongoing
         _stats(g, r, limits)
         r.severity = severity(r.max_deviation, r.duration, bands)
     return merged

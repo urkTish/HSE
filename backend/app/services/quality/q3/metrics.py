@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 
 from app.core.clock import now
 from app.core.quality.q3 import (
+    TEMP_CONTROLLED,
     QExcursionKind,
     QExcursionStatus,
     QLineDecision,
@@ -30,6 +31,8 @@ from app.models.quality.q3 import (
     QDamageReport,
     QExcursion,
     QFefoCheck,
+    QMonitoringGap,
+    QProduct,
     QReceipt,
     QReceiptLine,
     QShipment,
@@ -41,7 +44,6 @@ from app.models.quality.q3 import (
 from app.services.permissions import Principal
 from app.services.quality import common as qc
 from app.services.quality.q3 import base as b
-from app.services.quality.q3 import engine as eng
 from app.services.quality.q3 import hygiene, storage
 from app.services.quality.q3 import stock as stock_svc
 
@@ -75,12 +77,23 @@ def month(db: Session, project: Project, year: int, mon: int) -> dict[str, Any]:
     ids = [r.id for r in rec]
     decs: dict[uuid.UUID, set[QLineDecision]] = {}
     n_lines = n_rej_lines = 0
+    cold_products = set(
+        db.scalars(
+            select(QProduct.id).where(
+                QProduct.project_id == project.id,
+                QProduct.storage_class.in_(list(TEMP_CONTROLLED)),
+            )
+        )
+    )
+    cold: set[uuid.UUID] = set()  # temperature-controlled receipts (Q-RCV-08 dwell)
     for ln in db.scalars(
         select(QReceiptLine).where(QReceiptLine.receipt_id.in_(ids or [uuid.uuid4()]))
     ):
         decs.setdefault(ln.receipt_id, set()).add(ln.decision)  # type: ignore[arg-type]
         n_lines += 1
         n_rej_lines += ln.decision == QLineDecision.reject
+        if ln.product_id in cold_products:
+            cold.add(ln.receipt_id)
     lim = int(b.setting(db, project.id, "dock_dwell_max_minutes"))
     out["k160"] = {
         "receipts": len(rec),
@@ -97,7 +110,7 @@ def month(db: Session, project: Project, year: int, mon: int) -> dict[str, Any]:
         ),
         "line_rejection_pct": pct(n_rej_lines, n_lines),
         "dock_dwell_over_limit": sum(
-            1 for r in rec if r.dwell_minutes is not None and r.dwell_minutes > lim
+            1 for r in rec if r.id in cold and r.dwell_minutes is not None and r.dwell_minutes > lim
         ),
     }
 
@@ -112,17 +125,25 @@ def month(db: Session, project: Project, year: int, mon: int) -> dict[str, Any]:
     mon_total = out_total = period_total = 0
     zone_months = 0
     per_zone = []
-    gmin = int(b.setting(db, project.id, "monitoring_gap_alert_minutes"))
-    gaps = 0
+    gaps = (
+        db.scalar(
+            select(func.count())
+            .select_from(QMonitoringGap)
+            .where(
+                QMonitoringGap.project_id == project.id,
+                QMonitoringGap.started_at >= a,
+                QMonitoringGap.started_at < e,
+            )
+        )
+        or 0
+    )
     for z in zones:
-        gr = storage.zone_grid(db, z, a, e)
-        p_, m_, o_ = eng.coverage(gr)
+        p_, m_, o_ = storage.month_tor(db, z, year, mon)
         if m_:
             zone_months += 1
         mon_total += m_
         out_total += o_
         period_total += p_
-        gaps += len(eng.gaps(gr, gmin))
         per_zone.append(
             {
                 "zone_id": z.zone_id,
@@ -143,7 +164,7 @@ def month(db: Session, project: Project, year: int, mon: int) -> dict[str, Any]:
             )
         )
     )
-    storage_x = [x for x in excs if x.kind != QExcursionKind.transit]
+    storage_x = [x for x in excs if x.kind == QExcursionKind.storage]
     out["k161"] = {
         "excursions": len(storage_x),
         "zone_months": zone_months,
@@ -155,6 +176,7 @@ def month(db: Session, project: Project, year: int, mon: int) -> dict[str, Any]:
             for s in ("minor", "major", "critical")
         },
         "transit_excursions": sum(1 for x in excs if x.kind == QExcursionKind.transit),
+        "humidity_excursions": sum(1 for x in excs if x.kind == QExcursionKind.humidity),
         "dismissed": db.scalar(
             select(func.count())
             .select_from(QExcursion)
@@ -173,7 +195,12 @@ def month(db: Session, project: Project, year: int, mon: int) -> dict[str, Any]:
         "period_minutes": period_total,
         "value": pct(out_total, mon_total, "0.01"),
         "coverage_pct": pct(mon_total, period_total),
-        "zones_not_mapped": sum(1 for z in zones if z.mapping_state != QMappingState.mapped),
+        "zones_not_mapped": sum(
+            1
+            for z in zones
+            if z.mapping_state != QMappingState.mapped
+            or (z.mapped_until is not None and z.mapped_until < b.local_day(as_of))
+        ),
         "gaps": gaps,
         "zones": per_zone,
     }
@@ -292,7 +319,16 @@ def month(db: Session, project: Project, year: int, mon: int) -> dict[str, Any]:
         )
     )
     with_data = [t for t in trips if t.transit_data]
-    bad = {x.trip_id for x in excs if x.kind == QExcursionKind.transit}
+    bad = set(
+        db.scalars(
+            select(QExcursion.trip_id).where(
+                QExcursion.trip_id.in_([t.id for t in trips] or [uuid.uuid4()]),
+                QExcursion.kind == QExcursionKind.transit,
+                QExcursion.transient.is_(False),
+                QExcursion.status.not_in([QExcursionStatus.dismissed, QExcursionStatus.voided]),
+            )
+        )
+    )
     out["k167"] = {
         "trips": len(trips),
         "with_data": len(with_data),

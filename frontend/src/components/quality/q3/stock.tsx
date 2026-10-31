@@ -54,7 +54,11 @@ function Stock({ project }: { project: Project }) {
 function Metrics({ project }: { project: Project }) {
   const t = useTranslations("quality.logistics.kpi");
   const def = usePrevMonth();
-  const [ym, setYm] = useState(`${def.year}-${String(def.month).padStart(2, "0")}`);
+  const s = useSearchState();
+  // the month is in the URL (?ym=2026-09) so a link or a test opens a fixed month
+  const fromUrl = s.get("ym");
+  const ym = fromUrl && /^\d{4}-\d{2}$/.test(fromUrl) ? fromUrl : `${def.year}-${String(def.month).padStart(2, "0")}`;
+  const setYm = (v: string) => s.set({ ym: v || null });
   const [y = def.year, m = def.month] = ym.split("-").map(Number);
   const q = useQ3Metrics(project.id, y, m);
   const d = q.data;

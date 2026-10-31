@@ -141,7 +141,8 @@
         "d2": "Deviation band d2 (°C)",
         "t1": "Duration band t1 (min)",
         "t2": "Duration band t2 (min)"
-      }
+      },
+      "gapRow": "No readings {from} – {to} ({n} min)"
     },
     "rdg": {
       "title": "Manual reading",

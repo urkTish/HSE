@@ -25,6 +25,7 @@ from app.core.quality.q3 import (
     QFefoResult,
     QHoldLineStatus,
     QHoldReason,
+    QHoldStatus,
     QZoneRole,
 )
 from app.models import Project
@@ -129,7 +130,11 @@ def held_keys(db: Session, project_id: uuid.UUID) -> set[tuple[str, str]]:
     rows = db.execute(
         select(QHoldLine.sku, QHoldLine.batch)
         .join(QHold, QHold.id == QHoldLine.hold_id)
-        .where(QHold.project_id == project_id, QHoldLine.line_status == QHoldLineStatus.on_hold)
+        .where(
+            QHold.project_id == project_id,
+            QHold.status != QHoldStatus.voided,
+            QHoldLine.line_status == QHoldLineStatus.on_hold,
+        )
     )
     return {(r[0], r[1]) for r in rows}
 

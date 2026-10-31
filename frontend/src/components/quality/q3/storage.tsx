@@ -19,6 +19,7 @@ import { Link } from "@/i18n/navigation";
 import { api, unwrap } from "@/lib/api/client";
 import { useQMte } from "@/lib/api/quality/q0";
 import { useQ3Zone, useQ3ZoneReport, useQ3Zones } from "@/lib/api/quality/q3";
+import { useFormatters } from "@/lib/use-formatters";
 import { ReasonDialog, useBilingual, useQCaps, useQLabels, useRun } from "@/components/quality/q0/common";
 import { LIVE_TONE, Q3Gate, Section, Temp, clean, fromLocalInput, nowLocal, useForm, type Project, type S } from "./common";
 
@@ -103,6 +104,7 @@ function ZoneDetail({ project, id }: { project: Project; id: string }) {
     return { start: iso(new Date(end.getTime() - days * 86400_000)), end: iso(end) };
   }, [days]);
   const rep = useQ3ZoneReport(id, range.start, range.end);
+  const { dateTime } = useFormatters(project.id);
   const { run, busy, error } = useRun();
   const [edit, setEdit] = useState(false);
   const [note, setNote] = useState<"" | "layout" | "hvac">("");
@@ -141,6 +143,13 @@ function ZoneDetail({ project, id }: { project: Project; id: string }) {
               <Stat label={t("gaps")} value={rep.data.gaps.length} />
             </div>
             <ProfileChart report={rep.data} />
+            {rep.data.gaps.length ? (
+              <ul className="mt-2 space-y-1 text-sm" data-testid="q3-gaps">
+                {rep.data.gaps.map((g) => (
+                  <li key={String(g.from)}>{t("gapRow", { from: dateTime(String(g.from)), to: dateTime(String(g.to)), n: Number(g.minutes) })}</li>
+                ))}
+              </ul>
+            ) : null}
             {rep.data.series.some((s) => s.mkt) ? (
               <p className="mt-2 text-sm" data-testid="q3-mkt">{t("mkt")}: {rep.data.series.filter((s) => s.mkt).map((s) => <span key={String(s.code)} className="me-3"><span className="ltr">{String(s.code)}</span> <Temp v={(s.mkt as { mkt_c: string }).mkt_c} />{(s.mkt as { warning?: string }).warning ? <Badge tone="danger" className="ms-1">{t("mktAbove")}</Badge> : null}</span>)}</p>
             ) : null}

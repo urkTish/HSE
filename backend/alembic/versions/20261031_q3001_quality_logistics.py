@@ -3,7 +3,8 @@
 Products and CSV import batches, storage zones, monitoring points and readings, excursions and
 impact lines, mapping studies, check schedules, pest stations and visits, receipts and lines,
 stock snapshots and lines, FEFO checks, holds and lines, damage reports, returns, cycle counts,
-recalls and consignee contacts, shipments, trips, PODs and throughput. Sits on q0001 like q1001 /
+recalls and consignee contacts, shipments, trips, PODs and throughput, monitoring gaps and the
+per-zone day summaries of the minute model. Sits on q0001 like q1001 /
 q2001; the integrator re-chains them.
 
 Revision ID: q3001
@@ -296,6 +297,23 @@ def upgrade() -> None:
     sa.UniqueConstraint('project_id', 'map_no', name=op.f('uq_q_mapping_studies_project_id'))
     )
     op.create_index(op.f('ix_q_mapping_studies_project_id'), 'q_mapping_studies', ['project_id'], unique=False)
+    op.create_table('q_monitoring_gaps',
+    sa.Column('id', sa.Uuid(), nullable=False),
+    sa.Column('project_id', sa.Uuid(), nullable=False),
+    sa.Column('site_id', sa.Uuid(), nullable=False),
+    sa.Column('zone_id', sa.Uuid(), nullable=False),
+    sa.Column('started_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('ended_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('minutes', sa.Integer(), nullable=False),
+    sa.Column('notified_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
+    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], name=op.f('fk_q_monitoring_gaps_project_id_projects')),
+    sa.ForeignKeyConstraint(['site_id'], ['sites.id'], name=op.f('fk_q_monitoring_gaps_site_id_sites')),
+    sa.ForeignKeyConstraint(['zone_id'], ['q_storage_zones.zone_id'], name=op.f('fk_q_monitoring_gaps_zone_id_q_storage_zones')),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_q_monitoring_gaps')),
+    sa.UniqueConstraint('zone_id', 'started_at', name=op.f('uq_q_monitoring_gaps_zone_id'))
+    )
+    op.create_index(op.f('ix_q_monitoring_gaps_project_id'), 'q_monitoring_gaps', ['project_id'], unique=False)
     op.create_table('q_monitoring_points',
     sa.Column('project_id', sa.Uuid(), nullable=False),
     sa.Column('zone_id', sa.Uuid(), nullable=False),
@@ -368,6 +386,19 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id', name=op.f('pk_q_stock_lines'))
     )
     op.create_index('ix_q_stock_lines_snap_batch', 'q_stock_lines', ['snapshot_id', 'batch'], unique=False)
+    op.create_table('q_zone_days',
+    sa.Column('zone_id', sa.Uuid(), nullable=False),
+    sa.Column('day', sa.Date(), nullable=False),
+    sa.Column('project_id', sa.Uuid(), nullable=False),
+    sa.Column('period_minutes', sa.Integer(), nullable=False),
+    sa.Column('monitored_minutes', sa.Integer(), nullable=False),
+    sa.Column('out_minutes', sa.Integer(), nullable=False),
+    sa.Column('computed_at', sa.DateTime(timezone=True), nullable=False),
+    sa.ForeignKeyConstraint(['project_id'], ['projects.id'], name=op.f('fk_q_zone_days_project_id_projects')),
+    sa.ForeignKeyConstraint(['zone_id'], ['q_storage_zones.zone_id'], name=op.f('fk_q_zone_days_zone_id_q_storage_zones')),
+    sa.PrimaryKeyConstraint('zone_id', 'day', name=op.f('pk_q_zone_days'))
+    )
+    op.create_index(op.f('ix_q_zone_days_project_id'), 'q_zone_days', ['project_id'], unique=False)
     op.create_table('q_holds',
     sa.Column('project_id', sa.Uuid(), nullable=False),
     sa.Column('hold_no', sa.String(length=40), nullable=False),
@@ -413,7 +444,7 @@ def upgrade() -> None:
     op.create_table('q_readings',
     sa.Column('id', sa.BigInteger(), autoincrement=True, nullable=False),
     sa.Column('project_id', sa.Uuid(), nullable=False),
-    sa.Column('target_type', sa.Enum('point', 'trip', 'mapping_study', name='qreadingtarget', native_enum=False, length=40), nullable=False),
+    sa.Column('target_type', sa.Enum('point', 'trip', 'mapping_study', 'receipt', name='qreadingtarget', native_enum=False, length=40), nullable=False),
     sa.Column('target_id', sa.Uuid(), nullable=False),
     sa.Column('channel', sa.String(length=20), nullable=False),
     sa.Column('measured_at', sa.DateTime(timezone=True), nullable=False),
@@ -586,6 +617,7 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id', name=op.f('pk_q_receipts')),
     sa.UniqueConstraint('project_id', 'rcv_no', name=op.f('uq_q_receipts_project_id'))
     )
+    op.create_index('ix_q_receipts_project_decided', 'q_receipts', ['project_id', 'decided_at'], unique=False)
     op.create_index(op.f('ix_q_receipts_project_id'), 'q_receipts', ['project_id'], unique=False)
     op.create_table('q_returns',
     sa.Column('project_id', sa.Uuid(), nullable=False),
@@ -668,6 +700,7 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id', name=op.f('pk_q_trips')),
     sa.UniqueConstraint('project_id', 'trip_no', name=op.f('uq_q_trips_project_id'))
     )
+    op.create_index('ix_q_trips_project_delivered', 'q_trips', ['project_id', 'delivered_at'], unique=False)
     op.create_index(op.f('ix_q_trips_project_id'), 'q_trips', ['project_id'], unique=False)
     op.create_table('q_excursions',
     sa.Column('project_id', sa.Uuid(), nullable=False),
@@ -723,6 +756,7 @@ def upgrade() -> None:
     sa.UniqueConstraint('project_id', 'exc_no', name=op.f('uq_q_excursions_project_id'))
     )
     op.create_index(op.f('ix_q_excursions_project_id'), 'q_excursions', ['project_id'], unique=False)
+    op.create_index('ix_q_excursions_project_start', 'q_excursions', ['project_id', 'started_at'], unique=False)
     op.create_index('ix_q_excursions_zone_start', 'q_excursions', ['zone_id', 'started_at'], unique=False)
     op.create_table('q_recall_items',
     sa.Column('id', sa.Uuid(), nullable=False),
@@ -828,6 +862,7 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id', name=op.f('pk_q_shipments')),
     sa.UniqueConstraint('project_id', 'shipment_ref', name=op.f('uq_q_shipments_project_id'))
     )
+    op.create_index('ix_q_shipments_project_delivered', 'q_shipments', ['project_id', 'delivered_at'], unique=False)
     op.create_index(op.f('ix_q_shipments_project_id'), 'q_shipments', ['project_id'], unique=False)
     op.create_index(op.f('ix_q_shipments_trip_id'), 'q_shipments', ['trip_id'], unique=False)
     op.create_table('q_hold_lines',
@@ -862,6 +897,7 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id', name=op.f('pk_q_hold_lines'))
     )
     op.create_index(op.f('ix_q_hold_lines_hold_id'), 'q_hold_lines', ['hold_id'], unique=False)
+    op.create_index('ix_q_hold_lines_sku_batch', 'q_hold_lines', ['sku', 'batch'], unique=False)
     op.create_table('q_pods',
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('trip_id', sa.Uuid(), nullable=False),
@@ -933,10 +969,12 @@ def downgrade() -> None:
     op.drop_table('q_shipment_lines')
     op.drop_index(op.f('ix_q_pods_trip_id'), table_name='q_pods')
     op.drop_table('q_pods')
+    op.drop_index('ix_q_hold_lines_sku_batch', table_name='q_hold_lines')
     op.drop_index(op.f('ix_q_hold_lines_hold_id'), table_name='q_hold_lines')
     op.drop_table('q_hold_lines')
     op.drop_index(op.f('ix_q_shipments_trip_id'), table_name='q_shipments')
     op.drop_index(op.f('ix_q_shipments_project_id'), table_name='q_shipments')
+    op.drop_index('ix_q_shipments_project_delivered', table_name='q_shipments')
     op.drop_table('q_shipments')
     op.drop_index(op.f('ix_q_return_lines_return_id'), table_name='q_return_lines')
     op.drop_table('q_return_lines')
@@ -945,13 +983,16 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_q_recall_items_recall_id'), table_name='q_recall_items')
     op.drop_table('q_recall_items')
     op.drop_index('ix_q_excursions_zone_start', table_name='q_excursions')
+    op.drop_index('ix_q_excursions_project_start', table_name='q_excursions')
     op.drop_index(op.f('ix_q_excursions_project_id'), table_name='q_excursions')
     op.drop_table('q_excursions')
     op.drop_index(op.f('ix_q_trips_project_id'), table_name='q_trips')
+    op.drop_index('ix_q_trips_project_delivered', table_name='q_trips')
     op.drop_table('q_trips')
     op.drop_index(op.f('ix_q_returns_project_id'), table_name='q_returns')
     op.drop_table('q_returns')
     op.drop_index(op.f('ix_q_receipts_project_id'), table_name='q_receipts')
+    op.drop_index('ix_q_receipts_project_decided', table_name='q_receipts')
     op.drop_table('q_receipts')
     op.drop_index(op.f('ix_q_recalls_project_id'), table_name='q_recalls')
     op.drop_table('q_recalls')
@@ -964,6 +1005,8 @@ def downgrade() -> None:
     op.drop_table('q_readings')
     op.drop_index(op.f('ix_q_holds_project_id'), table_name='q_holds')
     op.drop_table('q_holds')
+    op.drop_index(op.f('ix_q_zone_days_project_id'), table_name='q_zone_days')
+    op.drop_table('q_zone_days')
     op.drop_index('ix_q_stock_lines_snap_batch', table_name='q_stock_lines')
     op.drop_table('q_stock_lines')
     op.drop_index(op.f('ix_q_pest_stations_project_id'), table_name='q_pest_stations')
@@ -971,6 +1014,8 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_q_monitoring_points_zone_id'), table_name='q_monitoring_points')
     op.drop_index(op.f('ix_q_monitoring_points_project_id'), table_name='q_monitoring_points')
     op.drop_table('q_monitoring_points')
+    op.drop_index(op.f('ix_q_monitoring_gaps_project_id'), table_name='q_monitoring_gaps')
+    op.drop_table('q_monitoring_gaps')
     op.drop_index(op.f('ix_q_mapping_studies_project_id'), table_name='q_mapping_studies')
     op.drop_table('q_mapping_studies')
     op.drop_index(op.f('ix_q_fefo_checks_project_id'), table_name='q_fefo_checks')

@@ -284,19 +284,24 @@ def start_real(
     t = trace(db, r)
     r.snapshot_id = t["snapshot_id"]
     uid = p.user.id if p else r.created_by_user_id
-    h = hold_svc.place(
-        db,
-        project,
-        site_id=r.site_id,
-        reason=QHoldReason.recall,
-        lines=[stock_svc._line_from_stock(x) for x in t["_lines"]],
-        placed_by=uid,
-        zone_level=not t["_lines"],
-        source=(RT, r.id, r.rcl_no),
-        p=p,
-        note="Recalled lines may only be rejected (Q-HLD-04).",
+    # nothing of the batches on hand at the site: there is no stock to hold (and no zone for a
+    # zone-level hold); the trace and the NCR still run
+    h = (
+        hold_svc.place(
+            db,
+            project,
+            site_id=r.site_id,
+            reason=QHoldReason.recall,
+            lines=[stock_svc._line_from_stock(x) for x in t["_lines"]],
+            placed_by=uid,
+            source=(RT, r.id, r.rcl_no),
+            p=p,
+            note="Recalled lines may only be rejected (Q-HLD-04).",
+        )
+        if t["_lines"]
+        else None
     )
-    r.hold_id = h.id
+    r.hold_id = h.id if h else None
     n = b.raise_ncr(
         db,
         project,
@@ -308,13 +313,17 @@ def start_real(
         title=f"Recall {r.rcl_no}: {', '.join(f'{i["sku"]} {i["batch"]}' for i in r.items)}"[:150],
     )
     r.ncr_id = n.id
-    h.ncr_id = n.id
+    if h is not None:
+        h.ncr_id = n.id
     if notify:
         users = b.holders(db, project, C.recall_manage, r.site_id)
         users |= set(b.resolvers(db, project, RT, "close", ctx(r), record_id=r.id))
-        users |= set(
-            b.resolvers(db, project, QRecordType.hold, "release", hold_svc.ctx(h), record_id=h.id)
-        )
+        if h is not None:
+            users |= set(
+                b.resolvers(
+                    db, project, QRecordType.hold, "release", hold_svc.ctx(h), record_id=h.id
+                )
+            )
         b.send(
             db,
             project,
@@ -322,8 +331,11 @@ def start_real(
             f"rcl:{r.id}:opened",
             f"Recall opened: {r.rcl_no}",
             f"تم فتح استدعاء: {r.rcl_no}",
-            body_en=f"Batches: {', '.join(i['batch'] for i in r.items)}. Stock on hand is held.",
-            body_ar="تم حجز المخزون الموجود من الدفعات المستدعاة.",
+            body_en=f"Batches: {', '.join(i['batch'] for i in r.items)}. "
+            + ("Stock on hand is held." if h else "No stock of them on hand."),
+            body_ar="تم حجز المخزون الموجود من الدفعات المستدعاة."
+            if h
+            else "لا يوجد مخزون منها في الموقع.",
             rt=RT,
             rid=r.id,
             path=f"/quality/recalls/{r.id}",

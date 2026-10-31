@@ -49856,7 +49856,7 @@ export interface components {
          * QHoldStatus
          * @enum {string}
          */
-        QHoldStatus: "on_hold" | "released" | "rejected" | "partly_released" | "closed";
+        QHoldStatus: "on_hold" | "released" | "rejected" | "partly_released" | "closed" | "voided";
         /** QHolderCreate */
         QHolderCreate: {
             /**
