@@ -112,12 +112,12 @@ def q_decide_calibration(
 
 
 @router.put(
-    "/quality/mte/{mte_id}/cal-override",
+    "/quality/mte/{mte_id}/manual-status",
     response_model=QMteRead,
     summary="Manual out of service / limited use (or clear)",
     responses=E,
 )
-def q_mte_override(
+def q_mte_manual_status(
     mte_id: uuid.UUID, body: QMteOverrideSet, user: CurrentUser, db: DB
 ) -> dict[str, Any]:
     return cal.set_override(db, user, mte_id, body.status, body.reason)

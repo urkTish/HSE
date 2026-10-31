@@ -16220,7 +16220,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/quality/mte/{mte_id}/cal-override": {
+    "/api/v1/quality/mte/{mte_id}/manual-status": {
         parameters: {
             query?: never;
             header?: never;
@@ -16229,7 +16229,7 @@ export interface paths {
         };
         get?: never;
         /** Manual out of service / limited use (or clear) */
-        put: operations["q_mte_override"];
+        put: operations["q_mte_manual_status"];
         post?: never;
         delete?: never;
         options?: never;
@@ -143551,7 +143551,7 @@ export interface operations {
             };
         };
     };
-    q_mte_override: {
+    q_mte_manual_status: {
         parameters: {
             query?: never;
             header?: never;

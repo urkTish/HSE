@@ -110,13 +110,13 @@ def test_AC21_as_left_out_of_tolerance_is_out_of_service(q2: None, api: Api, ids
     # a manual override wins; clearing it returns to the computed status
     o = ok(
         mazen.put(
-            f"{API}/quality/mte/{m['id']}/cal-override",
+            f"{API}/quality/mte/{m['id']}/manual-status",
             json={"status": "limited_use", "reason": "Use above 10 °C only"},
         )
     )
     assert o["cal_status"] == "limited_use"
     assert (
-        ok(mazen.put(f"{API}/quality/mte/{m['id']}/cal-override", json={"status": None}))[
+        ok(mazen.put(f"{API}/quality/mte/{m['id']}/manual-status", json={"status": None}))[
             "cal_status"
         ]
         == "out_of_service"

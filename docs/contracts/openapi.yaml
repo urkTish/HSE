@@ -82413,13 +82413,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /api/v1/quality/mte/{mte_id}/cal-override:
+  /api/v1/quality/mte/{mte_id}/manual-status:
     put:
       tags:
       - quality
       - quality
       summary: Manual out of service / limited use (or clear)
-      operationId: q_mte_override
+      operationId: q_mte_manual_status
       security:
       - sessionCookie: []
       - bearerAuth: []
