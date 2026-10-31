@@ -19,7 +19,6 @@ import { Link } from "@/i18n/navigation";
 import { api, unwrap } from "@/lib/api/client";
 import { useQMte } from "@/lib/api/quality/q0";
 import { useQ3Zone, useQ3ZoneReport, useQ3Zones } from "@/lib/api/quality/q3";
-import { useFormatters } from "@/lib/use-formatters";
 import { ReasonDialog, useBilingual, useQCaps, useQLabels, useRun } from "@/components/quality/q0/common";
 import { LIVE_TONE, Q3Gate, Section, Temp, clean, fromLocalInput, nowLocal, useForm, type Project, type S } from "./common";
 

@@ -4,8 +4,6 @@ import { openQ, pickFirst, QU } from "./q0-helpers";
 // Quality Q3 logistics (spec 8-quality Part D) on the RUH-CCH seed (Appendix A.5 / A.6, D-358).
 // ANIA-EXP is Construction: the Q3 items are hidden and the pages show the other-profile notice (Q-NAV-01).
 
-const SAAD = "saad.anazi@example.com";
-
 test.describe("Quality Q3 logistics", () => {
   test("construction project hides the logistics screens", async ({ page }) => {
     await openQ(page, QU.hatem, "/quality/storage");
@@ -42,19 +40,23 @@ test.describe("Quality Q3 logistics", () => {
   });
 
   test("holds: HLD-0112 lines, blockers and the WMS export (Q-HLD)", async ({ page }) => {
-    await openQ(page, SAAD, "/quality/holds", { project: "RUH-CCH" });
+    await openQ(page, QU.reem, "/quality/holds", { project: "RUH-CCH" });
     const row = page.locator('[data-testid="q3-hold-row"][data-no="HLD-RUH-CCH-2026-0112"]');
     await expect(row).toBeVisible();
+    await expect(page.getByTestId("q3-hold-export")).toBeVisible();
     await row.getByRole("link").first().click();
     await expect(page.getByTestId("q3-hold-detail")).toBeVisible();
     await expect(page.getByTestId("q3-hold-line")).toHaveCount(14);
-    await expect(page.getByTestId("q3-hold-export")).toBeVisible();
+    // NCR-0034's disposition is not approved in the Q0 seed, so release is blocked (Q-HLD-04, D-358).
+    await expect(page.getByTestId("q3-hold-blockers")).toContainText("NCR-RUH-CCH-2026-0034");
   });
 
   test("stock: September KPIs and the expired batch on the expiry tab (K-160…K-168, Q-STK-02)", async ({ page }) => {
     await openQ(page, QU.reem, "/quality/stock", { project: "RUH-CCH" });
+    await page.getByTestId("q3-stock-tab-metrics").click();
     await expect(page.getByTestId("q3-metrics")).toBeVisible();
-    await expect(page.getByTestId("k161")).toContainText("0.71");
+    // The month is computed from about 70,000 readings on the minute grid (D-351): allow for it.
+    await expect(page.getByTestId("k161")).toContainText("0.71", { timeout: 30_000 });
     await expect(page.getByTestId("k163")).toContainText("93.2");
     await page.getByTestId("q3-stock-tab-expiry").click();
     const expired = page.locator('[data-testid="q3-expiry-row"][data-batch="NDC-L-2633"]');
@@ -92,6 +94,9 @@ test.describe("Quality Q3 logistics", () => {
     await page.getByTestId("ln-batch").fill("E2E-B1");
     await page.getByTestId("ln-expiry").fill("2027-12-31");
     await page.getByTestId("ln-qty").fill("10");
+    // Frozen and chilled lines need the product temperature with a registered probe (Q-RCV-07).
+    await page.getByTestId("ln-temp").fill("-19.5");
+    await pickFirst(page, "ln-mte");
     await page.getByTestId("ln-save").click();
     await expect(page.getByTestId("q3-line")).toHaveCount(1);
   });

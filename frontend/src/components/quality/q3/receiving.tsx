@@ -178,7 +178,6 @@ export function ReceiptDetailPage({ id }: { id: string }) {
 
 function ReceiptDetail({ project, id }: { project: Project; id: string }) {
   const t = useTranslations("quality.logistics.rcv");
-  const { l } = useQLabels();
   const caps = useQCaps(project.id);
   const { dateTime } = useFormatters(project.id);
   const q = useQ3Receipt(id);

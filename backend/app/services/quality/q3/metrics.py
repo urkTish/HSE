@@ -190,10 +190,16 @@ def month(db: Session, project: Project, year: int, mon: int) -> dict[str, Any]:
             )
         )
     )
+    by_ship: dict[uuid.UUID, list[QShipmentLine]] = {}
+    if ships:
+        for sl in db.scalars(
+            select(QShipmentLine).where(QShipmentLine.shipment_id.in_([s.id for s in ships]))
+        ):
+            by_ship.setdefault(sl.shipment_id, []).append(sl)
     on_time = in_full = both = 0
     for s in ships:
         ot = s.delivered_at <= s.promised_at + window  # type: ignore[operator]
-        lines = list(db.scalars(select(QShipmentLine).where(QShipmentLine.shipment_id == s.id)))
+        lines = by_ship.get(s.id, [])
         inf = all(
             ln.delivered_qty is not None and ln.delivered_qty >= ln.ordered_qty for ln in lines
         )
