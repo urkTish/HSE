@@ -1074,3 +1074,281 @@ States: Draft مسودة (255) → Submitted مُقدَّم (255) → Approved �
 31. **AC-Q2-31** (Q-WLD-06) **Given** J07 rejected after R1 **When** R2 is recorded without a quality engineer comment **Then** 422; rejected after R2 **Then** Cut Out and an NCR opens.
 32. **AC-Q2-32** (Q-PRF-04) **Given** RUH-CCH (logistics) **Then** creating a MAR, pour or weld → 409 `PROFILE_INACTIVE`; creating an `ATP-SWAB` test request and an M&TE item succeeds.
 33. **AC-Q2-33** (rule 41) **Given** the Arabic UI **Then** every Q2 label, list value, status, label print and PDF is in Arabic; joint ids, heat numbers and values stay LTR.
+
+---
+
+# Part D — Q3: logistics — receiving, storage and cold chain, stock quality, recalls, transport
+
+Profile: logistics (temperature-controlled storage, dry storage and transportation). Every write in this part needs the project profile `logistics` (Q-PRF-04 for leftovers). In a 3PL the goods usually belong to a **customer (depositor)**; the warehouse proves that it kept them right and the owner decides on doubtful product where its contract says so (Q-EXC-09).
+
+## D.1 Q3 settings, storage classes, products and imports
+
+### D.1.1 Settings (registry keys)
+| Key | AR label | Type | Default | Allowed |
+|---|---|---|---|---|
+| `reading_gap_factor` | معامل فجوة القراءات | decimal | 2.0 | 1.5–5.0 |
+| `monitoring_gap_alert_minutes` | تنبيه انقطاع المراقبة | minutes | 60 | 15–1,440 |
+| `manual_reading_max_age_hours` | أقدم قراءة يدوية مسموحة | hours | 72 | 1–168 |
+| `excursion_auto_hold` | حجز تلقائي عند الانحراف | bool | true | — |
+| `pharma_impact_all_excursions` | تقييم كل انحرافات الأدوية | bool | true | — |
+| `min_remaining_shelf_life_pct` | الحد الأدنى للصلاحية المتبقية | % | 60 ASSUMPTION | 10–100 (product or customer value wins) |
+| `near_expiry_days` / `near_expiry_pct` | قرب انتهاء الصلاحية | days / % of shelf life | 30 / 20 | 1–365 / 1–90 |
+| `dock_dwell_max_minutes` | أقصى مدة على الرصيف | minutes | 30 ASSUMPTION | 5–180 |
+| `hold_ageing_days` | تنبيه تقادم الحجز | days | 7 | 1–60 |
+| `fefo_checks_per_week` | عدد فحوص FEFO الأسبوعية | int | 20 | 0–500 |
+| `cycle_count_tolerance_units` | تفاوت الجرد | units | 0 | 0–100 |
+| `recall_trace_target_hours` | زمن التتبع المستهدف | hours | 4 ASSUMPTION | 1–48 |
+| `recall_effectiveness_target_pct` | فعالية الاستدعاء المستهدفة | % | 100.0 | 90.0–100.0 |
+| `mock_recall_months` | دورية الاستدعاء التجريبي | months | 12 ASSUMPTION | 3–24 |
+| `mapping_validity_months` | صلاحية دراسة التوزيع الحراري | months | 24 ASSUMPTION `[VERIFY]` WHO supplement / SFDA | 6–60 |
+| `mapping_min_hours` / `mapping_max_interval_minutes` / `mapping_min_loggers` | حدود دراسة التوزيع | h / min / int | 72 / 5 / 9 ASSUMPTION `[VERIFY]` | 24–336 / 1–15 / 3–200 |
+| `otif_window_minutes` | نافذة التسليم في الموعد | minutes | 60 | 0–1,440 |
+| `transit_data_due_hours` | مهلة بيانات الرحلة | hours | 48 | 4–168 |
+| `import_max_rows` | الحد الأقصى للصفوف | int | 200,000 | 1,000–1,000,000 |
+
+### D.1.2 Storage classes (list SCL; defaults copied into each storage zone and editable there)
+| Code | EN / AR | Range °C (min / max) | Alarm delay (min) | Deviation bands d1 / d2 (°C) | Duration bands t1 / t2 (min) | Humidity |
+|---|---|---|---|---|---|---|
+| `frozen` | Frozen / مجمد | −30 / −18 | 30 (defrost) | 3 / 6 | 120 / 480 | — |
+| `chilled` | Chilled / مبرد | 0 / 4 | 15 | 2 / 5 | 60 / 240 | — |
+| `pharma_2_8` | Medicines 2–8 °C / أدوية 2–8 | 2 / 8 | 10 | 1 / 3 | 30 / 120 | — |
+| `ambient_controlled` | Controlled ambient 15–25 °C / محيط مضبوط | 15 / 25 | 30 | 3 / 7 | 240 / 1,440 | ≤ 65 % ASSUMPTION |
+| `dry` | Dry ambient / جاف | — / 30 | 60 | 3 / 7 | 480 / 2,880 | ≤ 65 % ASSUMPTION |
+| `dock_controlled` | Controlled dock / رصيف مبرد | 8 / 15 | 30 | 3 / 6 | 60 / 240 | — |
+
+All defaults are ASSUMPTION `[VERIFY]` against the goods owner's requirements, SFDA rules and the product labels; they are data.
+
+### D.1.3 Products — `q_products`
+sku (unique per project and owner), owner customer (`q_customers` kind depositor), description EN / AR, GTIN (optional, 8 / 12 / 13 / 14 digits with a valid check digit), storage class (SCL), range override, shelf_life_days, min_remaining_shelf_life_pct (optional), dated (true = FEFO by expiry; false = FIFO by receipt date), active. Entered or imported (Q-IMP).
+
+### D.1.4 Imports (Q-IMP) — `q_import_batches`
+Kinds: `readings` (logger files), `stock_snapshot`, `shipments`, `products`, `cycle_count`. Each batch: kind, import profile (saved column mapping: column names, date format, time zone of the file (`Asia/Riyadh` or UTC or an offset), unit °C / °F, decimal separator, logger serial column), file (attachment `q_import_file`, SHA-256), target (monitoring point, trip, mapping study, receipt), rows read / accepted / rejected, error report, imported_by / at, status `imported` · `refused` · `voided`.
+- **Q-IMP-01.** The file is stored unchanged with its SHA-256; the same file again for the same target → 409 `IMPORT_DUPLICATE_FILE`.
+- **Q-IMP-02.** Readings files: rows with a bad time, a value outside −80…+80 °C or 0…100 % RH, or a time already stored for the target are rejected row by row (listed with row no and reason); valid rows are stored. Snapshot, shipment and product files are all-or-nothing: any row error refuses the file (`IMPORT_ROWS_INVALID`, with the error list).
+- **Q-IMP-03.** °F is converted to °C (°C = (°F − 32) × 5 ÷ 9, kept to 2 dp); times are converted to UTC from the profile's time zone.
+- **Q-IMP-04.** Files over `import_max_rows` rows are refused (`IMPORT_TOO_LARGE`).
+- **Q-IMP-05.** A batch may be voided by 244 within 24 h of import with a reason ≥ 20 chars (e.g. wrong point mapped); its rows leave every calculation and derived excursions are recomputed. Later, imported data are never changed (Q-STO-07).
+- **Q-IMP-06.** Nothing in Phase 8 writes back to a WMS or TMS; holds are exported for the WMS (Q-HLD-08).
+
+## D.2 Receiving inspection — فحص الاستلام (Q-RCV)
+
+`q_receipts`:
+| Field | AR label | Type | Req | Validation | Example | PDPL |
+|---|---|---|---|---|---|---|
+| rcv_no | رقم الاستلام | string | sys | Q-NUM | RCV-RUH-CCH-2026-01877 | none |
+| site_id / dock_zone_id | الموقع / الرصيف | FK ×2 | Y | dock zone of the site | S-DC1 / Z-DOCK | none |
+| customer_id / supplier_id / carrier_id | المالك / المورد / الناقل | FK ×3 | Y / N / N | Q-SHR-02 | Gulf Frozen Foods / — / CoolRoad | none |
+| po_ref / asn_ref | أمر الشراء / إشعار الشحن | string(40) ×2 | N | — | PO-77812 / ASN-GFF-26-0914 | none |
+| vehicle_plate / reefer_display_c | لوحة المركبة / عرض حرارة الوحدة | string(20) / decimal | N | — | 4521 RJA / −19.0 | none |
+| seal_expected / seal_actual / seal_intact | الختم | string ×2 / bool | N / Y / Y | mismatch flagged (Q-RCV-06) | 0098812 / 0098812 / true | none |
+| arrived_at / unload_start / unload_end | الوصول / بدء وانتهاء التفريغ | timestamptz ×3 | Y / Y / Y | order | 06:10 / 06:25 / 06:48 | none |
+| vehicle_check | فحص المركبة | checklist response (`receiving`) | Y | template QRCV | — | none |
+| transit_data | بيانات النقل | import batch | N | logger file of the inbound trip | — | none |
+| lines | البنود | list `q_receipt_lines` | Y | ≥ 1 | 6 lines | none |
+| status | الحالة | enum | Y | Draft مسودة → Inspected تم الفحص → Decided مقرر; Cancelled ملغى | decided | none |
+
+`q_receipt_lines`: product (sku), batch / lot, expiry date, production date, qty_expected (ASN), qty_received, unit, condition (`good` · `damaged` · `wet` · `crushed` · `leaking` · `pest_signs`), labels_ok (Arabic label present `[VERIFY]` SFDA labelling rules; readable barcode), product temperature (°C) with M&TE, remaining_shelf_life_pct (sys), sample inspected (count; hint from the seeded ISO 2859-1 table, general level II, single sampling `[VERIFY]`), photos, proposed decision (sys), decision (list RD), reason, NCR / claim link, hold link.
+**RD — line decisions:** `accept` قبول · `accept_with_deviation` قبول مع انحراف · `quarantine` عزل · `reject` رفض.
+
+- **Q-RCV-01.** The system proposes a line decision from criteria: `arrival_temperature` by storage class (seeded: frozen accept ≤ −18.0, deviation −18.0 < t ≤ −15.0, reject > −15.0; chilled accept −1.0…5.0, deviation 5.0 < t ≤ 7.0, reject > 7.0 or < −1.0; pharma_2_8 accept 2.0…8.0, otherwise quarantine; all ASSUMPTION `[VERIFY]`), `remaining_shelf_life` (≥ the product's, else the customer's, else `min_remaining_shelf_life_pct` → accept, else deviation), condition (damaged / leaking / pest_signs → quarantine) and labels (not ok → deviation). The worst proposal wins.
+- **Q-RCV-02.** The user records the final decision. A decision better than the proposal needs a sign-off of `receipt.deviation` with a reason ≥ 20 chars (`DECISION_BETTER_THAN_CRITERIA`).
+- **Q-RCV-03.** `accept_with_deviation` needs RPM `receipt.deviation`; when the line's owner has `owner_release_approval`, the owner's written approval file is also required (`OWNER_DECISION_REQUIRED`).
+- **Q-RCV-04.** `quarantine` creates a hold (reason `receiving`) with the line, automatically.
+- **Q-RCV-05.** `reject` needs RPM `receipt.reject` and either an NCR (source `receipt`, class major) or a supplier / carrier claim no. (`REJECT_NEEDS_NCR_OR_CLAIM`).
+- **Q-RCV-06.** A seal mismatch or broken seal flags the receipt; any acceptance then needs RPM `receipt.deviation`.
+- **Q-RCV-07.** Lines of storage class frozen, chilled, pharma_2_8 or dock_controlled need a product temperature with an M&TE (`MTE_REQUIRED`; Q-SHR-04 applies).
+- **Q-RCV-08.** Dock dwell = unload_end − unload_start for temperature-controlled receipts; over `dock_dwell_max_minutes` gives warning `DOCK_DWELL_LONG` (counted in K-160 chip).
+- **Q-RCV-09.** Quantity differences (received vs ASN) are recorded as a quantity deviation note; they are not a quality rejection and do not count in K-160.
+- **Worked example QX14.** RCV-RUH-CCH-2026-01877, Gulf Frozen Foods, frozen chicken line: product −16.5 °C → deviation band; received 2026-09-14, expiry 2026-12-20, shelf life 180 days → remaining 97 ÷ 180 = **53.9 %** < 60 → deviation. Proposed **accept_with_deviation**; Reem signs `receipt.deviation` with the owner's approval file attached. A chilled yoghurt line at **+11.0 °C** (RCV-…-01902) → proposed **reject**; rejected with NCR-RUH-CCH-2026-0031.
+
+## D.3 Storage zones, monitoring points and readings (Q-STO)
+
+`q_storage_zones` (one per Phase 0 zone used for storage; PK = zone_id): storage_class, temp_min / temp_max / setpoint, humidity_min / humidity_max, alarm_delay_minutes, bands d1 / d2 / t1 / t2, expected interval_minutes, mapping status (sys: `mapped` until date · `not_mapped` · `remap_required`), active.
+`q_monitoring_points`: code, zone, position note (from mapping: hot spot, cold spot, general), interval_minutes, logger assignments (list {mte_id, from, to}), active.
+`q_readings`: target (point, trip or mapping study), measured_at (UTC), temperature_c, humidity_pct, source (`manual` · `import`), import batch, entered_by, M&TE (manual), annotation {text, by, at}, flag `probe_fault`. Unique (target, measured_at).
+
+- **Q-STO-01.** A storage zone takes its class defaults (§D.1.2); changing range or bands is audited and sets `remap_required` when the range changes (Q-MAP-06).
+- **Q-STO-02.** Manual readings (267) carry the probe's M&TE (usage recorded, Q-SHR-04). measured_at > now + 5 min → `CLOCK_SKEW`; older than `manual_reading_max_age_hours` → `READING_TOO_OLD`.
+- **Q-STO-03.** A logger assigned to a point records usage for the assignment period; assigning an M&TE that is not `calibrated` or `due_soon` warns or blocks per `mte_use_policy`; Q-CAL-07 applies.
+- **Q-STO-04.** **Coverage and gaps:** a reading covers [measured_at, measured_at + interval). Two consecutive readings of a point more than `reading_gap_factor` × interval apart leave the minutes between unmonitored. A zone minute is *monitored* when ≥ 1 active point of the zone covers it. A gap ≥ `monitoring_gap_alert_minutes` in a zone opens a "monitoring gap" entry and alerts 266 holders. Coverage % = monitored ÷ period minutes × 100.
+- **Q-STO-05.** **Time out of range:** a zone minute is *out* when any point covering it is out of range (value < min or > max; the limits themselves are in range). TOR minutes = Σ out minutes, including transients (Q-EXC-03).
+- **Q-STO-06.** The zone page shows the profile chart (C48): readings per point against the range, excursions shaded, gaps marked.
+- **Q-STO-07.** Readings are never edited or deleted (only Q-IMP-05 batch void). Corrections are annotations; a `probe_fault` flag is set only through an excursion dismissal (Q-EXC-11) and keeps the value visible.
+
+## D.4 Temperature excursions and product impact — الانحرافات الحرارية (Q-EXC)
+
+`q_excursions`: exc_no, kind (`storage` · `transit` · `humidity`), zone or trip, started_at, ended_at (null = ongoing), duration_min, peak value and point, max_deviation (°C beyond the nearest limit), degree_minutes, severity (list ES), data_gap (bool), cause (`door_open` · `defrost` · `power_failure` · `equipment_failure` · `overload` · `loading_delay` · `probe_fault` · `unknown` · `other`), NCR link, hold link, status.
+`q_excursion_impacts`: excursion, lines (owner, sku, batch, qty, location — from the hold), per line: stability evidence (file) or justification, decision (`release` · `extend_hold` · `destroy` · `return_to_owner`), owner decision file / owner contact name / date (when required).
+**ES — severity:** `minor` طفيف · `major` جوهري · `critical` حرج. **States:** Detected مُكتشف → Under Assessment قيد التقييم (268; cause entered) → Assessed مُقيَّم (268 + RPM `excursion.impact`) → Closed مغلق (System, when its hold lines are final and its NCR, if any, is Closed); Detected / Under Assessment → Dismissed مستبعد (268 + RPM, Q-EXC-11).
+
+- **Q-EXC-01.** **Detection** runs after every import and manual reading, per zone (storage) or trip (transit): a run of out minutes (Q-STO-05) starts at the first out reading's time and ends at the time of the first later reading at which every covering point is in range; duration = end − start. A run with no later in-range reading is ongoing. Runs separated by fewer than `alarm_delay_minutes` of in-range minutes are one excursion.
+- **Q-EXC-02.** **Severity** = the worse of: deviation level (max_deviation ≤ d1 → minor, ≤ d2 → major, > d2 → critical) and duration level (duration ≤ t1 → minor, ≤ t2 → major, > t2 → critical). degree_minutes = Σ over out readings of (deviation × that reading's covered minutes). A data gap inside the run counts as out time (conservative) and sets `data_gap`.
+- **Q-EXC-03.** A run shorter than `alarm_delay_minutes` is a **transient**: stored, shown on the chart, counted in TOR, not an excursion.
+- **Q-EXC-04.** A major or critical excursion alerts within 60 s of detection the 268 holders of the site, the WAREHOUSE_MGR position and, for `pharma_2_8`, RESP_PHARMACIST (in-app + email + push). An ongoing excursion found by a manual reading alerts the same way at once.
+- **Q-EXC-05.** Major and critical excursions open an NCR (source `excursion`, class = severity, category `temperature`) and, with `excursion_auto_hold`, a hold (reason `excursion`) with the stock lines of the zone in the latest stock snapshot taken before started_at; without a snapshot, a zone-level hold that the warehouse completes with lines (Q-HLD-02).
+- **Q-EXC-06.** Impact assessment is required for major and critical excursions, and for any excursion in a `pharma_2_8` zone when `pharma_impact_all_excursions`; a minor excursion elsewhere may be closed with a "no product impact" note.
+- **Q-EXC-07.** The assessment covers every line of the linked hold (`IMPACT_LINES_INCOMPLETE`).
+- **Q-EXC-08.** A `release` decision needs stability evidence (the owner's or manufacturer's allowed excursion, e.g. a degree-minute or time budget) or a justification ≥ 50 chars (`IMPACT_EVIDENCE_REQUIRED`).
+- **Q-EXC-09.** **Goods owner's decision:** when the line's owner (`q_customers.owner_release_approval`) requires it, `release` and `destroy` need the owner's written decision file (`OWNER_DECISION_REQUIRED`). The warehouse's responsible person still signs the assessment.
+- **Q-EXC-10.** An approved assessment proposes the decisions on the hold lines; the hold release itself is the `hold.release` step (Q-HLD-04), which the same person may sign when they resolve for both.
+- **Q-EXC-11.** **Dismissal** (probe fault) needs evidence that the instrument was faulty (a check or calibration of the M&TE showing the error, or a second instrument's readings for the same time) and RPM `excursion.impact`; the readings get the `probe_fault` flag; the excursion leaves K-161 / K-162 (listed separately) and the M&TE is set out_of_service.
+- **Q-EXC-12.** **Mean kinetic temperature** (for `ambient_controlled` and `pharma_2_8` points, monthly): MKT = (ΔH/R) ÷ (−ln(Σ e^(−ΔH/(R·Tᵢ)) ÷ n)) − 273.15, with ΔH/R = 10,000 K (ΔH = 83.144 kJ/mol) and Tᵢ in kelvin from hourly means `[VERIFY]` USP <1079.2>. MKT above the range max gives warning `MKT_ABOVE_RANGE`.
+- **Worked examples. QX12** (Z-CHL1, chilled 0–4 °C, 15-min readings, 2026-09-17): 08:00 3.6 · 08:15 4.4 · 08:30 5.1 · 08:45 5.6 · 09:00 4.8 · 09:15 3.9 → run 08:15–09:15, duration **60 min** (≥ 15 alarm delay → excursion), max deviation **1.6 °C** (≤ 2 → minor), duration ≤ 60 → minor → **minor**; degree-minutes (0.4 + 1.1 + 1.6 + 0.8) × 15 = **58.5 °C·min**. **QX13** (Z-FRZ1, frozen, 2026-09-22): defrost failure, out from 02:00 to 05:30 (**210 min** > t1 120 → major), peak −13.8 °C → deviation 4.2 (> 3, ≤ 6 → major) → **major**: NCR-RUH-CCH-2026-0034 and HLD-RUH-CCH-2026-0112 with 14 lines from the 2026-09-21 23:00 snapshot. **QX15 MKT** hourly means 21.5, 22.0, 23.0, 24.5, 26.0, 27.5, 24.0 °C → arithmetic mean 24.07, **MKT 24.29 °C** (≤ 25 → no warning).
+
+## D.5 Temperature mapping — دراسة التوزيع الحراري (Q-MAP)
+
+`q_mapping_studies`: map_no, zone, purpose (`initial` · `periodic` · `after_change`), season (`summer` · `winter` · `n_a`), load state (`empty` · `loaded`), planned / actual start and end, interval_minutes, loggers (list {mte_id, position code, description: height and grid}), test windows (list {kind `door_open` · `power_off` · `other`, from, to}, excluded from pass / fail but reported), lead (user; competence `MAPPING-LEAD` through `COMPETENCE`), results (sys: per logger min / max / mean, % time in range; hot spot and cold spot; zone min / max), pass (sys), recommended monitoring positions, report file, status Draft مسودة → Data Loaded تم تحميل البيانات → Evaluated مُقيَّمة → Approved معتمدة (266 + RPM `mapping_study.approve`) / Rejected مرفوضة; valid_until = add_months(approval date, `mapping_validity_months`) − 1 day.
+
+- **Q-MAP-01.** Every logger must be `calibrated` (or `due_soon`) on both the start and end dates (`MAPPING_LOGGER_NOT_CALIBRATED`), with Q-CAL-07 range coverage.
+- **Q-MAP-02.** Duration ≥ `mapping_min_hours`, interval ≤ `mapping_max_interval_minutes`, loggers ≥ `mapping_min_loggers` (`MAPPING_DESIGN_INSUFFICIENT`, listing which).
+- **Q-MAP-03.** Readings are imported with the study as target; evaluation computes results; pass ⇔ every logger stays within the zone range outside the test windows.
+- **Q-MAP-04.** On approval, the zone becomes `mapped` until valid_until; the hot and cold spots are proposed as monitoring point positions.
+- **Q-MAP-05.** Alerts at 60 / 30 / 0 days before valid_until; a zone `not_mapped` shows on the zone page and in the K-162 chip; a `pharma_2_8` zone not mapped gives a red banner on the Quality home.
+- **Q-MAP-06.** A change of range, a layout change note, or an HVAC change note on the zone sets `remap_required` until a study of purpose `after_change` is approved.
+
+## D.6 Hygiene, cleaning and pest control — النظافة ومكافحة الآفات (Q-HYG)
+
+`q_check_schedules`: site or zone, template (quality kind, `quality_type` `hygiene` or `pest_visit`), frequency (`daily` · `weekly` · `fortnightly` · `monthly`), weekday (weekly), start date, assignee role, active. Due checks are computed on read (as DECISIONS #157): a period is *done* when a response of that template for that zone has completed_date in the period.
+`q_pest_stations`: code (unique per site), zone, type (`rodent_bait` · `rodent_trap` · `insect_light_trap` · `glue_board` · `pheromone_trap` · `bird_deterrent`), location note, provider (supplier `pest_control`), active.
+`q_pest_visits`: visit_no, provider, visited_at, technician name (personal), chemicals (list {product, registration no `[VERIFY]` MEWA / SFDA pesticide registration, quantity}), station results (list {station, activity `none` · `low` · `medium` · `high`, pest type `rodent` · `cockroach` · `stored_product_insect` · `flying_insect` · `bird` · `other`, bait consumed %, action}), checklist response (optional), report file.
+
+- **Q-HYG-01.** A due check not done by the end of its period is overdue (alerts the assignee role and 266 holders the next morning); counted in K-168.
+- **Q-HYG-02.** A hygiene checklist critical failure (e.g. pest evidence, product contamination, chemicals stored with food) proposes an NCR (source `hygiene_pest`) and a hold of the affected stock.
+- **Q-HYG-03.** A pest station with activity on 2 consecutive visits, any `high` activity, or any activity in a zone of class chilled, frozen or pharma_2_8 proposes a quality alert and an NCR (source `hygiene_pest`); the station is marked "activity trend".
+- **Q-HYG-04.** Every station must appear in each visit's results; a station missing from a visit is listed "not serviced" (`STATION_NOT_SERVICED` warning).
+
+## D.7 Stock quality — جودة المخزون
+
+### D.7.1 Stock snapshots and the near-expiry list (Q-STK)
+`q_stock_snapshots` (imported, Q-IMP): site, as_of, rows in `q_stock_lines` (owner, sku, batch, expiry, receipt date, location, zone code, qty, unit, WMS status).
+- **Q-STK-01.** The latest snapshot before a time T is "the stock at T" for excursion holds (Q-EXC-05), FEFO checks (Q-STK-04) and recall traces (Q-RCL-02). The screen always shows the snapshot's as_of; a snapshot older than 24 h when used gives warning `SNAPSHOT_OLD`.
+- **Q-STK-02.** **Near-expiry list** (latest snapshot): `expired` (expiry < today) and `near_expiry` (expiry − today ≤ `near_expiry_days`, or remaining ≤ `near_expiry_pct` of the product's shelf life); per owner, exportable. An expired line not on a hold alerts 269 holders daily and offers "Place hold" (reason `expiry`).
+- **Q-STK-03.** `q_throughput` (per site and month: units received, units dispatched, deliveries, shipments; entered or derived from imports) is the denominator for damage and complaint rates (§E.4).
+
+### D.7.2 FEFO / FIFO checks — فحص الأقدم انتهاءً أولاً
+`q_fefo_checks`: check_no, checked_at, order / pick ref, product, picked batch + expiry (or receipt date when not dated), location, eligible earliest (sys), result (`compliant` · `non_compliant` · `exception`), exception reason (`customer_allocation` · `batch_reserved` · `consignee_min_shelf_life` · `other`, note).
+- **Q-STK-04.** Eligible earliest = among the latest snapshot's lines of the same owner and product, not on a Q3 hold, not expired, in zones that are not quarantine or returns, the earliest expiry (dated products) or receipt date (not dated). Compliant ⇔ picked expiry (or receipt date) ≤ eligible earliest; ties are compliant.
+- **Q-STK-05.** An `exception` needs a reason and counts as compliant in K-166 when the reason is not `other`; `other` needs a note ≥ 20 chars and the 266 holder's confirmation.
+- **Q-STK-06.** Fewer than `fefo_checks_per_week` checks in a week on a site appears on the Quality home (K-166 chip).
+
+### D.7.3 Holds and quarantine — الحجز والعزل (Q-HLD)
+`q_holds`: hold_no, site, reason (`excursion` · `receiving` · `damage` · `expiry` · `recall` · `pest_hygiene` · `owner_request` · `contamination` · `other`), source link, zone-level flag, segregation (`moved_to_quarantine` with location · `tagged_in_place`), segregation photo, WMS hold confirmed (bool, time), placed_by / placed_at, status. `q_hold_lines`: owner, product, batch, qty, unit, location, line status `on_hold` محجوز · `released` مُفرج عنه · `rejected` مرفوض, final outcome (`destroyed` أُتلف · `returned_to_owner` أعيد للمالك · `returned_to_supplier` أعيد للمورد), evidence.
+Hold status (derived): On Hold محجوز (any line on hold) → Released مُفرج عنه (all lines released) · Rejected مرفوض (all lines rejected) · Partly Released مُفرج جزئياً (mix, none on hold) → Closed مغلق (every rejected line has its final outcome evidenced).
+
+- **Q-HLD-01.** Holds are placed by 270 holders (Warehouse QC included) or automatically: receipt quarantine (Q-RCV-04), excursion (Q-EXC-05), recall (Q-RCL-03), hygiene (Q-HYG-02).
+- **Q-HLD-02.** A zone-level hold must get its lines within 24 h (alert to the placer and 266 holders); until then the whole zone shows "on hold" on the Quality home.
+- **Q-HLD-03.** Segregation is recorded with a photo within 4 h of placing (alert otherwise).
+- **Q-HLD-04.** **Release and reject** by line need RPM `hold.release` / `hold.reject` and are refused (`HOLD_RELEASE_BLOCKED`) while: a linked NCR exists whose disposition is not Approved; a linked excursion is not Assessed; or the batch is in an open recall (recalled lines may only be rejected).
+- **Q-HLD-05.** Release of a line owned by a customer with `owner_release_approval` needs the owner's decision file (Q-EXC-09 logic).
+- **Q-HLD-06.** A rejected line closes only with its final outcome and evidence (destruction certificate, return note).
+- **Q-HLD-07.** Holds on hold longer than `hold_ageing_days` alert the WAREHOUSE_MGR position weekly.
+- **Q-HLD-08.** The hold list exports to CSV in a WMS-friendly layout (owner, sku, batch, location, qty, hold no, status); "WMS hold confirmed" is ticked by the user after the WMS update.
+
+### D.7.4 Damage reports, returns and cycle counts
+- `q_damage_reports`: dmg_no, stage (`receiving` · `storage` · `picking` · `loading` · `delivery`), product, batch, qty, cause (`forklift` · `stacking_crush` · `packaging_failure` · `temperature` · `water` · `pest` · `other`), photos, hold link, owner notified (time). **Q-STK-07.** A damage report creates a hold (reason `damage`) unless the line is destroyed on the spot with photo evidence and owner notification; units damaged feed K-164.
+- `q_returns` / `q_return_lines`: ret_no, customer, RMA ref, received_at, reason, lines {product, batch, qty, temperature history available (bool + file), condition grade `A` resaleable قابل للبيع · `B` repack إعادة تغليف · `C` hold for owner decision حجز لقرار المالك · `D` destroy إتلاف}. **Q-STK-08.** A temperature-controlled line without temperature history cannot be graded A (`COLD_RETURN_NO_HISTORY`); grade C creates a hold; grades are confirmed by RPM `return.disposition`.
+- `q_cycle_counts` / `q_cycle_count_lines`: cc_no, counted_at, zones, lines {product, batch, location, system_qty, counted_qty, unit, tolerance (default `cycle_count_tolerance_units`), within_tolerance (sys), variance reason, recount qty}. **Q-STK-09.** within_tolerance ⇔ |counted − system| ≤ tolerance, using the recount when present; feeds K-165. Variances are reported; the platform never adjusts stock (Q-IMP-06).
+
+## D.8 Recalls and mock recalls — استدعاء المنتجات (Q-RCL)
+
+`q_recalls`: rcl_no, type (`supplier` · `regulator` · `owner` · `mock`), class (`I` · `II` · `III` `[VERIFY]` SFDA recall classes), products and batches (list), reason, external ref (e.g. SFDA notice), initiated_at, trace (sys and confirmed), trace_completed_at, consignee contacts (`q_recall_items`: consignee, qty shipped, contacted_at, method, response, qty retrieved, qty confirmed destroyed by consignee), effectiveness (sys), status: Open مفتوح → Traced تم التتبع (271; trace confirmed) → Recovering قيد الاسترجاع (not for mock) → Closed مغلق (271 + RPM `recall.close`) · Cancelled ملغى (reason).
+
+- **Q-RCL-01.** Opening a recall needs ≥ 1 product and batch; type regulator needs the external ref.
+- **Q-RCL-02.** **Trace** (system, from Q3 data only): received = Σ receipt lines of the batches; on hand = the latest snapshot at or after initiated_at (or the latest before it with warning `SNAPSHOT_OLD`); shipped = Σ shipment lines of the batches by consignee and date; destroyed = rejected hold lines and damage reports of the batches with outcome destroyed; unaccounted = received − on hand − shipped − destroyed. trace_time = trace_completed_at − initiated_at.
+- **Q-RCL-03.** A recall (not mock) places a hold (reason `recall`) on every on-hand line of the batches at once; those lines may only be rejected (Q-HLD-04).
+- **Q-RCL-04.** effectiveness % = (on hand + retrieved + confirmed destroyed by consignees + destroyed in the warehouse) ÷ received × 100 for a real recall; for a mock recall = (on hand + shipped and traced to a named consignee + destroyed) ÷ received × 100. Closing below `recall_effectiveness_target_pct` needs a justification ≥ 50 chars (`RECALL_TARGET_NOT_MET`); a trace slower than `recall_trace_target_hours` is flagged.
+- **Q-RCL-05.** A site without a closed mock recall in the last `mock_recall_months` alerts 239 holders monthly; counted in the K-166 chip set.
+- **Q-RCL-06.** A real recall is class `critical` for its NCR (source `recall`, auto), linked to the supplier when known.
+- **Worked example QX16** (mock recall MR of batch NDC-Y-2609, 2026-09-08 09:00): received 4,800; on hand 1,150; shipped 3,620 to 14 consignees; destroyed 0 at first → accounted 4,770 → **99.4 %**; linking DMG-RUH-CCH-2026-0207 (30 units destroyed) → **100.0 %**; trace completed 11:35 → **2 h 35 min** ≤ 4 h.
+
+## D.9 Transport — النقل (Q-TRN)
+
+`q_trips`: trip_no, carrier (supplier `carrier`) or own fleet, vehicle (Phase 2 `vehicles` id, optional; else plate text), reefer unit serial, compartments (1 or more, each with setpoint and class), driver (worker link or name; personal), shipments (imported, linked), range (sys: per compartment, the strictest range of the classes loaded), logger M&TE ids, seal numbers, planned departure, preload response (template QRPL, `quality_type` `reefer_preload`), loading product temperatures (list {shipment, °C, M&TE}), departed_at, PODs (`q_pods`), transit readings (imported or manual, target = trip), status Planned مخطط → Preload Checked تم الفحص قبل التحميل → Dispatched انطلقت → Delivered تم التسليم → Closed مغلقة; Cancelled ملغاة.
+`q_pods` (per shipment): delivered_at, receiver name and role (personal), signature image or photo of the signed delivery note, seal intact, product temperature at delivery (optional, M&TE), exceptions (list {kind `shortage` · `damage` · `temperature` · `refused` · `other`, qty, note}), photos.
+
+- **Q-TRN-01.** Products of classes that cannot share one compartment (frozen with chilled, pharma_2_8 with food) in one compartment give 422 `INCOMPATIBLE_LOAD`.
+- **Q-TRN-02.** Dispatch needs a submitted pre-load checklist. Seeded critical items: pre-cooled (box temperature at loading within the compartment range, frozen ≤ setpoint + 2.0 °C ASSUMPTION `[VERIFY]`), clean and odour-free, doors / gaskets / insulation undamaged, airflow clear, logger placed (M&TE scanned), seal applied. A critical failure blocks dispatch (`PRELOAD_FAILED`) unless RPM `trip.dispatch_override` with a reason ≥ 20 chars; no override when any compartment carries `pharma_2_8` (`OVERRIDE_NOT_ALLOWED`).
+- **Q-TRN-03.** Loading temperatures: ≥ 1 per shipment and class, with an M&TE; a value outside the class range stops that shipment (hold proposed).
+- **Q-TRN-04.** **Link to 7b:** when the trip names a Phase 2 vehicle that has 7b readiness data, the trip shows readiness (document validity, today's pre-use check result) and the driver's authorisation status when the driver is a worker; not ready → warning `VEHICLE_NOT_READY` (7b owns readiness; Phase 8 creates no 7b record and never blocks on it).
+- **Q-TRN-05.** **Transit temperature:** readings come from the trip logger file (import, target = trip) or manual entries; excursions use Q-EXC-01…03 with the compartment range and its class bands. A transit excursion of severity major or critical opens an NCR (source `trip`, class = severity) and a "notify consignee" task on the shipments delivered after its start.
+- **Q-TRN-06.** **POD:** each shipment needs a POD to reach Delivered (`POD_REQUIRED`); a POD with an exception proposes an NCR (source `trip`) and lets a later customer complaint link to it.
+- **Q-TRN-07.** A trip with a logger and no readings imported `transit_data_due_hours` after delivery alerts the TRANSPORT_SUP position; the trip closes when PODs and (if a logger is named) readings are in.
+- **Q-TRN-08.** **OTIF data:** an imported shipment counts for K-163 when it has promised_at and delivered_at; on time ⇔ delivered_at ≤ promised_at + `otif_window_minutes`; in full ⇔ delivered qty ≥ ordered qty on every line.
+
+## D.10 Q3 screens
+
+| Screen | Phone / tablet (warehouse floor, dock, cab) | Desk |
+|---|---|---|
+| Receiving `/quality/receiving` | Dock flow: scan or pick ASN, vehicle checklist, line cards with temperature (probe M&TE scan), expiry, condition, photos; proposed decision chip; hold / reject actions | Register with filters (owner, decision, deviation); receipt detail with sign-offs; dock dwell report |
+| Storage `/quality/storage` | Zone list with live status colour (in range, excursion, gap, not mapped) | Zone settings (class, range, bands), points and logger assignments, profile chart C48 |
+| Readings `/quality/readings` and Imports `/quality/imports` | Manual reading entry | Logger CSV import with profile picker, preview of the first rows, result report; import history |
+| Excursions `/quality/excursions` | Alert card with "acknowledge", cause | Register; detail with chart, impact lines table, evidence, owner decision files, sign-offs |
+| Mapping `/quality/mapping` | — | Study design, logger grid, import, results (min / max / mean per logger, heat-map table), approval |
+| Hygiene `/quality/hygiene` and Pest `/quality/pest` | Run due checks (6d runner); pest visit entry per station | Schedules, due / overdue list; station register and trend |
+| Stock `/quality/stock` (near-expiry, FEFO checks, damage, cycle counts, throughput) and Products `/quality/products` | FEFO check form with the computed eligible earliest; damage report with photo | Near-expiry list per owner; FEFO compliance; IRA report |
+| Holds `/quality/holds` and Returns `/quality/returns` | Place hold, segregation photo | Hold register with ageing and blockers; line release / reject; WMS export |
+| Recalls `/quality/recalls` | — | Recall wizard (batches → trace → holds → consignee contacts), effectiveness and trace time |
+| Transport `/quality/transport` | Cab mode: pre-load checklist, loading temperatures, POD with signature on the device | Trip board; transit chart; OTIF |
+
+## D.11 Q3 notifications
+| Trigger | Recipient | Timing | Channel |
+|---|---|---|---|
+| Excursion major / critical (Q-EXC-04) | 268 holders of the site; WAREHOUSE_MGR; RESP_PHARMACIST (pharma) | within 60 s of detection | in-app + email + push |
+| Monitoring gap ≥ limit | 266 holders | at detection | in-app + push |
+| Receiving rejection / deviation needing sign-off | `receipt.*` resolvers | immediately | in-app + push |
+| Hold placed / zone-level hold without lines after 24 h / ageing | WAREHOUSE_MGR; placer | immediately / at 24 h / weekly | in-app + email |
+| Expired stock not on hold | 269 holders | daily 07:12 | in-app |
+| Mapping valid until in 60 / 30 / 0 days | 266 holders; qa_qc_manager | 07:12 | in-app + email |
+| Hygiene / pest check overdue; pest activity trend | assignee role; 266 holders | next morning 07:12; at visit entry | in-app |
+| Recall opened (real) | 271 holders; qa_qc_manager; WAREHOUSE_MGR | immediately | in-app + email + push |
+| Mock recall due | 239 holders | monthly | in-app |
+| No transit data after delivery | TRANSPORT_SUP | at `transit_data_due_hours` | in-app |
+| Pre-load failed / override requested | TRANSPORT_SUP; `trip.dispatch_override` resolvers | immediately | in-app + push |
+
+## D.12 Q3 errors
+422 `IMPORT_ROWS_INVALID`, `IMPORT_TOO_LARGE`, `DECISION_BETTER_THAN_CRITERIA`, `OWNER_DECISION_REQUIRED`, `REJECT_NEEDS_NCR_OR_CLAIM`, `MTE_REQUIRED`, `READING_TOO_OLD`, `CLOCK_SKEW`, `IMPACT_LINES_INCOMPLETE`, `IMPACT_EVIDENCE_REQUIRED`, `MAPPING_LOGGER_NOT_CALIBRATED`, `MAPPING_DESIGN_INSUFFICIENT`, `HOLD_RELEASE_BLOCKED`, `COLD_RETURN_NO_HISTORY`, `RECALL_TARGET_NOT_MET`, `INCOMPATIBLE_LOAD`, `PRELOAD_FAILED`, `OVERRIDE_NOT_ALLOWED`, `POD_REQUIRED`; 409 `IMPORT_DUPLICATE_FILE`. Warnings: `DOCK_DWELL_LONG`, `SNAPSHOT_OLD`, `MKT_ABOVE_RANGE`, `STATION_NOT_SERVICED`, `VEHICLE_NOT_READY`.
+
+## D.13 Acceptance criteria — Q3
+1. **AC-Q3-01** (Q-IMP-01) **Given** a logger file imported for point CHL1-P2 **When** the same file is imported again **Then** 409 `IMPORT_DUPLICATE_FILE`; the stored file's SHA-256 equals the upload's.
+2. **AC-Q3-02** (Q-IMP-02) **Given** a readings file with 3 bad rows out of 2,880 **Then** 2,877 rows are stored and the report lists the 3 rows; a stock snapshot with 1 bad row **Then** 422 `IMPORT_ROWS_INVALID` and nothing stored.
+3. **AC-Q3-03** (Q-IMP-03) **Given** a °F file with 39.2 °F **Then** stored 4.00 °C; a file in UTC+00 at 05:15 **Then** shown 08:15 Riyadh.
+4. **AC-Q3-04** (Q-IMP-05, Q-STO-07) **Given** a batch imported to the wrong point **When** Reem voids it within 24 h with a reason **Then** its rows and derived excursions disappear from KPIs; after 24 h **Then** 409; a PATCH of a reading value **Then** no route exists.
+5. **AC-Q3-05** (Q-RCV-01, QX14) **Given** the frozen chicken line at −16.5 °C and 97 / 180 days remaining **Then** proposed accept_with_deviation; the yoghurt line at +11.0 °C **Then** proposed reject.
+6. **AC-Q3-06** (Q-RCV-02) **Given** the yoghurt line **When** Imran records accept **Then** 422 `DECISION_BETTER_THAN_CRITERIA` unless a `receipt.deviation` sign-off with reason is given.
+7. **AC-Q3-07** (Q-RCV-03) **Given** Gulf Frozen Foods with owner_release_approval **When** accept_with_deviation is signed without the owner's file **Then** 422 `OWNER_DECISION_REQUIRED`.
+8. **AC-Q3-08** (Q-RCV-04, Q-RCV-05) **Given** a line decided quarantine **Then** a hold with that line exists; a reject without NCR or claim no. **Then** 422 `REJECT_NEEDS_NCR_OR_CLAIM`.
+9. **AC-Q3-09** (Q-RCV-07, Q-SHR-04) **Given** a chilled line without M&TE **Then** 422 `MTE_REQUIRED`; with overdue MTE-0042 under policy warn **Then** saved with warning and a usage row.
+10. **AC-Q3-10** (Q-RCV-08) **Given** unloading 06:25–07:05 for a frozen receipt **Then** warning `DOCK_DWELL_LONG` (40 > 30).
+11. **AC-Q3-11** (Q-EXC-01, Q-EXC-02, QX12) **Given** QX12 readings **Then** one excursion 08:15–09:15, 60 min, max deviation 1.6, degree-minutes 58.5, severity minor; no NCR; no auto hold.
+12. **AC-Q3-12** (Q-EXC-03) **Given** a run of 10 min out of range in Z-CHL1 (alarm delay 15) **Then** a transient: no excursion, no alert, 10 min in TOR.
+13. **AC-Q3-13** (Q-EXC-02, Q-EXC-05, QX13) **Given** QX13 **Then** severity major, an NCR (source excursion, class major, category temperature) and HLD-…-0112 with the 14 lines of the 2026-09-21 23:00 snapshot; alerts within 60 s to Reem, Imran and Saad.
+14. **AC-Q3-14** (Q-EXC-02) **Given** a frozen run peaking at −11.5 °C (deviation 6.5) for 40 min **Then** severity critical.
+15. **AC-Q3-15** (Q-EXC-02) **Given** a run with a 50-min data gap inside **Then** the gap counts as out time and `data_gap` is set.
+16. **AC-Q3-16** (Q-EXC-06) **Given** a minor excursion in Z-PHR1 (pharma) **Then** impact assessment is required; a minor in Z-AMB1 **Then** it may close with a "no product impact" note.
+17. **AC-Q3-17** (Q-EXC-07, Q-EXC-08) **Given** HLD-…-0112 with 14 lines **When** the assessment decides 13 **Then** 422 `IMPACT_LINES_INCOMPLETE`; a release without evidence and with a 20-char note **Then** 422 `IMPACT_EVIDENCE_REQUIRED`.
+18. **AC-Q3-18** (Q-EXC-09) **Given** a Gulf Frozen Foods line released without the owner's decision file **Then** 422 `OWNER_DECISION_REQUIRED`.
+19. **AC-Q3-19** (Q-EXC-11) **Given** a dismissal with a calibration showing probe MTE-0051 reading +3.0 °C high **Then** the excursion is Dismissed, the readings flagged `probe_fault`, K-161 excludes it, and MTE-0051 is out_of_service.
+20. **AC-Q3-20** (Q-EXC-12, QX15) **Given** QX15 hourly means **Then** MKT = 24.29 °C (2 dp) and no warning; with all values + 2 °C **Then** `MKT_ABOVE_RANGE`.
+21. **AC-Q3-21** (Q-STO-04, Q-STO-05, K-162, QX18) **Given** Z-CHL1 in September with 90 unmonitored minutes and 135 out minutes **Then** monitored 43,110 min, TOR 0.31 %, coverage 99.8 %.
+22. **AC-Q3-22** (Q-STO-02) **Given** a manual reading dated 80 h ago **Then** 422 `READING_TOO_OLD`; 10 min in the future **Then** 422 `CLOCK_SKEW`.
+23. **AC-Q3-23** (Q-MAP-01, Q-MAP-02) **Given** a study with a logger due 2026-09-25 and an end date 2026-09-26 **Then** 422 `MAPPING_LOGGER_NOT_CALIBRATED`; a 48 h study **Then** 422 `MAPPING_DESIGN_INSUFFICIENT`.
+24. **AC-Q3-24** (Q-MAP-03, Q-MAP-04) **Given** MAP-RUH-CCH-2026-0004 for Z-FRZ1 with all loggers in range except during a declared door-open window **Then** pass, and approved on 2026-07-28 Z-FRZ1 is mapped until 2028-07-27.
+25. **AC-Q3-25** (Q-MAP-05, Q-MAP-06) **Given** Z-PHR1 with mapping valid until 2026-10-20 **Then** the 30-day alert was sent 2026-09-20; changing its range sets `remap_required`.
+26. **AC-Q3-26** (Q-HYG-01) **Given** a weekly hygiene schedule on Z-CHL1 with no response in the week ending 2026-10-03 **Then** it is overdue and the assignee role is alerted on 2026-10-04 07:12.
+27. **AC-Q3-27** (Q-HYG-03) **Given** station RB-14 in Z-DRY1 with activity on two consecutive visits **Then** a quality alert and an NCR are proposed; any activity in Z-CHL1 proposes them at the first visit.
+28. **AC-Q3-28** (Q-STK-02) **Given** the latest snapshot **Then** expired and near-expiry lines are listed per owner; an expired line not on hold triggers the daily alert and "Place hold".
+29. **AC-Q3-29** (Q-STK-04) **Given** batch B1 (expiry 2026-11-05) available and B2 (2026-11-30) picked **Then** non_compliant; with B1 on hold **Then** compliant.
+30. **AC-Q3-30** (Q-HLD-04) **Given** HLD-…-0112 with its NCR in Open **When** Saad releases a line **Then** 422 `HOLD_RELEASE_BLOCKED`; after the excursion is Assessed and the NCR disposition Approved **Then** released with a sign-off.
+31. **AC-Q3-31** (Q-HLD-02, Q-HLD-03) **Given** a zone-level hold placed 2026-10-05 09:00 without lines **Then** an alert at 2026-10-06 09:00; no segregation photo by 13:00 on the day of placing **Then** an alert at 13:00.
+32. **AC-Q3-32** (Q-HLD-06) **Given** a rejected line **When** the hold is closed without a destruction or return document **Then** 422.
+33. **AC-Q3-33** (Q-STK-08) **Given** a chilled return line without temperature history **When** graded A **Then** 422 `COLD_RETURN_NO_HISTORY`.
+34. **AC-Q3-34** (Q-STK-09) **Given** 400 counted lines of which 388 within tolerance **Then** IRA 97.0 % (K-165).
+35. **AC-Q3-35** (Q-RCL-02, Q-RCL-04, QX16) **Given** QX16 **Then** effectiveness 99.4 % before and 100.0 % after linking the damage report; trace time 2 h 35 min within target.
+36. **AC-Q3-36** (Q-RCL-03) **Given** a real recall of batch NDC-Y-2611 with 600 units on hand **Then** a hold of those lines exists and releasing them → 422 `HOLD_RELEASE_BLOCKED`.
+37. **AC-Q3-37** (Q-TRN-01) **Given** frozen and chilled shipments in a one-compartment trip **Then** 422 `INCOMPATIBLE_LOAD`.
+38. **AC-Q3-38** (Q-TRN-02) **Given** a pre-load with box temperature −12 °C for a frozen compartment set at −20 °C **When** dispatched **Then** 422 `PRELOAD_FAILED`; with a `trip.dispatch_override` by Saad **Then** dispatched; with a pharma compartment **Then** 422 `OVERRIDE_NOT_ALLOWED`.
+39. **AC-Q3-39** (Q-TRN-04) **Given** a trip naming a Phase 2 vehicle whose 7b Istimara expired **Then** warning `VEHICLE_NOT_READY` and no 7b record is created.
+40. **AC-Q3-40** (Q-TRN-05, Q-TRN-06) **Given** TRP-RUH-CCH-2026-0921 with a transit excursion of severity major **Then** an NCR (source trip) and a notify-consignee task exist; a shipment without POD **Then** the trip cannot become Delivered (`POD_REQUIRED`).
+41. **AC-Q3-41** (Q-TRN-08, QX17) **Given** the September shipments of Appendix A.6 **Then** K-163 = 93.2 %.
+42. **AC-Q3-42** (Q-PRF-04) **Given** ANIA-EXP (construction) **Then** creating a receipt → 409 `PROFILE_INACTIVE`.
+43. **AC-Q3-43** (rule 41) **Given** the Arabic UI **Then** every Q3 label, storage class, status, alert, PDF and export header is in Arabic; temperatures, batch numbers and times stay LTR, and negative temperatures render with the minus sign before the digits in both directions.
