@@ -98,6 +98,7 @@ import { useCurrentProject } from "@/lib/current-project";
 import { useMeData } from "@/components/shell/me-context";
 import { PrototypeBadge } from "@/components/site-vehicles/common";
 import { useSvSettings } from "@/lib/api/site-vehicles";
+import { useQualityNavItems } from "@/components/quality/nav/use-items";
 
 interface Item {
   href: string;
@@ -359,6 +360,8 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
     ...(ac("export_log.view") ? [{ href: "/exports", label: t("xpExports"), Icon: FileDown, testId: "nav-xp-exports" }] : []),
   ];
 
+  const qualityItems: Item[] = useQualityNavItems(pid);
+
   const emergencyItems: Item[] = pid
     ? [
         ...(ac("emergency.view") ? [{ href: "/emergency-board", label: t("emergencyBoard"), Icon: ShieldAlert, testId: "nav-emergency-board" }] : []),
@@ -536,6 +539,18 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
               <p className="px-3 pt-1 pb-1 text-xs font-medium text-sidebar-muted">{t("emergency")}</p>
               <ul className="mb-3 flex flex-col gap-1" data-testid="nav-emergency">
                 {emergencyItems.map((i) => (
+                  <li key={i.href}>
+                    <NavLink item={i} onNavigate={onNavigate} />
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : null}
+          {qualityItems.length > 0 ? (
+            <>
+              <p className="px-3 pt-1 pb-1 text-xs font-medium text-sidebar-muted">{t("quality")}</p>
+              <ul className="mb-3 flex flex-col gap-1" data-testid="nav-quality">
+                {qualityItems.map((i) => (
                   <li key={i.href}>
                     <NavLink item={i} onNavigate={onNavigate} />
                   </li>

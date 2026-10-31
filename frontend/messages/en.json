@@ -249,7 +249,8 @@
     "investigations": "Investigation reports",
     "hseTeam": "HSE team",
     "deletedItems": "Deleted items",
-    "licence": "Licence"
+    "licence": "Licence",
+    "quality": "Quality"
   },
   "shell": {
     "projectSwitcher": "Project",
@@ -379,7 +380,8 @@
       "building_highrise": "High-rise building",
       "infrastructure": "Infrastructure",
       "industrial": "Industrial",
-      "other": "Other"
+      "other": "Other",
+      "logistics": "Logistics / warehousing"
     },
     "sort": {
       "code": "Code (A–Z)",
@@ -705,7 +707,12 @@
     "permit_receiver": "Permit Receiver",
     "contractor_hse_rep": "Contractor HSE Rep",
     "viewer_client": "Viewer / Client",
-    "oh_practitioner": "Occupational health practitioner"
+    "oh_practitioner": "Occupational health practitioner",
+    "qa_qc_manager": "QA/QC Manager",
+    "quality_engineer": "Quality Engineer",
+    "qc_inspector": "QC Inspector",
+    "warehouse_qc": "Warehouse QC / Storekeeper",
+    "responsible_person": "Responsible Person"
   },
   "assignment": {
     "title": "Role assignments",
@@ -993,7 +1000,53 @@
       "driver_authorisation": "Driver authorisation",
       "vehicle_check": "Pre-use check",
       "journey_plan": "Journey plan",
-      "licence": "Licence"
+      "licence": "Licence",
+      "q_settings": "Quality settings",
+      "q_position": "Project position",
+      "q_rp_rule": "Responsible-person rule",
+      "q_numbering": "Number format",
+      "q_criterion": "Acceptance criterion",
+      "q_system": "System",
+      "q_customer": "Customer",
+      "q_link": "Quality link",
+      "q_signoff": "Sign-off",
+      "q_mte_usage": "M&TE use",
+      "q_ncr": "NCR",
+      "q_observation": "Quality observation",
+      "q_quality_alert": "Quality alert",
+      "q_complaint": "Customer complaint",
+      "q_itp": "ITP",
+      "q_ir": "Inspection request",
+      "q_punch_item": "Punch item",
+      "q_dossier": "Handover dossier",
+      "q_mar": "Material approval request",
+      "q_mir": "Material inspection request",
+      "q_quarantine": "Quarantined material",
+      "q_test_request": "Test request",
+      "q_pour": "Concrete pour",
+      "q_wps": "WPS",
+      "q_pqr": "PQR",
+      "q_wpq": "Welder qualification",
+      "q_weld": "Weld joint",
+      "q_mte": "M&TE item",
+      "q_calibration": "Calibration",
+      "q_oot_review": "Out-of-tolerance review",
+      "q_receipt": "Receiving inspection",
+      "q_excursion": "Temperature excursion",
+      "q_mapping_study": "Mapping study",
+      "q_hold": "Hold",
+      "q_return": "Return inspection",
+      "q_recall": "Recall",
+      "q_damage_report": "Damage report",
+      "q_fefo_check": "FEFO check",
+      "q_cycle_count": "Cycle count",
+      "q_trip": "Transport trip",
+      "q_document": "Controlled document",
+      "q_transmittal": "Transmittal",
+      "q_audit": "Quality audit",
+      "q_management_review": "Management review",
+      "q_supplier": "Supplier",
+      "q_supplier_evaluation": "Supplier evaluation"
     },
     "system": "System"
   },
@@ -1586,7 +1639,33 @@
       "MFA_SETUP_NOT_STARTED": "Start the set-up again: no QR code is waiting for a code.",
       "FILE_INFECTED": "The file was rejected because the virus scanner found a threat in it. Do not open it; contact your IT support.",
       "SCANNER_UNAVAILABLE": "The file could not be checked for viruses right now, so it was not saved. Try again in a few minutes.",
-      "SETUP_ALREADY_DONE": "This installation is already set up. Sign in instead."
+      "SETUP_ALREADY_DONE": "This installation is already set up. Sign in instead.",
+      "PROFILE_REQUIRED": "Choose the project's Quality sector profile first.",
+      "PROFILE_INACTIVE": "This record type belongs to the project's other sector profile; open records can still be finished.",
+      "RESPONSIBLE_PERSON_NOT_SET": "No responsible person is set for this step. Ask the Quality settings owner to complete the matrix.",
+      "NUMBER_FORMAT_INVALID": "The number format is not valid.",
+      "CLASS_LOWERED_NEEDS_APPROVAL": "Only the responsible person for the disposition may lower the class, with a reason.",
+      "CONTAINMENT_REQUIRED": "Record the containment first.",
+      "RCA_METHOD_NOT_ALLOWED": "This root-cause method is not allowed for the NCR class.",
+      "RCA_INCOMPLETE": "The root-cause analysis is incomplete.",
+      "DISPOSITION_QTY_MISMATCH": "The disposition lines do not add up to the NCR quantity.",
+      "CONCESSION_EVIDENCE_REQUIRED": "Use as is and repair need a justification of at least 50 characters and an evidence file.",
+      "COST_NOT_RECORDED": "Record the costs or confirm that no cost was incurred.",
+      "DELAY_RATE_NOT_SET": "Set the delay cost per day in the Quality settings first.",
+      "NCR_CLOSE_BLOCKED": "The NCR cannot be closed yet.",
+      "NCR_REQUIRED_FOR_JUSTIFIED": "A justified complaint must be linked to an NCR.",
+      "SUPPLIER_DISQUALIFIED": "The supplier is disqualified.",
+      "MTE_NOT_CALIBRATED": "The instrument is not calibrated.",
+      "STOP_RULE_NOT_ALLOWED": "Quality checklists cannot stop work.",
+      "LINK_NOT_ALLOWED": "Both records must be on the same project and visible to you.",
+      "CRITERION_IMMUTABLE": "Only a draft criterion can be changed; create a new version.",
+      "MTE_SERIAL_DUPLICATE": "An instrument with this manufacturer and serial number is already registered.",
+      "SUPPLIER_NOT_APPROVED": "The supplier is not approved.",
+      "LAB_NOT_ACCREDITED_FOR_SCOPE": "The laboratory is not accredited for this scope.",
+      "HUMAN_ERROR_NOT_ROOT_CAUSE": "\"Operator error\" is not a root cause: ask why the error was possible.",
+      "DETECTION_ONLY_ACTION": "Extra inspection only detects the problem; add an action that removes the cause.",
+      "COMPETENCE_NOT_MET": "The person does not meet the competence requirement.",
+      "BEFORE_QUALITY_START": "Before the project's Quality start date (excluded from KPIs)."
     }
   },
   "theme": {
@@ -1891,7 +1970,12 @@
       "environmental": "Environmental",
       "lesson": "Lesson learned",
       "scorecard": "Contractor scorecard",
-      "site_vehicle": "Site vehicle check"
+      "site_vehicle": "Site vehicle check",
+      "quality_ncr": "Quality NCR",
+      "quality_observation": "Quality observation",
+      "quality_complaint": "Customer complaint",
+      "quality_audit": "Quality audit",
+      "quality_review": "Management review"
     },
     "overdueBucket": {
       "1-7": "1–7 days",
@@ -4891,7 +4975,8 @@
     },
     "fdTemplateKind": {
       "inspection": "Inspection",
-      "audit": "Audit"
+      "audit": "Audit",
+      "quality": "Quality checklist"
     },
     "fdZoneType": {
       "airside": "Airside",
