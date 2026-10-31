@@ -35,7 +35,7 @@ _PHOTO: str | None = None
 def photo(name: str = "work.png") -> dict[str, str]:
     global _PHOTO  # noqa: PLW0603
     if _PHOTO is None:
-        from PIL import Image  # noqa: PLC0415
+        from PIL import Image
 
         buf = io.BytesIO()
         Image.new("RGB", (640, 480), (120, 140, 160)).save(buf, "PNG")
@@ -190,7 +190,7 @@ def schedule(c: TestClient, ir_id: str, when: datetime | None = None, **kw: Any)
 
 def answers(template: str, *, fail: str | None = None) -> list[dict[str, Any]]:
     """All compliant, or one item non-compliant with a note."""
-    from app.seed_quality_q1 import TEMPLATES, _items  # noqa: PLC0415
+    from app.seed_quality_q1 import TEMPLATES, _items
 
     out = []
     for it in _items(template, TEMPLATES[template][3]):

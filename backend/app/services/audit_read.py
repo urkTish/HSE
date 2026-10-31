@@ -185,6 +185,30 @@ def verify(db: Session, p: Principal) -> AuditChainVerification:
     )
 
 
+def _quality_history(
+    db: Session, p: Principal, entity_type: EntityType, entity_id: uuid.UUID
+) -> bool | None:
+    """8-quality: a Quality record's history for whoever may read the record (registry
+    `RECORD_TYPES`, every part); None when the entity type is not a Quality record type."""
+    from app.core.quality.common import QRecordType, entity_type_value  # noqa: PLC0415
+    from app.services.quality import ensure_registered  # noqa: PLC0415
+    from app.services.quality import registry as reg  # noqa: PLC0415
+
+    rt = next((r for r in QRecordType if entity_type_value(r) == entity_type.value), None)
+    if rt is None:
+        return None
+    ensure_registered()
+    ad = reg.RECORD_TYPES.get(rt)
+    row = ad.get(db, entity_id) if ad else None
+    if ad is None or row is None or not ad.scope(db, p, row):
+        raise not_found("Record")
+    pid = ad.project_id(row)
+    sc = p.projects.get(pid)
+    if sc is not None and sc.read_only and not p.is_manager:
+        return False  # P8-4: the Viewer / Client sees no names
+    return p.grant(pid, Capability.quality_view) is not None
+
+
 def _history_allowed(
     db: Session, p: Principal, entity_type: EntityType, entity_id: uuid.UUID
 ) -> None:
@@ -232,6 +256,8 @@ def _history_allowed(
     elif entity_type.value in PHASE4_HISTORY:
         pid = _phase4_project(db, p, entity_type, entity_id)
         ok = p.has_any(cap) if pid is None else p.grant(pid, cap) is not None
+    elif (quality := _quality_history(db, p, entity_type, entity_id)) is not None:
+        ok = quality
     else:
         pid = _phase1_project(db, p, entity_type, entity_id)
         ok = p.grant(pid, cap) is not None

@@ -37,10 +37,26 @@ def _pid(ids: Ids) -> str:
 
 def test_AC01_submit_needs_h_or_w(q1lib: None, api: Api, ids: Ids) -> None:
     bilal = api.as_("bilal.qureshi")
-    pts = [{"seq": 10, "activity_en": "Mix", "activity_ar": "خلطة", "characteristic_en": "MAR", "characteristic_ar": "اعتماد",
-            "point_type": "R", "acceptance_text_en": "Approved"},
-           {"seq": 30, "activity_en": "Rebar", "activity_ar": "تسليح", "characteristic_en": "Cover", "characteristic_ar": "غطاء",
-            "point_type": "S", "criteria_ids": [crit("COVER-40")]}]  # fmt: skip
+    pts = [
+        {
+            "seq": 10,
+            "activity_en": "Mix",
+            "activity_ar": "خلطة",
+            "characteristic_en": "MAR",
+            "characteristic_ar": "اعتماد",
+            "point_type": "R",
+            "acceptance_text_en": "Approved",
+        },
+        {
+            "seq": 30,
+            "activity_en": "Rebar",
+            "activity_ar": "تسليح",
+            "characteristic_en": "Cover",
+            "characteristic_ar": "غطاء",
+            "point_type": "S",
+            "criteria_ids": [crit("COVER-40")],
+        },
+    ]
     it = ok(
         bilal.post(f"{API}/projects/{_pid(ids)}/quality/itps", json=itp_body(ids, points=pts)), 201
     )
@@ -189,8 +205,18 @@ def test_AC05_AC06_notice_and_self_check(q1lib: None, api: Api, ids: Ids) -> Non
     )
     assert e["meta"]["notice_hours"] == 24
     ok(submit_ir(joseph, ids, itp, [30], proposed_at=local(2026, 10, 7, 10).isoformat()), 201)
-    urgent = ok(submit_ir(joseph, ids, itp, [30], loc="Level 4 slab", proposed_at=local(2026, 10, 6, 18).isoformat(),
-                          short_notice_reason="Concrete truck booked; client asked to advance the pour."), 201)  # fmt: skip
+    urgent = ok(
+        submit_ir(
+            joseph,
+            ids,
+            itp,
+            [30],
+            loc="Level 4 slab",
+            proposed_at=local(2026, 10, 6, 18).isoformat(),
+            short_notice_reason="Concrete truck booked; client asked to advance the pour.",
+        ),
+        201,
+    )
     assert urgent["short_notice"] is True and any(
         w["code"] == "IR_SHORT_NOTICE" for w in urgent["warnings"]
     )
@@ -272,7 +298,7 @@ def test_AC08_void_reblocks_and_notifies(q1lib: None, api: Api, ids: Ids, db: An
     )
 
 
-# ---- decisions -------------------------------------------------------------------------------------
+# ---- decisions -----------------------------------------------------------------------------
 
 
 def test_AC09_result_consistency(q1lib: None, api: Api, ids: Ids) -> None:
@@ -348,8 +374,14 @@ def test_AC11_resolution_for_s_points(q1lib: None, api: Api, ids: Ids) -> None:
         and "Abdullah Al-Dossary" not in names
     )
     # Joseph (RAWABI) holds the role but cannot sign his own tree (Q-RPM-07)
-    err(api.as_("joseph.mathew.qc").post(f"{API}/quality/inspection-requests/{r['id']}/schedule",
-                                        json={"scheduled_at": local(2026, 10, 6, 14).isoformat()}), 422, "SOD_CONFLICT")  # fmt: skip
+    err(
+        api.as_("joseph.mathew.qc").post(
+            f"{API}/quality/inspection-requests/{r['id']}/schedule",
+            json={"scheduled_at": local(2026, 10, 6, 14).isoformat()},
+        ),
+        422,
+        "SOD_CONFLICT",
+    )
     mazen = api.as_("mazen.harbi")
     schedule(mazen, r["id"])
     # Abdullah: no row names him for S → 403
@@ -385,7 +417,7 @@ def test_AC12_witness_waiver(q1lib: None, api: Api, ids: Ids) -> None:
         "HOLD_NOT_WAIVABLE",
     )
     # review overdue alert on 2026-10-09 (witness_review_days 3)
-    from app.services.quality.jobs import run_slot  # noqa: PLC0415
+    from app.services.quality.jobs import run_slot
 
     with get_sessionmaker()() as db:
         out1 = run_slot(db, "quality_alerts", local(2026, 10, 8, 7, 12))
@@ -410,8 +442,12 @@ def test_AC13_comments_before_next_hold(q1lib: None, api: Api, ids: Ids) -> None
     abd = api.as_("abdullah.dossary")
     r30 = ok(submit_ir(joseph, ids, itp, [30]), 201)
     schedule(abd, r30["id"])
-    d = ok(abd.post(f"{API}/quality/inspection-requests/{r30['id']}/decide",
-                    json=decide_body([30], "approved_with_comments", close_comments_before_next_hold=True)))  # fmt: skip
+    d = ok(
+        abd.post(
+            f"{API}/quality/inspection-requests/{r30['id']}/decide",
+            json=decide_body([30], "approved_with_comments", close_comments_before_next_hold=True),
+        )
+    )
     assert d["comments"][0]["status"] == "open"
     e = err(submit_ir(joseph, ids, itp, [70]), 422, "HOLD_POINT_NOT_RELEASED")
     assert "Clean the soffit" in e["message"]
@@ -452,8 +488,17 @@ def test_AC14_competence(q1lib: None, api: Api, ids: Ids) -> None:
         False, "COMPETENCE_NOT_MET", "No valid record.", "لا يوجد سجل ساري."
     )
     try:
-        e = err(abd.post(f"{API}/quality/inspection-requests/{r['id']}/schedule",
-                         json={"scheduled_at": local(2026, 10, 7, 9).isoformat(), "reason": "Inspector change"}), 422, "COMPETENCE_NOT_MET")  # fmt: skip
+        e = err(
+            abd.post(
+                f"{API}/quality/inspection-requests/{r['id']}/schedule",
+                json={
+                    "scheduled_at": local(2026, 10, 7, 9).isoformat(),
+                    "reason": "Inspector change",
+                },
+            ),
+            422,
+            "COMPETENCE_NOT_MET",
+        )
         assert e["meta"]["competence_code"] == "CONC-FIELD-TECH"
     finally:
         reg.COMPETENCE[0] = old
@@ -494,8 +539,8 @@ def test_AC16_mte_overdue_warns_and_records_usage(q1lib: None, api: Api, ids: Id
 
 
 def test_AC17_paper_signoff_pdf_ar(q1lib: None, api: Api, ids: Ids) -> None:
-    from app.services.permissions import build_principal  # noqa: PLC0415
-    from app.services.quality.q1 import pdf  # noqa: PLC0415
+    from app.services.permissions import build_principal
+    from app.services.quality.q1 import pdf
 
     itp = approved_itp(api, ids)
     joseph = api.as_("joseph.mathew.qc")
@@ -523,7 +568,7 @@ def test_AC17_paper_signoff_pdf_ar(q1lib: None, api: Api, ids: Ids) -> None:
     res = hatem.get(f"{API}/quality/inspection-requests/{r['id']}/pdf?lang=ar")
     assert res.status_code == 200 and res.content.startswith(b"%PDF")
     with get_sessionmaker()() as db:
-        from app.models import User  # noqa: PLC0415
+        from app.models import User
 
         u = db.get(User, ids.user("hatem.shehri"))
         p = build_principal(db, u, None)
@@ -565,10 +610,10 @@ def test_AC18_offline_round_needs_confirmation(q1lib: None, api: Api, ids: Ids) 
     # resent by the phone: idempotent, still not decided
     again = ok(abd.post(f"{API}/quality/inspection-requests/{r50['id']}/decide", json=body))
     assert again["status"] == "scheduled"
-    from app.services.quality.q1 import kpi  # noqa: PLC0415
+    from app.services.quality.q1 import kpi
 
     with get_sessionmaker()() as db:
-        from datetime import date  # noqa: PLC0415
+        from datetime import date
 
         c = kpi.ir_counts(
             db, __import__("uuid").UUID(_pid(ids)), date(2026, 10, 1), date(2026, 10, 31)

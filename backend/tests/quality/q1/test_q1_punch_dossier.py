@@ -49,7 +49,7 @@ def _punch(c: Any, ids: Ids, **kw: Any) -> dict[str, Any]:
 
 
 def _png(w: int, h: int) -> bytes:
-    from PIL import Image  # noqa: PLC0415
+    from PIL import Image
 
     buf = io.BytesIO()
     Image.new("L", (w, h), 255).save(buf, "PNG")
@@ -122,12 +122,23 @@ def test_AC19_punch_evidence_and_sod(q1lib: None, api: Api, ids: Ids) -> None:
 def test_punch_escalated_to_ncr_blocks_close(q1lib: None, api: Api, ids: Ids) -> None:
     mazen = api.as_("mazen.harbi")
     it = _punch(mazen, ids, category="A")
-    n = ok(mazen.post(f"{API}/projects/{_pid(ids)}/quality/ncrs", json={
-        "source_type": "punch_item", "source_id": it["id"], "category": "workmanship",
-        "owner_id": ids.user("bilal.qureshi"), "classification": "minor", "open": True}), 201)  # fmt: skip
+    n = ok(
+        mazen.post(
+            f"{API}/projects/{_pid(ids)}/quality/ncrs",
+            json={
+                "source_type": "punch_item",
+                "source_id": it["id"],
+                "category": "workmanship",
+                "owner_id": ids.user("bilal.qureshi"),
+                "classification": "minor",
+                "open": True,
+            },
+        ),
+        201,
+    )
     assert n["source_ref"] == it["punch_no"] and n["status"] == "open"
     with get_sessionmaker()() as db:
-        from app.services.quality.ncr import core  # noqa: PLC0415
+        from app.services.quality.ncr import core
 
         ncr = db.get(QNcr, uuid.UUID(n["id"]))
         assert ncr is not None
@@ -137,9 +148,16 @@ def test_punch_escalated_to_ncr_blocks_close(q1lib: None, api: Api, ids: Ids) ->
 def test_AC20_plan_revision_keeps_or_flags_pins(q1lib: None, api: Api, ids: Ids) -> None:
     hatem = api.as_("hatem.shehri")
     pid = _pid(ids)
-    up = hatem.post(f"{API}/projects/{pid}/quality/floor-plans",
-                    data={"zone_id": ids.zone("Z-PIERB"), "level_label": "Level 1", "title_en": "Pier B Level 1", "title_ar": "الرصيف B المستوى 1"},
-                    files={"file": ("plan.png", _png(4200, 2800), "image/png")})  # fmt: skip
+    up = hatem.post(
+        f"{API}/projects/{pid}/quality/floor-plans",
+        data={
+            "zone_id": ids.zone("Z-PIERB"),
+            "level_label": "Level 1",
+            "title_en": "Pier B Level 1",
+            "title_ar": "الرصيف B المستوى 1",
+        },
+        files={"file": ("plan.png", _png(4200, 2800), "image/png")},
+    )
     fp = ok(up, 201)
     assert fp["width_px"] == 4200 and fp["height_px"] == 2800
     items = [
@@ -147,16 +165,31 @@ def test_AC20_plan_revision_keeps_or_flags_pins(q1lib: None, api: Api, ids: Ids)
         for i in range(12)
     ]
     assert all(x["floor_plan_id"] == fp["id"] for x in items)
-    same = ok(hatem.post(f"{API}/projects/{pid}/quality/floor-plans", data={"revision_of": fp["id"]},
-                         files={"file": ("plan-r1.png", _png(2100, 1400), "image/png")}), 201)  # fmt: skip
+    same = ok(
+        hatem.post(
+            f"{API}/projects/{pid}/quality/floor-plans",
+            data={"revision_of": fp["id"]},
+            files={"file": ("plan-r1.png", _png(2100, 1400), "image/png")},
+        ),
+        201,
+    )
     assert same["pin_count"] == 12 and not any(p["pin_check"] for p in same["pins"])
     assert same["pins"][0]["pin_x_pct"] in {f"{10 + i}.00" for i in range(12)}
-    other = ok(hatem.post(f"{API}/projects/{pid}/quality/floor-plans", data={"revision_of": same["id"]},
-                          files={"file": ("plan-r2.png", _png(3000, 3000), "image/png")}), 201)  # fmt: skip
+    other = ok(
+        hatem.post(
+            f"{API}/projects/{pid}/quality/floor-plans",
+            data={"revision_of": same["id"]},
+            files={"file": ("plan-r2.png", _png(3000, 3000), "image/png")},
+        ),
+        201,
+    )
     assert other["pin_count"] == 12 and all(p["pin_check"] for p in other["pins"])
     # a PDF is refused; the image is served
-    bad = hatem.post(f"{API}/projects/{pid}/quality/floor-plans", data={"zone_id": ids.zone("Z-PIERB")},
-                     files={"file": ("plan.pdf", b"%PDF-1.4 x", "application/pdf")})  # fmt: skip
+    bad = hatem.post(
+        f"{API}/projects/{pid}/quality/floor-plans",
+        data={"zone_id": ids.zone("Z-PIERB")},
+        files={"file": ("plan.pdf", b"%PDF-1.4 x", "application/pdf")},
+    )
     err(bad, 422, "PLAN_IMAGE_INVALID")
     img = hatem.get(f"{API}/quality/floor-plans/{other['id']}/image")
     assert img.status_code == 200 and img.content.startswith(b"\x89PNG")
@@ -175,7 +208,7 @@ def test_AC21_overdue_and_sunday_digest(q1lib: None, api: Api, ids: Ids) -> None
     assert got["overdue"] is True
     page = ok(hatem.get(f"{API}/projects/{_pid(ids)}/quality/punch?overdue=true"))
     assert page["total"] == 1
-    from app.services.quality.jobs import run_slot  # noqa: PLC0415
+    from app.services.quality.jobs import run_slot
 
     with get_sessionmaker()() as db:
         out = run_slot(db, "quality_weekly", local(2026, 10, 11, 7, 12))
@@ -195,14 +228,23 @@ def test_AC21_overdue_and_sunday_digest(q1lib: None, api: Api, ids: Ids) -> None
 
 def _ready_dossier(api: Api, ids: Ids) -> tuple[Any, dict[str, Any]]:
     hatem = api.as_("hatem.shehri")
-    d = ok(hatem.post(f"{API}/projects/{_pid(ids)}/quality/dossiers",
-                      json={"title_en": "Pier B level 3", "title_ar": "الرصيف B المستوى 3", "zone_ids": [ids.zone("Z-PIERB")]}), 201)  # fmt: skip
+    d = ok(
+        hatem.post(
+            f"{API}/projects/{_pid(ids)}/quality/dossiers",
+            json={
+                "title_en": "Pier B level 3",
+                "title_ar": "الرصيف B المستوى 3",
+                "zone_ids": [ids.zone("Z-PIERB")],
+            },
+        ),
+        201,
+    )
     assert d["dossier_no"] == "DOS-ANIA-EXP-2026-0001" and "ncr" in d["sections"]
     return hatem, d
 
 
 def test_AC22_dossier_blockers(q1lib: None, api: Api, ids: Ids) -> None:
-    from tests.quality.q0.qh import raise_ncr  # noqa: PLC0415
+    from tests.quality.q0.qh import raise_ncr
 
     hatem, d = _ready_dossier(api, ids)
     url = f"{API}/quality/dossiers/{d['id']}"
@@ -239,9 +281,23 @@ def test_AC22_dossier_blockers(q1lib: None, api: Api, ids: Ids) -> None:
 def test_AC23_AC24_AC25_compile_snapshot_accept_and_downloads(
     q1lib: None, api: Api, ids: Ids
 ) -> None:
-    itp = approved_itp(api, ids, points=[
-        {"seq": 30, "activity_en": "Rebar", "activity_ar": "التسليح", "characteristic_en": "Cover", "characteristic_ar": "الغطاء",
-         "point_type": "H", "criteria_ids": [], "acceptance_text_en": "Cover per drawing", "checklist_template_code": "QSTC-RB"}])  # fmt: skip
+    itp = approved_itp(
+        api,
+        ids,
+        points=[
+            {
+                "seq": 30,
+                "activity_en": "Rebar",
+                "activity_ar": "التسليح",
+                "characteristic_en": "Cover",
+                "characteristic_ar": "الغطاء",
+                "point_type": "H",
+                "criteria_ids": [],
+                "acceptance_text_en": "Cover per drawing",
+                "checklist_template_code": "QSTC-RB",
+            }
+        ],
+    )
     joseph = api.as_("joseph.mathew.qc")
     abd = api.as_("abdullah.dossary")
     r = ok(submit_ir(joseph, ids, itp, [30]), 201)
@@ -276,8 +332,16 @@ def test_AC23_AC24_AC25_compile_snapshot_accept_and_downloads(
     ar = hatem.get(f"{url}/index?lang=ar")
     assert ar.status_code == 200 and ar.content.startswith(b"%PDF")
     # Q-DOS-02: a later change to a record in scope leaves the compiled files unchanged
-    joseph.post(f"{API}/attachments", data={"owner_type": "q_ir_round", "owner_id": ok(joseph.get(f"{API}/quality/inspection-requests/{r['id']}"))["rounds"][0]["id"]},
-                files={"file": ("later.png", io.BytesIO(_png(500, 500)), "image/png")})  # fmt: skip
+    joseph.post(
+        f"{API}/attachments",
+        data={
+            "owner_type": "q_ir_round",
+            "owner_id": ok(joseph.get(f"{API}/quality/inspection-requests/{r['id']}"))["rounds"][0][
+                "id"
+            ],
+        },
+        files={"file": ("later.png", io.BytesIO(_png(500, 500)), "image/png")},
+    )
     again = ok(hatem.get(url))
     assert again["package_sha256"] == sha
     assert zipfile.ZipFile(io.BytesIO(hatem.get(f"{url}/package").content)).namelist() == names
@@ -302,7 +366,7 @@ def test_AC23_AC24_AC25_compile_snapshot_accept_and_downloads(
 
 
 def test_registries_and_reference_labels(q1lib: None, api: Api, ids: Ids) -> None:
-    from app.services.quality import ensure_registered  # noqa: PLC0415
+    from app.services.quality import ensure_registered
 
     ensure_registered()
     assert "itp_point" in reg.HOLD_CHECKS
@@ -381,7 +445,11 @@ def test_AC15_seed_counts(q_seed: None, api: Api, ids: Ids) -> None:
     assert plans[0]["title_en"] == "Pier B Level 1" and plans[0]["pin_count"] == 12
     itps = ok(hatem.get(f"{API}/projects/{pid}/quality/itps?current_only=true"))
     assert {i["display_no"] for i in itps["items"]} == {
-        "ITP-ANIA-EXP-STC-001 Rev.2", "ITP-ANIA-EXP-STL-001 Rev.1", "ITP-ANIA-EXP-AFP-001 Rev.0", "ITP-ANIA-EXP-HVC-001 Rev.0"}  # fmt: skip
+        "ITP-ANIA-EXP-STC-001 Rev.2",
+        "ITP-ANIA-EXP-STL-001 Rev.1",
+        "ITP-ANIA-EXP-AFP-001 Rev.0",
+        "ITP-ANIA-EXP-HVC-001 Rev.0",
+    }
     # RUH-CCH (logistics) has no Part B record
     assert (
         ok(api.as_("reem.mutairi").get(f"{API}/projects/{ids.project('RUH-CCH')}/quality/itps"))[
@@ -390,3 +458,13 @@ def test_AC15_seed_counts(q_seed: None, api: Api, ids: Ids) -> None:
         == 0
     )
     _ = date
+
+
+def test_history_of_quality_records(q1lib: None, api: Api, ids: Ids) -> None:
+    itp = approved_itp(api, ids)
+    r = ok(submit_ir(api.as_("joseph.mathew.qc"), ids, itp, [30]), 201)
+    hatem = api.as_("hatem.shehri")
+    h = ok(hatem.get(f"{API}/history/q_ir/{r['id']}"))
+    assert any(e["action"] == "create" for e in h["items"])
+    ok(hatem.get(f"{API}/history/q_itp/{itp['id']}"))
+    assert api.as_("sarah.mitchell").get(f"{API}/history/q_ir/{r['id']}").status_code in (403, 404)

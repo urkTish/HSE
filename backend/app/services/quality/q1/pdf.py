@@ -23,6 +23,15 @@ from app.services.quality.q1 import itp as itps
 from app.services.scorecard import render
 
 
+def _local(at: Any, pr: Any) -> str:
+    """A timestamp in the project's time zone (Asia/Riyadh by default)."""
+    if at is None:
+        return "—"
+    from zoneinfo import ZoneInfo  # noqa: PLC0415
+
+    return str(at.astimezone(ZoneInfo(qc.tz(pr))).strftime("%Y-%m-%d %H:%M"))
+
+
 def doc(db: Session, p: Principal, ir_id: uuid.UUID) -> tuple[render.Doc, str]:
     ir = irs.get_ir(db, p, ir_id)
     r = irs.read(db, p, ir)
@@ -47,7 +56,7 @@ def doc(db: Session, p: Principal, ir_id: uuid.UUID) -> tuple[render.Doc, str]:
         (
             "Proposed",
             "الموعد المقترح",
-            ir.proposed_at.strftime("%Y-%m-%d %H:%M") if ir.proposed_at else "—",
+            _local(ir.proposed_at, pr),
         ),
         ("Issue date", "تاريخ الإصدار", issued.isoformat()),
         (
@@ -98,14 +107,14 @@ def doc(db: Session, p: Principal, ir_id: uuid.UUID) -> tuple[render.Doc, str]:
             + (
                 f"; review {label('ir_result', rd['review_result'])}" if rd["review_result"] else ""
             ),
-            f"Scheduled {rd['scheduled_at']:%Y-%m-%d %H:%M}"
+            f"Scheduled {_local(rd['scheduled_at'], pr)}"
             if rd["scheduled_at"]
             else "Not scheduled",
         ]
         paras_ar = [
             f"الجولة {rd['round_no']}: "
             f"{label('ir_result', rd['result'], True) if rd['result'] else 'لم يُتخذ قرار'}",
-            f"موعد الفحص {rd['scheduled_at']:%Y-%m-%d %H:%M}" if rd["scheduled_at"] else "لم يُجدول",
+            f"موعد الفحص {_local(rd['scheduled_at'], pr)}" if rd["scheduled_at"] else "لم يُجدول",
         ]
         if rd["comment"]:
             paras_en.append(f"Comment: {rd['comment']}")
