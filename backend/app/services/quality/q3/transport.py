@@ -848,12 +848,15 @@ def list_trips(
     page_no: int,
     size: int,
     status: QTripStatus | None = None,
+    search: str | None = None,
 ) -> dict[str, Any]:
     project = qc.get_project(db, p, project_id)
     g = b.list_grant(p, project.id)
     q = select(QTrip).where(QTrip.project_id == project.id)
     if status:
         q = q.where(QTrip.status == status)
+    if search and search.strip():
+        q = q.where(QTrip.trip_no.ilike(f"%{search.strip()}%"))
     items = []
     for t in db.scalars(q.order_by(QTrip.created_at.desc()).limit(2000)):
         if g.scope.value == "responsible":

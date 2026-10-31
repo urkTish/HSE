@@ -144512,6 +144512,7 @@ export interface operations {
         parameters: {
             query?: {
                 status?: components["schemas"]["QTripStatus"] | null;
+                q?: string | null;
                 /** @description 1-based page number. */
                 page?: number;
                 /** @description Items per page. */

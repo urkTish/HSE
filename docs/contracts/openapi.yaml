@@ -82780,6 +82780,15 @@ paths:
           - $ref: '#/components/schemas/QTripStatus'
           - type: 'null'
           title: Status
+      - name: q
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            maxLength: 40
+          - type: 'null'
+          title: Q
       - name: page
         in: query
         required: false

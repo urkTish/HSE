@@ -672,8 +672,9 @@ def q3_list_trips(
     pg: PageParams,
     db: DB,
     status_: Annotated[QTripStatus | None, Query(alias="status")] = None,
+    q: Annotated[str | None, Query(max_length=40)] = None,
 ) -> dict[str, Any]:
-    return transport.list_trips(db, user, project_id, pg.page, pg.page_size, status_)
+    return transport.list_trips(db, user, project_id, pg.page, pg.page_size, status_, q)
 
 
 @router.post(

@@ -1665,7 +1665,26 @@
       "HUMAN_ERROR_NOT_ROOT_CAUSE": "\"Operator error\" is not a root cause: ask why the error was possible.",
       "DETECTION_ONLY_ACTION": "Extra inspection only detects the problem; add an action that removes the cause.",
       "COMPETENCE_NOT_MET": "The person does not meet the competence requirement.",
-      "BEFORE_QUALITY_START": "Before the project's Quality start date (excluded from KPIs)."
+      "BEFORE_QUALITY_START": "Before the project's Quality start date (excluded from KPIs).",
+      "IMPORT_ROWS_INVALID": "Some rows of the file are not valid. Correct them and import again.",
+      "IMPORT_TOO_LARGE": "The file is too large to import.",
+      "IMPORT_DUPLICATE_FILE": "This file was already imported.",
+      "DECISION_BETTER_THAN_CRITERIA": "The decision cannot be better than the criteria allow without a deviation.",
+      "OWNER_DECISION_REQUIRED": "The owner's decision file is required for this decision.",
+      "REJECT_NEEDS_NCR_OR_CLAIM": "A rejection needs an NCR or a supplier claim.",
+      "MTE_REQUIRED": "Choose the measuring instrument used.",
+      "READING_TOO_OLD": "The reading is too old to be entered by hand.",
+      "IMPACT_LINES_INCOMPLETE": "Every affected batch needs an impact decision.",
+      "IMPACT_EVIDENCE_REQUIRED": "The impact assessment needs the stability data or owner evidence.",
+      "MAPPING_LOGGER_NOT_CALIBRATED": "A logger of the study is not calibrated for the study dates.",
+      "MAPPING_DESIGN_INSUFFICIENT": "The study design does not meet the minimum loggers or duration.",
+      "HOLD_RELEASE_BLOCKED": "The lines cannot be released yet; see the open items.",
+      "COLD_RETURN_NO_HISTORY": "A cold-chain return without temperature history cannot be returned to stock.",
+      "RECALL_TARGET_NOT_MET": "The recall cannot close before the recovery target is met.",
+      "INCOMPATIBLE_LOAD": "These products cannot travel in the same compartment.",
+      "PRELOAD_FAILED": "The pre-load check failed; the trip cannot be dispatched.",
+      "OVERRIDE_NOT_ALLOWED": "You cannot override this check.",
+      "POD_REQUIRED": "A proof of delivery is required for every drop."
     }
   },
   "theme": {
