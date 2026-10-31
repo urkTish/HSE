@@ -1084,7 +1084,8 @@ def package_file(db: Session, p: Principal, dossier_id: uuid.UUID) -> tuple[byte
 
 def allowed_actions(db: Session, p: Principal, d: QDossier) -> list[str]:
     if q1c.viewer(p, d.project_id):
-        return []
+        # Q-DOS-05: the Viewer / Client downloads the accepted index PDF only
+        return ["download_index"] if d.status == ST.accepted and d.index_en_id else []
     pr = q1c.project(db, d.project_id)
     comp = qc.covers(p.grant(pr.id, C.dossier_compile), None, None)
     out = []

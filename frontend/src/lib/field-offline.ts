@@ -19,8 +19,9 @@ const DB = "hse-field";
 const STORE = "kv";
 const DEFAULT_CACHE_HOURS = 72;
 
-/** `q_ncr`: a Quality NCR raised on the phone without signal (8-quality Q-NCR-01, idempotent by client_uuid). */
-export type OutboxKind = "checklist" | "talk" | "q_ncr";
+/** `q_ncr`: a Quality NCR raised on the phone without signal (8-quality Q-NCR-01, idempotent by client_uuid).
+ * `q_ir_round`: an IR round decided without signal (Q-IR-14; the body carries `ir_id`, checked again at sync). */
+export type OutboxKind = "checklist" | "talk" | "q_ncr" | "q_ir_round";
 export interface OutboxItem {
   id: string; // client_uuid
   kind: OutboxKind;
@@ -28,7 +29,7 @@ export interface OutboxItem {
   label: string;
   created_at: string;
   expires_at: string;
-  body: S["SubmissionCreate"] | S["TalkCreate"] | S["QNcrCreate"];
+  body: S["SubmissionCreate"] | S["TalkCreate"] | S["QNcrCreate"] | (S["QIrDecide"] & { ir_id: string });
   /** Set when the server refused the item (4xx): kept so the user sees why, until discarded. */
   error?: { code: string; message: string; message_ar?: string | null } | null;
   /** Record created on the server (the item is then removed); kept for the caller only. */
@@ -256,6 +257,10 @@ function isTransient(e: unknown): boolean {
 
 async function post(item: OutboxItem): Promise<{ id: string }> {
   const path = { params: { path: { project_id: item.project_id } } };
+  if (item.kind === "q_ir_round") {
+    const { ir_id, ...body } = item.body as S["QIrDecide"] & { ir_id: string };
+    return unwrap(api.POST("/api/v1/quality/inspection-requests/{ir_id}/decide", { params: { path: { ir_id } }, body }));
+  }
   if (item.kind === "q_ncr") {
     return unwrap(api.POST("/api/v1/projects/{project_id}/quality/ncrs", { ...path, body: item.body as S["QNcrCreate"] }));
   }

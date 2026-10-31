@@ -1066,6 +1066,12 @@ def read(
         "itp_title_en": it.title_en if it else None,
         "itp_title_ar": it.title_ar if it else None,
         "points": [itps.point_read(db, pt) for pt in points(db, ir)],
+        "checklists": [
+            checklists.template_read(t, pt.seq)
+            for pt in points(db, ir)
+            if pt.checklist_template_code
+            and (t := checklists.template_for(db, pt.checklist_template_code, "ir_inspection"))
+        ],
         "site": {"id": site.id, "code": site.code, "name_en": site.name_en, "name_ar": site.name_ar}
         if site
         else None,

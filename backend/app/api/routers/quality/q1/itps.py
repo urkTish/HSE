@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import date
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Query, Response, status
 
@@ -11,6 +11,7 @@ from app.core.errors import error_responses
 from app.core.quality.common import QDiscipline
 from app.core.quality.q1 import QItpStatus
 from app.schemas.quality.q1 import (
+    QChecklistRead,
     QIrCounts,
     QItpCoverage,
     QItpCreate,
@@ -23,7 +24,7 @@ from app.schemas.quality.q1 import (
 )
 from app.services.permissions import forbidden_error
 from app.services.quality import common as qc
-from app.services.quality.q1 import itp, kpi
+from app.services.quality.q1 import checklists, itp, kpi
 
 router = APIRouter(tags=["quality"])
 E = error_responses(401, 403, 404, 409, 422)
@@ -159,6 +160,26 @@ def q1_withdraw_itp(itp_id: uuid.UUID, body: QReason, user: CurrentUser, db: DB)
 )
 def q1_itp_coverage(itp_id: uuid.UUID, user: CurrentUser, db: DB) -> dict[str, Any]:
     return itp.coverage(db, user, itp_id)
+
+
+@router.get(
+    "/projects/{project_id}/quality/q1-checklists",
+    response_model=list[QChecklistRead],
+    summary="Published Part B quality checklists with their items (builder, runner, walkdown)",
+    responses=E,
+)
+def q1_checklists(
+    project_id: uuid.UUID,
+    user: CurrentUser,
+    db: DB,
+    quality_type: Literal["ir_inspection", "punch_walkdown"] = "ir_inspection",
+) -> list[dict[str, Any]]:
+    pr = qc.get_project(db, user, project_id)
+    if not any(
+        user.grant(pr.id, c) for c in (qc.C.quality_view, qc.C.itp_author, qc.C.punch_record)
+    ):
+        raise forbidden_error()
+    return [checklists.template_read(t) for t in checklists.published(db, quality_type)]
 
 
 @router.get(

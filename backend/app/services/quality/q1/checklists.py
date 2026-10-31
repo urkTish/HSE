@@ -173,3 +173,41 @@ def response_read(db: Session, rid: uuid.UUID | str | None) -> dict[str, Any] | 
             for a in r.answers or []
         ],
     }
+
+
+def template_read(t: ChecklistTemplate, seq: int | None = None) -> dict[str, Any]:
+    """A published template with its items for the phone runner (answers are 6d `AnswerInput`)."""
+    items = sorted(t.items or [], key=lambda x: (x.get("section_code", ""), x.get("order", 0)))
+    return {
+        "seq": seq,
+        "template_code": t.template_code,
+        "version": t.version,
+        "quality_type": t.quality_type,
+        "title_en": t.title_en,
+        "title_ar": t.title_ar,
+        "items": [
+            {
+                "item_code": i["item_code"],
+                "text_en": i.get("text_en"),
+                "text_ar": i.get("text_ar"),
+                "item_type": i.get("item_type"),
+                "critical": bool(i.get("critical")),
+                "na_allowed": bool(i.get("na_allowed")),
+            }
+            for i in items
+        ],
+    }
+
+
+def published(db: Session, quality_type: str) -> list[ChecklistTemplate]:
+    return list(
+        db.scalars(
+            select(ChecklistTemplate)
+            .where(
+                ChecklistTemplate.kind == TemplateKind.quality,
+                ChecklistTemplate.quality_type == quality_type,
+                ChecklistTemplate.status == VersionStatus.published,
+            )
+            .order_by(ChecklistTemplate.template_code)
+        )
+    )

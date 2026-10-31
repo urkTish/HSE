@@ -1665,7 +1665,22 @@
       "HUMAN_ERROR_NOT_ROOT_CAUSE": "\"Operator error\" is not a root cause: ask why the error was possible.",
       "DETECTION_ONLY_ACTION": "Extra inspection only detects the problem; add an action that removes the cause.",
       "COMPETENCE_NOT_MET": "The person does not meet the competence requirement.",
-      "BEFORE_QUALITY_START": "Before the project's Quality start date (excluded from KPIs)."
+      "BEFORE_QUALITY_START": "Before the project's Quality start date (excluded from KPIs).",
+      "ITP_INCOMPLETE": "The ITP is not complete: titles, points, criteria and at least one hold or witness point.",
+      "ITP_NOT_APPROVED": "Use the current approved revision of the ITP.",
+      "ITP_IMMUTABLE": "An approved ITP revision cannot be changed; make a new revision.",
+      "IR_NOTICE_TOO_SHORT": "Not enough notice for a hold or witness point; give a short-notice reason or a later time.",
+      "SELF_CHECK_REQUIRED": "Confirm the contractor's self-check first.",
+      "IR_RESULT_INCONSISTENT": "The result does not match the checklist or the measurements.",
+      "NCR_REQUIRED": "This rejection needs an NCR.",
+      "HOLD_POINT_NOT_RELEASED": "A hold point before this one is not released at this location.",
+      "HOLD_NOT_WAIVABLE": "Hold points are never waived.",
+      "WITNESS_WAIT_NOT_OVER": "The witness may still come; wait until the waiting time is over.",
+      "PUNCH_EVIDENCE_REQUIRED": "Add a photo after the fix and a note of at least 10 characters.",
+      "DOSSIER_BLOCKED": "The dossier has open items that block submission.",
+      "DOSSIER_TOO_LARGE": "The package would exceed 2 GB; split the scope.",
+      "DOSSIER_IMMUTABLE": "An accepted dossier is final; start a new revision.",
+      "PLAN_IMAGE_INVALID": "Plans must be PNG or JPEG images up to 10 MB and 6000 px."
     }
   },
   "theme": {

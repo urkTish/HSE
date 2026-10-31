@@ -248,6 +248,8 @@ def decide(
     at = recorded_at or now()
     if recorded_at is not None:
         _offline_times(db, p, pr, recorded_at)
+    # a round sent more than 2 minutes after it was recorded is an offline sync (Q-IR-14)
+    offline = recorded_at is not None and recorded_at < now() - timedelta(minutes=2)
     if paper:
         g = p.grant(pr.id, C.ir_inspect)
         if g is None or not qc.covers(g, ir.site_id, ir.engagement_id):
@@ -259,10 +261,10 @@ def decide(
     # Q-IR-08 / Q-IR-14: the hold the IR relied on must still be released
     hold = irs.hold_check(db, ir)
     if not hold.ok:
-        if recorded_at is not None:
+        if offline:
             return _needs_confirmation(db, p, ir, rnd, body, hold.blockers[0].detail_en, warnings)
         raise irs.hold_error(hold)
-    if recorded_at is not None and qs.value(db, pr.id, "mte_use_policy") == "block":
+    if offline and qs.value(db, pr.id, "mte_use_policy") == "block":
         try:
             sp = db.begin_nested()
             _measurements(db, p, pr, ir, list(body.get("measurements") or []), at, False, [])
@@ -388,8 +390,9 @@ def _apply_decision(
     rnd.inspector_id = rnd.inspector_id if paper else p.user.id
     rnd.needs_confirmation = False
     rnd.pending_decision = None
-    if body.get("recorded_at"):
-        rnd.recorded_offline_at = body["recorded_at"]
+    rec = body.get("recorded_at")
+    if isinstance(rec, datetime) and rec < now() - timedelta(minutes=2):
+        rnd.recorded_offline_at = rec
     rnd.warnings = [w.model_dump() for w in warnings]
     ir.decided_at = at
     ir.decided_date = rnd.decided_date

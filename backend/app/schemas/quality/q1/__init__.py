@@ -504,6 +504,25 @@ class QNcrRef(ApiModel):
     classification: QNcrClass | None = None
 
 
+class QChecklistItemRead(ApiModel):
+    item_code: str
+    text_en: str | None
+    text_ar: str | None
+    item_type: str | None
+    critical: bool
+    na_allowed: bool
+
+
+class QChecklistRead(ApiModel):
+    seq: int | None = Field(description="The ITP point the checklist belongs to (IR rounds).")
+    template_code: str
+    version: int
+    quality_type: str | None
+    title_en: str
+    title_ar: str
+    items: list[QChecklistItemRead]
+
+
 class QIrRead(QIrListItem):
     project_id: uuid.UUID
     itp_family_id: uuid.UUID
@@ -512,6 +531,7 @@ class QIrRead(QIrListItem):
     itp_title_en: str | None
     itp_title_ar: str | None
     points: list[QItpPointRead]
+    checklists: list[QChecklistRead]
     site: QCodeRef | None
     system: QCodeRef | None
     extent: str | None
