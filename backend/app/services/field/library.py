@@ -90,6 +90,8 @@ def template_read(db: Session, t: ChecklistTemplate) -> TemplateRead:
             "kind": t.kind,
             "inspection_type": t.inspection_type,
             "audit_type": t.audit_type,
+            "quality_type": t.quality_type,
+            "sector_profiles": t.sector_profiles,
             "title_en": t.title_en,
             "title_ar": t.title_ar or "",
             "sections": t.sections or [],
@@ -162,7 +164,7 @@ def list_templates(
     page: int,
     page_size: int,
 ) -> TemplatePage:
-    p.require_any(C.field_library_view)
+    _viewer(p, kind)
     T = ChecklistTemplate  # noqa: N806
     stmt = select(T)
     if kind:
@@ -185,8 +187,9 @@ def list_templates(
 
 
 def read_template(db: Session, p: Principal, template_id: uuid.UUID) -> TemplateRead:
-    p.require_any(C.field_library_view)
-    return template_read(db, get_template(db, template_id))
+    t = get_template(db, template_id)
+    _viewer(p, t.kind)
+    return template_read(db, t)
 
 
 def _next_version(db: Session, model: Any, col: Any, code: str) -> int:
@@ -203,9 +206,32 @@ def _no_open_draft(db: Session, model: Any, col: Any, code: str) -> None:
         )
 
 
+def _author(p: Principal, kind: TemplateKind) -> None:
+    """6d v1.5 (8-quality Q-CHK-01): kind quality is authored with 240, not 192."""
+    p.require_any(C.quality_author if kind == TemplateKind.quality else C.field_library_author)
+
+
+def _publisher(p: Principal, kind: TemplateKind) -> None:
+    """…and published / retired with 239, not 193."""
+    p.require_any(C.quality_settings if kind == TemplateKind.quality else C.field_library_publish)
+
+
+def _viewer(p: Principal, kind: TemplateKind | None) -> None:
+    if kind == TemplateKind.quality and (p.has_any(C.quality_view) or p.has_any(C.quality_author)):
+        return
+    p.require_any(C.field_library_view)
+
+
 def create_template(db: Session, p: Principal, body: TemplateCreate) -> TemplateRead:
-    p.require_any(C.field_library_author)
+    _author(p, body.kind)
     p.ensure_writer()
+    if body.kind == TemplateKind.quality:
+        if not body.template_code.startswith("Q"):
+            raise validation_error("template_code", "Quality checklist codes start with Q.")
+        if body.quality_type is None:
+            raise validation_error("quality_type", "Required for a quality checklist.")
+    elif not body.template_code.isalpha():
+        raise validation_error("template_code", "Use 2–8 capital letters.")
     if body.kind == TemplateKind.inspection and body.inspection_type is None:
         raise validation_error("inspection_type", "Required for an inspection template.")
     if body.kind == TemplateKind.audit and body.audit_type is None:
@@ -223,6 +249,12 @@ def create_template(db: Session, p: Principal, body: TemplateCreate) -> Template
         kind=body.kind,
         inspection_type=body.inspection_type if body.kind == TemplateKind.inspection else None,
         audit_type=body.audit_type if body.kind == TemplateKind.audit else None,
+        quality_type=body.quality_type.value
+        if body.kind == TemplateKind.quality and body.quality_type
+        else None,
+        sector_profiles=(body.sector_profiles or "both")
+        if body.kind == TemplateKind.quality
+        else None,
         title_en=body.title_en,
         title_ar=body.title_ar,
         sections=data["sections"],
@@ -246,9 +278,9 @@ def create_template(db: Session, p: Principal, body: TemplateCreate) -> Template
 def update_template(
     db: Session, p: Principal, template_id: uuid.UUID, body: TemplateUpdate
 ) -> TemplateRead:
-    p.require_any(C.field_library_author)
     p.ensure_writer()
     t = get_template(db, template_id)
+    _author(p, t.kind)
     if t.status != VS.draft:
         raise _immutable()
     data = body.model_dump(mode="json", exclude_unset=True)
@@ -272,7 +304,7 @@ def update_template(
 def delete_template(db: Session, p: Principal, template_id: uuid.UUID) -> None:
     t = get_template(db, template_id)
     if t.authored_by_user_id != p.user.id:
-        p.require_any(C.field_library_publish)
+        _publisher(p, t.kind)
     if t.status != VS.draft:
         raise _immutable()
     _audit(db, p, AuditAction.archive, EntityType.checklist_template, t)
@@ -281,8 +313,8 @@ def delete_template(db: Session, p: Principal, template_id: uuid.UUID) -> None:
 
 
 def new_version(db: Session, p: Principal, template_id: uuid.UUID) -> TemplateRead:
-    p.require_any(C.field_library_author)
     src = get_template(db, template_id)
+    _author(p, src.kind)
     T = ChecklistTemplate  # noqa: N806
     _no_open_draft(db, T, T.template_code, src.template_code)
     t = T(
@@ -291,6 +323,8 @@ def new_version(db: Session, p: Principal, template_id: uuid.UUID) -> TemplateRe
         kind=src.kind,
         inspection_type=src.inspection_type,
         audit_type=src.audit_type,
+        quality_type=src.quality_type,
+        sector_profiles=src.sector_profiles,
         title_en=src.title_en,
         title_ar=src.title_ar,
         sections=list(src.sections or []),
@@ -347,15 +381,24 @@ def completeness(t: ChecklistTemplate) -> list[str]:
 def transition_template(
     db: Session, p: Principal, template_id: uuid.UUID, body: VersionTransition
 ) -> TemplateRead:
-    p.require_any(C.field_library_publish)
-    p.ensure_writer()
     t = get_template(db, template_id)
+    _publisher(p, t.kind)
+    p.ensure_writer()
     at = now()
     src = t.status
     if body.action == VersionAction.publish:
         if t.status != VS.draft:
             raise fc.err(409, ErrorCode.INVALID_TRANSITION, "Only a Draft is published.",
                          "يُنشر الإصدار المسودة فقط.")  # fmt: skip
+        if t.kind == TemplateKind.quality and any(
+            i.get("stop_rule") == StopRule.stop_work.value for i in t.items or []
+        ):
+            raise fc.err(
+                422,
+                ErrorCode.STOP_RULE_NOT_ALLOWED,
+                "Quality checklists cannot stop work; remove the stop_work rules (Q-CHK-02).",
+                "لا يجوز أن توقف قوائم فحص الجودة العمل؛ احذف قواعد إيقاف العمل.",
+            )
         miss = completeness(t)
         if miss:
             raise fc.err(

@@ -249,7 +249,8 @@
     "investigations": "تقارير التحقيق",
     "hseTeam": "فريق الصحة والسلامة",
     "deletedItems": "العناصر المحذوفة",
-    "licence": "الترخيص"
+    "licence": "الترخيص",
+    "quality": "الجودة"
   },
   "shell": {
     "projectSwitcher": "المشروع",
@@ -379,7 +380,8 @@
       "building_highrise": "مبنى شاهق",
       "infrastructure": "بنية تحتية",
       "industrial": "صناعي",
-      "other": "أخرى"
+      "other": "أخرى",
+      "logistics": "لوجستيات / مستودعات"
     },
     "sort": {
       "code": "الرمز (تصاعدي)",
@@ -705,7 +707,12 @@
     "permit_receiver": "مستلم التصريح",
     "contractor_hse_rep": "ممثل السلامة للمقاول",
     "viewer_client": "مُطّلع / العميل",
-    "oh_practitioner": "ممارس الصحة المهنية"
+    "oh_practitioner": "ممارس الصحة المهنية",
+    "qa_qc_manager": "مدير ضبط وتوكيد الجودة",
+    "quality_engineer": "مهندس الجودة",
+    "qc_inspector": "مفتش ضبط الجودة",
+    "warehouse_qc": "مراقب جودة المستودع / أمين المخزن",
+    "responsible_person": "الشخص المسؤول"
   },
   "assignment": {
     "title": "الأدوار المسندة",
@@ -993,7 +1000,53 @@
       "driver_authorisation": "تفويض القيادة",
       "vehicle_check": "الفحص اليومي",
       "journey_plan": "خطة الرحلة",
-      "licence": "الترخيص"
+      "licence": "الترخيص",
+      "q_settings": "إعدادات الجودة",
+      "q_position": "منصب المشروع",
+      "q_rp_rule": "قاعدة الشخص المسؤول",
+      "q_numbering": "صيغة الترقيم",
+      "q_criterion": "معيار قبول",
+      "q_system": "نظام",
+      "q_customer": "عميل",
+      "q_link": "رابط جودة",
+      "q_signoff": "توقيع",
+      "q_mte_usage": "استخدام جهاز قياس",
+      "q_ncr": "تقرير عدم مطابقة",
+      "q_observation": "ملاحظة جودة",
+      "q_quality_alert": "تنبيه جودة",
+      "q_complaint": "شكوى عميل",
+      "q_itp": "خطة الفحص والاختبار",
+      "q_ir": "طلب فحص",
+      "q_punch_item": "بند قائمة النواقص",
+      "q_dossier": "ملف التسليم",
+      "q_mar": "طلب اعتماد مواد",
+      "q_mir": "طلب فحص المواد الموردة",
+      "q_quarantine": "مواد محجوزة",
+      "q_test_request": "طلب اختبار",
+      "q_pour": "صبّة خرسانية",
+      "q_wps": "مواصفة إجراء اللحام",
+      "q_pqr": "سجل تأهيل الإجراء",
+      "q_wpq": "تأهيل اللحّام",
+      "q_weld": "وصلة لحام",
+      "q_mte": "جهاز قياس واختبار",
+      "q_calibration": "سجل معايرة",
+      "q_oot_review": "مراجعة الخروج عن التفاوت",
+      "q_receipt": "فحص الاستلام",
+      "q_excursion": "انحراف حراري",
+      "q_mapping_study": "دراسة التوزيع الحراري",
+      "q_hold": "حجز وعزل",
+      "q_return": "فحص المرتجعات",
+      "q_recall": "استدعاء منتج",
+      "q_damage_report": "بلاغ تلف",
+      "q_fefo_check": "فحص الأقدم انتهاءً",
+      "q_cycle_count": "جرد دوري",
+      "q_trip": "رحلة نقل",
+      "q_document": "وثيقة مضبوطة",
+      "q_transmittal": "مذكرة إحالة",
+      "q_audit": "تدقيق الجودة",
+      "q_management_review": "مراجعة الإدارة",
+      "q_supplier": "مورد",
+      "q_supplier_evaluation": "تقييم المورد"
     },
     "system": "النظام"
   },
@@ -1586,7 +1639,33 @@
       "MFA_SETUP_NOT_STARTED": "ابدأ الإعداد من جديد: لا يوجد رمز QR بانتظار التأكيد.",
       "FILE_INFECTED": "رُفض الملف لأن فاحص الفيروسات وجد فيه تهديدًا. لا تفتحه، وتواصل مع الدعم الفني.",
       "SCANNER_UNAVAILABLE": "تعذّر فحص الملف من الفيروسات الآن، لذا لم يُحفظ. حاول مرة أخرى بعد بضع دقائق.",
-      "SETUP_ALREADY_DONE": "تم إعداد هذا النظام مسبقًا. سجّل الدخول بدلًا من ذلك."
+      "SETUP_ALREADY_DONE": "تم إعداد هذا النظام مسبقًا. سجّل الدخول بدلًا من ذلك.",
+      "PROFILE_REQUIRED": "اختر قطاع الجودة للمشروع أولاً.",
+      "PROFILE_INACTIVE": "هذا النوع يخص قطاعاً غير مفعّل في المشروع؛ يمكن إكمال السجلات المفتوحة فقط.",
+      "RESPONSIBLE_PERSON_NOT_SET": "لم يُحدَّد الشخص المسؤول لهذه الخطوة؛ اطلب استكمال المصفوفة.",
+      "NUMBER_FORMAT_INVALID": "صيغة الترقيم غير صالحة.",
+      "CLASS_LOWERED_NEEDS_APPROVAL": "لا يخفض التصنيف إلا الشخص المسؤول عن اعتماد المعالجة مع ذكر السبب.",
+      "CONTAINMENT_REQUIRED": "سجّل إجراءات الاحتواء أولاً.",
+      "RCA_METHOD_NOT_ALLOWED": "طريقة تحليل السبب غير مسموحة لهذا التصنيف.",
+      "RCA_INCOMPLETE": "تحليل السبب الجذري غير مكتمل.",
+      "DISPOSITION_QTY_MISMATCH": "مجموع كميات بنود المعالجة لا يساوي كمية التقرير.",
+      "CONCESSION_EVIDENCE_REQUIRED": "يتطلب الاستخدام كما هو والإصلاح مبرراً لا يقل عن 50 حرفاً وملف دليل.",
+      "COST_NOT_RECORDED": "سجّل التكاليف أو أكّد عدم وجود تكلفة.",
+      "DELAY_RATE_NOT_SET": "حدد تكلفة يوم التأخير في إعدادات الجودة أولاً.",
+      "NCR_CLOSE_BLOCKED": "لا يمكن إغلاق التقرير بعد.",
+      "NCR_REQUIRED_FOR_JUSTIFIED": "يجب ربط الشكوى المبررة بتقرير عدم مطابقة.",
+      "SUPPLIER_DISQUALIFIED": "المورد مستبعد.",
+      "MTE_NOT_CALIBRATED": "الجهاز غير معاير.",
+      "STOP_RULE_NOT_ALLOWED": "لا يجوز أن توقف قوائم فحص الجودة العمل.",
+      "LINK_NOT_ALLOWED": "يجب أن يكون السجلان في المشروع نفسه وأن تتمكن من رؤيتهما.",
+      "CRITERION_IMMUTABLE": "يمكن تعديل المعيار المسودة فقط؛ أنشئ إصداراً جديداً.",
+      "MTE_SERIAL_DUPLICATE": "يوجد جهاز مسجل بنفس الشركة المصنعة والرقم التسلسلي.",
+      "SUPPLIER_NOT_APPROVED": "المورد غير معتمد.",
+      "LAB_NOT_ACCREDITED_FOR_SCOPE": "المختبر غير معتمد لهذا النطاق.",
+      "HUMAN_ERROR_NOT_ROOT_CAUSE": "\"خطأ المشغل\" ليس سبباً جذرياً: اسأل لماذا كان الخطأ ممكناً.",
+      "DETECTION_ONLY_ACTION": "الفحص الإضافي يكشف المشكلة فقط؛ أضف إجراءً يزيل السبب.",
+      "COMPETENCE_NOT_MET": "الشخص لا يستوفي متطلب الكفاءة.",
+      "BEFORE_QUALITY_START": "قبل تاريخ بدء الجودة في المشروع (مستبعد من المؤشرات)."
     }
   },
   "theme": {
@@ -1891,7 +1970,12 @@
       "environmental": "بيئي",
       "lesson": "درس مستفاد",
       "scorecard": "بطاقة أداء المقاول",
-      "site_vehicle": "فحص مركبة الموقع"
+      "site_vehicle": "فحص مركبة الموقع",
+      "quality_ncr": "تقرير عدم مطابقة",
+      "quality_observation": "ملاحظة جودة",
+      "quality_complaint": "شكوى عميل",
+      "quality_audit": "تدقيق الجودة",
+      "quality_review": "مراجعة الإدارة"
     },
     "overdueBucket": {
       "1-7": "1–7 أيام",
@@ -4891,7 +4975,8 @@
     },
     "fdTemplateKind": {
       "inspection": "تفتيش",
-      "audit": "تدقيق"
+      "audit": "تدقيق",
+      "quality": "قائمة فحص الجودة"
     },
     "fdZoneType": {
       "airside": "الجانب الجوي",

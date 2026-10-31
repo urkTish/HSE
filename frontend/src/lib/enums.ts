@@ -2,7 +2,7 @@ import type { Schemas } from "@/lib/api/client";
 
 // Enum value lists mirrored from the contract for selects (types keep them in sync).
 export const PROJECT_STATUSES = ["planning", "active", "on_hold", "closed"] as const satisfies readonly Schemas["ProjectStatus"][];
-export const PROJECT_TYPES = ["airport", "building_highrise", "infrastructure", "industrial", "other"] as const satisfies readonly Schemas["ProjectType"][];
+export const PROJECT_TYPES = ["airport", "building_highrise", "infrastructure", "industrial", "logistics", "other"] as const satisfies readonly Schemas["ProjectType"][];
 export const SITE_SIDES = ["airside", "landside", "mixed", "other"] as const satisfies readonly Schemas["SiteSide"][];
 export const SITE_STATUSES = ["active", "inactive"] as const satisfies readonly Schemas["SiteStatus"][];
 export const ZONE_TYPES = ["airside", "landside", "other"] as const satisfies readonly Schemas["ZoneType"][];
@@ -50,7 +50,14 @@ export const ROLES = [
   "contractor_hse_rep",
   "viewer_client",
   "oh_practitioner",
+  "qa_qc_manager",
+  "quality_engineer",
+  "qc_inspector",
+  "warehouse_qc",
+  "responsible_person",
 ] as const satisfies readonly Schemas["Role"][];
+/** 8-quality §A.1: project roles the project's QA/QC Manager (239) assigns; an engagement is optional (Q-ROL-02). */
+export const QUALITY_ROLES: readonly Schemas["Role"][] = ["qa_qc_manager", "quality_engineer", "qc_inspector", "warehouse_qc", "responsible_person"];
 /** Roles an HSE Officer may assign (rule 14). */
 export const OFFICER_ASSIGNABLE_ROLES: readonly Schemas["Role"][] = [
   "site_engineer",

@@ -291,4 +291,5 @@ def test_me_capabilities(api: Api, ids: Ids) -> None:
     assert caps["site_zone.view"] == "sites"
     assert "site_zone.manage" not in caps
     sarah = api.as_("sarah.mitchell").get("/api/v1/auth/me").json()
-    assert all(p["read_only"] for p in sarah["projects"]) and len(sarah["projects"]) == 2
+    # 8-quality Appendix A.1: Sarah is also Viewer on the logistics project RUH-CCH
+    assert all(p["read_only"] for p in sarah["projects"]) and len(sarah["projects"]) == 3

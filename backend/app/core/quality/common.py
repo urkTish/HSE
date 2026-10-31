@@ -2368,6 +2368,141 @@ LABELS: dict[str, dict[str, tuple[str, str]]] = {
 }
 
 
+_MTE_AR = {
+    "tape_rule": "شريط قياس",
+    "caliper_micrometer": "قدمة / ميكرومتر",
+    "level_theodolite": "ميزان / ثيودوليت",
+    "total_station": "محطة رصد",
+    "gnss_survey": "جهاز مساحة GNSS",
+    "thermometer": "ميزان حرارة",
+    "temp_probe": "مجس حرارة",
+    "temp_logger": "مسجل حرارة",
+    "humidity_logger": "مسجل رطوبة",
+    "infrared_thermometer": "ميزان حرارة بالأشعة تحت الحمراء",
+    "pressure_gauge": "مقياس ضغط",
+    "torque_wrench": "مفتاح عزم",
+    "dft_gauge": "مقياس سماكة الطلاء",
+    "holiday_detector": "كاشف ثقوب الطلاء",
+    "hardness_tester": "جهاز قياس الصلادة",
+    "compression_machine": "ماكينة الضغط",
+    "slump_cone": "مخروط الهبوط",
+    "cube_mould": "قالب المكعبات",
+    "nuclear_density_gauge": "جهاز الكثافة النووي",
+    "scale_balance": "ميزان",
+    "multimeter_insulation_tester": "جهاز متعدد / فاحص عزل",
+    "ultrasonic_thickness": "مقياس سماكة بالموجات فوق الصوتية",
+    "other": "أخرى",
+}
+LABELS.update(
+    {
+        "mte_type": {k: (k.replace("_", " ").capitalize(), v) for k, v in _MTE_AR.items()},
+        "check_kind": {
+            "calibration": ("Calibration", "معايرة"),
+            "verification": ("Verification", "تحقق"),
+            "none": ("None", "لا يوجد"),
+        },
+        "mte_status": {
+            "active": ("Active", "نشط"),
+            "retired": ("Retired", "مستبعد"),
+            "lost": ("Lost", "مفقود"),
+        },
+        "complaint_channel": {
+            "email": ("Email", "بريد إلكتروني"),
+            "phone": ("Phone", "هاتف"),
+            "letter": ("Letter", "خطاب"),
+            "meeting": ("Meeting", "اجتماع"),
+            "portal": ("Portal", "بوابة"),
+            "other": ("Other", "أخرى"),
+        },
+        "complaint_severity": {
+            "low": ("Low", "منخفضة"),
+            "medium": ("Medium", "متوسطة"),
+            "high": ("High", "عالية"),
+        },
+        "justified": {
+            "yes": ("Justified", "مبررة"),
+            "no": ("Not justified", "غير مبررة"),
+            "partly": ("Partly justified", "مبررة جزئياً"),
+        },
+        "satisfaction": {
+            "yes": ("Satisfied", "راضٍ"),
+            "no": ("Not satisfied", "غير راضٍ"),
+            "no_reply": ("No reply", "لا رد"),
+        },
+        "criterion_status": {
+            "draft": ("Draft", "مسودة"),
+            "published": ("Published", "منشور"),
+            "superseded": ("Superseded", "مستبدل"),
+            "retired": ("Retired", "موقوف"),
+        },
+        "link_kind": {
+            "raised_from": ("Raised from", "صادر عن"),
+            "relates": ("Related", "مرتبط"),
+            "evidence": ("Evidence", "دليل"),
+            "requires": ("Requires", "يتطلب"),
+            "supersedes": ("Supersedes", "يحل محل"),
+        },
+        "discipline": {
+            "CIV": ("Civil works", "أعمال مدنية"),
+            "STC": ("Structural concrete", "خرسانة إنشائية"),
+            "STL": ("Structural steel", "حديد إنشائي"),
+            "ARC": ("Architectural", "معماري"),
+            "HVC": ("HVAC", "تكييف وتهوية"),
+            "PLB": ("Plumbing and drainage", "سباكة وصرف"),
+            "FPS": ("Fire protection", "حماية من الحريق"),
+            "ELE": ("Electrical", "كهرباء"),
+            "ELV": ("Low current / ELV", "تيار منخفض"),
+            "RDS": ("Roads and infrastructure", "طرق وبنية تحتية"),
+            "AFP": ("Airfield pavement", "رصف المطارات"),
+            "GEO": ("Geotechnical and earthworks", "أعمال ترابية وجيوتقنية"),
+            "LSC": ("Landscape", "تنسيق الموقع"),
+            "OTH": ("Other", "أخرى"),
+        },
+        "assignee_kind": {
+            "user": ("Named user", "مستخدم محدد"),
+            "role": ("Platform role", "دور"),
+            "position": ("Project position", "منصب في المشروع"),
+        },
+        "role": {
+            "qa_qc_manager": ("QA/QC Manager", "مدير ضبط وتوكيد الجودة"),
+            "quality_engineer": ("Quality Engineer", "مهندس الجودة"),
+            "qc_inspector": ("QC Inspector", "مفتش ضبط الجودة"),
+            "warehouse_qc": ("Warehouse QC", "مراقب جودة المستودع"),
+            "responsible_person": ("Responsible Person", "الشخص المسؤول"),
+            "hse_manager": ("HSE Manager", "مدير الصحة والسلامة"),
+            "hse_officer": ("HSE Officer", "مسؤول الصحة والسلامة"),
+            "site_engineer": ("Site Engineer", "مهندس الموقع"),
+        },
+        "channel": {"in_app": ("In the app", "داخل التطبيق"), "paper": ("On paper", "ورقياً")},
+        "accreditation_body": {
+            "sac": ("SAC (Saudi Accreditation Center)", "المركز السعودي للاعتماد"),
+            "ilac_mra_other": ("Other ILAC MRA body", "جهة أخرى ضمن ILAC MRA"),
+            "other": ("Other", "أخرى"),
+        },
+        "accreditation_standard": {
+            "iso_iec_17025": ("ISO/IEC 17025", "ISO/IEC 17025"),
+            "iso_iec_17020": ("ISO/IEC 17020", "ISO/IEC 17020"),
+            "iso_9001": ("ISO 9001", "ISO 9001"),
+            "iso_22000": ("ISO 22000", "ISO 22000"),
+            "other": ("Other", "أخرى"),
+        },
+        "customer_status": {"active": ("Active", "نشط"), "inactive": ("Inactive", "غير نشط")},
+        "active_status": {"active": ("Active", "نشط"), "archived": ("Archived", "مؤرشف")},
+        "mte_owner_kind": {
+            "own": ("Own", "ملك المشروع"),
+            "engagement": ("Contractor", "المقاول"),
+            "supplier": ("Supplier", "المورد"),
+        },
+        "number_reset": {"yearly": ("Every year", "كل سنة"), "never": ("Never", "أبداً")},
+        "mte_use_verdict": {
+            "ok": ("OK", "سليم"),
+            "warned": ("Warned", "مع تحذير"),
+            "blocked_overridden": ("Blocked, overridden", "محظور مع تجاوز"),
+        },
+    }
+)
+
+
 def label(kind: str, value: Any, ar: bool = False) -> str:
     v = value.value if isinstance(value, StrEnum) else str(value)
     pair = LABELS.get(kind, {}).get(v)
