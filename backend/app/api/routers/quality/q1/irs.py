@@ -21,6 +21,7 @@ from app.schemas.quality.q1 import (
     QIrRead,
     QIrReinspect,
     QIrSchedule,
+    QIrSelfCheck,
     QIrSubmit,
     QIrUpdate,
     QIrWaive,
@@ -159,6 +160,19 @@ def q1_delete_ir(ir_id: uuid.UUID, user: CurrentUser, db: DB) -> Response:
 def q1_submit_ir(ir_id: uuid.UUID, body: QIrSubmit, user: CurrentUser, db: DB) -> dict[str, Any]:
     r, warnings = ir.submit(db, user, ir_id, body.short_notice_reason)
     return _r(db, user, r, warnings)
+
+
+@router.post(
+    "/quality/inspection-requests/{ir_id}/self-check",
+    response_model=QIrRead,
+    summary="Contractor self-check on the points' checklists, kept as round 0 (Q-IR-04)",
+    responses=E,
+)
+def q1_self_check_ir(
+    ir_id: uuid.UUID, body: QIrSelfCheck, user: CurrentUser, db: DB
+) -> dict[str, Any]:
+    data = body.model_dump(mode="python")
+    return _r(db, user, ir.self_check(db, user, ir_id, data["answers"], data["note"]))
 
 
 @router.post(

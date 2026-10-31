@@ -15257,6 +15257,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/quality/inspection-requests/{ir_id}/self-check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Contractor self-check on the points' checklists, kept as round 0 (Q-IR-04) */
+        post: operations["q1_self_check_ir"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/quality/inspection-requests/{ir_id}/return": {
         parameters: {
             query?: never;
@@ -47184,6 +47201,21 @@ export interface components {
             reason?: string | null;
         };
         /**
+         * QIrSelfCheck
+         * @description Q-IR-04 round 0: the contractor's pre-inspection on the points' checklists.
+         */
+        QIrSelfCheck: {
+            /**
+             * Answers
+             * @description Checklist answers by ITP point seq.
+             */
+            answers: {
+                [key: string]: components["schemas"]["AnswerInput"][];
+            };
+            /** Note */
+            note?: string | null;
+        };
+        /**
          * QIrStatus
          * @description §B.4.2.
          * @enum {string}
@@ -47232,8 +47264,6 @@ export interface components {
             photos?: components["schemas"]["PhotoInput"][];
             /** Comment */
             comment?: string | null;
-            /** Recorded At */
-            recorded_at?: string | null;
         };
         /** QItpCoverage */
         QItpCoverage: {
@@ -137302,6 +137332,77 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["QIrSubmit"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QIrRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q1_self_check_ir: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ir_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QIrSelfCheck"];
             };
         };
         responses: {

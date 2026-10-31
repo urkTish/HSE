@@ -239,7 +239,12 @@
       "response": "Response",
       "responsePlaceholder": "What was done",
       "respond": "Respond",
-      "closeComment": "Close comment"
+      "closeComment": "Close comment",
+      "selfCheckRun": "Self-check checklist",
+      "selfCheckTitle": "Contractor self-check (round 0, not scored)",
+      "saveSelfCheck": "Save self-check",
+      "selfCheckSaved": "Self-check saved",
+      "round0": "Self-check (round 0)"
     },
     "punch": {
       "title": "Punch list",

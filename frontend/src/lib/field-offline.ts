@@ -286,7 +286,9 @@ export async function submitWithOutbox<T extends { id: string }>(kind: OutboxKin
     label,
     created_at: new Date(now).toISOString(),
     expires_at: new Date(now + cacheHours * 3_600_000).toISOString(),
-    body,
+    // an IR round kept on the device carries the time it was recorded: the server treats it as an
+    // offline sync (Q-IR-14); the immediate send below goes without it
+    body: kind === "q_ir_round" ? { ...(body as S["QIrDecide"] & { ir_id: string }), recorded_at: new Date(now).toISOString() } : body,
   };
   const stored = available();
   if (stored) {
@@ -298,7 +300,7 @@ export async function submitWithOutbox<T extends { id: string }>(kind: OutboxKin
   }
   if (typeof navigator !== "undefined" && !navigator.onLine && stored) return { status: "queued" };
   try {
-    const record = (await post(item)) as T;
+    const record = (await post({ ...item, body })) as T;
     if (stored) await discardOutbox(item.id).catch(() => undefined);
     return { status: "sent", record };
   } catch (e) {

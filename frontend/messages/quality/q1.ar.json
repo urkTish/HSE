@@ -239,7 +239,12 @@
       "response": "الرد",
       "responsePlaceholder": "ما تم تنفيذه",
       "respond": "رد",
-      "closeComment": "إغلاق الملاحظة"
+      "closeComment": "إغلاق الملاحظة",
+      "selfCheckRun": "قائمة الفحص الذاتي",
+      "selfCheckTitle": "الفحص الذاتي للمقاول (الجولة 0، لا تُحتسب)",
+      "saveSelfCheck": "حفظ الفحص الذاتي",
+      "selfCheckSaved": "حُفظ الفحص الذاتي",
+      "round0": "الفحص الذاتي (الجولة 0)"
     },
     "punch": {
       "title": "قائمة النواقص",

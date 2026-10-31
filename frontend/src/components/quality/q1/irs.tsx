@@ -454,6 +454,7 @@ function Detail({ project, id }: { project: Project; id: string }) {
       {panel === "schedule" || panel === "reschedule" ? <ScheduleForm ir={ir} resched={panel === "reschedule"} onDone={() => setPanel(null)} /> : null}
       {panel === "decide" || panel === "review" || panel === "paper" ? <Runner ir={ir} project={project} review={ir.status === "witness_waived"} paperOnly={panel === "paper"} onDone={() => setPanel(null)} /> : null}
       {panel === "waive" ? <Runner ir={ir} project={project} waive onDone={() => setPanel(null)} /> : null}
+      {panel === "self_check" ? <Runner ir={ir} project={project} selfCheck onDone={() => setPanel(null)} /> : null}
       {panel === "reinspect" ? <Reinspect ir={ir} onDone={() => setPanel(null)} /> : null}
       <Tabs tabs={TABS} value={tab} onChange={setTab} label={(k) => t(`tab.${k}`)} prefix="q1-ir" />
       {tab === "rounds" ? <Rounds ir={ir} canUpload={Boolean(cur) && (allowed.has("decide") || allowed.has("waive"))} /> : null}
@@ -495,6 +496,7 @@ function HeaderActions({ ir, onPanel }: { ir: Ir; onPanel: (p: string | null) =>
         {btn("review", t("review"), () => onPanel("review"), "default")}
         {btn("paper_signoff", t("paperSignoff"), () => onPanel("paper"))}
         {btn("waive", t("waive"), () => onPanel("waive"))}
+        {btn("self_check", t("selfCheckRun"), () => onPanel("self_check"))}
         {btn("request_reinspection", t("requestReinspection"), () => onPanel("reinspect"), "default")}
         {btn("confirm_offline", t("confirmOffline"), () => void run(() => unwrap(api.POST("/api/v1/quality/inspection-requests/{ir_id}/confirm-offline", { ...path, body: { discard: false } })), t("confirmed")), "default")}
         {btn("return", t("return"), () => setDlg("return"))}
@@ -575,7 +577,7 @@ function ScheduleForm({ ir, resched, onDone }: { ir: Ir; resched: boolean; onDon
 type Answer = { item_code: string; answer: string; note?: string };
 
 /** The inspection run on the phone: checklists, measurements (with M&TE), photos, result, sign-off. */
-function Runner({ ir, project, review = false, waive = false, paperOnly = false, onDone }: { ir: Ir; project: Project; review?: boolean; waive?: boolean; paperOnly?: boolean; onDone: () => void }) {
+function Runner({ ir, project, review = false, waive = false, paperOnly = false, selfCheck = false, onDone }: { ir: Ir; project: Project; review?: boolean; waive?: boolean; paperOnly?: boolean; selfCheck?: boolean; onDone: () => void }) {
   const t = useTranslations("quality.q1.ir");
   const tc = useTranslations("quality.common");
   const ar = useLocale() === "ar";
@@ -595,7 +597,6 @@ function Runner({ ir, project, review = false, waive = false, paperOnly = false,
   const [paper, setPaper] = useState(paperOnly);
   const [pp, setPp] = useState(emptyPaper());
   const [cuid] = useState(newUuid);
-  const recordedAt = useMemo(() => new Date().toISOString(), []);
   const lists = review ? [] : ir.checklists;
   const setA = (seq: number, code: string, patch: Partial<Answer>) =>
     setAnswers((x) => ({ ...x, [seq]: { ...(x[seq] ?? {}), [code]: { item_code: code, answer: "compliant", ...(x[seq]?.[code] ?? {}), ...patch } } }));
@@ -617,10 +618,17 @@ function Runner({ ir, project, review = false, waive = false, paperOnly = false,
         const m = meas[`${seq}:${c.id}`];
         return { point_seq: seq, criterion_id: c.id, value: m?.value && c.kind !== "pass_fail" && c.kind !== "text" ? m.value : null, verdict: m?.verdict ? (m.verdict as "pass" | "fail") : null, mte_id: m?.mte_id || null };
       }),
-      photos, raise_ncr: raiseNcr, paper: paper ? pp : null, client_uuid: cuid, recorded_at: recordedAt, ncr_owner_id: null,
+      photos, raise_ncr: raiseNcr, paper: paper ? pp : null, client_uuid: cuid, ncr_owner_id: null,
     };
   }
   async function go() {
+    if (selfCheck) {
+      const out = await run(() => unwrap(api.POST("/api/v1/quality/inspection-requests/{ir_id}/self-check", {
+        params: { path: { ir_id: ir.id } }, body: { answers: body().answers ?? {}, note: comment || null },
+      })), t("selfCheckSaved"));
+      if (out) onDone();
+      return;
+    }
     if (waive) {
       const out = await run(() => unwrap(api.POST("/api/v1/quality/inspection-requests/{ir_id}/waive", {
         params: { path: { ir_id: ir.id } }, body: { answers: body().answers, measurements: body().measurements, photos, comment: comment || null },
@@ -643,12 +651,12 @@ function Runner({ ir, project, review = false, waive = false, paperOnly = false,
     onDone();
   }
   const needsPhoto = result === "rejected" || waive;
-  const ok = (waive || result) && (!needsPhoto || photos.length > 0 || ir.rounds.some((x) => x.round_no === ir.current_round && x.photo_ids.length))
-    && (result !== "rejected" || category) && (result !== "approved_with_comments" || comments.some((c) => c.trim())) && (!paper || paperReady(pp));
+  const ok = selfCheck || ((waive || result) && (!needsPhoto || photos.length > 0 || ir.rounds.some((x) => x.round_no === ir.current_round && x.photo_ids.length))
+    && (result !== "rejected" || category) && (result !== "approved_with_comments" || comments.some((c) => c.trim())) && (!paper || paperReady(pp)));
   return (
     <Card className="mb-4" data-testid="q1-ir-runner">
       <CardContent className="flex flex-col gap-4 p-4">
-        <p className="font-medium">{waive ? t("waiveTitle") : review ? t("reviewTitle") : t("runTitle")}</p>
+        <p className="font-medium">{selfCheck ? t("selfCheckTitle") : waive ? t("waiveTitle") : review ? t("reviewTitle") : t("runTitle")}</p>
         <MutationError error={error} />
         {lists.map((cl) => (
           <FormSection key={`${cl.seq}-${cl.template_code}`} title={`${t("checklistFor", { seq: cl.seq ?? 0 })} · ${cl.template_code} — ${ar ? cl.title_ar : cl.title_en}`}>
@@ -674,7 +682,7 @@ function Runner({ ir, project, review = false, waive = false, paperOnly = false,
             </ul>
           </FormSection>
         ))}
-        {crit.length && !review ? (
+        {crit.length && !review && !selfCheck ? (
           <FormSection title={t("measurements")}>
             {crit.map(({ seq, c }) => {
               const k = `${seq}:${c.id}`;
@@ -702,8 +710,8 @@ function Runner({ ir, project, review = false, waive = false, paperOnly = false,
             })}
           </FormSection>
         ) : null}
-        <FormField id="run-photos" label={t("photos")} required={needsPhoto}><PhotoPicker value={photos} onChange={setPhotos} max={20} testId="q1-run-photos" /></FormField>
-        {!waive ? (
+        {!selfCheck ? <FormField id="run-photos" label={t("photos")} required={needsPhoto}><PhotoPicker value={photos} onChange={setPhotos} max={20} testId="q1-run-photos" /></FormField> : null}
+        {!waive && !selfCheck ? (
           <div className="flex flex-col gap-2">
             <p className="text-sm font-medium">{t("result")}</p>
             <div className="flex flex-wrap gap-2" role="radiogroup">
@@ -735,12 +743,12 @@ function Runner({ ir, project, review = false, waive = false, paperOnly = false,
         <FormField id="run-comment" label={t("comment")} hint={result === "rejected" || result === "not_ready" ? tc("minChars", { n: 10 }) : tc("noNames")}>
           <Textarea value={comment} onChange={(e) => setComment(e.target.value)} rows={2} data-testid="q1-run-comment" />
         </FormField>
-        {!waive && !paperOnly ? <CheckboxField id="run-paper" label={t("paperInstead")}><Checkbox checked={paper} onChange={(e) => setPaper(e.target.checked)} /></CheckboxField> : null}
+        {!waive && !paperOnly && !selfCheck ? <CheckboxField id="run-paper" label={t("paperInstead")}><Checkbox checked={paper} onChange={(e) => setPaper(e.target.checked)} /></CheckboxField> : null}
         {paper ? <PaperFields value={pp} onChange={setPp} /> : null}
-        <OutboxPanel kind="q_ir_round" projectId={project.id} />
+        {!selfCheck ? <OutboxPanel kind="q_ir_round" projectId={project.id} /> : null}
         <div className="sticky bottom-0 flex gap-2 bg-background py-2">
           <Button variant="outline" onClick={onDone}>{tc("cancel")}</Button>
-          <Button disabled={busy || !ok} onClick={() => void go()} data-testid="q1-run-sign">{waive ? t("recordWaiver") : t("sign")}</Button>
+          <Button disabled={busy || !ok} onClick={() => void go()} data-testid="q1-run-sign">{selfCheck ? t("saveSelfCheck") : waive ? t("recordWaiver") : t("sign")}</Button>
         </div>
       </CardContent>
     </Card>
@@ -783,7 +791,7 @@ function Rounds({ ir, canUpload }: { ir: Ir; canUpload: boolean }) {
         <Card key={r.id} data-testid="q1-ir-round" data-round={r.round_no} data-result={r.result ?? ""}>
           <CardContent className="flex flex-col gap-2 p-4 text-sm">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="font-medium">{t("roundN", { n: r.round_no })}</span>
+              <span className="font-medium">{r.round_no === 0 ? t("round0") : t("roundN", { n: r.round_no })}</span>
               {r.result ? <Q1Status kind="ir_result" value={r.result} /> : null}
               {r.review_result ? <span className="text-xs">{t("reviewed")}: <Q1Status kind="ir_result" value={r.review_result} /></span> : null}
               {r.needs_confirmation ? <span className="text-xs text-warning">{t("needsConfirmation")}</span> : null}

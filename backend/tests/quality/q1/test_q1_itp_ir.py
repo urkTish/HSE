@@ -92,7 +92,11 @@ def test_AC02_AC03_approval_supersedes_and_immutable(q1lib: None, api: Api, ids:
     with get_sessionmaker()() as db:
         r = db.scalar(
             select(QRpRule).where(
-                QRpRule.record_type == "itp", QRpRule.step == "approve", QRpRule.record_id.is_(None)
+                QRpRule.project_id == _pid(ids),
+                QRpRule.record_type == "itp",
+                QRpRule.step == "approve",
+                QRpRule.record_id.is_(None),
+                QRpRule.active.is_(True),
             )
         )
         assert r is not None
@@ -106,7 +110,11 @@ def test_AC02_AC03_approval_supersedes_and_immutable(q1lib: None, api: Api, ids:
     with get_sessionmaker()() as db:
         r = db.scalar(
             select(QRpRule).where(
-                QRpRule.record_type == "itp", QRpRule.step == "approve", QRpRule.record_id.is_(None)
+                QRpRule.project_id == _pid(ids),
+                QRpRule.record_type == "itp",
+                QRpRule.step == "approve",
+                QRpRule.record_id.is_(None),
+                QRpRule.active.is_(True),
             )
         )
         assert r is not None
@@ -626,3 +634,119 @@ def test_AC18_offline_round_needs_confirmation(q1lib: None, api: Api, ids: Ids) 
     )
     set_now(local(2026, 10, 6, 7))
     _ = crit
+
+
+def test_waiver_wait_uses_the_server_clock(q1lib: None, api: Api, ids: Ids) -> None:
+    """F-3: a waiver cannot back-date itself past the witness wait (no client time accepted)."""
+    itp = approved_itp(api, ids)
+    joseph = api.as_("joseph.mathew.qc")
+    abd = api.as_("abdullah.dossary")
+    clock_at(2026, 10, 3, 9)
+    w = ok(submit_ir(joseph, ids, itp, [20], loc="Level 1 slab"), 201)
+    schedule(abd, w["id"], local(2026, 10, 6, 8))
+    clock_at(2026, 10, 6, 8, 30)
+    url = f"{API}/quality/inspection-requests/{w['id']}/waive"
+    body: dict[str, Any] = {"answers": decide_body([20])["answers"], "photos": [photo()]}
+    err(api.as_("joseph.mathew.qc").post(url, json=body), 422, "WITNESS_WAIT_NOT_OVER")
+    late = {**body, "recorded_at": local(2026, 10, 6, 9, 30).isoformat()}
+    err(api.as_("joseph.mathew.qc").post(url, json=late), 422, "VALIDATION_ERROR")
+
+
+def test_client_uuid_of_another_ir_is_refused(q1lib: None, api: Api, ids: Ids) -> None:
+    """F-5: a replayed client_uuid only returns its own IR."""
+    itp = approved_itp(api, ids, points=stc_points(rebar_type="W"))
+    joseph = api.as_("joseph.mathew.qc")
+    abd = api.as_("abdullah.dossary")
+    a = ok(submit_ir(joseph, ids, itp, [20], loc="Level 1 slab"), 201)
+    b = ok(submit_ir(joseph, ids, itp, [20], loc="Level 2 slab"), 201)
+    for x in (a, b):
+        schedule(abd, x["id"])
+    cu = "2b0d3f7a-1e4c-4f6b-8a9d-0c1e2f3a4b5c"
+    ok(
+        abd.post(
+            f"{API}/quality/inspection-requests/{a['id']}/decide",
+            json=decide_body([20], client_uuid=cu),
+        )
+    )
+    again = ok(
+        abd.post(
+            f"{API}/quality/inspection-requests/{a['id']}/decide",
+            json=decide_body([20], client_uuid=cu),
+        )
+    )
+    assert again["id"] == a["id"] and again["status"] == "approved"
+    e = abd.post(
+        f"{API}/quality/inspection-requests/{b['id']}/decide",
+        json=decide_body([20], client_uuid=cu),
+    )
+    err(e, 409, "INVALID_TRANSITION")
+
+
+def test_existing_ncr_satisfies_ncr_required(q1lib: None, api: Api, ids: Ids) -> None:
+    """F-6: round 2 rejected after an NCR was raised on round 1 needs no second NCR."""
+    itp = approved_itp(api, ids)
+    joseph = api.as_("joseph.mathew.qc")
+    abd = api.as_("abdullah.dossary")
+    r = ok(submit_ir(joseph, ids, itp, [30]), 201)
+    url = f"{API}/quality/inspection-requests/{r['id']}/decide"
+    schedule(abd, r["id"])
+    one = ok(abd.post(url, json=decide_body([30], "rejected", cover="33", raise_ncr=True)))
+    assert len(one["ncrs"]) == 1
+    ok(
+        joseph.post(
+            f"{API}/quality/inspection-requests/{r['id']}/reinspection",
+            json={"note": "Spacers fitted along the whole bay.", "photos": [photo()]},
+        )
+    )
+    schedule(abd, r["id"])
+    two = ok(abd.post(url, json=decide_body([30], "rejected", cover="33")))
+    assert two["status"] == "rejected" and len(two["ncrs"]) == 1
+
+
+def test_round_zero_self_check(q1lib: None, api: Api, ids: Ids, db: Any) -> None:
+    """F-8 / Q-IR-04: the contractor's pre-inspection is round 0 and never counted."""
+    from datetime import date
+    from uuid import UUID
+
+    from app.services.quality.q1 import kpi
+
+    itp = approved_itp(api, ids, points=stc_points(rebar_type="W"))
+    joseph = api.as_("joseph.mathew.qc")
+    abd = api.as_("abdullah.dossary")
+    draft = ok(
+        joseph.post(
+            f"{API}/projects/{_pid(ids)}/quality/inspection-requests",
+            json={
+                "itp_id": itp["id"],
+                "point_seqs": [20, 30],
+                "site_id": ids.site("S-LAND"),
+                "zone_id": ids.zone("Z-PIERB"),
+                "location_ref": "Level 6 slab",
+                "proposed_at": local(2026, 10, 7, 18).isoformat(),
+            },
+        ),
+        201,
+    )
+    assert "self_check" in draft["allowed_actions"] and not draft["self_check_done"]
+    url = f"{API}/quality/inspection-requests/{draft['id']}/self-check"
+    err(
+        joseph.post(url, json={"answers": {"20": decide_body([20])["answers"]["20"]}}),
+        422,
+        "VALIDATION_ERROR",
+    )
+    sc = ok(
+        joseph.post(
+            url, json={"answers": decide_body([20, 30])["answers"], "note": "Checked by our QC."}
+        )
+    )
+    assert sc["self_check_done"] and sc["rounds"][0]["round_no"] == 0
+    assert {x["seq"] for x in sc["rounds"][0]["responses"]} == {20, 30}
+    ok(joseph.post(f"{API}/quality/inspection-requests/{draft['id']}/submit", json={}))
+    schedule(abd, draft["id"])
+    ok(
+        abd.post(
+            f"{API}/quality/inspection-requests/{draft['id']}/decide", json=decide_body([20, 30])
+        )
+    )
+    c = kpi.ir_counts(db, UUID(_pid(ids)), date(2026, 10, 1), date(2026, 10, 31))
+    assert c.rounds_decided == 1 and c.opportunities == 28  # round 0 (another 28) not counted

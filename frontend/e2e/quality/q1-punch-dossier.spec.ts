@@ -20,9 +20,10 @@ test.describe("Quality Q1 punch list and dossier", () => {
     await selectByPrefix(page.getByTestId("q1-punch-plan"), "Pier B Level 1");
     const plan = page.getByTestId("q1-plan-pick");
     await expect(plan).toBeVisible();
-    // the top band (seeded pins sit lower), a fresh spot each run: clicking a pin would open that item instead
+    // wait for the seeded pins, then tap the empty top band of the plan (seeded pins sit lower)
+    await expect.poll(() => plan.getByTestId("q1-pin").count()).toBeGreaterThanOrEqual(12);
     const box = await plan.boundingBox();
-    await plan.click({ position: { x: Math.round((box?.width ?? 300) * (0.15 + Math.random() * 0.7)), y: Math.round((box?.height ?? 200) * (0.04 + Math.random() * 0.06)) } });
+    await plan.click({ position: { x: Math.round((box?.width ?? 300) * 0.5), y: Math.round((box?.height ?? 200) * 0.05) } });
     await expect(page.getByTestId("q1-pin-new")).toBeVisible();
     await page.getByTestId("q1-punch-location").fill(`Gate B2 lounge ${tag}`);
     await page.getByTestId("q1-punch-desc").fill(`Skirting loose behind the seating ${tag}`);

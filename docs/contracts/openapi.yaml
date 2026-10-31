@@ -78223,6 +78223,68 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/quality/inspection-requests/{ir_id}/self-check:
+    post:
+      tags:
+      - quality
+      - quality
+      summary: Contractor self-check on the points' checklists, kept as round 0 (Q-IR-04)
+      operationId: q1_self_check_ir
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: ir_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Ir Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QIrSelfCheck'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QIrRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/v1/quality/inspection-requests/{ir_id}/return:
     post:
       tags:
@@ -141374,6 +141436,28 @@ components:
       required:
       - scheduled_at
       title: QIrSchedule
+    QIrSelfCheck:
+      properties:
+        answers:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/AnswerInput'
+            type: array
+          type: object
+          title: Answers
+          description: Checklist answers by ITP point seq.
+        note:
+          anyOf:
+          - type: string
+            maxLength: 500
+          - type: 'null'
+          title: Note
+      additionalProperties: false
+      type: object
+      required:
+      - answers
+      title: QIrSelfCheck
+      description: 'Q-IR-04 round 0: the contractor''s pre-inspection on the points'' checklists.'
     QIrStatus:
       type: string
       enum:
@@ -141494,12 +141578,6 @@ components:
             maxLength: 2000
           - type: 'null'
           title: Comment
-        recorded_at:
-          anyOf:
-          - type: string
-            format: date-time
-          - type: 'null'
-          title: Recorded At
       additionalProperties: false
       type: object
       title: QIrWaive

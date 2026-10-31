@@ -352,7 +352,13 @@ class QIrWaive(StrictInput):
     measurements: list[QIrMeasurement] = Field(default_factory=list, max_length=100)
     photos: list[PhotoInput] = Field(default_factory=list, max_length=20)
     comment: str | None = Field(default=None, max_length=2000)
-    recorded_at: datetime | None = None
+
+
+class QIrSelfCheck(StrictInput):
+    """Q-IR-04 round 0: the contractor's pre-inspection on the points' checklists."""
+
+    answers: dict[str, list[AnswerInput]] = Field(description="Checklist answers by ITP point seq.")
+    note: str | None = Field(default=None, max_length=500)
 
 
 class QIrReinspect(StrictInput):

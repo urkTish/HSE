@@ -160,7 +160,7 @@ class QIr(Audited, Base):
     location_ref: Mapped[str] = mapped_column(String(120))
     location_key: Mapped[str] = mapped_column(String(160))
     extent: Mapped[str | None] = mapped_column(String(150))
-    requested_by_user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
+    requested_by_user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
     submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     submitted_by_user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))
     proposed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -226,6 +226,7 @@ class QIrComment(Audited, Base):
     """§B.4.1 a comment of an approved-with-comments round (Q-IR-11)."""
 
     __tablename__ = "q_ir_comments"
+    __table_args__ = (Index("ix_q_ir_comments_due", "project_id", "status", "due_on"),)
 
     ir_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("q_irs.id"), index=True)
     round_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("q_ir_rounds.id"))
@@ -273,7 +274,7 @@ class QPunchItem(Audited, Base):
     project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id"))
     punch_no: Mapped[str] = mapped_column(String(40))
     site_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("sites.id"))
-    zone_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("zones.id"))
+    zone_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("zones.id"), index=True)
     system_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("q_systems.id"))
     location_ref: Mapped[str] = mapped_column(String(120))
     discipline: Mapped[QDiscipline] = enum_col(QDiscipline)
@@ -290,7 +291,9 @@ class QPunchItem(Audited, Base):
     target_date: Mapped[date] = mapped_column(Date)
     photo_before_ids: Mapped[list[uuid.UUID]] = mapped_column(UUIDS, default=list)
     photo_after_ids: Mapped[list[uuid.UUID]] = mapped_column(UUIDS, default=list)
-    floor_plan_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("q_floor_plans.id"))
+    floor_plan_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("q_floor_plans.id"), index=True
+    )
     pin_x_pct: Mapped[Decimal | None] = mapped_column(Numeric(5, 2))
     pin_y_pct: Mapped[Decimal | None] = mapped_column(Numeric(5, 2))
     pin_check: Mapped[bool] = mapped_column(Boolean, default=False)

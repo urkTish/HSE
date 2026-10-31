@@ -479,6 +479,75 @@ def submit(
     return ir, warnings
 
 
+def self_check(
+    db: Session, p: Principal, ir_id: uuid.UUID, answers: dict[str, list[Any]], note: str | None
+) -> QIr:
+    """Q-IR-04: the contractor fills the points' checklists as a pre-inspection, kept as round 0
+    (owner type `q_ir_round`). Round 0 is never scored in KPIs (`kpi.ir_counts` counts rounds
+    from 1). Allowed while the IR is a draft or waits for scheduling."""
+    ir = get_ir(db, p, ir_id)
+    pr = q1c.project(db, ir.project_id)
+    q1c.progress_writable(pr, p)
+    if ir.status not in (ST.draft, ST.submitted):
+        raise invalid_transition("IR", ir.status, "self-check")
+    g = p.require(pr.id, C.ir_submit)
+    if p.user.id != ir.requested_by_user_id and not qc.covers(g, ir.site_id, ir.engagement_id):
+        raise forbidden_error()
+    pts = [pt for pt in points(db, ir) if pt.checklist_template_code]
+    if not pts:
+        raise qc.field_err(
+            "answers", "No point of this IR has a checklist.", "لا توجد قائمة فحص لنقاط هذا الطلب."
+        )
+    at = now()
+    out: dict[str, str] = {}
+    for pt in pts:
+        given = answers.get(str(pt.seq)) or []
+        if not given:
+            raise qc.field_err(
+                f"answers.{pt.seq}",
+                f"Point {pt.seq}: complete checklist {pt.checklist_template_code}.",
+                f"النقطة {pt.seq}: أكمل قائمة الفحص {pt.checklist_template_code}.",
+            )
+        t = checklists.template_for(db, pt.checklist_template_code or "", "ir_inspection", at)
+        if t is None:
+            raise qc.field_err(f"answers.{pt.seq}", "The point's checklist is not published.")
+        r, _sc = checklists.record(
+            db,
+            p.user.id,
+            pr,
+            ResponseOwnerType.q_ir_round,
+            t,
+            [dict(a) for a in given],
+            site_id=ir.site_id,
+            zone_id=ir.zone_id,
+            engagement_id=ir.engagement_id,
+            completed_at=at,
+            fld=f"answers.{pt.seq}",
+        )
+        out[str(pt.seq)] = str(r.id)
+    rnd0 = db.scalar(select(QIrRound).where(QIrRound.ir_id == ir.id, QIrRound.round_no == 0))
+    if rnd0 is None:
+        rnd0 = QIrRound(
+            id=uuid.uuid4(),
+            ir_id=ir.id,
+            project_id=ir.project_id,
+            round_no=0,
+            created_by_user_id=p.user.id,
+        )
+        db.add(rnd0)
+    rnd0.responses = out
+    rnd0.inspected_at = at
+    rnd0.requested_by_user_id = p.user.id
+    rnd0.comment = (note or "").strip() or None
+    ir.self_check_done = True
+    ir.self_check_response_id = uuid.UUID(next(iter(out.values())))
+    if note is not None:
+        ir.self_check_note = (note or "").strip() or None
+    db.flush()
+    _audit(db, p, ir, AuditAction.update, details={"self_check_round_0": sorted(out)})
+    return ir
+
+
 def delete_draft(db: Session, p: Principal, ir_id: uuid.UUID) -> None:
     ir = get_ir(db, p, ir_id)
     q1c.progress_writable(q1c.project(db, ir.project_id), p)
@@ -605,7 +674,8 @@ def schedule(
     rnd.scheduled_at = scheduled_at
     rnd.scheduled_by_user_id = p.user.id
     rnd.inspector_id = insp
-    ir.reblocked_at = None
+    if hold_check(db, ir).ok:
+        ir.reblocked_at = None  # a re-blocked IR stays flagged until its hold is released again
     if resched:
         db.flush()
         _audit(db, p, ir, AuditAction.update, details={"rescheduled_to": scheduled_at.isoformat()})
@@ -1007,6 +1077,12 @@ def allowed_actions(db: Session, p: Principal, ir: QIr) -> list[str]:
     )
     if ir.status == ST.draft and req:
         out += ["edit", "submit"] + (["delete"] if ir.ir_no is None else [])
+    if (
+        ir.status in (ST.draft, ST.submitted)
+        and sub
+        and any(pt.checklist_template_code for pt in points(db, ir))
+    ):
+        out.append("self_check")
     if ir.status == ST.submitted and resolves:
         out += ["return", "schedule"]
     if ir.status == ST.reinspection_requested and resolves:

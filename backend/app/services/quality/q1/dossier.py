@@ -10,8 +10,8 @@ record_id, link_path, files: [attachment ids]} and its blockers as `registry.Blo
 from __future__ import annotations
 
 import hashlib
-import io
 import json
+import tempfile
 import uuid
 import zipfile
 from datetime import date
@@ -574,7 +574,7 @@ def update(db: Session, p: Principal, dossier_id: uuid.UUID, body: dict[str, Any
     if body.get("sections") is not None:
         d.sections = _sections(body["sections"])
     if d.status == ST.compiled:
-        d.status = ST.draft  # a scope change makes the compiled files stale
+        _status(db, p, d, ST.draft, stale="scope or sections changed")  # compiled files are stale
     d.updated_by_user_id = p.user.id
     db.flush()
     _audit(db, p, d, AuditAction.update, details={"fields": sorted(body)})
@@ -789,14 +789,23 @@ def index_doc(db: Session, d: QDossier, snap: dict[str, Any], issued: date) -> r
     )
 
 
-def _zip(entries: list[tuple[str, bytes]]) -> bytes:
-    buf = io.BytesIO()
-    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
-        for path, data in entries:
-            info = zipfile.ZipInfo(path, date_time=(2026, 1, 1, 0, 0, 0))
-            info.compress_type = zipfile.ZIP_DEFLATED
-            z.writestr(info, data)
-    return buf.getvalue()
+def _zip(index: list[tuple[str, bytes]], files: list[tuple[str, Attachment]]) -> bytes:
+    """The package with fixed timestamps (stable SHA-256). It is written to a spooled temporary
+    file (memory up to 64 MB, then disk), reading one referenced file at a time."""
+    with tempfile.SpooledTemporaryFile(max_size=64 * 1024 * 1024) as buf:
+        with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+            for path, data in index:
+                z.writestr(_info(path), data)
+            for path, a in files:
+                z.writestr(_info(path), attachments.read_content(a))
+        buf.seek(0)
+        return buf.read()
+
+
+def _info(path: str) -> zipfile.ZipInfo:
+    info = zipfile.ZipInfo(path, date_time=(2026, 1, 1, 0, 0, 0))
+    info.compress_type = zipfile.ZIP_DEFLATED
+    return info
 
 
 def compile_(db: Session, p: Principal, dossier_id: uuid.UUID) -> QDossier:
@@ -848,9 +857,8 @@ def compile_(db: Session, p: Principal, dossier_id: uuid.UUID) -> QDossier:
         p.user.id,
         generated=True,
     )
-    entries = [(f"00-index/{base}-index-EN.pdf", en), (f"00-index/{base}-index-AR.pdf", ar)]
-    entries += [(path, attachments.read_content(a)) for path, a in files]
-    package = _zip(entries)
+    index = [(f"00-index/{base}-index-EN.pdf", en), (f"00-index/{base}-index-AR.pdf", ar)]
+    package = _zip(index, files)
     pa = attachments.store(
         db,
         AttachmentOwner.q_dossier,

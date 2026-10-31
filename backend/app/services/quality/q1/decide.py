@@ -28,6 +28,7 @@ from app.core.quality.common import (
     QNcrCategory,
     QNcrClass,
     QNcrSourceType,
+    QNcrStatus,
     QVerdict,
     label,
 )
@@ -43,6 +44,7 @@ from app.models.quality import QCriterion
 from app.models.quality.q1 import QIr, QIrComment, QIrRound
 from app.schemas.hse_common import ApiWarning
 from app.services.common import invalid_transition
+from app.services.hse_common import id_warnings
 from app.services.permissions import Principal, forbidden_error
 from app.services.quality import common as qc
 from app.services.quality import criteria as qcrit
@@ -236,7 +238,14 @@ def decide(
     if cu is not None:
         dup = db.scalar(select(QIrRound).where(QIrRound.client_uuid == cu))
         if dup is not None:
-            return irs.get_row(db, dup.ir_id), [], {}
+            if dup.ir_id != ir.id:
+                raise qc.err(
+                    409,
+                    ErrorCode.INVALID_TRANSITION,
+                    "This client_uuid was already used for another inspection request.",
+                    "استُخدم هذا المعرف لطلب فحص آخر.",
+                )
+            return ir, [], {}
     if ir.status not in (ST.scheduled, ST.witness_waived) or rnd is None:
         raise invalid_transition("IR", ir.status, body.get("result"))
     result = R(body["result"])
@@ -248,8 +257,8 @@ def decide(
     at = recorded_at or now()
     if recorded_at is not None:
         _offline_times(db, p, pr, recorded_at)
-    # a round sent more than 2 minutes after it was recorded is an offline sync (Q-IR-14)
-    offline = recorded_at is not None and recorded_at < now() - timedelta(minutes=2)
+    # `recorded_at` is sent only by the phone's offline queue: its presence marks a sync (Q-IR-14)
+    offline = recorded_at is not None
     if paper:
         g = p.grant(pr.id, C.ir_inspect)
         if g is None or not qc.covers(g, ir.site_id, ir.engagement_id):
@@ -305,6 +314,11 @@ def _apply_decision(
         for c in body.get("comments") or []
         if (c.get("text_en") or c.get("text_ar") or "").strip()
     ]
+    # P1-8: free texts are scanned for ID numbers (warning, as for NCRs and punch items)
+    warnings += id_warnings(
+        comment=body.get("comment"),
+        **{f"comments[{i}]": c.get("text_en") or c.get("text_ar") for i, c in enumerate(comments)},
+    )
     if result in (R.approved, R.approved_with_comments):
         if crit:
             raise _inconsistent(
@@ -338,7 +352,9 @@ def _apply_decision(
             )
         category = QNcrCategory(category)
         must = rnd.round_no >= 2 or category in NCR_CATEGORIES
-        if must and not body.get("raise_ncr"):
+        # an NCR already raised on this IR (not voided) satisfies the requirement
+        has_ncr = any(n.status != QNcrStatus.voided for n in irs.ncrs_of(db, ir))
+        if must and not body.get("raise_ncr") and not has_ncr:
             raise qc.err(
                 422,
                 ErrorCode.NCR_REQUIRED,
@@ -391,7 +407,7 @@ def _apply_decision(
     rnd.needs_confirmation = False
     rnd.pending_decision = None
     rec = body.get("recorded_at")
-    if isinstance(rec, datetime) and rec < now() - timedelta(minutes=2):
+    if isinstance(rec, datetime):
         rnd.recorded_offline_at = rec
     rnd.warnings = [w.model_dump() for w in warnings]
     ir.decided_at = at
@@ -569,7 +585,8 @@ def waive(
     if p.user.id != ir.requested_by_user_id and not qc.covers(g, ir.site_id, ir.engagement_id):
         raise forbidden_error()
     wait = int(qs.value(db, pr.id, "witness_wait_minutes"))
-    at = body.get("recorded_at") or now()
+    # Q-IR-10: the wait is measured on the server clock, never on a time sent by the client
+    at = now()
     if rnd.attended_at is not None and rnd.attended_at <= rnd.scheduled_at + timedelta(
         minutes=wait
     ):

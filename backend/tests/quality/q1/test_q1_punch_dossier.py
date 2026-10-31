@@ -319,6 +319,7 @@ def test_AC23_AC24_AC25_compile_snapshot_accept_and_downloads(
         ),
         201,
     )
+    snag = _punch(api.as_("mazen.harbi"), ids, category="B")  # in scope, an agreed open item
     c1 = ok(hatem.post(f"{url}/compile"))
     assert c1["status"] == "compiled" and c1["package_sha256"]
     sha = c1["package_sha256"]
@@ -331,17 +332,15 @@ def test_AC23_AC24_AC25_compile_snapshot_accept_and_downloads(
     assert any(x.startswith("02-ir/") and x.endswith("rebar.png") for x in names), names
     ar = hatem.get(f"{url}/index?lang=ar")
     assert ar.status_code == 200 and ar.content.startswith(b"%PDF")
+    assert any(snag["punch_no"] in x for x in names), names  # the before photo is packed
     # Q-DOS-02: a later change to a record in scope leaves the compiled files unchanged
-    joseph.post(
-        f"{API}/attachments",
-        data={
-            "owner_type": "q_ir_round",
-            "owner_id": ok(joseph.get(f"{API}/quality/inspection-requests/{r['id']}"))["rounds"][0][
-                "id"
-            ],
-        },
-        files={"file": ("later.png", io.BytesIO(_png(500, 500)), "image/png")},
+    fixed = ok(
+        joseph.post(
+            f"{API}/quality/punch/{snag['id']}/ready",
+            json={"note": "Fixed after the compile.", "photos": [photo("after.png")]},
+        )
     )
+    assert fixed["status"] == "ready_for_review" and len(fixed["photo_after_ids"]) == 1
     again = ok(hatem.get(url))
     assert again["package_sha256"] == sha
     assert zipfile.ZipFile(io.BytesIO(hatem.get(f"{url}/package").content)).namelist() == names
@@ -468,3 +467,69 @@ def test_history_of_quality_records(q1lib: None, api: Api, ids: Ids) -> None:
     assert any(e["action"] == "create" for e in h["items"])
     ok(hatem.get(f"{API}/history/q_itp/{itp['id']}"))
     assert api.as_("sarah.mitchell").get(f"{API}/history/q_ir/{r['id']}").status_code in (403, 404)
+
+
+def test_walkdown_creates_items(q1lib: None, api: Api, ids: Ids) -> None:
+    """F-7 / Q-PUN-01: one QPUN response; a non-compliant answer and a free entry become items."""
+    from app.models.field import ChecklistResponse
+    from app.models.quality.q1 import QPunchItem
+
+    hatem = api.as_("hatem.shehri")
+    pid = _pid(ids)
+    fp = ok(
+        hatem.post(
+            f"{API}/projects/{pid}/quality/floor-plans",
+            data={
+                "zone_id": ids.zone("Z-PIERB"),
+                "level_label": "L1",
+                "title_en": "L1",
+                "title_ar": "م1",
+            },
+            files={"file": ("plan.png", _png(800, 600), "image/png")},
+        ),
+        201,
+    )
+    answers = [
+        {
+            "item_code": "PUN-01",
+            "answer": "non_compliant",
+            "note": "Tile stained at column C17.",
+            "photos": [photo()],
+            "category": "A",
+            "pin": {"floor_plan_id": fp["id"], "x_pct": "41.20", "y_pct": "63.80"},
+        },
+        *({"item_code": f"PUN-0{n}", "answer": "compliant"} for n in range(2, 6)),
+    ]
+    out = ok(
+        api.as_("mazen.harbi").post(
+            f"{API}/projects/{pid}/quality/punch/walkdown",
+            json={
+                "site_id": ids.site("S-LAND"),
+                "zone_id": ids.zone("Z-PIERB"),
+                "responsible_engagement_id": ids.engagement("RAWABI"),
+                "discipline": "ARC",
+                "location_ref": "Gate B4 lounge",
+                "template_code": "QPUN",
+                "answers": answers,
+                "entries": [
+                    {"description_en": "Door closer loose", "category": "B", "photos": [photo()]}
+                ],
+            },
+        ),
+        201,
+    )
+    items = out["items"]
+    assert len(items) == 2
+    first = next(i for i in items if i["category"] == "A")
+    assert first["floor_plan_id"] == fp["id"] and first["pin_x_pct"] == "41.20"
+    assert "Tile stained" in (first["description_en"] or "")
+    assert next(i for i in items if i["category"] == "B")["description_en"] == "Door closer loose"
+    with get_sessionmaker()() as db:
+        rows = db.scalars(
+            select(QPunchItem).where(QPunchItem.id.in_([i["id"] for i in items]))
+        ).all()
+        rid = {r.walkdown_response_id for r in rows}
+        assert len(rid) == 1 and None not in rid
+        resp = db.get(ChecklistResponse, rid.pop())
+        assert resp is not None and resp.owner_type.value == "q_punch_walkdown"
+        assert resp.applicable_count == 5 and resp.compliant_count == 4
