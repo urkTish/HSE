@@ -221,6 +221,9 @@ def _punch_source(db: Session, project: Project, source_id: uuid.UUID) -> reg.So
         engagement_id=it.responsible_engagement_id,
         item_key=f"PCH:{it.discipline.value}",
         detection_stage=QDetectionStage.final_inspection,
+        requirement_en=f"Close {it.punch_no} (category {it.category.value}) to the specification "
+        "and drawings before acceptance.",
+        requirement_ar=f"إغلاق البند {it.punch_no} وفق المواصفات والمخططات قبل القبول.",
         finding_en=it.description_en,
         finding_ar=it.description_ar,
         proposed_class=QNcrClass.minor,

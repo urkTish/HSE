@@ -86,7 +86,11 @@ def ctx(db: Session, ir: QIr) -> rpm.Ctx:
 
 
 def resolvers(db: Session, pr: Project, ir: QIr) -> rpm.Resolution:
-    return rpm.resolve(db, pr, RT, STEP, ctx(db, ir), record_id=ir.id)
+    """Users who resolve for `ir.inspect` and may act now (segregation applied)."""
+    c = ctx(db, ir)
+    res = rpm.resolve(db, pr, RT, STEP, c, record_id=ir.id)
+    out: rpm.Resolution = q1c.acting(db, pr.id, res, c)
+    return out
 
 
 def can_view(db: Session, p: Principal, ir: QIr) -> bool:

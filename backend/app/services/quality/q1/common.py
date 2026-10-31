@@ -119,3 +119,21 @@ def day(pr: Project) -> date:
 
 def scope_grant(p: Principal, project_id: uuid.UUID) -> Any:
     return p.grant(project_id, C.quality_view)
+
+
+def acting(db: Session, project_id: uuid.UUID, res: Any, ctx: Any) -> Any:
+    """The resolution narrowed to users who may act now: segregation (Q-RPM-06) and the
+    contractor's own tree (Q-RPM-07) removed — the "responsible set" shown and notified."""
+    from app.services.permissions import build_principal  # noqa: PLC0415
+    from app.services.quality import rpm  # noqa: PLC0415
+
+    if res.rule is None:
+        return res
+    keep = {}
+    for uid, cap in res.users.items():
+        u = qc.active_user(db, uid)
+        if u is None:
+            continue
+        if rpm.sod_problem(db, build_principal(db, u, None), project_id, res.rule, ctx) is None:
+            keep[uid] = cap
+    return rpm.Resolution(res.rule, keep)

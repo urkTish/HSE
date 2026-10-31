@@ -297,7 +297,7 @@ def mark_ready(
     it.ready_by_user_id = p.user.id
     it.ready_at = now()
     _status(db, p, it, ST.ready_for_review)
-    res = rpm.resolve(db, pr, RT, STEP, ctx(it), record_id=it.id)
+    res = q1c.acting(db, pr.id, rpm.resolve(db, pr, RT, STEP, ctx(it), record_id=it.id), ctx(it))
     qc.send(
         db,
         [u for u in res.users if u not in requesters(it)],
@@ -573,7 +573,7 @@ def read(
     hide = q1c.viewer(p, it.project_id)
     site = db.get(Site, it.site_id)
     res = (
-        rpm.resolve(db, pr, RT, STEP, ctx(it), record_id=it.id)
+        q1c.acting(db, pr.id, rpm.resolve(db, pr, RT, STEP, ctx(it), record_id=it.id), ctx(it))
         if it.status == ST.ready_for_review
         else None
     )

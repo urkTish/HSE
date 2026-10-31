@@ -891,7 +891,7 @@ def submit(db: Session, p: Principal, dossier_id: uuid.UUID) -> QDossier:
     d.submitted_at = now()
     d.submitted_by_user_id = p.user.id
     _status(db, p, d, ST.submitted)
-    res = rpm.resolve(db, pr, RT, STEP, ctx(d), record_id=d.id)
+    res = q1c.acting(db, pr.id, rpm.resolve(db, pr, RT, STEP, ctx(d), record_id=d.id), ctx(d))
     qc.send(
         db,
         [u for u in res.users if u not in requesters(d)],
@@ -1147,7 +1147,9 @@ def read(db: Session, p: Principal, d: QDossier, *, with_blockers: bool = True) 
     )
     systems = [db.get(QSystem, s) for s in d.system_ids or []]
     res = (
-        rpm.resolve(db, pr, RT, STEP, ctx(d), record_id=d.id) if d.status == ST.submitted else None
+        q1c.acting(db, pr.id, rpm.resolve(db, pr, RT, STEP, ctx(d), record_id=d.id), ctx(d))
+        if d.status == ST.submitted
+        else None
     )
     sections = []
     snap = d.snapshot or {}

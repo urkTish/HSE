@@ -440,7 +440,9 @@ def submit(db: Session, p: Principal, itp_id: uuid.UUID) -> QItp:
 
 
 def _notify_submitted(db: Session, pr: Any, it: QItp) -> None:
-    res = rpm.resolve(db, pr, RT, "approve", ctx(it), record_id=it.id)
+    res = q1c.acting(
+        db, pr.id, rpm.resolve(db, pr, RT, "approve", ctx(it), record_id=it.id), ctx(it)
+    )
     qc.send(
         db,
         [u for u in res.users if u not in requesters(it)],
@@ -715,7 +717,7 @@ def read(db: Session, p: Principal, it: QItp) -> dict[str, Any]:
     zones = [db.get(Zone, z) for z in it.zone_ids or []]
     systems = [db.get(QSystem, s) for s in it.system_ids or []]
     res = (
-        rpm.resolve(db, pr, RT, "approve", ctx(it), record_id=it.id)
+        q1c.acting(db, pr.id, rpm.resolve(db, pr, RT, "approve", ctx(it), record_id=it.id), ctx(it))
         if it.status == ST.submitted
         else None
     )
