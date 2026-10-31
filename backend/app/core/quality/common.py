@@ -2494,6 +2494,18 @@ LABELS.update(
             "supplier": ("Supplier", "المورد"),
         },
         "number_reset": {"yearly": ("Every year", "كل سنة"), "never": ("Never", "أبداً")},
+        "checklist_type": {
+            "ir_inspection": ("Inspection request", "طلب الفحص"),
+            "punch_walkdown": ("Punch walk-down", "جولة قائمة الملاحظات"),
+            "mir_inspection": ("Material inspection", "فحص المواد"),
+            "receiving": ("Receiving", "الاستلام"),
+            "reefer_preload": ("Reefer pre-load", "فحص الشاحنة المبردة قبل التحميل"),
+            "hygiene": ("Hygiene", "النظافة"),
+            "pest_visit": ("Pest-control visit", "زيارة مكافحة الآفات"),
+            "return_inspection": ("Return inspection", "فحص المرتجعات"),
+            "q_audit": ("Quality audit", "تدقيق الجودة"),
+            "supplier_audit": ("Supplier audit", "تدقيق المورد"),
+        },
         "mte_use_verdict": {
             "ok": ("OK", "سليم"),
             "warned": ("Warned", "مع تحذير"),

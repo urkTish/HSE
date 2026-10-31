@@ -92,6 +92,9 @@ class SourceInfo:
 @dataclass
 class NcrSource:
     resolve: Callable[[Session, Project, uuid.UUID], SourceInfo]
+    # May the principal read the source record? Every part's adapter should set it: a
+    # responsible person (scope N) raises NCRs only from records they can see.
+    visible: Callable[[Session, Principal, uuid.UUID], bool] | None = None
     on_ncr_status: Callable[[Session, QNcr, QNcrStatus], None] | None = None
     close_check: Callable[[Session, QNcr], list[Blocker]] | None = None
 

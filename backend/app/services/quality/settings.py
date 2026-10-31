@@ -136,7 +136,7 @@ def _ensure_row(db: Session, project_id: uuid.UUID) -> QSettings:
 def _can_read(p: Principal, project_id: uuid.UUID) -> bool:
     return any(
         p.grant(project_id, c) is not None
-        for c in (C.quality_view, C.quality_settings, C.ncr_raise, C.quality_acknowledge)
+        for c in (C.quality_view, C.quality_settings, C.ncr_raise)
     )
 
 

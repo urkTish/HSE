@@ -66,7 +66,11 @@ export function CaList({ project }: { project: Schemas["ProjectRead"] }) {
   const engs = s.getAll("engagement_id");
   const bucket = (s.get("overdue_bucket") ?? "") as Schemas["OverdueBucket"] | "";
   const source = (s.get("source_type") ?? "") as Schemas["CaSourceType"] | "";
+  // 8-quality Q-CAP-06: HSE · Quality · All (empty = the server's default for the user's role)
+  const domain = (s.get("domain") ?? "") as "hse" | "quality" | "all" | "";
+  const quality = can(me, "quality.view", project.id);
   const q = {
+    domain: domain || null,
     status: status.length ? status : null,
     overdue: s.getBool("overdue") ?? null,
     overdue_bucket: bucket || null,
@@ -110,6 +114,9 @@ export function CaList({ project }: { project: Schemas["ProjectRead"] }) {
       <ListToolbar actions={can(me, "export.lists", project.id) ? <ExportButtons dataset="corrective_actions" params={{ project_id: project.id, status: status.join(",") || null }} /> : null}>
         <SearchFilter id="ca-q" placeholder={tc("search")} value={q.q ?? ""} onChange={(v) => s.set({ q: v })} />
         <MultiSelect id="ca-status" label={t("fields.status")} options={CA_STATUSES.map((x) => ({ value: x, label: te(`caStatus.${x}`) }))} value={status} onChange={(v) => s.set({ status: v })} testId="ca-status-filter" />
+        {quality ? (
+          <SelectFilter id="ca-domain" label={t("domain")} value={domain} onChange={(v) => s.set({ domain: v, page: null })} options={(["hse", "quality", "all"] as const).map((x) => ({ value: x, label: t(`domains.${x}`) }))} />
+        ) : null}
         <MultiSelect id="ca-prio" label={t("fields.priority")} options={CA_PRIORITIES.map((x) => ({ value: x, label: te(`caPriority.${x}`) }))} value={prio} onChange={(v) => s.set({ priority: v })} />
         <MultiSelect id="ca-cl" label={t("fields.control_level")} options={CONTROL_LEVELS.map((x) => ({ value: x, label: te(`controlLevel.${x}`) }))} value={cl} onChange={(v) => s.set({ control_level: v })} />
         <SelectFilter id="ca-bucket" label={t("overdue")} value={bucket} onChange={(v) => s.set({ overdue_bucket: v })} options={OVERDUE_BUCKETS.map((x) => ({ value: x, label: te(`overdueBucket.${x}`) }))} />

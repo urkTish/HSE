@@ -186,7 +186,7 @@ export function useRun() {
         const out = await fn();
         const w = (out as { warnings?: S["ApiWarning"][] } | undefined)?.warnings;
         if (w?.length) warn(w);
-        toast.success(done ?? t("saved"));
+        if (done !== "") toast.success(done ?? t("saved")); // "" = the caller tells the user itself
         await refresh();
         return out;
       } catch (e) {

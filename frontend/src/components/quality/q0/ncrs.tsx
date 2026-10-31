@@ -25,6 +25,9 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { api, downloadFile, unwrap } from "@/lib/api/client";
 import { useQNcr, useQNcrs, useQSuppliers } from "@/lib/api/quality/q0";
 import { useMeData } from "@/components/shell/me-context";
+import { OfflineSubmitNote, OutboxPanel } from "@/components/field/offline";
+import { newUuid, submitWithOutbox } from "@/lib/field-offline";
+import { toast } from "sonner";
 import { useDebounced } from "@/lib/use-debounced";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
@@ -196,16 +199,31 @@ function RaiseForm({ project }: { project: Project; settings: QSettings }) {
     site_id: "", zone_id: "", responsible_engagement_id: "", owner_id: me.id, supplier_id: "", location_ref: "", quantity: "", unit: "",
   });
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF((x) => ({ ...x, [k]: e.target.value }));
+  // One id per form: a retry or a send from the phone's outbox never makes a second NCR (Q-NCR-01)
+  const [cuid, setCuid] = useState(newUuid);
   const ready = f.title.trim() && f.site_id;
   async function save(open: boolean) {
-    const body = Object.fromEntries(Object.entries(f).filter(([, v]) => v !== "")) as Record<string, string>;
-    const out = await run(() => unwrap(api.POST("/api/v1/projects/{project_id}/quality/ncrs", { params: { path: { project_id: project.id } }, body: { ...body, open } as S["QNcrCreate"] })), open ? t("opened") : t("draftSaved"));
-    if (out) router.push(`/quality/ncrs/${out.id}`);
+    const body = { ...Object.fromEntries(Object.entries(f).filter(([, v]) => v !== "")), open, client_uuid: cuid } as S["QNcrCreate"];
+    const out = await run(async () => {
+      const r = await submitWithOutbox<{ id: string }>("q_ncr", project.id, body, f.title.trim() || t("draft"));
+      if (r.status === "rejected") throw r.error;
+      return r;
+    }, "");
+    if (!out) return;
+    if (out.status === "queued") {
+      toast.info(t("queued"));
+      setCuid(newUuid());
+      setF((x) => ({ ...x, title: "", finding_en: "", requirement_en: "", location_ref: "", quantity: "", unit: "" }));
+      return;
+    }
+    toast.success(open ? t("opened") : t("draftSaved"));
+    if (out.status === "sent") router.push(`/quality/ncrs/${out.record.id}`);
   }
   return (
     <div>
       <Breadcrumbs items={[{ label: t("title"), href: "/quality/ncrs" }, { label: t("new") }]} />
       <PageHeader title={t("new")} description={t("newHint")} />
+      <OutboxPanel kind="q_ncr" projectId={project.id} />
       <MutationError error={error} />
       <Card>
         <CardContent className="flex flex-col gap-4 p-4">
@@ -285,6 +303,7 @@ function RaiseForm({ project }: { project: Project; settings: QSettings }) {
             </div>
           </FormSection>
           <p className="text-xs text-muted-foreground">{t("photoAfter")}</p>
+          <OfflineSubmitNote />
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" disabled={busy || !ready} onClick={() => void save(false)} data-testid="ncr-save-draft">
               {t("saveDraft")}

@@ -279,6 +279,71 @@ def test_AC47_viewer_sees_no_names_costs_photos_or_contacts(
         )
 
 
+def test_AC47_viewer_complaint_and_alert_without_names_or_files(
+    qsetup: None, api: Api, ids: Ids
+) -> None:
+    from app.models.quality import QCustomer
+
+    pid = ids.project("ANIA-EXP")
+    rania, hatem, sarah = (
+        api.as_("rania.zahrani"),
+        api.as_("hatem.shehri"),
+        api.as_("sarah.mitchell"),
+    )
+    with get_sessionmaker()() as db:
+        anc = db.scalar(select(QCustomer).where(QCustomer.code == "ANC"))
+        assert anc is not None
+        cust = str(anc.id)
+    c = ok(
+        rania.post(
+            f"{API}/projects/{pid}/quality/complaints",
+            json={
+                "customer_id": cust,
+                "channel": "email",
+                "category": "workmanship",
+                "description": "Joint sealant missing at the apron edge.",
+                "severity": "low",
+            },
+        ),
+        201,
+    )
+    url = f"{API}/quality/complaints/{c['id']}/transitions"
+    ok(hatem.post(url, json={"to_status": "acknowledged"}))
+    ok(hatem.post(url, json={"to_status": "under_investigation"}))
+    done = ok(
+        hatem.post(
+            url,
+            json={"to_status": "responded", "justified": "no", "response_en": "Within tolerance."},
+        )
+    )
+    assert done["signoffs"] and done["signoffs"][0]["signed_by"]
+    attach(rania, "q_complaint", c["id"])
+    seen = ok(sarah.get(f"{API}/quality/complaints/{c['id']}"))
+    assert seen["signoffs"] == [] and seen["actions"] == []
+    files = {"owner_type": "q_complaint", "owner_id": c["id"]}
+    assert sarah.get(f"{API}/attachments", params=files).status_code == 403
+    a = ok(
+        rania.post(
+            f"{API}/projects/{pid}/quality/alerts",
+            json={
+                "title_en": "Sealant lot on hold",
+                "title_ar": "إيقاف دفعة مانع التسرب",
+                "message_en": "Do not use lot 44.",
+                "message_ar": "لا تستخدم الدفعة 44.",
+                "severity": "warning",
+                "dist_roles": ["qc_inspector"],
+            },
+        ),
+        201,
+    )
+    attach(rania, "q_alert", a["id"])
+    ok(hatem.post(f"{API}/quality/alerts/{a['id']}/issue", json={}))
+    assert ok(sarah.get(f"{API}/quality/alerts/{a['id']}"))["status"] == "issued"
+    files = {"owner_type": "q_alert", "owner_id": a["id"]}
+    assert sarah.get(f"{API}/attachments", params=files).status_code == 403
+    assert rania.get(f"{API}/attachments", params=files).status_code == 200
+
+
 def test_AC48_errors_carry_arabic(qsetup: None, api: Api, ids: Ids) -> None:
     faisal = api.as_("faisal.harbi")
     d = err(

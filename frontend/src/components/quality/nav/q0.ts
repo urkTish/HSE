@@ -17,6 +17,6 @@ export const navQ0: QualityNavItem[] = [
   { href: "/quality/systems", labelKey: "nav.systems", Icon: Network, capabilities: ["quality.view"], profiles: ["construction"], testId: "nav-q-systems", order: 82 },
   { href: "/quality/mte", labelKey: "nav.mte", Icon: Boxes, capabilities: ["quality.view", "mte.manage"], profiles: BOTH, testId: "nav-q-mte", order: 83 },
   { href: "/quality/criteria", labelKey: "nav.criteria", Icon: ListChecks, capabilities: ["quality.view", "quality.author"], profiles: BOTH, testId: "nav-q-criteria", order: 84 },
-  { href: "/checklist-templates?kind=quality", labelKey: "nav.checklists", Icon: BadgeCheck, capabilities: ["quality.author", "quality.settings"], profiles: BOTH, testId: "nav-q-checklists", order: 85 },
+  { href: "/checklist-templates?kind=quality", labelKey: "nav.checklists", Icon: BadgeCheck, capabilities: ["quality.view", "quality.author", "quality.settings"], profiles: BOTH, testId: "nav-q-checklists", order: 85 },
   { href: "/quality/settings", labelKey: "nav.settings", Icon: SlidersHorizontal, capabilities: ["quality.settings"], profiles: BOTH, testId: "nav-q-settings", order: 99 },
 ];

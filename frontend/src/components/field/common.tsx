@@ -25,6 +25,10 @@ export function useFieldCaps(projectId?: string | null) {
   const pid = projectId ?? null;
   return {
     libraryView: can(me, "field_library.view", pid),
+    /** Quality checklists (kind quality): view 238 / 240, author 240, publish 239 (8-quality Q-CHK-01). */
+    qualityView: can(me, "quality.view", pid) || can(me, "quality.author", pid),
+    qualityAuthor: canWrite(me, "quality.author", pid),
+    qualityPublish: canWrite(me, "quality.settings", pid),
     author: canWrite(me, "field_library.author", pid),
     publish: canWrite(me, "field_library.publish", pid),
     /** 6d settings and switch dates are edited with 193 (HSE Manager). */

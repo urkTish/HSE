@@ -194,7 +194,9 @@ def requesters(n: QNcr, step: str) -> frozenset[uuid.UUID]:
 
 
 def ctx_for(n: QNcr, step: str) -> rpm.Ctx:
-    return rpm.Ctx(n.site_id, n.responsible_engagement_id, requesters(n, step))
+    """Resolution context; the class is the qualifier, so class-specific matrix rows match."""
+    cls = n.classification.value if n.classification is not None else None
+    return rpm.Ctx(n.site_id, n.responsible_engagement_id, requesters(n, step), qualifier=cls)
 
 
 def open_steps(db: Session, project: Project) -> list[reg.OpenStep]:
@@ -223,7 +225,7 @@ def open_steps(db: Session, project: Project) -> list[reg.OpenStep]:
                         f"/quality/ncrs/{n.id}",
                         "Q0",
                     ),
-                    None,
+                    n.classification.value if n.classification is not None else None,
                     n.site_id,
                     n.responsible_engagement_id,
                     requesters(n, step),
@@ -387,6 +389,8 @@ def create(
         src = reg.NCR_SOURCES.get(st)
         if src is None or body.get("source_id") is None:
             raise qc.field_err("source_id", f"Source {st.value} is not available on this install.")
+        if src.visible is not None and not src.visible(db, p, body["source_id"]):
+            raise forbidden_error("You cannot see the source record.")
         info = src.resolve(db, project, body["source_id"])
     elif g.scope == S.responsible:
         raise forbidden_error("A responsible person raises NCRs from a record they act on.")
@@ -415,9 +419,14 @@ def create(
                 data[k] = v
         if data.get("classification") is None:
             data["classification"] = info.proposed_class or NCR_SOURCE_DEFS[st][1]
-    if g.scope != S.responsible and not qc.covers(
-        g, data.get("site_id"), data.get("responsible_engagement_id")
-    ):
+    site, eng = data.get("site_id"), data.get("responsible_engagement_id")
+    if g.scope == S.responsible:
+        # N from a source: the source's site and contractor must still be inside the assignment
+        if (site is not None and not g.covers_site(site)) or (
+            g.engagement_ids is not None and (eng is None or eng not in g.engagement_ids)
+        ):
+            raise forbidden_error("This site or contractor is outside your scope.")
+    elif not qc.covers(g, site, eng):
         raise forbidden_error("This site or contractor is outside your scope.")
     n = QNcr(
         id=uuid.uuid4(),
@@ -770,7 +779,6 @@ def set_class(
     lowering = old is not None and CLASS_RANK[cls] < CLASS_RANK[old]
     details: dict[str, Any] = {}
     if lowering:
-        text = qc.reason(why, 20)
         try:
             rpm.check_signer(
                 db, p, project, RT, "disposition", ctx_for(n, "disposition"), record_id=n.id
@@ -785,6 +793,7 @@ def set_class(
                 "reason (Q-NCR-05).",
                 "لا يخفض التصنيف إلا الشخص المسؤول عن اعتماد المعالجة مع ذكر السبب.",
             ) from e
+        text = qc.reason(why, 20)  # only after the signer check (a non-resolver gets 422 above)
         details["reason"] = text
         if n.repeat_of_id is not None and cls == QNcrClass.minor:
             raise qc.err(

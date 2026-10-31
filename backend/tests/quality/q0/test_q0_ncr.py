@@ -65,6 +65,8 @@ def test_AC28_class_lowered_needs_the_disposition_resolver(
         422,
         "CLASS_LOWERED_NEEDS_APPROVAL",
     )
+    # a non-resolver hears that only the responsible person may lower it, even without a reason
+    err(bilal.post(url, json={"classification": "minor"}), 422, "CLASS_LOWERED_NEEDS_APPROVAL")
     low = ok(
         hatem.post(
             url,

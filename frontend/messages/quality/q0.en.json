@@ -227,7 +227,8 @@
     "noSignoffs": "No sign-offs yet.",
     "noLinks": "No linked records.",
     "notVisible": "Not visible to you",
-    "voided": "Voided"
+    "voided": "Voided",
+    "queued": "No signal: the NCR is kept on this phone and will be sent when the signal returns."
   },
   "obs": {
     "title": "Quality observations",
@@ -479,7 +480,8 @@
       "matrix": "Responsible persons",
       "positions": "Positions",
       "numbering": "Numbering",
-      "parts": "Part settings"
+      "parts": "Part settings",
+      "checklists": "Checklist defaults"
     },
     "profileIntro": "Choose the sector profile to switch Quality on. Suggested for this project: {suggested}.",
     "profile": "Sector profile",
@@ -525,6 +527,12 @@
     "saveFormat": "Save",
     "pending": "{n} unsaved changes",
     "changed": "changed from default",
-    "badJson": "Not valid JSON"
+    "badJson": "Not valid JSON",
+    "checklistHint": "The checklist a new record proposes for each type. Users may still pick any published quality checklist of the same type.",
+    "checklistType": "Checklist type",
+    "defaultTemplate": "Default checklist",
+    "noDefault": "No default",
+    "noTemplate": "No published checklist of this type",
+    "openTemplates": "Open quality checklists"
   }
 }

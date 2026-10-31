@@ -16,11 +16,14 @@ import { ProjectGate } from "@/components/common/project-gate";
 import { UserSelect } from "@/components/common/pickers";
 import { ErrorState, LoadingState, MutationError } from "@/components/common/states";
 import { api, unwrap } from "@/lib/api/client";
+import { Link } from "@/i18n/navigation";
 import { useQNumbering, useQPositions, useQRules, useQSettings, useQSettingsSchema } from "@/lib/api/quality/q0";
 import { useFormatters } from "@/lib/use-formatters";
+import { useTemplates } from "@/lib/api/field";
+import { QUALITY_CHECKLIST_TYPES } from "@/lib/field-enums";
 import { ProfileBadge, useQLabels, useRun, userText, type Project, type QSettings, type S } from "./common";
 
-const TABS = ["profile", "matrix", "positions", "numbering", "parts"] as const;
+const TABS = ["profile", "matrix", "positions", "numbering", "checklists", "parts"] as const;
 type Tab = (typeof TABS)[number];
 
 /** Quality settings `/quality/settings` (239): profile · RP matrix · positions · numbering · part settings. */
@@ -55,6 +58,7 @@ function Settings({ project, settings }: { project: Project; settings: QSettings
       {tab === "matrix" && configured ? <MatrixTab project={project} settings={settings} /> : null}
       {tab === "positions" && configured ? <PositionsTab project={project} settings={settings} /> : null}
       {tab === "numbering" && configured ? <NumberingTab project={project} settings={settings} /> : null}
+      {tab === "checklists" && configured ? <ChecklistDefaultsTab project={project} settings={settings} /> : null}
       {tab === "parts" && configured ? <PartsTab project={project} settings={settings} /> : null}
     </div>
   );
@@ -349,6 +353,78 @@ function NumberingTab({ project, settings }: { project: Project; settings: QSett
           );
         })}</TBody>
       </Table>
+    </div>
+  );
+}
+
+/* ─── checklist defaults (Q-CHK-04): the template a new record proposes, per checklist type ─── */
+
+/** Profile of each checklist type (8-quality §A.7). */
+const CHECKLIST_PROFILE: Record<string, "construction" | "logistics" | "both"> = {
+  ir_inspection: "construction",
+  punch_walkdown: "construction",
+  mir_inspection: "construction",
+  receiving: "logistics",
+  reefer_preload: "logistics",
+  hygiene: "logistics",
+  pest_visit: "logistics",
+  return_inspection: "logistics",
+  q_audit: "both",
+  supplier_audit: "both",
+};
+
+function ChecklistDefaultsTab({ project, settings }: { project: Project; settings: QSettings }) {
+  const t = useTranslations("quality.settings");
+  const tc = useTranslations("quality.common");
+  const { l } = useQLabels();
+  const ar = useLocale() === "ar";
+  const q = useTemplates({ kind: "quality", status: ["published"] });
+  const { run, busy, error } = useRun();
+  const saved = (settings.values.checklist_default ?? {}) as Record<string, string>;
+  const [draft, setDraft] = useState<Record<string, string>>(saved);
+  if (q.isLoading) return <LoadingState />;
+  if (q.isError) return <ErrorState error={q.error} onRetry={() => q.refetch()} />;
+  const templates = (q.data?.items ?? []).filter((x) => inProfile(x.sector_profiles, settings.sector_profile));
+  const types = QUALITY_CHECKLIST_TYPES.filter((c) => inProfile(CHECKLIST_PROFILE[c], settings.sector_profile));
+  const changed = JSON.stringify(draft) !== JSON.stringify(saved);
+  const save = () =>
+    run(() =>
+      unwrap(api.PATCH("/api/v1/projects/{project_id}/quality/settings", {
+        params: { path: { project_id: project.id } },
+        body: { values: { checklist_default: Object.fromEntries(Object.entries(draft).filter(([, v]) => v)) }, clear_quality_start_date: false },
+      })),
+    );
+  return (
+    <div className="flex flex-col gap-4">
+      <MutationError error={error} />
+      <p className="text-sm text-muted-foreground">{t("checklistHint")}</p>
+      <Table compact data-testid="q-checklist-defaults">
+        <THead><TR><TH>{t("checklistType")}</TH><TH>{t("defaultTemplate")}</TH></TR></THead>
+        <TBody>{types.map((c) => {
+          const options = templates.filter((x) => x.quality_type === c);
+          return (
+            <TR key={c} data-testid="q-checklist-default-row" data-type={c}>
+              <TD label={t("checklistType")}>{l("checklist_type", c)}</TD>
+              <TD label={t("defaultTemplate")}>
+                <Select value={draft[c] ?? ""} disabled={!settings.can_edit} onChange={(e) => setDraft({ ...draft, [c]: e.target.value })} aria-label={l("checklist_type", c)} data-testid={`q-checklist-default-${c}`}>
+                  <option value="">{options.length ? t("noDefault") : t("noTemplate")}</option>
+                  {options.map((x) => (
+                    <option key={x.id} value={x.template_code}>
+                      {x.template_code} v{x.version} — {ar ? x.title_ar || x.title_en : x.title_en}
+                    </option>
+                  ))}
+                </Select>
+              </TD>
+            </TR>
+          );
+        })}</TBody>
+      </Table>
+      {settings.can_edit ? (
+        <div className="flex gap-2">
+          <Button disabled={busy || !changed} onClick={() => void save()} data-testid="q-checklist-defaults-save">{tc("save")}</Button>
+          <Button asChild variant="outline"><Link href="/checklist-templates?kind=quality">{t("openTemplates")}</Link></Button>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -6010,6 +6010,12 @@
       "verification_comment": "تعليق التحقق",
       "cancel_reason": "سبب الإلغاء",
       "evidence_text": "دليل الإنجاز"
+    },
+    "domain": "المجال",
+    "domains": {
+      "hse": "الصحة والسلامة والبيئة",
+      "quality": "الجودة",
+      "all": "الكل"
     }
   },
   "meetings": {
@@ -12566,7 +12572,9 @@
       "suggestedCaEn": "الإجراء المقترح (بالإنجليزية)",
       "suggestedCaAr": "الإجراء المقترح (بالعربية)",
       "reference": "المرجع القياسي",
-      "save": "حفظ"
+      "save": "حفظ",
+      "codeHintQuality": "يبدأ بالحرف Q؛ حتى 8 حروف لاتينية كبيرة أو أرقام أو شرطات، مثل QSTC-FW؛ ثابت بعد الإنشاء.",
+      "sectorProfiles": "ملفات القطاع"
     },
     "topics": {
       "title": "مواضيع التوعية",

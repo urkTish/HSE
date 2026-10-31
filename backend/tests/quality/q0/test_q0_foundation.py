@@ -447,6 +447,16 @@ def test_AC14_manager_reassigns_but_never_signs(qsetup: None, api: Api, ids: Ids
             },
         )
     )
+    unknown = {
+        "record_type": "ncr",
+        "record_id": str(uuid.uuid4()),
+        "step": "disposition",
+        "assignee_kind": "user",
+        "assignee": ids.user("sultan.mutlaq"),
+        "reason": "Hatem on leave until the 20th October",
+    }
+    res = faisal.post(f"{API}/projects/{pid}/quality/reassign", json=unknown)
+    assert res.status_code == 422, res.text  # the record must exist on the project
     other = raise_ncr(api.as_("joseph.mathew.qc"), ids)
     to_proposed(api.as_("bilal.qureshi"), ids, other)
     sultan = api.as_("sultan.mutlaq")

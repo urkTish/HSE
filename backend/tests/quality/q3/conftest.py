@@ -1,2 +1,2 @@
 """Fixtures of the Q3 tests (stub created by Q0, §3.3a; the shared fixtures, including `q_seed`,
-live in `tests/conftest.py`)."""
+live in `tests/quality/conftest.py`: `qsetup` and `q_seed`)."""

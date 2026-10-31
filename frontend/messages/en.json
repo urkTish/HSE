@@ -6010,6 +6010,12 @@
       "verification_comment": "Verification comment",
       "cancel_reason": "Cancel reason",
       "evidence_text": "Evidence"
+    },
+    "domain": "Domain",
+    "domains": {
+      "hse": "HSE",
+      "quality": "Quality",
+      "all": "All"
     }
   },
   "meetings": {
@@ -12566,7 +12572,9 @@
       "suggestedCaEn": "Suggested action (English)",
       "suggestedCaAr": "Suggested action (Arabic)",
       "reference": "Standard reference",
-      "save": "Save"
+      "save": "Save",
+      "codeHintQuality": "Starts with Q; up to 8 capital letters, digits or hyphens, e.g. QSTC-FW; fixed once created.",
+      "sectorProfiles": "Sector profiles"
     },
     "topics": {
       "title": "Toolbox topics",
