@@ -25,7 +25,7 @@ export function useErrorMessage() {
     (err: unknown): string => {
       if (err instanceof ApiError) {
         // Licence errors (D-296): the server text names the end date, the limit and the counts.
-        if (SERVER_TEXT_FIRST.has(err.code) && (locale === "ar" ? err.messageAr : err.message)) {
+        if ((err.serverText || SERVER_TEXT_FIRST.has(err.code)) &&(locale === "ar" ? err.messageAr : err.message)) {
           return (locale === "ar" ? err.messageAr : err.message) ?? err.message;
         }
         const key = `code.${err.code}` as const;

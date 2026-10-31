@@ -12,7 +12,7 @@ import { FormField } from "@/components/common/form-field";
 import { ProjectGate } from "@/components/common/project-gate";
 import { ErrorState, LoadingState, MutationError } from "@/components/common/states";
 import { Link } from "@/i18n/navigation";
-import type { Schemas } from "@/lib/api/client";
+import { ApiError, type Schemas } from "@/lib/api/client";
 import { useQReference, useQSettings, useQualityRefresh } from "@/lib/api/quality/q0";
 import { useMeData } from "@/components/shell/me-context";
 import { can, canWrite, type Capability } from "@/lib/permissions";
@@ -165,6 +165,12 @@ export function ClassBadge({ value }: { value: string | null | undefined }) {
   );
 }
 
+/** Quality errors show the server's text: it names the step, the rule and the blocking records. */
+export function qError(e: unknown): unknown {
+  if (e instanceof ApiError) e.serverText = true;
+  return e;
+}
+
 /** Runs one write: busy flag, error for MutationError, warning toasts, success toast and refresh. */
 export function useRun() {
   const refresh = useQualityRefresh();
@@ -184,7 +190,7 @@ export function useRun() {
         await refresh();
         return out;
       } catch (e) {
-        setError(e);
+        setError(qError(e));
         return undefined;
       } finally {
         setBusy(false);
@@ -231,7 +237,7 @@ export function ReasonDialog({
       setText("");
       onOpenChange(false);
     } catch (e) {
-      setError(e);
+      setError(qError(e));
     } finally {
       setBusy(false);
     }

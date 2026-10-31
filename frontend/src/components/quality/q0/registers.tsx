@@ -416,7 +416,7 @@ function Criteria({ project }: { project: Project }) {
           <MutationError error={error} />
           <FormField id="cr-code" label={t("code")} required><Input value={f.code} onChange={set("code")} dir="ltr" data-testid="cr-code" /></FormField>
           <FormField id="cr-en" label={t("titleEn")} required><Input value={f.title_en} onChange={set("title_en")} dir="ltr" data-testid="cr-title" /></FormField>
-          <FormField id="cr-ar" label={t("titleAr")}><Input value={f.title_ar} onChange={set("title_ar")} dir="rtl" /></FormField>
+          <FormField id="cr-ar" label={t("titleAr")}><Input value={f.title_ar} onChange={set("title_ar")} dir="rtl" data-testid="cr-title-ar" /></FormField>
           <FormField id="cr-kind" label={t("kind")}><Select value={f.kind} onChange={set("kind")} data-testid="cr-kind">{options("criterion_kind").filter((o) => o.value !== "rule").map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</Select></FormField>
           <FormField id="cr-prof" label={t("profile")}><Select value={f.profile} onChange={set("profile")}>{options("profile").map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</Select></FormField>
           <FormField id="cr-unit" label={t("unit")}><Input value={f.unit} onChange={set("unit")} dir="ltr" /></FormField>

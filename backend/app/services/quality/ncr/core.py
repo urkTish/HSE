@@ -581,24 +581,35 @@ def delete_draft(db: Session, p: Principal, ncr_id: uuid.UUID) -> None:
 # ---- open (Q-NCR-03, -06, -16) ----------------------------------------------------------------
 
 
+_OPEN_NEEDS: dict[str, tuple[str, str]] = {
+    "category": ("Choose the category.", "اختر الفئة."),
+    "detection_stage": ("Choose where it was detected.", "اختر مرحلة الاكتشاف."),
+    "classification": ("Choose the class.", "اختر التصنيف."),
+    "responsible_engagement_id": ("Choose the responsible contractor.", "اختر المقاول المسؤول."),
+    "owner_id": ("Choose the NCR owner.", "اختر مالك التقرير."),
+}
+
+
 def _open_problems(db: Session, n: QNcr) -> list[FieldError]:
-    miss: list[tuple[str, str]] = []
+    miss: list[tuple[str, str, str]] = []
     if not (n.title or "").strip() or n.title == "—":
-        miss.append(("title", "The title is required."))
+        miss.append(("title", "The title is required.", "العنوان مطلوب."))
     if not qc.text_of(n.requirement_en, n.requirement_ar):
-        miss.append(("requirement_en", "State the requirement (one language)."))
+        miss.append(
+            (
+                "requirement_en",
+                "State the requirement (one language).",
+                "اكتب المتطلب (بلغة واحدة).",
+            )
+        )
     if not qc.text_of(n.finding_en, n.finding_ar):
-        miss.append(("finding_en", "State the finding (one language)."))
-    for k in (
-        "category",
-        "detection_stage",
-        "classification",
-        "responsible_engagement_id",
-        "owner_id",
-    ):
+        miss.append(
+            ("finding_en", "State the finding (one language).", "اكتب الملاحظة (بلغة واحدة).")
+        )
+    for k, (en, ar) in _OPEN_NEEDS.items():
         if getattr(n, k) is None:
-            miss.append((k, f"{k} is required to open the NCR."))
-    return [FieldError(loc=["body", k], msg=m, type="missing") for k, m in miss]
+            miss.append((k, en, ar))
+    return [FieldError(loc=["body", k], msg=m, msg_ar=a, type="missing") for k, m, a in miss]
 
 
 def open_ncr(db: Session, p: Principal, ncr_id: uuid.UUID) -> tuple[QNcr, list[ApiWarning]]:
@@ -621,8 +632,8 @@ def _do_open(db: Session, p: Principal | None, project: Project, n: QNcr) -> lis
         raise ApiError(
             422,
             ErrorCode.VALIDATION_ERROR,
-            "Complete the NCR before opening it: " + "; ".join(e.msg for e in problems),
-            "أكمل بيانات التقرير قبل فتحه.",
+            "Complete the NCR before opening it: " + " ".join(e.msg for e in problems),
+            "أكمل بيانات التقرير قبل فتحه: " + " ".join(e.msg_ar or "" for e in problems),
             errors=problems,
         )
     if n.classification == QNcrClass.critical and evidence_count(db, n) == 0:

@@ -837,10 +837,19 @@ _QUALITY_BASE: dict[Capability, CapabilityScope] = {
     C.settings_view: S.project,
     C.history_view: S.project,
     C.profile_edit_own: S.all,
+    # Every role reads the lessons library (6f) and its own exports log (6g).
+    C.lesson_library_view: S.project,
+    C.export_log: S.project,
 }
 for _role in QUALITY_ROLES:
     MATRIX[_role] = (
-        {C.project_view: S.project, C.site_zone_view: S.project, C.profile_edit_own: S.all}
+        {
+            C.project_view: S.project,
+            C.site_zone_view: S.project,
+            C.profile_edit_own: S.all,
+            C.lesson_library_view: S.project,
+            C.export_log: S.project,
+        }
         if _role == Role.responsible_person
         else dict(_QUALITY_BASE)
     )

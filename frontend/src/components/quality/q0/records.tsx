@@ -186,7 +186,7 @@ function ObservationForm({ project, onDone }: { project: Project; onDone: () => 
           </Select>
         </FormField>
         <FormField id="obs-eng" label={tn("responsible")}>
-          <Select value={f.engagement_id} onChange={set("engagement_id")}>
+          <Select value={f.engagement_id} onChange={set("engagement_id")} data-testid="obs-engagement">
             <option value="">—</option>
             {opts.engagements.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           </Select>

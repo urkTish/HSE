@@ -24,6 +24,7 @@ import { ApiWarnings } from "@/components/common/api-warnings";
 import { Link, useRouter } from "@/i18n/navigation";
 import { api, downloadFile, unwrap } from "@/lib/api/client";
 import { useQNcr, useQNcrs, useQSuppliers } from "@/lib/api/quality/q0";
+import { useMeData } from "@/components/shell/me-context";
 import { useDebounced } from "@/lib/use-debounced";
 import { useFormatters } from "@/lib/use-formatters";
 import { useSearchState } from "@/lib/url-state";
@@ -189,9 +190,10 @@ function RaiseForm({ project }: { project: Project; settings: QSettings }) {
   const suppliers = useQSuppliers({ page_size: 200 });
   const router = useRouter();
   const { run, busy, error } = useRun();
+  const me = useMeData();
   const [f, setF] = useState({
     title: "", finding_en: "", requirement_en: "", category: "", classification: "minor", detection_stage: "in_process",
-    site_id: "", zone_id: "", responsible_engagement_id: "", owner_id: "", supplier_id: "", location_ref: "", quantity: "", unit: "",
+    site_id: "", zone_id: "", responsible_engagement_id: "", owner_id: me.id, supplier_id: "", location_ref: "", quantity: "", unit: "",
   });
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF((x) => ({ ...x, [k]: e.target.value }));
   const ready = f.title.trim() && f.site_id;
