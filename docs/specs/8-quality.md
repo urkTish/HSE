@@ -275,7 +275,7 @@ Seeded positions per profile: construction CONSULTANT_RE (Consultant Resident En
 - **Q-CHK-04.** `checklist_default` settings per record type (and discipline / storage class) name the template a new record proposes; the user may pick any Published quality template whose `quality_type` and profile match.
 
 **QCT — quality checklist types:** `ir_inspection` (Q1) · `punch_walkdown` (Q1) · `mir_inspection` (Q2) · `receiving` (Q3) · `reefer_preload` (Q3) · `hygiene` (Q3) · `pest_visit` (Q3) · `return_inspection` (Q3) · `q_audit` (Q4, kind `audit` stays 6d's; quality audits use kind `quality` with this type) · `supplier_audit` (Q4).
-**Response owner types added:** `q_ir_round`, `q_punch_walkdown`, `q_mir`, `q_receipt`, `q_trip_preload`, `q_hygiene`, `q_pest_visit`, `q_return`, `q_audit`.
+**Response owner types added:** `q_ir_round`, `q_punch_walkdown`, `q_mir`, `q_receipt`, `q_trip_preload`, `q_hygiene`, `q_pest_visit`, `q_return`. Quality audits keep the 6d owner type `audit` (they are `field_audits` rows, §E.2).
 
 ## A.8 Shared registers owned by Q0 (Q-SHR)
 
@@ -575,7 +575,7 @@ Fixtures: the Phase 0–7b seed plus Appendix A; clock `HSE_CLOCK_AT` = **2026-1
 **Responsible-person matrix and sign-offs**
 8. **AC-Q0-08** (Q-RPM-03) **Given** the default row `ir.inspect` H → position CONSULTANT_RE held by Abdullah **Then** Abdullah resolves for a hold-point IR and Hatem does not.
 9. **AC-Q0-09** (Q-RPM-02) **Given** no active row for `ncr.close` **When** the owner asks to close **Then** 422 `RESPONSIBLE_PERSON_NOT_SET` and the NCR is listed under "steps without a responsible person".
-10. **AC-Q0-10** (Q-RPM-06) **Given** Hatem raised NCR-…-0044 and also resolves for `ncr.disposition` **When** he approves the disposition **Then** 422 `SOD_CONFLICT`; with `self_approval_allowed` true on that row **Then** allowed.
+10. **AC-Q0-10** (Q-RPM-06) **Given** Hatem raised an NCR and also resolves for `ncr.disposition` **When** he approves the disposition **Then** 422 `SOD_CONFLICT`; with `self_approval_allowed` true on that row **Then** allowed.
 11. **AC-Q0-11** (Q-RPM-07) **Given** a matrix row naming role quality_engineer for `ncr.close` and Bilal (RAWABI-assigned) **When** he closes a RAWABI NCR **Then** 422 `SOD_CONFLICT`; for a GULFPAVE NCR with `own_tree_allowed` false **Then** still refused (GULFPAVE is in RAWABI's tree); for an NCR whose responsible engagement is outside his tree **Then** 404.
 12. **AC-Q0-12** (Q-RPM-01) **Given** the `ncr.disposition` row changed from role qa_qc_manager to user Sultan **Then** Sultan resolves and Hatem no longer does, without a code change.
 13. **AC-Q0-13** (Q-RPM-08) **Given** a row with `paper_allowed` **When** Hatem records an external approval without a scan **Then** 422; with name, organisation, position, date and a PDF **Then** a sign-off with channel `paper` is stored and printed "Signed on paper by …, recorded by Hatem"; with `paper_allowed` false **Then** 422.
@@ -588,7 +588,7 @@ Fixtures: the Phase 0–7b seed plus Appendix A; clock `HSE_CLOCK_AT` = **2026-1
 18. **AC-Q0-18** (Q-NUM-02, Q-NUM-04) **Given** a format `{PFX}-{PROJECT}` **Then** 422 `NUMBER_FORMAT_INVALID`; changing NCR format to `{PFX}/{PROJECT}/{YY}/{SEQ5}` leaves existing numbers unchanged and the next NCR is `NCR/ANIA-EXP/26/00045`.
 19. **AC-Q0-19** (Q-CRT-01) **Given** criterion `COMP-95` (kind min, 95.0 %) **Then** 96.2 → pass, 95.0 → pass, 94.4 → fail; criterion kind target_tolerance 100 ± 25 mm: 75 and 125 pass, 130 fails.
 20. **AC-Q0-20** (Q-CRT-02) **Given** a record pinned to COMP-95 v1 **When** v2 (98.0 %) is published **Then** the record's verdict is unchanged.
-21. **AC-Q0-21** (Q-CHK-01, Q-CHK-02) **Given** a quality template draft with a `stop_work` item **Then** publish → 422 `STOP_RULE_NOT_ALLOWED`; Noura (HSE Officer, capability 193) publishing a kind `quality` template → 403.
+21. **AC-Q0-21** (Q-CHK-01, Q-CHK-02) **Given** a quality template draft with a `stop_work` item **Then** publish → 422 `STOP_RULE_NOT_ALLOWED`; Noura (HSE Officer, holds 6d capability 192 but not 240) creating a kind `quality` draft → 403; Faisal publishing a clean draft → Published.
 22. **AC-Q0-22** (Q-CHK-03) **Given** quality checklist responses in September **Then** K-34, K-35 and K-110 for September are unchanged.
 23. **AC-Q0-23** (Q-SHR-02) **Given** supplier GULFPIPE suspended **When** a MAR names it **Then** warning `SUPPLIER_NOT_APPROVED`; a disqualified supplier → 422 `SUPPLIER_DISQUALIFIED`.
 24. **AC-Q0-24** (Q-SHR-04) **Given** M&TE MTE-0015 with cal_status overdue and `mte_use_policy` warn **When** a usage is recorded **Then** stored with verdict `warned` and warning `MTE_NOT_CALIBRATED`; with policy `block` **Then** 422.
