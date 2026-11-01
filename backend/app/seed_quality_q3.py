@@ -334,7 +334,7 @@ def seed_setup(db: Session) -> None:
 def _instruments(db: Session, c: _Ctx, author: uuid.UUID) -> None:
     """Loggers MTE-0101…0122 (points), MTE-0123…0127 (spare mapping loggers, A.5: the Z-FRZ1
     study used 27) and the probes MTE-0042 / MTE-0051 in the Q0 M&TE register, when the Q0 data
-    layer has not created them; their calibration status stays `unknown` until Q2 is installed."""
+    layer has not created them, with the Q0 calibration dates (Q2 recomputes the status)."""
     rows = [(n, QMteType.temp_logger, f"Temperature logger {n}") for n in range(101, 128)]
     rows += [
         (42, QMteType.temp_probe, "Receiving probe thermometer"),
@@ -354,7 +354,12 @@ def _instruments(db: Session, c: _Ctx, author: uuid.UUID) -> None:
             site_id=c.site.id,
             check_kind=QMteCheckKind.calibration,
             interval_months=12,
-            cal_status=QCalStatus.unknown,
+            # same dates as the Q0 data layer (calibrated 2026-03-01, due 2027-02-28); with Q2
+            # installed the status is recomputed from cal_due_on (Q-CAL-02), so None would read
+            # "never calibrated" → overdue.
+            cal_status=QCalStatus.calibrated,
+            cal_due_on=date(2027, 2, 28),
+            cal_status_reason="Last calibrated 2026-03-01",
             created_by_user_id=author,
             seed_fake=True,
         )

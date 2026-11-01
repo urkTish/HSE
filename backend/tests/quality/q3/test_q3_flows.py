@@ -214,14 +214,14 @@ def test_ac09_ac10_mte_and_dwell(q3setup: None, api: Api, db) -> None:  # type: 
     err(c.post(f"{API}/projects/{r.pid}/quality/receipts", json=body), 422, "MTE_REQUIRED")
     body["lines"][0]["mte_id"] = r.mte("MTE-0042")
     rec = ok(c.post(f"{API}/projects/{r.pid}/quality/receipts", json=body), 201)
-    assert any(
-        w["code"] == "MTE_NOT_CALIBRATED" for w in rec["warnings"]
-    )  # Q2 not installed: unknown warns
+    # with Q2 installed the probe's status is recomputed from its due date (calibrated), so the
+    # receipt carries no MTE_NOT_CALIBRATED warning
+    assert not any(w["code"] == "MTE_NOT_CALIBRATED" for w in rec["warnings"])
     from app.models.quality import QMteUsage
 
     assert (
         db.scalar(select(QMteUsage).where(QMteUsage.record_id == rec["id"])).verdict.value
-        == "warned"
+        == "ok"  # a calibrated probe: the usage is recorded without a warning
     )
     upd = ok(
         c.patch(
