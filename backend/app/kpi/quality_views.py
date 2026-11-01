@@ -70,7 +70,7 @@ def tile(e: qk.Engine, k: QKpi, hide_cost: bool) -> dict[str, Any]:
         )
     t = qk.target_of(e.db, e.project.id, k, e.end)
     r["target"] = str(t) if t is not None else None
-    r["rag"] = qk.rag(k, D(r["value"]) if r["value"] else None, t)
+    r["rag"] = qk.rag_for(e.result(k), t)
     return r
 
 

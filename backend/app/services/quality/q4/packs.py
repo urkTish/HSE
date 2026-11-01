@@ -81,7 +81,7 @@ def kpi_section(
             "num": str(r.numerator or "—"),
             "den": str(r.denominator or "—"),
             "target": str(t) if t is not None else "—",
-            "rag": qk.rag(k, r.value, t) or "—",
+            "rag": qk.rag_for(r, t) or "—",
         }
         rows.append({**base, "name": qk.CATALOGUE[k][0]})
         rows_ar.append({**base, "name": qk.CATALOGUE[k][1]})

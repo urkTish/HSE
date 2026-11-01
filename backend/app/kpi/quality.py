@@ -1082,6 +1082,14 @@ def rag(kpi: QKpi, value: Decimal | None, target: Decimal | None) -> str | None:
     return None
 
 
+def rag_for(r: Result, target: Decimal | None) -> str | None:
+    """RAG of a result; K-148's objective is COPQ % of the work value (A.7 "K-148 ≤ 0.5 %")."""
+    if r.kpi == K.K148:
+        v = next((c["value"] for c in r.chips if c["code"] == "copq_pct"), None)
+        return rag(r.kpi, D(v) if v else None, target)
+    return rag(r.kpi, r.value, target)
+
+
 def tiles_for(profile: QSectorProfile | None) -> list[QKpi]:
     """§E.7: tiles of the current profile and the shared ones (AC-Q4-33)."""
     own = TILES.get(profile.value, []) if profile else TILES["construction"]
@@ -1098,7 +1106,7 @@ def snapshot(db: Session, project: Project, start: date, end: date) -> dict[str,
         r = e.result(k).dump()
         t = target_of(db, project.id, k, end)
         r["target"] = str(t) if t is not None else None
-        r["rag"] = rag(k, D(r["value"]) if r["value"] else None, t)
+        r["rag"] = rag_for(e.result(k), t)
         rows.append(r)
     return {"period_start": start.isoformat(), "period_end": end.isoformat(), "kpis": rows}
 

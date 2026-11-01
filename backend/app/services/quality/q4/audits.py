@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import date, timedelta
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
 
 from sqlalchemy import select
@@ -163,9 +163,9 @@ def months_for(freq: Decimal, year: int) -> list[int]:
     2 → 3 and 9; 3 → 2, 6, 10; 4 → 2, 5, 8, 11; below 1 → month 6 every round(1 ÷ f) years
     (even years for 0.5)."""
     if freq >= 1:
-        n = min(int((freq + Decimal("0.5")).to_integral_value()), 4)
+        n = min(int(freq.quantize(Decimal("1"), ROUND_HALF_UP)), 4)
         return {1: [6], 2: [3, 9], 3: [2, 6, 10], 4: [2, 5, 8, 11]}[n]
-    every = max(int((1 / freq + Decimal("0.5")).to_integral_value()), 1)
+    every = max(int((1 / freq).quantize(Decimal("1"), ROUND_HALF_UP)), 1)
     return [6] if year % every == 0 else []
 
 
