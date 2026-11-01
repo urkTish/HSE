@@ -42,6 +42,14 @@ AUDIT_TYPES: dict[AuditType, tuple[str, str]] = {
     AuditType.system_iso45001: ("ISO 45001 internal audit", "تدقيق داخلي لنظام ISO 45001"),
     AuditType.client_requested: ("Client-requested audit", "تدقيق بطلب العميل"),
 }
+# 8-quality §E.2.1 (Q4): quality audit types (domain `quality`; not offered by the 6d screens)
+AUDIT_TYPE_LABELS: dict[AuditType, tuple[str, str]] = {
+    **AUDIT_TYPES,
+    AuditType.qms_internal: ("QMS internal audit (ISO 9001)", "تدقيق داخلي لنظام إدارة الجودة"),
+    AuditType.process_quality: ("Process or product audit", "تدقيق عملية أو منتج"),
+    AuditType.supplier_quality: ("Supplier quality audit", "تدقيق مورد"),
+    AuditType.subcontractor_quality: ("Subcontractor quality audit", "تدقيق جودة مقاول باطن"),
+}
 
 # AG (ASSUMPTION): lower bound of each grade, by unrounded score
 AUDIT_GRADES: dict[AuditGrade, tuple[str, str, Decimal]] = {

@@ -387,7 +387,10 @@ def transition(
             if blockers:
                 raise qc.err(
                     422,
-                    ErrorCode.TRANSITION_CONDITION_NOT_MET,
+                    # the gate's own code when it names one (Q4: SUPPLIER_EVALUATION_REQUIRED)
+                    ErrorCode(blockers[0].code)
+                    if blockers[0].code in ErrorCode._value2member_map_
+                    else ErrorCode.TRANSITION_CONDITION_NOT_MET,
                     blockers[0].detail_en,
                     blockers[0].detail_ar,
                     blockers=[b.__dict__ for b in blockers],

@@ -137,23 +137,35 @@ class QMrvStatus(StrEnum):
 
 # ISO 9001:2015 9.3.2 inputs (Q-MRV-01): key, EN, AR
 MRV_INPUTS: tuple[tuple[str, str, str], ...] = (
-    ("previous_actions", "Status of actions from previous reviews",
-     "حالة الإجراءات من المراجعات السابقة"),
+    (
+        "previous_actions",
+        "Status of actions from previous reviews",
+        "حالة الإجراءات من المراجعات السابقة",
+    ),
     ("issues", "Changes in external and internal issues", "التغيرات في القضايا الخارجية والداخلية"),
     ("customer", "Customer satisfaction and feedback", "رضا العملاء والتغذية الراجعة"),
     ("objectives", "Extent to which quality objectives were met", "مدى تحقيق أهداف الجودة"),
-    ("process_performance", "Process performance and conformity of products and services",
-     "أداء العمليات ومطابقة المنتجات والخدمات"),
-    ("nonconformities", "Nonconformities and corrective actions",
-     "حالات عدم المطابقة والإجراءات التصحيحية"),
+    (
+        "process_performance",
+        "Process performance and conformity of products and services",
+        "أداء العمليات ومطابقة المنتجات والخدمات",
+    ),
+    (
+        "nonconformities",
+        "Nonconformities and corrective actions",
+        "حالات عدم المطابقة والإجراءات التصحيحية",
+    ),
     ("monitoring", "Monitoring and measurement results", "نتائج الرصد والقياس"),
     ("audits", "Audit results", "نتائج التدقيق"),
     ("external_providers", "Performance of external providers", "أداء المزودين الخارجيين"),
     ("resources", "Adequacy of resources", "كفاية الموارد"),
-    ("risks", "Effectiveness of actions on risks and opportunities",
-     "فعالية الإجراءات المتخذة للمخاطر والفرص"),
+    (
+        "risks",
+        "Effectiveness of actions on risks and opportunities",
+        "فعالية الإجراءات المتخذة للمخاطر والفرص",
+    ),
     ("improvement", "Opportunities for improvement", "فرص التحسين"),
-)  # fmt: skip
+)
 MRV_INPUT_KEYS: tuple[str, ...] = tuple(k for k, _, _ in MRV_INPUTS)
 
 
@@ -163,7 +175,7 @@ class QMrvOutputKind(StrEnum):
     resource = "resource"
 
 
-# ---- suppliers (§E.3) -----------------------------------------------------------------------------
+# ---- suppliers (§E.3) ----------------------------------------------------------------------------
 
 
 class QSevKind(StrEnum):
@@ -213,7 +225,7 @@ SCORE_METRICS: tuple[tuple[str, str, str], ...] = (
 )
 
 
-# ---- SPC (§E.5) -----------------------------------------------------------------------------------
+# ---- SPC (§E.5) ----------------------------------------------------------------------------------
 
 
 class QSpcType(StrEnum):
@@ -250,7 +262,7 @@ class QSpcBaseline(StrEnum):
     rolling = "rolling"
 
 
-# ---- KPIs (§E.4) ----------------------------------------------------------------------------------
+# ---- KPIs (§E.4) ---------------------------------------------------------------------------------
 
 
 class QKpi(StrEnum):

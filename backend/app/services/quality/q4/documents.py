@@ -36,7 +36,7 @@ from app.core.quality.q4 import (
     QTransmittalStatus,
     QTransmittalTo,
 )
-from app.models import Attachment, EmailMessage, Project, ProjectEngagement, RoleAssignment, User
+from app.models import Attachment, EmailMessage, Project, ProjectEngagement, RoleAssignment
 from app.models.quality import QCustomer, QLink, QPosition, QPositionHolder, QSignoff, QSupplier
 from app.models.quality.q4 import (
     QDocAck,
@@ -99,7 +99,9 @@ def _can_view(db: Session, p: Principal, d: QDocument) -> bool:
     if project is None or rev is None:
         return False
     for step in ("review", "approve"):
-        if rpm.resolves(db, p, project, RT.document, step, _ctx(rev), record_id=d.id, can_act=False):
+        if rpm.resolves(
+            db, p, project, RT.document, step, _ctx(rev), record_id=d.id, can_act=False
+        ):
             return True
     return False
 
@@ -250,8 +252,13 @@ def _my_ack(db: Session, p: Principal, d: QDocument) -> dict[str, Any] | None:
 
 def _dist_read(dist: QDocDistribution | None) -> dict[str, Any]:
     if dist is None:
-        return {"roles": [], "positions": [], "engagement_ids": [], "user_ids": [],
-                "ack_required": False}  # fmt: skip
+        return {
+            "roles": [],
+            "positions": [],
+            "engagement_ids": [],
+            "user_ids": [],
+            "ack_required": False,
+        }
     return {
         "roles": list(dist.roles or []),
         "positions": list(dist.positions or []),
@@ -282,8 +289,13 @@ def list_documents(
         stmt = stmt.where(QDocument.status == status)
     if q:
         like = f"%{q.strip()}%"
-        stmt = stmt.where(or_(QDocument.doc_no.ilike(like), QDocument.title_en.ilike(like),
-                              QDocument.title_ar.ilike(like)))  # fmt: skip
+        stmt = stmt.where(
+            or_(
+                QDocument.doc_no.ilike(like),
+                QDocument.title_en.ilike(like),
+                QDocument.title_ar.ilike(like),
+            )
+        )
     rows = list(db.scalars(stmt.order_by(QDocument.doc_no)))
     hide = b.hide_names(p, project.id)
     day = b.today(project)
@@ -322,29 +334,47 @@ def _member_user(db: Session, project: Project, uid: uuid.UUID, field: str) -> N
         raise qc.field_err(field, "The user is not on this project.", "المستخدم ليس في المشروع.")
 
 
-def create(db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any]) -> dict[str, Any]:
+def create(
+    db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any]
+) -> dict[str, Any]:
     project, _g = b.writer(db, p, project_id, C.document_author)
     dt = QDocType(body["doc_type"])
     owner = body.get("owner_user_id") or p.user.id
     _member_user(db, project, owner, "owner_user_id")
-    doc_no = (body.get("doc_no") or "").strip() or b.number(db, project, RT.document, DOC_PREFIX[dt])
-    if db.scalar(select(QDocument.id).where(QDocument.project_id == project.id,
-                                            QDocument.doc_no == doc_no)):  # fmt: skip
+    doc_no = (body.get("doc_no") or "").strip() or b.number(
+        db, project, RT.document, DOC_PREFIX[dt]
+    )
+    if db.scalar(
+        select(QDocument.id).where(QDocument.project_id == project.id, QDocument.doc_no == doc_no)
+    ):
         raise qc.err(409, ErrorCode.DUPLICATE_VALUE, f"{doc_no} exists.", "رقم الوثيقة مستخدم.")
     d = QDocument(
-        id=uuid.uuid4(), project_id=project.id, doc_no=doc_no, doc_type=dt,
-        title_en=body["title_en"].strip(), title_ar=(body.get("title_ar") or "").strip(),
-        profile=QProfileScope(body.get("profile") or "both"), discipline=body.get("discipline"),
-        process_id=body.get("process_id"), owner_user_id=owner, status=RS.draft,
-        created_by_user_id=p.user.id, alerts_sent=[],
-    )  # fmt: skip
+        id=uuid.uuid4(),
+        project_id=project.id,
+        doc_no=doc_no,
+        doc_type=dt,
+        title_en=body["title_en"].strip(),
+        title_ar=(body.get("title_ar") or "").strip(),
+        profile=QProfileScope(body.get("profile") or "both"),
+        discipline=body.get("discipline"),
+        process_id=body.get("process_id"),
+        owner_user_id=owner,
+        status=RS.draft,
+        created_by_user_id=p.user.id,
+        alerts_sent=[],
+    )
     db.add(d)
     db.flush()
     r = QDocumentRevision(
-        id=uuid.uuid4(), document_id=d.id, rev_code="A", rev_index=1, status=RS.draft,
-        change_summary=body.get("change_summary") or "First issue", author_user_id=p.user.id,
+        id=uuid.uuid4(),
+        document_id=d.id,
+        rev_code="A",
+        rev_index=1,
+        status=RS.draft,
+        change_summary=body.get("change_summary") or "First issue",
+        author_user_id=p.user.id,
         created_by_user_id=p.user.id,
-    )  # fmt: skip
+    )
     db.add(r)
     db.flush()
     b.record(db, p, AuditAction.create, RT.document, d, project.id, details={"doc_no": doc_no})
@@ -375,15 +405,24 @@ def new_revision(db: Session, p: Principal, doc_id: uuid.UUID) -> dict[str, Any]
     if d.status == RS.obsolete:
         raise _immutable()
     if _open_revision(db, d) is not None:
-        raise qc.err(409, ErrorCode.INVALID_TRANSITION, "A revision is already open.",
-                     "توجد مراجعة مفتوحة بالفعل.")  # fmt: skip
+        raise qc.err(
+            409,
+            ErrorCode.INVALID_TRANSITION,
+            "A revision is already open.",
+            "توجد مراجعة مفتوحة بالفعل.",
+        )
     cur = db.get(QDocumentRevision, d.current_revision_id) if d.current_revision_id else None
     n = len(_revisions(db, d)) + 1
     r = QDocumentRevision(
-        id=uuid.uuid4(), document_id=d.id, rev_code="A", rev_index=n, status=RS.draft,
+        id=uuid.uuid4(),
+        document_id=d.id,
+        rev_code="A",
+        rev_index=n,
+        status=RS.draft,
         source_attachment_id=cur.source_attachment_id if cur else None,
-        author_user_id=p.user.id, created_by_user_id=p.user.id,
-    )  # fmt: skip
+        author_user_id=p.user.id,
+        created_by_user_id=p.user.id,
+    )
     db.add(r)
     db.flush()
     b.record(db, p, AuditAction.create, RT.document, d, d.project_id, details={"revision": n})
@@ -396,19 +435,32 @@ def update_revision(
     r, d = _get_rev(db, p, rev_id)
     b.writer(db, p, d.project_id, C.document_author)
     if r.status != RS.draft:
-        raise _immutable() if r.status not in OPEN_REV else qc.err(
-            409, ErrorCode.INVALID_TRANSITION, "Return the revision to Draft to edit it.",
-            "أعد المراجعة إلى مسودة لتعديلها.")  # fmt: skip
+        raise (
+            _immutable()
+            if r.status not in OPEN_REV
+            else qc.err(
+                409,
+                ErrorCode.INVALID_TRANSITION,
+                "Return the revision to Draft to edit it.",
+                "أعد المراجعة إلى مسودة لتعديلها.",
+            )
+        )
     if "file_attachment_id" in body:
         r.file_attachment_id = b.attachment_on(
-            db, body["file_attachment_id"], AttachmentOwner.q_document_file, r.id,
+            db,
+            body["file_attachment_id"],
+            AttachmentOwner.q_document_file,
+            r.id,
             "file_attachment_id",
-        )  # fmt: skip
+        )
     if "source_attachment_id" in body:
         r.source_attachment_id = b.attachment_on(
-            db, body["source_attachment_id"], AttachmentOwner.q_document_file, r.id,
+            db,
+            body["source_attachment_id"],
+            AttachmentOwner.q_document_file,
+            r.id,
             "source_attachment_id",
-        )  # fmt: skip
+        )
     for k in ("change_summary", "effective_date"):
         if k in body:
             setattr(r, k, body[k])
@@ -419,19 +471,28 @@ def update_revision(
 
 def _is_pdf(db: Session, aid: uuid.UUID | None) -> bool:
     a = db.get(Attachment, aid) if aid else None
-    return a is not None and (a.content_type == "application/pdf"
-                              or a.file_name.lower().endswith(".pdf"))  # fmt: skip
+    return a is not None and (
+        a.content_type == "application/pdf" or a.file_name.lower().endswith(".pdf")
+    )
 
 
 def submit(db: Session, p: Principal, rev_id: uuid.UUID) -> dict[str, Any]:
     r, d = _get_rev(db, p, rev_id)
     b.writer(db, p, d.project_id, C.document_author)
     if r.status != RS.draft:
-        raise qc.err(409, ErrorCode.INVALID_TRANSITION, "Only a Draft is sent for review.",
-                     "تُرسل المسودة فقط للمراجعة.")  # fmt: skip
+        raise qc.err(
+            409,
+            ErrorCode.INVALID_TRANSITION,
+            "Only a Draft is sent for review.",
+            "تُرسل المسودة فقط للمراجعة.",
+        )
     if not _is_pdf(db, r.file_attachment_id):
-        raise qc.err(422, ErrorCode.DOCUMENT_FILE_REQUIRED,
-                     "Attach the PDF of the revision first.", "أرفق ملف PDF للمراجعة أولاً.")  # fmt: skip
+        raise qc.err(
+            422,
+            ErrorCode.DOCUMENT_FILE_REQUIRED,
+            "Attach the PDF of the revision first.",
+            "أرفق ملف PDF للمراجعة أولاً.",
+        )
     r.status = RS.for_review
     r.submitted_at = now()
     if d.current_revision_id is None:
@@ -440,11 +501,26 @@ def submit(db: Session, p: Principal, rev_id: uuid.UUID) -> dict[str, Any]:
     project = db.get(Project, d.project_id)
     assert project is not None  # noqa: S101
     users = b.resolvers(db, project, RT.document, "review", _ctx(r), record_id=d.id)
-    b.send(db, project, users, f"doc:{r.id}:review", f"{d.doc_no} Rev.{r.rev_code} for review",
-           f"{d.doc_no} المراجعة {r.rev_code} للمراجعة", rt=RT.document, rid=d.id,
-           path=f"/quality/documents/{d.id}")  # fmt: skip
-    b.record(db, p, AuditAction.status_change, RT.document, d, d.project_id,
-             details={"revision": r.rev_code, "to": "for_review"})  # fmt: skip
+    b.send(
+        db,
+        project,
+        users,
+        f"doc:{r.id}:review",
+        f"{d.doc_no} Rev.{r.rev_code} for review",
+        f"{d.doc_no} المراجعة {r.rev_code} للمراجعة",
+        rt=RT.document,
+        rid=d.id,
+        path=f"/quality/documents/{d.id}",
+    )
+    b.record(
+        db,
+        p,
+        AuditAction.status_change,
+        RT.document,
+        d,
+        d.project_id,
+        details={"revision": r.rev_code, "to": "for_review"},
+    )
     return read(db, p, d.id)
 
 
@@ -464,14 +540,17 @@ def review(db: Session, p: Principal, rev_id: uuid.UUID, body: dict[str, Any]) -
     r, d = _get_rev(db, p, rev_id)
     project, _g = b.writer(db, p, d.project_id, C.document_approve, allow_n=True)
     if r.status != RS.for_review:
-        raise qc.err(409, ErrorCode.INVALID_TRANSITION, "The revision is not for review.",
-                     "المراجعة ليست قيد المراجعة.")  # fmt: skip
+        raise qc.err(
+            409,
+            ErrorCode.INVALID_TRANSITION,
+            "The revision is not for review.",
+            "المراجعة ليست قيد المراجعة.",
+        )
     decision = body.get("decision") or "approved"
     comment = body.get("comment")
     if decision == "returned":
         comment = qc.reason(comment, 20, "comment")
-    b.sign(db, p, project, RT.document, r.id, "review", _ctx(r), decision=decision,
-           comment=comment)  # fmt: skip
+    b.sign(db, p, project, RT.document, r.id, "review", _ctx(r), decision=decision, comment=comment)
     if decision == "returned":
         _return(db, d, r, comment or "")
     db.flush()
@@ -483,39 +562,82 @@ def approve(db: Session, p: Principal, rev_id: uuid.UUID, body: dict[str, Any]) 
     r, d = _get_rev(db, p, rev_id)
     project, _g = b.writer(db, p, d.project_id, C.document_approve, allow_n=True)
     if r.status != RS.for_review:
-        raise qc.err(409, ErrorCode.INVALID_TRANSITION, "The revision is not for review.",
-                     "المراجعة ليست قيد المراجعة.")  # fmt: skip
+        raise qc.err(
+            409,
+            ErrorCode.INVALID_TRANSITION,
+            "The revision is not for review.",
+            "المراجعة ليست قيد المراجعة.",
+        )
     decision = body.get("decision") or "approved"
     if decision == "returned":
         comment = qc.reason(body.get("comment"), 20, "comment")
-        b.sign(db, p, project, RT.document, r.id, "approve", _ctx(r), decision="returned",
-               comment=comment)  # fmt: skip
+        b.sign(
+            db,
+            p,
+            project,
+            RT.document,
+            r.id,
+            "approve",
+            _ctx(r),
+            decision="returned",
+            comment=comment,
+        )
         _return(db, d, r, comment)
         db.flush()
         return read(db, p, d.id)
     if p.user.id in _ctx(r).requesters:
-        raise qc.err(422, ErrorCode.SOD_CONFLICT,
-                     "The author cannot approve their own revision (Q-RPM-06).",
-                     "لا يجوز للمؤلف اعتماد مراجعته.")  # fmt: skip
+        raise qc.err(
+            422,
+            ErrorCode.SOD_CONFLICT,
+            "The author cannot approve their own revision (Q-RPM-06).",
+            "لا يجوز للمؤلف اعتماد مراجعته.",
+        )
     if not _is_pdf(db, r.file_attachment_id):
-        raise qc.err(422, ErrorCode.DOCUMENT_FILE_REQUIRED, "The revision has no PDF.",
-                     "لا يوجد ملف PDF للمراجعة.")  # fmt: skip
+        raise qc.err(
+            422,
+            ErrorCode.DOCUMENT_FILE_REQUIRED,
+            "The revision has no PDF.",
+            "لا يوجد ملف PDF للمراجعة.",
+        )
     reviewed = db.scalar(
-        select(QSignoff.id).where(
-            QSignoff.record_type == RT.document.value, QSignoff.record_id == r.id,
-            QSignoff.step == "review", QSignoff.decision.in_(["approved", "approved_with_comments"]),
+        select(QSignoff.id)
+        .where(
+            QSignoff.record_type == RT.document.value,
+            QSignoff.record_id == r.id,
+            QSignoff.step == "review",
+            QSignoff.decision.in_(["approved", "approved_with_comments"]),
             QSignoff.signed_at >= (r.submitted_at or r.created_at),
-        ).limit(1)
-    )  # fmt: skip
+        )
+        .limit(1)
+    )
     if reviewed is None:
-        raise qc.err(422, ErrorCode.SIGNOFF_REQUIRED,
-                     "At least one review sign-off is needed before approval (Q-DOC-02).",
-                     "يلزم توقيع مراجعة واحد على الأقل قبل الاعتماد.")  # fmt: skip
-    b.sign(db, p, project, RT.document, r.id, "approve", _ctx(r), decision="approved",
-           comment=body.get("comment"))  # fmt: skip
+        raise qc.err(
+            422,
+            ErrorCode.SIGNOFF_REQUIRED,
+            "At least one review sign-off is needed before approval (Q-DOC-02).",
+            "يلزم توقيع مراجعة واحد على الأقل قبل الاعتماد.",
+        )
+    b.sign(
+        db,
+        p,
+        project,
+        RT.document,
+        r.id,
+        "approve",
+        _ctx(r),
+        decision="approved",
+        comment=body.get("comment"),
+    )
     _approve(db, project, d, r, p.user.id)
-    b.record(db, p, AuditAction.status_change, RT.document, d, d.project_id,
-             details={"revision": r.rev_code, "to": "approved"})  # fmt: skip
+    b.record(
+        db,
+        p,
+        AuditAction.status_change,
+        RT.document,
+        d,
+        d.project_id,
+        details={"revision": r.rev_code, "to": "approved"},
+    )
     return read(db, p, d.id)
 
 
@@ -546,15 +668,25 @@ def _members(db: Session, project: Project, dist: QDocDistribution) -> set[uuid.
     out: set[uuid.UUID] = set(dist.user_ids or [])
     roles = set(dist.roles or [])
     engs = set(dist.engagement_ids or [])
-    for a in db.scalars(select(RoleAssignment).where(RoleAssignment.project_id == project.id,
-                                                     RoleAssignment.revoked_at.is_(None))):  # fmt: skip
+    for a in db.scalars(
+        select(RoleAssignment).where(
+            RoleAssignment.project_id == project.id, RoleAssignment.revoked_at.is_(None)
+        )
+    ):
         if not a.is_active_on(day):
             continue
-        if a.role.value in roles or (a.contractor_engagement_id and a.contractor_engagement_id in engs):
+        if a.role.value in roles or (
+            a.contractor_engagement_id and a.contractor_engagement_id in engs
+        ):
             out.add(a.user_id)
     if dist.positions:
-        pos = list(db.scalars(select(QPosition.id).where(QPosition.project_id == project.id,
-                                                         QPosition.code.in_(dist.positions))))  # fmt: skip
+        pos = list(
+            db.scalars(
+                select(QPosition.id).where(
+                    QPosition.project_id == project.id, QPosition.code.in_(dist.positions)
+                )
+            )
+        )
         for h in db.scalars(select(QPositionHolder).where(QPositionHolder.position_id.in_(pos))):
             if h.valid_from <= day and (h.valid_to is None or h.valid_to >= day):
                 out.add(h.user_id)
@@ -574,9 +706,17 @@ def _create_acks(
     for uid in sorted(users):
         db.add(QDocAck(id=uuid.uuid4(), revision_id=r.id, user_id=uid, due_on=due))
     db.flush()
-    b.send(db, project, users, f"doc-ack:{r.id}", f"Read and acknowledge {d.doc_no} Rev.{r.rev_code}",
-           f"اطلع وأقر بالوثيقة {d.doc_no} المراجعة {r.rev_code}", rt=RT.document, rid=d.id,
-           path=f"/quality/documents/{d.id}")  # fmt: skip
+    b.send(
+        db,
+        project,
+        users,
+        f"doc-ack:{r.id}",
+        f"Read and acknowledge {d.doc_no} Rev.{r.rev_code}",
+        f"اطلع وأقر بالوثيقة {d.doc_no} المراجعة {r.rev_code}",
+        rt=RT.document,
+        rid=d.id,
+        path=f"/quality/documents/{d.id}",
+    )
     return len(users)
 
 
@@ -584,15 +724,21 @@ def obsolete(db: Session, p: Principal, doc_id: uuid.UUID, reason: str | None) -
     d = _get(db, p, doc_id)
     b.writer(db, p, d.project_id, C.quality_settings)
     if d.status != RS.approved:
-        raise qc.err(409, ErrorCode.INVALID_TRANSITION, "Only an approved document is withdrawn.",
-                     "تُسحب الوثيقة المعتمدة فقط.")  # fmt: skip
+        raise qc.err(
+            409,
+            ErrorCode.INVALID_TRANSITION,
+            "Only an approved document is withdrawn.",
+            "تُسحب الوثيقة المعتمدة فقط.",
+        )
     d.status_reason = qc.reason(reason, 20)
     d.status = RS.obsolete
     cur = db.get(QDocumentRevision, d.current_revision_id) if d.current_revision_id else None
     if cur is not None:
         cur.status = RS.obsolete
     db.flush()
-    b.record(db, p, AuditAction.status_change, RT.document, d, d.project_id, details={"to": "obsolete"})
+    b.record(
+        db, p, AuditAction.status_change, RT.document, d, d.project_id, details={"to": "obsolete"}
+    )
     return read(db, p, d.id)
 
 
@@ -612,8 +758,9 @@ def set_distribution(
     for eid in body.get("engagement_ids") or []:
         e = db.get(ProjectEngagement, eid)
         if e is None or e.project_id != project.id:
-            raise qc.field_err("engagement_ids", "Not an engagement of the project.",
-                               "ليس تعاقداً في المشروع.")  # fmt: skip
+            raise qc.field_err(
+                "engagement_ids", "Not an engagement of the project.", "ليس تعاقداً في المشروع."
+            )
     for i, uid in enumerate(body.get("user_ids") or []):
         _member_user(db, project, uid, f"user_ids[{i}]")
     dist.roles = list(body.get("roles") or [])
@@ -640,12 +787,15 @@ def acknowledge(db: Session, p: Principal, rev_id: uuid.UUID) -> dict[str, Any]:
     if a.acked_at is None:
         a.acked_at = now()
         db.flush()
-        b.record(db, p, AuditAction.update, RT.document, d, d.project_id,
-                 details={"ack": r.rev_code})  # fmt: skip
+        b.record(
+            db, p, AuditAction.update, RT.document, d, d.project_id, details={"ack": r.rev_code}
+        )
     return {"revision_id": r.id, "acked_at": a.acked_at, "acks": ack_stats(db, r.id)}
 
 
-def my_acks(db: Session, p: Principal, project_id: uuid.UUID, pending: bool) -> list[dict[str, Any]]:
+def my_acks(
+    db: Session, p: Principal, project_id: uuid.UUID, pending: bool
+) -> list[dict[str, Any]]:
     b.project(db, p, project_id)
     stmt = (
         select(QDocAck, QDocumentRevision, QDocument)
@@ -656,11 +806,20 @@ def my_acks(db: Session, p: Principal, project_id: uuid.UUID, pending: bool) -> 
     if pending:
         stmt = stmt.where(QDocAck.acked_at.is_(None))
     return [
-        {"document_id": d.id, "doc_no": d.doc_no, "title_en": d.title_en, "title_ar": d.title_ar,
-         "revision_id": r.id, "rev_code": r.rev_code, "revision_status": r.status,
-         "file_attachment_id": r.file_attachment_id, "due_on": a.due_on, "acked_at": a.acked_at}
+        {
+            "document_id": d.id,
+            "doc_no": d.doc_no,
+            "title_en": d.title_en,
+            "title_ar": d.title_ar,
+            "revision_id": r.id,
+            "rev_code": r.rev_code,
+            "revision_status": r.status,
+            "file_attachment_id": r.file_attachment_id,
+            "due_on": a.due_on,
+            "acked_at": a.acked_at,
+        }
         for a, r, d in db.execute(stmt.order_by(QDocAck.due_on, QDocument.doc_no))
-    ]  # fmt: skip
+    ]
 
 
 def file_name(db: Session, d: QDocument, r: QDocumentRevision) -> str | None:
@@ -698,29 +857,44 @@ def citation_title(db: Session, r: QDocumentRevision) -> str:
     return f"{base_} (newer revision available: Rev.{n.rev_code})" if n else base_
 
 
-def citations_of(db: Session, p: Principal, rt: QRecordType, rid: uuid.UUID) -> list[dict[str, Any]]:
+def citations_of(
+    db: Session, p: Principal, rt: QRecordType, rid: uuid.UUID
+) -> list[dict[str, Any]]:
     """Documents cited by a record, with "newer revision available" (AC-Q4-05)."""
     ad = reg.RECORD_TYPES.get(rt)
     row = ad.get(db, rid) if ad else None
     if ad is None or row is None or not ad.scope(db, p, row):
         raise not_found("Record")
     out = []
-    for ln in db.scalars(select(QLink).where(
-        or_(
-            (QLink.from_type == rt.value) & (QLink.from_id == rid) & (QLink.to_type == RT.document.value),
-            (QLink.to_type == rt.value) & (QLink.to_id == rid) & (QLink.from_type == RT.document.value),
+    for ln in db.scalars(
+        select(QLink).where(
+            or_(
+                (QLink.from_type == rt.value)
+                & (QLink.from_id == rid)
+                & (QLink.to_type == RT.document.value),
+                (QLink.to_type == rt.value)
+                & (QLink.to_id == rid)
+                & (QLink.from_type == RT.document.value),
+            )
         )
-    )):  # fmt: skip
+    ):
         rev_id = ln.to_id if ln.to_type == RT.document.value else ln.from_id
         r = db.get(QDocumentRevision, rev_id)
         if r is None:
             continue
         d = db.get(QDocument, r.document_id)
         n = _newer(db, r)
-        out.append({"document_id": r.document_id, "doc_no": d.doc_no if d else "",
-                    "revision_id": r.id, "rev_code": r.rev_code, "status": r.status,
-                    "newer_revision_available": n is not None,
-                    "newer_rev_code": n.rev_code if n else None})  # fmt: skip
+        out.append(
+            {
+                "document_id": r.document_id,
+                "doc_no": d.doc_no if d else "",
+                "revision_id": r.id,
+                "rev_code": r.rev_code,
+                "status": r.status,
+                "newer_revision_available": n is not None,
+                "newer_rev_code": n.rev_code if n else None,
+            }
+        )
     return out
 
 
@@ -740,22 +914,39 @@ def cite(
 
 
 def _notify_citers(
-    db: Session, project: Project, d: QDocument, prev: QDocumentRevision | None,
+    db: Session,
+    project: Project,
+    d: QDocument,
+    prev: QDocumentRevision | None,
     r: QDocumentRevision,
-) -> None:  # fmt: skip
+) -> None:
     if prev is None:
         return
     owners: set[uuid.UUID] = set()
-    for ln in db.scalars(select(QLink).where(QLink.to_type == RT.document.value,
-                                             QLink.to_id == prev.id)):  # fmt: skip
-        ad = reg.RECORD_TYPES.get(QRecordType(ln.from_type)) if ln.from_type in RT._value2member_map_ else None
+    for ln in db.scalars(
+        select(QLink).where(QLink.to_type == RT.document.value, QLink.to_id == prev.id)
+    ):
+        ad = (
+            reg.RECORD_TYPES.get(QRecordType(ln.from_type))
+            if ln.from_type in RT._value2member_map_
+            else None
+        )
         row = ad.get(db, ln.from_id) if ad else None
         if row is not None and not ad.voided(row):  # type: ignore[union-attr]
             owners |= {u for u in (getattr(row, "created_by_user_id", None),) if u}
     if owners:
-        b.send(db, project, owners, f"doc-newer:{prev.id}", f"Newer revision of {d.doc_no}: Rev.{r.rev_code}",
-               f"مراجعة أحدث للوثيقة {d.doc_no}: {r.rev_code}", rt=RT.document, rid=d.id,
-               path=f"/quality/documents/{d.id}", email=False)  # fmt: skip
+        b.send(
+            db,
+            project,
+            owners,
+            f"doc-newer:{prev.id}",
+            f"Newer revision of {d.doc_no}: Rev.{r.rev_code}",
+            f"مراجعة أحدث للوثيقة {d.doc_no}: {r.rev_code}",
+            rt=RT.document,
+            rid=d.id,
+            path=f"/quality/documents/{d.id}",
+            email=False,
+        )
 
 
 # ---- transmittals (Q-DOC-07) --------------------------------------------------------------------
@@ -766,7 +957,9 @@ def _get_trm(db: Session, p: Principal, tid: uuid.UUID) -> QTransmittal:
     if t is None or not p.can_see_project(t.project_id):
         raise not_found("Transmittal")
     g = p.grant(t.project_id, C.quality_view)
-    if (g is None or g.scope == b.S.responsible) and p.grant(t.project_id, C.document_author) is None:
+    if (g is None or g.scope == b.S.responsible) and p.grant(
+        t.project_id, C.document_author
+    ) is None:
         raise not_found("Transmittal")
     return t
 
@@ -787,29 +980,62 @@ def _to_label(db: Session, t: QTransmittal) -> tuple[str, str]:
 
 def trm_read(db: Session, t: QTransmittal, hide: bool = False) -> dict[str, Any]:
     en, ar = _to_label(db, t)
-    items = list(db.scalars(select(QTransmittalItem).where(QTransmittalItem.transmittal_id == t.id)
-                            .order_by(QTransmittalItem.position)))  # fmt: skip
+    items = list(
+        db.scalars(
+            select(QTransmittalItem)
+            .where(QTransmittalItem.transmittal_id == t.id)
+            .order_by(QTransmittalItem.position)
+        )
+    )
     return {
-        "id": t.id, "project_id": t.project_id, "trm_no": t.trm_no, "to_kind": t.to_kind,
-        "to_engagement_id": t.to_engagement_id, "to_supplier_id": t.to_supplier_id,
-        "to_customer_id": t.to_customer_id, "to_label_en": en, "to_label_ar": ar,
-        "to_name": None if hide else t.to_name, "to_email": None if hide else t.to_email,
-        "purpose": t.purpose, "method": t.method, "subject": t.subject, "note": t.note,
-        "sent_at": t.sent_at, "response_due_on": t.response_due_on,
+        "id": t.id,
+        "project_id": t.project_id,
+        "trm_no": t.trm_no,
+        "to_kind": t.to_kind,
+        "to_engagement_id": t.to_engagement_id,
+        "to_supplier_id": t.to_supplier_id,
+        "to_customer_id": t.to_customer_id,
+        "to_label_en": en,
+        "to_label_ar": ar,
+        "to_name": None if hide else t.to_name,
+        "to_email": None if hide else t.to_email,
+        "purpose": t.purpose,
+        "method": t.method,
+        "subject": t.subject,
+        "note": t.note,
+        "sent_at": t.sent_at,
+        "response_due_on": t.response_due_on,
         "response_received_on": t.response_received_on,
-        "response_name": None if hide else t.response_name, "status": t.status,
-        "cover_en_id": t.cover_en_id, "cover_ar_id": t.cover_ar_id, "outbox_id": t.outbox_id,
-        "items": [{"id": i.id, "kind": i.kind, "revision_id": i.revision_id,
-                   "record_type": i.record_type, "record_id": i.record_id, "ref": i.ref,
-                   "title": i.title, "response_code": i.response_code,
-                   "response_note": i.response_note} for i in items],
-    }  # fmt: skip
+        "response_name": None if hide else t.response_name,
+        "status": t.status,
+        "cover_en_id": t.cover_en_id,
+        "cover_ar_id": t.cover_ar_id,
+        "outbox_id": t.outbox_id,
+        "items": [
+            {
+                "id": i.id,
+                "kind": i.kind,
+                "revision_id": i.revision_id,
+                "record_type": i.record_type,
+                "record_id": i.record_id,
+                "ref": i.ref,
+                "title": i.title,
+                "response_code": i.response_code,
+                "response_note": i.response_note,
+            }
+            for i in items
+        ],
+    }
 
 
 def list_transmittals(
-    db: Session, p: Principal, project_id: uuid.UUID, status: QTransmittalStatus | None,
-    page_no: int, size: int,
-) -> dict[str, Any]:  # fmt: skip
+    db: Session,
+    p: Principal,
+    project_id: uuid.UUID,
+    status: QTransmittalStatus | None,
+    page_no: int,
+    size: int,
+) -> dict[str, Any]:
     project = b.project(db, p, project_id)
     g = p.grant(project.id, C.quality_view)
     if (g is None or g.scope == b.S.responsible) and p.grant(project.id, C.document_author) is None:
@@ -822,47 +1048,92 @@ def list_transmittals(
     return b.page([trm_read(db, t, hide) for t in rows], page_no, size)
 
 
-def _item_rows(db: Session, project: Project, p: Principal, items: list[dict[str, Any]]) -> list[QTransmittalItem]:
+def _item_rows(
+    db: Session, project: Project, p: Principal, items: list[dict[str, Any]]
+) -> list[QTransmittalItem]:
     out = []
     for i, it in enumerate(items):
         if it.get("revision_id"):
             r = db.get(QDocumentRevision, it["revision_id"])
             d = db.get(QDocument, r.document_id) if r else None
             if r is None or d is None or d.project_id != project.id:
-                raise qc.field_err(f"items[{i}].revision_id", "Not a document revision of the project.",
-                                   "ليست مراجعة وثيقة في المشروع.")  # fmt: skip
-            out.append(QTransmittalItem(id=uuid.uuid4(), position=i, kind=QTransmittalItemKind.document_revision,
-                                        revision_id=r.id, ref=f"{d.doc_no} Rev.{r.rev_code}",
-                                        title=d.title_en))  # fmt: skip
+                raise qc.field_err(
+                    f"items[{i}].revision_id",
+                    "Not a document revision of the project.",
+                    "ليست مراجعة وثيقة في المشروع.",
+                )
+            out.append(
+                QTransmittalItem(
+                    id=uuid.uuid4(),
+                    position=i,
+                    kind=QTransmittalItemKind.document_revision,
+                    revision_id=r.id,
+                    ref=f"{d.doc_no} Rev.{r.rev_code}",
+                    title=d.title_en,
+                )
+            )
             continue
         try:
-            rt = QRecordType(it.get("record_type"))
+            rt = QRecordType(str(it.get("record_type")))
         except ValueError as e:
-            raise qc.field_err(f"items[{i}].record_type", "Unknown record type.", "نوع سجل غير معروف.") from e
+            raise qc.field_err(
+                f"items[{i}].record_type", "Unknown record type.", "نوع سجل غير معروف."
+            ) from e
         ad = reg.RECORD_TYPES.get(rt)
         row = ad.get(db, it["record_id"]) if ad and it.get("record_id") else None
-        if ad is None or row is None or ad.project_id(row) != project.id or not ad.scope(db, p, row):
-            raise qc.field_err(f"items[{i}].record_id", "Not a record of the project.", "ليس سجلاً في المشروع.")
-        out.append(QTransmittalItem(id=uuid.uuid4(), position=i, kind=QTransmittalItemKind.record,
-                                    record_type=rt.value, record_id=row.id, ref=ad.ref(row),
-                                    title=(ad.title(row) or "")[:200]))  # fmt: skip
+        if (
+            ad is None
+            or row is None
+            or ad.project_id(row) != project.id
+            or not ad.scope(db, p, row)
+        ):
+            raise qc.field_err(
+                f"items[{i}].record_id", "Not a record of the project.", "ليس سجلاً في المشروع."
+            )
+        out.append(
+            QTransmittalItem(
+                id=uuid.uuid4(),
+                position=i,
+                kind=QTransmittalItemKind.record,
+                record_type=rt.value,
+                record_id=row.id,
+                ref=ad.ref(row),
+                title=(ad.title(row) or "")[:200],
+            )
+        )
     return out
 
 
-def create_transmittal(db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any]) -> dict[str, Any]:
+def create_transmittal(
+    db: Session, p: Principal, project_id: uuid.UUID, body: dict[str, Any]
+) -> dict[str, Any]:
     project, _g = b.writer(db, p, project_id, C.document_author)
     to = QTransmittalTo(body["to_kind"])
     t = QTransmittal(
-        id=uuid.uuid4(), project_id=project.id, to_kind=to, purpose=body["purpose"],
-        method=QTransmittalMethod(body.get("method") or "email"), subject=body["subject"].strip(),
-        note=body.get("note"), response_due_on=body.get("response_due_on"),
-        to_name=body.get("to_name"), to_email=body.get("to_email"),
-        status=QTransmittalStatus.draft, created_by_user_id=p.user.id, alerts_sent=[],
-    )  # fmt: skip
+        id=uuid.uuid4(),
+        project_id=project.id,
+        to_kind=to,
+        purpose=body["purpose"],
+        method=QTransmittalMethod(body.get("method") or "email"),
+        subject=body["subject"].strip(),
+        note=body.get("note"),
+        response_due_on=body.get("response_due_on"),
+        to_name=body.get("to_name"),
+        to_email=body.get("to_email"),
+        status=QTransmittalStatus.draft,
+        created_by_user_id=p.user.id,
+        alerts_sent=[],
+    )
     if to == QTransmittalTo.engagement:
-        e = db.get(ProjectEngagement, body.get("to_engagement_id")) if body.get("to_engagement_id") else None
+        e = (
+            db.get(ProjectEngagement, body.get("to_engagement_id"))
+            if body.get("to_engagement_id")
+            else None
+        )
         if e is None or e.project_id != project.id:
-            raise qc.field_err("to_engagement_id", "Choose an engagement of the project.", "اختر تعاقداً.")
+            raise qc.field_err(
+                "to_engagement_id", "Choose an engagement of the project.", "اختر تعاقداً."
+            )
         t.to_engagement_id = e.id
     elif to == QTransmittalTo.supplier:
         s = db.get(QSupplier, body.get("to_supplier_id")) if body.get("to_supplier_id") else None
@@ -878,7 +1149,9 @@ def create_transmittal(db: Session, p: Principal, project_id: uuid.UUID, body: d
     elif not (t.to_name or "").strip():
         raise qc.field_err("to_name", "Name the external organisation.", "اذكر اسم الجهة الخارجية.")
     if t.method == QTransmittalMethod.email and not (t.to_email or "").strip():
-        raise qc.field_err("to_email", "An email transmittal needs an address.", "أدخل البريد الإلكتروني.")
+        raise qc.field_err(
+            "to_email", "An email transmittal needs an address.", "أدخل البريد الإلكتروني."
+        )
     db.add(t)
     db.flush()
     items = _item_rows(db, project, p, body.get("items") or [])
@@ -895,10 +1168,17 @@ def create_transmittal(db: Session, p: Principal, project_id: uuid.UUID, body: d
 def cover_doc(db: Session, t: QTransmittal, project: Project) -> render.Doc:
     en, ar = _to_label(db, t)
     day = qc.project_day(project, t.sent_at or now())
-    items = list(db.scalars(select(QTransmittalItem).where(QTransmittalItem.transmittal_id == t.id)
-                            .order_by(QTransmittalItem.position)))  # fmt: skip
-    rows = [{"no": i.position + 1, "ref": i.ref, "title": i.title, "code": i.response_code or ""}
-            for i in items]  # fmt: skip
+    items = list(
+        db.scalars(
+            select(QTransmittalItem)
+            .where(QTransmittalItem.transmittal_id == t.id)
+            .order_by(QTransmittalItem.position)
+        )
+    )
+    rows = [
+        {"no": i.position + 1, "ref": i.ref, "title": i.title, "code": i.response_code or ""}
+        for i in items
+    ]
     ctl: list[tuple[str, ...]] = [
         ("Transmittal", "مذكرة الإحالة", t.trm_no or "—"),
         ("Project", "المشروع", project.code),
@@ -910,13 +1190,33 @@ def cover_doc(db: Session, t: QTransmittal, project: Project) -> render.Doc:
     ]
     digest = hashlib.sha256(json.dumps([ctl, rows], default=str).encode()).hexdigest()
     return render.Doc(
-        doc_no=t.trm_no or "TRM", revision=0, title_en=f"Transmittal {t.trm_no}",
-        title_ar=f"مذكرة إحالة {t.trm_no}", snapshot_hash=digest, control=ctl,
-        sections=[b.section("items", "Items", "البنود", tables=[b.table(
-            [("no", "#", "#"), ("ref", "Reference", "المرجع"), ("title", "Title", "العنوان"),
-             ("code", "Response", "الرد")], rows)],
-            paras_en=[t.subject, t.note or ""], paras_ar=[t.subject, t.note or ""])],
-    )  # fmt: skip
+        doc_no=t.trm_no or "TRM",
+        revision=0,
+        title_en=f"Transmittal {t.trm_no}",
+        title_ar=f"مذكرة إحالة {t.trm_no}",
+        snapshot_hash=digest,
+        control=ctl,
+        sections=[
+            b.section(
+                "items",
+                "Items",
+                "البنود",
+                tables=[
+                    b.table(
+                        [
+                            ("no", "#", "#"),
+                            ("ref", "Reference", "المرجع"),
+                            ("title", "Title", "العنوان"),
+                            ("code", "Response", "الرد"),
+                        ],
+                        rows,
+                    )
+                ],
+                paras_en=[t.subject, t.note or ""],
+                paras_ar=[t.subject, t.note or ""],
+            )
+        ],
+    )
 
 
 def send_transmittal(db: Session, p: Principal, tid: uuid.UUID) -> dict[str, Any]:
@@ -925,46 +1225,64 @@ def send_transmittal(db: Session, p: Principal, tid: uuid.UUID) -> dict[str, Any
     t = _get_trm(db, p, tid)
     project, _g = b.writer(db, p, t.project_id, C.document_author)
     if t.status != QTransmittalStatus.draft:
-        raise qc.err(409, ErrorCode.INVALID_TRANSITION, "Only a Draft is sent.", "تُرسل المسودة فقط.")
+        raise qc.err(
+            409, ErrorCode.INVALID_TRANSITION, "Only a Draft is sent.", "تُرسل المسودة فقط."
+        )
     t.trm_no = b.number(db, project, RT.transmittal)
     t.sent_at = now()
     t.status = QTransmittalStatus.sent
     db.flush()
     doc = cover_doc(db, t, project)
-    t.cover_en_id, t.cover_ar_id = b.store_pdfs(db, AttachmentOwner.q_transmittal, t.id, project.id,
-                                                doc, t.trm_no, p.user.id)  # fmt: skip
+    t.cover_en_id, t.cover_ar_id = b.store_pdfs(
+        db, AttachmentOwner.q_transmittal, t.id, project.id, doc, t.trm_no, p.user.id
+    )
     if t.method == QTransmittalMethod.email:
         files = [str(t.cover_en_id), str(t.cover_ar_id)]
         size = 0
-        for it in db.scalars(select(QTransmittalItem).where(QTransmittalItem.transmittal_id == t.id)):
+        for it in db.scalars(
+            select(QTransmittalItem).where(QTransmittalItem.transmittal_id == t.id)
+        ):
             r = db.get(QDocumentRevision, it.revision_id) if it.revision_id else None
             a = db.get(Attachment, r.file_attachment_id) if r and r.file_attachment_id else None
             if a is not None:
                 files.append(str(a.id))
                 size += a.size_bytes or 0
         if size > 20 * 1024 * 1024:
-            raise qc.err(422, ErrorCode.VALIDATION_ERROR, "The files exceed the 20 MB email limit; "
-                         "send by portal or by hand.", "الملفات تتجاوز حد 20 ميجابايت.")  # fmt: skip
+            raise qc.err(
+                422,
+                ErrorCode.VALIDATION_ERROR,
+                "The files exceed the 20 MB email limit; send by portal or by hand.",
+                "الملفات تتجاوز حد 20 ميجابايت.",
+            )
         m = EmailMessage(
-            to_email=(t.to_email or "").strip(), to_user_id=None, language=Language.en,
-            template="quality_transmittal", subject=f"{t.trm_no} — {t.subject}"[:200],
+            to_email=(t.to_email or "").strip(),
+            to_user_id=None,
+            language=Language.en,
+            template="quality_transmittal",
+            subject=f"{t.trm_no} — {t.subject}"[:200],
             body=f"Transmittal {t.trm_no} from {project.code}: {t.subject}\n"
-                 f"Purpose: {t.purpose.value}. Response due: {t.response_due_on or '—'}.\n"
-                 f"مذكرة إحالة {t.trm_no} — {t.subject}",
+            f"Purpose: {t.purpose.value}. Response due: {t.response_due_on or '—'}.\n"
+            f"مذكرة إحالة {t.trm_no} — {t.subject}",
             attachment_ids=files,
-        )  # fmt: skip
+        )
         db.add(m)
         db.flush()
         t.outbox_id = m.id
-    b.record(db, p, AuditAction.status_change, RT.transmittal, t, project.id, details={"to": "sent"})
+    b.record(
+        db, p, AuditAction.status_change, RT.transmittal, t, project.id, details={"to": "sent"}
+    )
     return trm_read(db, t)
 
 
-def respond_transmittal(db: Session, p: Principal, tid: uuid.UUID, body: dict[str, Any]) -> dict[str, Any]:
+def respond_transmittal(
+    db: Session, p: Principal, tid: uuid.UUID, body: dict[str, Any]
+) -> dict[str, Any]:
     t = _get_trm(db, p, tid)
     project, _g = b.writer(db, p, t.project_id, C.document_author)
     if t.status not in (QTransmittalStatus.sent, QTransmittalStatus.responded):
-        raise qc.err(409, ErrorCode.INVALID_TRANSITION, "The transmittal was not sent.", "لم تُرسل المذكرة.")
+        raise qc.err(
+            409, ErrorCode.INVALID_TRANSITION, "The transmittal was not sent.", "لم تُرسل المذكرة."
+        )
     codes = {str(x["item_id"]): x for x in body.get("items") or []}
     for it in db.scalars(select(QTransmittalItem).where(QTransmittalItem.transmittal_id == t.id)):
         x = codes.get(str(it.id))
@@ -979,11 +1297,15 @@ def respond_transmittal(db: Session, p: Principal, tid: uuid.UUID, body: dict[st
     return trm_read(db, t)
 
 
-def cancel_transmittal(db: Session, p: Principal, tid: uuid.UUID, reason: str | None) -> dict[str, Any]:
+def cancel_transmittal(
+    db: Session, p: Principal, tid: uuid.UUID, reason: str | None
+) -> dict[str, Any]:
     t = _get_trm(db, p, tid)
     b.writer(db, p, t.project_id, C.document_author)
     if t.status != QTransmittalStatus.draft:
-        raise qc.err(409, ErrorCode.INVALID_TRANSITION, "Only a Draft is cancelled.", "تُلغى المسودة فقط.")
+        raise qc.err(
+            409, ErrorCode.INVALID_TRANSITION, "Only a Draft is cancelled.", "تُلغى المسودة فقط."
+        )
     t.status_reason = qc.reason(reason, 20)
     t.status = QTransmittalStatus.cancelled
     db.flush()
@@ -1002,20 +1324,33 @@ def daily(db: Session, at: Any) -> dict[str, int]:
     """Q-DOC-04 review alerts at 30 / 0 days to the owner; Q-DOC-05 one reminder at the due date;
     transmittal response overdue (sender)."""
     n = 0
-    for d in db.scalars(select(QDocument).where(QDocument.status == RS.approved,
-                                                QDocument.review_due_on.is_not(None))):  # fmt: skip
+    for d in db.scalars(
+        select(QDocument).where(
+            QDocument.status == RS.approved, QDocument.review_due_on.is_not(None)
+        )
+    ):
         project = db.get(Project, d.project_id)
         if project is None or d.review_due_on is None:
             continue
         day = qc.project_day(project, at)
-        for mark, when in (("review30", d.review_due_on - timedelta(days=30)), ("review0", d.review_due_on)):
+        for mark, when in (
+            ("review30", d.review_due_on - timedelta(days=30)),
+            ("review0", d.review_due_on),
+        ):
             if day >= when and mark not in (d.alerts_sent or []):
                 d.alerts_sent = [*(d.alerts_sent or []), mark]
-                n += b.send(db, project, [d.owner_user_id], f"doc:{d.id}:{mark}:{d.review_due_on}",
-                            f"{d.doc_no} review due {d.review_due_on.isoformat()}",
-                            f"مراجعة الوثيقة {d.doc_no} مستحقة {d.review_due_on.isoformat()}",
-                            rt=RT.document, rid=d.id, path=f"/quality/documents/{d.id}")  # fmt: skip
-    for a, r, d in db.execute(
+                n += b.send(
+                    db,
+                    project,
+                    [d.owner_user_id],
+                    f"doc:{d.id}:{mark}:{d.review_due_on}",
+                    f"{d.doc_no} review due {d.review_due_on.isoformat()}",
+                    f"مراجعة الوثيقة {d.doc_no} مستحقة {d.review_due_on.isoformat()}",
+                    rt=RT.document,
+                    rid=d.id,
+                    path=f"/quality/documents/{d.id}",
+                )
+    for a, _r, d in db.execute(
         select(QDocAck, QDocumentRevision, QDocument)
         .join(QDocumentRevision, QDocumentRevision.id == QDocAck.revision_id)
         .join(QDocument, QDocument.id == QDocumentRevision.document_id)
@@ -1025,22 +1360,46 @@ def daily(db: Session, at: Any) -> dict[str, int]:
         if project is None or qc.project_day(project, at) < a.due_on:
             continue
         a.reminded = True
-        n += b.send(db, project, [a.user_id], f"doc-ack-rem:{a.id}", f"Reminder: acknowledge {d.doc_no}",
-                    f"تذكير: أقر بالوثيقة {d.doc_no}", rt=RT.document, rid=d.id,
-                    path=f"/quality/documents/{d.id}")  # fmt: skip
-    for t in db.scalars(select(QTransmittal).where(QTransmittal.status == QTransmittalStatus.sent,
-                                                   QTransmittal.response_due_on.is_not(None))):  # fmt: skip
+        n += b.send(
+            db,
+            project,
+            [a.user_id],
+            f"doc-ack-rem:{a.id}",
+            f"Reminder: acknowledge {d.doc_no}",
+            f"تذكير: أقر بالوثيقة {d.doc_no}",
+            rt=RT.document,
+            rid=d.id,
+            path=f"/quality/documents/{d.id}",
+        )
+    for t in db.scalars(
+        select(QTransmittal).where(
+            QTransmittal.status == QTransmittalStatus.sent,
+            QTransmittal.response_due_on.is_not(None),
+        )
+    ):
         project = db.get(Project, t.project_id)
-        if project is None or t.response_due_on is None or qc.project_day(project, at) <= t.response_due_on:
+        if (
+            project is None
+            or t.response_due_on is None
+            or qc.project_day(project, at) <= t.response_due_on
+        ):
             continue
         if "overdue" in (t.alerts_sent or []):
             continue
         t.alerts_sent = [*(t.alerts_sent or []), "overdue"]
         if t.created_by_user_id:
-            n += b.send(db, project, [t.created_by_user_id], f"trm:{t.id}:overdue",
-                        f"{t.trm_no} response overdue", f"تأخر الرد على {t.trm_no}",
-                        rt=RT.transmittal, rid=t.id, path=f"/quality/transmittals/{t.id}",
-                        email=False)  # fmt: skip
+            n += b.send(
+                db,
+                project,
+                [t.created_by_user_id],
+                f"trm:{t.id}:overdue",
+                f"{t.trm_no} response overdue",
+                f"تأخر الرد على {t.trm_no}",
+                rt=RT.transmittal,
+                rid=t.id,
+                path=f"/quality/transmittals/{t.id}",
+                email=False,
+            )
     db.flush()
     return {"q4_documents": n}
 
@@ -1065,5 +1424,9 @@ def k159(db: Session, project_id: uuid.UUID, as_of: date) -> dict[str, Any]:
         .join(QDocument, QDocument.id == QDocumentRevision.document_id)
         .where(QDocument.project_id == project_id, QDocAck.due_on <= as_of)
     ).one()
-    return {"current": int(total), "in_date": int(ok), "acks_required": int(req),
-            "acks_done": int(done)}  # fmt: skip
+    return {
+        "current": int(total),
+        "in_date": int(ok),
+        "acks_required": int(req),
+        "acks_done": int(done),
+    }

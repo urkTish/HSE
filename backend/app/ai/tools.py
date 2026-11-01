@@ -22,6 +22,7 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.ai import quality_tools
 from app.ai.masking import redact, redact_plates
 from app.api.kpi_params import KpiQuery
 from app.core.access_enums import AccessKpiGroupBy
@@ -1554,6 +1555,9 @@ def t_get_leading_warnings(ctx: ToolContext, params: dict[str, Any]) -> tuple[di
             }
             for w in res.warnings
         ],
+        "quality_warnings": quality_tools.quality_warnings(  # 8-quality Q-AI-04: E26–E28
+            ctx, proj, min(int(params.get("months") or 3), 12)
+        ),
         "cite": cid,
     }, narrowed or sc.narrowed
 
@@ -1900,6 +1904,8 @@ def t_propose_chart(ctx: ToolContext, params: dict[str, Any]) -> tuple[dict[str,
 
 log = logging.getLogger("hse.ai.tools")
 
+TOOL_DEFS += quality_tools.defs(_tool)  # T26–T29 (8-quality §E.9)
+
 HANDLERS: dict[str, Callable[[ToolContext, dict[str, Any]], tuple[dict[str, Any], bool]]] = {
     AiTool.get_kpis.value: t_get_kpis,
     AiTool.get_kpi_timeseries.value: t_get_kpi_timeseries,
@@ -1920,6 +1926,7 @@ HANDLERS: dict[str, Callable[[ToolContext, dict[str, Any]], tuple[dict[str, Any]
     AiTool.get_ptw_kpis.value: t_get_ptw_kpis,
     AiTool.get_certification_kpis.value: t_get_certification_kpis,
     AiTool.get_training_kpis.value: t_get_training_kpis,
+    **quality_tools.HANDLERS,
 }
 
 

@@ -26,9 +26,9 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.field_enums import (
     AttendanceMethod,
+    AuditDomain,
     AuditGrade,
     AuditStatus,
-    AuditDomain,
     AuditType,
     CampaignReason,
     CampaignStatus,

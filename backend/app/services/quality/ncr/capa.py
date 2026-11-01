@@ -17,8 +17,9 @@ from app.core.enums import Capability, EntityType
 from app.core.errors import ErrorCode, validation_error
 from app.core.hse_enums import CaPriority, CaSourceType, CaStatus, ControlLevel
 from app.core.quality.common import QNcrClass
-from app.models import CorrectiveAction, Project
+from app.models import CorrectiveAction, FieldAudit, Project
 from app.models.quality import QComplaint, QNcr, QObservation
+from app.models.quality.q4 import QManagementReview
 from app.schemas.actions import CaInline
 from app.schemas.hse_common import ApiWarning
 from app.services.quality import common as qc
@@ -29,8 +30,12 @@ MODELS: dict[CaSourceType, Any] = {
     CaSourceType.quality_ncr: QNcr,
     CaSourceType.quality_observation: QObservation,
     CaSourceType.quality_complaint: QComplaint,
+    # Q4 (8-quality §E.2): quality audits (6d rows, domain quality) and management reviews
+    CaSourceType.quality_audit: FieldAudit,
+    CaSourceType.quality_review: QManagementReview,
 }
-REF_ATTR = {QNcr: "ncr_no", QObservation: "obs_no", QComplaint: "complaint_no"}
+REF_ATTR = {QNcr: "ncr_no", QObservation: "obs_no", QComplaint: "complaint_no",
+            FieldAudit: "audit_no", QManagementReview: "mrv_no"}  # fmt: skip
 PRIORITY_OF = {
     QNcrClass.critical: CaPriority.critical,
     QNcrClass.major: CaPriority.high,

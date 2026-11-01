@@ -160,9 +160,7 @@ class QTransmittal(Audited, Base):
     project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id"))
     trm_no: Mapped[str | None] = mapped_column(String(40))
     to_kind: Mapped[QTransmittalTo] = enum_col(QTransmittalTo)
-    to_engagement_id: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("project_engagements.id")
-    )
+    to_engagement_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("project_engagements.id"))
     to_supplier_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("q_suppliers.id"))
     to_customer_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("q_customers.id"))
     to_name: Mapped[str | None] = mapped_column(String(200))
@@ -263,7 +261,7 @@ class QManagementReview(Audited, Base):
     issued_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
-# ---- suppliers (§E.3) -----------------------------------------------------------------------------
+# ---- suppliers (§E.3) ----------------------------------------------------------------------------
 
 
 class QSupplierEvaluation(Audited, Base):
@@ -278,9 +276,7 @@ class QSupplierEvaluation(Audited, Base):
     audit_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("field_audits.id"))
     criteria: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list)
     total: Mapped[Decimal | None] = mapped_column(SCORE)
-    recommendation: Mapped[QSevRecommendation | None] = enum_col(
-        QSevRecommendation, nullable=True
-    )
+    recommendation: Mapped[QSevRecommendation | None] = enum_col(QSevRecommendation, nullable=True)
     conditions: Mapped[str | None] = mapped_column(String(1000))
     evaluated_at: Mapped[date | None] = mapped_column(Date)
     submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

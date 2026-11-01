@@ -1473,6 +1473,14 @@ class ExpiringItemKind(StrEnum):
     training_record_expiry = "training_record_expiry"
     training_refresher_due = "training_refresher_due"
     trainer_authorisation_expiry = "trainer_authorisation_expiry"
+    # Phase 8 Quality (8-quality §E.7, Q4)
+    q_mte_calibration_due = "q_mte_calibration_due"
+    q_wpq_continuity = "q_wpq_continuity"
+    q_competence_expiry = "q_competence_expiry"
+    q_document_review = "q_document_review"
+    q_mapping_validity = "q_mapping_validity"
+    q_supplier_evaluation = "q_supplier_evaluation"
+    q_ncr_target = "q_ncr_target"
     training_provider_accreditation_expiry = "training_provider_accreditation_expiry"
     training_verification_due = "training_verification_due"
     training_session_close_due = "training_session_close_due"
@@ -1536,6 +1544,11 @@ class AiTool(StrEnum):
     get_training_kpis = "get_training_kpis"  # T17 (1-dashboard v1.4, 5-training TK-4)
     get_occupational_health_kpis = "get_occupational_health_kpis"  # T18 (6a MK-4)
     get_heat_stress_kpis = "get_heat_stress_kpis"  # T19 (6b HM-2)
+    # 8-quality §E.9 (Q4)
+    get_quality_kpis = "get_quality_kpis"  # T26
+    search_ncrs = "search_ncrs"  # T27
+    get_spc_status = "get_spc_status"  # T28
+    get_cold_chain_summary = "get_cold_chain_summary"  # T29
 
 
 class GroundingResult(StrEnum):

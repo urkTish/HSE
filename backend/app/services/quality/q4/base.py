@@ -150,9 +150,13 @@ def issue_dates(day: date) -> list[tuple[str, ...]]:
     """Q-RPT-02: the issue date in Gregorian and Umm al-Qura Hijri on every Quality PDF."""
     return [
         ("Issue date", "تاريخ الإصدار", day.isoformat()),
-        ("Issue date (Hijri, Umm al-Qura)", "تاريخ الإصدار الهجري، أم القرى",
-         hijri_en(day), hijri_ar(day)),
-    ]  # fmt: skip
+        (
+            "Issue date (Hijri, Umm al-Qura)",
+            "تاريخ الإصدار الهجري، أم القرى",
+            hijri_en(day),
+            hijri_ar(day),
+        ),
+    ]
 
 
 def store_pdfs(
@@ -170,25 +174,44 @@ def store_pdfs(
     ids = []
     for lang in ("en", "ar"):
         a = attachments.store(
-            db, owner, owner_id, project_id, f"{base_name}-{lang.upper()}.pdf",
-            render.pdf(doc, lang), "application/pdf", by, generated=True,
-        )  # fmt: skip
+            db,
+            owner,
+            owner_id,
+            project_id,
+            f"{base_name}-{lang.upper()}.pdf",
+            render.pdf(doc, lang),
+            "application/pdf",
+            by,
+            generated=True,
+        )
         ids.append(a.id)
     return ids[0], ids[1]
 
 
 def table(
-    cols: list[tuple[str, str, str]], rows: list[dict[str, Any]], rows_ar: list[dict[str, Any]]
-    | None = None, en: str = "", ar: str = "",
-) -> render.Table:  # fmt: skip
+    cols: list[tuple[str, str, str]],
+    rows: list[dict[str, Any]],
+    rows_ar: list[dict[str, Any]] | None = None,
+    en: str = "",
+    ar: str = "",
+) -> render.Table:
     return render.Table(cols, rows, rows_ar=rows_ar, title_en=en, title_ar=ar)
 
 
 def section(
-    key: str, en: str, ar: str, *, tables: list[render.Table] | None = None,
-    paras_en: list[str] | None = None, paras_ar: list[str] | None = None,
-) -> render.Section:  # fmt: skip
+    key: str,
+    en: str,
+    ar: str,
+    *,
+    tables: list[render.Table] | None = None,
+    paras_en: list[str] | None = None,
+    paras_ar: list[str] | None = None,
+) -> render.Section:
     return render.Section(
-        key=key, title_en=en, title_ar=ar, tables=tables or [],
-        paragraphs_en=paras_en or [], paragraphs_ar=paras_ar or [],
-    )  # fmt: skip
+        key=key,
+        title_en=en,
+        title_ar=ar,
+        tables=tables or [],
+        paragraphs_en=paras_en or [],
+        paragraphs_ar=paras_ar or [],
+    )

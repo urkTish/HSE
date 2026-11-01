@@ -20,6 +20,8 @@ from app.core.enums import AuditAction, Capability, EntityType, Role
 from app.core.errors import ErrorCode, not_found, validation_error
 from app.core.field_enums import (
     AUDIT_GRADES,
+    QUALITY_AUDIT_TYPES,
+    AuditDomain,
     AuditStatus,
     AuditType,
     FindingSeverity,
@@ -59,7 +61,7 @@ from app.schemas.field import (
 from app.services.common import ensure_open, invalid_transition, paginate
 from app.services.field import common as fc
 from app.services.field import execution, library, scoring
-from app.services.field.reference import AUDIT_TYPES, grade_for
+from app.services.field.reference import AUDIT_TYPE_LABELS, grade_for
 from app.services.hse_common import Refs
 from app.services.permissions import Principal, build_principal, forbidden_error
 from app.services.scorecard import render
@@ -138,7 +140,8 @@ def _visible(p: Principal, a: FieldAudit) -> bool:
 
 def _get(db: Session, p: Principal, audit_id: uuid.UUID) -> FieldAudit:
     a = db.get(FieldAudit, audit_id)
-    if a is None or not p.can_see_project(a.project_id) or not _visible(p, a):
+    if (a is None or a.domain != AuditDomain.hse or not p.can_see_project(a.project_id)
+            or not _visible(p, a)):  # fmt: skip
         raise not_found("Audit")
     return a
 
@@ -160,7 +163,7 @@ def list_audits(
     fc.project(db, p, project_id)
     g = fc.view_grant(p, project_id)
     A = FieldAudit  # noqa: N806
-    stmt = select(A).where(A.project_id == project_id)
+    stmt = select(A).where(A.project_id == project_id, A.domain == AuditDomain.hse)
     if g.engagement_ids is not None:
         engs = list(g.engagement_ids)
         stmt = stmt.where(A.auditee_engagement_id.in_(engs) if engs else false())
@@ -249,6 +252,8 @@ def create_audit(db: Session, p: Principal, project_id: uuid.UUID, body: AuditCr
     proj = fc.project(db, p, project_id)
     ensure_open(proj)
     g = p.require(project_id, C.field_audit_conduct)
+    if body.audit_type in QUALITY_AUDIT_TYPES:  # 8-quality Q-AUD-01: planned with 276 in Quality
+        raise forbidden_error("Quality audits are planned in the Quality module (276).")
     t = _template(db, body.template_code, body.audit_type, project_id)
     auditee = body.auditee_engagement_id
     if body.audit_type == AuditType.contractor_hse and auditee is None:
@@ -631,7 +636,7 @@ def report_doc(
     team = [u for u in (refs.user(x) for x in [a.lead_auditor_id, *a.team_ids]) if u]
     names_en = ", ".join(u.full_name_en for u in team)
     names_ar = "، ".join(u.full_name_ar or u.full_name_en for u in team)
-    type_en, type_ar = AUDIT_TYPES[a.audit_type]
+    type_en, type_ar = AUDIT_TYPE_LABELS[a.audit_type]
     score = f"{rr.score_pct} %" if rr.score_pct is not None else "—"
     grade = r.grade.value if r.grade else "—"
     issued = fc.local_day(a.issued_at) if a.issued_at else fc.local_day()
@@ -697,7 +702,11 @@ def close_issued(db: Session, project_id: uuid.UUID) -> int:
     """§4.4 Issued → Closed when every CA of the audit is Closed or Cancelled."""
     n = 0
     for a in db.scalars(
-        select(FieldAudit).where(FieldAudit.project_id == project_id, FieldAudit.status == S.issued)
+        select(FieldAudit).where(
+            FieldAudit.project_id == project_id,
+            FieldAudit.status == S.issued,
+            FieldAudit.domain == AuditDomain.hse,
+        )
     ):
         open_cas = db.scalar(
             select(func.count())
@@ -767,6 +776,7 @@ def lines(db: Session, project_id: uuid.UUID, as_of: date) -> list[Line]:
         db.scalars(
             select(FieldAudit).where(
                 FieldAudit.project_id == project_id,
+                FieldAudit.domain == AuditDomain.hse,  # 8-quality Q-AUD-05
                 FieldAudit.status.in_(SATISFYING),
                 FieldAudit.fieldwork_end.is_not(None),
             )
