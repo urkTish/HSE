@@ -36,8 +36,8 @@
 - Cross-package defects found and fixed: Q2 pours never matched Q1's hold-point key (free text vs `zone|ref`) and took no hold point from the pre-pour IR (D-371); Q2's AC-Q2-14 fixture removed Q1's real `HOLD_CHECKS` entry for the rest of the test process.
 - Tests: `backend/tests/quality/integration/` (lab test → NCR → CA → IR link → dossier blocked until the NCR closes; pour vs the real pre-pour hold; OOT review over Q1 IR measurements, Q2 sampling, Q3 receiving checks and logger readings → NCR; excursion → NCR disposition and concession → hold release; KPIs of every part and quality CAs out of K-40…K-43; Q1 counts by grant; AC-Q0-22; read-only licence over every part with PDFs, dossier downloads and every Quality dataset; profile switch both ways; customer shelf-life minimum; gap factor; hourly slot) and `tests/quality/q1/test_q1_gaps.py` (Q-ITP-05 across revisions, Q-ITP-06, IR not-scheduled / comment-overdue alerts, DOSSIER_TOO_LARGE).
 - Spec v1.3 integration row (statuses `voided`, D-354 note, §3.3 tables, cert codes, A.5 / A.7, §E.4 chips not built, §4 hourly slot).
-- Checks: SHARD_LINE
-- E2E: E2E_LINE
+- Checks (local, 4 CPUs, machine free): ruff, ruff format, mypy clean; `export_openapi --check` clean; alembic upgrade / check / round trip clean; frontend lint, typecheck, i18n (13,532 + 1,998 Quality keys, EN / AR parity) and build green; full backend pytest in 4 shards on separate databases: **1,476 passed, 0 failed** (373 / 337 / 359 / 407); all Quality tests (q0…q4 + integration) 236 passed.
+- E2E: full suite on a fresh seed (API 8205, web 3205): **401 passed, 0 failed, 35 skipped** (the screenshot specs).
 - Known, not changed: Python-side `can_view` paging for scope N lists (Q0 / Q1 / Q3, performance only); the dossier ZIP is returned as bytes after a spooled build (memory up to the 2 GB cap); §E.4 chips listed as not built in the spec.
 
 ### Quality (phase 8) — Q4 documents, audits, suppliers, KPIs / SPC / COPQ, AI tools, report packs, seed (2026-11-01, branch `claude/quality-q4-analytics`, draft PR #16; built on `claude/quality-pre-q4`)
