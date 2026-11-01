@@ -1716,7 +1716,12 @@
       "INCOMPATIBLE_LOAD": "These products cannot travel in the same compartment.",
       "PRELOAD_FAILED": "The pre-load check failed; the trip cannot be dispatched.",
       "OVERRIDE_NOT_ALLOWED": "You cannot override this check.",
-      "POD_REQUIRED": "A proof of delivery is required for every drop."
+      "POD_REQUIRED": "A proof of delivery is required for every drop.",
+      "DOCUMENT_FILE_REQUIRED": "Attach the PDF of the revision first.",
+      "DOCUMENT_IMMUTABLE": "An approved revision cannot be changed; start a new revision.",
+      "MRV_INPUTS_INCOMPLETE": "Answer every management review input (or mark it not applicable).",
+      "SUPPLIER_EVALUATION_REQUIRED": "An approved supplier evaluation of the last 12 months is required.",
+      "SPC_SOURCE_INVALID": "This data source does not fit the chart type."
     }
   },
   "theme": {
