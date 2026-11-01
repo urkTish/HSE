@@ -516,6 +516,9 @@ def expiring_items(
     items.extend(cert_items.expiring(db, p, project, day, horizon, include_overdue))
     items.extend(train_items.expiring(db, p, project, day, horizon, include_overdue))
     items.extend(site_vehicle_items.expiring(db, p, project, day, horizon, include_overdue))
+    from app.services.quality.q4 import expiring as quality_items  # noqa: PLC0415  (8-quality §E.7)
+
+    items.extend(quality_items.expiring(db, p, project, day, horizon, include_overdue))
     items.sort(key=lambda x: (x.due_date, x.kind.value, x.ref or ""))
     return ExpiringItemsResponse(
         project_id=project.id, as_of=day, within_days=within_days, items=items

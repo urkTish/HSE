@@ -18,12 +18,16 @@ export function QualityHomePage() {
   return <QGate>{(p) => <Home project={p} />}</QGate>;
 }
 
-function Tile({ label, value, href, tone, testId }: { label: string; value: number; href?: string; tone?: "danger" | "warning"; testId: string }) {
+const RAG_CLASS: Record<string, string> = { red: "text-danger", amber: "text-warning", green: "text-success" };
+
+/** A count tile; KPI tiles (§E.7) pass `display` (formatted value) and `rag` instead. */
+function Tile({ label, value, href, tone, testId, display, rag }: { label: string; value: number; href?: string; tone?: "danger" | "warning"; testId: string; display?: string; rag?: string }) {
+  const color = display !== undefined ? (rag ? RAG_CLASS[rag] ?? "" : "") : tone === "danger" && value ? "text-danger" : tone === "warning" && value ? "text-warning" : "";
   const body = (
-    <Card className="h-full" data-testid={testId} data-value={value}>
+    <Card className="h-full" data-testid={testId} data-value={display ?? value} data-rag={rag}>
       <CardContent className="flex flex-col gap-1 p-4">
         <span className="text-xs font-medium text-muted-foreground">{label}</span>
-        <span className={`ltr text-2xl font-semibold ${tone === "danger" && value ? "text-danger" : tone === "warning" && value ? "text-warning" : ""}`}>{value}</span>
+        <span className={`ltr text-2xl font-semibold ${color}`}>{display ?? value}</span>
       </CardContent>
     </Card>
   );
@@ -96,7 +100,15 @@ function Home({ project }: { project: Project }) {
       {h.tiles.length ? (
         <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-6">
           {h.tiles.map((x) => (
-            <Tile key={String(x.code)} label={String(ar ? x.label_ar : x.label_en)} value={Number(x.value)} href={x.href ? String(x.href) : undefined} testId={`q-tile-${String(x.code)}`} />
+            <Tile
+              key={String(x.code)}
+              label={String(ar ? x.label_ar : x.label_en)}
+              value={Number(x.value)}
+              href={x.href ? String(x.href) : undefined}
+              testId={`q-tile-${String(x.code)}`}
+              display={x.display != null ? String(x.display) : undefined}
+              rag={x.rag ? String(x.rag) : undefined}
+            />
           ))}
         </div>
       ) : null}

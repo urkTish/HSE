@@ -138,7 +138,7 @@ def action_panel(db: Session, p: Principal, project_id: uuid.UUID) -> FieldActio
     days = int(c["audit_report_days"])
     add(K.audit_reports_overdue, [
         a.audit_no for a in db.scalars(select(FieldAudit).where(
-            FieldAudit.project_id == project_id,
+            FieldAudit.project_id == project_id, FieldAudit.domain == "hse",
             FieldAudit.status.in_((AuditStatus.in_progress, AuditStatus.fieldwork_complete)),
             FieldAudit.fieldwork_end.is_not(None)).order_by(FieldAudit.audit_no))
         if a.fieldwork_end and today > a.fieldwork_end + timedelta(days=days)

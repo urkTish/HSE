@@ -1716,7 +1716,12 @@
       "INCOMPATIBLE_LOAD": "لا يمكن نقل هذه المنتجات في الحجرة نفسها.",
       "PRELOAD_FAILED": "فشل فحص ما قبل التحميل؛ لا يمكن إرسال الرحلة.",
       "OVERRIDE_NOT_ALLOWED": "لا يمكنك تجاوز هذا الفحص.",
-      "POD_REQUIRED": "إثبات التسليم مطلوب لكل نقطة تسليم."
+      "POD_REQUIRED": "إثبات التسليم مطلوب لكل نقطة تسليم.",
+      "DOCUMENT_FILE_REQUIRED": "أرفق ملف PDF للمراجعة أولاً.",
+      "DOCUMENT_IMMUTABLE": "لا يمكن تعديل مراجعة معتمدة؛ ابدأ مراجعة جديدة.",
+      "MRV_INPUTS_INCOMPLETE": "أجب عن كل مدخلات مراجعة الإدارة (أو حددها غير منطبقة).",
+      "SUPPLIER_EVALUATION_REQUIRED": "يلزم تقييم مورد معتمد خلال آخر 12 شهراً.",
+      "SPC_SOURCE_INVALID": "مصدر البيانات لا يناسب نوع المخطط."
     }
   },
   "theme": {
@@ -2207,6 +2212,13 @@
       "training_provider_accreditation_expiry": "انتهاء اعتماد جهة تدريب",
       "training_verification_due": "تحقق من تدريب مستحق",
       "training_session_close_due": "إغلاق جلسة تدريب مستحق",
+      "q_mte_calibration_due": "استحقاق المعايرة",
+      "q_wpq_continuity": "انتهاء استمرارية اللحام",
+      "q_competence_expiry": "انتهاء الكفاءة",
+      "q_document_review": "استحقاق مراجعة الوثيقة",
+      "q_mapping_validity": "صلاحية دراسة التوزيع الحراري",
+      "q_supplier_evaluation": "استحقاق إعادة تقييم المورد",
+      "q_ncr_target": "موعد إغلاق التقرير",
       "fitness_expiry": "انتهاء اللياقة",
       "fitness_restriction_review": "مراجعة القيد",
       "fitness_unfit_review": "مراجعة عدم اللياقة",

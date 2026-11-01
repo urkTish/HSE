@@ -67,6 +67,10 @@ RT = {
     "OSHA300": ("OSHA 300-style log (benchmark; not a KSA statutory form)",
                 "سجل الإصابات السنوي (مرجعي؛ ليس نموذجاً نظامياً سعودياً)"),
     "HEAT": ("Heat season report", "تقرير موسم الحرارة"),
+    "QMR": ("Monthly quality report", "تقرير الجودة الشهري"),
+    "QNCR": ("NCR register pack", "حزمة سجل تقارير عدم المطابقة"),
+    "QSUP": ("Supplier scorecard pack", "حزمة بطاقات أداء الموردين"),
+    "QMRV": ("Management review minutes", "محضر مراجعة الإدارة"),
 }  # fmt: skip
 
 LISTS: dict[str, L] = {

@@ -1716,7 +1716,12 @@
       "INCOMPATIBLE_LOAD": "These products cannot travel in the same compartment.",
       "PRELOAD_FAILED": "The pre-load check failed; the trip cannot be dispatched.",
       "OVERRIDE_NOT_ALLOWED": "You cannot override this check.",
-      "POD_REQUIRED": "A proof of delivery is required for every drop."
+      "POD_REQUIRED": "A proof of delivery is required for every drop.",
+      "DOCUMENT_FILE_REQUIRED": "Attach the PDF of the revision first.",
+      "DOCUMENT_IMMUTABLE": "An approved revision cannot be changed; start a new revision.",
+      "MRV_INPUTS_INCOMPLETE": "Answer every management review input (or mark it not applicable).",
+      "SUPPLIER_EVALUATION_REQUIRED": "An approved supplier evaluation of the last 12 months is required.",
+      "SPC_SOURCE_INVALID": "This data source does not fit the chart type."
     }
   },
   "theme": {
@@ -2207,6 +2212,13 @@
       "training_provider_accreditation_expiry": "Training provider accreditation expiry",
       "training_verification_due": "Training verification due",
       "training_session_close_due": "Training session close due",
+      "q_mte_calibration_due": "Calibration due",
+      "q_wpq_continuity": "Welder continuity ends",
+      "q_competence_expiry": "Competence expiry",
+      "q_document_review": "Document review due",
+      "q_mapping_validity": "Temperature mapping validity",
+      "q_supplier_evaluation": "Supplier re-evaluation due",
+      "q_ncr_target": "NCR target close date",
       "fitness_expiry": "Fitness expiry",
       "fitness_restriction_review": "Restriction review",
       "fitness_unfit_review": "Unfit review",

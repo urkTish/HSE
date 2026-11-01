@@ -7,11 +7,12 @@ hygiene / pest check compliance. Rounding half-up at output only; a zero denomin
 from __future__ import annotations
 
 import uuid
+from collections.abc import Collection
 from datetime import date, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
 
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.clock import now
@@ -56,7 +57,19 @@ def pct(n: int | D, d: int | D, dp: str = "0.1") -> D | None:
     return (D(n) * 100 / D(d)).quantize(D(dp), ROUND_HALF_UP)
 
 
-def month(db: Session, project: Project, year: int, mon: int) -> dict[str, Any]:
+def _at(col: Any, sites: Collection[uuid.UUID] | None) -> list[Any]:
+    return [] if sites is None else [col.in_(list(sites) or [uuid.uuid4()])]
+
+
+def month(
+    db: Session,
+    project: Project,
+    year: int,
+    mon: int,
+    site_ids: Collection[uuid.UUID] | None = None,
+) -> dict[str, Any]:
+    """One month of K-160…K-168; `site_ids` narrows every source to those sites (Q4 KPI
+    grant narrowing, Phase 0 rule 11; None = the whole project)."""
     a, e = b.month_bounds(year, mon)
     as_of = min(e, now())
     first = date(year, mon, 1)
@@ -71,6 +84,7 @@ def month(db: Session, project: Project, year: int, mon: int) -> dict[str, Any]:
                 QReceipt.status == QReceiptStatus.decided,
                 QReceipt.decided_at >= a,
                 QReceipt.decided_at < e,
+                *_at(QReceipt.site_id, site_ids),
             )
         )
     )
@@ -118,7 +132,9 @@ def month(db: Session, project: Project, year: int, mon: int) -> dict[str, Any]:
     zones = list(
         db.scalars(
             select(QStorageZone).where(
-                QStorageZone.project_id == project.id, QStorageZone.active.is_(True)
+                QStorageZone.project_id == project.id,
+                QStorageZone.active.is_(True),
+                *_at(QStorageZone.site_id, site_ids),
             )
         )
     )
@@ -133,6 +149,7 @@ def month(db: Session, project: Project, year: int, mon: int) -> dict[str, Any]:
                 QMonitoringGap.project_id == project.id,
                 QMonitoringGap.started_at >= a,
                 QMonitoringGap.started_at < e,
+                *_at(QMonitoringGap.site_id, site_ids),
             )
         )
         or 0
@@ -153,6 +170,15 @@ def month(db: Session, project: Project, year: int, mon: int) -> dict[str, Any]:
                 "coverage_pct": pct(m_, p_),
             }
         )
+    x_site: list[Any] = []
+    if site_ids is not None:
+        trips_at = select(QTrip.id).where(*_at(QTrip.site_id, site_ids))
+        x_site = [
+            or_(
+                *_at(QExcursion.site_id, site_ids),
+                and_(QExcursion.site_id.is_(None), QExcursion.trip_id.in_(trips_at)),
+            )
+        ]
     excs = list(
         db.scalars(
             select(QExcursion).where(
@@ -161,6 +187,7 @@ def month(db: Session, project: Project, year: int, mon: int) -> dict[str, Any]:
                 QExcursion.started_at >= a,
                 QExcursion.started_at < e,
                 QExcursion.status.not_in([QExcursionStatus.dismissed, QExcursionStatus.voided]),
+                *x_site,
             )
         )
     )
@@ -185,6 +212,7 @@ def month(db: Session, project: Project, year: int, mon: int) -> dict[str, Any]:
                 QExcursion.status == QExcursionStatus.dismissed,
                 QExcursion.started_at >= a,
                 QExcursion.started_at < e,
+                *x_site,
             )
         )
         or 0,
@@ -214,6 +242,7 @@ def month(db: Session, project: Project, year: int, mon: int) -> dict[str, Any]:
                 QShipment.delivered_at >= a,
                 QShipment.delivered_at < e,
                 QShipment.promised_at.is_not(None),
+                *_at(QShipment.site_id, site_ids),
             )
         )
     )
@@ -248,6 +277,7 @@ def month(db: Session, project: Project, year: int, mon: int) -> dict[str, Any]:
                 QDamageReport.project_id == project.id,
                 QDamageReport.reported_at >= a,
                 QDamageReport.reported_at < e,
+                *_at(QDamageReport.site_id, site_ids),
             )
         )
         or 0
@@ -256,7 +286,11 @@ def month(db: Session, project: Project, year: int, mon: int) -> dict[str, Any]:
         select(
             func.coalesce(func.sum(QThroughput.units_received), 0),
             func.coalesce(func.sum(QThroughput.units_dispatched), 0),
-        ).where(QThroughput.project_id == project.id, QThroughput.month == first)
+        ).where(
+            QThroughput.project_id == project.id,
+            QThroughput.month == first,
+            *_at(QThroughput.site_id, site_ids),
+        )
     ).one()
     handled = int(thr[0]) + int(thr[1])
     out["k164"] = {
@@ -277,6 +311,7 @@ def month(db: Session, project: Project, year: int, mon: int) -> dict[str, Any]:
                 QCycleCount.voided.is_(False),
                 QCycleCount.counted_at >= a,
                 QCycleCount.counted_at < e,
+                *_at(QCycleCount.site_id, site_ids),
             )
         )
     ]
@@ -295,6 +330,7 @@ def month(db: Session, project: Project, year: int, mon: int) -> dict[str, Any]:
                 QFefoCheck.project_id == project.id,
                 QFefoCheck.checked_at >= a,
                 QFefoCheck.checked_at < e,
+                *_at(QFefoCheck.site_id, site_ids),
             )
         )
     )
@@ -315,6 +351,7 @@ def month(db: Session, project: Project, year: int, mon: int) -> dict[str, Any]:
                 QTrip.status.in_([QTripStatus.delivered, QTripStatus.closed]),
                 QTrip.delivered_at >= a,
                 QTrip.delivered_at < e,
+                *_at(QTrip.site_id, site_ids),
             )
         )
     )
@@ -340,7 +377,7 @@ def month(db: Session, project: Project, year: int, mon: int) -> dict[str, Any]:
     }
 
     # K-168 hygiene and pest checks
-    done, total = hygiene.compliance(db, project, first, last, b.local_day(as_of))
+    done, total = hygiene.compliance(db, project, first, last, b.local_day(as_of), site_ids)
     out["k168"] = {"done": done, "due": total, "value": pct(done, total)}
     return out
 

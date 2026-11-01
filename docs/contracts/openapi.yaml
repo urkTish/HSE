@@ -93519,6 +93519,3902 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/quality/documents:
+    get:
+      tags:
+      - quality
+      - quality
+      summary: Document register (§E.1)
+      operationId: q4_list_documents
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      - name: doc_type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/QDocType'
+          - type: 'null'
+          title: Doc Type
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/QRevStatus'
+          - type: 'null'
+          title: Status
+      - name: q
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            maxLength: 100
+          - type: 'null'
+          title: Q
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          description: 1-based page number.
+          default: 1
+          title: Page
+        description: 1-based page number.
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          description: Items per page.
+          default: 50
+          title: Page Size
+        description: Items per page.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Page_Q4DocumentListItem_'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+      - quality
+      - quality
+      summary: New controlled document with its first Draft revision (273)
+      operationId: q4_create_document
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Q4DocumentCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4DocumentRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/quality/documents/{doc_id}:
+    get:
+      tags:
+      - quality
+      - quality
+      summary: One document
+      operationId: q4_get_document
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: doc_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Doc Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4DocumentRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags:
+      - quality
+      - quality
+      summary: Edit document data (273)
+      operationId: q4_update_document
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: doc_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Doc Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Q4DocumentUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4DocumentRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/quality/documents/{doc_id}/revisions:
+    post:
+      tags:
+      - quality
+      - quality
+      summary: Start a new revision from the current one (Q-DOC-03)
+      operationId: q4_new_revision
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: doc_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Doc Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4DocumentRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/quality/documents/{doc_id}/distribution:
+    put:
+      tags:
+      - quality
+      - quality
+      summary: Distribution and read-and-acknowledge (Q-DOC-05)
+      operationId: q4_distribution
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: doc_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Doc Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Q4Distribution'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4DocumentRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/quality/documents/{doc_id}/obsolete:
+    post:
+      tags:
+      - quality
+      - quality
+      summary: Withdraw an approved document (239)
+      operationId: q4_obsolete
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: doc_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Doc Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Q4Reason'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4DocumentRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/quality/document-revisions/{rev_id}:
+    patch:
+      tags:
+      - quality
+      - quality
+      summary: Edit a Draft revision (409 DOCUMENT_IMMUTABLE once approved)
+      operationId: q4_update_revision
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: rev_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Rev Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Q4RevisionUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4DocumentRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/quality/document-revisions/{rev_id}/submit:
+    post:
+      tags:
+      - quality
+      - quality
+      summary: Draft → For Review (PDF required)
+      operationId: q4_submit_revision
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: rev_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Rev Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4DocumentRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/quality/document-revisions/{rev_id}/review:
+    post:
+      tags:
+      - quality
+      - quality
+      summary: Review sign-off `document.review` (returned → Draft)
+      operationId: q4_review_revision
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: rev_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Rev Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Q4Decision'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4DocumentRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/quality/document-revisions/{rev_id}/approve:
+    post:
+      tags:
+      - quality
+      - quality
+      summary: Approval `document.approve` (Q-DOC-02…05)
+      operationId: q4_approve_revision
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: rev_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Rev Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Q4Decision'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4DocumentRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/quality/document-revisions/{rev_id}/ack:
+    post:
+      tags:
+      - quality
+      - quality
+      summary: Acknowledge a revision (275; idempotent)
+      operationId: q4_ack
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: rev_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Rev Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4AckResult'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/quality/document-revisions/{rev_id}/download:
+    get:
+      tags:
+      - quality
+      - quality
+      summary: The revision PDF (superseded files carry the -SUPERSEDED suffix)
+      operationId: q4_download_revision
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: rev_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Rev Id
+      responses:
+        '200':
+          description: Successful Response
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/quality/document-revisions/{rev_id}/citations:
+    post:
+      tags:
+      - quality
+      - quality
+      summary: Cite a revision from a Quality record (Q-DOC-06)
+      operationId: q4_cite
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: rev_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Rev Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Q4CiteInput'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Q4Citation'
+                title: Response Q4 Cite
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/quality/citations:
+    get:
+      tags:
+      - quality
+      - quality
+      summary: Documents a record cites, with 'newer revision available'
+      operationId: q4_citations
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: record_type
+        in: query
+        required: true
+        schema:
+          $ref: '#/components/schemas/QRecordType'
+      - name: record_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Record Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Q4Citation'
+                title: Response Q4 Citations
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/quality/my-acknowledgements:
+    get:
+      tags:
+      - quality
+      - quality
+      summary: My read-and-acknowledge tasks
+      operationId: q4_my_acks
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      - name: pending
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: true
+          title: Pending
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Q4MyAck'
+                title: Response Q4 My Acks
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/quality/transmittals:
+    get:
+      tags:
+      - quality
+      - quality
+      summary: Transmittals (Q-DOC-07)
+      operationId: q4_list_transmittals
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/QTransmittalStatus'
+          - type: 'null'
+          title: Status
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          description: 1-based page number.
+          default: 1
+          title: Page
+        description: 1-based page number.
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          description: Items per page.
+          default: 50
+          title: Page Size
+        description: Items per page.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Page_Q4TransmittalRead_'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+      - quality
+      - quality
+      summary: New transmittal (273)
+      operationId: q4_create_transmittal
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Q4TransmittalCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4TransmittalRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/quality/transmittals/{tid}:
+    get:
+      tags:
+      - quality
+      - quality
+      summary: One transmittal
+      operationId: q4_get_transmittal
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: tid
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Tid
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4TransmittalRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/quality/transmittals/{tid}/send:
+    post:
+      tags:
+      - quality
+      - quality
+      summary: 'Send: number, cover sheet EN / AR (Hijri) and email outbox'
+      operationId: q4_send_transmittal
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: tid
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Tid
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4TransmittalRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/quality/transmittals/{tid}/response:
+    post:
+      tags:
+      - quality
+      - quality
+      summary: Record the response with per-item codes A–D
+      operationId: q4_respond_transmittal
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: tid
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Tid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Q4TransmittalRespond'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4TransmittalRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/quality/transmittals/{tid}/cancel:
+    post:
+      tags:
+      - quality
+      - quality
+      summary: Cancel a Draft transmittal
+      operationId: q4_cancel_transmittal
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: tid
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Tid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Q4Reason'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4TransmittalRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/quality/processes:
+    get:
+      tags:
+      - quality
+      - quality
+      summary: Process register (§E.2.1)
+      operationId: q4_list_processes
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Q4ProcessRead'
+                title: Response Q4 List Processes
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+      - quality
+      - quality
+      summary: New process (276)
+      operationId: q4_create_process
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Q4ProcessInput'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4ProcessRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/quality/processes/{process_id}:
+    patch:
+      tags:
+      - quality
+      - quality
+      summary: Edit a process (276)
+      operationId: q4_update_process
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      - name: process_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Process Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Q4ProcessInput'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4ProcessRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/quality/audit-programme:
+    get:
+      tags:
+      - quality
+      - quality
+      summary: Quality audit programme of a year (Q-AUD-06)
+      operationId: q4_programme
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      - name: year
+        in: query
+        required: true
+        schema:
+          type: integer
+          maximum: 2100
+          minimum: 2020
+          title: Year
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Q4LineRead'
+                title: Response Q4 Programme
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+      - quality
+      - quality
+      summary: Add a supplier, subcontractor or clause-set line
+      operationId: q4_add_line
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Q4LineCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4LineRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/quality/audit-programme/generate:
+    post:
+      tags:
+      - quality
+      - quality
+      summary: Generate lines per process by risk (idempotent)
+      operationId: q4_programme_generate
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      - name: year
+        in: query
+        required: true
+        schema:
+          type: integer
+          maximum: 2100
+          minimum: 2020
+          title: Year
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Q4LineRead'
+                title: Response Q4 Programme Generate
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/quality/audit-programme/{line_id}:
+    patch:
+      tags:
+      - quality
+      - quality
+      summary: Postpone, cancel or move a line
+      operationId: q4_update_line
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: line_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Line Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Q4LineUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4LineRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/quality/audits:
+    get:
+      tags:
+      - quality
+      - quality
+      summary: Quality audits (domain quality)
+      operationId: q4_list_audits
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/AuditStatus'
+          - type: 'null'
+          title: Status
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          description: 1-based page number.
+          default: 1
+          title: Page
+        description: 1-based page number.
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          description: Items per page.
+          default: 50
+          title: Page Size
+        description: Items per page.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Page_Q4AuditRead_'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+      - quality
+      - quality
+      summary: Plan a quality audit (276; independence Q-AUD-02)
+      operationId: q4_create_audit
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Q4AuditCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4AuditRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/quality/audits/{audit_id}:
+    get:
+      tags:
+      - quality
+      - quality
+      summary: One quality audit
+      operationId: q4_get_audit
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: audit_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Audit Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4AuditRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags:
+      - quality
+      - quality
+      summary: Fieldwork dates, meetings, summary (audit team)
+      operationId: q4_update_audit
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: audit_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Audit Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Q4AuditUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4AuditRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/quality/audits/{audit_id}/answers:
+    put:
+      tags:
+      - quality
+      - quality
+      summary: Save answers on the 6d engine (grades and findings)
+      operationId: q4_audit_answers
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: audit_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Audit Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuditAnswers'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4AuditRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/quality/audits/{audit_id}/complete-fieldwork:
+    post:
+      tags:
+      - quality
+      - quality
+      summary: Lead auditor completes the fieldwork
+      operationId: q4_audit_complete
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: audit_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Audit Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4AuditRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/quality/audits/{audit_id}/issue:
+    post:
+      tags:
+      - quality
+      - quality
+      summary: Issue the report (277 + RPM q_audit.issue; NCRs per NC, Q-AUD-03 / -04)
+      operationId: q4_audit_issue
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: audit_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Audit Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Q4AuditIssue'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4AuditRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/quality/audits/{audit_id}/cancel:
+    post:
+      tags:
+      - quality
+      - quality
+      summary: Cancel a planned audit
+      operationId: q4_audit_cancel
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: audit_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Audit Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Q4Reason'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4AuditRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/quality/audits/{audit_id}/void:
+    post:
+      tags:
+      - quality
+      - quality
+      summary: Void an audit (244)
+      operationId: q4_audit_void
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: audit_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Audit Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Q4Reason'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4AuditRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/quality/management-reviews:
+    get:
+      tags:
+      - quality
+      - quality
+      summary: Management reviews (§E.2.2)
+      operationId: q4_list_mrv
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Q4MrvRead'
+                title: Response Q4 List Mrv
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+      - quality
+      - quality
+      summary: New management review (276)
+      operationId: q4_create_mrv
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Q4MrvCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4MrvRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/quality/management-reviews/{mid}:
+    get:
+      tags:
+      - quality
+      - quality
+      summary: One management review
+      operationId: q4_get_mrv
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: mid
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Mid
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4MrvRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags:
+      - quality
+      - quality
+      summary: Inputs (Draft) and outputs; an output may create a CA
+      operationId: q4_update_mrv
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: mid
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Mid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Q4MrvUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4MrvRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/quality/management-reviews/{mid}/hold:
+    post:
+      tags:
+      - quality
+      - quality
+      summary: Draft → Held (Q-MRV-01) and freeze the KPI snapshot (Q-MRV-02)
+      operationId: q4_hold_mrv
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: mid
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Mid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Q4MrvHold'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4MrvRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/quality/management-reviews/{mid}/issue-minutes:
+    post:
+      tags:
+      - quality
+      - quality
+      summary: Approve and issue the minutes (277 + RPM; EN / AR PDFs)
+      operationId: q4_issue_mrv
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: mid
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Mid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Q4Reason'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4MrvRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/quality/supplier-evaluations:
+    get:
+      tags:
+      - quality
+      - quality
+      summary: Supplier evaluations (§E.3)
+      operationId: q4_list_sev
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      - name: supplier_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Supplier Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Q4SevRead'
+                title: Response Q4 List Sev
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+      - quality
+      - quality
+      summary: New supplier evaluation (278)
+      operationId: q4_create_sev
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Q4SevCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4SevRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/quality/supplier-evaluations/{eid}:
+    get:
+      tags:
+      - quality
+      - quality
+      summary: One evaluation
+      operationId: q4_get_sev
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: eid
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Eid
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4SevRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags:
+      - quality
+      - quality
+      summary: Edit a Draft evaluation
+      operationId: q4_update_sev
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: eid
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Eid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Q4SevUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4SevRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/quality/supplier-evaluations/{eid}/transition:
+    post:
+      tags:
+      - quality
+      - quality
+      summary: Submit, approve (279 + RPM), return or cancel
+      operationId: q4_sev_transition
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: eid
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Eid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Q4SevAction'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4SevRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/quality/supplier-scores:
+    get:
+      tags:
+      - quality
+      - quality
+      summary: Supplier quality scorecards (Q-SUP-03; org-wide)
+      operationId: q4_scores
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      - name: period_start
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Period Start
+      - name: supplier_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Supplier Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Q4ScoreRead'
+                title: Response Q4 Scores
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/quality/supplier-scores/recompute:
+    post:
+      tags:
+      - quality
+      - quality
+      summary: Recompute the provisional scores of the current period (278)
+      operationId: q4_scores_recompute
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      - name: day
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Day
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Q4ScoreRead'
+                title: Response Q4 Scores Recompute
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/quality/contractor-quality/{contractor_id}:
+    get:
+      tags:
+      - quality
+      - quality
+      summary: Quality score of suppliers linked to a contractor (information only, Q-SUP-05)
+      operationId: q4_contractor_score
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: contractor_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Contractor Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Q4ContractorScore'
+                title: Response Q4 Contractor Score
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/quality/kpis:
+    get:
+      tags:
+      - quality
+      - quality
+      summary: Quality KPIs K-141…K-169 with targets, warnings and charts (403 for scope N)
+      operationId: q4_kpis
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      - name: date_from
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Date From
+      - name: date_to
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Date To
+      - name: site_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Site Id
+      - name: zone_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Zone Id
+      - name: engagement_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Engagement Id
+      - name: supplier_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Supplier Id
+      - name: test_type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Test Type
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4KpiPage'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/quality/kpi-targets:
+    get:
+      tags:
+      - quality
+      - quality
+      summary: Quality objectives
+      operationId: q4_targets
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Q4KpiTargetRead'
+                title: Response Q4 Targets
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags:
+      - quality
+      - quality
+      summary: Set a KPI target (239)
+      operationId: q4_set_target
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Q4KpiTargetInput'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4KpiTargetRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/quality/work-value:
+    get:
+      tags:
+      - quality
+      - quality
+      summary: Monthly work value behind COPQ % (239)
+      operationId: q4_work_value
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Q4WorkValueRead'
+                title: Response Q4 Work Value
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags:
+      - quality
+      - quality
+      summary: Set a month's work value (239)
+      operationId: q4_set_work_value
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Q4WorkValueInput'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4WorkValueRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/quality/spc-charts:
+    get:
+      tags:
+      - quality
+      - quality
+      summary: SPC charts (§E.5)
+      operationId: q4_spc_list
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Q4SpcRead'
+                title: Response Q4 Spc List
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+      - quality
+      - quality
+      summary: New SPC chart (240)
+      operationId: q4_spc_create
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Q4SpcInput'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4SpcRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/quality/spc-charts/{chart_id}:
+    get:
+      tags:
+      - quality
+      - quality
+      summary: One SPC chart with limits, signals and capability
+      operationId: q4_spc_get
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: chart_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Chart Id
+      - name: date_from
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Date From
+      - name: date_to
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Date To
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4SpcRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/projects/{project_id}/quality/spc-charts/{chart_id}:
+    patch:
+      tags:
+      - quality
+      - quality
+      summary: Edit an SPC chart (240)
+      operationId: q4_spc_update
+      security:
+      - sessionCookie: []
+      - bearerAuth: []
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Project Id
+      - name: chart_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Chart Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Q4SpcInput'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Q4SpcRead'
+        '401':
+          description: Not authenticated, session expired, or login rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing capability, read-only role, contractor suspended, or privacy notice not
+            acknowledged (PRIVACY_ACK_REQUIRED).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found or outside the caller's project/contractor scope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid state transition, closed project, duplicate value or business-rule conflict.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error (field errors in detail.errors).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/v1/privacy-notice:
     get:
       tags:
@@ -95747,6 +99643,10 @@ components:
       - get_training_kpis
       - get_occupational_health_kpis
       - get_heat_stress_kpis
+      - get_quality_kpis
+      - search_ncrs
+      - get_spc_status
+      - get_cold_chain_summary
       title: AiTool
     AiToolCallLog:
       properties:
@@ -98869,6 +102769,13 @@ components:
       - planned_end
       title: AuditCreate
       description: Capability 194 (AUD-1…AUD-3).
+    AuditDomain:
+      type: string
+      enum:
+      - hse
+      - quality
+      title: AuditDomain
+      description: '8-quality §E.2.1 `field_audits.domain`: 6d HSE audits or Phase 8 quality audits.'
     AuditEntryPage:
       properties:
         items:
@@ -99413,6 +103320,10 @@ components:
       - contractor_hse
       - system_iso45001
       - client_requested
+      - qms_internal
+      - process_quality
+      - supplier_quality
+      - subcontractor_quality
       title: AuditType
       description: List AT (client_requested counts as contractor_hse when an auditee is set).
     AuditUpdate:
@@ -117413,6 +121324,11 @@ components:
       - PRELOAD_FAILED
       - OVERRIDE_NOT_ALLOWED
       - POD_REQUIRED
+      - DOCUMENT_FILE_REQUIRED
+      - DOCUMENT_IMMUTABLE
+      - MRV_INPUTS_INCOMPLETE
+      - SUPPLIER_EVALUATION_REQUIRED
+      - SPC_SOURCE_INVALID
       - NOT_IMPLEMENTED
       - INTERNAL_ERROR
       title: ErrorCode
@@ -118906,6 +122822,13 @@ components:
       - training_record_expiry
       - training_refresher_due
       - trainer_authorisation_expiry
+      - q_mte_calibration_due
+      - q_wpq_continuity
+      - q_competence_expiry
+      - q_document_review
+      - q_mapping_validity
+      - q_supplier_evaluation
+      - q_ncr_target
       - training_provider_accreditation_expiry
       - training_verification_due
       - training_session_close_due
@@ -142357,6 +146280,84 @@ components:
       - page
       - page_size
       title: Page[PtwAuditListItem]
+    Page_Q4AuditRead_:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/Q4AuditRead'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+          description: Total number of matching items across all pages.
+        page:
+          type: integer
+          title: Page
+          description: 1-based page number.
+        page_size:
+          type: integer
+          title: Page Size
+          description: Items per page (max 200).
+      type: object
+      required:
+      - items
+      - total
+      - page
+      - page_size
+      title: Page[Q4AuditRead]
+    Page_Q4DocumentListItem_:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/Q4DocumentListItem'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+          description: Total number of matching items across all pages.
+        page:
+          type: integer
+          title: Page
+          description: 1-based page number.
+        page_size:
+          type: integer
+          title: Page Size
+          description: Items per page (max 200).
+      type: object
+      required:
+      - items
+      - total
+      - page
+      - page_size
+      title: Page[Q4DocumentListItem]
+    Page_Q4TransmittalRead_:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/Q4TransmittalRead'
+          type: array
+          title: Items
+        total:
+          type: integer
+          title: Total
+          description: Total number of matching items across all pages.
+        page:
+          type: integer
+          title: Page
+          description: 1-based page number.
+        page_size:
+          type: integer
+          title: Page Size
+          description: Items per page (max 200).
+      type: object
+      required:
+      - items
+      - total
+      - page
+      - page_size
+      title: Page[Q4TransmittalRead]
     Page_SimopsConflictRead_:
       properties:
         items:
@@ -157118,6 +161119,2490 @@ components:
       additionalProperties: false
       type: object
       title: Q3ZoneUpdate
+    Q4AckResult:
+      properties:
+        revision_id:
+          type: string
+          format: uuid
+          title: Revision Id
+        acked_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Acked At
+        acks:
+          $ref: '#/components/schemas/Q4AckStats'
+      type: object
+      required:
+      - revision_id
+      - acked_at
+      - acks
+      title: Q4AckResult
+    Q4AckStats:
+      properties:
+        required:
+          type: integer
+          title: Required
+        acked:
+          type: integer
+          title: Acked
+        pct:
+          type: string
+          title: Pct
+      type: object
+      required:
+      - required
+      - acked
+      - pct
+      title: Q4AckStats
+    Q4AuditCreate:
+      properties:
+        audit_type:
+          $ref: '#/components/schemas/AuditType'
+        template_code:
+          type: string
+          maxLength: 8
+          minLength: 2
+          title: Template Code
+        auditee_supplier_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Auditee Supplier Id
+        auditee_engagement_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Auditee Engagement Id
+        process_ids:
+          items:
+            type: string
+            format: uuid
+          type: array
+          title: Process Ids
+        site_ids:
+          items:
+            type: string
+            format: uuid
+          type: array
+          title: Site Ids
+        lead_auditor_id:
+          type: string
+          format: uuid
+          title: Lead Auditor Id
+        team_ids:
+          items:
+            type: string
+            format: uuid
+          type: array
+          title: Team Ids
+        planned_start:
+          type: string
+          format: date
+          title: Planned Start
+        planned_end:
+          type: string
+          format: date
+          title: Planned End
+        programme_line_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Programme Line Id
+      additionalProperties: false
+      type: object
+      required:
+      - audit_type
+      - template_code
+      - lead_auditor_id
+      - planned_start
+      - planned_end
+      title: Q4AuditCreate
+    Q4AuditIssue:
+      properties:
+        comment:
+          anyOf:
+          - type: string
+            maxLength: 2000
+          - type: 'null'
+          title: Comment
+        ca_for_observations:
+          type: boolean
+          title: Ca For Observations
+          default: false
+      additionalProperties: false
+      type: object
+      title: Q4AuditIssue
+    Q4AuditRead:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        audit_no:
+          type: string
+          title: Audit No
+        project_id:
+          type: string
+          format: uuid
+          title: Project Id
+        audit_type:
+          $ref: '#/components/schemas/AuditType'
+        domain:
+          $ref: '#/components/schemas/AuditDomain'
+        template_code:
+          type: string
+          title: Template Code
+        status:
+          $ref: '#/components/schemas/AuditStatus'
+        planned_start:
+          type: string
+          format: date
+          title: Planned Start
+        planned_end:
+          type: string
+          format: date
+          title: Planned End
+        fieldwork_start:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Fieldwork Start
+        fieldwork_end:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Fieldwork End
+        opening_meeting_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Opening Meeting At
+        closing_meeting_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Closing Meeting At
+        lead_auditor:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Lead Auditor
+        team:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Team
+        sites:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Sites
+        auditee_engagement:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Auditee Engagement
+        auditee_supplier:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Auditee Supplier
+        processes:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Processes
+        response:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Response
+        summary_en:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Summary En
+        summary_ar:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Summary Ar
+        report_en_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Report En Id
+        report_ar_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Report Ar Id
+        issued_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Issued At
+        report_due_by:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Report Due By
+        can_issue:
+          type: boolean
+          title: Can Issue
+        ncr_ids:
+          items:
+            type: string
+            format: uuid
+          type: array
+          title: Ncr Ids
+        template_items:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Template Items
+          description: Checklist items (6d engine).
+        findings:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Findings
+        status_reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Status Reason
+        warnings:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Warnings
+      type: object
+      required:
+      - id
+      - audit_no
+      - project_id
+      - audit_type
+      - domain
+      - template_code
+      - status
+      - planned_start
+      - planned_end
+      - fieldwork_start
+      - fieldwork_end
+      - opening_meeting_at
+      - closing_meeting_at
+      - lead_auditor
+      - team
+      - sites
+      - auditee_engagement
+      - auditee_supplier
+      - processes
+      - response
+      - summary_en
+      - summary_ar
+      - report_en_id
+      - report_ar_id
+      - issued_at
+      - report_due_by
+      - can_issue
+      - ncr_ids
+      - status_reason
+      title: Q4AuditRead
+    Q4AuditUpdate:
+      properties:
+        fieldwork_start:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Fieldwork Start
+        fieldwork_end:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Fieldwork End
+        opening_meeting_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Opening Meeting At
+        closing_meeting_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Closing Meeting At
+        summary_en:
+          anyOf:
+          - type: string
+            maxLength: 3000
+          - type: 'null'
+          title: Summary En
+        summary_ar:
+          anyOf:
+          - type: string
+            maxLength: 3000
+          - type: 'null'
+          title: Summary Ar
+        auditee_attendee_roles:
+          anyOf:
+          - type: string
+            maxLength: 300
+          - type: 'null'
+          title: Auditee Attendee Roles
+      additionalProperties: false
+      type: object
+      title: Q4AuditUpdate
+    Q4Citation:
+      properties:
+        document_id:
+          type: string
+          format: uuid
+          title: Document Id
+        doc_no:
+          type: string
+          title: Doc No
+        revision_id:
+          type: string
+          format: uuid
+          title: Revision Id
+        rev_code:
+          type: string
+          title: Rev Code
+        status:
+          $ref: '#/components/schemas/QRevStatus'
+        newer_revision_available:
+          type: boolean
+          title: Newer Revision Available
+        newer_rev_code:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Newer Rev Code
+      type: object
+      required:
+      - document_id
+      - doc_no
+      - revision_id
+      - rev_code
+      - status
+      - newer_revision_available
+      - newer_rev_code
+      title: Q4Citation
+    Q4CiteInput:
+      properties:
+        record_type:
+          type: string
+          title: Record Type
+        record_id:
+          type: string
+          format: uuid
+          title: Record Id
+      additionalProperties: false
+      type: object
+      required:
+      - record_type
+      - record_id
+      title: Q4CiteInput
+    Q4ContractorScore:
+      properties:
+        supplier:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Supplier
+        score:
+          anyOf:
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          - type: 'null'
+          title: Score
+        band:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Band
+        period_start:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Period Start
+        period_end:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Period End
+      type: object
+      required:
+      - supplier
+      - score
+      - band
+      - period_start
+      - period_end
+      title: Q4ContractorScore
+    Q4Criterion:
+      properties:
+        criterion:
+          type: string
+          maxLength: 150
+          minLength: 1
+          title: Criterion
+        weight:
+          anyOf:
+          - type: number
+            maximum: 100.0
+            minimum: 0.0
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          title: Weight
+        score:
+          anyOf:
+          - type: number
+            maximum: 100.0
+            minimum: 0.0
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          title: Score
+      additionalProperties: false
+      type: object
+      required:
+      - criterion
+      - weight
+      - score
+      title: Q4Criterion
+    Q4Decision:
+      properties:
+        decision:
+          type: string
+          enum:
+          - approved
+          - approved_with_comments
+          - returned
+          title: Decision
+          default: approved
+        comment:
+          anyOf:
+          - type: string
+            maxLength: 2000
+          - type: 'null'
+          title: Comment
+      additionalProperties: false
+      type: object
+      title: Q4Decision
+    Q4Distribution:
+      properties:
+        roles:
+          items:
+            type: string
+          type: array
+          title: Roles
+        positions:
+          items:
+            type: string
+          type: array
+          title: Positions
+        engagement_ids:
+          items:
+            type: string
+            format: uuid
+          type: array
+          title: Engagement Ids
+        user_ids:
+          items:
+            type: string
+            format: uuid
+          type: array
+          title: User Ids
+        ack_required:
+          type: boolean
+          title: Ack Required
+          default: false
+      additionalProperties: false
+      type: object
+      title: Q4Distribution
+    Q4DocumentCreate:
+      properties:
+        doc_type:
+          $ref: '#/components/schemas/QDocType'
+        title_en:
+          type: string
+          maxLength: 200
+          minLength: 3
+          title: Title En
+        title_ar:
+          type: string
+          maxLength: 200
+          title: Title Ar
+          default: ''
+        doc_no:
+          anyOf:
+          - type: string
+            maxLength: 60
+          - type: 'null'
+          title: Doc No
+          description: 'Default: numbering format.'
+        profile:
+          $ref: '#/components/schemas/QProfileScope'
+          default: both
+        discipline:
+          anyOf:
+          - type: string
+            maxLength: 40
+          - type: 'null'
+          title: Discipline
+        process_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Process Id
+        owner_user_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Owner User Id
+        change_summary:
+          anyOf:
+          - type: string
+            maxLength: 2000
+          - type: 'null'
+          title: Change Summary
+      additionalProperties: false
+      type: object
+      required:
+      - doc_type
+      - title_en
+      title: Q4DocumentCreate
+    Q4DocumentListItem:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        project_id:
+          type: string
+          format: uuid
+          title: Project Id
+        doc_no:
+          type: string
+          title: Doc No
+        doc_type:
+          $ref: '#/components/schemas/QDocType'
+        doc_type_en:
+          type: string
+          title: Doc Type En
+        doc_type_ar:
+          type: string
+          title: Doc Type Ar
+        title_en:
+          type: string
+          title: Title En
+        title_ar:
+          type: string
+          title: Title Ar
+        profile:
+          $ref: '#/components/schemas/QProfileScope'
+        discipline:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Discipline
+        process_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Process Id
+        owner:
+          anyOf:
+          - $ref: '#/components/schemas/Q4UserRef'
+          - type: 'null'
+        status:
+          $ref: '#/components/schemas/QRevStatus'
+        current_rev:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Current Rev
+        open_rev:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Open Rev
+        open_rev_status:
+          anyOf:
+          - $ref: '#/components/schemas/QRevStatus'
+          - type: 'null'
+        review_due_on:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Review Due On
+        review_overdue:
+          type: boolean
+          title: Review Overdue
+      type: object
+      required:
+      - id
+      - project_id
+      - doc_no
+      - doc_type
+      - doc_type_en
+      - doc_type_ar
+      - title_en
+      - title_ar
+      - profile
+      - discipline
+      - process_id
+      - owner
+      - status
+      - current_rev
+      - open_rev
+      - open_rev_status
+      - review_due_on
+      - review_overdue
+      title: Q4DocumentListItem
+    Q4DocumentRead:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        project_id:
+          type: string
+          format: uuid
+          title: Project Id
+        doc_no:
+          type: string
+          title: Doc No
+        doc_type:
+          $ref: '#/components/schemas/QDocType'
+        doc_type_en:
+          type: string
+          title: Doc Type En
+        doc_type_ar:
+          type: string
+          title: Doc Type Ar
+        title_en:
+          type: string
+          title: Title En
+        title_ar:
+          type: string
+          title: Title Ar
+        profile:
+          $ref: '#/components/schemas/QProfileScope'
+        discipline:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Discipline
+        process_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Process Id
+        owner:
+          anyOf:
+          - $ref: '#/components/schemas/Q4UserRef'
+          - type: 'null'
+        status:
+          $ref: '#/components/schemas/QRevStatus'
+        current_rev:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Current Rev
+        open_rev:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Open Rev
+        open_rev_status:
+          anyOf:
+          - $ref: '#/components/schemas/QRevStatus'
+          - type: 'null'
+        review_due_on:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Review Due On
+        review_overdue:
+          type: boolean
+          title: Review Overdue
+        revisions:
+          items:
+            $ref: '#/components/schemas/Q4RevisionRead'
+          type: array
+          title: Revisions
+        distribution:
+          additionalProperties: true
+          type: object
+          title: Distribution
+        status_reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Status Reason
+        can_author:
+          type: boolean
+          title: Can Author
+        can_review:
+          type: boolean
+          title: Can Review
+        can_approve:
+          type: boolean
+          title: Can Approve
+        my_ack:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: My Ack
+      type: object
+      required:
+      - id
+      - project_id
+      - doc_no
+      - doc_type
+      - doc_type_en
+      - doc_type_ar
+      - title_en
+      - title_ar
+      - profile
+      - discipline
+      - process_id
+      - owner
+      - status
+      - current_rev
+      - open_rev
+      - open_rev_status
+      - review_due_on
+      - review_overdue
+      - revisions
+      - distribution
+      - status_reason
+      - can_author
+      - can_review
+      - can_approve
+      - my_ack
+      title: Q4DocumentRead
+    Q4DocumentUpdate:
+      properties:
+        title_en:
+          anyOf:
+          - type: string
+            maxLength: 200
+            minLength: 3
+          - type: 'null'
+          title: Title En
+        title_ar:
+          anyOf:
+          - type: string
+            maxLength: 200
+          - type: 'null'
+          title: Title Ar
+        discipline:
+          anyOf:
+          - type: string
+            maxLength: 40
+          - type: 'null'
+          title: Discipline
+        process_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Process Id
+        owner_user_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Owner User Id
+      additionalProperties: false
+      type: object
+      title: Q4DocumentUpdate
+    Q4ItemResponse:
+      properties:
+        item_id:
+          type: string
+          format: uuid
+          title: Item Id
+        response_code:
+          $ref: '#/components/schemas/QResponseCode'
+        note:
+          anyOf:
+          - type: string
+            maxLength: 1000
+          - type: 'null'
+          title: Note
+      additionalProperties: false
+      type: object
+      required:
+      - item_id
+      - response_code
+      title: Q4ItemResponse
+    Q4KpiPage:
+      properties:
+        project_id:
+          type: string
+          format: uuid
+          title: Project Id
+        profile:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Profile
+        period_start:
+          type: string
+          format: date
+          title: Period Start
+        period_end:
+          type: string
+          format: date
+          title: Period End
+        as_of:
+          type: string
+          format: date
+          title: As Of
+        tiles:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Tiles
+          description: 'K-141…K-169 tiles: value, display, numerator, denominator, chips, target, rag
+            (green / amber / red).'
+        warnings:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Warnings
+          description: E26–E28 for the month ending at period_end.
+        charts:
+          additionalProperties: true
+          type: object
+          title: Charts
+          description: C42–C46, C49–C51 series (aggregates only).
+      type: object
+      required:
+      - project_id
+      - profile
+      - period_start
+      - period_end
+      - as_of
+      - tiles
+      - warnings
+      - charts
+      title: Q4KpiPage
+    Q4KpiTargetInput:
+      properties:
+        kpi_id:
+          type: string
+          pattern: ^K-1(4[1-9]|5[0-9]|6[0-9])$
+          title: Kpi Id
+        target:
+          anyOf:
+          - type: number
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          title: Target
+        valid_from:
+          type: string
+          format: date
+          title: Valid From
+      additionalProperties: false
+      type: object
+      required:
+      - kpi_id
+      - target
+      - valid_from
+      title: Q4KpiTargetInput
+    Q4KpiTargetRead:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        kpi_id:
+          type: string
+          title: Kpi Id
+        target:
+          type: string
+          pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          title: Target
+        valid_from:
+          type: string
+          format: date
+          title: Valid From
+      type: object
+      required:
+      - id
+      - kpi_id
+      - target
+      - valid_from
+      title: Q4KpiTargetRead
+    Q4LineCreate:
+      properties:
+        year:
+          type: integer
+          maximum: 2100.0
+          minimum: 2020.0
+          title: Year
+        subject_kind:
+          $ref: '#/components/schemas/QProgrammeSubject'
+        process_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Process Id
+        supplier_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Supplier Id
+        engagement_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Engagement Id
+        clause_set:
+          anyOf:
+          - type: string
+            maxLength: 100
+          - type: 'null'
+          title: Clause Set
+        risk:
+          $ref: '#/components/schemas/QRisk'
+          default: medium
+        planned_month:
+          type: integer
+          maximum: 12.0
+          minimum: 1.0
+          title: Planned Month
+      additionalProperties: false
+      type: object
+      required:
+      - year
+      - subject_kind
+      - planned_month
+      title: Q4LineCreate
+    Q4LineRead:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        project_id:
+          type: string
+          format: uuid
+          title: Project Id
+        year:
+          type: integer
+          title: Year
+        subject_kind:
+          $ref: '#/components/schemas/QProgrammeSubject'
+        process_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Process Id
+        process_code:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Process Code
+        process_name_en:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Process Name En
+        process_name_ar:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Process Name Ar
+        supplier:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Supplier
+        engagement_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Engagement Id
+        engagement_code:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Engagement Code
+        clause_set:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Clause Set
+        risk:
+          $ref: '#/components/schemas/QRisk'
+        planned_month:
+          type: integer
+          title: Planned Month
+        audit_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Audit Id
+        audit_no:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Audit No
+        status:
+          $ref: '#/components/schemas/QProgrammeStatus'
+        status_reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Status Reason
+        on_time:
+          type: boolean
+          title: On Time
+        auto:
+          type: boolean
+          title: Auto
+      type: object
+      required:
+      - id
+      - project_id
+      - year
+      - subject_kind
+      - process_id
+      - process_code
+      - process_name_en
+      - process_name_ar
+      - supplier
+      - engagement_id
+      - engagement_code
+      - clause_set
+      - risk
+      - planned_month
+      - audit_id
+      - audit_no
+      - status
+      - status_reason
+      - on_time
+      - auto
+      title: Q4LineRead
+    Q4LineUpdate:
+      properties:
+        status:
+          anyOf:
+          - $ref: '#/components/schemas/QProgrammeStatus'
+          - type: 'null'
+        reason:
+          anyOf:
+          - type: string
+            maxLength: 500
+          - type: 'null'
+          title: Reason
+        planned_month:
+          anyOf:
+          - type: integer
+            maximum: 12.0
+            minimum: 1.0
+          - type: 'null'
+          title: Planned Month
+      additionalProperties: false
+      type: object
+      title: Q4LineUpdate
+    Q4MrvCreate:
+      properties:
+        period_start:
+          type: string
+          format: date
+          title: Period Start
+        period_end:
+          type: string
+          format: date
+          title: Period End
+        chair_user_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Chair User Id
+        attendee_user_ids:
+          items:
+            type: string
+            format: uuid
+          type: array
+          title: Attendee User Ids
+        external_attendees:
+          items:
+            type: string
+          type: array
+          title: External Attendees
+      additionalProperties: false
+      type: object
+      required:
+      - period_start
+      - period_end
+      title: Q4MrvCreate
+    Q4MrvHold:
+      properties:
+        held_on:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Held On
+      additionalProperties: false
+      type: object
+      title: Q4MrvHold
+    Q4MrvInput:
+      properties:
+        note:
+          anyOf:
+          - type: string
+            maxLength: 3000
+          - type: 'null'
+          title: Note
+        not_applicable:
+          type: boolean
+          title: Not Applicable
+          default: false
+      additionalProperties: false
+      type: object
+      title: Q4MrvInput
+    Q4MrvOutput:
+      properties:
+        id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Id
+        kind:
+          type: string
+          enum:
+          - improvement
+          - qms_change
+          - resource
+          title: Kind
+          default: improvement
+        text:
+          type: string
+          maxLength: 1000
+          minLength: 3
+          title: Text
+        owner_user_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Owner User Id
+        due_date:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Due Date
+        create_ca:
+          type: boolean
+          title: Create Ca
+          default: false
+      additionalProperties: false
+      type: object
+      required:
+      - text
+      title: Q4MrvOutput
+    Q4MrvRead:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        project_id:
+          type: string
+          format: uuid
+          title: Project Id
+        mrv_no:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Mrv No
+        period_start:
+          type: string
+          format: date
+          title: Period Start
+        period_end:
+          type: string
+          format: date
+          title: Period End
+        held_on:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Held On
+        chair:
+          anyOf:
+          - $ref: '#/components/schemas/Q4UserRef'
+          - type: 'null'
+        attendees:
+          items:
+            anyOf:
+            - additionalProperties: true
+              type: object
+            - type: 'null'
+          type: array
+          title: Attendees
+        external_attendees:
+          items:
+            type: string
+          type: array
+          title: External Attendees
+        inputs:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Inputs
+        kpi_snapshot:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Kpi Snapshot
+        outputs:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Outputs
+        minutes_en_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Minutes En Id
+        minutes_ar_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Minutes Ar Id
+        status:
+          $ref: '#/components/schemas/QMrvStatus'
+        can_issue:
+          type: boolean
+          title: Can Issue
+      type: object
+      required:
+      - id
+      - project_id
+      - mrv_no
+      - period_start
+      - period_end
+      - held_on
+      - chair
+      - attendees
+      - external_attendees
+      - inputs
+      - kpi_snapshot
+      - outputs
+      - minutes_en_id
+      - minutes_ar_id
+      - status
+      - can_issue
+      title: Q4MrvRead
+    Q4MrvUpdate:
+      properties:
+        inputs:
+          anyOf:
+          - additionalProperties:
+              $ref: '#/components/schemas/Q4MrvInput'
+            type: object
+          - type: 'null'
+          title: Inputs
+        outputs:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/Q4MrvOutput'
+            type: array
+          - type: 'null'
+          title: Outputs
+        chair_user_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Chair User Id
+        held_on:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Held On
+        attendee_user_ids:
+          anyOf:
+          - items:
+              type: string
+              format: uuid
+            type: array
+          - type: 'null'
+          title: Attendee User Ids
+        external_attendees:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: External Attendees
+      additionalProperties: false
+      type: object
+      title: Q4MrvUpdate
+    Q4MyAck:
+      properties:
+        document_id:
+          type: string
+          format: uuid
+          title: Document Id
+        doc_no:
+          type: string
+          title: Doc No
+        title_en:
+          type: string
+          title: Title En
+        title_ar:
+          type: string
+          title: Title Ar
+        revision_id:
+          type: string
+          format: uuid
+          title: Revision Id
+        rev_code:
+          type: string
+          title: Rev Code
+        revision_status:
+          $ref: '#/components/schemas/QRevStatus'
+        file_attachment_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: File Attachment Id
+        due_on:
+          type: string
+          format: date
+          title: Due On
+        acked_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Acked At
+      type: object
+      required:
+      - document_id
+      - doc_no
+      - title_en
+      - title_ar
+      - revision_id
+      - rev_code
+      - revision_status
+      - file_attachment_id
+      - due_on
+      - acked_at
+      title: Q4MyAck
+    Q4ProcessInput:
+      properties:
+        code:
+          anyOf:
+          - type: string
+            maxLength: 20
+          - type: 'null'
+          title: Code
+        name_en:
+          anyOf:
+          - type: string
+            maxLength: 150
+          - type: 'null'
+          title: Name En
+        name_ar:
+          anyOf:
+          - type: string
+            maxLength: 150
+          - type: 'null'
+          title: Name Ar
+        owner_user_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Owner User Id
+        profile:
+          anyOf:
+          - $ref: '#/components/schemas/QProfileScope'
+          - type: 'null'
+        risk:
+          anyOf:
+          - $ref: '#/components/schemas/QRisk'
+          - type: 'null'
+        document_ids:
+          anyOf:
+          - items:
+              type: string
+              format: uuid
+            type: array
+          - type: 'null'
+          title: Document Ids
+        active:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Active
+      additionalProperties: false
+      type: object
+      title: Q4ProcessInput
+    Q4ProcessRead:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        project_id:
+          type: string
+          format: uuid
+          title: Project Id
+        code:
+          type: string
+          title: Code
+        name_en:
+          type: string
+          title: Name En
+        name_ar:
+          type: string
+          title: Name Ar
+        owner:
+          anyOf:
+          - $ref: '#/components/schemas/Q4UserRef'
+          - type: 'null'
+        profile:
+          $ref: '#/components/schemas/QProfileScope'
+        risk:
+          $ref: '#/components/schemas/QRisk'
+        document_ids:
+          items:
+            type: string
+            format: uuid
+          type: array
+          title: Document Ids
+        active:
+          type: boolean
+          title: Active
+      type: object
+      required:
+      - id
+      - project_id
+      - code
+      - name_en
+      - name_ar
+      - owner
+      - profile
+      - risk
+      - document_ids
+      - active
+      title: Q4ProcessRead
+    Q4Reason:
+      properties:
+        reason:
+          anyOf:
+          - type: string
+            maxLength: 1000
+          - type: 'null'
+          title: Reason
+      additionalProperties: false
+      type: object
+      title: Q4Reason
+    Q4RevisionRead:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        document_id:
+          type: string
+          format: uuid
+          title: Document Id
+        rev_code:
+          type: string
+          title: Rev Code
+        status:
+          $ref: '#/components/schemas/QRevStatus'
+        file_attachment_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: File Attachment Id
+        source_attachment_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Source Attachment Id
+        change_summary:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Change Summary
+        effective_date:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Effective Date
+        author:
+          anyOf:
+          - $ref: '#/components/schemas/Q4UserRef'
+          - type: 'null'
+        submitted_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Submitted At
+        approved_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Approved At
+        approved_by:
+          anyOf:
+          - $ref: '#/components/schemas/Q4UserRef'
+          - type: 'null'
+        returned_comment:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Returned Comment
+        ack_due_on:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Ack Due On
+        acks:
+          $ref: '#/components/schemas/Q4AckStats'
+        signoffs:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Signoffs
+        download_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Download Name
+      type: object
+      required:
+      - id
+      - document_id
+      - rev_code
+      - status
+      - file_attachment_id
+      - source_attachment_id
+      - change_summary
+      - effective_date
+      - author
+      - submitted_at
+      - approved_at
+      - approved_by
+      - returned_comment
+      - ack_due_on
+      - acks
+      - signoffs
+      - download_name
+      title: Q4RevisionRead
+    Q4RevisionUpdate:
+      properties:
+        file_attachment_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: File Attachment Id
+        source_attachment_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Source Attachment Id
+        change_summary:
+          anyOf:
+          - type: string
+            maxLength: 2000
+          - type: 'null'
+          title: Change Summary
+        effective_date:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Effective Date
+      additionalProperties: false
+      type: object
+      title: Q4RevisionUpdate
+    Q4ScoreRead:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        supplier:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Supplier
+        period_kind:
+          $ref: '#/components/schemas/QScorePeriod'
+        period_start:
+          type: string
+          format: date
+          title: Period Start
+        period_end:
+          type: string
+          format: date
+          title: Period End
+        metrics:
+          additionalProperties: true
+          type: object
+          title: Metrics
+        score:
+          anyOf:
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          - type: 'null'
+          title: Score
+        band:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Band
+        recommendation:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Recommendation
+        status:
+          $ref: '#/components/schemas/QScoreStatus'
+        finalised_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Finalised At
+      type: object
+      required:
+      - id
+      - supplier
+      - period_kind
+      - period_start
+      - period_end
+      - metrics
+      - score
+      - band
+      - recommendation
+      - status
+      - finalised_at
+      title: Q4ScoreRead
+    Q4SevAction:
+      properties:
+        action:
+          type: string
+          enum:
+          - submit
+          - approve
+          - return
+          - cancel
+          title: Action
+        comment:
+          anyOf:
+          - type: string
+            maxLength: 2000
+          - type: 'null'
+          title: Comment
+        reason:
+          anyOf:
+          - type: string
+            maxLength: 1000
+          - type: 'null'
+          title: Reason
+      additionalProperties: false
+      type: object
+      required:
+      - action
+      title: Q4SevAction
+    Q4SevCreate:
+      properties:
+        supplier_id:
+          type: string
+          format: uuid
+          title: Supplier Id
+        kind:
+          $ref: '#/components/schemas/QSevKind'
+        method:
+          $ref: '#/components/schemas/QSevMethod'
+        audit_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Audit Id
+        criteria:
+          items:
+            $ref: '#/components/schemas/Q4Criterion'
+          type: array
+          title: Criteria
+        recommendation:
+          anyOf:
+          - $ref: '#/components/schemas/QSevRecommendation'
+          - type: 'null'
+        conditions:
+          anyOf:
+          - type: string
+            maxLength: 1000
+          - type: 'null'
+          title: Conditions
+        evaluated_at:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Evaluated At
+      additionalProperties: false
+      type: object
+      required:
+      - supplier_id
+      - kind
+      - method
+      title: Q4SevCreate
+    Q4SevRead:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        project_id:
+          type: string
+          format: uuid
+          title: Project Id
+        sev_no:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Sev No
+        supplier:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Supplier
+        kind:
+          $ref: '#/components/schemas/QSevKind'
+        method:
+          $ref: '#/components/schemas/QSevMethod'
+        audit_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Audit Id
+        criteria:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Criteria
+        total:
+          anyOf:
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          - type: 'null'
+          title: Total
+        recommendation:
+          anyOf:
+          - $ref: '#/components/schemas/QSevRecommendation'
+          - type: 'null'
+        conditions:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Conditions
+        evaluated_at:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Evaluated At
+        submitted_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Submitted At
+        submitted_by:
+          anyOf:
+          - $ref: '#/components/schemas/Q4UserRef'
+          - type: 'null'
+        approved_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Approved At
+        next_evaluation_due:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Next Evaluation Due
+        status:
+          $ref: '#/components/schemas/QSevStatus'
+        status_reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Status Reason
+        can_approve:
+          type: boolean
+          title: Can Approve
+      type: object
+      required:
+      - id
+      - project_id
+      - sev_no
+      - supplier
+      - kind
+      - method
+      - audit_id
+      - criteria
+      - total
+      - recommendation
+      - conditions
+      - evaluated_at
+      - submitted_at
+      - submitted_by
+      - approved_at
+      - next_evaluation_due
+      - status
+      - status_reason
+      - can_approve
+      title: Q4SevRead
+    Q4SevUpdate:
+      properties:
+        method:
+          anyOf:
+          - $ref: '#/components/schemas/QSevMethod'
+          - type: 'null'
+        audit_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Audit Id
+        criteria:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/Q4Criterion'
+            type: array
+          - type: 'null'
+          title: Criteria
+        recommendation:
+          anyOf:
+          - $ref: '#/components/schemas/QSevRecommendation'
+          - type: 'null'
+        conditions:
+          anyOf:
+          - type: string
+            maxLength: 1000
+          - type: 'null'
+          title: Conditions
+        evaluated_at:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Evaluated At
+      additionalProperties: false
+      type: object
+      title: Q4SevUpdate
+    Q4SpcInput:
+      properties:
+        code:
+          anyOf:
+          - type: string
+            maxLength: 30
+          - type: 'null'
+          title: Code
+        title_en:
+          anyOf:
+          - type: string
+            maxLength: 150
+          - type: 'null'
+          title: Title En
+        title_ar:
+          anyOf:
+          - type: string
+            maxLength: 150
+          - type: 'null'
+          title: Title Ar
+        chart_type:
+          anyOf:
+          - $ref: '#/components/schemas/QSpcType'
+          - type: 'null'
+        source:
+          anyOf:
+          - $ref: '#/components/schemas/QSpcSource'
+          - type: 'null'
+        filters:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Filters
+        subgroup_size:
+          anyOf:
+          - type: integer
+            maximum: 10.0
+            minimum: 2.0
+          - type: 'null'
+          title: Subgroup Size
+        baseline:
+          anyOf:
+          - $ref: '#/components/schemas/QSpcBaseline'
+          - type: 'null'
+        baseline_keys:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Baseline Keys
+        lsl:
+          anyOf:
+          - type: number
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          - type: 'null'
+          title: Lsl
+        usl:
+          anyOf:
+          - type: number
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          - type: 'null'
+          title: Usl
+        owner_user_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Owner User Id
+        active:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Active
+      additionalProperties: false
+      type: object
+      title: Q4SpcInput
+    Q4SpcRead:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        project_id:
+          type: string
+          format: uuid
+          title: Project Id
+        code:
+          type: string
+          title: Code
+        title_en:
+          type: string
+          title: Title En
+        title_ar:
+          type: string
+          title: Title Ar
+        chart_type:
+          $ref: '#/components/schemas/QSpcType'
+        source:
+          $ref: '#/components/schemas/QSpcSource'
+        filters:
+          additionalProperties: true
+          type: object
+          title: Filters
+        subgroup_size:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Subgroup Size
+        baseline:
+          $ref: '#/components/schemas/QSpcBaseline'
+        lsl:
+          anyOf:
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          - type: 'null'
+          title: Lsl
+        usl:
+          anyOf:
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          - type: 'null'
+          title: Usl
+        owner_user_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Owner User Id
+        active:
+          type: boolean
+          title: Active
+        result:
+          additionalProperties: true
+          type: object
+          title: Result
+          description: Centre and limits, provisional flag, points, signals (rule, chart), capability
+            (Cp / Cpk, short-term).
+      type: object
+      required:
+      - id
+      - project_id
+      - code
+      - title_en
+      - title_ar
+      - chart_type
+      - source
+      - filters
+      - subgroup_size
+      - baseline
+      - lsl
+      - usl
+      - owner_user_id
+      - active
+      - result
+      title: Q4SpcRead
+    Q4TransmittalCreate:
+      properties:
+        to_kind:
+          $ref: '#/components/schemas/QTransmittalTo'
+        to_engagement_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: To Engagement Id
+        to_supplier_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: To Supplier Id
+        to_customer_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: To Customer Id
+        to_name:
+          anyOf:
+          - type: string
+            maxLength: 200
+          - type: 'null'
+          title: To Name
+        to_email:
+          anyOf:
+          - type: string
+            maxLength: 200
+          - type: 'null'
+          title: To Email
+        purpose:
+          $ref: '#/components/schemas/QTransmittalPurpose'
+        method:
+          $ref: '#/components/schemas/QTransmittalMethod'
+          default: email
+        subject:
+          type: string
+          maxLength: 200
+          minLength: 3
+          title: Subject
+        note:
+          anyOf:
+          - type: string
+            maxLength: 2000
+          - type: 'null'
+          title: Note
+        response_due_on:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Response Due On
+        items:
+          items:
+            $ref: '#/components/schemas/Q4TransmittalItemInput'
+          type: array
+          maxItems: 100
+          minItems: 1
+          title: Items
+      additionalProperties: false
+      type: object
+      required:
+      - to_kind
+      - purpose
+      - subject
+      - items
+      title: Q4TransmittalCreate
+    Q4TransmittalItemInput:
+      properties:
+        revision_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Revision Id
+        record_type:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Record Type
+        record_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Record Id
+      additionalProperties: false
+      type: object
+      title: Q4TransmittalItemInput
+    Q4TransmittalItemRead:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        kind:
+          $ref: '#/components/schemas/QTransmittalItemKind'
+        revision_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Revision Id
+        record_type:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Record Type
+        record_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Record Id
+        ref:
+          type: string
+          title: Ref
+        title:
+          type: string
+          title: Title
+        response_code:
+          anyOf:
+          - $ref: '#/components/schemas/QResponseCode'
+          - type: 'null'
+        response_note:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Response Note
+      type: object
+      required:
+      - id
+      - kind
+      - revision_id
+      - record_type
+      - record_id
+      - ref
+      - title
+      - response_code
+      - response_note
+      title: Q4TransmittalItemRead
+    Q4TransmittalRead:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        project_id:
+          type: string
+          format: uuid
+          title: Project Id
+        trm_no:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Trm No
+        to_kind:
+          $ref: '#/components/schemas/QTransmittalTo'
+        to_engagement_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: To Engagement Id
+        to_supplier_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: To Supplier Id
+        to_customer_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: To Customer Id
+        to_label_en:
+          type: string
+          title: To Label En
+        to_label_ar:
+          type: string
+          title: To Label Ar
+        to_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: To Name
+        to_email:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: To Email
+        purpose:
+          $ref: '#/components/schemas/QTransmittalPurpose'
+        method:
+          $ref: '#/components/schemas/QTransmittalMethod'
+        subject:
+          type: string
+          title: Subject
+        note:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Note
+        sent_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Sent At
+        response_due_on:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Response Due On
+        response_received_on:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Response Received On
+        response_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Response Name
+        status:
+          $ref: '#/components/schemas/QTransmittalStatus'
+        cover_en_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Cover En Id
+        cover_ar_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Cover Ar Id
+        outbox_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Outbox Id
+        items:
+          items:
+            $ref: '#/components/schemas/Q4TransmittalItemRead'
+          type: array
+          title: Items
+      type: object
+      required:
+      - id
+      - project_id
+      - trm_no
+      - to_kind
+      - to_engagement_id
+      - to_supplier_id
+      - to_customer_id
+      - to_label_en
+      - to_label_ar
+      - to_name
+      - to_email
+      - purpose
+      - method
+      - subject
+      - note
+      - sent_at
+      - response_due_on
+      - response_received_on
+      - response_name
+      - status
+      - cover_en_id
+      - cover_ar_id
+      - outbox_id
+      - items
+      title: Q4TransmittalRead
+    Q4TransmittalRespond:
+      properties:
+        received_on:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Received On
+        response_name:
+          anyOf:
+          - type: string
+            maxLength: 200
+          - type: 'null'
+          title: Response Name
+        items:
+          items:
+            $ref: '#/components/schemas/Q4ItemResponse'
+          type: array
+          title: Items
+      additionalProperties: false
+      type: object
+      title: Q4TransmittalRespond
+    Q4UserRef:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        name_en:
+          type: string
+          title: Name En
+        name_ar:
+          type: string
+          title: Name Ar
+      type: object
+      required:
+      - id
+      - name_en
+      - name_ar
+      title: Q4UserRef
+    Q4WorkValueInput:
+      properties:
+        month:
+          type: string
+          format: date
+          title: Month
+          description: Any day of the month (stored as the first).
+        value_sar:
+          anyOf:
+          - type: number
+            minimum: 0.0
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          title: Value Sar
+      additionalProperties: false
+      type: object
+      required:
+      - month
+      - value_sar
+      title: Q4WorkValueInput
+    Q4WorkValueRead:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        month:
+          type: string
+          format: date
+          title: Month
+        value_sar:
+          type: string
+          pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          title: Value Sar
+      type: object
+      required:
+      - id
+      - month
+      - value_sar
+      title: Q4WorkValueRead
     QAcceptReject:
       type: string
       enum:
@@ -160017,6 +166502,20 @@ components:
       - reject_scrap
       title: QDisposition
       description: List DP.
+    QDocType:
+      type: string
+      enum:
+      - pqp
+      - quality_manual
+      - procedure
+      - work_instruction
+      - sop
+      - method_statement
+      - specification
+      - form
+      - other
+      title: QDocType
+      description: List DT (prefix in `DOC_PREFIX`).
     QDossierCreate:
       properties:
         title_en:
@@ -164304,6 +170803,13 @@ components:
       - verdict
       - clause
       title: QMixTest
+    QMrvStatus:
+      type: string
+      enum:
+      - draft
+      - held
+      - minutes_issued
+      title: QMrvStatus
     QMteCheckKind:
       type: string
       enum:
@@ -167835,6 +174341,23 @@ components:
       required:
       - sector_profile
       title: QProfileSet
+    QProgrammeStatus:
+      type: string
+      enum:
+      - planned
+      - scheduled
+      - done
+      - postponed
+      - cancelled
+      title: QProgrammeStatus
+    QProgrammeSubject:
+      type: string
+      enum:
+      - process
+      - supplier
+      - engagement
+      - clause_set
+      title: QProgrammeSubject
     QPunchCategory:
       type: string
       enum:
@@ -168868,6 +175391,18 @@ components:
       - rate_pct
       - rate_by_length_pct
       title: QRepairRate
+    QResponseCode:
+      type: string
+      enum:
+      - A
+      - B
+      - C
+      - D
+      title: QResponseCode
+      description: 'Per-item response A / B / C / D (approved · approved as noted · revise and resubmit
+        ·
+
+        rejected).'
     QResponseRead:
       properties:
         seq:
@@ -169010,6 +175545,16 @@ components:
       - graded
       - confirmed
       title: QReturnStatus
+    QRevStatus:
+      type: string
+      enum:
+      - draft
+      - for_review
+      - approved
+      - superseded
+      - obsolete
+      title: QRevStatus
+      description: §E.1.2 revision states (the document's status is its current revision's).
     QRevisionRef:
       properties:
         id:
@@ -169034,6 +175579,13 @@ components:
       - revision
       - status
       title: QRevisionRef
+    QRisk:
+      type: string
+      enum:
+      - high
+      - medium
+      - low
+      title: QRisk
     QRpOverride:
       properties:
         assignee_kind:
@@ -169215,6 +175767,18 @@ components:
       - 'no'
       - no_reply
       title: QSatisfaction
+    QScorePeriod:
+      type: string
+      enum:
+      - month
+      - quarter
+      title: QScorePeriod
+    QScoreStatus:
+      type: string
+      enum:
+      - provisional
+      - final
+      title: QScoreStatus
     QSeason:
       type: string
       enum:
@@ -169397,6 +175961,37 @@ components:
       additionalProperties: false
       type: object
       title: QSettingsUpdate
+    QSevKind:
+      type: string
+      enum:
+      - initial
+      - periodic
+      - for_cause
+      title: QSevKind
+    QSevMethod:
+      type: string
+      enum:
+      - questionnaire
+      - audit
+      - document_review
+      - trial_order
+      title: QSevMethod
+    QSevRecommendation:
+      type: string
+      enum:
+      - approve
+      - conditional
+      - reject
+      - suspend
+      title: QSevRecommendation
+    QSevStatus:
+      type: string
+      enum:
+      - draft
+      - submitted
+      - approved
+      - cancelled
+      title: QSevStatus
     QSignoffChannel:
       type: string
       enum:
@@ -169520,6 +176115,31 @@ components:
       - item_count
       - file_count
       title: QSnapshotSection
+    QSpcBaseline:
+      type: string
+      enum:
+      - frozen
+      - rolling
+      title: QSpcBaseline
+    QSpcSource:
+      type: string
+      enum:
+      - conc_strength_28d
+      - slump
+      - dft_spot
+      - compaction_pct
+      - zone_daily_mean_temp
+      - ir_rejection_weekly
+      - receiving_rejection_weekly
+      title: QSpcSource
+      description: Registry list SPCS with the chart type each source supports.
+    QSpcType:
+      type: string
+      enum:
+      - xbar_r
+      - imr
+      - p
+      title: QSpcType
     QSpecimenCalendar:
       properties:
         'on':
@@ -171184,6 +177804,44 @@ components:
       - power_off
       - other
       title: QTestWindowKind
+    QTransmittalItemKind:
+      type: string
+      enum:
+      - document_revision
+      - record
+      title: QTransmittalItemKind
+    QTransmittalMethod:
+      type: string
+      enum:
+      - email
+      - portal
+      - hand
+      title: QTransmittalMethod
+    QTransmittalPurpose:
+      type: string
+      enum:
+      - for_approval
+      - for_review
+      - for_information
+      - for_construction
+      - as_built
+      title: QTransmittalPurpose
+    QTransmittalStatus:
+      type: string
+      enum:
+      - draft
+      - sent
+      - responded
+      - cancelled
+      title: QTransmittalStatus
+    QTransmittalTo:
+      type: string
+      enum:
+      - engagement
+      - supplier
+      - customer
+      - external
+      title: QTransmittalTo
     QTripStatus:
       type: string
       enum:
@@ -176611,6 +183269,10 @@ components:
       - CPS
       - OSHA300
       - HEAT
+      - QMR
+      - QNCR
+      - QSUP
+      - QMRV
       title: RpType
       description: List RT.
     SafetyDevice:

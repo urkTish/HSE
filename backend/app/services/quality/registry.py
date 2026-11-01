@@ -271,6 +271,8 @@ class HomeCount:
     value: int
     href: str | None = None
     tone: str = "neutral"
+    display: str | None = None  # a formatted value instead of the count (Q4 KPI tiles, §E.7)
+    rag: str | None = None  # red / amber / green against the KPI target
 
 
 # extra counts on the Quality home (Q-NAV, §E.7 band): fn(db, principal, project) → counts
