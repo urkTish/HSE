@@ -1680,7 +1680,24 @@
       "DOSSIER_BLOCKED": "The dossier has open items that block submission.",
       "DOSSIER_TOO_LARGE": "The package would exceed 2 GB; split the scope.",
       "DOSSIER_IMMUTABLE": "An accepted dossier is final; start a new revision.",
-      "PLAN_IMAGE_INVALID": "Plans must be PNG or JPEG images up to 10 MB and 6000 px."
+      "PLAN_IMAGE_INVALID": "Plans must be PNG or JPEG images up to 10 MB and 6000 px.",
+      "TEST_RESULT_INCOMPLETE": "The test results are incomplete (lab report file, report number or a result field).",
+      "SIGNOFF_REQUIRED": "This step needs the responsible person's sign-off first.",
+      "MAR_INCOMPLETE": "The material approval request is incomplete.",
+      "MAR_NOT_APPROVED": "This material needs an approved material approval request first.",
+      "MIR_QTY_MISMATCH": "Accepted and rejected quantities must add up to the delivered quantity.",
+      "QUARANTINE_RELEASE_BLOCKED": "Release needs a linked NCR with an approved use-as-is, repair or rework disposition.",
+      "WPS_RANGE_EXCEEDED": "The WPS does not cover this joint.",
+      "WELDER_NOT_QUALIFIED": "The welder is not qualified for this joint (WPQ or continuity).",
+      "CALIBRATION_CERT_REQUIRED": "Attach the calibration certificate before accepting.",
+      "OOT_REVIEW_INCOMPLETE": "Decide every item of the out-of-tolerance review first.",
+      "RESULT_VERIFIED": "Verified results are never edited; record an amendment instead.",
+      "EARLY_STRENGTH_LOW": "The early-age strength is low.",
+      "POUR_SAMPLING_SHORT": "Fewer strength sets were taken than required.",
+      "HOLD_STATUS_UNKNOWN": "The hold point release could not be checked.",
+      "HEAT_NUMBER_MISMATCH": "Heat numbers on the tags are not on the certificates.",
+      "CAL_RANGE_NOT_COVERED": "The calibration points do not cover the range of use.",
+      "WELDER_RECORDED_WITH_OVERRIDE": "Recorded with an unqualified welder; an NCR was opened."
     }
   },
   "theme": {

@@ -384,7 +384,9 @@ def test_stubs_and_registries_exist() -> None:
     assert {QNcrSourceType.observation, QNcrSourceType.complaint} <= set(reg.NCR_SOURCES)
     assert QRecordType.ncr in reg.RECORD_TYPES and "Q0" in reg.PENDING_STEPS
     assert "quality_ncrs" in reg.DATASETS
-    assert reg.competence_check(None, uuid.uuid4(), "CWI", date(2026, 10, 6)).met is None  # type: ignore[arg-type]
+    # with Q2 installed the provider reads the requirement library (empty in this fixture)
+    with get_sessionmaker()() as db:
+        assert reg.competence_check(db, uuid.uuid4(), "CWI", date(2026, 10, 6)).met is None
 
 
 def test_job_slots_run(qsetup: None) -> None:

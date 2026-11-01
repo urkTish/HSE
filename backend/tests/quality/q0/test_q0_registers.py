@@ -250,7 +250,11 @@ def _mte(api: Api, who: str, project: str, ids: Ids, serial: str) -> object:
 
 def test_AC49_mte_register_in_q0(qsetup: None, api: Api, ids: Ids) -> None:
     m = ok(_mte(api, "imran.siddiq", "RUH-CCH", ids, "LG-0001"), 201)
-    assert m["cal_status"] == "unknown" and m["mte_no"] == "MTE-0001"
+    # "unknown" only until Q2 is installed; with Q2 a never-calibrated item is overdue (Q-CAL-02)
+    from app.services.quality import registry as reg
+
+    expected = "overdue" if "Q2" in reg.OPEN_STEPS else "unknown"
+    assert m["cal_status"] == expected and m["mte_no"] == "MTE-0001"
     imran = api.as_("imran.siddiq")
     u = ok(
         imran.post(
