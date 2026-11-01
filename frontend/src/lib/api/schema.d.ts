@@ -15826,6 +15826,2835 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/{project_id}/quality/mars": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Material approval requests */
+        get: operations["q_list_mars"];
+        put?: never;
+        /** New MAR draft (255; construction) */
+        post: operations["q_create_mar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/mars/{mar_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One MAR revision */
+        get: operations["q_get_mar"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edit a MAR draft */
+        patch: operations["q_update_mar"];
+        trace?: never;
+    };
+    "/api/v1/quality/mars/{mar_id}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit (Q-MAT-01 MAR_INCOMPLETE) */
+        post: operations["q_submit_mar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/mars/{mar_id}/decide": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approval code A–D (256 + RPM mar.approve) */
+        post: operations["q_decide_mar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/mars/{mar_id}/resubmit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** New revision after code C */
+        post: operations["q_resubmit_mar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/mars/{mar_id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Withdraw an approved MAR (239, reason) */
+        post: operations["q_withdraw_mar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/mirs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Material inspections on delivery */
+        get: operations["q_list_mirs"];
+        put?: never;
+        /** New MIR draft (255) */
+        post: operations["q_create_mir"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/mirs/{mir_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One MIR */
+        get: operations["q_get_mir"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edit a MIR draft */
+        patch: operations["q_update_mir"];
+        trace?: never;
+    };
+    "/api/v1/quality/mirs/{mir_id}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit (Q-MAT-03 MAR_NOT_APPROVED) */
+        post: operations["q_submit_mir"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/mirs/{mir_id}/decide": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decide (256 + RPM mir.decide; Q-MAT-04, -05) */
+        post: operations["q_decide_mir"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/mirs/{mir_id}/checklist": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Record the delivery checklist (6d engine, owner q_mir; §C.3.2) */
+        put: operations["q_mir_checklist"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/mir-checklist": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The material inspection checklist the project proposes (Q-CHK-04) */
+        get: operations["q_mir_checklist_template"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/mirs/{mir_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel a draft */
+        post: operations["q_cancel_mir"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/mirs/{mir_id}/quarantine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Quarantine the remaining stock (Q-MAT-06) */
+        post: operations["q_mir_quarantine"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/quarantine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Quarantined material with ageing */
+        get: operations["q_list_quarantine"];
+        put?: never;
+        /** Quarantine material (red tag) */
+        post: operations["q_create_quarantine"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/quarantine/{item_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One quarantine item (red-tag QR target) */
+        get: operations["q_get_quarantine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/quarantine/{item_id}/link-ncr": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Link the NCR that decides it */
+        post: operations["q_quarantine_link"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/quarantine/{item_id}/dispose": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Release / return / scrap (256 + RPM quarantine.dispose; Q-MAT-07) */
+        post: operations["q_dispose_quarantine"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/test-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Test types (versioned data, Q-TST-01) */
+        get: operations["q_list_test_types"];
+        put?: never;
+        /** New test type draft (240) */
+        post: operations["q_create_test_type"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/test-types/{type_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One test type version */
+        get: operations["q_get_test_type"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edit a draft (240) */
+        patch: operations["q_update_test_type"];
+        trace?: never;
+    };
+    "/api/v1/quality/test-types/{type_id}/new-version": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** New draft version (optionally a project's own) */
+        post: operations["q_test_type_version"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/test-types/{type_id}/transitions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Publish or retire (239) */
+        post: operations["q_test_type_transition"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/tests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Test requests */
+        get: operations["q_list_tests"];
+        put?: never;
+        /** New test request (257; Q-TST-02 lab checks) */
+        post: operations["q_create_test"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/specimen-calendar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Specimens due today, overdue and in the next 7 days */
+        get: operations["q_specimen_calendar"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/tests/{test_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One test request with specimens, verdict and history */
+        get: operations["q_get_test"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edit details (after verification → 409 RESULT_VERIFIED) */
+        patch: operations["q_update_test"];
+        trace?: never;
+    };
+    "/api/v1/quality/tests/{test_id}/sample": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Requested → Sampled (M&TE usage; specimens and due dates) */
+        post: operations["q_sample_test"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/tests/{test_id}/deliver": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sampled → At Lab */
+        post: operations["q_deliver_test"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/tests/{test_id}/specimens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Specimen results while at the lab (early ages are indicative, Q-TST-07) */
+        put: operations["q_test_specimens"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/tests/{test_id}/results": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** At Lab → Results Entered (Q-TST-04; verdict; Q-TST-06 NCR) */
+        post: operations["q_test_results"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/tests/{test_id}/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Verify or return (258 + RPM test_request.verify; Q-TST-05) */
+        post: operations["q_verify_test"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/tests/{test_id}/amend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Amend verified results (Q-TST-09; the original is kept) */
+        post: operations["q_amend_test"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/tests/{test_id}/ncr-decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Prompt mode: raise the NCR or record why not (Q-TST-06) */
+        post: operations["q_test_ncr_decision"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/tests/{test_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel (Requested / Sampled; reason ≥ 20) */
+        post: operations["q_cancel_test"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/tests/{test_id}/void": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Void (244; reason ≥ 20) */
+        post: operations["q_void_test"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/pours": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Concrete pours with sets required vs taken */
+        get: operations["q_list_pours"];
+        put?: never;
+        /** New pour (257; construction) */
+        post: operations["q_create_pour"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/pours/{pour_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One pour with the mix strength status */
+        get: operations["q_get_pour"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/pours/{pour_id}/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start (Q-TST-12 hold point) */
+        post: operations["q_start_pour"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/pours/{pour_id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Close (POUR_SAMPLING_SHORT when sets are short) */
+        post: operations["q_close_pour"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/pours/{pour_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel a planned pour */
+        post: operations["q_cancel_pour"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/wps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** WPS register */
+        get: operations["q_list_wps"];
+        put?: never;
+        /** New WPS draft (259; construction) */
+        post: operations["q_create_wps"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/wps/{wps_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edit a WPS draft */
+        patch: operations["q_update_wps"];
+        trace?: never;
+    };
+    "/api/v1/quality/wps/{wps_id}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit for approval */
+        post: operations["q_submit_wps"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/wps/{wps_id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve (260 + RPM wps.approve) */
+        post: operations["q_approve_wps"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/wps/{wps_id}/revise": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** New revision of an approved WPS */
+        post: operations["q_revise_wps"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/wps/{wps_id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Withdraw (260, reason) */
+        post: operations["q_withdraw_wps"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/pqrs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** PQR register */
+        get: operations["q_list_pqrs"];
+        put?: never;
+        /** New PQR (259) */
+        post: operations["q_create_pqr"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/pqrs/{pqr_id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve (260 + RPM pqr.approve) */
+        post: operations["q_approve_pqr"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/welders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Welders (Phase 2 workers with a stamp) */
+        get: operations["q_list_welders"];
+        put?: never;
+        /** Register a welder (259) */
+        post: operations["q_create_welder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/welders/{welder_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Activate or deactivate a welder */
+        patch: operations["q_update_welder"];
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/wpqs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Welder qualifications */
+        get: operations["q_list_wpqs"];
+        put?: never;
+        /** New WPQ draft (259) */
+        post: operations["q_create_wpq"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/wpqs/{wpq_id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve (260 + RPM wpq.approve) → Active */
+        post: operations["q_approve_wpq"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/wpqs/{wpq_id}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revoke (260, reason) */
+        post: operations["q_revoke_wpq"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/wpqs/{wpq_id}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Six-monthly confirmation (ISO 9606-1 mode) */
+        post: operations["q_confirm_wpq"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/welds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Weld log */
+        get: operations["q_list_welds"];
+        put?: never;
+        /** Record a weld (Q-WLD-01, -02) */
+        post: operations["q_create_weld"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/welds/{weld_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One weld */
+        get: operations["q_get_weld"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/welds/{weld_id}/visual": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Visual result */
+        post: operations["q_weld_visual"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/welds/{weld_id}/lot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Assign to an NDT lot */
+        post: operations["q_weld_lot"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/welds/{weld_id}/select": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Select for NDT */
+        post: operations["q_weld_select"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/welds/{weld_id}/ndt": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** NDT result (Q-WLD-05 progressive; Q-WLD-08 competence) */
+        post: operations["q_weld_ndt"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/welds/{weld_id}/repair": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Repair R1 / R2 (Q-WLD-06 SIGNOFF_REQUIRED) */
+        post: operations["q_weld_repair"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/welds/{weld_id}/sign-repair2": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve a second repair (RPM weld.repair2_approve) */
+        post: operations["q_weld_sign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/welds/{weld_id}/void": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Void (244) */
+        post: operations["q_weld_void"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/weld-lots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** NDT lots of the project */
+        get: operations["q_weld_lots"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/weld-lots/{lot_code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lot NDT % and shortfall (Q-WLD-04) */
+        get: operations["q_weld_lot_summary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/weld-lots/{lot_code}/pick": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Proposed random selection covering every welder */
+        get: operations["q_weld_lot_pick"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/weld-repair-rates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Repair rate per welder (Q-WLD-07) */
+        get: operations["q_weld_rates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/welder-continuity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Continuity board (welder × process, days left) */
+        get: operations["q_welder_continuity"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/calibrations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Calibration records of the project */
+        get: operations["q_list_calibrations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/mte/{mte_id}/calibrations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Calibration history of an instrument */
+        get: operations["q_mte_calibrations"];
+        put?: never;
+        /** Record a calibration or verification (261) */
+        post: operations["q_create_calibration"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/calibrations/{cal_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One calibration */
+        get: operations["q_get_calibration"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edit a draft calibration */
+        patch: operations["q_update_calibration"];
+        trace?: never;
+    };
+    "/api/v1/quality/calibrations/{cal_id}/decide": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accept or reject (262 + RPM calibration.accept) */
+        post: operations["q_decide_calibration"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/mte/{mte_id}/manual-status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Manual out of service / limited use (or clear) */
+        put: operations["q_mte_manual_status"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/mte/{mte_id}/label": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Status label data (Q-CAL-05) */
+        get: operations["q_mte_label"];
+        put?: never;
+        /** Mark the label printed */
+        post: operations["q_mte_label_printed"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/mte/{mte_id}/range-check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Calibration points cover a range? (Q-CAL-07 CAL_RANGE_NOT_COVERED) */
+        get: operations["q_mte_range_check"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/oot-reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Out-of-tolerance reviews */
+        get: operations["q_list_oot"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/oot-reviews/{review_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One OOT review with its items */
+        get: operations["q_get_oot"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/oot-items/{item_id}/decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decide one item (no_impact · recheck · ncr) */
+        post: operations["q_oot_item"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/oot-reviews/{review_id}/accept-proposals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decide every proposed no_impact item with one justification */
+        post: operations["q_oot_accept"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/oot-reviews/{review_id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Close (every item decided; RPM oot_review.decide) */
+        post: operations["q_close_oot"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/competence/requirements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Competence requirements (org-wide) */
+        get: operations["q_list_competence"];
+        put?: never;
+        /** New requirement (263: QA/QC Manager, Quality Engineer) */
+        post: operations["q_create_competence"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/competence/requirements/{req_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edit a requirement */
+        patch: operations["q_update_competence"];
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/competence/matrix": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** People × requirements (Q-CPT-03) */
+        get: operations["q_competence_matrix"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/competence/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Check one person against one requirement (Q-CPT-01) */
+        get: operations["q_competence_check"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Product master (§D.1.3) */
+        get: operations["q3_list_products"];
+        put?: never;
+        /** Create a product (269) */
+        post: operations["q3_create_product"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/products/{product_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update a product (269) */
+        patch: operations["q3_update_product"];
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Import history */
+        get: operations["q3_list_imports"];
+        put?: never;
+        /**
+         * Import a CSV file: logger readings, stock snapshot, shipments, products or cycle count
+         * @description Readings are accepted row by row (bad rows listed); the other kinds are all-or-nothing (422 IMPORT_ROWS_INVALID with `meta.errors`). 409 IMPORT_DUPLICATE_FILE for the same file and target; 422 IMPORT_TOO_LARGE over `import_max_rows`. `profile` is JSON: {columns, date_format, timezone, unit C|F, decimal, delimiter, logger_serial_column}. Excursions found are returned.
+         */
+        post: operations["q3_import"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/imports/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Preview the first rows of a CSV file as it will be read */
+        post: operations["q3_import_preview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/import-profiles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Saved column mappings of a kind */
+        get: operations["q3_import_profiles"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/imports/{batch_id}/void": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Void a batch within 24 h (244, Q-IMP-05) */
+        post: operations["q3_void_import"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/storage-zones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Storage zones with live status (§D.3) */
+        get: operations["q3_list_zones"];
+        put?: never;
+        /** Storage settings for a zone (266; class defaults) */
+        post: operations["q3_create_zone"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/storage-zones/{zone_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One storage zone */
+        get: operations["q3_get_zone"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edit range or bands (audited; a range change requires re-mapping) */
+        patch: operations["q3_update_zone"];
+        trace?: never;
+    };
+    "/api/v1/quality/storage-zones/{zone_id}/change-notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Layout or HVAC change note (Q-MAP-06) */
+        post: operations["q3_zone_change"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/storage-zones/{zone_id}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Profile chart C48, coverage, TOR, gaps and MKT for a period */
+        get: operations["q3_zone_report"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/storage-zones/{zone_id}/points": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add a monitoring point (266) */
+        post: operations["q3_create_point"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/monitoring-points/{point_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edit a monitoring point */
+        patch: operations["q3_update_point"];
+        trace?: never;
+    };
+    "/api/v1/quality/monitoring-points/{point_id}/loggers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Assign a logger (Q-STO-03; usage recorded) */
+        post: operations["q3_assign_logger"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/monitoring-points/{point_id}/readings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Manual reading with the probe's M&TE (267; 422 CLOCK_SKEW / READING_TOO_OLD / MTE_REQUIRED) */
+        post: operations["q3_manual_reading"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/readings/{reading_id}/annotation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Annotate a reading (values are never edited, Q-STO-07) */
+        post: operations["q3_annotate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/excursions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Excursion register (§D.4) */
+        get: operations["q3_list_excursions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/excursions/{exc_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One excursion */
+        get: operations["q3_get_excursion"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/excursions/{exc_id}/acknowledge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Acknowledge the alert */
+        post: operations["q3_ack_excursion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/excursions/{exc_id}/cause": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record the cause (Detected → Under Assessment) */
+        post: operations["q3_excursion_cause"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/excursions/{exc_id}/impacts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Save impact-assessment lines (Q-EXC-07…09) */
+        put: operations["q3_excursion_impacts"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/excursions/{exc_id}/assess": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sign the impact assessment (RPM excursion.impact; 422 IMPACT_LINES_INCOMPLETE / IMPACT_EVIDENCE_REQUIRED / OWNER_DECISION_REQUIRED) */
+        post: operations["q3_excursion_assess"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/excursions/{exc_id}/reopen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reopen an assessed excursion */
+        post: operations["q3_excursion_reopen"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/excursions/{exc_id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Close with a no-product-impact note (Q-EXC-06) */
+        post: operations["q3_excursion_close"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/excursions/{exc_id}/dismiss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Dismiss as a probe fault (Q-EXC-11) */
+        post: operations["q3_excursion_dismiss"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/mapping-studies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Temperature mapping studies (§D.5) */
+        get: operations["q3_list_studies"];
+        put?: never;
+        /** Design a study (266; 422 MAPPING_LOGGER_NOT_CALIBRATED / MAPPING_DESIGN_INSUFFICIENT) */
+        post: operations["q3_create_study"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/mapping-studies/{study_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One study */
+        get: operations["q3_get_study"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edit the study design */
+        patch: operations["q3_update_study"];
+        trace?: never;
+    };
+    "/api/v1/quality/mapping-studies/{study_id}/evaluate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Evaluate the imported data (Q-MAP-03) */
+        post: operations["q3_evaluate_study"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/mapping-studies/{study_id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve or reject (RPM mapping_study.approve) */
+        post: operations["q3_approve_study"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/check-schedules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Hygiene and pest check schedules with due / overdue periods */
+        get: operations["q3_list_schedules"];
+        put?: never;
+        /** Create a schedule (266) */
+        post: operations["q3_create_schedule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/check-schedules/{schedule_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edit a schedule */
+        patch: operations["q3_update_schedule"];
+        trace?: never;
+    };
+    "/api/v1/quality/check-schedules/{schedule_id}/checks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Run a hygiene check (6d engine; Q-HYG-02 proposals) */
+        post: operations["q3_run_check"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/pest-stations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Pest station register */
+        get: operations["q3_list_stations"];
+        put?: never;
+        /** Add a pest station (266) */
+        post: operations["q3_create_station"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/pest-visits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Pest-control visits */
+        get: operations["q3_list_visits"];
+        put?: never;
+        /** Record a pest-control visit (warning STATION_NOT_SERVICED; Q-HYG-03 proposals) */
+        post: operations["q3_create_visit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/pest-visits/{visit_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One pest visit */
+        get: operations["q3_get_visit"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/logistics-metrics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** K-160…K-168 inputs for a month (§E.4) */
+        get: operations["q3_metrics"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/receipts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Receiving register */
+        get: operations["q3_list_receipts"];
+        put?: never;
+        /** Start a receiving inspection (264; logistics profile) */
+        post: operations["q3_create_receipt"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/receipts/{receipt_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One receipt */
+        get: operations["q3_get_receipt"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edit the header (warnings DOCK_DWELL_LONG, SEAL_MISMATCH) */
+        patch: operations["q3_update_receipt"];
+        trace?: never;
+    };
+    "/api/v1/quality/receipts/{receipt_id}/lines": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add a line (422 MTE_REQUIRED for temperature-controlled classes) */
+        post: operations["q3_add_line"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/receipts/{receipt_id}/lines/{line_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edit an undecided line */
+        patch: operations["q3_update_line"];
+        trace?: never;
+    };
+    "/api/v1/quality/receipts/{receipt_id}/vehicle-check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Vehicle check QRCV (6d engine) */
+        post: operations["q3_vehicle_check"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/receipts/{receipt_id}/inspect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Draft → Inspected (number assigned, proposals computed) */
+        post: operations["q3_inspect_receipt"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/receipts/{receipt_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel a receipt without decided lines */
+        post: operations["q3_cancel_receipt"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/receipt-lines/{line_id}/decide": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record the line decision (RPM receipt.deviation / receipt.reject; 422 DECISION_BETTER_THAN_CRITERIA, OWNER_DECISION_REQUIRED, REJECT_NEEDS_NCR_OR_CLAIM) */
+        post: operations["q3_decide_line"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/holds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Hold register with ageing and blockers */
+        get: operations["q3_list_holds"];
+        put?: never;
+        /** Place a hold (270; Warehouse QC may place) */
+        post: operations["q3_create_hold"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/holds/export.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** WMS hold export (owner, sku, batch, location, qty, hold no, status; Q-HLD-08) */
+        get: operations["q3_export_holds"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/holds/{hold_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One hold */
+        get: operations["q3_get_hold"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/holds/{hold_id}/lines": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add lines to a zone-level hold (Q-HLD-02) */
+        post: operations["q3_hold_lines"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/holds/{hold_id}/segregation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record segregation with a photo (Q-HLD-03) */
+        post: operations["q3_hold_segregation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/holds/{hold_id}/wms-confirmed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tick WMS hold confirmed */
+        post: operations["q3_hold_wms"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/holds/{hold_id}/decide": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Release or reject lines (RPM hold.release / hold.reject; 422 HOLD_RELEASE_BLOCKED, OWNER_DECISION_REQUIRED) */
+        post: operations["q3_hold_decide"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/holds/{hold_id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Close a hold (every rejected line evidenced, Q-HLD-06) */
+        post: operations["q3_hold_close"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/hold-lines/{line_id}/rehold": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Hold a released line again */
+        post: operations["q3_hold_rehold"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/hold-lines/{line_id}/outcome": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Final outcome of a rejected line with evidence (269) */
+        post: operations["q3_hold_outcome"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/stock-snapshots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Imported stock snapshots */
+        get: operations["q3_list_snapshots"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/near-expiry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Expired and near-expiry lines of the latest snapshot (Q-STK-02) */
+        get: operations["q3_near_expiry"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/near-expiry/hold": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Place an expiry hold on stock lines */
+        post: operations["q3_expiry_hold"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/fefo-checks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** FEFO / FIFO checks */
+        get: operations["q3_list_fefo"];
+        put?: never;
+        /** Record a FEFO check (eligible earliest computed, Q-STK-04) */
+        post: operations["q3_create_fefo"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/fefo-checks/{check_id}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm an 'other' exception (266, Q-STK-05) */
+        post: operations["q3_confirm_fefo"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/damage-reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Damage reports */
+        get: operations["q3_list_damage"];
+        put?: never;
+        /** Report damage (a hold unless destroyed on the spot, Q-STK-07) */
+        post: operations["q3_create_damage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/cycle-counts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Cycle counts with IRA */
+        get: operations["q3_list_counts"];
+        put?: never;
+        /** Record a cycle count (Q-STK-09) */
+        post: operations["q3_create_count"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/throughput": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Units handled per site and month (Q-STK-03) */
+        get: operations["q3_list_throughput"];
+        /** Enter a month's throughput */
+        put: operations["q3_put_throughput"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/returns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Returns */
+        get: operations["q3_list_returns"];
+        put?: never;
+        /** Receive a return (269) */
+        post: operations["q3_create_return"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/returns/{return_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One return */
+        get: operations["q3_get_return"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/returns/{return_id}/inspection": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Return inspection checklist QRET */
+        post: operations["q3_return_inspection"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/returns/{return_id}/grade": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Grade lines A–D (422 COLD_RETURN_NO_HISTORY) */
+        post: operations["q3_grade_return"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/returns/{return_id}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm grades (RPM return.disposition; grade C → hold) */
+        post: operations["q3_confirm_return"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/recalls": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Recalls and mock recalls */
+        get: operations["q3_list_recalls"];
+        put?: never;
+        /** Open a recall (271; real recalls hold stock and open a critical NCR) */
+        post: operations["q3_create_recall"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/recalls/{recall_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One recall with its live trace */
+        get: operations["q3_get_recall"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/recalls/{recall_id}/trace": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm the trace (Open → Traced) */
+        post: operations["q3_confirm_trace"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/recalls/{recall_id}/recover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start recovery (real recalls) */
+        post: operations["q3_recover"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/recall-contacts/{item_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Record a consignee contact */
+        patch: operations["q3_recall_contact"];
+        trace?: never;
+    };
+    "/api/v1/quality/recalls/{recall_id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Close (RPM recall.close; 422 RECALL_TARGET_NOT_MET) */
+        post: operations["q3_close_recall"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/recalls/{recall_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel a recall (RPM recall.close) */
+        post: operations["q3_cancel_recall"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/shipments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Imported shipments */
+        get: operations["q3_list_shipments"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/quality/trips": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Trip board */
+        get: operations["q3_list_trips"];
+        put?: never;
+        /** Plan a trip (272; 422 INCOMPATIBLE_LOAD; warning VEHICLE_NOT_READY) */
+        post: operations["q3_create_trip"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/trips/{trip_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One trip */
+        get: operations["q3_get_trip"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/trips/{trip_id}/preload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pre-load check QRPL and loading temperatures */
+        post: operations["q3_trip_preload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/trips/{trip_id}/dispatch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Dispatch (422 PRELOAD_FAILED / OVERRIDE_NOT_ALLOWED; override by RPM trip.dispatch_override) */
+        post: operations["q3_trip_dispatch"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/trips/{trip_id}/pods": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Proof of delivery of one shipment */
+        post: operations["q3_trip_pod"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/trips/{trip_id}/deliver": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Dispatched → Delivered (422 POD_REQUIRED) */
+        post: operations["q3_trip_deliver"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quality/trips/{trip_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel a planned trip */
+        post: operations["q3_trip_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/privacy-notice": {
         parameters: {
             query?: never;
@@ -19673,6 +22502,30 @@ export interface components {
             revision?: string | null;
             /** Revision Of */
             revision_of?: string | null;
+        };
+        /** Body_q3_import */
+        Body_q3_import: {
+            kind: components["schemas"]["QImportKind"];
+            target_type: components["schemas"]["QImportTarget"];
+            /**
+             * Target Id
+             * Format: uuid
+             */
+            target_id: string;
+            /** File */
+            file: string;
+            /** Profile */
+            profile?: string | null;
+            /** As Of */
+            as_of?: string | null;
+        };
+        /** Body_q3_import_preview */
+        Body_q3_import_preview: {
+            kind: components["schemas"]["QImportKind"];
+            /** File */
+            file: string;
+            /** Profile */
+            profile?: string | null;
         };
         /** Body_upload_accident_report_file */
         Body_upload_accident_report_file: {
@@ -27907,7 +30760,7 @@ export interface components {
          * @description Machine-readable error codes. Stable: the frontend translates these.
          * @enum {string}
          */
-        ErrorCode: "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "ACCOUNT_LOCKED" | "SESSION_EXPIRED" | "PRIVACY_ACK_REQUIRED" | "PRIVACY_NOTICE_VERSION_MISMATCH" | "MFA_REQUIRED" | "MFA_CODE_INVALID" | "MFA_ENROLMENT_REQUIRED" | "MFA_REQUIRED_FOR_ROLE" | "MFA_ALREADY_ENABLED" | "MFA_NOT_ENABLED" | "MFA_SETUP_NOT_STARTED" | "FILE_INFECTED" | "SCANNER_UNAVAILABLE" | "SETUP_ALREADY_DONE" | "INVITE_INVALID" | "INVITE_EXPIRED" | "RESET_TOKEN_INVALID" | "WEAK_PASSWORD" | "CURRENT_PASSWORD_INCORRECT" | "FORBIDDEN" | "READ_ONLY_ROLE" | "CONTRACTOR_SUSPENDED" | "SELF_MODIFICATION_FORBIDDEN" | "ROLE_NOT_ASSIGNABLE" | "NOT_FOUND" | "VALIDATION_ERROR" | "DUPLICATE_VALUE" | "INVALID_TRANSITION" | "TRANSITION_CONDITION_NOT_MET" | "PROJECT_CLOSED" | "SITE_INACTIVE" | "ZONE_ARCHIVED" | "CONTRACTOR_NOT_APPROVED" | "LAST_HSE_MANAGER" | "SOD_CONFLICT" | "DUPLICATE_RETURN" | "PERIOD_LOCKED" | "VERIFIER_IS_CREATOR" | "OUTSIDE_MOBILISATION" | "IMPORT_FILE_INVALID" | "IMPORT_HAS_ERRORS" | "IMPORT_EXPIRED" | "IMPORT_NOT_VALIDATED" | "NEAR_MISS_EXCLUSIVE" | "INJURY_CASE_REQUIRED" | "INVESTIGATION_LEVEL_TOO_LOW" | "INVESTIGATION_INCOMPLETE" | "INVESTIGATION_LEAD_NOT_ALLOWED" | "INVESTIGATION_TEAM_INCOMPLETE" | "APPROVER_IS_LEAD" | "CASES_NOT_CONFIRMED" | "HIGHER_CONTROL_REQUIRED" | "JUSTIFICATION_REQUIRED" | "POSSIBLE_ID_NUMBER" | "SAFE_OBSERVATION_IMMUTABLE" | "FINDING_CA_REQUIRED" | "VERIFIER_IS_OWNER" | "VERIFIER_ROLE_NOT_ALLOWED" | "EVIDENCE_REQUIRED" | "EXTENSION_LIMIT_REACHED" | "DUE_DATE_TOO_LATE" | "RESTRICTED_DIMENSION" | "MIXED_PROJECT_SCOPE" | "EXPORT_PURPOSE_REQUIRED" | "FILE_TOO_LARGE" | "FILE_TYPE_NOT_ALLOWED" | "SIGNED_URL_INVALID" | "AI_DISABLED" | "AI_TRANSFER_APPROVAL_REQUIRED" | "AI_UNAVAILABLE" | "AI_RATE_LIMITED" | "GATE_DEVICE_FORBIDDEN" | "GATE_DEVICE_REVOKED" | "GATE_RATE_LIMITED" | "PAIRING_NOT_FOUND" | "WORKER_EXISTS" | "WORKER_EXISTS_OUT_OF_SCOPE" | "ADULT_ATTESTATION_REQUIRED" | "DEPLOYMENT_EXISTS" | "WORKER_BANNED" | "PHOTO_REQUIRED" | "DELIVERER_NOT_ALLOWED" | "INDUCTION_PREREQUISITE" | "INDUCTION_ATTEMPTS_EXCEEDED" | "INDUCTION_TOO_SHORT" | "INDUCTION_EDIT_LOCKED" | "PROFILE_LOOSENING" | "HOOK_PROVIDER_MISSING" | "NOT_AIRPORT_PROJECT" | "APPLICATION_OPEN" | "ID_EXPIRES_SOON" | "ID_EXPIRED" | "VALIDITY_EXCEEDS_LIMIT" | "BACKGROUND_NOT_CLEARED" | "ENDORSER_NOT_ALLOWED" | "PREREQUISITES_NOT_MET" | "AREA_NOT_REQUESTED" | "ADP_PASS_REQUIRED" | "ADP_EXISTS" | "LICENCE_NOT_VALID" | "RTF_REQUIRED" | "TESTS_NOT_VALID" | "SUSPENSION_PERIOD_RUNNING" | "AVP_PRECONDITION" | "AVP_EXISTS" | "LATE_JUSTIFICATION_REQUIRED" | "OB_CONDITIONS_REQUIRED" | "CLEARANCE_NOT_LINKABLE" | "WAP_DURATION_EXCEEDED" | "WSP_REQUIRED" | "WAP_BLOCKED" | "CREW_INVALID" | "FOD_HANDBACK_REQUIRED" | "OPS_ZONES_LOCKED" | "SYSTEM_SUSPENSION" | "CREDENTIAL_TERMINAL" | "REAUTH_REQUIRED" | "COSIGNER_INVALID" | "CONTRACTOR_BLACKLISTED" | "MIXED_SIDE_ZONES" | "ZONES_NOT_SAME_SITE" | "RECEIVER_LIMIT" | "CREW_NOT_IN_TREE" | "DURATION_EXCEEDS_LIMIT" | "BACKDATED_PERMIT" | "PERMIT_READ_ONLY" | "KEY_ROLE_BUSY" | "APPOINTMENT_INVALID" | "ISSUER_APPOINTMENT_MANAGER_ONLY" | "JSA_MISSING" | "JSA_NOT_APPROVED" | "JSA_TYPE_MISMATCH" | "JSA_MANDATORY_HAZARD_MISSING" | "JSA_RESIDUAL_EXTREME" | "JSA_FROZEN" | "RESIDUAL_ACCEPTANCE_MISSING" | "RESIDUAL_ABOVE_INITIAL" | "PPE_ONLY_CONTROLS" | "TEMPLATE_REVIEW_DUE" | "HSE_REVIEW_MISSING" | "DOCUMENT_MISSING" | "CHECKLIST_INCOMPLETE" | "ROLE_MISSING" | "KEY_ROLE_INELIGIBLE" | "NO_ELIGIBLE_CREW" | "HOOK_NOT_MET" | "GAS_TEST_REQUIRED" | "GAS_TEST_FAILED" | "GAS_TEST_EXPIRED" | "DETECTOR_CALIBRATION_OVERDUE" | "DETECTOR_NOT_IN_SERVICE" | "BUMP_TEST_MISSING" | "DETECTOR_SENSOR_MISSING" | "BACKDATED_TEST" | "CSE_POINTS_REQUIRED" | "TESTER_SIGNATURE_REQUIRED" | "ISOLATION_NOT_VERIFIED" | "VERIFIER_IS_APPLIER" | "PERSONAL_LOCKS_MISSING" | "DEISOLATION_BLOCKED" | "LOCK_NOT_AVAILABLE" | "SIMOPS_PROHIBITED" | "SIMOPS_COORDINATION_REQUIRED" | "SIMOPS_RULE_LOCKED" | "WAP_NOT_ACTIVE" | "WAP_CREW_MISSING" | "OUTSIDE_WAP_WINDOW" | "NOTAM_NOT_IN_EFFECT" | "OBS_CLEARANCE_REQUIRED" | "AIRCRAFT_PROXIMITY" | "WIND_LIMIT_EXCEEDED" | "MIDDAY_BAN" | "MIDDAY_BAN_WINDOW" | "OUTSIDE_WINDOW" | "LICENCE_INVALID" | "BARRIER_TOO_SMALL" | "BARRIER_NOT_VERIFIED" | "FIRE_IMPAIRMENT_NOT_APPROVED" | "UTILITY_CLEARANCE_MISSING" | "FALL_CLEARANCE_INSUFFICIENT" | "HAZARDOUS_AREA_PROHIBITED" | "FIRE_WATCH_RUNNING" | "ENTRANTS_INSIDE" | "HEAT_CONTROLS_REQUIRED" | "HANDOVER_LIMIT" | "HANDOVER_TOO_EARLY" | "MECHANICAL_NEAR_SERVICE" | "INSPECTION_REQUIRED" | "ENERGIZED_HV_PROHIBITED" | "EXEMPTION_REQUIRED" | "CAPACITY_EXCEEDED" | "REVALIDATION_NOT_ALLOWED" | "CREW_NOT_BRIEFED" | "CAUSE_NOT_CLEARED" | "PAUSE_NOT_ALLOWED" | "CLOSURE_INCOMPLETE" | "POST_EXPIRY_CHECK_PENDING" | "CA_REQUIRED" | "AUDIT_LOCKED" | "CODE_IN_OTHER_CATALOGUE" | "TPI_NOT_ACCEPTABLE" | "TPI_NOT_APPROVED" | "TPI_SUSPENDED" | "TPI_BLACKLISTED" | "TPI_ACCREDITATION_INVALID" | "TPI_SCOPE_NOT_COVERED" | "TPI_NOT_CLIENT_APPROVED" | "TPI_NOT_INDEPENDENT" | "TPI_ACCREDITATION_REQUIRED" | "STANDARD_KIND_MISMATCH" | "SCOPE_EXCEEDS_ACCREDITATION" | "EQUIPMENT_EXISTS" | "EQUIPMENT_EXISTS_OUT_OF_SCOPE" | "EQUIPMENT_BLACKLISTED" | "CATEGORY_MISMATCH" | "VEHICLE_ALREADY_LINKED" | "USE_DETECTOR_REGISTER" | "ATTRIBUTE_REQUIRED" | "RELIEF_ABOVE_MAWP" | "EQUIPMENT_NOT_IN_SERVICE" | "EQUIPMENT_DEPLOYED_ELSEWHERE" | "TAG_EXISTS" | "EQUIPMENT_RETIRED" | "EQUIPMENT_NOT_REGISTERED" | "EQUIPMENT_NOT_DEPLOYED" | "OPERATOR_REQUIRED" | "EQUIPMENT_NOT_APPROVED" | "EQUIPMENT_OUT_OF_SERVICE" | "EQUIPMENT_QUARANTINED" | "ARRIVAL_INSPECTION_MISSING" | "CERT_EXISTS" | "CERT_NO_REUSED" | "CERT_ALREADY_EXPIRED" | "SCAN_REQUIRED" | "SERIAL_MISMATCH" | "LOAD_TEST_REQUIRED" | "SWL_ABOVE_RATING" | "LIFTING_DUTY_NOT_CERTIFIED" | "LIMITATION_CONFLICT" | "COLOUR_CODE_OUT_OF_PERIOD" | "CONFIGURATION_MISMATCH" | "CONFIGURATION_CHANGED" | "INSPECTION_BEFORE_EVENT" | "BACKDATED_EVENT" | "CONFIGURATION_EVENT_NOT_ALLOWED" | "SCAFFOLD_DESIGN_REQUIRED" | "CREW_NOT_CERTIFIED" | "INSPECTOR_NOT_CERTIFIED" | "BACKDATED_INSPECTION" | "RESTRICTIONS_REQUIRED" | "SCAFFOLD_NOT_REGISTERED" | "SCAFFOLD_INSPECTION_OVERDUE" | "SCAFFOLD_TAG_RED" | "SCAFFOLD_INSPECTION_REQUIRED" | "SCAFFOLD_YELLOW_TAG" | "CERT_ID_MISMATCH" | "NAME_MISMATCH_CONFIRMATION" | "LEVEL_NOT_ACCEPTED" | "LEVEL_REQUIRED" | "CERT_SCOPE_MISMATCH" | "CERT_LIMITATION" | "CARD_RESTRICTION_REVIEW" | "TRADE_CERT_MISSING" | "HOLDER_BANNED" | "CERT_HOLDER_BANNED" | "CERT_MISSING" | "CERT_EXPIRED" | "CERT_UNVERIFIED" | "CERT_SUSPENDED" | "CERT_REVOKED" | "SWL_LIMITATION" | "WORKER_NOT_IN_SCOPE" | "CHANNEL_NOT_REGISTERED" | "VERIFICATION_URL_FOREIGN_DOMAIN" | "EVIDENCE_REQUIRED_FOR_METHOD" | "VERIFICATION_CLOSED" | "ACCESSORY_REPAIR_NOT_ALLOWED" | "TPI_REINSPECTION_REQUIRED" | "DEFECTS_OPEN" | "PHYSICAL_TAG_REQUIRED" | "TPI_DEFECT_NOT_CANCELLABLE" | "PHASE4_NOT_ENABLED" | "HOOK_POLICY_LOOSENING" | "CRITICAL_CODE_NO_DEFERRAL" | "DEFERRAL_USED" | "DEFERRAL_TOO_LONG" | "HOOK_NOT_MET_WARN" | "EXPIRING_7D" | "UNKNOWN_CODE" | "TOKEN_UNKNOWN" | "CREDENTIAL_REVOKED" | "OUT_OF_SCOPE" | "SETTING_LOOSENING" | "EVIDENCE_DOMAIN_MISMATCH" | "IMPORT_SOURCE_NOT_ALLOWED" | "TPI_BLACKLIST_SCOPE_REQUIRED" | "INDUCTION_OWNED_BY_PHASE2" | "CATALOGUE_LOOSENING" | "ACCREDITED_PROVIDER_REQUIRED" | "PRACTICAL_REQUIRED" | "PREREQUISITE_CYCLE" | "COURSE_IN_USE" | "COURSE_INACTIVE" | "PROVIDER_NOT_ACCEPTABLE" | "PROVIDER_NOT_APPROVED" | "PROVIDER_SUSPENDED" | "PROVIDER_BLACKLISTED" | "ACCREDITATION_INVALID" | "ACCREDITATION_SCOPE" | "INTERNAL_NOT_ALLOWED" | "CONTRACTOR_DELIVERY_NOT_ALLOWED" | "NOT_OWN_TREE" | "PROVIDER_ACCREDITATION_REQUIRED" | "PROVIDER_BLACKLIST_SCOPE_REQUIRED" | "TRAINER_NOT_AUTHORISED" | "TRAINER_NOT_TRAINED" | "TRAINER_EVIDENCE_REQUIRED" | "AUTHORISATION_TOO_LONG" | "LINE_DERIVED_FROM_HOOK" | "DUE_DAYS_NOT_ALLOWED" | "ANY_OF_NOT_ALLOWED" | "MATRIX_LOOSENING" | "EXEMPTION_NOT_ALLOWED" | "ZONE_NOT_IN_DEPLOYMENT_SITES" | "SESSION_TOO_SHORT" | "SESSION_DAY_TOO_LONG" | "SESSION_FULL" | "SESSION_IN_PAST" | "BACKDATED_SESSION" | "SCHEDULE_CLASH" | "TRAINING_PREREQUISITE" | "TRAINING_ATTEMPTS_EXCEEDED" | "NOMINATIONS_INCOMPLETE" | "ATTENDANCE_SHEET_REQUIRED" | "ATTENDANCE_INSUFFICIENT" | "ATTENDANCE_DAY_NOT_REACHED" | "ASSESSOR_REQUIRED" | "LANGUAGE_NOT_UNDERSTOOD" | "LANGUAGE_MISMATCH" | "RECORD_ALREADY_EXPIRED" | "REFRESHER_NOT_ELIGIBLE" | "RECORD_EDIT_LOCKED" | "TRAINING_REGISTER_NOT_LIVE" | "TRAINING_REGISTER_LATER" | "TRAINING_HOOKS_NOT_ENABLED" | "TRAINING_MISSING" | "TRAINING_EXPIRED" | "TRAINING_PENDING_REVIEW" | "TRAINING_UNVERIFIED" | "TRAINING_SUSPENDED" | "TRAINING_REVOKED" | "TRAINING_VERIFICATION_FAILED" | "INDUCTION_NOT_VALID" | "HOLDER_NOT_LINKED" | "SESSION_NOT_EDITABLE" | "FITNESS_CODE_IN_USE" | "MEDICAL_PROVIDER_NOT_ACCEPTABLE" | "PROVIDER_KIND_NOT_ALLOWED" | "NOT_PROJECT_CLINIC" | "LICENCE_CHECK_REQUIRED" | "EXAMINER_LICENCE_INVALID" | "EXAMINER_NOT_QUALIFIED" | "EXAMINER_NOT_LINKED" | "PLAN_LOOSENING" | "BACKDATED_ASSESSMENT" | "FITNESS_ALREADY_EXPIRED" | "DUPLICATE_CODE_LINE" | "RESTRICTIONS_NOT_ALLOWED" | "REVIEW_DATE_INVALID" | "HOLD_REFERENCE_INVALID" | "PURPOSE_NOTICE_REQUIRED" | "SECOND_OPINION_REQUIRED" | "ASSESSMENT_LOCKED" | "CLINICAL_DATA_IN_SCAN" | "HOLD_RELEASE_REQUIRES_ASSESSMENT" | "MEDICAL_REGISTER_NOT_LIVE" | "MEDICAL_REGISTER_LATER" | "NO_MEDICAL_PROVIDER" | "MEDICAL_HOOKS_NOT_ENABLED" | "INCIDENT_RECORD_EXPECTED" | "RTW_BEFORE_CLEARANCE" | "PROHIBITED_DATA_HINT" | "MEDICAL_HOLD" | "MEDICAL_UNFIT" | "MEDICAL_PENDING_REVIEW" | "MEDICAL_UNVERIFIED" | "MEDICAL_REVOKED" | "MEDICAL_VERIFICATION_FAILED" | "MEDICAL_MISSING" | "RESTRICTION_CONFLICT" | "MEDICAL_REVIEW_DUE" | "MEDICAL_EXPIRED" | "WORKER_UNKNOWN" | "INSTRUMENT_NOT_COMPLIANT" | "INSTRUMENT_CALIBRATION_EXPIRED" | "ZONE_ALREADY_COVERED" | "REGIME_LOOSENING" | "PERIOD_TOO_SHORT" | "HEAT_COVERAGE_INCOMPLETE" | "WBGT_REQUIRED" | "VALUE_OUT_OF_RANGE" | "BACKDATED_READING" | "WBGT_COMPONENT_MISMATCH" | "STATION_INACTIVE" | "NA_NOT_ALLOWED" | "NOT_IN_BAN_WINDOW" | "NO_ACTIVE_EXEMPTION" | "OUTSIDE_BAN_PERIOD" | "TOO_LATE_TO_CHANGE" | "HEAT_STOP" | "WBGT_READING_REQUIRED" | "HEAT_RESTRICTION" | "HEAT_STOP_FOR_WORKER" | "WORKER_ACCLIMATISING" | "ERP_INCOMPLETE" | "ERP_NOT_APPROVED" | "RESCUE_PLAN_REF_REQUIRED" | "DRILL_FREQUENCY_TOO_LOW" | "ASSEMBLY_POINT_IN_RESTRICTED_AREA" | "ZONE_WITHOUT_ASSEMBLY_POINT" | "ALREADY_IN_TEAM" | "CHECK_BACKDATED" | "CHECK_WITHOUT_SCAN" | "TIMELINE_ORDER" | "INCIDENT_LINK_REQUIRED" | "RESCUE_TEAM_NOT_REGISTERED" | "RESCUE_DRILL_OVERDUE" | "HEIGHT_RESCUE_NOT_READY" | "NO_READY_EXTINGUISHER" | "TEMPLATE_INCOMPLETE" | "TEMPLATE_IN_USE" | "TEMPLATE_REQUIRED" | "TEMPLATE_NOT_APPLICABLE" | "TEMPLATE_IMMUTABLE" | "SEVERITY_LOWERED" | "FIX_ON_SPOT_NOT_ALLOWED" | "STOP_RECORD_REQUIRED" | "STOP_RELEASE_CA_REQUIRED" | "STOP_WORK_ACTIVE" | "OFFLINE_SUBMIT_TOO_LATE" | "CLOCK_SKEW" | "TOPIC_INCOMPLETE" | "TOPIC_REVIEW_OVERDUE" | "WORKER_NOT_MOBILISED" | "DUPLICATE_ATTENDEE" | "ATTENDANCE_EVIDENCE_REQUIRED" | "TALK_LOCKED" | "TBT_SHORT" | "ASPECT_CONTROL_REQUIRED" | "CONTROL_LEVEL_TOO_LOW" | "PRODUCER_REGISTRATION_INVALID" | "PROVIDER_LICENCE_INVALID" | "LICENCE_SCOPE_MISMATCH" | "STREAM_NOT_ACCEPTED" | "CONTAINMENT_INSUFFICIENT" | "AIRSIDE_STORAGE_NOT_SECURED" | "MANIFEST_REF_REQUIRED" | "DISCREPANCY_REASON_REQUIRED" | "FIELD_CALIBRATION_REQUIRED" | "LIMIT_LOOSENING" | "ENGAGEMENT_REQUIRED" | "INCIDENT_FIELDS_REQUIRED" | "INCIDENT_NOT_ENVIRONMENTAL" | "CLEANUP_WASTE_UNTRACKED" | "DUPLICATE_WATER_ENTRY" | "CONSIGNMENT_CLOSED" | "PERMIT_NOT_VALID" | "AVP_NOT_FOUND" | "RULE_LOOSENING" | "CLIENT_RECIPIENT_REQUIRED" | "WAIVER_EVIDENCE_REQUIRED" | "INVESTIGATION_NOT_APPROVED" | "PACK_NOT_APPROVED" | "CHANNEL_NOT_ALLOWED" | "SUBMITTED_AT_INVALID" | "IDENTITY_IN_TEXT" | "LESSON_INCOMPLETE" | "REDACTION_NOT_CONFIRMED" | "SELF_APPROVAL" | "NOT_DISTRIBUTED" | "ON_BEHALF_NOTE_REQUIRED" | "LESSON_NOT_PUBLISHED" | "RATIONALE_REQUIRED" | "FOLLOW_UP_REQUIRED" | "PACK_IMMUTABLE" | "SUBMISSION_LOCKED" | "WEIGHTS_NOT_100" | "LAGGING_WEIGHT_OUT_OF_RANGE" | "CAP_REQUIRED" | "PROFILE_BACKDATED" | "SOURCES_NOT_CONFIRMED" | "COMMENT_WINDOW_CLOSED" | "COMMENT_WINDOW_OPEN" | "DISPUTES_OPEN" | "CORRECTION_NOT_FOUND" | "CAP_NOT_EXCLUDABLE" | "WATCH_ENTRY_OPEN" | "PIP_INCOMPLETE" | "SOURCE_REPORT_NOT_PUBLISHED" | "SELF_REVIEW" | "RECIPIENT_SCOPE" | "EXTERNAL_NOT_ALLOWED" | "PACK_TOO_LARGE_FOR_EMAIL" | "COLUMN_NOT_EXPORTABLE" | "PURPOSE_REQUIRED" | "EXPORT_TOO_LARGE" | "SUBSCRIPTION_PERSONAL_DATA" | "SETTING_OUT_OF_RANGE" | "COLUMN_NOT_PERMITTED" | "PACK_ISSUED_IMMUTABLE" | "SCORECARD_FINAL" | "EXPORT_RATE_LIMIT" | "SCORECARDS_NOT_FINAL" | "ROAD_TYPE_ZONE_MISMATCH" | "VEHICLE_REQUIRED" | "VEHICLE_SECTION_INCOMPLETE" | "ACCIDENT_REPORT_AUTHORITY_REQUIRED" | "ACCIDENT_REPORT_MISSING" | "PLATE_IS_REGISTERED" | "ACCIDENT_REPORT_LOCKED" | "VEHICLE_INVOLVED_LOCKED" | "SITE_VEHICLES_NOT_LIVE" | "OPERATING_CARD_REQUIRED" | "LICENCE_CLASS_NOT_COVERING" | "ASSESSMENT_TOO_OLD" | "DRIVER_NOT_AUTHORISED" | "PRE_USE_CHECK_EXISTS" | "PASSENGERS_EXCEED_SEATS" | "JOURNEY_TIMES_INVALID" | "JOURNEY_CONTACT_IS_DRIVER" | "VEHICLE_DEFECT_HOLD" | "VEHICLE_NOT_READY" | "AUTH_NOT_ACTIVE" | "LICENCE_READ_ONLY" | "LICENCE_LIMIT_REACHED" | "LICENCE_KEY_INVALID" | "PROFILE_REQUIRED" | "PROFILE_INACTIVE" | "RESPONSIBLE_PERSON_NOT_SET" | "NUMBER_FORMAT_INVALID" | "CLASS_LOWERED_NEEDS_APPROVAL" | "CONTAINMENT_REQUIRED" | "RCA_METHOD_NOT_ALLOWED" | "RCA_INCOMPLETE" | "DISPOSITION_QTY_MISMATCH" | "CONCESSION_EVIDENCE_REQUIRED" | "COST_NOT_RECORDED" | "DELAY_RATE_NOT_SET" | "NCR_CLOSE_BLOCKED" | "NCR_REQUIRED_FOR_JUSTIFIED" | "SUPPLIER_DISQUALIFIED" | "MTE_NOT_CALIBRATED" | "STOP_RULE_NOT_ALLOWED" | "LINK_NOT_ALLOWED" | "CRITERION_IMMUTABLE" | "MTE_SERIAL_DUPLICATE" | "SUPPLIER_NOT_APPROVED" | "LAB_NOT_ACCREDITED_FOR_SCOPE" | "HUMAN_ERROR_NOT_ROOT_CAUSE" | "DETECTION_ONLY_ACTION" | "COMPETENCE_NOT_MET" | "BEFORE_QUALITY_START" | "ITP_INCOMPLETE" | "ITP_NOT_APPROVED" | "ITP_IMMUTABLE" | "IR_NOTICE_TOO_SHORT" | "SELF_CHECK_REQUIRED" | "IR_RESULT_INCONSISTENT" | "NCR_REQUIRED" | "HOLD_POINT_NOT_RELEASED" | "HOLD_NOT_WAIVABLE" | "WITNESS_WAIT_NOT_OVER" | "PUNCH_EVIDENCE_REQUIRED" | "DOSSIER_BLOCKED" | "DOSSIER_TOO_LARGE" | "DOSSIER_IMMUTABLE" | "PLAN_IMAGE_INVALID" | "NOT_IMPLEMENTED" | "INTERNAL_ERROR";
+        ErrorCode: "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "ACCOUNT_LOCKED" | "SESSION_EXPIRED" | "PRIVACY_ACK_REQUIRED" | "PRIVACY_NOTICE_VERSION_MISMATCH" | "MFA_REQUIRED" | "MFA_CODE_INVALID" | "MFA_ENROLMENT_REQUIRED" | "MFA_REQUIRED_FOR_ROLE" | "MFA_ALREADY_ENABLED" | "MFA_NOT_ENABLED" | "MFA_SETUP_NOT_STARTED" | "FILE_INFECTED" | "SCANNER_UNAVAILABLE" | "SETUP_ALREADY_DONE" | "INVITE_INVALID" | "INVITE_EXPIRED" | "RESET_TOKEN_INVALID" | "WEAK_PASSWORD" | "CURRENT_PASSWORD_INCORRECT" | "FORBIDDEN" | "READ_ONLY_ROLE" | "CONTRACTOR_SUSPENDED" | "SELF_MODIFICATION_FORBIDDEN" | "ROLE_NOT_ASSIGNABLE" | "NOT_FOUND" | "VALIDATION_ERROR" | "DUPLICATE_VALUE" | "INVALID_TRANSITION" | "TRANSITION_CONDITION_NOT_MET" | "PROJECT_CLOSED" | "SITE_INACTIVE" | "ZONE_ARCHIVED" | "CONTRACTOR_NOT_APPROVED" | "LAST_HSE_MANAGER" | "SOD_CONFLICT" | "DUPLICATE_RETURN" | "PERIOD_LOCKED" | "VERIFIER_IS_CREATOR" | "OUTSIDE_MOBILISATION" | "IMPORT_FILE_INVALID" | "IMPORT_HAS_ERRORS" | "IMPORT_EXPIRED" | "IMPORT_NOT_VALIDATED" | "NEAR_MISS_EXCLUSIVE" | "INJURY_CASE_REQUIRED" | "INVESTIGATION_LEVEL_TOO_LOW" | "INVESTIGATION_INCOMPLETE" | "INVESTIGATION_LEAD_NOT_ALLOWED" | "INVESTIGATION_TEAM_INCOMPLETE" | "APPROVER_IS_LEAD" | "CASES_NOT_CONFIRMED" | "HIGHER_CONTROL_REQUIRED" | "JUSTIFICATION_REQUIRED" | "POSSIBLE_ID_NUMBER" | "SAFE_OBSERVATION_IMMUTABLE" | "FINDING_CA_REQUIRED" | "VERIFIER_IS_OWNER" | "VERIFIER_ROLE_NOT_ALLOWED" | "EVIDENCE_REQUIRED" | "EXTENSION_LIMIT_REACHED" | "DUE_DATE_TOO_LATE" | "RESTRICTED_DIMENSION" | "MIXED_PROJECT_SCOPE" | "EXPORT_PURPOSE_REQUIRED" | "FILE_TOO_LARGE" | "FILE_TYPE_NOT_ALLOWED" | "SIGNED_URL_INVALID" | "AI_DISABLED" | "AI_TRANSFER_APPROVAL_REQUIRED" | "AI_UNAVAILABLE" | "AI_RATE_LIMITED" | "GATE_DEVICE_FORBIDDEN" | "GATE_DEVICE_REVOKED" | "GATE_RATE_LIMITED" | "PAIRING_NOT_FOUND" | "WORKER_EXISTS" | "WORKER_EXISTS_OUT_OF_SCOPE" | "ADULT_ATTESTATION_REQUIRED" | "DEPLOYMENT_EXISTS" | "WORKER_BANNED" | "PHOTO_REQUIRED" | "DELIVERER_NOT_ALLOWED" | "INDUCTION_PREREQUISITE" | "INDUCTION_ATTEMPTS_EXCEEDED" | "INDUCTION_TOO_SHORT" | "INDUCTION_EDIT_LOCKED" | "PROFILE_LOOSENING" | "HOOK_PROVIDER_MISSING" | "NOT_AIRPORT_PROJECT" | "APPLICATION_OPEN" | "ID_EXPIRES_SOON" | "ID_EXPIRED" | "VALIDITY_EXCEEDS_LIMIT" | "BACKGROUND_NOT_CLEARED" | "ENDORSER_NOT_ALLOWED" | "PREREQUISITES_NOT_MET" | "AREA_NOT_REQUESTED" | "ADP_PASS_REQUIRED" | "ADP_EXISTS" | "LICENCE_NOT_VALID" | "RTF_REQUIRED" | "TESTS_NOT_VALID" | "SUSPENSION_PERIOD_RUNNING" | "AVP_PRECONDITION" | "AVP_EXISTS" | "LATE_JUSTIFICATION_REQUIRED" | "OB_CONDITIONS_REQUIRED" | "CLEARANCE_NOT_LINKABLE" | "WAP_DURATION_EXCEEDED" | "WSP_REQUIRED" | "WAP_BLOCKED" | "CREW_INVALID" | "FOD_HANDBACK_REQUIRED" | "OPS_ZONES_LOCKED" | "SYSTEM_SUSPENSION" | "CREDENTIAL_TERMINAL" | "REAUTH_REQUIRED" | "COSIGNER_INVALID" | "CONTRACTOR_BLACKLISTED" | "MIXED_SIDE_ZONES" | "ZONES_NOT_SAME_SITE" | "RECEIVER_LIMIT" | "CREW_NOT_IN_TREE" | "DURATION_EXCEEDS_LIMIT" | "BACKDATED_PERMIT" | "PERMIT_READ_ONLY" | "KEY_ROLE_BUSY" | "APPOINTMENT_INVALID" | "ISSUER_APPOINTMENT_MANAGER_ONLY" | "JSA_MISSING" | "JSA_NOT_APPROVED" | "JSA_TYPE_MISMATCH" | "JSA_MANDATORY_HAZARD_MISSING" | "JSA_RESIDUAL_EXTREME" | "JSA_FROZEN" | "RESIDUAL_ACCEPTANCE_MISSING" | "RESIDUAL_ABOVE_INITIAL" | "PPE_ONLY_CONTROLS" | "TEMPLATE_REVIEW_DUE" | "HSE_REVIEW_MISSING" | "DOCUMENT_MISSING" | "CHECKLIST_INCOMPLETE" | "ROLE_MISSING" | "KEY_ROLE_INELIGIBLE" | "NO_ELIGIBLE_CREW" | "HOOK_NOT_MET" | "GAS_TEST_REQUIRED" | "GAS_TEST_FAILED" | "GAS_TEST_EXPIRED" | "DETECTOR_CALIBRATION_OVERDUE" | "DETECTOR_NOT_IN_SERVICE" | "BUMP_TEST_MISSING" | "DETECTOR_SENSOR_MISSING" | "BACKDATED_TEST" | "CSE_POINTS_REQUIRED" | "TESTER_SIGNATURE_REQUIRED" | "ISOLATION_NOT_VERIFIED" | "VERIFIER_IS_APPLIER" | "PERSONAL_LOCKS_MISSING" | "DEISOLATION_BLOCKED" | "LOCK_NOT_AVAILABLE" | "SIMOPS_PROHIBITED" | "SIMOPS_COORDINATION_REQUIRED" | "SIMOPS_RULE_LOCKED" | "WAP_NOT_ACTIVE" | "WAP_CREW_MISSING" | "OUTSIDE_WAP_WINDOW" | "NOTAM_NOT_IN_EFFECT" | "OBS_CLEARANCE_REQUIRED" | "AIRCRAFT_PROXIMITY" | "WIND_LIMIT_EXCEEDED" | "MIDDAY_BAN" | "MIDDAY_BAN_WINDOW" | "OUTSIDE_WINDOW" | "LICENCE_INVALID" | "BARRIER_TOO_SMALL" | "BARRIER_NOT_VERIFIED" | "FIRE_IMPAIRMENT_NOT_APPROVED" | "UTILITY_CLEARANCE_MISSING" | "FALL_CLEARANCE_INSUFFICIENT" | "HAZARDOUS_AREA_PROHIBITED" | "FIRE_WATCH_RUNNING" | "ENTRANTS_INSIDE" | "HEAT_CONTROLS_REQUIRED" | "HANDOVER_LIMIT" | "HANDOVER_TOO_EARLY" | "MECHANICAL_NEAR_SERVICE" | "INSPECTION_REQUIRED" | "ENERGIZED_HV_PROHIBITED" | "EXEMPTION_REQUIRED" | "CAPACITY_EXCEEDED" | "REVALIDATION_NOT_ALLOWED" | "CREW_NOT_BRIEFED" | "CAUSE_NOT_CLEARED" | "PAUSE_NOT_ALLOWED" | "CLOSURE_INCOMPLETE" | "POST_EXPIRY_CHECK_PENDING" | "CA_REQUIRED" | "AUDIT_LOCKED" | "CODE_IN_OTHER_CATALOGUE" | "TPI_NOT_ACCEPTABLE" | "TPI_NOT_APPROVED" | "TPI_SUSPENDED" | "TPI_BLACKLISTED" | "TPI_ACCREDITATION_INVALID" | "TPI_SCOPE_NOT_COVERED" | "TPI_NOT_CLIENT_APPROVED" | "TPI_NOT_INDEPENDENT" | "TPI_ACCREDITATION_REQUIRED" | "STANDARD_KIND_MISMATCH" | "SCOPE_EXCEEDS_ACCREDITATION" | "EQUIPMENT_EXISTS" | "EQUIPMENT_EXISTS_OUT_OF_SCOPE" | "EQUIPMENT_BLACKLISTED" | "CATEGORY_MISMATCH" | "VEHICLE_ALREADY_LINKED" | "USE_DETECTOR_REGISTER" | "ATTRIBUTE_REQUIRED" | "RELIEF_ABOVE_MAWP" | "EQUIPMENT_NOT_IN_SERVICE" | "EQUIPMENT_DEPLOYED_ELSEWHERE" | "TAG_EXISTS" | "EQUIPMENT_RETIRED" | "EQUIPMENT_NOT_REGISTERED" | "EQUIPMENT_NOT_DEPLOYED" | "OPERATOR_REQUIRED" | "EQUIPMENT_NOT_APPROVED" | "EQUIPMENT_OUT_OF_SERVICE" | "EQUIPMENT_QUARANTINED" | "ARRIVAL_INSPECTION_MISSING" | "CERT_EXISTS" | "CERT_NO_REUSED" | "CERT_ALREADY_EXPIRED" | "SCAN_REQUIRED" | "SERIAL_MISMATCH" | "LOAD_TEST_REQUIRED" | "SWL_ABOVE_RATING" | "LIFTING_DUTY_NOT_CERTIFIED" | "LIMITATION_CONFLICT" | "COLOUR_CODE_OUT_OF_PERIOD" | "CONFIGURATION_MISMATCH" | "CONFIGURATION_CHANGED" | "INSPECTION_BEFORE_EVENT" | "BACKDATED_EVENT" | "CONFIGURATION_EVENT_NOT_ALLOWED" | "SCAFFOLD_DESIGN_REQUIRED" | "CREW_NOT_CERTIFIED" | "INSPECTOR_NOT_CERTIFIED" | "BACKDATED_INSPECTION" | "RESTRICTIONS_REQUIRED" | "SCAFFOLD_NOT_REGISTERED" | "SCAFFOLD_INSPECTION_OVERDUE" | "SCAFFOLD_TAG_RED" | "SCAFFOLD_INSPECTION_REQUIRED" | "SCAFFOLD_YELLOW_TAG" | "CERT_ID_MISMATCH" | "NAME_MISMATCH_CONFIRMATION" | "LEVEL_NOT_ACCEPTED" | "LEVEL_REQUIRED" | "CERT_SCOPE_MISMATCH" | "CERT_LIMITATION" | "CARD_RESTRICTION_REVIEW" | "TRADE_CERT_MISSING" | "HOLDER_BANNED" | "CERT_HOLDER_BANNED" | "CERT_MISSING" | "CERT_EXPIRED" | "CERT_UNVERIFIED" | "CERT_SUSPENDED" | "CERT_REVOKED" | "SWL_LIMITATION" | "WORKER_NOT_IN_SCOPE" | "CHANNEL_NOT_REGISTERED" | "VERIFICATION_URL_FOREIGN_DOMAIN" | "EVIDENCE_REQUIRED_FOR_METHOD" | "VERIFICATION_CLOSED" | "ACCESSORY_REPAIR_NOT_ALLOWED" | "TPI_REINSPECTION_REQUIRED" | "DEFECTS_OPEN" | "PHYSICAL_TAG_REQUIRED" | "TPI_DEFECT_NOT_CANCELLABLE" | "PHASE4_NOT_ENABLED" | "HOOK_POLICY_LOOSENING" | "CRITICAL_CODE_NO_DEFERRAL" | "DEFERRAL_USED" | "DEFERRAL_TOO_LONG" | "HOOK_NOT_MET_WARN" | "EXPIRING_7D" | "UNKNOWN_CODE" | "TOKEN_UNKNOWN" | "CREDENTIAL_REVOKED" | "OUT_OF_SCOPE" | "SETTING_LOOSENING" | "EVIDENCE_DOMAIN_MISMATCH" | "IMPORT_SOURCE_NOT_ALLOWED" | "TPI_BLACKLIST_SCOPE_REQUIRED" | "INDUCTION_OWNED_BY_PHASE2" | "CATALOGUE_LOOSENING" | "ACCREDITED_PROVIDER_REQUIRED" | "PRACTICAL_REQUIRED" | "PREREQUISITE_CYCLE" | "COURSE_IN_USE" | "COURSE_INACTIVE" | "PROVIDER_NOT_ACCEPTABLE" | "PROVIDER_NOT_APPROVED" | "PROVIDER_SUSPENDED" | "PROVIDER_BLACKLISTED" | "ACCREDITATION_INVALID" | "ACCREDITATION_SCOPE" | "INTERNAL_NOT_ALLOWED" | "CONTRACTOR_DELIVERY_NOT_ALLOWED" | "NOT_OWN_TREE" | "PROVIDER_ACCREDITATION_REQUIRED" | "PROVIDER_BLACKLIST_SCOPE_REQUIRED" | "TRAINER_NOT_AUTHORISED" | "TRAINER_NOT_TRAINED" | "TRAINER_EVIDENCE_REQUIRED" | "AUTHORISATION_TOO_LONG" | "LINE_DERIVED_FROM_HOOK" | "DUE_DAYS_NOT_ALLOWED" | "ANY_OF_NOT_ALLOWED" | "MATRIX_LOOSENING" | "EXEMPTION_NOT_ALLOWED" | "ZONE_NOT_IN_DEPLOYMENT_SITES" | "SESSION_TOO_SHORT" | "SESSION_DAY_TOO_LONG" | "SESSION_FULL" | "SESSION_IN_PAST" | "BACKDATED_SESSION" | "SCHEDULE_CLASH" | "TRAINING_PREREQUISITE" | "TRAINING_ATTEMPTS_EXCEEDED" | "NOMINATIONS_INCOMPLETE" | "ATTENDANCE_SHEET_REQUIRED" | "ATTENDANCE_INSUFFICIENT" | "ATTENDANCE_DAY_NOT_REACHED" | "ASSESSOR_REQUIRED" | "LANGUAGE_NOT_UNDERSTOOD" | "LANGUAGE_MISMATCH" | "RECORD_ALREADY_EXPIRED" | "REFRESHER_NOT_ELIGIBLE" | "RECORD_EDIT_LOCKED" | "TRAINING_REGISTER_NOT_LIVE" | "TRAINING_REGISTER_LATER" | "TRAINING_HOOKS_NOT_ENABLED" | "TRAINING_MISSING" | "TRAINING_EXPIRED" | "TRAINING_PENDING_REVIEW" | "TRAINING_UNVERIFIED" | "TRAINING_SUSPENDED" | "TRAINING_REVOKED" | "TRAINING_VERIFICATION_FAILED" | "INDUCTION_NOT_VALID" | "HOLDER_NOT_LINKED" | "SESSION_NOT_EDITABLE" | "FITNESS_CODE_IN_USE" | "MEDICAL_PROVIDER_NOT_ACCEPTABLE" | "PROVIDER_KIND_NOT_ALLOWED" | "NOT_PROJECT_CLINIC" | "LICENCE_CHECK_REQUIRED" | "EXAMINER_LICENCE_INVALID" | "EXAMINER_NOT_QUALIFIED" | "EXAMINER_NOT_LINKED" | "PLAN_LOOSENING" | "BACKDATED_ASSESSMENT" | "FITNESS_ALREADY_EXPIRED" | "DUPLICATE_CODE_LINE" | "RESTRICTIONS_NOT_ALLOWED" | "REVIEW_DATE_INVALID" | "HOLD_REFERENCE_INVALID" | "PURPOSE_NOTICE_REQUIRED" | "SECOND_OPINION_REQUIRED" | "ASSESSMENT_LOCKED" | "CLINICAL_DATA_IN_SCAN" | "HOLD_RELEASE_REQUIRES_ASSESSMENT" | "MEDICAL_REGISTER_NOT_LIVE" | "MEDICAL_REGISTER_LATER" | "NO_MEDICAL_PROVIDER" | "MEDICAL_HOOKS_NOT_ENABLED" | "INCIDENT_RECORD_EXPECTED" | "RTW_BEFORE_CLEARANCE" | "PROHIBITED_DATA_HINT" | "MEDICAL_HOLD" | "MEDICAL_UNFIT" | "MEDICAL_PENDING_REVIEW" | "MEDICAL_UNVERIFIED" | "MEDICAL_REVOKED" | "MEDICAL_VERIFICATION_FAILED" | "MEDICAL_MISSING" | "RESTRICTION_CONFLICT" | "MEDICAL_REVIEW_DUE" | "MEDICAL_EXPIRED" | "WORKER_UNKNOWN" | "INSTRUMENT_NOT_COMPLIANT" | "INSTRUMENT_CALIBRATION_EXPIRED" | "ZONE_ALREADY_COVERED" | "REGIME_LOOSENING" | "PERIOD_TOO_SHORT" | "HEAT_COVERAGE_INCOMPLETE" | "WBGT_REQUIRED" | "VALUE_OUT_OF_RANGE" | "BACKDATED_READING" | "WBGT_COMPONENT_MISMATCH" | "STATION_INACTIVE" | "NA_NOT_ALLOWED" | "NOT_IN_BAN_WINDOW" | "NO_ACTIVE_EXEMPTION" | "OUTSIDE_BAN_PERIOD" | "TOO_LATE_TO_CHANGE" | "HEAT_STOP" | "WBGT_READING_REQUIRED" | "HEAT_RESTRICTION" | "HEAT_STOP_FOR_WORKER" | "WORKER_ACCLIMATISING" | "ERP_INCOMPLETE" | "ERP_NOT_APPROVED" | "RESCUE_PLAN_REF_REQUIRED" | "DRILL_FREQUENCY_TOO_LOW" | "ASSEMBLY_POINT_IN_RESTRICTED_AREA" | "ZONE_WITHOUT_ASSEMBLY_POINT" | "ALREADY_IN_TEAM" | "CHECK_BACKDATED" | "CHECK_WITHOUT_SCAN" | "TIMELINE_ORDER" | "INCIDENT_LINK_REQUIRED" | "RESCUE_TEAM_NOT_REGISTERED" | "RESCUE_DRILL_OVERDUE" | "HEIGHT_RESCUE_NOT_READY" | "NO_READY_EXTINGUISHER" | "TEMPLATE_INCOMPLETE" | "TEMPLATE_IN_USE" | "TEMPLATE_REQUIRED" | "TEMPLATE_NOT_APPLICABLE" | "TEMPLATE_IMMUTABLE" | "SEVERITY_LOWERED" | "FIX_ON_SPOT_NOT_ALLOWED" | "STOP_RECORD_REQUIRED" | "STOP_RELEASE_CA_REQUIRED" | "STOP_WORK_ACTIVE" | "OFFLINE_SUBMIT_TOO_LATE" | "CLOCK_SKEW" | "TOPIC_INCOMPLETE" | "TOPIC_REVIEW_OVERDUE" | "WORKER_NOT_MOBILISED" | "DUPLICATE_ATTENDEE" | "ATTENDANCE_EVIDENCE_REQUIRED" | "TALK_LOCKED" | "TBT_SHORT" | "ASPECT_CONTROL_REQUIRED" | "CONTROL_LEVEL_TOO_LOW" | "PRODUCER_REGISTRATION_INVALID" | "PROVIDER_LICENCE_INVALID" | "LICENCE_SCOPE_MISMATCH" | "STREAM_NOT_ACCEPTED" | "CONTAINMENT_INSUFFICIENT" | "AIRSIDE_STORAGE_NOT_SECURED" | "MANIFEST_REF_REQUIRED" | "DISCREPANCY_REASON_REQUIRED" | "FIELD_CALIBRATION_REQUIRED" | "LIMIT_LOOSENING" | "ENGAGEMENT_REQUIRED" | "INCIDENT_FIELDS_REQUIRED" | "INCIDENT_NOT_ENVIRONMENTAL" | "CLEANUP_WASTE_UNTRACKED" | "DUPLICATE_WATER_ENTRY" | "CONSIGNMENT_CLOSED" | "PERMIT_NOT_VALID" | "AVP_NOT_FOUND" | "RULE_LOOSENING" | "CLIENT_RECIPIENT_REQUIRED" | "WAIVER_EVIDENCE_REQUIRED" | "INVESTIGATION_NOT_APPROVED" | "PACK_NOT_APPROVED" | "CHANNEL_NOT_ALLOWED" | "SUBMITTED_AT_INVALID" | "IDENTITY_IN_TEXT" | "LESSON_INCOMPLETE" | "REDACTION_NOT_CONFIRMED" | "SELF_APPROVAL" | "NOT_DISTRIBUTED" | "ON_BEHALF_NOTE_REQUIRED" | "LESSON_NOT_PUBLISHED" | "RATIONALE_REQUIRED" | "FOLLOW_UP_REQUIRED" | "PACK_IMMUTABLE" | "SUBMISSION_LOCKED" | "WEIGHTS_NOT_100" | "LAGGING_WEIGHT_OUT_OF_RANGE" | "CAP_REQUIRED" | "PROFILE_BACKDATED" | "SOURCES_NOT_CONFIRMED" | "COMMENT_WINDOW_CLOSED" | "COMMENT_WINDOW_OPEN" | "DISPUTES_OPEN" | "CORRECTION_NOT_FOUND" | "CAP_NOT_EXCLUDABLE" | "WATCH_ENTRY_OPEN" | "PIP_INCOMPLETE" | "SOURCE_REPORT_NOT_PUBLISHED" | "SELF_REVIEW" | "RECIPIENT_SCOPE" | "EXTERNAL_NOT_ALLOWED" | "PACK_TOO_LARGE_FOR_EMAIL" | "COLUMN_NOT_EXPORTABLE" | "PURPOSE_REQUIRED" | "EXPORT_TOO_LARGE" | "SUBSCRIPTION_PERSONAL_DATA" | "SETTING_OUT_OF_RANGE" | "COLUMN_NOT_PERMITTED" | "PACK_ISSUED_IMMUTABLE" | "SCORECARD_FINAL" | "EXPORT_RATE_LIMIT" | "SCORECARDS_NOT_FINAL" | "ROAD_TYPE_ZONE_MISMATCH" | "VEHICLE_REQUIRED" | "VEHICLE_SECTION_INCOMPLETE" | "ACCIDENT_REPORT_AUTHORITY_REQUIRED" | "ACCIDENT_REPORT_MISSING" | "PLATE_IS_REGISTERED" | "ACCIDENT_REPORT_LOCKED" | "VEHICLE_INVOLVED_LOCKED" | "SITE_VEHICLES_NOT_LIVE" | "OPERATING_CARD_REQUIRED" | "LICENCE_CLASS_NOT_COVERING" | "ASSESSMENT_TOO_OLD" | "DRIVER_NOT_AUTHORISED" | "PRE_USE_CHECK_EXISTS" | "PASSENGERS_EXCEED_SEATS" | "JOURNEY_TIMES_INVALID" | "JOURNEY_CONTACT_IS_DRIVER" | "VEHICLE_DEFECT_HOLD" | "VEHICLE_NOT_READY" | "AUTH_NOT_ACTIVE" | "LICENCE_READ_ONLY" | "LICENCE_LIMIT_REACHED" | "LICENCE_KEY_INVALID" | "PROFILE_REQUIRED" | "PROFILE_INACTIVE" | "RESPONSIBLE_PERSON_NOT_SET" | "NUMBER_FORMAT_INVALID" | "CLASS_LOWERED_NEEDS_APPROVAL" | "CONTAINMENT_REQUIRED" | "RCA_METHOD_NOT_ALLOWED" | "RCA_INCOMPLETE" | "DISPOSITION_QTY_MISMATCH" | "CONCESSION_EVIDENCE_REQUIRED" | "COST_NOT_RECORDED" | "DELAY_RATE_NOT_SET" | "NCR_CLOSE_BLOCKED" | "NCR_REQUIRED_FOR_JUSTIFIED" | "SUPPLIER_DISQUALIFIED" | "MTE_NOT_CALIBRATED" | "STOP_RULE_NOT_ALLOWED" | "LINK_NOT_ALLOWED" | "CRITERION_IMMUTABLE" | "MTE_SERIAL_DUPLICATE" | "SUPPLIER_NOT_APPROVED" | "LAB_NOT_ACCREDITED_FOR_SCOPE" | "HUMAN_ERROR_NOT_ROOT_CAUSE" | "DETECTION_ONLY_ACTION" | "COMPETENCE_NOT_MET" | "BEFORE_QUALITY_START" | "ITP_INCOMPLETE" | "ITP_NOT_APPROVED" | "ITP_IMMUTABLE" | "IR_NOTICE_TOO_SHORT" | "SELF_CHECK_REQUIRED" | "IR_RESULT_INCONSISTENT" | "NCR_REQUIRED" | "HOLD_POINT_NOT_RELEASED" | "HOLD_NOT_WAIVABLE" | "WITNESS_WAIT_NOT_OVER" | "PUNCH_EVIDENCE_REQUIRED" | "DOSSIER_BLOCKED" | "DOSSIER_TOO_LARGE" | "DOSSIER_IMMUTABLE" | "PLAN_IMAGE_INVALID" | "TEST_RESULT_INCOMPLETE" | "SIGNOFF_REQUIRED" | "MAR_INCOMPLETE" | "MAR_NOT_APPROVED" | "MIR_QTY_MISMATCH" | "QUARANTINE_RELEASE_BLOCKED" | "WPS_RANGE_EXCEEDED" | "WELDER_NOT_QUALIFIED" | "CALIBRATION_CERT_REQUIRED" | "OOT_REVIEW_INCOMPLETE" | "RESULT_VERIFIED" | "EARLY_STRENGTH_LOW" | "POUR_SAMPLING_SHORT" | "HOLD_STATUS_UNKNOWN" | "HEAT_NUMBER_MISMATCH" | "CAL_RANGE_NOT_COVERED" | "WELDER_RECORDED_WITH_OVERRIDE" | "IMPORT_ROWS_INVALID" | "IMPORT_TOO_LARGE" | "IMPORT_DUPLICATE_FILE" | "DECISION_BETTER_THAN_CRITERIA" | "OWNER_DECISION_REQUIRED" | "REJECT_NEEDS_NCR_OR_CLAIM" | "MTE_REQUIRED" | "READING_TOO_OLD" | "IMPACT_LINES_INCOMPLETE" | "IMPACT_EVIDENCE_REQUIRED" | "MAPPING_LOGGER_NOT_CALIBRATED" | "MAPPING_DESIGN_INSUFFICIENT" | "HOLD_RELEASE_BLOCKED" | "COLD_RETURN_NO_HISTORY" | "RECALL_TARGET_NOT_MET" | "INCOMPATIBLE_LOAD" | "PRELOAD_FAILED" | "OVERRIDE_NOT_ALLOWED" | "POD_REQUIRED" | "NOT_IMPLEMENTED" | "INTERNAL_ERROR";
         /** ErrorDetail */
         ErrorDetail: {
             /** @description Stable machine code; map it to EN/AR UI text. */
@@ -45520,6 +48373,2948 @@ export interface components {
              */
             layers: components["schemas"]["PyramidLayerRead"][];
         };
+        /** Q3Annotation */
+        Q3Annotation: {
+            /** Text */
+            text: string;
+        };
+        /** Q3AnswersInput */
+        Q3AnswersInput: {
+            /** Answers */
+            answers: components["schemas"]["AnswerInput"][];
+            /** Template Code */
+            template_code?: string | null;
+        };
+        /** Q3ApproveInput */
+        Q3ApproveInput: {
+            /**
+             * Decision
+             * @default approved
+             * @enum {string}
+             */
+            decision: "approved" | "returned";
+            /** Comment */
+            comment?: string | null;
+            /** Approved On */
+            approved_on?: string | null;
+        };
+        /** Q3AssessInput */
+        Q3AssessInput: {
+            /** Lines */
+            lines?: components["schemas"]["Q3ImpactLineInput"][] | null;
+            /**
+             * Decision
+             * @default approved
+             * @enum {string}
+             */
+            decision: "approved" | "returned";
+            /** Comment */
+            comment?: string | null;
+        };
+        /** Q3Blocker */
+        Q3Blocker: {
+            /** Code */
+            code: string;
+            /** Detail En */
+            detail_en: string;
+            /** Detail Ar */
+            detail_ar: string;
+        };
+        /** Q3CauseInput */
+        Q3CauseInput: {
+            cause: components["schemas"]["QExcursionCause"];
+            /** Cause Note */
+            cause_note?: string | null;
+        };
+        /** Q3ChangeNote */
+        Q3ChangeNote: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "layout" | "hvac";
+            /** Note */
+            note: string;
+        };
+        /** Q3CheckRunInput */
+        Q3CheckRunInput: {
+            /** Answers */
+            answers: components["schemas"]["AnswerInput"][];
+            /** Completed At */
+            completed_at?: string | null;
+        };
+        /** Q3CheckRunResult */
+        Q3CheckRunResult: {
+            response: components["schemas"]["Q3ChecklistResponse"] | null;
+            /** Passed */
+            passed: boolean;
+            /** Proposals */
+            proposals: {
+                [key: string]: unknown;
+            }[];
+        };
+        /** Q3ChecklistResponse */
+        Q3ChecklistResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Template Code */
+            template_code: string;
+            /** Template Version */
+            template_version: number;
+            /** Completed At */
+            completed_at: string | null;
+            /** Score Pct */
+            score_pct: string | null;
+            /** Result */
+            result: string | null;
+            /** Critical Fail Count */
+            critical_fail_count: number;
+            /** Answers */
+            answers: {
+                [key: string]: unknown;
+            }[];
+        };
+        /** Q3Chemical */
+        Q3Chemical: {
+            /** Product */
+            product: string;
+            /** Registration No */
+            registration_no?: string | null;
+            /** Quantity */
+            quantity?: string | null;
+        };
+        /** Q3CommentInput */
+        Q3CommentInput: {
+            /** Comment */
+            comment?: string | null;
+        };
+        /** Q3CompartmentInput */
+        Q3CompartmentInput: {
+            /** Code */
+            code: string;
+            /** Setpoint */
+            setpoint?: number | string | null;
+            /** Interval Minutes */
+            interval_minutes?: number | null;
+        };
+        /** Q3CountCreate */
+        Q3CountCreate: {
+            /**
+             * Site Id
+             * Format: uuid
+             */
+            site_id: string;
+            /** Counted At */
+            counted_at?: string | null;
+            /** Zone Codes */
+            zone_codes?: string[] | null;
+            /** Lines */
+            lines: components["schemas"]["Q3CountLineInput"][];
+        };
+        /** Q3CountLineInput */
+        Q3CountLineInput: {
+            /** Product Id */
+            product_id?: string | null;
+            /** Sku */
+            sku: string;
+            /** Batch */
+            batch?: string | null;
+            /** Location */
+            location: string;
+            /** Zone Code */
+            zone_code?: string | null;
+            /** System Qty */
+            system_qty: number | string;
+            /** Counted Qty */
+            counted_qty: number | string;
+            /** Recount Qty */
+            recount_qty?: number | string | null;
+            /** Tolerance */
+            tolerance?: number | string | null;
+            /** Unit */
+            unit?: string | null;
+            /** Variance Reason */
+            variance_reason?: string | null;
+        };
+        /** Q3CountRead */
+        Q3CountRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Cc No */
+            cc_no: string;
+            /**
+             * Site Id
+             * Format: uuid
+             */
+            site_id: string;
+            /**
+             * Counted At
+             * Format: date-time
+             */
+            counted_at: string;
+            /** Zone Codes */
+            zone_codes: string[];
+            /** Lines Counted */
+            lines_counted: number;
+            /** Lines Within */
+            lines_within: number;
+            /** Ira Pct */
+            ira_pct: string | null;
+            /** Lines */
+            lines: {
+                [key: string]: unknown;
+            }[];
+        };
+        /** Q3CustomerRef */
+        Q3CustomerRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Code */
+            code: string;
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            /** Owner Release Approval */
+            owner_release_approval: boolean;
+        };
+        /** Q3DamageCreate */
+        Q3DamageCreate: {
+            /**
+             * Site Id
+             * Format: uuid
+             */
+            site_id: string;
+            /** Zone Id */
+            zone_id?: string | null;
+            stage: components["schemas"]["QDamageStage"];
+            /**
+             * Product Id
+             * Format: uuid
+             */
+            product_id: string;
+            /** Batch */
+            batch: string;
+            /** Qty */
+            qty: number | string;
+            /**
+             * Unit
+             * @default unit
+             */
+            unit: string;
+            /** Location */
+            location?: string | null;
+            cause: components["schemas"]["QDamageCause"];
+            /** Note */
+            note?: string | null;
+            /**
+             * Destroyed On Spot
+             * @default false
+             */
+            destroyed_on_spot: boolean;
+            /** Owner Notified At */
+            owner_notified_at?: string | null;
+            /** Reported At */
+            reported_at?: string | null;
+        };
+        /** Q3DamagePage */
+        Q3DamagePage: {
+            /** Items */
+            items: components["schemas"]["Q3DamageRead"][];
+            /**
+             * Total
+             * @description Total number of matching items across all pages.
+             */
+            total: number;
+            /**
+             * Page
+             * @description 1-based page number.
+             */
+            page: number;
+            /**
+             * Page Size
+             * @description Items per page (max 200).
+             */
+            page_size: number;
+        };
+        /** Q3DamageRead */
+        Q3DamageRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Dmg No */
+            dmg_no: string;
+            /**
+             * Site Id
+             * Format: uuid
+             */
+            site_id: string;
+            zone: components["schemas"]["Q3Ref"] | null;
+            stage: components["schemas"]["QDamageStage"];
+            product: components["schemas"]["Q3ProductRef"] | null;
+            /** Batch */
+            batch: string;
+            /** Qty */
+            qty: string;
+            /** Unit */
+            unit: string;
+            /** Location */
+            location: string | null;
+            cause: components["schemas"]["QDamageCause"];
+            /** Note */
+            note: string | null;
+            /** Destroyed On Spot */
+            destroyed_on_spot: boolean;
+            /** Owner Notified At */
+            owner_notified_at: string | null;
+            /**
+             * Reported At
+             * Format: date-time
+             */
+            reported_at: string;
+            /** Hold Id */
+            hold_id: string | null;
+            reported_by: components["schemas"]["UserRef"] | null;
+        };
+        /** Q3DismissInput */
+        Q3DismissInput: {
+            /**
+             * Evidence Kind
+             * @enum {string}
+             */
+            evidence_kind: "calibration_check" | "second_instrument";
+            /**
+             * Mte Id
+             * Format: uuid
+             */
+            mte_id: string;
+            /** Second Mte Id */
+            second_mte_id?: string | null;
+            /** Error C */
+            error_c?: number | string | null;
+            /** Attachment Id */
+            attachment_id?: string | null;
+            /** Note */
+            note: string;
+        };
+        /** Q3DispatchInput */
+        Q3DispatchInput: {
+            /** Override Reason */
+            override_reason?: string | null;
+            /**
+             * Request Override
+             * @default false
+             */
+            request_override: boolean;
+            /** Departed At */
+            departed_at?: string | null;
+        };
+        /** Q3ExcursionBrief */
+        Q3ExcursionBrief: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Exc No */
+            exc_no: string | null;
+            severity: components["schemas"]["QExcursionSeverity"];
+            status: components["schemas"]["QExcursionStatus"];
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Ended At */
+            ended_at: string | null;
+            /** Duration Min */
+            duration_min: number;
+        };
+        /** Q3ExcursionListItem */
+        Q3ExcursionListItem: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Exc No */
+            exc_no: string | null;
+            severity: components["schemas"]["QExcursionSeverity"];
+            status: components["schemas"]["QExcursionStatus"];
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Ended At */
+            ended_at: string | null;
+            /** Duration Min */
+            duration_min: number;
+            kind: components["schemas"]["QExcursionKind"];
+            zone: components["schemas"]["Q3Ref"] | null;
+            /** Trip Id */
+            trip_id: string | null;
+            storage_class: components["schemas"]["QStorageClass"];
+            /** Peak Value */
+            peak_value: string | null;
+            /** Max Deviation */
+            max_deviation: string;
+            /** Data Gap */
+            data_gap: boolean;
+            /** Acknowledged */
+            acknowledged: boolean;
+            /** Ncr Id */
+            ncr_id: string | null;
+            /** Hold Id */
+            hold_id: string | null;
+        };
+        /** Q3ExcursionPage */
+        Q3ExcursionPage: {
+            /** Items */
+            items: components["schemas"]["Q3ExcursionListItem"][];
+            /**
+             * Total
+             * @description Total number of matching items across all pages.
+             */
+            total: number;
+            /**
+             * Page
+             * @description 1-based page number.
+             */
+            page: number;
+            /**
+             * Page Size
+             * @description Items per page (max 200).
+             */
+            page_size: number;
+        };
+        /** Q3ExcursionRead */
+        Q3ExcursionRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Exc No */
+            exc_no: string | null;
+            kind: components["schemas"]["QExcursionKind"];
+            site: components["schemas"]["Q3Ref"] | null;
+            zone: components["schemas"]["Q3Ref"] | null;
+            trip: components["schemas"]["Q3TripRef"] | null;
+            /** Compartment */
+            compartment: string | null;
+            storage_class: components["schemas"]["QStorageClass"];
+            /** Transient */
+            transient: boolean;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Ended At */
+            ended_at: string | null;
+            /** Duration Min */
+            duration_min: number;
+            /** Peak Value */
+            peak_value: string | null;
+            /** Peak Point */
+            peak_point: string | null;
+            /** Max Deviation */
+            max_deviation: string;
+            /** Degree Minutes */
+            degree_minutes: string;
+            severity: components["schemas"]["QExcursionSeverity"];
+            /** Data Gap */
+            data_gap: boolean;
+            /** Range Min */
+            range_min: string | null;
+            /** Range Max */
+            range_max: string | null;
+            cause: components["schemas"]["QExcursionCause"] | null;
+            /** Cause Note */
+            cause_note: string | null;
+            status: components["schemas"]["QExcursionStatus"];
+            /** Impact Required */
+            impact_required: boolean;
+            /** No Impact Note */
+            no_impact_note: string | null;
+            /** Dismissal */
+            dismissal: {
+                [key: string]: unknown;
+            } | null;
+            /** Acknowledged At */
+            acknowledged_at: string | null;
+            acknowledged_by: components["schemas"]["UserRef"] | null;
+            /**
+             * Detected At
+             * Format: date-time
+             */
+            detected_at: string;
+            /** Assessed At */
+            assessed_at: string | null;
+            /** Closed At */
+            closed_at: string | null;
+            ncr: components["schemas"]["Q3NcrRef"] | null;
+            hold: components["schemas"]["Q3HoldRef"] | null;
+            /** Impact Lines */
+            impact_lines: components["schemas"]["Q3ImpactLineRead"][];
+            /** Allowed Actions */
+            allowed_actions: string[];
+            /** Signoffs */
+            signoffs: components["schemas"]["QSignoffRead"][];
+        };
+        /** Q3ExpiryHoldInput */
+        Q3ExpiryHoldInput: {
+            /** Stock Line Ids */
+            stock_line_ids: string[];
+        };
+        /** Q3FefoCreate */
+        Q3FefoCreate: {
+            /**
+             * Site Id
+             * Format: uuid
+             */
+            site_id: string;
+            /**
+             * Product Id
+             * Format: uuid
+             */
+            product_id: string;
+            /** Picked Batch */
+            picked_batch: string;
+            /** Picked Expiry */
+            picked_expiry?: string | null;
+            /** Picked Receipt Date */
+            picked_receipt_date?: string | null;
+            /** Location */
+            location?: string | null;
+            /** Order Ref */
+            order_ref?: string | null;
+            /** Checked At */
+            checked_at?: string | null;
+            exception_reason?: components["schemas"]["QFefoException"] | null;
+            /** Exception Note */
+            exception_note?: string | null;
+        };
+        /** Q3FefoPage */
+        Q3FefoPage: {
+            /** Items */
+            items: components["schemas"]["Q3FefoRead"][];
+            /**
+             * Total
+             * @description Total number of matching items across all pages.
+             */
+            total: number;
+            /**
+             * Page
+             * @description 1-based page number.
+             */
+            page: number;
+            /**
+             * Page Size
+             * @description Items per page (max 200).
+             */
+            page_size: number;
+        };
+        /** Q3FefoRead */
+        Q3FefoRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Check No */
+            check_no: string;
+            /**
+             * Site Id
+             * Format: uuid
+             */
+            site_id: string;
+            /**
+             * Checked At
+             * Format: date-time
+             */
+            checked_at: string;
+            /** Order Ref */
+            order_ref: string | null;
+            product: components["schemas"]["Q3ProductRef"] | null;
+            /** Picked Batch */
+            picked_batch: string;
+            /** Picked Expiry */
+            picked_expiry: string | null;
+            /** Picked Receipt Date */
+            picked_receipt_date: string | null;
+            /** Location */
+            location: string | null;
+            /** Eligible Earliest */
+            eligible_earliest: string | null;
+            /** Eligible Batch */
+            eligible_batch: string | null;
+            result: components["schemas"]["QFefoResult"];
+            exception_reason: components["schemas"]["QFefoException"] | null;
+            /** Exception Note */
+            exception_note: string | null;
+            /** Confirmed */
+            confirmed: boolean;
+            /** Counts Compliant */
+            counts_compliant: boolean;
+            recorded_by: components["schemas"]["UserRef"] | null;
+            /** Warnings */
+            warnings?: components["schemas"]["ApiWarning"][];
+        };
+        /** Q3GradeInput */
+        Q3GradeInput: {
+            /** Lines */
+            lines: components["schemas"]["Q3GradeLine"][];
+        };
+        /** Q3GradeLine */
+        Q3GradeLine: {
+            /**
+             * Line Id
+             * Format: uuid
+             */
+            line_id: string;
+            grade: components["schemas"]["QReturnGrade"];
+            /** Temp History */
+            temp_history?: boolean | null;
+            /** Temp History Attachment Id */
+            temp_history_attachment_id?: string | null;
+            /** Note */
+            note?: string | null;
+        };
+        /** Q3HoldCreate */
+        Q3HoldCreate: {
+            /**
+             * Site Id
+             * Format: uuid
+             */
+            site_id: string;
+            reason: components["schemas"]["QHoldReason"];
+            /** Reason Note */
+            reason_note?: string | null;
+            /** Zone Id */
+            zone_id?: string | null;
+            /**
+             * Zone Level
+             * @default false
+             */
+            zone_level: boolean;
+            /** Ncr Id */
+            ncr_id?: string | null;
+            /** Lines */
+            lines?: components["schemas"]["Q3HoldLineInput"][];
+        };
+        /** Q3HoldDecide */
+        Q3HoldDecide: {
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "release" | "reject";
+            /** Line Ids */
+            line_ids?: string[];
+            /** Reason */
+            reason?: string | null;
+            /** Comment */
+            comment?: string | null;
+            /** Owner Decision Attachment Id */
+            owner_decision_attachment_id?: string | null;
+        };
+        /** Q3HoldLineInput */
+        Q3HoldLineInput: {
+            /** Owner Customer Id */
+            owner_customer_id?: string | null;
+            /** Product Id */
+            product_id?: string | null;
+            /** Sku */
+            sku?: string | null;
+            /** Batch */
+            batch: string;
+            /** Expiry Date */
+            expiry_date?: string | null;
+            /** Qty */
+            qty: number | string;
+            /**
+             * Unit
+             * @default unit
+             */
+            unit: string;
+            /** Location */
+            location?: string | null;
+        };
+        /** Q3HoldLineRead */
+        Q3HoldLineRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            owner: components["schemas"]["Q3CustomerRef"] | null;
+            /** Product Id */
+            product_id: string | null;
+            /** Sku */
+            sku: string;
+            /** Description En */
+            description_en: string | null;
+            /** Description Ar */
+            description_ar: string | null;
+            /** Batch */
+            batch: string;
+            /** Expiry Date */
+            expiry_date: string | null;
+            /** Qty */
+            qty: string;
+            /** Unit */
+            unit: string;
+            /** Location */
+            location: string | null;
+            line_status: components["schemas"]["QHoldLineStatus"];
+            proposed_decision: components["schemas"]["QImpactDecision"] | null;
+            /** Owner Decision Attachment Id */
+            owner_decision_attachment_id: string | null;
+            final_outcome: components["schemas"]["QHoldOutcome"] | null;
+            /** Evidence Attachment Id */
+            evidence_attachment_id: string | null;
+            /** Outcome At */
+            outcome_at: string | null;
+            /** Reason */
+            reason: string | null;
+            /** Decided At */
+            decided_at: string | null;
+        };
+        /** Q3HoldLinesInput */
+        Q3HoldLinesInput: {
+            /** Lines */
+            lines: components["schemas"]["Q3HoldLineInput"][];
+        };
+        /** Q3HoldListItem */
+        Q3HoldListItem: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Hold No */
+            hold_no: string;
+            reason: components["schemas"]["QHoldReason"];
+            status: components["schemas"]["QHoldStatus"];
+            zone: components["schemas"]["Q3Ref"] | null;
+            /** Zone Level */
+            zone_level: boolean;
+            /** Source Ref */
+            source_ref: string | null;
+            /**
+             * Placed At
+             * Format: date-time
+             */
+            placed_at: string;
+            /** Age Days */
+            age_days: number;
+            /** Lines */
+            lines: number;
+            /** Lines On Hold */
+            lines_on_hold: number;
+            /** Qty On Hold */
+            qty_on_hold: string;
+            /** Blocked */
+            blocked: boolean;
+            /** Segregated */
+            segregated: boolean;
+            /** Wms Confirmed */
+            wms_confirmed: boolean;
+        };
+        /** Q3HoldPage */
+        Q3HoldPage: {
+            /** Items */
+            items: components["schemas"]["Q3HoldListItem"][];
+            /**
+             * Total
+             * @description Total number of matching items across all pages.
+             */
+            total: number;
+            /**
+             * Page
+             * @description 1-based page number.
+             */
+            page: number;
+            /**
+             * Page Size
+             * @description Items per page (max 200).
+             */
+            page_size: number;
+        };
+        /** Q3HoldRead */
+        Q3HoldRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Hold No */
+            hold_no: string;
+            site: components["schemas"]["Q3Ref"] | null;
+            zone: components["schemas"]["Q3Ref"] | null;
+            reason: components["schemas"]["QHoldReason"];
+            /** Reason Note */
+            reason_note: string | null;
+            /** Source Type */
+            source_type: string | null;
+            /** Source Id */
+            source_id: string | null;
+            /** Source Ref */
+            source_ref: string | null;
+            /** Ncr Id */
+            ncr_id: string | null;
+            /** Zone Level */
+            zone_level: boolean;
+            storage_class: components["schemas"]["QStorageClass"] | null;
+            segregation: components["schemas"]["QSegregation"] | null;
+            /** Segregation Location */
+            segregation_location: string | null;
+            /** Segregation Photo Id */
+            segregation_photo_id: string | null;
+            /** Segregation At */
+            segregation_at: string | null;
+            /** Wms Confirmed */
+            wms_confirmed: boolean;
+            /** Wms Confirmed At */
+            wms_confirmed_at: string | null;
+            placed_by: components["schemas"]["UserRef"] | null;
+            /**
+             * Placed At
+             * Format: date-time
+             */
+            placed_at: string;
+            status: components["schemas"]["QHoldStatus"];
+            /** Age Days */
+            age_days: number;
+            /** Lines */
+            lines: components["schemas"]["Q3HoldLineRead"][];
+            /** Blockers */
+            blockers: components["schemas"]["Q3Blocker"][];
+            /** Allowed Actions */
+            allowed_actions: string[];
+            /** Signoffs */
+            signoffs: components["schemas"]["QSignoffRead"][];
+        };
+        /** Q3HoldRef */
+        Q3HoldRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Hold No */
+            hold_no: string;
+            status: components["schemas"]["QHoldStatus"];
+            /** Zone Level */
+            zone_level: boolean;
+        };
+        /** Q3ImpactLineInput */
+        Q3ImpactLineInput: {
+            /**
+             * Hold Line Id
+             * Format: uuid
+             */
+            hold_line_id: string;
+            decision: components["schemas"]["QImpactDecision"];
+            /** Justification */
+            justification?: string | null;
+            /** Evidence Attachment Id */
+            evidence_attachment_id?: string | null;
+            /** Owner Decision Attachment Id */
+            owner_decision_attachment_id?: string | null;
+            /** Owner Contact Name */
+            owner_contact_name?: string | null;
+            /** Owner Decision Date */
+            owner_decision_date?: string | null;
+        };
+        /** Q3ImpactLineRead */
+        Q3ImpactLineRead: {
+            hold_line: components["schemas"]["Q3HoldLineRead"];
+            decision: components["schemas"]["QImpactDecision"] | null;
+            /** Justification */
+            justification: string | null;
+            /** Evidence Attachment Id */
+            evidence_attachment_id: string | null;
+            /** Owner Decision Attachment Id */
+            owner_decision_attachment_id: string | null;
+            /** Owner Contact Name */
+            owner_contact_name: string | null;
+            /** Owner Decision Date */
+            owner_decision_date: string | null;
+        };
+        /** Q3ImpactsInput */
+        Q3ImpactsInput: {
+            /** Lines */
+            lines: components["schemas"]["Q3ImpactLineInput"][];
+        };
+        /** Q3ImportPage */
+        Q3ImportPage: {
+            /** Items */
+            items: components["schemas"]["Q3ImportRead"][];
+            /**
+             * Total
+             * @description Total number of matching items across all pages.
+             */
+            total: number;
+            /**
+             * Page
+             * @description 1-based page number.
+             */
+            page: number;
+            /**
+             * Page Size
+             * @description Items per page (max 200).
+             */
+            page_size: number;
+        };
+        /** Q3ImportPreview */
+        Q3ImportPreview: {
+            /** Columns */
+            columns: string[];
+            /** Rows */
+            rows: number;
+            /** Sample */
+            sample: {
+                [key: string]: unknown;
+            }[];
+            /** Profile */
+            profile: {
+                [key: string]: unknown;
+            };
+        };
+        /** Q3ImportRead */
+        Q3ImportRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            kind: components["schemas"]["QImportKind"];
+            /** File Name */
+            file_name: string;
+            /** Sha256 */
+            sha256: string;
+            /** Attachment Id */
+            attachment_id: string | null;
+            target_type: components["schemas"]["QImportTarget"];
+            /**
+             * Target Id
+             * Format: uuid
+             */
+            target_id: string;
+            /** Profile */
+            profile: {
+                [key: string]: unknown;
+            };
+            /** Rows Read */
+            rows_read: number;
+            /** Rows Accepted */
+            rows_accepted: number;
+            /** Rows Rejected */
+            rows_rejected: number;
+            /**
+             * Errors
+             * @description [{row, reason}] (row 1 is the header).
+             */
+            errors: {
+                [key: string]: unknown;
+            }[];
+            /** First At */
+            first_at: string | null;
+            /** Last At */
+            last_at: string | null;
+            status: components["schemas"]["QImportStatus"];
+            /**
+             * Imported At
+             * Format: date-time
+             */
+            imported_at: string;
+            /** Voided At */
+            voided_at: string | null;
+            /** Void Reason */
+            void_reason: string | null;
+            /** Voidable */
+            voidable: boolean;
+        };
+        /** Q3ImportResult */
+        Q3ImportResult: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            kind: components["schemas"]["QImportKind"];
+            /** File Name */
+            file_name: string;
+            /** Sha256 */
+            sha256: string;
+            /** Attachment Id */
+            attachment_id: string | null;
+            target_type: components["schemas"]["QImportTarget"];
+            /**
+             * Target Id
+             * Format: uuid
+             */
+            target_id: string;
+            /** Profile */
+            profile: {
+                [key: string]: unknown;
+            };
+            /** Rows Read */
+            rows_read: number;
+            /** Rows Accepted */
+            rows_accepted: number;
+            /** Rows Rejected */
+            rows_rejected: number;
+            /**
+             * Errors
+             * @description [{row, reason}] (row 1 is the header).
+             */
+            errors: {
+                [key: string]: unknown;
+            }[];
+            /** First At */
+            first_at: string | null;
+            /** Last At */
+            last_at: string | null;
+            status: components["schemas"]["QImportStatus"];
+            /**
+             * Imported At
+             * Format: date-time
+             */
+            imported_at: string;
+            /** Voided At */
+            voided_at: string | null;
+            /** Void Reason */
+            void_reason: string | null;
+            /** Voidable */
+            voidable: boolean;
+            /** Excursions */
+            excursions?: components["schemas"]["Q3ExcursionBrief"][];
+            /** Snapshot Id */
+            snapshot_id?: string | null;
+            /** Shipments */
+            shipments?: number | null;
+            /** Products Created */
+            products_created?: number | null;
+            /** Products Updated */
+            products_updated?: number | null;
+            /** Cycle Count Id */
+            cycle_count_id?: string | null;
+        };
+        /** Q3LineDecide */
+        Q3LineDecide: {
+            decision?: components["schemas"]["QLineDecision"] | null;
+            /** Reason */
+            reason?: string | null;
+            /** Owner Approval Attachment Id */
+            owner_approval_attachment_id?: string | null;
+            /** Claim Ref */
+            claim_ref?: string | null;
+            /** Ncr Id */
+            ncr_id?: string | null;
+            /**
+             * Raise Ncr
+             * @default false
+             */
+            raise_ncr: boolean;
+            /**
+             * Request
+             * @description Ask the responsible person to sign when you do not resolve for the step.
+             * @default false
+             */
+            request: boolean;
+        };
+        /** Q3LoadingTemp */
+        Q3LoadingTemp: {
+            /**
+             * Shipment Id
+             * Format: uuid
+             */
+            shipment_id: string;
+            /** Temp C */
+            temp_c: number | string;
+            /** Mte Id */
+            mte_id?: string | null;
+        };
+        /** Q3LoggerAssign */
+        Q3LoggerAssign: {
+            /**
+             * Mte Id
+             * Format: uuid
+             */
+            mte_id: string;
+            /** From */
+            from?: string | null;
+        };
+        /** Q3ManualReading */
+        Q3ManualReading: {
+            /**
+             * Measured At
+             * Format: date-time
+             */
+            measured_at: string;
+            /** Temperature C */
+            temperature_c?: number | string | null;
+            /** Humidity Pct */
+            humidity_pct?: number | string | null;
+            /** Mte Id */
+            mte_id?: string | null;
+        };
+        /** Q3ManualReadingResult */
+        Q3ManualReadingResult: {
+            reading: components["schemas"]["Q3ReadingRead"];
+            /** Excursions */
+            excursions: components["schemas"]["Q3ExcursionBrief"][];
+            /** Warnings */
+            warnings: components["schemas"]["ApiWarning"][];
+        };
+        /** Q3MappingCreate */
+        Q3MappingCreate: {
+            purpose: components["schemas"]["QMappingPurpose"];
+            season?: components["schemas"]["QSeason"] | null;
+            load_state?: components["schemas"]["QLoadState"] | null;
+            /** Planned Start */
+            planned_start?: string | null;
+            /** Planned End */
+            planned_end?: string | null;
+            /** Interval Minutes */
+            interval_minutes?: number | null;
+            /** Lead User Id */
+            lead_user_id?: string | null;
+            /** Loggers */
+            loggers?: components["schemas"]["Q3MappingLogger"][] | null;
+            /** Test Windows */
+            test_windows?: components["schemas"]["Q3TestWindow"][] | null;
+            /**
+             * Zone Id
+             * Format: uuid
+             */
+            zone_id: string;
+        };
+        /** Q3MappingInput */
+        Q3MappingInput: {
+            purpose?: components["schemas"]["QMappingPurpose"] | null;
+            season?: components["schemas"]["QSeason"] | null;
+            load_state?: components["schemas"]["QLoadState"] | null;
+            /** Planned Start */
+            planned_start?: string | null;
+            /** Planned End */
+            planned_end?: string | null;
+            /** Interval Minutes */
+            interval_minutes?: number | null;
+            /** Lead User Id */
+            lead_user_id?: string | null;
+            /** Loggers */
+            loggers?: components["schemas"]["Q3MappingLogger"][] | null;
+            /** Test Windows */
+            test_windows?: components["schemas"]["Q3TestWindow"][] | null;
+        };
+        /** Q3MappingListItem */
+        Q3MappingListItem: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Map No */
+            map_no: string | null;
+            /** Zone Code */
+            zone_code: string;
+            purpose: components["schemas"]["QMappingPurpose"];
+            season: components["schemas"]["QSeason"];
+            status: components["schemas"]["QMappingStatus"];
+            /** Passed */
+            passed: boolean | null;
+            /** Loggers */
+            loggers: number;
+            /** Planned Start */
+            planned_start: string | null;
+            /** Planned End */
+            planned_end: string | null;
+            /** Valid Until */
+            valid_until: string | null;
+        };
+        /** Q3MappingLogger */
+        Q3MappingLogger: {
+            /**
+             * Mte Id
+             * Format: uuid
+             */
+            mte_id: string;
+            /** Position Code */
+            position_code: string;
+            /** Description */
+            description?: string | null;
+        };
+        /** Q3MappingRead */
+        Q3MappingRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Map No */
+            map_no: string | null;
+            /** Zone */
+            zone: {
+                [key: string]: unknown;
+            };
+            purpose: components["schemas"]["QMappingPurpose"];
+            season: components["schemas"]["QSeason"];
+            load_state: components["schemas"]["QLoadState"];
+            /** Planned Start */
+            planned_start: string | null;
+            /** Planned End */
+            planned_end: string | null;
+            /** Actual Start */
+            actual_start: string | null;
+            /** Actual End */
+            actual_end: string | null;
+            /** Interval Minutes */
+            interval_minutes: number;
+            /** Loggers */
+            loggers: {
+                [key: string]: unknown;
+            }[];
+            /** Test Windows */
+            test_windows: {
+                [key: string]: unknown;
+            }[];
+            lead: components["schemas"]["UserRef"] | null;
+            /** Results */
+            results: {
+                [key: string]: unknown;
+            } | null;
+            /** Passed */
+            passed: boolean | null;
+            /** Recommended Positions */
+            recommended_positions: {
+                [key: string]: unknown;
+            }[];
+            /** Report Attachment Id */
+            report_attachment_id: string | null;
+            status: components["schemas"]["QMappingStatus"];
+            /** Approved On */
+            approved_on: string | null;
+            /** Valid Until */
+            valid_until: string | null;
+            /** Reject Reason */
+            reject_reason: string | null;
+            /** Can Approve */
+            can_approve: boolean;
+            /** Signoffs */
+            signoffs: components["schemas"]["QSignoffRead"][];
+            /** Warnings */
+            warnings?: components["schemas"]["ApiWarning"][];
+        };
+        /**
+         * Q3Metrics
+         * @description K-160…K-168 inputs and values of one month (§E.4; Q4 owns the KPI catalogue).
+         */
+        Q3Metrics: {
+            /** Year */
+            year: number;
+            /** Month */
+            month: number;
+            /** K160 */
+            k160: {
+                [key: string]: unknown;
+            };
+            /** K161 */
+            k161: {
+                [key: string]: unknown;
+            };
+            /** K162 */
+            k162: {
+                [key: string]: unknown;
+            };
+            /** K163 */
+            k163: {
+                [key: string]: unknown;
+            };
+            /** K164 */
+            k164: {
+                [key: string]: unknown;
+            };
+            /** K165 */
+            k165: {
+                [key: string]: unknown;
+            };
+            /** K166 */
+            k166: {
+                [key: string]: unknown;
+            };
+            /** K167 */
+            k167: {
+                [key: string]: unknown;
+            };
+            /** K168 */
+            k168: {
+                [key: string]: unknown;
+            };
+        };
+        /** Q3MteRef */
+        Q3MteRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Mte No */
+            mte_no: string;
+            /** Description */
+            description: string;
+            cal_status: components["schemas"]["QCalStatus"];
+            /** Cal Due On */
+            cal_due_on: string | null;
+        };
+        /** Q3NcrRef */
+        Q3NcrRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Ncr No */
+            ncr_no: string | null;
+            /** Status */
+            status: string;
+            /** Classification */
+            classification: string | null;
+        };
+        /** Q3NearExpiry */
+        Q3NearExpiry: {
+            /** Snapshots */
+            snapshots: components["schemas"]["Q3SnapshotRead"][];
+            /** Items */
+            items: components["schemas"]["Q3NearExpiryItem"][];
+            /** Near Expiry Days */
+            near_expiry_days: number;
+            /** Near Expiry Pct */
+            near_expiry_pct: string;
+        };
+        /** Q3NearExpiryItem */
+        Q3NearExpiryItem: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "expired" | "near_expiry";
+            /**
+             * Stock Line Id
+             * Format: uuid
+             */
+            stock_line_id: string;
+            owner: components["schemas"]["Q3CustomerRef"] | null;
+            /** Sku */
+            sku: string;
+            /** Product Id */
+            product_id: string | null;
+            /** Batch */
+            batch: string;
+            /**
+             * Expiry Date
+             * Format: date
+             */
+            expiry_date: string;
+            /** Days Left */
+            days_left: number;
+            /** Location */
+            location: string;
+            /** Zone Code */
+            zone_code: string | null;
+            /** Qty */
+            qty: string;
+            /** Unit */
+            unit: string;
+            /** On Hold */
+            on_hold: boolean;
+            /**
+             * Site Id
+             * Format: uuid
+             */
+            site_id: string;
+        };
+        /** Q3NoteInput */
+        Q3NoteInput: {
+            /** Note */
+            note: string;
+        };
+        /** Q3OutcomeInput */
+        Q3OutcomeInput: {
+            outcome: components["schemas"]["QHoldOutcome"];
+            /**
+             * Evidence Attachment Id
+             * Format: uuid
+             */
+            evidence_attachment_id: string;
+            /** At */
+            at?: string | null;
+        };
+        /** Q3PodCreate */
+        Q3PodCreate: {
+            /**
+             * Shipment Id
+             * Format: uuid
+             */
+            shipment_id: string;
+            /** Delivered At */
+            delivered_at?: string | null;
+            /** Receiver Name */
+            receiver_name: string;
+            /** Receiver Role */
+            receiver_role?: string | null;
+            /**
+             * Signature Attachment Id
+             * Format: uuid
+             */
+            signature_attachment_id: string;
+            /**
+             * Seal Intact
+             * @default true
+             */
+            seal_intact: boolean;
+            /** Product Temp C */
+            product_temp_c?: number | string | null;
+            /** Mte Id */
+            mte_id?: string | null;
+            /** Exceptions */
+            exceptions?: components["schemas"]["Q3PodException"][];
+            /** Photo Ids */
+            photo_ids?: string[];
+        };
+        /** Q3PodException */
+        Q3PodException: {
+            kind: components["schemas"]["QPodException"];
+            /** Qty */
+            qty?: number | string | null;
+            /** Note */
+            note?: string | null;
+        };
+        /** Q3PointCreate */
+        Q3PointCreate: {
+            /** Code */
+            code: string;
+            /** @default general */
+            position: components["schemas"]["QPointPosition"];
+            /** Position Note */
+            position_note?: string | null;
+            /** Interval Minutes */
+            interval_minutes?: number | null;
+        };
+        /** Q3PointRead */
+        Q3PointRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Zone Id
+             * Format: uuid
+             */
+            zone_id: string;
+            /** Code */
+            code: string;
+            position: components["schemas"]["QPointPosition"];
+            /** Position Note */
+            position_note: string | null;
+            /** Interval Minutes */
+            interval_minutes: number;
+            /** Loggers */
+            loggers: {
+                [key: string]: unknown;
+            }[];
+            /** Active */
+            active: boolean;
+        };
+        /** Q3PointUpdate */
+        Q3PointUpdate: {
+            position?: components["schemas"]["QPointPosition"] | null;
+            /** Position Note */
+            position_note?: string | null;
+            /** Interval Minutes */
+            interval_minutes?: number | null;
+            /** Active */
+            active?: boolean | null;
+        };
+        /** Q3PointWithWarnings */
+        Q3PointWithWarnings: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Zone Id
+             * Format: uuid
+             */
+            zone_id: string;
+            /** Code */
+            code: string;
+            position: components["schemas"]["QPointPosition"];
+            /** Position Note */
+            position_note: string | null;
+            /** Interval Minutes */
+            interval_minutes: number;
+            /** Loggers */
+            loggers: {
+                [key: string]: unknown;
+            }[];
+            /** Active */
+            active: boolean;
+            /** Warnings */
+            warnings?: components["schemas"]["ApiWarning"][];
+        };
+        /** Q3PreloadInput */
+        Q3PreloadInput: {
+            /** Answers */
+            answers: components["schemas"]["AnswerInput"][];
+            /** Template Code */
+            template_code?: string | null;
+            /** Box Temp C */
+            box_temp_c?: number | string | null;
+            /** Loading Temps */
+            loading_temps?: components["schemas"]["Q3LoadingTemp"][];
+        };
+        /** Q3ProductCreate */
+        Q3ProductCreate: {
+            /**
+             * Owner Customer Id
+             * Format: uuid
+             */
+            owner_customer_id: string;
+            /** Sku */
+            sku: string;
+            /** Description En */
+            description_en: string;
+            /** Description Ar */
+            description_ar?: string | null;
+            /** Gtin */
+            gtin?: string | null;
+            storage_class: components["schemas"]["QStorageClass"];
+            /** Temp Min */
+            temp_min?: number | string | null;
+            /** Temp Max */
+            temp_max?: number | string | null;
+            /** Shelf Life Days */
+            shelf_life_days?: number | null;
+            /** Min Remaining Shelf Life Pct */
+            min_remaining_shelf_life_pct?: number | string | null;
+            /**
+             * Dated
+             * @default true
+             */
+            dated: boolean;
+        };
+        /** Q3ProductRead */
+        Q3ProductRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Sku */
+            sku: string;
+            owner: components["schemas"]["Q3CustomerRef"] | null;
+            /** Description En */
+            description_en: string;
+            /** Description Ar */
+            description_ar: string;
+            /** Gtin */
+            gtin: string | null;
+            storage_class: components["schemas"]["QStorageClass"];
+            /** Temp Min */
+            temp_min: string | null;
+            /** Temp Max */
+            temp_max: string | null;
+            /** Shelf Life Days */
+            shelf_life_days: number | null;
+            /** Min Remaining Shelf Life Pct */
+            min_remaining_shelf_life_pct: string | null;
+            /** Dated */
+            dated: boolean;
+            /** Active */
+            active: boolean;
+        };
+        /** Q3ProductRef */
+        Q3ProductRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Sku */
+            sku: string;
+            /** Description En */
+            description_en: string;
+            /** Description Ar */
+            description_ar: string;
+            storage_class?: components["schemas"]["QStorageClass"] | null;
+            /** Shelf Life Days */
+            shelf_life_days?: number | null;
+            /** Dated */
+            dated?: boolean | null;
+        };
+        /** Q3ProductUpdate */
+        Q3ProductUpdate: {
+            /** Description En */
+            description_en?: string | null;
+            /** Description Ar */
+            description_ar?: string | null;
+            /** Gtin */
+            gtin?: string | null;
+            storage_class?: components["schemas"]["QStorageClass"] | null;
+            /** Temp Min */
+            temp_min?: number | string | null;
+            /** Temp Max */
+            temp_max?: number | string | null;
+            /** Shelf Life Days */
+            shelf_life_days?: number | null;
+            /** Min Remaining Shelf Life Pct */
+            min_remaining_shelf_life_pct?: number | string | null;
+            /** Dated */
+            dated?: boolean | null;
+            /** Active */
+            active?: boolean | null;
+        };
+        /** Q3ReadingRead */
+        Q3ReadingRead: {
+            /** Id */
+            id: number;
+            target_type: components["schemas"]["QReadingTarget"];
+            /**
+             * Target Id
+             * Format: uuid
+             */
+            target_id: string;
+            /** Channel */
+            channel: string;
+            /**
+             * Measured At
+             * Format: date-time
+             */
+            measured_at: string;
+            /** Temperature C */
+            temperature_c: string | null;
+            /** Humidity Pct */
+            humidity_pct: string | null;
+            source: components["schemas"]["QReadingSource"];
+            /** Batch Id */
+            batch_id: string | null;
+            /** Mte Id */
+            mte_id: string | null;
+            /** Annotation */
+            annotation: {
+                [key: string]: unknown;
+            } | null;
+            /** Probe Fault */
+            probe_fault: boolean;
+        };
+        /** Q3ReasonInput */
+        Q3ReasonInput: {
+            /** Reason */
+            reason: string;
+        };
+        /** Q3RecallClose */
+        Q3RecallClose: {
+            /** Justification */
+            justification?: string | null;
+            /** Comment */
+            comment?: string | null;
+        };
+        /** Q3RecallContactUpdate */
+        Q3RecallContactUpdate: {
+            /** Contacted At */
+            contacted_at?: string | null;
+            /** Method */
+            method?: string | null;
+            /** Response */
+            response?: string | null;
+            /** Qty Retrieved */
+            qty_retrieved?: number | string | null;
+            /** Qty Destroyed By Consignee */
+            qty_destroyed_by_consignee?: number | string | null;
+        };
+        /** Q3RecallCreate */
+        Q3RecallCreate: {
+            /**
+             * Site Id
+             * Format: uuid
+             */
+            site_id: string;
+            recall_type: components["schemas"]["QRecallType"];
+            recall_class?: components["schemas"]["QRecallClass"] | null;
+            /** Items */
+            items: components["schemas"]["Q3RecallItemInput"][];
+            /** Reason */
+            reason: string;
+            /** External Ref */
+            external_ref?: string | null;
+            /** Supplier Id */
+            supplier_id?: string | null;
+            /** Initiated At */
+            initiated_at?: string | null;
+        };
+        /** Q3RecallItemInput */
+        Q3RecallItemInput: {
+            /** Product Id */
+            product_id?: string | null;
+            /** Sku */
+            sku?: string | null;
+            /** Batch */
+            batch: string;
+        };
+        /** Q3RecallListItem */
+        Q3RecallListItem: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Rcl No */
+            rcl_no: string;
+            recall_type: components["schemas"]["QRecallType"];
+            recall_class: components["schemas"]["QRecallClass"] | null;
+            /** Batches */
+            batches: string[];
+            status: components["schemas"]["QRecallStatus"];
+            /**
+             * Initiated At
+             * Format: date-time
+             */
+            initiated_at: string;
+            /** Effectiveness Pct */
+            effectiveness_pct: string | null;
+            /** Trace Minutes */
+            trace_minutes: number | null;
+        };
+        /** Q3RecallRead */
+        Q3RecallRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Rcl No */
+            rcl_no: string;
+            /**
+             * Site Id
+             * Format: uuid
+             */
+            site_id: string;
+            recall_type: components["schemas"]["QRecallType"];
+            recall_class: components["schemas"]["QRecallClass"] | null;
+            /** Items */
+            items: {
+                [key: string]: unknown;
+            }[];
+            /** Reason */
+            reason: string;
+            /** External Ref */
+            external_ref: string | null;
+            supplier: components["schemas"]["Q3SupplierRef"] | null;
+            /**
+             * Initiated At
+             * Format: date-time
+             */
+            initiated_at: string;
+            status: components["schemas"]["QRecallStatus"];
+            /**
+             * Trace
+             * @description Live trace: received, on_hand, shipped, destroyed, unaccounted, consignees, snapshot.
+             */
+            trace: {
+                [key: string]: unknown;
+            };
+            /** Trace Confirmed */
+            trace_confirmed: {
+                [key: string]: unknown;
+            } | null;
+            /** Trace Completed At */
+            trace_completed_at: string | null;
+            /** Trace Minutes */
+            trace_minutes: number | null;
+            /** Trace Target Hours */
+            trace_target_hours: number;
+            /** Trace Slow */
+            trace_slow: boolean;
+            /** Effectiveness Pct */
+            effectiveness_pct: string | null;
+            /** Effectiveness Target Pct */
+            effectiveness_target_pct: string;
+            /** Justification */
+            justification: string | null;
+            /** Hold Id */
+            hold_id: string | null;
+            /** Ncr Id */
+            ncr_id: string | null;
+            /** Cancel Reason */
+            cancel_reason: string | null;
+            /** Closed At */
+            closed_at: string | null;
+            /** Consignee Contacts */
+            consignee_contacts: {
+                [key: string]: unknown;
+            }[];
+            /** Can Close */
+            can_close: boolean;
+            /** Warnings */
+            warnings: {
+                [key: string]: unknown;
+            }[];
+            created_by: components["schemas"]["UserRef"] | null;
+            /** Signoffs */
+            signoffs: components["schemas"]["QSignoffRead"][];
+        };
+        /** Q3ReceiptCreate */
+        Q3ReceiptCreate: {
+            /**
+             * Dock Zone Id
+             * Format: uuid
+             */
+            dock_zone_id: string;
+            /**
+             * Customer Id
+             * Format: uuid
+             */
+            customer_id: string;
+            /** Supplier Id */
+            supplier_id?: string | null;
+            /** Carrier Id */
+            carrier_id?: string | null;
+            /** Po Ref */
+            po_ref?: string | null;
+            /** Asn Ref */
+            asn_ref?: string | null;
+            /** Vehicle Plate */
+            vehicle_plate?: string | null;
+            /** Reefer Display C */
+            reefer_display_c?: number | string | null;
+            /** Seal Expected */
+            seal_expected?: string | null;
+            /** Seal Actual */
+            seal_actual?: string | null;
+            /** Seal Intact */
+            seal_intact?: boolean | null;
+            /** Expected At */
+            expected_at?: string | null;
+            /** Arrived At */
+            arrived_at?: string | null;
+            /** Unload Start */
+            unload_start?: string | null;
+            /** Unload End */
+            unload_end?: string | null;
+            /** Qty Deviation Note */
+            qty_deviation_note?: string | null;
+            /**
+             * Site Id
+             * Format: uuid
+             */
+            site_id: string;
+            /** Lines */
+            lines?: components["schemas"]["Q3ReceiptLineInput"][];
+        };
+        /** Q3ReceiptHeader */
+        Q3ReceiptHeader: {
+            /** Dock Zone Id */
+            dock_zone_id?: string | null;
+            /** Customer Id */
+            customer_id?: string | null;
+            /** Supplier Id */
+            supplier_id?: string | null;
+            /** Carrier Id */
+            carrier_id?: string | null;
+            /** Po Ref */
+            po_ref?: string | null;
+            /** Asn Ref */
+            asn_ref?: string | null;
+            /** Vehicle Plate */
+            vehicle_plate?: string | null;
+            /** Reefer Display C */
+            reefer_display_c?: number | string | null;
+            /** Seal Expected */
+            seal_expected?: string | null;
+            /** Seal Actual */
+            seal_actual?: string | null;
+            /** Seal Intact */
+            seal_intact?: boolean | null;
+            /** Expected At */
+            expected_at?: string | null;
+            /** Arrived At */
+            arrived_at?: string | null;
+            /** Unload Start */
+            unload_start?: string | null;
+            /** Unload End */
+            unload_end?: string | null;
+            /** Qty Deviation Note */
+            qty_deviation_note?: string | null;
+        };
+        /** Q3ReceiptLineInput */
+        Q3ReceiptLineInput: {
+            /** Product Id */
+            product_id?: string | null;
+            /** Batch */
+            batch?: string | null;
+            /** Expiry Date */
+            expiry_date?: string | null;
+            /** Production Date */
+            production_date?: string | null;
+            /** Qty Expected */
+            qty_expected?: number | string | null;
+            /** Qty Received */
+            qty_received?: number | string | null;
+            /** Unit */
+            unit?: string | null;
+            condition?: components["schemas"]["QLineCondition"] | null;
+            /** Labels Ok */
+            labels_ok?: boolean | null;
+            /** Product Temp C */
+            product_temp_c?: number | string | null;
+            /** Mte Id */
+            mte_id?: string | null;
+            /** Sample Count */
+            sample_count?: number | null;
+        };
+        /** Q3ReceiptLineRead */
+        Q3ReceiptLineRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Line No */
+            line_no: number;
+            product: components["schemas"]["Q3ProductRef"] | null;
+            /** Batch */
+            batch: string;
+            /** Expiry Date */
+            expiry_date: string | null;
+            /** Production Date */
+            production_date: string | null;
+            /** Qty Expected */
+            qty_expected: string | null;
+            /** Qty Received */
+            qty_received: string;
+            /** Unit */
+            unit: string;
+            condition: components["schemas"]["QLineCondition"];
+            /** Labels Ok */
+            labels_ok: boolean;
+            /** Product Temp C */
+            product_temp_c: string | null;
+            mte: components["schemas"]["Q3MteRef"] | null;
+            /** Remaining Shelf Life Pct */
+            remaining_shelf_life_pct: string | null;
+            /** Sample Count */
+            sample_count: number | null;
+            /**
+             * Sample Hint
+             * @description ISO 2859-1 general level II single sampling `[VERIFY]`.
+             */
+            sample_hint: number | null;
+            proposed_decision: components["schemas"]["QLineDecision"] | null;
+            /** Proposal Reasons */
+            proposal_reasons: {
+                [key: string]: unknown;
+            }[];
+            /** Criteria Versions */
+            criteria_versions: {
+                [key: string]: unknown;
+            };
+            decision: components["schemas"]["QLineDecision"] | null;
+            requested_decision: components["schemas"]["QLineDecision"] | null;
+            /** Reason */
+            reason: string | null;
+            /** Ncr Id */
+            ncr_id: string | null;
+            /** Claim Ref */
+            claim_ref: string | null;
+            /** Hold Id */
+            hold_id: string | null;
+            /** Owner Approval Attachment Id */
+            owner_approval_attachment_id: string | null;
+            /** Decided At */
+            decided_at: string | null;
+        };
+        /** Q3ReceiptListItem */
+        Q3ReceiptListItem: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Rcv No */
+            rcv_no: string | null;
+            status: components["schemas"]["QReceiptStatus"];
+            customer: components["schemas"]["Q3CustomerRef"] | null;
+            supplier: components["schemas"]["Q3SupplierRef"] | null;
+            /**
+             * Arrived At
+             * Format: date-time
+             */
+            arrived_at: string;
+            /** Asn Ref */
+            asn_ref: string | null;
+            /** Lines */
+            lines: number;
+            /** Decisions */
+            decisions: string[];
+            /** Pending Signoff */
+            pending_signoff: boolean;
+            /** Seal Flag */
+            seal_flag: boolean;
+            /** Dwell Minutes */
+            dwell_minutes: number | null;
+            /** Dwell Long */
+            dwell_long: boolean;
+        };
+        /** Q3ReceiptPage */
+        Q3ReceiptPage: {
+            /** Items */
+            items: components["schemas"]["Q3ReceiptListItem"][];
+            /**
+             * Total
+             * @description Total number of matching items across all pages.
+             */
+            total: number;
+            /**
+             * Page
+             * @description 1-based page number.
+             */
+            page: number;
+            /**
+             * Page Size
+             * @description Items per page (max 200).
+             */
+            page_size: number;
+        };
+        /** Q3ReceiptRead */
+        Q3ReceiptRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Rcv No */
+            rcv_no: string | null;
+            site: components["schemas"]["Q3Ref"] | null;
+            dock_zone: components["schemas"]["Q3Ref"] | null;
+            customer: components["schemas"]["Q3CustomerRef"] | null;
+            supplier: components["schemas"]["Q3SupplierRef"] | null;
+            carrier: components["schemas"]["Q3SupplierRef"] | null;
+            /** Po Ref */
+            po_ref: string | null;
+            /** Asn Ref */
+            asn_ref: string | null;
+            /** Vehicle Plate */
+            vehicle_plate: string | null;
+            /** Reefer Display C */
+            reefer_display_c: string | null;
+            /** Seal Expected */
+            seal_expected: string | null;
+            /** Seal Actual */
+            seal_actual: string | null;
+            /** Seal Intact */
+            seal_intact: boolean;
+            /** Seal Flag */
+            seal_flag: boolean;
+            /** Expected At */
+            expected_at: string | null;
+            /**
+             * Arrived At
+             * Format: date-time
+             */
+            arrived_at: string;
+            /** Unload Start */
+            unload_start: string | null;
+            /** Unload End */
+            unload_end: string | null;
+            /** Dwell Minutes */
+            dwell_minutes: number | null;
+            /** Dwell Limit Minutes */
+            dwell_limit_minutes: number;
+            /** Temp Controlled */
+            temp_controlled: boolean;
+            vehicle_check: components["schemas"]["Q3ChecklistResponse"] | null;
+            /** Transit Batch Id */
+            transit_batch_id: string | null;
+            /** Qty Deviation Note */
+            qty_deviation_note: string | null;
+            status: components["schemas"]["QReceiptStatus"];
+            /** Inspected At */
+            inspected_at: string | null;
+            /** Decided At */
+            decided_at: string | null;
+            /** Cancel Reason */
+            cancel_reason: string | null;
+            created_by: components["schemas"]["UserRef"] | null;
+            /** Lines */
+            lines: components["schemas"]["Q3ReceiptLineRead"][];
+            /** My Steps */
+            my_steps: string[];
+            /** Signoffs */
+            signoffs: components["schemas"]["QSignoffRead"][];
+            /** Warnings */
+            warnings?: components["schemas"]["ApiWarning"][];
+            /** Signoff Id */
+            signoff_id?: string | null;
+        };
+        /** Q3Ref */
+        Q3Ref: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Code */
+            code: string;
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+        };
+        /** Q3ReturnCreate */
+        Q3ReturnCreate: {
+            /**
+             * Site Id
+             * Format: uuid
+             */
+            site_id: string;
+            /**
+             * Customer Id
+             * Format: uuid
+             */
+            customer_id: string;
+            /** Rma Ref */
+            rma_ref?: string | null;
+            /** Received At */
+            received_at?: string | null;
+            /** Reason */
+            reason?: string | null;
+            /** Lines */
+            lines: components["schemas"]["Q3ReturnLineInput"][];
+        };
+        /** Q3ReturnLineInput */
+        Q3ReturnLineInput: {
+            /**
+             * Product Id
+             * Format: uuid
+             */
+            product_id: string;
+            /** Batch */
+            batch: string;
+            /** Qty */
+            qty: number | string;
+            /**
+             * Unit
+             * @default unit
+             */
+            unit: string;
+            /**
+             * Temp History
+             * @default false
+             */
+            temp_history: boolean;
+        };
+        /** Q3ReturnListItem */
+        Q3ReturnListItem: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Ret No */
+            ret_no: string;
+            customer: components["schemas"]["Q3CustomerRef"] | null;
+            /** Rma Ref */
+            rma_ref: string | null;
+            /**
+             * Received At
+             * Format: date-time
+             */
+            received_at: string;
+            status: components["schemas"]["QReturnStatus"];
+            /** Lines */
+            lines: number;
+            /** Grades */
+            grades: string[];
+        };
+        /** Q3ReturnPage */
+        Q3ReturnPage: {
+            /** Items */
+            items: components["schemas"]["Q3ReturnListItem"][];
+            /**
+             * Total
+             * @description Total number of matching items across all pages.
+             */
+            total: number;
+            /**
+             * Page
+             * @description 1-based page number.
+             */
+            page: number;
+            /**
+             * Page Size
+             * @description Items per page (max 200).
+             */
+            page_size: number;
+        };
+        /** Q3ReturnRead */
+        Q3ReturnRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Ret No */
+            ret_no: string;
+            /**
+             * Site Id
+             * Format: uuid
+             */
+            site_id: string;
+            customer: components["schemas"]["Q3CustomerRef"] | null;
+            /** Rma Ref */
+            rma_ref: string | null;
+            /**
+             * Received At
+             * Format: date-time
+             */
+            received_at: string;
+            /** Reason */
+            reason: string | null;
+            status: components["schemas"]["QReturnStatus"];
+            inspection: components["schemas"]["Q3ChecklistResponse"] | null;
+            /** Lines */
+            lines: {
+                [key: string]: unknown;
+            }[];
+            /** Hold Id */
+            hold_id: string | null;
+            /** Can Confirm */
+            can_confirm: boolean;
+            /** Signoffs */
+            signoffs: components["schemas"]["QSignoffRead"][];
+        };
+        /** Q3ScheduleCreate */
+        Q3ScheduleCreate: {
+            /**
+             * Site Id
+             * Format: uuid
+             */
+            site_id: string;
+            /** Zone Id */
+            zone_id?: string | null;
+            check_type: components["schemas"]["QCheckType"];
+            /** Template Code */
+            template_code?: string | null;
+            frequency: components["schemas"]["QCheckFrequency"];
+            /** Weekday */
+            weekday?: number | null;
+            /** Start Date */
+            start_date?: string | null;
+            /** Assignee Role */
+            assignee_role?: string | null;
+        };
+        /** Q3ScheduleRead */
+        Q3ScheduleRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            site: components["schemas"]["Q3Ref"] | null;
+            zone: components["schemas"]["Q3Ref"] | null;
+            check_type: components["schemas"]["QCheckType"];
+            /** Template Code */
+            template_code: string;
+            frequency: components["schemas"]["QCheckFrequency"];
+            /** Weekday */
+            weekday: number | null;
+            /**
+             * Start Date
+             * Format: date
+             */
+            start_date: string;
+            /** Assignee Role */
+            assignee_role: string;
+            /** Active */
+            active: boolean;
+            /** Current */
+            current: {
+                [key: string]: unknown;
+            } | null;
+            /** Overdue */
+            overdue: {
+                [key: string]: unknown;
+            }[];
+            /** Recent */
+            recent: {
+                [key: string]: unknown;
+            }[];
+        };
+        /** Q3ScheduleUpdate */
+        Q3ScheduleUpdate: {
+            frequency?: components["schemas"]["QCheckFrequency"] | null;
+            /** Weekday */
+            weekday?: number | null;
+            /** Assignee Role */
+            assignee_role?: string | null;
+            /** Active */
+            active?: boolean | null;
+        };
+        /** Q3SegregationInput */
+        Q3SegregationInput: {
+            segregation: components["schemas"]["QSegregation"];
+            /** Location */
+            location?: string | null;
+            /**
+             * Photo Attachment Id
+             * Format: uuid
+             */
+            photo_attachment_id: string;
+        };
+        /** Q3ShipmentRead */
+        Q3ShipmentRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Shipment Ref */
+            shipment_ref: string;
+            /** Consignee Name */
+            consignee_name: string;
+            owner: components["schemas"]["Q3CustomerRef"] | null;
+            /** Classes */
+            classes: string[];
+            /** Promised At */
+            promised_at: string | null;
+            /** Delivered At */
+            delivered_at: string | null;
+            /** Trip Id */
+            trip_id: string | null;
+        };
+        /** Q3SnapshotRead */
+        Q3SnapshotRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            site: components["schemas"]["Q3Ref"] | null;
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            /** Line Count */
+            line_count: number;
+            /** Batch Id */
+            batch_id: string | null;
+        };
+        /** Q3StationCreate */
+        Q3StationCreate: {
+            /**
+             * Site Id
+             * Format: uuid
+             */
+            site_id: string;
+            /** Zone Id */
+            zone_id?: string | null;
+            /** Code */
+            code: string;
+            station_type: components["schemas"]["QPestStationType"];
+            /** Location Note */
+            location_note?: string | null;
+            /** Provider Supplier Id */
+            provider_supplier_id?: string | null;
+        };
+        /** Q3StationRead */
+        Q3StationRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Code */
+            code: string;
+            /**
+             * Site Id
+             * Format: uuid
+             */
+            site_id: string;
+            zone: components["schemas"]["Q3Ref"] | null;
+            station_type: components["schemas"]["QPestStationType"];
+            /** Location Note */
+            location_note: string | null;
+            provider: components["schemas"]["Q3SupplierRef"] | null;
+            /** Activity Trend */
+            activity_trend: boolean;
+            /** Active */
+            active: boolean;
+        };
+        /** Q3StationResult */
+        Q3StationResult: {
+            /**
+             * Station Id
+             * Format: uuid
+             */
+            station_id: string;
+            /** @default none */
+            activity: components["schemas"]["QPestActivity"];
+            pest_type?: components["schemas"]["QPestType"] | null;
+            /** Bait Consumed Pct */
+            bait_consumed_pct?: number | null;
+            /** Action */
+            action?: string | null;
+        };
+        /** Q3SupplierRef */
+        Q3SupplierRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Code */
+            code: string;
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            /** Status */
+            status: string;
+        };
+        /** Q3TestWindow */
+        Q3TestWindow: {
+            kind: components["schemas"]["QTestWindowKind"];
+            /**
+             * From
+             * Format: date-time
+             */
+            from: string;
+            /**
+             * To
+             * Format: date-time
+             */
+            to: string;
+        };
+        /** Q3ThroughputInput */
+        Q3ThroughputInput: {
+            /**
+             * Site Id
+             * Format: uuid
+             */
+            site_id: string;
+            /**
+             * Month
+             * Format: date
+             */
+            month: string;
+            /** Units Received */
+            units_received?: number | null;
+            /** Units Dispatched */
+            units_dispatched?: number | null;
+            /** Deliveries */
+            deliveries?: number | null;
+            /** Shipments */
+            shipments?: number | null;
+        };
+        /** Q3ThroughputRead */
+        Q3ThroughputRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Site Id
+             * Format: uuid
+             */
+            site_id: string;
+            /**
+             * Month
+             * Format: date
+             */
+            month: string;
+            /** Units Received */
+            units_received: number;
+            /** Units Dispatched */
+            units_dispatched: number;
+            /** Deliveries */
+            deliveries: number;
+            /** Shipments */
+            shipments: number;
+        };
+        /** Q3TraceConfirm */
+        Q3TraceConfirm: {
+            /** Completed At */
+            completed_at?: string | null;
+        };
+        /** Q3TripCreate */
+        Q3TripCreate: {
+            /**
+             * Site Id
+             * Format: uuid
+             */
+            site_id: string;
+            /** Carrier Id */
+            carrier_id?: string | null;
+            /**
+             * Own Fleet
+             * @default false
+             */
+            own_fleet: boolean;
+            /** Vehicle Id */
+            vehicle_id?: string | null;
+            /** Plate Text */
+            plate_text?: string | null;
+            /** Reefer Serial */
+            reefer_serial?: string | null;
+            /** Compartments */
+            compartments?: components["schemas"]["Q3CompartmentInput"][];
+            /** Driver Worker Id */
+            driver_worker_id?: string | null;
+            /** Driver Name */
+            driver_name?: string | null;
+            /** Logger Mte Ids */
+            logger_mte_ids?: string[];
+            /** Seal Numbers */
+            seal_numbers?: string[];
+            /** Planned Departure */
+            planned_departure?: string | null;
+            /** Shipments */
+            shipments: components["schemas"]["Q3TripShipment"][];
+        };
+        /** Q3TripListItem */
+        Q3TripListItem: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Trip No */
+            trip_no: string;
+            status: components["schemas"]["QTripStatus"];
+            carrier: components["schemas"]["Q3SupplierRef"] | null;
+            /** Plate Text */
+            plate_text: string | null;
+            /** Planned Departure */
+            planned_departure: string | null;
+            /** Departed At */
+            departed_at: string | null;
+            /** Delivered At */
+            delivered_at: string | null;
+            /** Shipments */
+            shipments: number;
+            /** Preload Passed */
+            preload_passed: boolean | null;
+            /** Overridden */
+            overridden: boolean;
+            /** Transit Excursions */
+            transit_excursions: boolean;
+        };
+        /** Q3TripPage */
+        Q3TripPage: {
+            /** Items */
+            items: components["schemas"]["Q3TripListItem"][];
+            /**
+             * Total
+             * @description Total number of matching items across all pages.
+             */
+            total: number;
+            /**
+             * Page
+             * @description 1-based page number.
+             */
+            page: number;
+            /**
+             * Page Size
+             * @description Items per page (max 200).
+             */
+            page_size: number;
+        };
+        /** Q3TripRead */
+        Q3TripRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Trip No */
+            trip_no: string;
+            /**
+             * Site Id
+             * Format: uuid
+             */
+            site_id: string;
+            carrier: components["schemas"]["Q3SupplierRef"] | null;
+            /** Own Fleet */
+            own_fleet: boolean;
+            /** Vehicle Id */
+            vehicle_id: string | null;
+            /** Plate Text */
+            plate_text: string | null;
+            /** Reefer Serial */
+            reefer_serial: string | null;
+            /** Compartments */
+            compartments: {
+                [key: string]: unknown;
+            }[];
+            /** Driver Name */
+            driver_name: string | null;
+            /** Driver Worker Id */
+            driver_worker_id: string | null;
+            /** Loggers */
+            loggers: (components["schemas"]["Q3MteRef"] | null)[];
+            /** Seal Numbers */
+            seal_numbers: string[];
+            /** Planned Departure */
+            planned_departure: string | null;
+            preload: components["schemas"]["Q3ChecklistResponse"] | null;
+            /** Preload Passed */
+            preload_passed: boolean | null;
+            /** Preload Failures */
+            preload_failures: string[];
+            /** Preload Box Temp C */
+            preload_box_temp_c: string | null;
+            /** Loading Temps */
+            loading_temps: {
+                [key: string]: unknown;
+            }[];
+            /** Override Allowed */
+            override_allowed: boolean;
+            /** Override Reason */
+            override_reason: string | null;
+            /** Override Requested */
+            override_requested: boolean;
+            /** Can Override */
+            can_override: boolean;
+            /** Readiness */
+            readiness: {
+                [key: string]: unknown;
+            } | null;
+            /** Departed At */
+            departed_at: string | null;
+            /** Delivered At */
+            delivered_at: string | null;
+            /** Closed At */
+            closed_at: string | null;
+            /** Transit Data */
+            transit_data: boolean;
+            status: components["schemas"]["QTripStatus"];
+            /** Cancel Reason */
+            cancel_reason: string | null;
+            /** Shipments */
+            shipments: {
+                [key: string]: unknown;
+            }[];
+            /** Excursions */
+            excursions: {
+                [key: string]: unknown;
+            }[];
+            /** Signoffs */
+            signoffs: components["schemas"]["QSignoffRead"][];
+            /** Warnings */
+            warnings?: components["schemas"]["ApiWarning"][];
+            /** Proposals */
+            proposals?: {
+                [key: string]: unknown;
+            }[];
+        };
+        /** Q3TripRef */
+        Q3TripRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Trip No */
+            trip_no: string;
+        };
+        /** Q3TripShipment */
+        Q3TripShipment: {
+            /**
+             * Shipment Id
+             * Format: uuid
+             */
+            shipment_id: string;
+            /** Compartment */
+            compartment?: string | null;
+        };
+        /** Q3VisitCreate */
+        Q3VisitCreate: {
+            /**
+             * Site Id
+             * Format: uuid
+             */
+            site_id: string;
+            /** Provider Supplier Id */
+            provider_supplier_id?: string | null;
+            /** Visited At */
+            visited_at?: string | null;
+            /** Technician Name */
+            technician_name?: string | null;
+            /** Chemicals */
+            chemicals?: components["schemas"]["Q3Chemical"][];
+            /** Station Results */
+            station_results?: components["schemas"]["Q3StationResult"][];
+            /** Answers */
+            answers?: components["schemas"]["AnswerInput"][] | null;
+        };
+        /** Q3VisitRead */
+        Q3VisitRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Visit No */
+            visit_no: string;
+            /**
+             * Site Id
+             * Format: uuid
+             */
+            site_id: string;
+            provider: components["schemas"]["Q3SupplierRef"] | null;
+            /**
+             * Visited At
+             * Format: date-time
+             */
+            visited_at: string;
+            /** Technician Name */
+            technician_name: string | null;
+            /** Chemicals */
+            chemicals: {
+                [key: string]: unknown;
+            }[];
+            /** Station Results */
+            station_results: {
+                [key: string]: unknown;
+            }[];
+            /** Not Serviced */
+            not_serviced: string[];
+            /** Proposals */
+            proposals: {
+                [key: string]: unknown;
+            }[];
+            /** Response Id */
+            response_id: string | null;
+            /** Warnings */
+            warnings?: components["schemas"]["ApiWarning"][];
+        };
+        /** Q3VoidInput */
+        Q3VoidInput: {
+            /** Reason */
+            reason: string;
+        };
+        /** Q3ZoneCreate */
+        Q3ZoneCreate: {
+            /**
+             * Zone Id
+             * Format: uuid
+             */
+            zone_id: string;
+            storage_class: components["schemas"]["QStorageClass"];
+            /** @default storage */
+            role: components["schemas"]["QZoneRole"];
+            /** Setpoint */
+            setpoint?: number | string | null;
+            /** Temp Min */
+            temp_min?: number | string | null;
+            /** Temp Max */
+            temp_max?: number | string | null;
+            /** Humidity Min */
+            humidity_min?: number | string | null;
+            /** Humidity Max */
+            humidity_max?: number | string | null;
+            /** Alarm Delay Minutes */
+            alarm_delay_minutes?: number | null;
+            /** D1 */
+            d1?: number | string | null;
+            /** D2 */
+            d2?: number | string | null;
+            /** T1 */
+            t1?: number | null;
+            /** T2 */
+            t2?: number | null;
+            /** Interval Minutes */
+            interval_minutes?: number | null;
+        };
+        /** Q3ZoneRead */
+        Q3ZoneRead: {
+            /**
+             * Zone Id
+             * Format: uuid
+             */
+            zone_id: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            site: components["schemas"]["Q3Ref"] | null;
+            /** Code */
+            code: string;
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            storage_class: components["schemas"]["QStorageClass"];
+            role: components["schemas"]["QZoneRole"];
+            /** Temp Min */
+            temp_min: string | null;
+            /** Temp Max */
+            temp_max: string | null;
+            /** Setpoint */
+            setpoint: string | null;
+            /** Humidity Min */
+            humidity_min: string | null;
+            /** Humidity Max */
+            humidity_max: string | null;
+            /** Alarm Delay Minutes */
+            alarm_delay_minutes: number;
+            /** D1 */
+            d1: string;
+            /** D2 */
+            d2: string;
+            /** T1 */
+            t1: number;
+            /** T2 */
+            t2: number;
+            /** Interval Minutes */
+            interval_minutes: number;
+            mapping_state: components["schemas"]["QMappingState"];
+            /** Mapped Until */
+            mapped_until: string | null;
+            /** Remap Reason */
+            remap_reason: string | null;
+            /** Change Notes */
+            change_notes: {
+                [key: string]: unknown;
+            }[];
+            /** Dispatch Override Allowed */
+            dispatch_override_allowed: boolean;
+            /** Active */
+            active: boolean;
+            /** Points */
+            points: components["schemas"]["Q3PointRead"][];
+            /** Live Status */
+            live_status?: ("in_range" | "excursion" | "gap" | "not_mapped") | null;
+        };
+        /** Q3ZoneReport */
+        Q3ZoneReport: {
+            zone: components["schemas"]["Q3ZoneRead"];
+            /**
+             * Start
+             * Format: date-time
+             */
+            start: string;
+            /**
+             * End
+             * Format: date-time
+             */
+            end: string;
+            /** Period Minutes */
+            period_minutes: number;
+            /** Monitored Minutes */
+            monitored_minutes: number;
+            /** Out Minutes */
+            out_minutes: number;
+            /** Coverage Pct */
+            coverage_pct: string | null;
+            /** Tor Pct */
+            tor_pct: string | null;
+            /** Gaps */
+            gaps: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Series
+             * @description Per point: {point_id, code, values: [{t, c, rh, fault}], mkt}.
+             */
+            series: {
+                [key: string]: unknown;
+            }[];
+            /** Excursions */
+            excursions: {
+                [key: string]: unknown;
+            }[];
+        };
+        /** Q3ZoneUpdate */
+        Q3ZoneUpdate: {
+            storage_class?: components["schemas"]["QStorageClass"] | null;
+            role?: components["schemas"]["QZoneRole"] | null;
+            /** Setpoint */
+            setpoint?: number | string | null;
+            /** Temp Min */
+            temp_min?: number | string | null;
+            /** Temp Max */
+            temp_max?: number | string | null;
+            /** Humidity Min */
+            humidity_min?: number | string | null;
+            /** Humidity Max */
+            humidity_max?: number | string | null;
+            /** Alarm Delay Minutes */
+            alarm_delay_minutes?: number | null;
+            /** D1 */
+            d1?: number | string | null;
+            /** D2 */
+            d2?: number | string | null;
+            /** T1 */
+            t1?: number | null;
+            /** T2 */
+            t2?: number | null;
+            /** Interval Minutes */
+            interval_minutes?: number | null;
+            /** Active */
+            active?: boolean | null;
+        };
+        /**
+         * QAcceptReject
+         * @enum {string}
+         */
+        QAcceptReject: "accept" | "reject";
         /**
          * QAccreditationBody
          * @enum {string}
@@ -45873,17 +51668,205 @@ export interface components {
             verifier_id: string;
         };
         /**
+         * QCalKind
+         * @enum {string}
+         */
+        QCalKind: "calibration" | "verification";
+        /** QCalPoint */
+        QCalPoint: {
+            /** Nominal */
+            nominal: string | number;
+            /** As Found */
+            as_found: string | number;
+            /** As Left */
+            as_left?: string | number | null;
+            /** Tolerance */
+            tolerance?: string | number | null;
+        };
+        /** QCalPointRead */
+        QCalPointRead: {
+            /** Nominal */
+            nominal: string;
+            /** As Found */
+            as_found: string;
+            /** As Left */
+            as_left: string | null;
+            /** Tolerance */
+            tolerance: string;
+            /** Error */
+            error: string;
+            /** In Tolerance */
+            in_tolerance: boolean;
+            /** As Left In Tolerance */
+            as_left_in_tolerance: boolean;
+        };
+        /**
+         * QCalRecordStatus
+         * @enum {string}
+         */
+        QCalRecordStatus: "draft" | "accepted" | "rejected";
+        /**
          * QCalStatus
          * @description List CS (§C.4). `unknown` only until Q2 is installed.
          * @enum {string}
          */
         QCalStatus: "calibrated" | "due_soon" | "overdue" | "out_of_service" | "limited_use" | "not_required" | "unknown";
+        /** QCalibrationCreate */
+        QCalibrationCreate: {
+            kind?: components["schemas"]["QCalKind"] | null;
+            /**
+             * Cal Date
+             * Format: date
+             */
+            cal_date: string;
+            /** Provider Supplier Id */
+            provider_supplier_id?: string | null;
+            /**
+             * In House
+             * @default false
+             */
+            in_house: boolean;
+            /** Reference Mte Id */
+            reference_mte_id?: string | null;
+            /** Certificate No */
+            certificate_no?: string | null;
+            /** Points */
+            points?: components["schemas"]["QCalPoint"][];
+            /** Traceability */
+            traceability?: string | null;
+            /** Uncertainty */
+            uncertainty?: string | null;
+            /** Verification Note */
+            verification_note?: string | null;
+        };
+        /** QCalibrationDecide */
+        QCalibrationDecide: {
+            /**
+             * Decision
+             * @enum {string}
+             */
+            decision: "approved" | "rejected";
+            /** Comment */
+            comment?: string | null;
+            paper?: components["schemas"]["QPaperSignoff"] | null;
+        };
+        /** QCalibrationPage */
+        QCalibrationPage: {
+            /** Items */
+            items: components["schemas"]["QCalibrationRead"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+        };
+        /** QCalibrationRead */
+        QCalibrationRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Cal No */
+            cal_no: string | null;
+            /**
+             * Mte Id
+             * Format: uuid
+             */
+            mte_id: string;
+            /** Mte No */
+            mte_no: string | null;
+            mte_type: components["schemas"]["QMteType"] | null;
+            kind: components["schemas"]["QCalKind"];
+            /**
+             * Cal Date
+             * Format: date
+             */
+            cal_date: string;
+            /** Provider Supplier Id */
+            provider_supplier_id: string | null;
+            /** Provider Code */
+            provider_code: string | null;
+            /** In House */
+            in_house: boolean;
+            /** Reference Mte Id */
+            reference_mte_id: string | null;
+            /** Reference Mte No */
+            reference_mte_no: string | null;
+            /** Certificate No */
+            certificate_no: string | null;
+            /** Points */
+            points: components["schemas"]["QCalPointRead"][];
+            /** As Found Ok */
+            as_found_ok: boolean;
+            /** As Left Ok */
+            as_left_ok: boolean;
+            /** Max Found Error */
+            max_found_error: string | null;
+            /** Traceability */
+            traceability: string | null;
+            /** Uncertainty */
+            uncertainty: string | null;
+            /** Verification Note */
+            verification_note: string | null;
+            /** Next Due */
+            next_due: string | null;
+            /** Decision Comment */
+            decision_comment: string | null;
+            /** Decided At */
+            decided_at: string | null;
+            decided_by: components["schemas"]["UserRef"] | null;
+            status: components["schemas"]["QCalRecordStatus"];
+            /** Certificate Count */
+            certificate_count: number;
+            /** Actions */
+            actions: string[];
+            /** Warnings */
+            warnings?: components["schemas"]["ApiWarning"][];
+        };
+        /** QCalibrationUpdate */
+        QCalibrationUpdate: {
+            /** Cal Date */
+            cal_date?: string | null;
+            /** Provider Supplier Id */
+            provider_supplier_id?: string | null;
+            /** In House */
+            in_house?: boolean | null;
+            /** Reference Mte Id */
+            reference_mte_id?: string | null;
+            /** Certificate No */
+            certificate_no?: string | null;
+            /** Points */
+            points?: components["schemas"]["QCalPoint"][] | null;
+            /** Traceability */
+            traceability?: string | null;
+            /** Uncertainty */
+            uncertainty?: string | null;
+            /** Verification Note */
+            verification_note?: string | null;
+        };
         /**
          * QCauseCategory
          * @description List 6M.
          * @enum {string}
          */
         QCauseCategory: "people" | "machine" | "method" | "material" | "measurement" | "environment";
+        /**
+         * QCheckFrequency
+         * @enum {string}
+         */
+        QCheckFrequency: "daily" | "weekly" | "fortnightly" | "monthly";
+        /**
+         * QCheckType
+         * @enum {string}
+         */
+        QCheckType: "hygiene" | "pest_visit";
         /** QChecklistItemRead */
         QChecklistItemRead: {
             /** Item Code */
@@ -45949,6 +51932,182 @@ export interface components {
             /** Comment */
             comment: string;
         };
+        /**
+         * QCompetenceAppliesTo
+         * @description List CA.
+         * @enum {string}
+         */
+        QCompetenceAppliesTo: "ir_inspector" | "test_technician" | "ndt_technician" | "welding_inspector" | "receiving_inspector" | "mapping_lead" | "auditor" | "calibration_acceptor" | "warehouse_qc" | "pharmacist" | "equipment_operator" | "other";
+        /** QCompetenceCell */
+        QCompetenceCell: {
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /** Code */
+            code: string;
+            state: components["schemas"]["QCompetenceState"];
+            /** Valid Until */
+            valid_until: string | null;
+            /** Reason */
+            reason: string | null;
+        };
+        /** QCompetenceCheckRead */
+        QCompetenceCheckRead: {
+            /** Requirement */
+            requirement: string;
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /** Met */
+            met: boolean | null;
+            /** Code */
+            code: string;
+            /** Detail En */
+            detail_en: string;
+            /** Detail Ar */
+            detail_ar: string;
+            /** Valid Until */
+            valid_until: string | null;
+            /** Evidence */
+            evidence: components["schemas"]["QCompetenceEvidence"][];
+        };
+        /** QCompetenceEvidence */
+        QCompetenceEvidence: {
+            /** Kind */
+            kind: string;
+            /** Code */
+            code: string;
+            /** Met */
+            met: boolean;
+            /** Valid Until */
+            valid_until: string | null;
+            /** Ref */
+            ref: string | null;
+            /** Reason */
+            reason: string | null;
+        };
+        /** QCompetenceMatrixRead */
+        QCompetenceMatrixRead: {
+            /**
+             * On
+             * Format: date
+             */
+            on: string;
+            /** Requirements */
+            requirements: components["schemas"]["QCompetenceReqRead"][];
+            /** People */
+            people: components["schemas"]["QCompetencePerson"][];
+            /** Cells */
+            cells: components["schemas"]["QCompetenceCell"][];
+            /** Applicable */
+            applicable: number;
+            /** Met */
+            met: number;
+        };
+        /** QCompetencePerson */
+        QCompetencePerson: {
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /** Full Name En */
+            full_name_en: string;
+            /** Full Name Ar */
+            full_name_ar: string | null;
+            /** Linked Worker */
+            linked_worker: boolean;
+        };
+        /**
+         * QCompetencePolicy
+         * @enum {string}
+         */
+        QCompetencePolicy: "inherit" | "warn" | "block";
+        /** QCompetenceReqCreate */
+        QCompetenceReqCreate: {
+            /** Code */
+            code: string;
+            /** Title En */
+            title_en: string;
+            /**
+             * Title Ar
+             * @default
+             */
+            title_ar: string;
+            /** Applies To */
+            applies_to?: components["schemas"]["QCompetenceAppliesTo"][];
+            /** Filters */
+            filters?: {
+                [key: string]: unknown;
+            };
+            /** Any Of */
+            any_of?: components["schemas"]["QEvidenceItem"][];
+            /** All Of */
+            all_of?: components["schemas"]["QEvidenceItem"][];
+            /** @default inherit */
+            policy: components["schemas"]["QCompetencePolicy"];
+            /** @default both */
+            profile: components["schemas"]["QProfileScope"];
+        };
+        /** QCompetenceReqRead */
+        QCompetenceReqRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Code */
+            code: string;
+            /** Title En */
+            title_en: string;
+            /** Title Ar */
+            title_ar: string;
+            /** Applies To */
+            applies_to: components["schemas"]["QCompetenceAppliesTo"][];
+            /** Filters */
+            filters: {
+                [key: string]: unknown;
+            };
+            /** Any Of */
+            any_of: components["schemas"]["QEvidenceItemRead"][];
+            /** All Of */
+            all_of: components["schemas"]["QEvidenceItemRead"][];
+            policy: components["schemas"]["QCompetencePolicy"];
+            profile: components["schemas"]["QProfileScope"];
+            /** Active */
+            active: boolean;
+        };
+        /** QCompetenceReqUpdate */
+        QCompetenceReqUpdate: {
+            /** Title En */
+            title_en?: string | null;
+            /** Title Ar */
+            title_ar?: string | null;
+            /** Applies To */
+            applies_to?: components["schemas"]["QCompetenceAppliesTo"][] | null;
+            /** Filters */
+            filters?: {
+                [key: string]: unknown;
+            } | null;
+            /** Any Of */
+            any_of?: components["schemas"]["QEvidenceItem"][] | null;
+            /** All Of */
+            all_of?: components["schemas"]["QEvidenceItem"][] | null;
+            policy?: components["schemas"]["QCompetencePolicy"] | null;
+            profile?: components["schemas"]["QProfileScope"] | null;
+            /** Active */
+            active?: boolean | null;
+        };
+        /**
+         * QCompetenceState
+         * @description Q-CPT-03 matrix cell.
+         * @enum {string}
+         */
+        QCompetenceState: "met" | "expiring" | "not_met" | "not_applicable";
         /**
          * QComplaintChannel
          * @enum {string}
@@ -46097,6 +52256,63 @@ export interface components {
             comment?: string | null;
             /** Reason */
             reason?: string | null;
+        };
+        /** QComplianceRead */
+        QComplianceRead: {
+            /** Requirement */
+            requirement: string;
+            /** Offered */
+            offered: string;
+            /** Result */
+            result: string;
+            /** Note */
+            note: string;
+        };
+        /** QComplianceRow */
+        QComplianceRow: {
+            /** Requirement */
+            requirement: string;
+            /**
+             * Offered
+             * @default
+             */
+            offered: string;
+            /**
+             * Result
+             * @default complies
+             * @enum {string}
+             */
+            result: "complies" | "deviation" | "not_applicable";
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+        };
+        /** QContinuityRow */
+        QContinuityRow: {
+            /**
+             * Welder Id
+             * Format: uuid
+             */
+            welder_id: string;
+            /** Stamp */
+            stamp: string;
+            /**
+             * Wpq Id
+             * Format: uuid
+             */
+            wpq_id: string;
+            /** Wpq No */
+            wpq_no: string | null;
+            process: components["schemas"]["QWeldProcess"];
+            /** Last Use */
+            last_use: string | null;
+            /** Continuity Until */
+            continuity_until: string | null;
+            /** Days Left */
+            days_left: number | null;
+            status: components["schemas"]["QWpqStatus"];
         };
         /**
          * QCostType
@@ -46393,6 +52609,27 @@ export interface components {
             contact_email?: string | null;
         };
         /**
+         * QDamageCause
+         * @enum {string}
+         */
+        QDamageCause: "forklift" | "stacking_crush" | "packaging_failure" | "temperature" | "water" | "pest" | "other";
+        /**
+         * QDamageStage
+         * @enum {string}
+         */
+        QDamageStage: "receiving" | "storage" | "picking" | "loading" | "delivery";
+        /** QDecisionBody */
+        QDecisionBody: {
+            /**
+             * Decision
+             * @enum {string}
+             */
+            decision: "approved" | "approved_with_comments" | "rejected" | "returned";
+            /** Comment */
+            comment?: string | null;
+            paper?: components["schemas"]["QPaperSignoff"] | null;
+        };
+        /**
          * QDetectionStage
          * @description List DS.
          * @enum {string}
@@ -46617,6 +52854,63 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        /**
+         * QEvaluationMode
+         * @description `fields` = one criterion per result field; `rule` = one criterion of kind rule.
+         * @enum {string}
+         */
+        QEvaluationMode: "fields" | "rule";
+        /** QEvidenceItem */
+        QEvidenceItem: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "training_course" | "personnel_certificate";
+            /** Code */
+            code: string;
+            /** Min Level */
+            min_level?: string | null;
+        };
+        /** QEvidenceItemRead */
+        QEvidenceItemRead: {
+            /** Kind */
+            kind: string;
+            /** Code */
+            code: string;
+            /** Min Level */
+            min_level?: string | null;
+        };
+        /**
+         * QExcursionCause
+         * @enum {string}
+         */
+        QExcursionCause: "door_open" | "defrost" | "power_failure" | "equipment_failure" | "overload" | "loading_delay" | "probe_fault" | "unknown" | "other";
+        /**
+         * QExcursionKind
+         * @enum {string}
+         */
+        QExcursionKind: "storage" | "transit" | "humidity";
+        /**
+         * QExcursionSeverity
+         * @enum {string}
+         */
+        QExcursionSeverity: "minor" | "major" | "critical";
+        /**
+         * QExcursionStatus
+         * @enum {string}
+         */
+        QExcursionStatus: "detected" | "under_assessment" | "assessed" | "closed" | "dismissed" | "voided";
+        /**
+         * QFefoException
+         * @enum {string}
+         */
+        QFefoException: "customer_allocation" | "batch_reserved" | "consignee_min_shelf_life" | "other";
+        /**
+         * QFefoResult
+         * @enum {string}
+         */
+        QFefoResult: "compliant" | "non_compliant" | "exception";
         /** QFloorPlanRead */
         QFloorPlanRead: {
             /**
@@ -46657,6 +52951,26 @@ export interface components {
              */
             created_at: string;
         };
+        /**
+         * QHoldLineStatus
+         * @enum {string}
+         */
+        QHoldLineStatus: "on_hold" | "released" | "rejected";
+        /**
+         * QHoldOutcome
+         * @enum {string}
+         */
+        QHoldOutcome: "destroyed" | "returned_to_owner" | "returned_to_supplier";
+        /**
+         * QHoldReason
+         * @enum {string}
+         */
+        QHoldReason: "excursion" | "receiving" | "damage" | "expiry" | "recall" | "pest_hygiene" | "owner_request" | "contamination" | "other";
+        /**
+         * QHoldStatus
+         * @enum {string}
+         */
+        QHoldStatus: "on_hold" | "released" | "rejected" | "partly_released" | "closed" | "voided";
         /** QHolderCreate */
         QHolderCreate: {
             /**
@@ -46719,6 +53033,26 @@ export interface components {
                 [key: string]: unknown;
             }[];
         };
+        /**
+         * QImpactDecision
+         * @enum {string}
+         */
+        QImpactDecision: "release" | "extend_hold" | "destroy" | "return_to_owner";
+        /**
+         * QImportKind
+         * @enum {string}
+         */
+        QImportKind: "readings" | "stock_snapshot" | "shipments" | "products" | "cycle_count";
+        /**
+         * QImportStatus
+         * @enum {string}
+         */
+        QImportStatus: "imported" | "refused" | "voided";
+        /**
+         * QImportTarget
+         * @enum {string}
+         */
+        QImportTarget: "point" | "trip" | "mapping_study" | "receipt" | "site";
         /** QIrCommentClose */
         QIrCommentClose: {
             /**
@@ -47588,10 +53922,26 @@ export interface components {
             points?: components["schemas"]["QItpPointInput"][] | null;
         };
         /**
+         * QJointType
+         * @enum {string}
+         */
+        QJointType: "butt" | "fillet" | "branch" | "socket";
+        /**
          * QJustified
          * @enum {string}
          */
         QJustified: "yes" | "no" | "partly";
+        /**
+         * QLineCondition
+         * @enum {string}
+         */
+        QLineCondition: "good" | "damaged" | "wet" | "crushed" | "leaking" | "pest_signs";
+        /**
+         * QLineDecision
+         * @description List RD (§D.2), best first.
+         * @enum {string}
+         */
+        QLineDecision: "accept" | "accept_with_deviation" | "quarantine" | "reject";
         /** QLinkCreate */
         QLinkCreate: {
             from_type: components["schemas"]["QRecordType"];
@@ -47650,6 +54000,11 @@ export interface components {
              */
             created_at: string;
         };
+        /**
+         * QLoadState
+         * @enum {string}
+         */
+        QLoadState: "empty" | "loaded";
         /** QLocationSuggestion */
         QLocationSuggestion: {
             /** Location Key */
@@ -47657,6 +54012,242 @@ export interface components {
             /** Location Ref */
             location_ref: string;
         };
+        /** QLotSummary */
+        QLotSummary: {
+            /** Lot Code */
+            lot_code: string;
+            /** Ndt Method */
+            ndt_method: string | null;
+            /** Required Pct */
+            required_pct: string;
+            /** Welds Visual Accepted */
+            welds_visual_accepted: number;
+            /** Examined */
+            examined: number;
+            /** Required */
+            required: number;
+            /** Shortfall */
+            shortfall: number;
+            /** Achieved Pct */
+            achieved_pct: string;
+            /** Progressive */
+            progressive: number;
+            /** Pct100 */
+            pct100: number;
+            /** By Welder */
+            by_welder: components["schemas"]["QLotWelder"][];
+        };
+        /** QLotWelder */
+        QLotWelder: {
+            /** Stamp */
+            stamp: string;
+            /** Welds */
+            welds: number;
+            /** Examined */
+            examined: number;
+            /** Rejected */
+            rejected: number;
+        };
+        /**
+         * QMappingPurpose
+         * @enum {string}
+         */
+        QMappingPurpose: "initial" | "periodic" | "after_change";
+        /**
+         * QMappingState
+         * @enum {string}
+         */
+        QMappingState: "mapped" | "not_mapped" | "remap_required";
+        /**
+         * QMappingStatus
+         * @enum {string}
+         */
+        QMappingStatus: "draft" | "data_loaded" | "evaluated" | "approved" | "rejected";
+        /** QMarCreate */
+        QMarCreate: {
+            /**
+             * Engagement Id
+             * Format: uuid
+             */
+            engagement_id: string;
+            /** Title En */
+            title_en: string;
+            /**
+             * Title Ar
+             * @default
+             */
+            title_ar: string;
+            category: components["schemas"]["QMaterialCategory"];
+            /** Spec Section */
+            spec_section?: string | null;
+            /** Manufacturer */
+            manufacturer?: string | null;
+            /** Supplier Id */
+            supplier_id?: string | null;
+            /** Country Of Origin */
+            country_of_origin?: string | null;
+            /** Brand Model */
+            brand_model?: string | null;
+            /** Compliance */
+            compliance?: components["schemas"]["QComplianceRow"][];
+            /** Deviations Note */
+            deviations_note?: string | null;
+            /** Sample Ref */
+            sample_ref?: string | null;
+        };
+        /** QMarDecide */
+        QMarDecide: {
+            /**
+             * Approval Code
+             * @enum {string}
+             */
+            approval_code: "A" | "B" | "C" | "D";
+            /** Comment */
+            comment?: string | null;
+            /**
+             * Accept Deviations
+             * @default false
+             */
+            accept_deviations: boolean;
+            paper?: components["schemas"]["QPaperSignoff"] | null;
+        };
+        /** QMarPage */
+        QMarPage: {
+            /** Items */
+            items: components["schemas"]["QMarRead"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+        };
+        /** QMarRead */
+        QMarRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Mar No */
+            mar_no: string | null;
+            /** Revision */
+            revision: number;
+            /**
+             * Root Id
+             * Format: uuid
+             */
+            root_id: string;
+            /**
+             * Engagement Id
+             * Format: uuid
+             */
+            engagement_id: string;
+            /** Engagement Code */
+            engagement_code: string | null;
+            /** Title En */
+            title_en: string;
+            /** Title Ar */
+            title_ar: string;
+            category: components["schemas"]["QMaterialCategory"];
+            /** Spec Section */
+            spec_section: string | null;
+            /** Manufacturer */
+            manufacturer: string | null;
+            /** Supplier Id */
+            supplier_id: string | null;
+            /** Supplier Code */
+            supplier_code: string | null;
+            /** Country Of Origin */
+            country_of_origin: string | null;
+            /** Brand Model */
+            brand_model: string | null;
+            /** Compliance */
+            compliance: components["schemas"]["QComplianceRead"][];
+            /** Deviations Note */
+            deviations_note: string | null;
+            /** With Deviations */
+            with_deviations: boolean;
+            /** Deviations Accepted */
+            deviations_accepted: boolean;
+            /** Sample Ref */
+            sample_ref: string | null;
+            /** Approval Code */
+            approval_code: string | null;
+            /** Decision Comment */
+            decision_comment: string | null;
+            /** Submitted At */
+            submitted_at: string | null;
+            submitted_by: components["schemas"]["UserRef"] | null;
+            /** Decided At */
+            decided_at: string | null;
+            decided_by: components["schemas"]["UserRef"] | null;
+            status: components["schemas"]["QMarStatus"];
+            /** Status Reason */
+            status_reason: string | null;
+            /** Document Count */
+            document_count: number;
+            /** Revisions */
+            revisions: components["schemas"]["QMarRevision"][];
+            /** Actions */
+            actions: string[];
+            /** Warnings */
+            warnings?: components["schemas"]["ApiWarning"][];
+        };
+        /** QMarRevision */
+        QMarRevision: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Revision */
+            revision: number;
+            status: components["schemas"]["QMarStatus"];
+            /** Approval Code */
+            approval_code: string | null;
+        };
+        /**
+         * QMarStatus
+         * @description §C.3.1 MAR states.
+         * @enum {string}
+         */
+        QMarStatus: "draft" | "submitted" | "approved" | "approved_as_noted" | "revise_resubmit" | "rejected" | "superseded" | "withdrawn";
+        /** QMarUpdate */
+        QMarUpdate: {
+            /** Title En */
+            title_en?: string | null;
+            /** Title Ar */
+            title_ar?: string | null;
+            category?: components["schemas"]["QMaterialCategory"] | null;
+            /** Spec Section */
+            spec_section?: string | null;
+            /** Manufacturer */
+            manufacturer?: string | null;
+            /** Supplier Id */
+            supplier_id?: string | null;
+            /** Country Of Origin */
+            country_of_origin?: string | null;
+            /** Brand Model */
+            brand_model?: string | null;
+            /** Compliance */
+            compliance?: components["schemas"]["QComplianceRow"][] | null;
+            /** Deviations Note */
+            deviations_note?: string | null;
+            /** Sample Ref */
+            sample_ref?: string | null;
+        };
+        /**
+         * QMaterialCategory
+         * @description List MC.
+         * @enum {string}
+         */
+        QMaterialCategory: "concrete_mix" | "cement" | "aggregates" | "rebar" | "structural_steel" | "blockwork" | "waterproofing" | "insulation" | "pipes_fittings" | "valves" | "ductwork" | "cables" | "electrical_equipment" | "mechanical_equipment" | "coatings" | "finishes" | "asphalt" | "consumables" | "other";
         /** QMeasurementRead */
         QMeasurementRead: {
             /** Point Seq */
@@ -47687,6 +54278,313 @@ export interface components {
             reason_en: string | null;
             /** Reason Ar */
             reason_ar: string | null;
+        };
+        /** QMirChecklistItemRead */
+        QMirChecklistItemRead: {
+            /** Item Code */
+            item_code: string;
+            /** Text En */
+            text_en: string;
+            /** Text Ar */
+            text_ar: string;
+            /** Critical */
+            critical: boolean;
+            /** Answer */
+            answer: string | null;
+            /** Compliant */
+            compliant: boolean | null;
+            /** Note */
+            note: string | null;
+        };
+        /**
+         * QMirChecklistRead
+         * @description §C.3.2 the delivery checklist response (6d engine, owner type q_mir).
+         */
+        QMirChecklistRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Template Code */
+            template_code: string;
+            /** Template Version */
+            template_version: number;
+            /** Completed At */
+            completed_at: string | null;
+            /** Score Pct */
+            score_pct: string | null;
+            /** Result */
+            result: string | null;
+            /** Critical Fail Count */
+            critical_fail_count: number;
+            /** Critical Failures */
+            critical_failures: string[];
+            /** Answers */
+            answers: components["schemas"]["QMirChecklistItemRead"][];
+        };
+        /**
+         * QMirChecklistSave
+         * @description PUT /quality/mirs/{id}/checklist: yes_no answers `compliant` / `non_compliant` / `na`; a
+         *     non-compliant answer needs a note of at least 10 characters (6d EXE-2).
+         */
+        QMirChecklistSave: {
+            /** Template Code */
+            template_code?: string | null;
+            /** Completed At */
+            completed_at?: string | null;
+            /** Answers */
+            answers: components["schemas"]["AnswerInput"][];
+        };
+        /** QMirChecklistTemplate */
+        QMirChecklistTemplate: {
+            /** Template Code */
+            template_code: string;
+            /** Version */
+            version: number;
+            /** Title En */
+            title_en: string;
+            /** Title Ar */
+            title_ar: string;
+            /** Items */
+            items: components["schemas"]["QMirChecklistTemplateItem"][];
+        };
+        /** QMirChecklistTemplateItem */
+        QMirChecklistTemplateItem: {
+            /** Item Code */
+            item_code: string;
+            /** Text En */
+            text_en: string;
+            /** Text Ar */
+            text_ar: string;
+            /** Critical */
+            critical: boolean;
+            /** Na Allowed */
+            na_allowed: boolean;
+        };
+        /** QMirCreate */
+        QMirCreate: {
+            /** Mar Id */
+            mar_id?: string | null;
+            /** Engagement Id */
+            engagement_id?: string | null;
+            category?: components["schemas"]["QMaterialCategory"] | null;
+            /** Material Description */
+            material_description?: string | null;
+            /** Site Id */
+            site_id?: string | null;
+            /** Delivery Note No */
+            delivery_note_no?: string | null;
+            /** Po No */
+            po_no?: string | null;
+            /** Supplier Id */
+            supplier_id?: string | null;
+            /** Delivered At */
+            delivered_at?: string | null;
+            /** Quantity */
+            quantity: string | number;
+            /** Unit */
+            unit: string;
+            /** Lot Numbers */
+            lot_numbers?: string[];
+            /** Cert Heat Numbers */
+            cert_heat_numbers?: string[];
+            /** Storage Zone Id */
+            storage_zone_id?: string | null;
+        };
+        /** QMirDecide */
+        QMirDecide: {
+            result: components["schemas"]["QMirResult"];
+            /** Accepted Qty */
+            accepted_qty: string | number;
+            /** Rejected Qty */
+            rejected_qty: string | number;
+            /** Comment */
+            comment?: string | null;
+            paper?: components["schemas"]["QPaperSignoff"] | null;
+        };
+        /** QMirPage */
+        QMirPage: {
+            /** Items */
+            items: components["schemas"]["QMirRead"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+        };
+        /** QMirQuarantine */
+        QMirQuarantine: {
+            /** Quantity */
+            quantity: string | number;
+            /** Ncr Id */
+            ncr_id?: string | null;
+            /** Location Ref */
+            location_ref?: string | null;
+        };
+        /** QMirRead */
+        QMirRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Mir No */
+            mir_no: string | null;
+            /** Mar Id */
+            mar_id: string | null;
+            /** Mar No */
+            mar_no: string | null;
+            /** Mar Revision */
+            mar_revision: number | null;
+            mar_status: components["schemas"]["QMarStatus"] | null;
+            /** Engagement Id */
+            engagement_id: string | null;
+            /** Engagement Code */
+            engagement_code: string | null;
+            category: components["schemas"]["QMaterialCategory"];
+            /** Material Description */
+            material_description: string;
+            /** Site Id */
+            site_id: string | null;
+            /** Delivery Note No */
+            delivery_note_no: string | null;
+            /** Po No */
+            po_no: string | null;
+            /** Supplier Id */
+            supplier_id: string | null;
+            /** Supplier Code */
+            supplier_code: string | null;
+            /** Delivered At */
+            delivered_at: string | null;
+            /** Quantity */
+            quantity: string;
+            /** Unit */
+            unit: string;
+            /** Lot Numbers */
+            lot_numbers: string[];
+            /** Cert Heat Numbers */
+            cert_heat_numbers: string[];
+            /** Heat Mismatch */
+            heat_mismatch: string[];
+            /** Storage Zone Id */
+            storage_zone_id: string | null;
+            /** Storage Zone Code */
+            storage_zone_code: string | null;
+            /** Accepted Qty */
+            accepted_qty: string | null;
+            /** Rejected Qty */
+            rejected_qty: string | null;
+            result: components["schemas"]["QMirResult"] | null;
+            /** Decision Comment */
+            decision_comment: string | null;
+            /** Submitted At */
+            submitted_at: string | null;
+            submitted_by: components["schemas"]["UserRef"] | null;
+            /** Decided At */
+            decided_at: string | null;
+            decided_by: components["schemas"]["UserRef"] | null;
+            status: components["schemas"]["QMirStatus"];
+            /** Tests */
+            tests: components["schemas"]["QMirTest"][];
+            /** Failed Tests */
+            failed_tests: number;
+            /** Quarantine Ids */
+            quarantine_ids: string[];
+            /** Certificate Count */
+            certificate_count: number;
+            /** Checklist Response Id */
+            checklist_response_id?: string | null;
+            checklist?: components["schemas"]["QMirChecklistRead"] | null;
+            /** Actions */
+            actions: string[];
+            /** Warnings */
+            warnings?: components["schemas"]["ApiWarning"][];
+        };
+        /**
+         * QMirResult
+         * @enum {string}
+         */
+        QMirResult: "accepted" | "accepted_with_comments" | "rejected";
+        /**
+         * QMirStatus
+         * @enum {string}
+         */
+        QMirStatus: "draft" | "submitted" | "decided" | "cancelled";
+        /** QMirTest */
+        QMirTest: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Test No */
+            test_no: string;
+            /** Test Type Code */
+            test_type_code: string;
+            verdict: components["schemas"]["QTestVerdict"];
+            status: components["schemas"]["QTestStatus"];
+        };
+        /** QMirUpdate */
+        QMirUpdate: {
+            /** Material Description */
+            material_description?: string | null;
+            /** Site Id */
+            site_id?: string | null;
+            /** Delivery Note No */
+            delivery_note_no?: string | null;
+            /** Po No */
+            po_no?: string | null;
+            /** Supplier Id */
+            supplier_id?: string | null;
+            /** Delivered At */
+            delivered_at?: string | null;
+            /** Quantity */
+            quantity?: string | number | null;
+            /** Unit */
+            unit?: string | null;
+            /** Lot Numbers */
+            lot_numbers?: string[] | null;
+            /** Cert Heat Numbers */
+            cert_heat_numbers?: string[] | null;
+            /** Storage Zone Id */
+            storage_zone_id?: string | null;
+        };
+        /** QMixStatus */
+        QMixStatus: {
+            /** Tests */
+            tests: components["schemas"]["QMixTest"][];
+            /** Flagged Pour Ids */
+            flagged_pour_ids: string[];
+            /** Flagged */
+            flagged: boolean;
+        };
+        /** QMixTest */
+        QMixTest: {
+            /**
+             * Test Id
+             * Format: uuid
+             */
+            test_id: string;
+            /** Test No */
+            test_no: string;
+            /** Pour No */
+            pour_no: string | null;
+            /** Cast Date */
+            cast_date: string | null;
+            /** Test */
+            test: string | null;
+            /** Mean3 */
+            mean3: string | null;
+            verdict: components["schemas"]["QTestVerdict"];
+            /** Clause */
+            clause: string | null;
         };
         /**
          * QMteCheckKind
@@ -47730,6 +54628,50 @@ export interface components {
             interval_months?: number | null;
             /** Equipment Item Id */
             equipment_item_id?: string | null;
+        };
+        /** QMteLabelRead */
+        QMteLabelRead: {
+            /**
+             * Mte Id
+             * Format: uuid
+             */
+            mte_id: string;
+            /** Mte No */
+            mte_no: string;
+            /** Project Code */
+            project_code: string;
+            /** Description */
+            description: string;
+            cal_status: components["schemas"]["QCalStatus"];
+            /** Status En */
+            status_en: string;
+            /** Status Ar */
+            status_ar: string;
+            /**
+             * Colour
+             * @enum {string}
+             */
+            colour: "green" | "amber" | "red" | "grey";
+            /** Cal Date */
+            cal_date: string | null;
+            /** Due On */
+            due_on: string | null;
+            /** Path */
+            path: string;
+            /** Printed At */
+            printed_at: string | null;
+        };
+        /**
+         * QMteOverride
+         * @description Manual M&TE status (Q-CAL-02: manual statuses win).
+         * @enum {string}
+         */
+        QMteOverride: "out_of_service" | "limited_use";
+        /** QMteOverrideSet */
+        QMteOverrideSet: {
+            status?: components["schemas"]["QMteOverride"] | null;
+            /** Reason */
+            reason?: string | null;
         };
         /**
          * QMteOwnerKind
@@ -48527,6 +55469,16 @@ export interface components {
             duplicate_of?: string | null;
         };
         /**
+         * QNdtMethod
+         * @enum {string}
+         */
+        QNdtMethod: "RT" | "UT" | "MT" | "PT";
+        /**
+         * QNdtSelection
+         * @enum {string}
+         */
+        QNdtSelection: "random" | "progressive" | "100pct";
+        /**
          * QNumberReset
          * @enum {string}
          */
@@ -48643,6 +55595,186 @@ export interface components {
          * @enum {string}
          */
         QObservationStatus: "open" | "actioned" | "closed";
+        /** QOotAcceptProposals */
+        QOotAcceptProposals: {
+            /** Justification */
+            justification: string;
+        };
+        /** QOotAccepted */
+        QOotAccepted: {
+            /** Decided */
+            decided: number;
+        };
+        /** QOotClose */
+        QOotClose: {
+            /** Comment */
+            comment?: string | null;
+            paper?: components["schemas"]["QPaperSignoff"] | null;
+        };
+        /**
+         * QOotDecision
+         * @enum {string}
+         */
+        QOotDecision: "no_impact" | "recheck" | "ncr";
+        /** QOotItemDecide */
+        QOotItemDecide: {
+            decision: components["schemas"]["QOotDecision"];
+            /** Justification */
+            justification?: string | null;
+            recheck_record_type?: components["schemas"]["QRecordType"] | null;
+            /** Recheck Record Id */
+            recheck_record_id?: string | null;
+            /** Recheck Ref */
+            recheck_ref?: string | null;
+            /** Owner Id */
+            owner_id?: string | null;
+        };
+        /** QOotItemRead */
+        QOotItemRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Record Type */
+            record_type: string;
+            /**
+             * Record Id
+             * Format: uuid
+             */
+            record_id: string;
+            /** Ref */
+            ref: string | null;
+            /** Used At */
+            used_at: string | null;
+            /** Value */
+            value: string | null;
+            /** Limit Low */
+            limit_low: string | null;
+            /** Limit High */
+            limit_high: string | null;
+            /** Margin */
+            margin: string | null;
+            /** Error Abs */
+            error_abs: string;
+            proposed: components["schemas"]["QOotDecision"] | null;
+            decision: components["schemas"]["QOotDecision"] | null;
+            /** Justification */
+            justification: string | null;
+            /** Recheck Record Type */
+            recheck_record_type: string | null;
+            /** Recheck Record Id */
+            recheck_record_id: string | null;
+            /** Recheck Ref */
+            recheck_ref: string | null;
+            /** Ncr Id */
+            ncr_id: string | null;
+            /** Decided At */
+            decided_at: string | null;
+        };
+        /** QOotReviewListItem */
+        QOotReviewListItem: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Oot No */
+            oot_no: string;
+            /**
+             * Mte Id
+             * Format: uuid
+             */
+            mte_id: string;
+            /** Mte No */
+            mte_no: string;
+            /**
+             * Period From
+             * Format: date
+             */
+            period_from: string;
+            /**
+             * Period To
+             * Format: date
+             */
+            period_to: string;
+            /** Error Abs */
+            error_abs: string;
+            /**
+             * Due On
+             * Format: date
+             */
+            due_on: string;
+            status: components["schemas"]["QOotStatus"];
+            /** Item Count */
+            item_count: number;
+            /** Decided Count */
+            decided_count: number;
+        };
+        /** QOotReviewRead */
+        QOotReviewRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Oot No */
+            oot_no: string;
+            /**
+             * Mte Id
+             * Format: uuid
+             */
+            mte_id: string;
+            /** Mte No */
+            mte_no: string;
+            /**
+             * Calibration Id
+             * Format: uuid
+             */
+            calibration_id: string;
+            /**
+             * Period From
+             * Format: date
+             */
+            period_from: string;
+            /**
+             * Period To
+             * Format: date
+             */
+            period_to: string;
+            /** Error Abs */
+            error_abs: string;
+            /**
+             * Due On
+             * Format: date
+             */
+            due_on: string;
+            status: components["schemas"]["QOotStatus"];
+            /** Closed At */
+            closed_at: string | null;
+            /** Item Count */
+            item_count: number;
+            /** Decided Count */
+            decided_count: number;
+            /** Proposed No Impact */
+            proposed_no_impact: number;
+            /** Ncr Count */
+            ncr_count: number;
+            /** Items */
+            items: components["schemas"]["QOotItemRead"][];
+            /** Actions */
+            actions: string[];
+        };
+        /**
+         * QOotStatus
+         * @enum {string}
+         */
+        QOotStatus: "open" | "closed";
         /** QPaperScan */
         QPaperScan: {
             /** File Name */
@@ -48700,6 +55832,21 @@ export interface components {
             /** Part */
             part: string;
         };
+        /**
+         * QPestActivity
+         * @enum {string}
+         */
+        QPestActivity: "none" | "low" | "medium" | "high";
+        /**
+         * QPestStationType
+         * @enum {string}
+         */
+        QPestStationType: "rodent_bait" | "rodent_trap" | "insect_light_trap" | "glue_board" | "pheromone_trap" | "bird_deterrent";
+        /**
+         * QPestType
+         * @enum {string}
+         */
+        QPestType: "rodent" | "cockroach" | "stored_product_insect" | "flying_insect" | "bird" | "other";
         /** QPin */
         QPin: {
             /** Floor Plan Id */
@@ -48714,6 +55861,16 @@ export interface components {
          * @enum {string}
          */
         QPlanStatus: "current" | "superseded";
+        /**
+         * QPodException
+         * @enum {string}
+         */
+        QPodException: "shortage" | "damage" | "temperature" | "refused" | "other";
+        /**
+         * QPointPosition
+         * @enum {string}
+         */
+        QPointPosition: "hot_spot" | "cold_spot" | "general";
         /**
          * QPointType
          * @description List PT (§B.1). Strictness order H > W > R > S.
@@ -48776,6 +55933,227 @@ export interface components {
             /** Active */
             active?: boolean | null;
         };
+        /** QPourClose */
+        QPourClose: {
+            /** Finished At */
+            finished_at?: string | null;
+            /** Ambient Temp C */
+            ambient_temp_c?: string | number | null;
+        };
+        /** QPourCreate */
+        QPourCreate: {
+            /** Element */
+            element: string;
+            /**
+             * Site Id
+             * Format: uuid
+             */
+            site_id: string;
+            /** Zone Id */
+            zone_id?: string | null;
+            /** Location Ref */
+            location_ref?: string | null;
+            /** Engagement Id */
+            engagement_id?: string | null;
+            /** Mar Id */
+            mar_id?: string | null;
+            /** Grade */
+            grade: string;
+            /** Fc Mpa */
+            fc_mpa?: string | number | null;
+            /** Volume M3 */
+            volume_m3: string | number;
+            /** Supplier Id */
+            supplier_id?: string | null;
+            /** Planned On */
+            planned_on?: string | null;
+            /** Ambient Temp C */
+            ambient_temp_c?: string | number | null;
+            /** Pre Pour Ir Id */
+            pre_pour_ir_id?: string | null;
+            /** Itp Point Id */
+            itp_point_id?: string | null;
+            /** Quality Engineer Id */
+            quality_engineer_id?: string | null;
+        };
+        /** QPourPage */
+        QPourPage: {
+            /** Items */
+            items: components["schemas"]["QPourRead"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+        };
+        /** QPourRead */
+        QPourRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Pour No */
+            pour_no: string;
+            /** Engagement Id */
+            engagement_id: string | null;
+            /** Element */
+            element: string;
+            /**
+             * Site Id
+             * Format: uuid
+             */
+            site_id: string;
+            /** Site Code */
+            site_code: string;
+            /** Zone Id */
+            zone_id: string | null;
+            /** Zone Code */
+            zone_code: string | null;
+            /** Location Ref */
+            location_ref: string | null;
+            /** Mar Id */
+            mar_id: string | null;
+            /** Mar No */
+            mar_no: string | null;
+            /** Grade */
+            grade: string;
+            /** Fc Mpa */
+            fc_mpa: string | null;
+            /** Volume M3 */
+            volume_m3: string;
+            /** Supplier Id */
+            supplier_id: string | null;
+            /** Supplier Code */
+            supplier_code: string | null;
+            /** Planned On */
+            planned_on: string | null;
+            /** Started At */
+            started_at: string | null;
+            /** Finished At */
+            finished_at: string | null;
+            /** Ambient Temp C */
+            ambient_temp_c: string | null;
+            /** Pre Pour Ir Id */
+            pre_pour_ir_id: string | null;
+            /** Itp Point Id */
+            itp_point_id: string | null;
+            /** Quality Engineer Id */
+            quality_engineer_id: string | null;
+            /** Sets Required */
+            sets_required: number;
+            /** Sets Taken */
+            sets_taken: number;
+            /** Set Test Ids */
+            set_test_ids: string[];
+            /** Flags */
+            flags: string[];
+            status: components["schemas"]["QPourStatus"];
+            mix_status: components["schemas"]["QMixStatus"] | null;
+            /** Actions */
+            actions: string[];
+            /** Warnings */
+            warnings?: components["schemas"]["ApiWarning"][];
+        };
+        /** QPourStart */
+        QPourStart: {
+            /** Started At */
+            started_at?: string | null;
+        };
+        /**
+         * QPourStatus
+         * @description Q-TST-11 pour log.
+         * @enum {string}
+         */
+        QPourStatus: "planned" | "started" | "closed" | "cancelled";
+        /** QPqrCreate */
+        QPqrCreate: {
+            /** Pqr No */
+            pqr_no: string;
+            standard: components["schemas"]["QWeldStandard"];
+            process: components["schemas"]["QWeldProcess"];
+            /**
+             * Test Date
+             * Format: date
+             */
+            test_date: string;
+            /** Results */
+            results?: components["schemas"]["QPqrResult"][];
+            /** Lab Supplier Id */
+            lab_supplier_id?: string | null;
+            /** Certificate No */
+            certificate_no?: string | null;
+        };
+        /** QPqrRead */
+        QPqrRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Pqr No */
+            pqr_no: string;
+            standard: components["schemas"]["QWeldStandard"];
+            process: components["schemas"]["QWeldProcess"];
+            /**
+             * Test Date
+             * Format: date
+             */
+            test_date: string;
+            /** Results */
+            results: components["schemas"]["QPqrResultRead"][];
+            /** Lab Supplier Id */
+            lab_supplier_id: string | null;
+            /** Certificate No */
+            certificate_no: string | null;
+            /** Approved At */
+            approved_at: string | null;
+            status: components["schemas"]["QPqrStatus"];
+            /** Actions */
+            actions: string[];
+            /** Warnings */
+            warnings?: components["schemas"]["ApiWarning"][];
+        };
+        /** QPqrResult */
+        QPqrResult: {
+            /** Test */
+            test: string;
+            /**
+             * Value
+             * @default
+             */
+            value: string;
+            /**
+             * Result
+             * @enum {string}
+             */
+            result: "pass" | "fail";
+        };
+        /** QPqrResultRead */
+        QPqrResultRead: {
+            /** Test */
+            test: string;
+            /** Value */
+            value: string;
+            /** Result */
+            result: string;
+        };
+        /**
+         * QPqrStatus
+         * @enum {string}
+         */
+        QPqrStatus: "draft" | "approved";
         /**
          * QProfileScope
          * @description Profile of a record type, position, criterion, checklist or setting.
@@ -49021,16 +56399,148 @@ export interface components {
             comment?: string | null;
             paper?: components["schemas"]["QPaperSignoff"] | null;
         };
+        /** QQuarantineCreate */
+        QQuarantineCreate: {
+            /** Material Description */
+            material_description: string;
+            /** Quantity */
+            quantity: string | number;
+            /** Unit */
+            unit: string;
+            /** Site Id */
+            site_id?: string | null;
+            /** Zone Id */
+            zone_id?: string | null;
+            /** Location Ref */
+            location_ref?: string | null;
+            /** Engagement Id */
+            engagement_id?: string | null;
+            /** Ncr Id */
+            ncr_id?: string | null;
+        };
+        /** QQuarantineDispose */
+        QQuarantineDispose: {
+            /**
+             * To Status
+             * @enum {string}
+             */
+            to_status: "released" | "returned" | "scrapped";
+            /** Return Note No */
+            return_note_no?: string | null;
+            /** Note */
+            note?: string | null;
+            paper?: components["schemas"]["QPaperSignoff"] | null;
+        };
+        /** QQuarantineLink */
+        QQuarantineLink: {
+            /**
+             * Ncr Id
+             * Format: uuid
+             */
+            ncr_id: string;
+        };
+        /** QQuarantinePage */
+        QQuarantinePage: {
+            /** Items */
+            items: components["schemas"]["QQuarantineRead"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+        };
+        /** QQuarantineRead */
+        QQuarantineRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Tag No */
+            tag_no: string;
+            /** Material Description */
+            material_description: string;
+            /** Mir Id */
+            mir_id: string | null;
+            /** Mir No */
+            mir_no: string | null;
+            /** Engagement Id */
+            engagement_id: string | null;
+            /** Quantity */
+            quantity: string;
+            /** Unit */
+            unit: string;
+            /** Site Id */
+            site_id: string | null;
+            /** Zone Id */
+            zone_id: string | null;
+            /** Zone Code */
+            zone_code: string | null;
+            /** Location Ref */
+            location_ref: string | null;
+            /** Ncr Id */
+            ncr_id: string | null;
+            /** Ncr No */
+            ncr_no: string | null;
+            /** Ncr Status */
+            ncr_status: string | null;
+            /**
+             * Quarantined On
+             * Format: date
+             */
+            quarantined_on: string;
+            /** Age Days */
+            age_days: number | null;
+            /** Ageing */
+            ageing: boolean;
+            /** Return Note No */
+            return_note_no: string | null;
+            /** Disposal Note */
+            disposal_note: string | null;
+            /** Disposed At */
+            disposed_at: string | null;
+            status: components["schemas"]["QQuarantineStatus"];
+            /** Evidence Count */
+            evidence_count: number;
+            /** Actions */
+            actions: string[];
+        };
+        /**
+         * QQuarantineStatus
+         * @enum {string}
+         */
+        QQuarantineStatus: "quarantined" | "released" | "returned" | "scrapped";
         /**
          * QRcaMethod
          * @description List RCA.
          * @enum {string}
          */
         QRcaMethod: "simple" | "five_why" | "ishikawa" | "eight_d";
+        /**
+         * QReadingSource
+         * @enum {string}
+         */
+        QReadingSource: "manual" | "import";
+        /**
+         * QReadingTarget
+         * @enum {string}
+         */
+        QReadingTarget: "point" | "trip" | "mapping_study" | "receipt";
         /** QReason */
         QReason: {
             /** Reason */
             reason: string;
+        };
+        /** QReasonBody */
+        QReasonBody: {
+            /** Reason */
+            reason?: string | null;
         };
         /** QReasonInput */
         QReasonInput: {
@@ -49056,6 +56566,26 @@ export interface components {
             /** Reason */
             reason: string;
         };
+        /**
+         * QRecallClass
+         * @enum {string}
+         */
+        QRecallClass: "I" | "II" | "III";
+        /**
+         * QRecallStatus
+         * @enum {string}
+         */
+        QRecallStatus: "open" | "traced" | "recovering" | "closed" | "cancelled";
+        /**
+         * QRecallType
+         * @enum {string}
+         */
+        QRecallType: "supplier" | "regulator" | "owner" | "mock";
+        /**
+         * QReceiptStatus
+         * @enum {string}
+         */
+        QReceiptStatus: "draft" | "inspected" | "decided" | "cancelled";
         /**
          * QRecordType
          * @description List QRT (§A.4.2). The matrix has one row per type and step.
@@ -49097,6 +56627,24 @@ export interface components {
                 [key: string]: string;
             }[];
         };
+        /** QRepairRate */
+        QRepairRate: {
+            /**
+             * Welder Id
+             * Format: uuid
+             */
+            welder_id: string;
+            /** Stamp */
+            stamp: string;
+            /** First Examinations */
+            first_examinations: number;
+            /** Rejected */
+            rejected: number;
+            /** Rate Pct */
+            rate_pct: string;
+            /** Rate By Length Pct */
+            rate_by_length_pct: string | null;
+        };
         /** QResponseRead */
         QResponseRead: {
             /** Seq */
@@ -49124,6 +56672,55 @@ export interface components {
             /** Answers */
             answers?: components["schemas"]["QAnswerRead"][];
         };
+        /** QResultField */
+        QResultField: {
+            /** Key */
+            key: string;
+            /** Label En */
+            label_en: string;
+            /**
+             * Label Ar
+             * @default
+             */
+            label_ar: string;
+            /** Unit */
+            unit?: string | null;
+            /**
+             * Kind
+             * @default numeric
+             * @enum {string}
+             */
+            kind: "numeric" | "text" | "pass_fail";
+        };
+        /** QResultFieldRead */
+        QResultFieldRead: {
+            /** Key */
+            key: string;
+            /** Label En */
+            label_en: string;
+            /**
+             * Label Ar
+             * @default
+             */
+            label_ar: string;
+            /** Unit */
+            unit?: string | null;
+            /**
+             * Kind
+             * @default numeric
+             */
+            kind: string;
+        };
+        /**
+         * QReturnGrade
+         * @enum {string}
+         */
+        QReturnGrade: "A" | "B" | "C" | "D";
+        /**
+         * QReturnStatus
+         * @enum {string}
+         */
+        QReturnStatus: "draft" | "graded" | "confirmed";
         /** QRevisionRef */
         QRevisionRef: {
             /**
@@ -49231,6 +56828,11 @@ export interface components {
          * @enum {string}
          */
         QSatisfaction: "yes" | "no" | "no_reply";
+        /**
+         * QSeason
+         * @enum {string}
+         */
+        QSeason: "summer" | "winter" | "n_a";
         /** QSectionRef */
         QSectionRef: {
             /** Code */
@@ -49246,6 +56848,11 @@ export interface components {
          * @enum {string}
          */
         QSectorProfile: "construction" | "logistics";
+        /**
+         * QSegregation
+         * @enum {string}
+         */
+        QSegregation: "moved_to_quarantine" | "tagged_in_place";
         /** QSettingDefRead */
         QSettingDefRead: {
             /** Key */
@@ -49379,6 +56986,106 @@ export interface components {
             /** File Count */
             file_count: number;
         };
+        /** QSpecimenCalendar */
+        QSpecimenCalendar: {
+            /**
+             * On
+             * Format: date
+             */
+            on: string;
+            /** Items */
+            items: components["schemas"]["QSpecimenDue"][];
+        };
+        /** QSpecimenDue */
+        QSpecimenDue: {
+            /**
+             * Test Id
+             * Format: uuid
+             */
+            test_id: string;
+            /** Test No */
+            test_no: string;
+            /** Test Type Code */
+            test_type_code: string;
+            /** Specimen Ref */
+            specimen_ref: string;
+            /** Age Days */
+            age_days: number | null;
+            /**
+             * Due On
+             * Format: date
+             */
+            due_on: string;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "overdue" | "today" | "upcoming";
+        };
+        /** QSpecimenPlanRead */
+        QSpecimenPlanRead: {
+            /** Age Days */
+            age_days?: number | null;
+            /** Count */
+            count: number;
+            /**
+             * Spare
+             * @default false
+             */
+            spare: boolean;
+        };
+        /** QSpecimenPlanRow */
+        QSpecimenPlanRow: {
+            /** Age Days */
+            age_days?: number | null;
+            /** Count */
+            count: number;
+            /**
+             * Spare
+             * @default false
+             */
+            spare: boolean;
+        };
+        /** QSpecimenRead */
+        QSpecimenRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Specimen Ref */
+            specimen_ref: string;
+            /** Age Days */
+            age_days: number | null;
+            /** Due On */
+            due_on: string | null;
+            /** Tested On */
+            tested_on: string | null;
+            /** Values */
+            values: {
+                [key: string]: unknown;
+            };
+            /** Spare */
+            spare: boolean;
+        };
+        /** QSpecimenValues */
+        QSpecimenValues: {
+            /** Id */
+            id?: string | null;
+            /** Specimen Ref */
+            specimen_ref?: string | null;
+            /** Tested On */
+            tested_on?: string | null;
+            /** Values */
+            values?: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * QStorageClass
+         * @enum {string}
+         */
+        QStorageClass: "frozen" | "chilled" | "pharma_2_8" | "ambient_controlled" | "dry" | "dock_controlled";
         /**
          * QSupplierCategory
          * @description List SC.
@@ -49598,6 +57305,423 @@ export interface components {
             zone_ids?: string[] | null;
             status?: components["schemas"]["QActiveStatus"] | null;
         };
+        /** QTestAmend */
+        QTestAmend: {
+            /** Report No */
+            report_no?: string | null;
+            /** Tested By Name */
+            tested_by_name?: string | null;
+            /** Specimens */
+            specimens?: components["schemas"]["QSpecimenValues"][];
+            /** Results */
+            results?: {
+                [key: string]: unknown;
+            };
+            /** Reason */
+            reason: string;
+        };
+        /** QTestCreate */
+        QTestCreate: {
+            /** Test Type Id */
+            test_type_id?: string | null;
+            /** Test Type Code */
+            test_type_code?: string | null;
+            /** Criterion Id */
+            criterion_id?: string | null;
+            /** Site Id */
+            site_id?: string | null;
+            /** Zone Id */
+            zone_id?: string | null;
+            /** System Id */
+            system_id?: string | null;
+            /** Location Ref */
+            location_ref?: string | null;
+            /** Engagement Id */
+            engagement_id?: string | null;
+            /**
+             * Lab Supplier Id
+             * Format: uuid
+             */
+            lab_supplier_id: string;
+            /** Pour Id */
+            pour_id?: string | null;
+            /** Mir Id */
+            mir_id?: string | null;
+            /** Ir Id */
+            ir_id?: string | null;
+            /** Retest Of Id */
+            retest_of_id?: string | null;
+            /** Mix Key */
+            mix_key?: string | null;
+        };
+        /** QTestDeliver */
+        QTestDeliver: {
+            /** Delivered On */
+            delivered_on?: string | null;
+        };
+        /** QTestNcrDecision */
+        QTestNcrDecision: {
+            /** Raise Ncr */
+            raise_ncr: boolean;
+            /** Reason */
+            reason?: string | null;
+        };
+        /** QTestPage */
+        QTestPage: {
+            /** Items */
+            items: components["schemas"]["QTestRead"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+        };
+        /** QTestRead */
+        QTestRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Test No */
+            test_no: string;
+            /**
+             * Test Type Id
+             * Format: uuid
+             */
+            test_type_id: string;
+            /** Test Type Code */
+            test_type_code: string;
+            /** Test Type Version */
+            test_type_version: number;
+            /** Test Type Name En */
+            test_type_name_en: string;
+            /** Test Type Name Ar */
+            test_type_name_ar: string;
+            /** Criterion Id */
+            criterion_id: string | null;
+            /** Criterion Code */
+            criterion_code: string | null;
+            /** Criterion Version */
+            criterion_version: number | null;
+            /**
+             * Site Id
+             * Format: uuid
+             */
+            site_id: string;
+            /** Site Code */
+            site_code: string;
+            /** Zone Id */
+            zone_id: string | null;
+            /** Zone Code */
+            zone_code: string | null;
+            /** System Id */
+            system_id: string | null;
+            /** Location Ref */
+            location_ref: string;
+            /** Engagement Id */
+            engagement_id: string | null;
+            /**
+             * Lab Supplier Id
+             * Format: uuid
+             */
+            lab_supplier_id: string;
+            /** Lab Code */
+            lab_code: string;
+            /** Pour Id */
+            pour_id: string | null;
+            /** Pour No */
+            pour_no: string | null;
+            /** Mir Id */
+            mir_id: string | null;
+            /** Retest Of Id */
+            retest_of_id: string | null;
+            /** Mix Key */
+            mix_key: string | null;
+            requested_by: components["schemas"]["UserRef"] | null;
+            /** Sampled At */
+            sampled_at: string | null;
+            /** Cast Date */
+            cast_date: string | null;
+            sampled_by: components["schemas"]["UserRef"] | null;
+            /** Sample Ref */
+            sample_ref: string | null;
+            /** Mte Ids */
+            mte_ids: string[];
+            /** Delivered To Lab On */
+            delivered_to_lab_on: string | null;
+            /** Results */
+            results: {
+                [key: string]: unknown;
+            };
+            /** Report No */
+            report_no: string | null;
+            /** Tested By Name */
+            tested_by_name: string | null;
+            verdict: components["schemas"]["QTestVerdict"];
+            /** Verdict Detail */
+            verdict_detail: {
+                [key: string]: unknown;
+            };
+            /** Result Version */
+            result_version: number;
+            /** History */
+            history: {
+                [key: string]: unknown;
+            }[];
+            /** Results Entered At */
+            results_entered_at: string | null;
+            results_entered_by: components["schemas"]["UserRef"] | null;
+            /** Verified At */
+            verified_at: string | null;
+            verified_by: components["schemas"]["UserRef"] | null;
+            /** Ncr Decision */
+            ncr_decision: {
+                [key: string]: unknown;
+            };
+            status: components["schemas"]["QTestStatus"];
+            /** Status Reason */
+            status_reason: string | null;
+            /** Specimens */
+            specimens: components["schemas"]["QSpecimenRead"][];
+            /** Result Fields */
+            result_fields: components["schemas"]["QResultFieldRead"][];
+            /** Report Count */
+            report_count: number;
+            /** Actions */
+            actions: string[];
+            /** Warnings */
+            warnings?: components["schemas"]["ApiWarning"][];
+            /**
+             * Ncr Prompt
+             * @default false
+             */
+            ncr_prompt: boolean;
+        };
+        /** QTestResults */
+        QTestResults: {
+            /** Report No */
+            report_no?: string | null;
+            /** Tested By Name */
+            tested_by_name?: string | null;
+            /** Specimens */
+            specimens?: components["schemas"]["QSpecimenValues"][];
+            /** Results */
+            results?: {
+                [key: string]: unknown;
+            };
+        };
+        /** QTestSample */
+        QTestSample: {
+            /** Sampled At */
+            sampled_at?: string | null;
+            /** Sample Ref */
+            sample_ref: string;
+            /** Sampled By User Id */
+            sampled_by_user_id?: string | null;
+            /** Mte Ids */
+            mte_ids?: string[];
+            /** Mte Notes */
+            mte_notes?: {
+                [key: string]: string;
+            };
+            /** Results */
+            results?: {
+                [key: string]: unknown;
+            };
+        };
+        /** QTestSpecimens */
+        QTestSpecimens: {
+            /** Specimens */
+            specimens: components["schemas"]["QSpecimenValues"][];
+        };
+        /**
+         * QTestStatus
+         * @description §C.2.3.
+         * @enum {string}
+         */
+        QTestStatus: "requested" | "sampled" | "at_lab" | "results_entered" | "verified" | "amended" | "cancelled" | "voided";
+        /** QTestTypeCreate */
+        QTestTypeCreate: {
+            /** Code */
+            code: string;
+            /** Name En */
+            name_en: string;
+            /**
+             * Name Ar
+             * @default
+             */
+            name_ar: string;
+            /** Discipline */
+            discipline: string;
+            /** @default construction */
+            profile: components["schemas"]["QProfileScope"];
+            /** Standard Ref */
+            standard_ref?: string | null;
+            /** Specimen Plan */
+            specimen_plan?: components["schemas"]["QSpecimenPlanRow"][];
+            /** Result Fields */
+            result_fields: components["schemas"]["QResultField"][];
+            /** @default fields */
+            evaluation: components["schemas"]["QEvaluationMode"];
+            /** Criterion Code */
+            criterion_code?: string | null;
+            /** Field Criteria */
+            field_criteria?: {
+                [key: string]: string;
+            };
+            /** Acceptance Age Days */
+            acceptance_age_days?: number | null;
+            /** Ncr Class On Fail */
+            ncr_class_on_fail?: {
+                [key: string]: "minor" | "major" | "critical";
+            };
+            /** Competence Code */
+            competence_code?: string | null;
+        };
+        /** QTestTypeNewVersion */
+        QTestTypeNewVersion: {
+            /** Project Id */
+            project_id?: string | null;
+        };
+        /** QTestTypeRead */
+        QTestTypeRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Code */
+            code: string;
+            /** Version */
+            version: number;
+            /** Name En */
+            name_en: string;
+            /** Name Ar */
+            name_ar: string;
+            /** Discipline */
+            discipline: string;
+            profile: components["schemas"]["QProfileScope"];
+            /** Standard Ref */
+            standard_ref: string | null;
+            /** Specimen Plan */
+            specimen_plan: components["schemas"]["QSpecimenPlanRead"][];
+            /** Result Fields */
+            result_fields: components["schemas"]["QResultFieldRead"][];
+            evaluation: components["schemas"]["QEvaluationMode"];
+            /** Criterion Code */
+            criterion_code: string | null;
+            /** Field Criteria */
+            field_criteria: {
+                [key: string]: string;
+            };
+            /** Acceptance Age Days */
+            acceptance_age_days: number | null;
+            /** Ncr Class On Fail */
+            ncr_class_on_fail: {
+                [key: string]: string;
+            };
+            /** Competence Code */
+            competence_code: string | null;
+            /** Project Ids */
+            project_ids: string[];
+            status: components["schemas"]["QTestTypeStatus"];
+            /** Published At */
+            published_at: string | null;
+        };
+        /**
+         * QTestTypeStatus
+         * @description 6d-style versions (Q-TST-01).
+         * @enum {string}
+         */
+        QTestTypeStatus: "draft" | "published" | "superseded" | "retired";
+        /** QTestTypeTransition */
+        QTestTypeTransition: {
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "publish" | "retire";
+            /** Reason */
+            reason?: string | null;
+        };
+        /** QTestTypeUpdate */
+        QTestTypeUpdate: {
+            /** Name En */
+            name_en?: string | null;
+            /** Name Ar */
+            name_ar?: string | null;
+            /** Discipline */
+            discipline?: string | null;
+            profile?: components["schemas"]["QProfileScope"] | null;
+            /** Standard Ref */
+            standard_ref?: string | null;
+            /** Specimen Plan */
+            specimen_plan?: components["schemas"]["QSpecimenPlanRow"][] | null;
+            /** Result Fields */
+            result_fields?: components["schemas"]["QResultField"][] | null;
+            evaluation?: components["schemas"]["QEvaluationMode"] | null;
+            /** Criterion Code */
+            criterion_code?: string | null;
+            /** Field Criteria */
+            field_criteria?: {
+                [key: string]: string;
+            } | null;
+            /** Acceptance Age Days */
+            acceptance_age_days?: number | null;
+            /** Ncr Class On Fail */
+            ncr_class_on_fail?: {
+                [key: string]: "minor" | "major" | "critical";
+            } | null;
+            /** Competence Code */
+            competence_code?: string | null;
+        };
+        /** QTestUpdate */
+        QTestUpdate: {
+            /** Location Ref */
+            location_ref?: string | null;
+            /** Zone Id */
+            zone_id?: string | null;
+            /** System Id */
+            system_id?: string | null;
+            /** Sample Ref */
+            sample_ref?: string | null;
+            /** Tested By Name */
+            tested_by_name?: string | null;
+        };
+        /**
+         * QTestVerdict
+         * @description Q-CRT-01 verdict of a test request (`pending` until results are entered).
+         * @enum {string}
+         */
+        QTestVerdict: "pass" | "fail" | "indicative" | "pending";
+        /** QTestVerify */
+        QTestVerify: {
+            /**
+             * Decision
+             * @enum {string}
+             */
+            decision: "approved" | "returned";
+            /** Comment */
+            comment?: string | null;
+            paper?: components["schemas"]["QPaperSignoff"] | null;
+        };
+        /**
+         * QTestWindowKind
+         * @enum {string}
+         */
+        QTestWindowKind: "door_open" | "power_off" | "other";
+        /**
+         * QTripStatus
+         * @enum {string}
+         */
+        QTripStatus: "planned" | "preload_checked" | "dispatched" | "delivered" | "closed" | "cancelled";
         /**
          * QVerdict
          * @description Q-CRT-01.
@@ -49704,6 +57828,607 @@ export interface components {
             /** Warnings */
             warnings: components["schemas"]["ApiWarning"][];
         };
+        /** QWeldCreate */
+        QWeldCreate: {
+            /** Joint Id */
+            joint_id: string;
+            /**
+             * Wps Id
+             * Format: uuid
+             */
+            wps_id: string;
+            process?: components["schemas"]["QWeldProcess"] | null;
+            /** Position */
+            position: string;
+            /** @default butt */
+            joint_type: components["schemas"]["QJointType"];
+            /** Thickness Mm */
+            thickness_mm: string | number;
+            /** Diameter Mm */
+            diameter_mm?: string | number | null;
+            /** Length Mm */
+            length_mm?: string | number | null;
+            /** Welders */
+            welders: components["schemas"]["QWeldWelder"][];
+            /**
+             * Welded On
+             * Format: date
+             */
+            welded_on: string;
+            /** Drawing Ref */
+            drawing_ref?: string | null;
+            /** Site Id */
+            site_id?: string | null;
+            /** Zone Id */
+            zone_id?: string | null;
+            /** System Id */
+            system_id?: string | null;
+            /** Lot Code */
+            lot_code?: string | null;
+            ndt_method?: components["schemas"]["QNdtMethod"] | null;
+            /** Ndt Required Pct */
+            ndt_required_pct?: string | number | null;
+            /** Override Reason */
+            override_reason?: string | null;
+        };
+        /** QWeldLot */
+        QWeldLot: {
+            /** Lot Code */
+            lot_code: string;
+            ndt_method: components["schemas"]["QNdtMethod"];
+            /** Ndt Required Pct */
+            ndt_required_pct?: string | number | null;
+        };
+        /** QWeldLotItem */
+        QWeldLotItem: {
+            /** Lot Code */
+            lot_code: string;
+            /** Welds */
+            welds: number;
+        };
+        /** QWeldNdt */
+        QWeldNdt: {
+            method?: components["schemas"]["QNdtMethod"] | null;
+            result: components["schemas"]["QAcceptReject"];
+            /** Report No */
+            report_no: string;
+            /**
+             * Attachment Id
+             * Format: uuid
+             */
+            attachment_id: string;
+            /** Defect Type */
+            defect_type?: string | null;
+            /** Defect Length Mm */
+            defect_length_mm?: string | number | null;
+            /** Examined Length Mm */
+            examined_length_mm?: string | number | null;
+            /** Technician Name */
+            technician_name?: string | null;
+            /** Technician User Id */
+            technician_user_id?: string | null;
+            /** Competence Code */
+            competence_code?: string | null;
+            /** Examined On */
+            examined_on?: string | null;
+        };
+        /** QWeldPage */
+        QWeldPage: {
+            /** Items */
+            items: components["schemas"]["QWeldRead"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+        };
+        /** QWeldPick */
+        QWeldPick: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Joint Id */
+            joint_id: string;
+        };
+        /**
+         * QWeldProcess
+         * @description List WP.
+         * @enum {string}
+         */
+        QWeldProcess: "SMAW" | "GTAW" | "GMAW" | "FCAW" | "SAW" | "other";
+        /** QWeldRead */
+        QWeldRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Joint Id */
+            joint_id: string;
+            /** Engagement Id */
+            engagement_id: string | null;
+            /** Drawing Ref */
+            drawing_ref: string | null;
+            /** Site Id */
+            site_id: string | null;
+            /** Zone Id */
+            zone_id: string | null;
+            /** System Id */
+            system_id: string | null;
+            /**
+             * Wps Id
+             * Format: uuid
+             */
+            wps_id: string;
+            /** Wps No */
+            wps_no: string;
+            process: components["schemas"]["QWeldProcess"];
+            /** Position */
+            position: string;
+            joint_type: components["schemas"]["QJointType"];
+            /** Diameter Mm */
+            diameter_mm: string | null;
+            /** Thickness Mm */
+            thickness_mm: string;
+            /** Length Mm */
+            length_mm: string | null;
+            /** Welders */
+            welders: components["schemas"]["QWeldWelderRead"][];
+            /**
+             * Welded On
+             * Format: date
+             */
+            welded_on: string;
+            visual_result: components["schemas"]["QAcceptReject"] | null;
+            /** Visual Defect */
+            visual_defect: string | null;
+            /** Lot Code */
+            lot_code: string | null;
+            ndt_method: components["schemas"]["QNdtMethod"] | null;
+            /** Ndt Required Pct */
+            ndt_required_pct: string | null;
+            /** Selected For Ndt */
+            selected_for_ndt: boolean;
+            selection_reason: components["schemas"]["QNdtSelection"] | null;
+            /** Selected From Id */
+            selected_from_id: string | null;
+            /** Ndt Results */
+            ndt_results: {
+                [key: string]: unknown;
+            }[];
+            /** Repair Count */
+            repair_count: number;
+            /** Override Reason */
+            override_reason: string | null;
+            status: components["schemas"]["QWeldStatus"];
+            /** Status Reason */
+            status_reason: string | null;
+            /** Actions */
+            actions: string[];
+            /** Warnings */
+            warnings?: components["schemas"]["ApiWarning"][];
+            /** Progressive */
+            progressive?: string[];
+        };
+        /** QWeldRepair */
+        QWeldRepair: {
+            /** Welders */
+            welders?: components["schemas"]["QWeldWelder"][];
+            /** Repaired On */
+            repaired_on?: string | null;
+        };
+        /** QWeldSelect */
+        QWeldSelect: {
+            /** @default random */
+            reason: components["schemas"]["QNdtSelection"];
+        };
+        /** QWeldSign */
+        QWeldSign: {
+            /**
+             * Decision
+             * @enum {string}
+             */
+            decision: "approved" | "rejected";
+            /** Comment */
+            comment: string;
+            paper?: components["schemas"]["QPaperSignoff"] | null;
+        };
+        /**
+         * QWeldStandard
+         * @enum {string}
+         */
+        QWeldStandard: "AWS_D1_1" | "ASME_IX" | "ISO_15614_1" | "ISO_9606_1" | "other";
+        /**
+         * QWeldStatus
+         * @description §C.6 weld transitions.
+         * @enum {string}
+         */
+        QWeldStatus: "welded" | "visual_accepted" | "visual_rejected" | "ndt_pending" | "accepted" | "rejected" | "repaired_r1" | "repaired_r2" | "cut_out" | "voided";
+        /** QWeldVisual */
+        QWeldVisual: {
+            result: components["schemas"]["QAcceptReject"];
+            /** Defect Type */
+            defect_type?: string | null;
+        };
+        /** QWeldWelder */
+        QWeldWelder: {
+            /** Welder Id */
+            welder_id?: string | null;
+            /** Stamp */
+            stamp?: string | null;
+            /**
+             * Root
+             * @default false
+             */
+            root: boolean;
+            /**
+             * Fill
+             * @default false
+             */
+            fill: boolean;
+            /**
+             * Cap
+             * @default false
+             */
+            cap: boolean;
+        };
+        /** QWeldWelderRead */
+        QWeldWelderRead: {
+            /** Welder Id */
+            welder_id: string;
+            /** Stamp */
+            stamp: string;
+            /** Root */
+            root: boolean;
+            /** Fill */
+            fill: boolean;
+            /** Cap */
+            cap: boolean;
+        };
+        /** QWelderCreate */
+        QWelderCreate: {
+            /**
+             * Worker Id
+             * Format: uuid
+             */
+            worker_id: string;
+            /** Stamp */
+            stamp: string;
+            /**
+             * Engagement Id
+             * Format: uuid
+             */
+            engagement_id: string;
+        };
+        /** QWelderRead */
+        QWelderRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /**
+             * Worker Id
+             * Format: uuid
+             */
+            worker_id: string;
+            /** Worker No */
+            worker_no: string | null;
+            /** Full Name En */
+            full_name_en: string;
+            /** Full Name Ar */
+            full_name_ar: string | null;
+            /** Stamp */
+            stamp: string;
+            /**
+             * Engagement Id
+             * Format: uuid
+             */
+            engagement_id: string;
+            /** Engagement Code */
+            engagement_code: string | null;
+            status: components["schemas"]["QWelderStatus"];
+        };
+        /**
+         * QWelderStatus
+         * @enum {string}
+         */
+        QWelderStatus: "active" | "inactive";
+        /** QWelderUpdate */
+        QWelderUpdate: {
+            status: components["schemas"]["QWelderStatus"];
+        };
+        /** QWpqConfirm */
+        QWpqConfirm: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+        };
+        /** QWpqCreate */
+        QWpqCreate: {
+            /**
+             * Welder Id
+             * Format: uuid
+             */
+            welder_id: string;
+            standard: components["schemas"]["QWeldStandard"];
+            process: components["schemas"]["QWeldProcess"];
+            /** Test Wps Id */
+            test_wps_id?: string | null;
+            /**
+             * Test Date
+             * Format: date
+             */
+            test_date: string;
+            /** Coupon Thickness Mm */
+            coupon_thickness_mm?: string | number | null;
+            /** Coupon Diameter Mm */
+            coupon_diameter_mm?: string | number | null;
+            /** Coupon Position */
+            coupon_position?: string | null;
+            /** Positions */
+            positions: string[];
+            /** Thickness Min Mm */
+            thickness_min_mm: string | number;
+            /** Thickness Max Mm */
+            thickness_max_mm: string | number;
+            /** Diameter Min Mm */
+            diameter_min_mm?: string | number | null;
+            /** F No */
+            f_no?: string | null;
+            test_method: components["schemas"]["QWpqMethod"];
+            /** @default accept */
+            result: components["schemas"]["QAcceptReject"];
+            /** Examiner Supplier Id */
+            examiner_supplier_id?: string | null;
+            /** Personnel Certificate Id */
+            personnel_certificate_id?: string | null;
+            /** Revalidation Due */
+            revalidation_due?: string | null;
+        };
+        /**
+         * QWpqMethod
+         * @enum {string}
+         */
+        QWpqMethod: "RT" | "bend" | "fracture" | "macro";
+        /** QWpqRead */
+        QWpqRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Wpq No */
+            wpq_no: string | null;
+            /**
+             * Welder Id
+             * Format: uuid
+             */
+            welder_id: string;
+            /** Stamp */
+            stamp: string;
+            standard: components["schemas"]["QWeldStandard"];
+            process: components["schemas"]["QWeldProcess"];
+            /** Test Wps Id */
+            test_wps_id: string | null;
+            /**
+             * Test Date
+             * Format: date
+             */
+            test_date: string;
+            /** Coupon Thickness Mm */
+            coupon_thickness_mm: string | null;
+            /** Coupon Diameter Mm */
+            coupon_diameter_mm: string | null;
+            /** Coupon Position */
+            coupon_position: string | null;
+            /** Positions */
+            positions: string[];
+            /** Thickness Min Mm */
+            thickness_min_mm: string;
+            /** Thickness Max Mm */
+            thickness_max_mm: string;
+            /** Diameter Min Mm */
+            diameter_min_mm: string | null;
+            /** F No */
+            f_no: string | null;
+            test_method: components["schemas"]["QWpqMethod"];
+            result: components["schemas"]["QAcceptReject"];
+            /** Examiner Supplier Id */
+            examiner_supplier_id: string | null;
+            /** Last Use */
+            last_use: string | null;
+            /** Continuity Until */
+            continuity_until: string | null;
+            /** Days Left */
+            days_left: number | null;
+            /** Revalidation Due */
+            revalidation_due: string | null;
+            /** Confirmations */
+            confirmations: {
+                [key: string]: unknown;
+            }[];
+            status: components["schemas"]["QWpqStatus"];
+            /** Status Reason */
+            status_reason: string | null;
+            /** Actions */
+            actions: string[];
+        };
+        /**
+         * QWpqStatus
+         * @enum {string}
+         */
+        QWpqStatus: "draft" | "active" | "lapsed" | "expired" | "revoked";
+        /** QWpsCreate */
+        QWpsCreate: {
+            /** Wps No */
+            wps_no: string;
+            standard: components["schemas"]["QWeldStandard"];
+            /** Processes */
+            processes: components["schemas"]["QWeldProcess"][];
+            /** Joint Types */
+            joint_types?: components["schemas"]["QJointType"][];
+            /** Base Material Group */
+            base_material_group?: string | null;
+            /** Thickness Min Mm */
+            thickness_min_mm: string | number;
+            /** Thickness Max Mm */
+            thickness_max_mm: string | number;
+            /** Diameter Min Mm */
+            diameter_min_mm?: string | number | null;
+            /** Diameter Max Mm */
+            diameter_max_mm?: string | number | null;
+            /** Positions */
+            positions?: string[];
+            /** Filler Class */
+            filler_class?: string | null;
+            /** F No */
+            f_no?: string | null;
+            /** A No */
+            a_no?: string | null;
+            /** Preheat Min C */
+            preheat_min_c?: string | number | null;
+            /** Interpass Max C */
+            interpass_max_c?: string | number | null;
+            /** Pwht */
+            pwht?: string | null;
+            /** Gas */
+            gas?: string | null;
+            /**
+             * Prequalified
+             * @default false
+             */
+            prequalified: boolean;
+            /** Pqr Ids */
+            pqr_ids?: string[];
+        };
+        /** QWpsRead */
+        QWpsRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Wps No */
+            wps_no: string;
+            /** Revision */
+            revision: number;
+            standard: components["schemas"]["QWeldStandard"];
+            /** Processes */
+            processes: string[];
+            /** Joint Types */
+            joint_types: string[];
+            /** Base Material Group */
+            base_material_group: string | null;
+            /** Thickness Min Mm */
+            thickness_min_mm: string;
+            /** Thickness Max Mm */
+            thickness_max_mm: string;
+            /** Diameter Min Mm */
+            diameter_min_mm: string | null;
+            /** Diameter Max Mm */
+            diameter_max_mm: string | null;
+            /** Positions */
+            positions: string[];
+            /** Filler Class */
+            filler_class: string | null;
+            /** F No */
+            f_no: string | null;
+            /** A No */
+            a_no: string | null;
+            /** Preheat Min C */
+            preheat_min_c: string | null;
+            /** Interpass Max C */
+            interpass_max_c: string | null;
+            /** Pwht */
+            pwht: string | null;
+            /** Gas */
+            gas: string | null;
+            /** Prequalified */
+            prequalified: boolean;
+            /** Pqr Ids */
+            pqr_ids: string[];
+            /** Approved At */
+            approved_at: string | null;
+            status: components["schemas"]["QWpsStatus"];
+            /** Status Reason */
+            status_reason: string | null;
+            /** Actions */
+            actions: string[];
+        };
+        /**
+         * QWpsStatus
+         * @enum {string}
+         */
+        QWpsStatus: "draft" | "submitted" | "approved" | "superseded" | "withdrawn";
+        /** QWpsUpdate */
+        QWpsUpdate: {
+            standard?: components["schemas"]["QWeldStandard"] | null;
+            /** Processes */
+            processes?: components["schemas"]["QWeldProcess"][] | null;
+            /** Joint Types */
+            joint_types?: components["schemas"]["QJointType"][] | null;
+            /** Base Material Group */
+            base_material_group?: string | null;
+            /** Thickness Min Mm */
+            thickness_min_mm?: string | number | null;
+            /** Thickness Max Mm */
+            thickness_max_mm?: string | number | null;
+            /** Diameter Min Mm */
+            diameter_min_mm?: string | number | null;
+            /** Diameter Max Mm */
+            diameter_max_mm?: string | number | null;
+            /** Positions */
+            positions?: string[] | null;
+            /** Filler Class */
+            filler_class?: string | null;
+            /** F No */
+            f_no?: string | null;
+            /** A No */
+            a_no?: string | null;
+            /** Preheat Min C */
+            preheat_min_c?: string | number | null;
+            /** Interpass Max C */
+            interpass_max_c?: string | number | null;
+            /** Pwht */
+            pwht?: string | null;
+            /** Gas */
+            gas?: string | null;
+            /** Prequalified */
+            prequalified?: boolean | null;
+            /** Pqr Ids */
+            pqr_ids?: string[] | null;
+        };
+        /**
+         * QZoneRole
+         * @enum {string}
+         */
+        QZoneRole: "storage" | "quarantine" | "dock";
         /**
          * QrKind
          * @description §3.20 payload `HSE2:<kind>:<token>`.
@@ -140005,6 +148730,14166 @@ export interface operations {
                 };
                 content: {
                     "application/zip": string;
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_list_mars: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["QMarStatus"][] | null;
+                category?: components["schemas"]["QMaterialCategory"] | null;
+                q?: string | null;
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QMarPage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_create_mar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QMarCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QMarRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_get_mar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mar_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QMarRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_update_mar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mar_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QMarUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QMarRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_submit_mar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mar_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QMarRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_decide_mar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mar_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QMarDecide"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QMarRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_resubmit_mar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mar_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QMarRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_withdraw_mar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mar_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QReasonBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QMarRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_list_mirs: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["QMirStatus"][] | null;
+                result?: components["schemas"]["QMirResult"] | null;
+                q?: string | null;
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QMirPage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_create_mir: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QMirCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QMirRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_get_mir: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mir_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QMirRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_update_mir: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mir_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QMirUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QMirRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_submit_mir: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mir_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QMirRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_decide_mir: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mir_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QMirDecide"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QMirRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_mir_checklist: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mir_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QMirChecklistSave"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QMirRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_mir_checklist_template: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QMirChecklistTemplate"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_cancel_mir: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mir_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QReasonBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QMirRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_mir_quarantine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mir_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QMirQuarantine"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QQuarantineRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_list_quarantine: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["QQuarantineStatus"] | null;
+                q?: string | null;
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QQuarantinePage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_create_quarantine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QQuarantineCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QQuarantineRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_get_quarantine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QQuarantineRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_quarantine_link: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QQuarantineLink"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QQuarantineRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_dispose_quarantine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QQuarantineDispose"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QQuarantineRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_list_test_types: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["QTestTypeStatus"] | null;
+                profile?: components["schemas"]["QProfileScope"] | null;
+                project_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QTestTypeRead"][];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_create_test_type: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QTestTypeCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QTestTypeRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_get_test_type: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                type_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QTestTypeRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_update_test_type: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                type_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QTestTypeUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QTestTypeRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_test_type_version: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                type_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QTestTypeNewVersion"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QTestTypeRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_test_type_transition: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                type_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QTestTypeTransition"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QTestTypeRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_list_tests: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["QTestStatus"][] | null;
+                verdict?: components["schemas"]["QTestVerdict"] | null;
+                test_type?: string | null;
+                pour_id?: string | null;
+                q?: string | null;
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QTestPage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_create_test: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QTestCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QTestRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_specimen_calendar: {
+        parameters: {
+            query?: {
+                on?: string | null;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QSpecimenCalendar"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_get_test: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                test_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QTestRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_update_test: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                test_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QTestUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QTestRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_sample_test: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                test_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QTestSample"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QTestRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_deliver_test: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                test_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QTestDeliver"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QTestRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_test_specimens: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                test_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QTestSpecimens"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QTestRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_test_results: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                test_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QTestResults"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QTestRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_verify_test: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                test_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QTestVerify"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QTestRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_amend_test: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                test_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QTestAmend"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QTestRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_test_ncr_decision: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                test_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QTestNcrDecision"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QTestRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_cancel_test: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                test_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QReasonBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QTestRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_void_test: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                test_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QReasonBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QTestRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_list_pours: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["QPourStatus"] | null;
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QPourPage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_create_pour: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QPourCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QPourRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_get_pour: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pour_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QPourRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_start_pour: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pour_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QPourStart"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QPourRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_close_pour: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pour_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QPourClose"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QPourRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_cancel_pour: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pour_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QReasonBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QPourRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_list_wps: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QWpsRead"][];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_create_wps: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QWpsCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QWpsRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_update_wps: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                wps_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QWpsUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QWpsRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_submit_wps: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                wps_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QWpsRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_approve_wps: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                wps_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QDecisionBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QWpsRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_revise_wps: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                wps_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QWpsRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_withdraw_wps: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                wps_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QReasonBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QWpsRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_list_pqrs: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QPqrRead"][];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_create_pqr: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QPqrCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QPqrRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_approve_pqr: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pqr_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QDecisionBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QPqrRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_list_welders: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QWelderRead"][];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_create_welder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QWelderCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QWelderRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_update_welder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                welder_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QWelderUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QWelderRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_list_wpqs: {
+        parameters: {
+            query?: {
+                welder_id?: string | null;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QWpqRead"][];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_create_wpq: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QWpqCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QWpqRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_approve_wpq: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                wpq_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QDecisionBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QWpqRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_revoke_wpq: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                wpq_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QReasonBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QWpqRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_confirm_wpq: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                wpq_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QWpqConfirm"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QWpqRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_list_welds: {
+        parameters: {
+            query?: {
+                lot_code?: string | null;
+                status?: components["schemas"]["QWeldStatus"][] | null;
+                stamp?: string | null;
+                q?: string | null;
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QWeldPage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_create_weld: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QWeldCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QWeldRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_get_weld: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                weld_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QWeldRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_weld_visual: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                weld_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QWeldVisual"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QWeldRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_weld_lot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                weld_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QWeldLot"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QWeldRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_weld_select: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                weld_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QWeldSelect"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QWeldRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_weld_ndt: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                weld_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QWeldNdt"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QWeldRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_weld_repair: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                weld_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QWeldRepair"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QWeldRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_weld_sign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                weld_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QWeldSign"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QWeldRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_weld_void: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                weld_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QReasonBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QWeldRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_weld_lots: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QWeldLotItem"][];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_weld_lot_summary: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                lot_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QLotSummary"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_weld_lot_pick: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                lot_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QWeldPick"][];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_weld_rates: {
+        parameters: {
+            query?: {
+                days?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QRepairRate"][];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_welder_continuity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QContinuityRow"][];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_list_calibrations: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["QCalRecordStatus"] | null;
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QCalibrationPage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_mte_calibrations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mte_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QCalibrationRead"][];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_create_calibration: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mte_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QCalibrationCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QCalibrationRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_get_calibration: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QCalibrationRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_update_calibration: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QCalibrationUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QCalibrationRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_decide_calibration: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QCalibrationDecide"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QCalibrationRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_mte_manual_status: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mte_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QMteOverrideSet"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QMteRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_mte_label: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mte_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QMteLabelRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_mte_label_printed: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mte_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QMteLabelRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_mte_range_check: {
+        parameters: {
+            query: {
+                lo: number | string;
+                hi: number | string;
+            };
+            header?: never;
+            path: {
+                mte_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiWarning"][];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_list_oot: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["QOotStatus"] | null;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QOotReviewListItem"][];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_get_oot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                review_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QOotReviewRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_oot_item: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QOotItemDecide"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QOotItemRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_oot_accept: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                review_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QOotAcceptProposals"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QOotAccepted"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_close_oot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                review_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QOotClose"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QOotReviewRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_list_competence: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QCompetenceReqRead"][];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_create_competence: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QCompetenceReqCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QCompetenceReqRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_update_competence: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                req_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QCompetenceReqUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QCompetenceReqRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_competence_matrix: {
+        parameters: {
+            query?: {
+                on?: string | null;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QCompetenceMatrixRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q_competence_check: {
+        parameters: {
+            query: {
+                user_id: string;
+                code: string;
+                on?: string | null;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QCompetenceCheckRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_list_products: {
+        parameters: {
+            query?: {
+                owner_id?: string | null;
+                q?: string | null;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ProductRead"][];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_create_product: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3ProductCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ProductRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_update_product: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                product_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3ProductUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ProductRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_list_imports: {
+        parameters: {
+            query?: {
+                kind?: components["schemas"]["QImportKind"] | null;
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ImportPage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_import: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_q3_import"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ImportResult"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_import_preview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_q3_import_preview"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ImportPreview"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_import_profiles: {
+        parameters: {
+            query: {
+                kind: components["schemas"]["QImportKind"];
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    }[];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_void_import: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                batch_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3VoidInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ImportRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_list_zones: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ZoneRead"][];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_create_zone: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3ZoneCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ZoneRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_get_zone: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                zone_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ZoneRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_update_zone: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                zone_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3ZoneUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ZoneRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_zone_change: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                zone_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3ChangeNote"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ZoneRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_zone_report: {
+        parameters: {
+            query: {
+                start: string;
+                end: string;
+            };
+            header?: never;
+            path: {
+                zone_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ZoneReport"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_create_point: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                zone_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3PointCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3PointRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_update_point: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                point_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3PointUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3PointRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_assign_logger: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                point_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3LoggerAssign"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3PointWithWarnings"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_manual_reading: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                point_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3ManualReading"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ManualReadingResult"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_annotate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reading_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3Annotation"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ReadingRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_list_excursions: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["QExcursionStatus"][] | null;
+                severity?: components["schemas"]["QExcursionSeverity"] | null;
+                zone_id?: string | null;
+                kind?: components["schemas"]["QExcursionKind"] | null;
+                transients?: boolean;
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ExcursionPage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_get_excursion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ExcursionRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_ack_excursion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ExcursionRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_excursion_cause: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3CauseInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ExcursionRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_excursion_impacts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3ImpactsInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ExcursionRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_excursion_assess: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3AssessInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ExcursionRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_excursion_reopen: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3ReasonInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ExcursionRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_excursion_close: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3NoteInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ExcursionRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_excursion_dismiss: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3DismissInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ExcursionRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_list_studies: {
+        parameters: {
+            query?: {
+                zone_id?: string | null;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3MappingListItem"][];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_create_study: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3MappingCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3MappingRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_get_study: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                study_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3MappingRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_update_study: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                study_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3MappingInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3MappingRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_evaluate_study: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                study_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3MappingRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_approve_study: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                study_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3ApproveInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3MappingRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_list_schedules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ScheduleRead"][];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_create_schedule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3ScheduleCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ScheduleRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_update_schedule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                schedule_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3ScheduleUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ScheduleRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_run_check: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                schedule_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3CheckRunInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3CheckRunResult"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_list_stations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3StationRead"][];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_create_station: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3StationCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3StationRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_list_visits: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3VisitRead"][];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_create_visit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3VisitCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3VisitRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_get_visit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                visit_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3VisitRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_metrics: {
+        parameters: {
+            query: {
+                year: number;
+                month: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3Metrics"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_list_receipts: {
+        parameters: {
+            query?: {
+                customer_id?: string | null;
+                decision?: components["schemas"]["QLineDecision"] | null;
+                deviation?: boolean | null;
+                status?: components["schemas"]["QReceiptStatus"] | null;
+                q?: string | null;
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ReceiptPage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_create_receipt: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3ReceiptCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ReceiptRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_get_receipt: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                receipt_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ReceiptRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_update_receipt: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                receipt_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3ReceiptHeader"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ReceiptRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_add_line: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                receipt_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3ReceiptLineInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ReceiptRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_update_line: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                receipt_id: string;
+                line_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3ReceiptLineInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ReceiptRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_vehicle_check: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                receipt_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3AnswersInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ReceiptRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_inspect_receipt: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                receipt_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ReceiptRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_cancel_receipt: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                receipt_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3ReasonInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ReceiptRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_decide_line: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                line_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3LineDecide"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ReceiptRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_list_holds: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["QHoldStatus"][] | null;
+                reason?: components["schemas"]["QHoldReason"] | null;
+                q?: string | null;
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3HoldPage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_create_hold: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3HoldCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3HoldRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_export_holds: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_get_hold: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                hold_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3HoldRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_hold_lines: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                hold_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3HoldLinesInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3HoldRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_hold_segregation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                hold_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3SegregationInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3HoldRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_hold_wms: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                hold_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3HoldRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_hold_decide: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                hold_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3HoldDecide"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3HoldRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_hold_close: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                hold_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3HoldRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_hold_rehold: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                line_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3ReasonInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3HoldRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_hold_outcome: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                line_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3OutcomeInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3HoldRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_list_snapshots: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3SnapshotRead"][];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_near_expiry: {
+        parameters: {
+            query?: {
+                site_id?: string | null;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3NearExpiry"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_expiry_hold: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3ExpiryHoldInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3HoldRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_list_fefo: {
+        parameters: {
+            query?: {
+                result?: components["schemas"]["QFefoResult"] | null;
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3FefoPage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_create_fefo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3FefoCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3FefoRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_confirm_fefo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                check_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3FefoRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_list_damage: {
+        parameters: {
+            query?: {
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3DamagePage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_create_damage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3DamageCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3DamageRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_list_counts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3CountRead"][];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_create_count: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3CountCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3CountRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_list_throughput: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ThroughputRead"][];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_put_throughput: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3ThroughputInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ThroughputRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_list_returns: {
+        parameters: {
+            query?: {
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ReturnPage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_create_return: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3ReturnCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ReturnRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_get_return: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                return_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ReturnRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_return_inspection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                return_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3AnswersInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ReturnRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_grade_return: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                return_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3GradeInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ReturnRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_confirm_return: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                return_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3CommentInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ReturnRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_list_recalls: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3RecallListItem"][];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_create_recall: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3RecallCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3RecallRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_get_recall: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recall_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3RecallRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_confirm_trace: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recall_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3TraceConfirm"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3RecallRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_recover: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recall_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3RecallRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_recall_contact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3RecallContactUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3RecallRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_close_recall: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recall_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3RecallClose"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3RecallRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_cancel_recall: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recall_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3ReasonInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3RecallRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_list_shipments: {
+        parameters: {
+            query?: {
+                unassigned?: boolean;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3ShipmentRead"][];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_list_trips: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["QTripStatus"] | null;
+                q?: string | null;
+                /** @description 1-based page number. */
+                page?: number;
+                /** @description Items per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3TripPage"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_create_trip: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3TripCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3TripRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_get_trip: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                trip_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3TripRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_trip_preload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                trip_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3PreloadInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3TripRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_trip_dispatch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                trip_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3DispatchInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3TripRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_trip_pod: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                trip_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3PodCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3TripRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_trip_deliver: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                trip_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3TripRead"];
+                };
+            };
+            /** @description Not authenticated, session expired, or login rejected. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Missing capability, read-only role, contractor suspended, or privacy notice not acknowledged (PRIVACY_ACK_REQUIRED). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found or outside the caller's project/contractor scope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Invalid state transition, closed project, duplicate value or business-rule conflict. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation error (field errors in detail.errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    q3_trip_cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                trip_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Q3ReasonInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Q3TripRead"];
                 };
             };
             /** @description Not authenticated, session expired, or login rejected. */

@@ -342,7 +342,7 @@ def calibration_items(db: Session, d: Any) -> list[dict[str, Any]]:
             c.cal_date,
             "calibration",
             c.id,
-            f"/quality/calibration/{m.id}",
+            f"/quality/calibration/{c.id}",
             _files(db, A.q_calibration_cert, c.id),
         )
         for c, m in rows

@@ -6,7 +6,7 @@ WPQs and the weld log; calibrations, the manual M&TE status override, out-of-tol
 items; competence requirements and the competence matrix snapshot. Sits on q0001 like q1001 / q3001; the integrator re-chains them.
 
 Revision ID: q2001
-Revises: q0001
+Revises: q1001
 Create Date: 2026-10-31 18:28:53.303274
 
 """
@@ -18,7 +18,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = 'q2001'
-down_revision: Union[str, Sequence[str], None] = 'q0001'
+down_revision: Union[str, Sequence[str], None] = 'q1001'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

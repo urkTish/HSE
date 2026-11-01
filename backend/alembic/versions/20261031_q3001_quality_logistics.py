@@ -8,7 +8,7 @@ per-zone day summaries of the minute model. Sits on q0001 like q1001 /
 q2001; the integrator re-chains them.
 
 Revision ID: q3001
-Revises: q0001
+Revises: q2001
 Create Date: 2026-10-31 18:03:24.347625
 
 """
@@ -20,7 +20,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = 'q3001'
-down_revision: Union[str, Sequence[str], None] = 'q0001'
+down_revision: Union[str, Sequence[str], None] = 'q2001'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
