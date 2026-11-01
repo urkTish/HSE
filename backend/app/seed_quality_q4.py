@@ -810,6 +810,38 @@ def _mrv(w: _W) -> None:
     from app.models.quality.q4 import QManagementReview  # noqa: PLC0415
 
     ruh = w.p["RUH-CCH"]
+    from app.core.quality.common import QAssigneeKind  # noqa: PLC0415
+    from app.models.quality import QRpRule  # noqa: PLC0415
+
+    # RUH-CCH: like `q_audit.issue` (A.5), the minutes are approved by Faisal (top management),
+    # not by the QA/QC Manager who prepares the review
+    rule = w.db.scalar(
+        select(QRpRule).where(
+            QRpRule.project_id == ruh.id,
+            QRpRule.record_type == RT.management_review.value,
+            QRpRule.step == "approve",
+            QRpRule.record_id.is_(None),
+            QRpRule.qualifier.is_(None),
+        )
+    )
+    if rule is not None:
+        rule.assignee_kind, rule.assignee = QAssigneeKind.user, str(w.u("faisal.harbi"))
+    else:
+        w.db.add(
+            QRpRule(
+                project_id=ruh.id,
+                record_type=RT.management_review.value,
+                step="approve",
+                assignee_kind="user",
+                assignee=str(w.u("faisal.harbi")),
+                active=True,
+                paper_allowed=True,
+                self_approval_allowed=False,
+                own_tree_allowed=False,
+                seed_fake=True,
+            )
+        )
+    w.db.flush()
     m = QManagementReview(
         id=uuid.uuid4(),
         project_id=ruh.id,

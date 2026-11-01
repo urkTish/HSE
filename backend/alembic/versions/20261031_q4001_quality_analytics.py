@@ -231,7 +231,7 @@ def upgrade() -> None:
     sa.Column('period_start', sa.Date(), nullable=False),
     sa.Column('period_end', sa.Date(), nullable=False),
     sa.Column('metrics', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-    sa.Column('score', sa.Numeric(precision=6, scale=2), nullable=True),
+    sa.Column('score', sa.Numeric(precision=5, scale=1), nullable=True),
     sa.Column('band', sa.String(length=1), nullable=True),
     sa.Column('recommendation', sa.String(length=40), nullable=True),
     sa.Column('status', sa.Enum('provisional', 'final', name='qscorestatus', native_enum=False, length=40), nullable=False),

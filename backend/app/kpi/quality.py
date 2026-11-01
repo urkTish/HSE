@@ -1108,7 +1108,10 @@ def snapshot(db: Session, project: Project, start: date, end: date) -> dict[str,
         r["target"] = str(t) if t is not None else None
         r["rag"] = rag_for(e.result(k), t)
         rows.append(r)
-    return {"period_start": start.isoformat(), "period_end": end.isoformat(), "kpis": rows}
+    import json  # noqa: PLC0415
+
+    out = {"period_start": start.isoformat(), "period_end": end.isoformat(), "kpis": rows}
+    return json.loads(json.dumps(out, default=str))  # type: ignore[no-any-return]
 
 
 def _applies(e: Engine, k: QKpi) -> bool:

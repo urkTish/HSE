@@ -300,7 +300,7 @@ class QSupplierScore(Base):
     period_start: Mapped[date] = mapped_column(Date)
     period_end: Mapped[date] = mapped_column(Date)
     metrics: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
-    score: Mapped[Decimal | None] = mapped_column(SCORE)
+    score: Mapped[Decimal | None] = mapped_column(Numeric(5, 1))  # 1 dp (Q-SUP-03)
     band: Mapped[str | None] = mapped_column(String(1))
     recommendation: Mapped[str | None] = mapped_column(String(40))
     status: Mapped[QScoreStatus] = enum_col(QScoreStatus, default=QScoreStatus.provisional)

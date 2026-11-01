@@ -581,11 +581,11 @@ def create_audit(
         raise validation_error("planned_end", "End ≥ start and at most 10 days.")
     lead = body["lead_auditor_id"]
     team = [x for x in dict.fromkeys(body.get("team_ids") or []) if x != lead]
+    _independent(db, project, lead, "lead_auditor_id", procs, eng, sup)  # SoD first (AC-Q4-08)
     _auditor(db, project, lead, "lead_auditor_id")
-    _independent(db, project, lead, "lead_auditor_id", procs, eng, sup)
     for i, uid in enumerate(team):
-        _auditor(db, project, uid, f"team_ids[{i}]")
         _independent(db, project, uid, f"team_ids[{i}]", procs, eng, sup)
+        _auditor(db, project, uid, f"team_ids[{i}]")
     warnings = _competence(db, project, lead, ps)
     year = ps.year
     seq = fc.next_seq(db, FieldAudit, project.id, year)

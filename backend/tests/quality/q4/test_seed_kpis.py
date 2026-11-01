@@ -44,7 +44,13 @@ def test_ania_september(q_seed: None) -> None:
         assert ir["dpmo"] == "6431.5" and ir["sigma"] == "3.99"
         par = r(K.K150).extra["pareto"]  # QX25, AC-Q4-21
         assert [x["cumulative_pct"] for x in par["rows"]] == [
-            "42.9", "64.3", "78.6", "85.7", "92.9", "100.0"]  # fmt: skip
+            "42.9",
+            "64.3",
+            "78.6",
+            "85.7",
+            "92.9",
+            "100.0",
+        ]
         assert par["vital_few"] == 4
         assert (r(K.K151).numerator, r(K.K151).denominator, r(K.K151).value) == (2, 38, D("5.3"))
         assert (r(K.K152).numerator, r(K.K152).denominator, r(K.K152).value) == (6, 212, D("2.8"))
@@ -80,8 +86,11 @@ def test_ruh_september(q_seed: None) -> None:
         assert r(K.K154).value == D("100.0")
         assert r(K.K155).value == D("100.0")
         assert {k: v["dpmo"] for k, v in e.dpmo().items()} == {
-            "receiving": "1171.9", "picking_fefo": "30000.0", "delivery": "40000.0",
-            "inventory": "30000.0"}  # fmt: skip
+            "receiving": "1171.9",
+            "picking_fefo": "30000.0",
+            "delivery": "40000.0",
+            "inventory": "30000.0",
+        }
         assert qk.warnings(db, e.project, date(2026, 9, 1)) == []  # AC-Q4-28
 
 
