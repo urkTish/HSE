@@ -95,10 +95,12 @@ def design_problems(
                 "A logger is not registered on this project.",
                 "مسجل غير مسجل في المشروع.",
             )
-        bad = it.status != QMteStatus.active or it.cal_status in (
-            QCalStatus.overdue,
-            QCalStatus.out_of_service,
-        )
+        # Q-MAP-01 is about the study dates: a logger overdue today may still have been in
+        # calibration then (with Q2 installed `overdue` is a live status), so only the due date
+        # decides, plus inactive / out-of-service instruments.
+        bad = it.status != QMteStatus.active or it.cal_status == QCalStatus.out_of_service
+        if it.cal_due_on is None and it.cal_status == QCalStatus.overdue:
+            bad = True  # never calibrated
         for d in (start, end):
             if d is not None and it.cal_due_on is not None and it.cal_due_on < b.local_day(d):
                 bad = True

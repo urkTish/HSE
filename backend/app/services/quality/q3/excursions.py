@@ -849,6 +849,7 @@ def dismiss(db: Session, p: Principal, exc_id: uuid.UUID, body: dict[str, Any]) 
         db.add(ov)
     ov.status, ov.reason, ov.set_at = QMteOverride.out_of_service, fault, now()
     ov.set_by_user_id = p.user.id
+    db.flush()  # the override must exist before the status recompute on the next flush
     m.cal_status = QCalStatus.out_of_service
     m.cal_status_reason = fault
     x.dismissal = {
