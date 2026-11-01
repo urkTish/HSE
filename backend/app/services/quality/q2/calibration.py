@@ -61,8 +61,11 @@ A = AttachmentOwner
 
 # Q-CAL-04: other parts' measurements made with an instrument (Q3 logger readings of monitoring
 # points the logger was assigned to). fn(db, mte, period_from, period_to) → item dicts with
-# record_type, record_id, ref, used_at, value, limit_low, limit_high. Q3 / the integrator fill it.
+# record_type, record_id, ref, used_at, value, limit_low, limit_high. Q3 registers it (D-370).
 OOT_SOURCES: list[Any] = []
+# Usage rows an `OOT_SOURCES` function already reports in its own items (Q3: the logger
+# assignment and manual-reading rows of a monitoring point). fn(db, usage) → True to skip.
+OOT_USAGE_COVERED: list[Any] = []
 
 
 # ---- status (Q-CAL-01 / -02 / -03) --------------------------------------------------------------
@@ -635,7 +638,15 @@ def open_review(
     for u in usages:
         if u.record_type == RT.calibration.value:
             continue
-        v, lo, hi = parse_note(u.value_note)
+        if any(fn(db, u) for fn in OOT_USAGE_COVERED):
+            continue
+        # D-342 / D-370: the structured value and limits win; the note is the fallback
+        nv, nlo, nhi = parse_note(u.value_note)
+        v = u.value if u.value is not None else nv
+        if u.limit_low is not None or u.limit_high is not None:
+            lo, hi = u.limit_low, u.limit_high
+        else:
+            lo, hi = nlo, nhi
         rows.append(
             {
                 "usage_id": u.id,

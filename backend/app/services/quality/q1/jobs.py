@@ -18,7 +18,7 @@ from app.core.quality.q1 import PUNCH_LIVE, QIrCommentStatus, QIrStatus
 from app.models.quality.q1 import QIr, QIrComment, QPunchItem
 from app.services.quality import common as qc
 from app.services.quality import settings as qs
-from app.services.quality.jobs import _projects
+from app.services.quality.jobs import quality_projects
 from app.services.quality.q1 import ir as irs
 
 C = Capability
@@ -28,7 +28,7 @@ def ir_alerts(db: Session, at: datetime) -> dict[str, Any]:
     from app.services.quality.ncr import core  # noqa: PLC0415
 
     out = {"not_scheduled": 0, "waiver_review_due": 0, "comments_overdue": 0}
-    for pr in _projects(db):
+    for pr in quality_projects(db):
         day = qc.project_day(pr, at)
         hours = int(qs.value(db, pr.id, "ir_schedule_hours"))
         review_days = int(qs.value(db, pr.id, "witness_review_days"))
@@ -102,7 +102,7 @@ def punch_digest(db: Session, at: datetime) -> dict[str, Any]:
     from app.services.quality.ncr import core  # noqa: PLC0415
 
     sent = 0
-    for pr in _projects(db):
+    for pr in quality_projects(db):
         day = qc.project_day(pr, at)
         by_eng: dict[Any, list[QPunchItem]] = defaultdict(list)
         for it in db.scalars(

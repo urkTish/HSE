@@ -243,7 +243,14 @@ DOSSIER_SECTIONS: dict[str, DossierSection] = {}
 
 # ---- jobs (§4) -----------------------------------------------------------------------------------
 
-JOB_SLOTS = ("quality_daily", "quality_alerts", "quality_weekly", "quality_monthly")
+# `quality_hourly` (minute 17) carries deadlines shorter than a day: Q3 hold 24 h / 4 h (D-370)
+JOB_SLOTS = (
+    "quality_daily",
+    "quality_alerts",
+    "quality_weekly",
+    "quality_monthly",
+    "quality_hourly",
+)
 
 
 @dataclass
@@ -254,6 +261,11 @@ class JobDef:
 
 
 JOBS: dict[str, JobDef] = {}
+
+# Called after a project's Quality settings change: fn(db, project_id, changed) where changed
+# maps each changed key to its new value (D-370; Q3 drops its cached zone-day sums when
+# `reading_gap_factor` changes, since the minute model of D-351 depends on it).
+SETTING_HOOKS: list[Callable[[Session, uuid.UUID, dict[str, Any]], None]] = []
 
 
 # ---- export datasets, seeds, supplier gates, home tiles --------------------------------------

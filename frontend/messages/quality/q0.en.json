@@ -374,6 +374,7 @@
     "name": "Name",
     "kind": "Type",
     "ownerRelease": "Owner approves release",
+    "minShelfLife": "Minimum remaining shelf life at receipt (%)",
     "contact": "Contact",
     "yes": "Yes",
     "no": "No",

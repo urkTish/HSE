@@ -518,7 +518,18 @@ def manual_reading(
     db.add(r)
     db.flush()
     _, warnings = mte_svc.record_usage(
-        db, project, mte_id, RT.excursion, pt.id, p.user.id, at, f"reading {r.id}"
+        db,
+        project,
+        mte_id,
+        RT.excursion,
+        pt.id,
+        p.user.id,
+        at,
+        f"reading {r.id}",
+        value=r.temperature_c,
+        limit_low=z.temp_min if r.temperature_c is not None else z.humidity_min,
+        limit_high=z.temp_max if r.temperature_c is not None else z.humidity_max,
+        unit="°C" if r.temperature_c is not None else "%RH",
     )
     found = excursions.detect_zone(
         db, project, z, at - timedelta(hours=1), at + timedelta(minutes=1), p.user.id, manual=True

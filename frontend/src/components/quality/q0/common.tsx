@@ -47,9 +47,11 @@ export function useQLabels() {
     step: useCallback(
       (code: string, stepCode: string) => {
         const s = types?.find((x) => x.code === code)?.steps.find((x) => x.code === stepCode);
-        return s ? String((ar ? s.ar : s.en) || stepCode) : stepCode;
+        if (s) return String((ar ? s.ar : s.en) || stepCode);
+        const pair = labels?.pending_step?.[stepCode];
+        return pair ? (ar ? pair[1] : pair[0]) || stepCode : stepCode;
       },
-      [types, ar],
+      [types, labels, ar],
     ),
     options: useCallback(
       (kind: string) => Object.entries(labels?.[kind] ?? {}).map(([value, pair]) => ({ value, label: (ar ? pair[1] : pair[0]) || value })),

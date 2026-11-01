@@ -457,7 +457,9 @@ def t_get_cold_chain_summary(
     want = {c.upper() for c in params.get("zone_codes") or []}
     out = []
     for pr in projects:
-        e = qk.Engine(ctx.db, pr, start, end, ctx.as_of)
+        # the caller's grant sites narrow K-161 / K-162 / K-167 as on the KPI page (D-370)
+        flt = kpi_filter(ctx.p, pr.id)
+        e = qk.Engine(ctx.db, pr, start, end, ctx.as_of, flt)
         if e.profile is None or e.profile.value != "logistics":
             continue
         a, z_end = b.day_start(start), b.day_start(end + timedelta(days=1))
@@ -468,7 +470,7 @@ def t_get_cold_chain_summary(
             .where(
                 QStorageZone.project_id == pr.id,
                 QStorageZone.active.is_(True),
-                *kpi_filter(ctx.p, pr.id).at(QStorageZone.site_id),  # grant sites (rule 11)
+                *flt.at(QStorageZone.site_id),  # grant sites (rule 11)
             )
             .order_by(Zone.code)
         ):
@@ -517,6 +519,7 @@ def t_get_cold_chain_summary(
                     QHold.project_id == pr.id,
                     QHold.reason == "excursion",
                     QHold.status.in_(["on_hold", "partly_released"]),
+                    *flt.at(QHold.site_id),
                 )
             )
             or 0

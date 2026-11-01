@@ -313,7 +313,7 @@ function Oot({ project, id }: { project: Project; id: string }) {
       <Table compact data-testid="q2-oot-items"><THead><TR><TH>{t("record")}</TH><TH>{t("usedAt")}</TH><TH>{t("value")}</TH><TH>{t("limits")}</TH><TH>{t("margin")}</TH><TH>{t("proposal")}</TH><TH>{t("decision")}</TH><TH /></TR></THead>
         <TBody>{r.items.map((i) => (
           <TR key={i.id} data-testid="q2-oot-item" data-proposed={i.proposed ?? ""} data-decision={i.decision ?? ""}>
-            <TD label={t("record")}>{recordType(i.record_type)} <span className="ltr">{i.ref ?? ""}</span></TD>
+            <TD label={t("record")}>{i.record_type === "monitoring_point" ? t("monitoringPoint") : recordType(i.record_type)} <span className="ltr">{i.ref ?? ""}</span></TD>
             <TD label={t("usedAt")}>{dateTime(i.used_at)}</TD>
             <TD label={t("value")} className="ltr">{i.value ?? "—"}</TD>
             <TD label={t("limits")} className="ltr">{[i.limit_low, i.limit_high].map((x) => x ?? "…").join(" – ")}</TD>

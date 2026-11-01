@@ -172,6 +172,10 @@ def _measurements(
                 p.user.id,
                 at,
                 f"{m.get('name') or (c.code if c else '')} = {m.get('value')}"[:200],
+                value=m.get("value"),
+                limit_low=qcrit.limits(c)[0] if c else None,
+                limit_high=qcrit.limits(c)[1] if c else None,
+                unit=c.unit if c else None,
             )
             warnings += w
             from app.models.quality import QMteItem  # noqa: PLC0415

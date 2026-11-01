@@ -26,7 +26,7 @@ C = Capability
 ST = QNcrStatus
 
 
-def _projects(db: Session) -> list[Project]:
+def quality_projects(db: Session) -> list[Project]:
     """Projects that use Quality (a profile is set)."""
     ids = [r.project_id for r in db.scalars(select(QSettings)) if r.sector_profile is not None]
     if not ids:
@@ -46,7 +46,7 @@ def effectiveness_proposals(db: Session, at: datetime) -> int:
     from app.services.quality.ncr import core  # noqa: PLC0415
 
     n = 0
-    for project in _projects(db):
+    for project in quality_projects(db):
         day = qc.project_day(project, at)
         for ncr in db.scalars(
             select(QNcr).where(QNcr.project_id == project.id, QNcr.status == ST.closed)
@@ -92,7 +92,7 @@ def ncr_alerts(db: Session, at: datetime) -> int:
     from app.services.quality.ncr import core  # noqa: PLC0415
 
     sent = 0
-    for project in _projects(db):
+    for project in quality_projects(db):
         day = qc.project_day(project, at)
         managers = set(qc.holders_of(db, project, C.quality_settings, include_manager=False))
         for n in db.scalars(
@@ -164,7 +164,7 @@ def step_reminders(db: Session, at: datetime) -> int:
 
     ensure_registered()
     sent = 0
-    for project in _projects(db):
+    for project in quality_projects(db):
         day = qc.project_day(project, at)
         steps = [o for fn in reg.OPEN_STEPS.values() for o in fn(db, project)]
         by_user: dict[Any, list[reg.OpenStep]] = {}

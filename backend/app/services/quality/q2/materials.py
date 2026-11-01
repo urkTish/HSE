@@ -1276,7 +1276,9 @@ def q_dispose(
 
 def ageing_alerts(db: Session, at: datetime) -> int:
     """Q-MAT-08 weekly: items quarantined longer than `quarantine_ageing_days` alert the NCR
-    owner."""
+    owner and the engagement quality contacts (§C.8, D-370)."""
+    from app.services.quality.ncr import core as ncr_core  # noqa: PLC0415
+
     n = 0
     for q in db.scalars(select(QQuarantineItem).where(QQuarantineItem.status == QS.quarantined)):
         project = db.get(Project, q.project_id)
@@ -1288,6 +1290,8 @@ def ageing_alerts(db: Session, at: datetime) -> int:
             continue
         ncr = db.get(QNcr, q.ncr_id) if q.ncr_id else None
         users = [u for u in ((ncr.owner_id if ncr else None), q.created_by_user_id) if u]
+        eng = q.engagement_id or (ncr.responsible_engagement_id if ncr else None)
+        users += sorted(ncr_core.engagement_contacts(db, project, eng) - set(users))
         n += qc.send(
             db,
             users,

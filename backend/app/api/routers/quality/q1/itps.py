@@ -191,12 +191,24 @@ def q1_checklists(
 def q1_counts(
     project_id: uuid.UUID, user: CurrentUser, db: DB, date_from: date, date_to: date
 ) -> dict[str, Any]:
+    from app.kpi.quality_views import kpi_filter  # noqa: PLC0415
+
     pr = qc.get_project(db, user, project_id)
-    g = user.grant(pr.id, qc.C.quality_view)
-    if g is None or g.scope == qc.S.responsible:
-        raise forbidden_error()
-    c = kpi.ir_counts(db, pr.id, date_from, date_to)
-    pc = kpi.punch_counts(db, pr.id, date_from, date_to, min(date_to, qc.project_day(pr)))
+    # the caller's grant narrows the counts to its sites / engagement tree, as the Q4 KPI page
+    # does (D-360, D-370); scope N sees no counts (Q-ROL-04)
+    f = kpi_filter(user, pr.id)
+    c = kpi.ir_counts(
+        db, pr.id, date_from, date_to, site_ids=f.site_ids, engagement_ids=f.engagement_ids
+    )
+    pc = kpi.punch_counts(
+        db,
+        pr.id,
+        date_from,
+        date_to,
+        min(date_to, qc.project_day(pr)),
+        site_ids=f.site_ids,
+        engagement_ids=f.engagement_ids,
+    )
     return {
         "project_id": pr.id,
         "date_from": date_from,

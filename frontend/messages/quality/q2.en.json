@@ -350,6 +350,7 @@
     "backToMte": "Back to the instrument"
   },
   "oot": {
+    "monitoringPoint": "Monitoring point readings (worst of the day)",
     "title": "Out-of-tolerance review",
     "subtitle": "{mte}: as-found error {e} — decide every measurement made since the last good calibration.",
     "period": "Period",

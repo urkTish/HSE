@@ -46,7 +46,7 @@ info:
     \ 157.\n  No diagnosis, test result or clinical note is ever stored (P6-1). Medical hooks use the\
     \ shared\n  hook policy (kind `medical_fitness`; enable with `POST /projects/{id}/medical-hooks/enable`);\n\
     \  gate texts never say \"medical\". Site-clinic sign-off needs step-up re-auth.\n"
-  version: 0.17.0
+  version: 0.18.0
 paths:
   /api/v1/health:
     get:
@@ -166268,6 +166268,15 @@ components:
           type: boolean
           title: Owner Release Approval
           default: false
+        min_remaining_shelf_life_pct:
+          anyOf:
+          - type: number
+            maximum: 100.0
+            minimum: 10.0
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          - type: 'null'
+          title: Min Remaining Shelf Life Pct
         contact_name:
           anyOf:
           - type: string
@@ -166326,6 +166335,12 @@ components:
         owner_release_approval:
           type: boolean
           title: Owner Release Approval
+        min_remaining_shelf_life_pct:
+          anyOf:
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          - type: 'null'
+          title: Min Remaining Shelf Life Pct
         status:
           $ref: '#/components/schemas/QCustomerStatus'
         contact_name:
@@ -166390,6 +166405,15 @@ components:
           - type: boolean
           - type: 'null'
           title: Owner Release Approval
+        min_remaining_shelf_life_pct:
+          anyOf:
+          - type: number
+            maximum: 100.0
+            minimum: 10.0
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          - type: 'null'
+          title: Min Remaining Shelf Life Pct
         status:
           anyOf:
           - $ref: '#/components/schemas/QCustomerStatus'
@@ -171374,6 +171398,33 @@ components:
             maxLength: 200
           - type: 'null'
           title: Value Note
+        value:
+          anyOf:
+          - type: number
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          - type: 'null'
+          title: Value
+        limit_low:
+          anyOf:
+          - type: number
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          - type: 'null'
+          title: Limit Low
+        limit_high:
+          anyOf:
+          - type: number
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          - type: 'null'
+          title: Limit High
+        unit:
+          anyOf:
+          - type: string
+            maxLength: 16
+          - type: 'null'
+          title: Unit
       additionalProperties: false
       type: object
       required:
@@ -171410,6 +171461,29 @@ components:
           - type: string
           - type: 'null'
           title: Value Note
+        value:
+          anyOf:
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          - type: 'null'
+          title: Value
+        limit_low:
+          anyOf:
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          - type: 'null'
+          title: Limit Low
+        limit_high:
+          anyOf:
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          - type: 'null'
+          title: Limit High
+        unit:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Unit
         warnings:
           items:
             $ref: '#/components/schemas/ApiWarning'

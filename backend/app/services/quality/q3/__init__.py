@@ -495,6 +495,27 @@ def _alerts(db: Session, at: datetime) -> dict[str, Any]:
     }
 
 
+def _settings_changed(db: Session, project_id: uuid.UUID, changed: dict[str, Any]) -> None:
+    """D-351 / D-370: the zone-day sums depend on `reading_gap_factor`; a change drops them for
+    the project and they are recomputed on first use."""
+    if "reading_gap_factor" not in changed:
+        return
+    from sqlalchemy import delete, select  # noqa: PLC0415
+
+    from app.models.quality.q3 import QStorageZone, QZoneDay  # noqa: PLC0415
+
+    zones = select(QStorageZone.zone_id).where(QStorageZone.project_id == project_id)
+    db.execute(delete(QZoneDay).where(QZoneDay.zone_id.in_(zones)))
+
+
+def _hourly(db: Session, at: datetime) -> dict[str, Any]:
+    """Q-HLD-02 / -03: the 24 h (no lines) and 4 h (no segregation photo) hold deadlines, checked
+    every hour (D-355, D-370); each alert is sent once, so the daily slots stay harmless."""
+    from app.services.quality.q3 import holds  # noqa: PLC0415
+
+    return {"hold_deadlines": holds.deadlines(db, at)}
+
+
 def _weekly(db: Session, at: datetime) -> dict[str, Any]:
     from app.services.quality.q3 import holds  # noqa: PLC0415
 
@@ -738,7 +759,7 @@ def _datasets() -> None:
 def register() -> None:
     """Register Q3's providers (§3.2)."""
     from app import seed_quality_q3  # noqa: PLC0415
-    from app.services.quality.q3 import rules  # noqa: PLC0415
+    from app.services.quality.q3 import oot, rules  # noqa: PLC0415
 
     for kind, values in LABELS_Q3.items():
         LABELS.setdefault(kind, {}).update(values)
@@ -748,10 +769,14 @@ def register() -> None:
     reg.PENDING_STEPS["Q3"] = pending
     _attachment_owners()
     rules.register()
+    oot.register()  # Q-CAL-04: logger and probe readings in Q2's OOT review (D-370)
     reg.register_job("q3_daily", reg.JobDef("quality_daily", _daily, "Q3"))
     reg.register_job("q3_alerts", reg.JobDef("quality_alerts", _alerts, "Q3"))
     reg.register_job("q3_weekly", reg.JobDef("quality_weekly", _weekly, "Q3"))
     reg.register_job("q3_monthly", reg.JobDef("quality_monthly", _monthly, "Q3"))
+    reg.register_job("q3_hourly", reg.JobDef("quality_hourly", _hourly, "Q3"))
+    if _settings_changed not in reg.SETTING_HOOKS:
+        reg.SETTING_HOOKS.append(_settings_changed)
     reg.HOME_TILES["Q3"] = home_tiles
     _datasets()
     _ = seed_quality_q3

@@ -359,7 +359,18 @@ def preload(db: Session, p: Principal, tid: uuid.UUID, body: dict[str, Any]) -> 
         if not ok:
             s.stopped = True  # Q-TRN-03: the shipment is stopped (hold proposed)
         mte_svc.record_usage(
-            db, project, lt["mte_id"], RT, t.id, p.user.id, None, f"loading {s.shipment_ref} {v} °C"
+            db,
+            project,
+            lt["mte_id"],
+            RT,
+            t.id,
+            p.user.id,
+            None,
+            f"loading {s.shipment_ref} {v} °C",
+            value=v,
+            limit_low=lo,
+            limit_high=hi,
+            unit="°C",
         )
         temps.append(
             {

@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import date, datetime
+from decimal import Decimal
 from typing import Any, Literal
 
 from pydantic import Field
@@ -370,6 +371,7 @@ class QCustomerRead(ApiModel):
     name_ar: str
     kind: QCustomerKind
     owner_release_approval: bool
+    min_remaining_shelf_life_pct: Decimal | None = None
     status: QCustomerStatus
     contact_name: str | None
     contact_mobile: str | None
@@ -383,6 +385,7 @@ class QCustomerCreate(StrictInput):
     name_ar: str = Field(min_length=1, max_length=200)
     kind: QCustomerKind
     owner_release_approval: bool = False
+    min_remaining_shelf_life_pct: Decimal | None = Field(default=None, ge=10, le=100)
     contact_name: str | None = Field(default=None, max_length=120)
     contact_mobile: str | None = Field(default=None, max_length=20)
     contact_email: str | None = Field(default=None, max_length=254)
@@ -393,6 +396,7 @@ class QCustomerUpdate(StrictInput):
     name_ar: str | None = Field(default=None, max_length=200)
     kind: QCustomerKind | None = None
     owner_release_approval: bool | None = None
+    min_remaining_shelf_life_pct: Decimal | None = Field(default=None, ge=10, le=100)
     status: QCustomerStatus | None = None
     contact_name: str | None = Field(default=None, max_length=120)
     contact_mobile: str | None = Field(default=None, max_length=20)
@@ -584,6 +588,10 @@ class QMteUsageCreate(StrictInput):
     record_id: uuid.UUID
     used_at: datetime | None = None
     value_note: str | None = Field(default=None, max_length=200)
+    value: Decimal | None = None
+    limit_low: Decimal | None = None
+    limit_high: Decimal | None = None
+    unit: str | None = Field(default=None, max_length=16)
 
 
 class QMteUsageRead(ApiModel):
@@ -595,6 +603,10 @@ class QMteUsageRead(ApiModel):
     verdict: QMteUseVerdict
     cal_status_at_use: QCalStatus
     value_note: str | None
+    value: Decimal | None = None
+    limit_low: Decimal | None = None
+    limit_high: Decimal | None = None
+    unit: str | None = None
     warnings: list[ApiWarning] = Field(default_factory=list)
 
 

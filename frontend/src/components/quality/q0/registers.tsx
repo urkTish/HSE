@@ -270,13 +270,13 @@ function Customers({ project }: { project: Project }) {
   const bi = useBilingual();
   const r = useQCustomers(project.id);
   const { run, busy, error } = useRun();
-  const [f, set, setF] = useForm({ code: "", name_en: "", name_ar: "", kind: "client", contact_name: "", contact_mobile: "", contact_email: "" });
+  const [f, set, setF] = useForm({ code: "", name_en: "", name_ar: "", kind: "client", contact_name: "", contact_mobile: "", contact_email: "", min_remaining_shelf_life_pct: "" });
   const [ora, setOra] = useState(false);
   const manage = caps.write("quality.settings") || caps.write("complaint.manage");
   const P = { params: { path: { project_id: project.id } } };
   async function add() {
     const out = await run(() => unwrap(api.POST("/api/v1/projects/{project_id}/quality/customers", { ...P, body: { ...clean(f), owner_release_approval: ora } as unknown as S["QCustomerCreate"] })));
-    if (out) setF({ code: "", name_en: "", name_ar: "", kind: "client", contact_name: "", contact_mobile: "", contact_email: "" });
+    if (out) setF({ code: "", name_en: "", name_ar: "", kind: "client", contact_name: "", contact_mobile: "", contact_email: "", min_remaining_shelf_life_pct: "" });
   }
   const toggle = (c: S["QCustomerRead"]) =>
     run(() => unwrap(api.PATCH("/api/v1/quality/customers/{customer_id}", { params: { path: { customer_id: c.id } }, body: { status: c.status === "active" ? "inactive" : "active" } })));
@@ -287,7 +287,7 @@ function Customers({ project }: { project: Project }) {
       <MutationError error={error} />
       {r.isLoading ? <LoadingState /> : r.isError ? <ErrorState error={r.error} onRetry={() => r.refetch()} /> : rows.length ? (
         <Table compact data-testid="q-customer-table">
-          <THead><TR><TH>{t("code")}</TH><TH>{t("name")}</TH><TH>{t("kind")}</TH><TH>{tc("status")}</TH><TH>{t("ownerRelease")}</TH><TH>{t("contact")}</TH>{manage ? <TH /> : null}</TR></THead>
+          <THead><TR><TH>{t("code")}</TH><TH>{t("name")}</TH><TH>{t("kind")}</TH><TH>{tc("status")}</TH><TH>{t("ownerRelease")}</TH><TH>{t("minShelfLife")}</TH><TH>{t("contact")}</TH>{manage ? <TH /> : null}</TR></THead>
           <TBody>{rows.map((c) => (
             <TR key={c.id} data-testid="q-customer-row" data-code={c.code}>
               <TD label={t("code")} className="ltr font-medium">{c.code}</TD>
@@ -295,6 +295,7 @@ function Customers({ project }: { project: Project }) {
               <TD label={t("kind")}>{l("customer_kind", c.kind)}</TD>
               <TD label={tc("status")}><StatusBadge kind="customer_status" value={c.status} /></TD>
               <TD label={t("ownerRelease")}>{c.owner_release_approval ? t("yes") : t("no")}</TD>
+              <TD label={t("minShelfLife")} className="ltr">{c.min_remaining_shelf_life_pct != null ? `${c.min_remaining_shelf_life_pct} %` : "—"}</TD>
               <TD label={t("contact")} className="text-xs">{c.contacts_visible ? [c.contact_name, c.contact_mobile, c.contact_email].filter(Boolean).join(" · ") || "—" : "—"}</TD>
               {manage ? <TD><Button size="sm" variant="outline" disabled={busy} onClick={() => void toggle(c)}>{c.status === "active" ? t("deactivate") : t("activate")}</Button></TD> : null}
             </TR>
@@ -310,6 +311,7 @@ function Customers({ project }: { project: Project }) {
           <FormField id="cus-cn" label={t("contact")}><Input value={f.contact_name} onChange={set("contact_name")} /></FormField>
           <FormField id="cus-cm" label={t("mobile")}><Input value={f.contact_mobile} onChange={set("contact_mobile")} dir="ltr" inputMode="tel" /></FormField>
           <FormField id="cus-ce" label={t("email")}><Input value={f.contact_email} onChange={set("contact_email")} dir="ltr" type="email" /></FormField>
+          <FormField id="cus-rsl" label={t("minShelfLife")}><Input value={f.min_remaining_shelf_life_pct} onChange={set("min_remaining_shelf_life_pct")} dir="ltr" inputMode="decimal" placeholder="10–100" data-testid="cus-min-rsl" /></FormField>
           <CheckboxField id="cus-ora" label={t("ownerRelease")}><Checkbox checked={ora} onChange={(e) => setOra(e.target.checked)} /></CheckboxField>
           <Button className="self-start" disabled={busy || !f.code || !f.name_en || !f.name_ar} onClick={() => void add()} data-testid="cus-add">{t("add")}</Button>
         </CardContent></Card>

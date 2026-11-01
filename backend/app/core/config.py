@@ -6,7 +6,7 @@ from typing import Literal
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-CONTRACT_VERSION = "0.17.0"  # contract: trial readiness A + B + C combined
+CONTRACT_VERSION = "0.18.0"  # contract: Phase 8 Quality Q0–Q4 integrated (0.17.0: trial readiness A + B + C)
 API_PREFIX = "/api/v1"
 SESSION_COOKIE_NAME = "hse_session"
 GATE_SESSION_COOKIE = "hse_gate_session"

@@ -531,17 +531,45 @@ def home_tiles(db: Session, p: Principal, project: Project) -> list[reg.HomeCoun
     return out
 
 
+# (user, project, month end, today) → (stored at, tiles): the last complete month changes
+# rarely, so the Quality home reuses its KPI tiles for `kpi_cache_seconds` (0 = off, as in the
+# test suite; D-370).
+_HOME_KPI_CACHE: dict[tuple[Any, ...], tuple[float, list[dict[str, Any]]]] = {}
+
+
+def _home_kpi_page(
+    db: Session, p: Principal, project: Project, end: date, today: date
+) -> list[dict[str, Any]]:
+    import time  # noqa: PLC0415
+
+    from app.core.config import get_settings  # noqa: PLC0415
+    from app.kpi import quality_views as qv  # noqa: PLC0415
+
+    ttl = get_settings().kpi_cache_seconds
+    key = (p.user.id, project.id, end, today)
+    t = time.monotonic()
+    if ttl > 0:
+        hit = _HOME_KPI_CACHE.get(key)
+        if hit is not None and t - hit[0] < ttl:
+            return hit[1]
+    tiles = list(qv.page(db, p, project, end.replace(day=1), end, today, charts=False)["tiles"])
+    if ttl > 0:
+        if len(_HOME_KPI_CACHE) > 1024:
+            _HOME_KPI_CACHE.clear()
+        _HOME_KPI_CACHE[key] = (t, tiles)
+    return tiles
+
+
 def kpi_home_tiles(db: Session, p: Principal, project: Project) -> list[reg.HomeCount]:
     """§E.7: the profile's KPI tiles with RAG for the last complete month, from the same page
     builder as `/quality/kpis` (grant narrowing and hidden tiles included, no charts)."""
-    from app.kpi import quality_views as qv  # noqa: PLC0415
     from app.services.quality.q4 import base as b  # noqa: PLC0415
 
     if qc.profile_of(db, project.id) is None:
         return []
     today = b.today(project)
     end = today.replace(day=1) - timedelta(days=1)
-    pg = qv.page(db, p, project, end.replace(day=1), end, today, charts=False)
+    pg = {"tiles": _home_kpi_page(db, p, project, end, today)}
     tone = {"red": "danger", "amber": "warning", "green": "success"}
     return [
         reg.HomeCount(

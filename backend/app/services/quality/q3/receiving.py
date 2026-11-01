@@ -293,6 +293,29 @@ def remaining_pct(db: Session, r: QReceipt, ln: QReceiptLine, prod: QProduct) ->
     return (Decimal(left) * 100 / prod.shelf_life_days).quantize(Decimal("0.1"), ROUND_HALF_UP)
 
 
+def arrival_band(db: Session, prod: QProduct) -> tuple[Decimal | None, Decimal | None]:
+    """The acceptance band of the arrival-temperature criterion of the product's storage class
+    (criterion params over the rule defaults); stored with the M&TE usage so an out-of-tolerance
+    review sees the margin of each receiving check (Q-CAL-04, D-370)."""
+    from app.services.quality.q3 import rules  # noqa: PLC0415
+
+    cls = prod.storage_class.value
+    dflt = rules.ARRIVAL_DEFAULTS.get(cls)
+    if dflt is None:
+        return None, None
+    c = _criterion(db, "arrival_temperature", cls)
+    params = dict(c.params or {}) if c is not None else {}
+
+    def pick(key: str, i: int) -> Decimal | None:
+        if key in params:
+            v = params.get(key)
+            return None if v in (None, "") else Decimal(str(v))
+        v = dflt[i]
+        return v if isinstance(v, Decimal) else None
+
+    return pick("accept_min", 0), pick("accept_max", 1)
+
+
 def propose(db: Session, project: Project, r: QReceipt, ln: QReceiptLine) -> None:
     """Q-RCV-01: worst of arrival temperature, remaining shelf life, condition and labels."""
     prod = db.get(QProduct, ln.product_id)
@@ -326,8 +349,12 @@ def propose(db: Session, project: Project, r: QReceipt, ln: QReceiptLine) -> Non
     pct = remaining_pct(db, r, ln, prod)
     ln.remaining_shelf_life_pct = pct
     if pct is not None:
-        lim = prod.min_remaining_shelf_life_pct or b.dsetting(
-            db, project.id, "min_remaining_shelf_life_pct"
+        # Q-RCV-01: the product's minimum, else the depositor's, else the project setting (D-370)
+        owner = db.get(QCustomer, prod.owner_customer_id or r.customer_id)
+        lim = (
+            prod.min_remaining_shelf_life_pct
+            or (owner.min_remaining_shelf_life_pct if owner is not None else None)
+            or b.dsetting(db, project.id, "min_remaining_shelf_life_pct")
         )
         c = _criterion(db, "remaining_shelf_life")
         from app.services.quality.q3 import rules  # noqa: PLC0415
@@ -438,6 +465,7 @@ def _save_line(
     if ln.mte_id is not None:
         b.mte_of(db, project, ln.mte_id)
         db.flush()
+        a_lo, a_hi = arrival_band(db, prod)
         _, w = mte_svc.record_usage(
             db,
             project,
@@ -447,6 +475,10 @@ def _save_line(
             p.user.id,
             None,
             f"line {ln.line_no} {ln.product_temp_c} °C",
+            value=ln.product_temp_c,
+            limit_low=a_lo,
+            limit_high=a_hi,
+            unit="°C",
         )
         warnings += w
     ln.recorded_by_user_id = p.user.id

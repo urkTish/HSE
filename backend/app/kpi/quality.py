@@ -916,7 +916,9 @@ class Engine:
     def k157(self) -> Result:
         from app.services.quality.q4 import suppliers  # noqa: PLC0415
 
-        r = suppliers.k157(self.db, self.project.id, self.start, self.end)
+        r = suppliers.k157(
+            self.db, self.project.id, self.start, self.end, self.flt if self.flt.narrowed else None
+        )
         return Result(
             K.K157,
             r["mean"],

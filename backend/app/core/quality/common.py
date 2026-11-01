@@ -2395,6 +2395,11 @@ _MTE_AR = {
 }
 LABELS.update(
     {
+        # "Awaiting me" steps that are not responsible-person matrix steps (D-354, D-370): the
+        # owner of a Draft NCR that a part raised automatically opens it once evidence is attached.
+        "pending_step": {
+            "open": ("Open the draft NCR", "فتح مسودة تقرير عدم المطابقة"),
+        },
         "mte_type": {k: (k.replace("_", " ").capitalize(), v) for k, v in _MTE_AR.items()},
         "check_kind": {
             "calibration": ("Calibration", "معايرة"),

@@ -634,27 +634,37 @@ def contractor_score(db: Session, p: Principal, contractor_id: uuid.UUID) -> lis
     return out
 
 
-def k157(db: Session, project_id: uuid.UUID, start: date, end: date) -> dict[str, Any]:
-    """Mean of the latest final scores of suppliers used in the period (MIRs, receipts, NCRs)."""
+def k157(
+    db: Session, project_id: uuid.UUID, start: date, end: date, flt: Any = None
+) -> dict[str, Any]:
+    """Mean of the latest final scores of suppliers used in the period (MIRs, receipts, NCRs).
+    `flt` (a KPI `QFilter`) keeps only the uses inside the caller's sites / engagement tree, so a
+    narrowed view averages the suppliers its own records used (D-360, D-370)."""
     a, e = _bounds(start, end)
+    mir_c = flt.at(QMir.site_id, QMir.engagement_id) if flt is not None else []
+    rcv_c = flt.at(QReceipt.site_id) if flt is not None else []
+    ncr_c = flt.ncr() if flt is not None else []
     used = set(
         db.scalars(
             select(QMir.supplier_id).where(
-                QMir.project_id == project_id, QMir.decided_at >= a, QMir.decided_at < e
+                QMir.project_id == project_id, QMir.decided_at >= a, QMir.decided_at < e, *mir_c
             )
         )
     )
     used |= set(
         db.scalars(
             select(QReceipt.supplier_id).where(
-                QReceipt.project_id == project_id, QReceipt.arrived_at >= a, QReceipt.arrived_at < e
+                QReceipt.project_id == project_id,
+                QReceipt.arrived_at >= a,
+                QReceipt.arrived_at < e,
+                *rcv_c,
             )
         )
     )
     used |= set(
         db.scalars(
             select(QNcr.supplier_id).where(
-                QNcr.project_id == project_id, QNcr.opened_at >= a, QNcr.opened_at < e
+                QNcr.project_id == project_id, QNcr.opened_at >= a, QNcr.opened_at < e, *ncr_c
             )
         )
     )

@@ -54591,6 +54591,8 @@ export interface components {
              * @default false
              */
             owner_release_approval: boolean;
+            /** Min Remaining Shelf Life Pct */
+            min_remaining_shelf_life_pct?: number | string | null;
             /** Contact Name */
             contact_name?: string | null;
             /** Contact Mobile */
@@ -54624,6 +54626,8 @@ export interface components {
             kind: components["schemas"]["QCustomerKind"];
             /** Owner Release Approval */
             owner_release_approval: boolean;
+            /** Min Remaining Shelf Life Pct */
+            min_remaining_shelf_life_pct?: string | null;
             status: components["schemas"]["QCustomerStatus"];
             /** Contact Name */
             contact_name: string | null;
@@ -54648,6 +54652,8 @@ export interface components {
             kind?: components["schemas"]["QCustomerKind"] | null;
             /** Owner Release Approval */
             owner_release_approval?: boolean | null;
+            /** Min Remaining Shelf Life Pct */
+            min_remaining_shelf_life_pct?: number | string | null;
             status?: components["schemas"]["QCustomerStatus"] | null;
             /** Contact Name */
             contact_name?: string | null;
@@ -56870,6 +56876,14 @@ export interface components {
             used_at?: string | null;
             /** Value Note */
             value_note?: string | null;
+            /** Value */
+            value?: number | string | null;
+            /** Limit Low */
+            limit_low?: number | string | null;
+            /** Limit High */
+            limit_high?: number | string | null;
+            /** Unit */
+            unit?: string | null;
         };
         /** QMteUsageRead */
         QMteUsageRead: {
@@ -56899,6 +56913,14 @@ export interface components {
             cal_status_at_use: components["schemas"]["QCalStatus"];
             /** Value Note */
             value_note: string | null;
+            /** Value */
+            value?: string | null;
+            /** Limit Low */
+            limit_low?: string | null;
+            /** Limit High */
+            limit_high?: string | null;
+            /** Unit */
+            unit?: string | null;
             /** Warnings */
             warnings?: components["schemas"]["ApiWarning"][];
         };
