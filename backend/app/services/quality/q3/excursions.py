@@ -837,8 +837,20 @@ def dismiss(db: Session, p: Principal, exc_id: uuid.UUID, body: dict[str, Any]) 
                 b.local_day(x.started_at - timedelta(minutes=60)),
                 b.local_day(end) + timedelta(days=1),
             )
+    # Q2's status rule (Q-CAL-02) recomputes cal_status on every flush and only keeps a manual
+    # out_of_service when it is stored as an override, so the probe fault is recorded as one.
+    from app.core.quality.q2 import QMteOverride  # noqa: PLC0415
+    from app.models.quality.q2 import QMteCalOverride  # noqa: PLC0415
+
+    fault = f"Probe fault found on {x.exc_no} ({kind})"
+    ov = db.get(QMteCalOverride, m.id)
+    if ov is None:
+        ov = QMteCalOverride(mte_id=m.id, status=QMteOverride.out_of_service, reason=fault)
+        db.add(ov)
+    ov.status, ov.reason, ov.set_at = QMteOverride.out_of_service, fault, now()
+    ov.set_by_user_id = p.user.id
     m.cal_status = QCalStatus.out_of_service
-    m.cal_status_reason = f"Probe fault found on {x.exc_no} ({kind})"
+    m.cal_status_reason = fault
     x.dismissal = {
         "evidence_kind": kind,
         "mte_id": str(m.id),
