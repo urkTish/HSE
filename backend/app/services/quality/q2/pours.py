@@ -226,7 +226,9 @@ def create(
             if row is None or ad.project_id(row) != project.id:
                 raise qc.field_err("pre_pour_ir_id", "The IR is not on this project.")
             eng = ad.engagement(db, row) or eng  # Q-RPM-07: the ITP engagement of the IR
-            itp_point = itp_point or getattr(row, "itp_point_id", None)
+            hp = reg.HOLD_POINT_OF_IR.get("ir")
+            got = hp(db, row.id) if hp is not None and row is not None else None
+            itp_point = itp_point or (got[0] if got else getattr(row, "itp_point_id", None))
     site = db.get(Site, body["site_id"])
     if site is None or site.project_id != project.id:
         raise qc.field_err("site_id", "The site does not belong to this project.")
@@ -309,7 +311,13 @@ def start(
     if x.status != ST.planned:
         raise base.invalid("The pour", x.status, "started")
     fn = reg.HOLD_CHECKS.get("itp_point")
-    released = fn(db, x.itp_point_id, x.location_ref) if fn is not None and x.itp_point_id else None
+    # D-370: the hold is checked at the pre-pour IR's location key (Q1's key, not the pour's free
+    # text); a pour linked only to an ITP point is checked at any location of that ITP
+    hp = reg.HOLD_POINT_OF_IR.get("ir")
+    got = hp(db, x.pre_pour_ir_id) if hp is not None and x.pre_pour_ir_id else None
+    key = got[1] if got else None
+    point = x.itp_point_id or (got[0] if got else None)
+    released = fn(db, point, key) if fn is not None and point else None
     warnings: list[ApiWarning] = []
     if released is False:
         raise qc.err(

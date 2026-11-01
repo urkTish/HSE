@@ -198,6 +198,9 @@ CRITERIA_EVALUATORS: dict[str, Callable[[dict[str, Any], dict[str, Any]], Verdic
 
 # released(db, itp_point_id, location_key) → True / False / None (unknown)
 HOLD_CHECKS: dict[str, Callable[[Session, uuid.UUID, str | None], bool | None]] = {}
+# hold_point_of(db, ir_id) → (itp_point_id, location_key) of the hold point a pre-pour IR releases,
+# or None (Q1, D-370): Q2 pours check that point at the IR's own location key.
+HOLD_POINT_OF_IR: dict[str, Callable[[Session, uuid.UUID], tuple[uuid.UUID, str] | None]] = {}
 
 
 # ---- competence (Q2 → Q1, Q3, Q4) ----------------------------------------------------------------

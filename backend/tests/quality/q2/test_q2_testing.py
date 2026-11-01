@@ -270,9 +270,16 @@ def test_AC13_pour_closed_short_of_sets_warns(q2: None, api: Api, ids: Ids) -> N
 
 @pytest.fixture
 def hold_rejected() -> Iterator[None]:
+    from app.services.quality import ensure_registered
+
+    ensure_registered()
+    old = reg.HOLD_CHECKS.get("itp_point")  # Q1's real check once integrated: put it back
     reg.HOLD_CHECKS["itp_point"] = lambda _db, _point, _loc: False
     yield
-    reg.HOLD_CHECKS.pop("itp_point", None)
+    if old is None:
+        reg.HOLD_CHECKS.pop("itp_point", None)
+    else:
+        reg.HOLD_CHECKS["itp_point"] = old
 
 
 def test_AC14_pour_start_blocked_by_rejected_hold_point(

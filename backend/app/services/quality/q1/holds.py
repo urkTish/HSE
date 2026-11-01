@@ -135,6 +135,20 @@ def check(
     return res
 
 
+def hold_point_of(db: Session, ir_id: uuid.UUID) -> tuple[uuid.UUID, str] | None:
+    """`HOLD_POINT_OF_IR["ir"]` (D-370): the point a pre-pour IR releases — its highest H point,
+    else its highest point — with the IR's location key, so a Q2 pour linked to the IR is checked
+    at that point and location (Q-TST-12)."""
+    ir = db.get(QIr, ir_id)
+    if ir is None or not ir.point_seqs:
+        return None
+    types = _types(db, ir.itp_id)
+    holds = [s for s in ir.point_seqs if types.get(s) == QPointType.H]
+    seq = max(holds or ir.point_seqs)
+    pt = db.scalar(select(QItpPoint).where(QItpPoint.itp_id == ir.itp_id, QItpPoint.seq == seq))
+    return (pt.id, ir.location_key) if pt is not None else None
+
+
 def released(db: Session, itp_point_id: uuid.UUID, location_key: str | None) -> bool | None:
     """`HOLD_CHECKS["itp_point"]`: is this ITP point approved at the location key (any key when
     None)? None when the point is unknown."""

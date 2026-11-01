@@ -613,6 +613,7 @@ def register() -> None:
         }
     )
     reg.HOLD_CHECKS["itp_point"] = holds.released
+    reg.HOLD_POINT_OF_IR["ir"] = holds.hold_point_of
     dossier.register_sections()
     reg.register_job("q1_ir_alerts", reg.JobDef("quality_alerts", jobs.ir_alerts, "Q1"))
     reg.register_job("q1_punch_digest", reg.JobDef("quality_weekly", jobs.punch_digest, "Q1"))
