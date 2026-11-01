@@ -382,6 +382,12 @@ def transition(
             )
         project = qc.get_project(db, p, project_id)
         qc.writable(project, p)
+        requesters = {u for u in (s.created_by_user_id, s.updated_by_user_id) if u}
+        ctx = rpm.Ctx(requesters=frozenset(requesters if step == "approve" else ()))
+        rule, capacity = rpm.check_signer(
+            db, p, project, QRecordType.supplier, step, ctx, record_id=s.id
+        )
+        # Q4 gate after the signer checks: the signer first learns whether they may sign
         if src == SS.pending_approval and to in (SS.approved, SS.conditional):
             blockers = [b for gate in reg.SUPPLIER_GATES for b in gate(db, s, to.value)]
             if blockers:
@@ -395,11 +401,6 @@ def transition(
                     blockers[0].detail_ar,
                     blockers=[b.__dict__ for b in blockers],
                 )
-        requesters = {u for u in (s.created_by_user_id, s.updated_by_user_id) if u}
-        ctx = rpm.Ctx(requesters=frozenset(requesters if step == "approve" else ()))
-        rule, capacity = rpm.check_signer(
-            db, p, project, QRecordType.supplier, step, ctx, record_id=s.id
-        )
         signoff.sign(
             db, p, project, QRecordType.supplier, s.id, step, DECISION[to], text, rule, capacity
         )

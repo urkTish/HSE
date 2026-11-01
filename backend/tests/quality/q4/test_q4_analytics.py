@@ -87,9 +87,9 @@ def test_AC25_signals() -> None:
     base = [10.0, 10.4, 9.6, 10.2, 9.8, 10.1, 9.9, 10.3, 9.7, 10.0]
     r8 = spc.signals(base + [10.1] * 8, 10.0, [0.2] * 18, [10.6] * 18, [9.4] * 18)
     assert (17, 4) in r8
-    r1 = spc.signals(base + [11.0], 10.0, [0.2] * 11, [10.6] * 11, [9.4] * 11)
+    r1 = spc.signals([*base, 11.0], 10.0, [0.2] * 11, [10.6] * 11, [9.4] * 11)
     assert (10, 1) in r1
-    r2 = spc.signals(base + [10.5, 10.1, 10.5], 10.0, [0.2] * 13, [10.6] * 13, [9.4] * 13)
+    r2 = spc.signals([*base, 10.5, 10.1, 10.5], 10.0, [0.2] * 13, [10.6] * 13, [9.4] * 13)
     assert (12, 2) in r2
 
 
@@ -138,7 +138,7 @@ def test_AC25_signal_notifies_owner_no_ncr(q_seed: None) -> None:
         db.rollback()
 
 
-# ---- KPI page --------------------------------------------------------------------------------------
+# ---- KPI page ------------------------------------------------------------------------------------
 
 
 def test_kpi_page_profiles_and_scope(q_seed: None, api: Api, ids: Ids) -> None:
@@ -283,7 +283,7 @@ def test_AC30_q4_exports(q_seed: None, api: Api, ids: Ids) -> None:
         assert res.status_code == 201, res.text
 
 
-# ---- AI tools -----------------------------------------------------------------------------------------
+# ---- AI tools ------------------------------------------------------------------------------------
 
 
 def _ctx(db: object, email: str, code: str) -> object:

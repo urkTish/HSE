@@ -391,6 +391,10 @@ class Q4AuditRead(ApiModel):
     report_due_by: date | None
     can_issue: bool
     ncr_ids: list[uuid.UUID]
+    template_items: list[Obj] = Field(
+        default_factory=list, description="Checklist items (6d engine)."
+    )
+    findings: list[Obj] = Field(default_factory=list)
     status_reason: str | None
     warnings: list[Obj] = Field(default_factory=list)
 

@@ -395,6 +395,30 @@ def audit_read(db: Session, p: Principal | None, a: FieldAudit) -> dict[str, Any
             )
         )
     ]
+    t = db.get(ChecklistTemplate, a.template_id) if a.template_id else None
+    items = [
+        {
+            k: it.get(k)
+            for k in ("item_code", "section_code", "text_en", "text_ar", "reference", "critical")
+        }
+        for it in (t.items if t else [])
+    ]
+    fnd = []
+    if a.response_id:
+        for f in db.scalars(
+            select(FieldFinding)
+            .where(FieldFinding.response_id == a.response_id, FieldFinding.voided.is_(False))
+            .order_by(FieldFinding.finding_no)
+        ):
+            fnd.append(
+                {
+                    "finding_no": f.finding_no,
+                    "item_code": f.item_code,
+                    "severity": f.severity.value,
+                    "description_en": f.description_en,
+                    "description_ar": f.description_ar,
+                }
+            )
     return {
         **base_,
         "domain": a.domain,
@@ -407,6 +431,8 @@ def audit_read(db: Session, p: Principal | None, a: FieldAudit) -> dict[str, Any
         "report_due_by": a.fieldwork_end + timedelta(days=days) if a.fieldwork_end else None,
         "can_issue": can_issue,
         "ncr_ids": [x["id"] for x in ncrs],
+        "template_items": items,
+        "findings": fnd,
     }
 
 
