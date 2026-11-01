@@ -151,19 +151,16 @@ def signals(
     side = [1 if x > cl else -1 if x < cl else 0 for x in xs]
     for i in range(len(xs)):
         for s in (1, -1):
+            # rules 2 / 3 also fire on the partial windows at the chart start (2 of the first 2,
+            # 4 of the first 4), reported at the completing point, which must itself be beyond
             w3 = range(max(0, i - 2), i + 1)
             if (
-                len(w3) == 3
-                and sum(1 for j in w3 if s * (xs[j] - cl) > 2 * sig[j]) >= 2
+                sum(1 for j in w3 if s * (xs[j] - cl) > 2 * sig[j]) >= 2
                 and s * (xs[i] - cl) > 2 * sig[i]
             ):
                 out.append((i, 2))
             w5 = range(max(0, i - 4), i + 1)
-            if (
-                len(w5) == 5
-                and sum(1 for j in w5 if s * (xs[j] - cl) > sig[j]) >= 4
-                and s * (xs[i] - cl) > sig[i]
-            ):
+            if sum(1 for j in w5 if s * (xs[j] - cl) > sig[j]) >= 4 and s * (xs[i] - cl) > sig[i]:
                 out.append((i, 3))
         if i >= 7 and all(side[j] == side[i] != 0 for j in range(i - 7, i + 1)):
             out.append((i, 4))

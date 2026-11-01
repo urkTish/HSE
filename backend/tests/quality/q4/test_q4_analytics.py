@@ -1,6 +1,7 @@
 """KPI page, SPC, sigma, packs, exports and AI tools (spec 8-quality §E.4–§E.9; AC-Q4-20,
 -22…-34 and AC-Q0-03 for the KPI page)."""
 
+import uuid
 from datetime import date, timedelta
 from decimal import Decimal
 
@@ -91,6 +92,17 @@ def test_AC25_signals() -> None:
     assert (10, 1) in r1
     r2 = spc.signals([*base, 10.5, 10.1, 10.5], 10.0, [0.2] * 13, [10.6] * 13, [9.4] * 13)
     assert (12, 2) in r2
+    # partial windows at the chart start: 2 of the first 2 beyond 2σ, 4 of the first 4 beyond 1σ
+    s = [0.2] * 6
+    assert (1, 2) in spc.signals(
+        [10.5, 10.5, 10.0, 10.0, 10.0, 10.0], 10.0, s, [10.6] * 6, [9.4] * 6
+    )
+    assert (3, 3) in spc.signals(
+        [10.3, 10.3, 10.3, 10.3, 10.0, 10.0], 10.0, s, [10.6] * 6, [9.4] * 6
+    )
+    assert not any(
+        r == 2 for _i, r in spc.signals([10.5, 10.0, 10.0], 10.0, s[:3], [10.6] * 3, [9.4] * 3)
+    )
 
 
 def test_AC25_signal_notifies_owner_no_ncr(q_seed: None) -> None:
@@ -169,6 +181,89 @@ def test_kpi_page_profiles_and_scope(q_seed: None, api: Api, ids: Ids) -> None:
     )
     k148 = next(t for t in s["tiles"] if t["kpi"] == "K-148")
     assert k148["value"] is None and "C45" not in s["charts"]
+
+
+def test_quality_home_kpi_tiles(q_seed: None, api: Api, ids: Ids) -> None:
+    """§E.7 (review item 6): the Quality home shows the profile's KPI tiles with RAG for the last
+    complete month; the responsible-person scope N gets none."""
+    home = ok(api.as_("hatem.shehri").get(f"{API}/projects/{ids.project('ANIA-EXP')}/quality/home"))
+    kt = {t["code"]: t for t in home["tiles"] if t["code"].startswith("kpi-")}
+    assert kt["kpi-K-141"]["display"] == "80.0 %" and kt["kpi-K-141"]["rag"] == "red"
+    assert "kpi-K-160" not in kt
+    r = ok(api.as_("reem.mutairi").get(f"{API}/projects/{ids.project('RUH-CCH')}/quality/home"))
+    assert any(t["code"] == "kpi-K-160" for t in r["tiles"])
+    n = ok(
+        api.as_("abdullah.dossary").get(f"{API}/projects/{ids.project('ANIA-EXP')}/quality/home")
+    )
+    assert not any(t["code"].startswith("kpi-") for t in n["tiles"])
+
+
+def test_kpis_narrowed_to_contractor_tree(q_seed: None, api: Api, ids: Ids) -> None:
+    """Review item 2 (§E.4, K-R5): a contractor-assigned 238 holder sees every tile narrowed to
+    his engagement tree; tiles that cannot be narrowed and the E26–E28 warnings are hidden
+    (D-360); T26 gives him the same numbers. On the seed RAWABI is the whole ANIA-EXP tree, so
+    Bilal is moved to NAJD (tree NAJD + SAHARA) for a narrowing that bites."""
+    from sqlalchemy import func
+
+    from app.ai import tools
+    from app.core.enums import Capability
+    from app.models import RoleAssignment
+    from app.models.quality import QNcr
+    from app.services.permissions import build_principal
+    from app.services.quality.q1 import kpi as q1k
+
+    pid = ids.project("ANIA-EXP")
+    puid = uuid.UUID(pid)
+    q = {"date_from": "2026-07-01", "date_to": "2026-09-30"}
+    a, z = date(2026, 7, 1), date(2026, 9, 30)
+    with get_sessionmaker()() as db:
+        u = db.scalar(select(User).where(User.email == "bilal.qureshi@example.com"))
+        assert u is not None
+        for ra in db.scalars(
+            select(RoleAssignment).where(
+                RoleAssignment.user_id == u.id, RoleAssignment.project_id == puid
+            )
+        ):
+            ra.contractor_engagement_id = uuid.UUID(ids.engagement("NAJD"))
+        db.commit()
+        g = build_principal(db, u, None).grant(puid, Capability.quality_view)
+        assert g is not None and g.engagement_ids is not None
+        tree = frozenset(g.engagement_ids)
+        assert len(tree) == 2
+        whole = q1k.ir_counts(db, puid, a, z)
+        mine = q1k.ir_counts(db, puid, a, z, engagement_ids=tree)
+        base = [
+            QNcr.project_id == puid,
+            QNcr.status.not_in(["voided", "draft"]),
+            QNcr.before_quality_start.is_(False),
+            QNcr.opened_date.between(a, z),
+        ]
+        n_all = db.scalar(select(func.count()).select_from(QNcr).where(*base))
+        ncrs = db.scalar(
+            select(func.count())
+            .select_from(QNcr)
+            .where(*base, QNcr.responsible_engagement_id.in_(tree))
+        )
+    assert ncrs is not None and n_all is not None and ncrs < n_all  # narrowing bites on the seed
+    assert mine.first_rounds < whole.first_rounds
+    b = ok(api.as_("bilal.qureshi").get(f"{API}/projects/{pid}/quality/kpis", params=q))
+    tiles = {t["kpi"]: t for t in b["tiles"]}
+    assert not {"K-155", "K-158", "K-159"} & set(tiles)
+    assert b["warnings"] == []
+    assert tiles["K-141"]["denominator"] == str(mine.first_rounds)
+    assert tiles["K-141"]["numerator"] == str(mine.first_passes)
+    assert tiles["K-143"]["value"] == str(ncrs)
+    k148 = tiles["K-148"]
+    assert next(c for c in k148["chips"] if c["code"] == "copq_pct")["value"] is None
+    assert all(r["copq_pct"] is None for r in b["charts"].get("C45", []))
+    h = ok(api.as_("hatem.shehri").get(f"{API}/projects/{pid}/quality/kpis", params=q))
+    assert {"K-155", "K-158", "K-159"} <= {t["kpi"] for t in h["tiles"]}
+    with get_sessionmaker()() as db:
+        c = _ctx(db, "bilal.qureshi@example.com", "ANIA-EXP")
+        out = tools.run(c, "get_quality_kpis", {"period": {"start": str(a), "end": str(z)}})  # type: ignore[arg-type]
+        rows = {r["kpi"]: r for r in out["projects"][0]["kpis"]}
+        assert "K-155" not in rows and rows["K-141"]["denominator"] == str(mine.first_rounds)
+        db.rollback()
 
 
 def test_AC27_dismissed_excursion(q_seed: None) -> None:
@@ -281,6 +376,28 @@ def test_AC30_q4_exports(q_seed: None, api: Api, ids: Ids) -> None:
             f"{API}/exports", json={"dataset": ds, "project_id": pid}
         )
         assert res.status_code == 201, res.text
+
+
+def test_AC30_viewer_ncr_export_has_no_costs(q_seed: None, api: Api, ids: Ids) -> None:
+    """AC-Q4-30: Sarah (Viewer / Client) exports quality_ncrs without any cost column, by default
+    and when she asks for one."""
+    from app.models.scorecard import XpJob
+
+    sarah = api.as_("sarah.mitchell")
+    pid = ids.project("RUH-CCH")
+    res = sarah.post(f"{API}/exports", json={"dataset": "quality_ncrs", "project_id": pid})
+    assert res.status_code == 201, res.text
+    asked = sarah.post(
+        f"{API}/exports",
+        json={"dataset": "quality_ncrs", "project_id": pid, "columns": ["cost_gross_sar"]},
+    )
+    jobs = [res.json()["id"]] + ([asked.json()["id"]] if asked.status_code == 201 else [])
+    assert asked.status_code in (201, 403, 422), asked.text
+    with get_sessionmaker()() as db:
+        for jid in jobs:
+            job = db.get(XpJob, uuid.UUID(jid))
+            assert job is not None and job.columns
+            assert not any(c.startswith("cost") for c in job.columns), job.columns
 
 
 # ---- AI tools ------------------------------------------------------------------------------------

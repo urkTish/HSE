@@ -268,7 +268,7 @@ class QSupplierEvaluation(Audited, Base):
     __tablename__ = "q_supplier_evaluations"
     __table_args__ = (Index("ix_q_sev_supplier", "supplier_id", "status"),)
 
-    project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id"))
+    project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id"), index=True)
     sev_no: Mapped[str | None] = mapped_column(String(40))
     supplier_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("q_suppliers.id"))
     kind: Mapped[QSevKind] = enum_col(QSevKind)

@@ -160,6 +160,22 @@ class QFilter:
     storage_class: str | None = None
     test_type: str | None = None
 
+    @property
+    def narrowed(self) -> bool:
+        """A site- or engagement-narrowed view (grant or filter): project-wide-only figures
+        are hidden (D-360)."""
+        return self.site_ids is not None or self.engagement_ids is not None
+
+    def at(self, site_col: Any = None, eng_col: Any = None) -> list[Any]:
+        """Site / engagement conditions on a source's own columns (None column = not
+        applicable to that source, e.g. logistics records carry no engagement, Q-RPM-07)."""
+        cs: list[Any] = []
+        if site_col is not None and self.site_ids is not None:
+            cs.append(site_col.in_(list(self.site_ids) or [uuid.uuid4()]))
+        if eng_col is not None and self.engagement_ids is not None:
+            cs.append(eng_col.in_(list(self.engagement_ids) or [uuid.uuid4()]))
+        return cs
+
     def ncr(self) -> list[Any]:
         cs: list[Any] = []
         if self.site_ids is not None:
@@ -251,6 +267,21 @@ class Engine:
             self._memo[key] = fn()
         return self._memo[key]
 
+    def hidden(self, k: QKpi) -> bool:
+        """KPIs that cannot be narrowed to a grant's sites / engagement tree are not shown to
+        a narrowed view (D-360): K-155 (quality people's competence), K-158 (the audit
+        programme), K-159 (document control), and K-169 under an engagement narrowing outside
+        logistics (complaints carry no engagement)."""
+        if not self.flt.narrowed:
+            return False
+        if k in (K.K155, K.K158, K.K159):
+            return True
+        return (
+            k == K.K169
+            and self.flt.engagement_ids is not None
+            and self.profile != QSectorProfile.logistics
+        )
+
     def months(self) -> list[tuple[int, int]]:
         out, d = [], self.start.replace(day=1)
         while d <= self.end:
@@ -263,7 +294,10 @@ class Engine:
         from app.services.quality.q3 import metrics as q3m  # noqa: PLC0415
 
         out: list[dict[str, Any]] = self.memo(
-            "q3", lambda: [q3m.month(self.db, self.project, y, m) for y, m in self.months()]
+            "q3",
+            lambda: [
+                q3m.month(self.db, self.project, y, m, self.flt.site_ids) for y, m in self.months()
+            ],
         )
         return out
 
@@ -271,7 +305,15 @@ class Engine:
         from app.services.quality.q1 import kpi as q1k  # noqa: PLC0415
 
         return self.memo(
-            "ir", lambda: q1k.ir_counts(self.db, self.project.id, self.start, self.end)
+            "ir",
+            lambda: q1k.ir_counts(
+                self.db,
+                self.project.id,
+                self.start,
+                self.end,
+                site_ids=self.flt.site_ids,
+                engagement_ids=self.flt.engagement_ids,
+            ),
         )
 
     def punch(self) -> Any:
@@ -279,7 +321,15 @@ class Engine:
 
         return self.memo(
             "punch",
-            lambda: q1k.punch_counts(self.db, self.project.id, self.start, self.end, self.until),
+            lambda: q1k.punch_counts(
+                self.db,
+                self.project.id,
+                self.start,
+                self.end,
+                self.until,
+                site_ids=self.flt.site_ids,
+                engagement_ids=self.flt.engagement_ids,
+            ),
         )
 
     # ---- NCR SQL ---------------------------------------------------------------------------
@@ -444,6 +494,7 @@ class Engine:
                 CorrectiveAction.status != CaStatus.cancelled,
                 CorrectiveAction.due_date >= self.start,
                 CorrectiveAction.due_date <= self.until,
+                *self.flt.at(CorrectiveAction.site_id, CorrectiveAction.responsible_engagement_id),
             )
         ).one()
         v = pct(ok, due)
@@ -485,11 +536,15 @@ class Engine:
             .where(*self._opened())
         ).one()
         gross, inn, rec = D(gross), D(inn), D(rec)
-        wv = db.scalar(
-            select(func.sum(QWorkValue.value_sar)).where(
-                QWorkValue.project_id == self.project.id,
-                QWorkValue.month >= self.start.replace(day=1),
-                QWorkValue.month <= self.end,
+        wv = (
+            None
+            if self.flt.narrowed
+            else db.scalar(
+                select(func.sum(QWorkValue.value_sar)).where(
+                    QWorkValue.project_id == self.project.id,
+                    QWorkValue.month >= self.start.replace(day=1),
+                    QWorkValue.month <= self.end,
+                )
             )
         )
         not_closed = (
@@ -559,9 +614,16 @@ class Engine:
                     "where r->>'decision' <> 'accept')), 0) "
                     "from q_receipt_lines l join q_receipts r on r.id = l.receipt_id "
                     "where r.project_id = :p and r.status = 'decided' and r.decided_at >= :a "
-                    "and r.decided_at < :e"
+                    "and r.decided_at < :e and (cast(:all_sites as boolean) "
+                    "or r.site_id = any(cast(:sites as uuid[])))"
                 ),
-                {"p": self.project.id, "a": a, "e": e},
+                {
+                    "p": self.project.id,
+                    "a": a,
+                    "e": e,
+                    "all_sites": self.flt.site_ids is None,
+                    "sites": [str(x) for x in self.flt.site_ids or ()],
+                },
             ).one()
             opp = int(cfg.get("receiving", 4))
             put("receiving", int(units), int(units) * opp, int(defects))
@@ -603,6 +665,7 @@ class Engine:
                 QMir.status == "decided",
                 QMir.decided_at >= a,
                 QMir.decided_at < e,
+                *self.flt.at(QMir.site_id, QMir.engagement_id),
             )
         ).one()
         return int(u), int(o), int(o) - int(c)
@@ -649,6 +712,7 @@ class Engine:
                     QObservation.project_id == self.project.id,
                     func.date(QObservation.created_at) >= self.start,
                     func.date(QObservation.created_at) <= self.end,
+                    *self.flt.at(QObservation.site_id, QObservation.engagement_id),
                 )
                 .group_by(QObservation.category)
             ):
@@ -680,6 +744,7 @@ class Engine:
                 QMir.status == "decided",
                 QMir.decided_at >= a,
                 QMir.decided_at < e,
+                *self.flt.at(QMir.site_id, QMir.engagement_id),
             )
         ).one()
         v = pct(rej, n)
@@ -702,6 +767,7 @@ class Engine:
             QTestRequest.results_entered_at >= a,
             QTestRequest.results_entered_at < e,
             QTestRequest.status != "voided",
+            *self.flt.at(QTestRequest.site_id, QTestRequest.engagement_id),
         ]
         if self.flt.test_type:
             conds.append(QTestRequest.test_type_code == self.flt.test_type)
@@ -732,9 +798,20 @@ class Engine:
                 "select count(*), count(*) filter (where r->>'result' = 'reject') from q_welds w, "
                 "jsonb_array_elements(w.ndt_results) r where w.project_id = :p "
                 "and w.status <> 'voided' "
-                "and (r->>'repair_round') = '0' and (r->>'examined_on')::date between :s and :e"
+                "and (r->>'repair_round') = '0' and (r->>'examined_on')::date between :s and :e "
+                "and (cast(:all_sites as boolean) or w.site_id = any(cast(:sites as uuid[]))) "
+                "and (cast(:all_engs as boolean) "
+                "or w.engagement_id = any(cast(:engs as uuid[])))"
             ),
-            {"p": self.project.id, "s": self.start, "e": self.end},
+            {
+                "p": self.project.id,
+                "s": self.start,
+                "e": self.end,
+                "all_sites": self.flt.site_ids is None,
+                "sites": [str(x) for x in self.flt.site_ids or ()],
+                "all_engs": self.flt.engagement_ids is None,
+                "engs": [str(x) for x in self.flt.engagement_ids or ()],
+            },
         ).one()
         v = pct(rej, n)
         return Result(K.K153, v, D(rej), D(n), disp(v, "%"))
@@ -755,6 +832,7 @@ class Engine:
             QMteItem.check_kind != "none",
             QMteItem.id.not_in(oos),
             ~bad.exists(),
+            *self.flt.at(QMteItem.site_id, QMteItem.owner_engagement_id),
         ]
         n, ok = self.db.execute(
             select(func.count(), func.count().filter(QMteItem.cal_due_on >= day)).where(*base_)
@@ -765,7 +843,22 @@ class Engine:
             self.db.scalar(
                 select(func.count())
                 .select_from(QOotReview)
-                .where(QOotReview.project_id == self.project.id, QOotReview.status != "closed")
+                .where(
+                    QOotReview.project_id == self.project.id,
+                    QOotReview.status != "closed",
+                    *(
+                        [
+                            QOotReview.mte_id.in_(
+                                select(QMteItem.id).where(
+                                    QMteItem.project_id == self.project.id,
+                                    *self.flt.at(QMteItem.site_id, QMteItem.owner_engagement_id),
+                                )
+                            )
+                        ]
+                        if self.flt.narrowed
+                        else []
+                    ),
+                )
             )
             or 0
         )
@@ -1027,6 +1120,7 @@ class Engine:
                 QComplaint.project_id == self.project.id,
                 QComplaint.received_at >= a,
                 QComplaint.received_at < e,
+                *self.flt.at(QComplaint.site_id),
             )
         ).one()
         rate = None
@@ -1115,6 +1209,8 @@ def snapshot(db: Session, project: Project, start: date, end: date) -> dict[str,
 
 
 def _applies(e: Engine, k: QKpi) -> bool:
+    if e.hidden(k):
+        return False
     prof = CATALOGUE[k][2]
     if prof == "both":
         return True

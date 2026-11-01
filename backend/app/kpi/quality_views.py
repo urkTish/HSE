@@ -94,8 +94,11 @@ def page(
         "period_start": e.start,
         "period_end": end,
         "as_of": as_of,
-        "tiles": [tile(e, k, hide) for k in kpis],
-        "warnings": qk.warnings(db, project, end) if end.day == qk.month_end(end).day else [],
+        "tiles": [tile(e, k, hide) for k in kpis if not e.hidden(k)],
+        # E26–E28 are project-wide management signals: not shown to a narrowed view (D-360).
+        "warnings": qk.warnings(db, project, end)
+        if end.day == qk.month_end(end).day and not f.narrowed
+        else [],
         "charts": {},
     }
     if charts:
@@ -140,14 +143,18 @@ def build_charts(db: Session, e: qk.Engine, hide: bool) -> dict[str, Any]:
             .where(*e._ncr_base(), QNcr.opened_date >= months[0][0], QNcr.opened_date <= e.end)
             .group_by(text("1"), text("2"), text("3"))
         ).all()
-        wv = {
-            m.isoformat()[:7]: D(v)
-            for m, v in db.execute(
-                select(QWorkValue.month, QWorkValue.value_sar).where(
-                    QWorkValue.project_id == e.project.id, QWorkValue.month >= months[0][0]
+        wv = (
+            {}
+            if e.flt.narrowed
+            else {
+                m.isoformat()[:7]: D(v)
+                for m, v in db.execute(
+                    select(QWorkValue.month, QWorkValue.value_sar).where(
+                        QWorkValue.project_id == e.project.id, QWorkValue.month >= months[0][0]
+                    )
                 )
-            )
-        }
+            }
+        )
         c45: dict[str, dict[str, Any]] = {
             a.isoformat()[:7]: {
                 "month": a.isoformat()[:7],
@@ -173,7 +180,14 @@ def build_charts(db: Session, e: qk.Engine, hide: bool) -> dict[str, Any]:
 
         c46 = []
         for a, z in months[-6:]:
-            c = q1k.ir_counts(db, e.project.id, a, z)
+            c = q1k.ir_counts(
+                db,
+                e.project.id,
+                a,
+                z,
+                site_ids=e.flt.site_ids,
+                engagement_ids=e.flt.engagement_ids,
+            )
             c46.append(
                 {
                     "month": a.isoformat()[:7],
@@ -183,14 +197,17 @@ def build_charts(db: Session, e: qk.Engine, hide: bool) -> dict[str, Any]:
             )
         ch["C46"] = c46
     if e.profile == QSectorProfile.logistics:
-        ch["C49"] = excursion_grid(db, e.project.id, months)
+        ch["C49"] = excursion_grid(db, e.project.id, months, e.flt)
     ch["C50"] = supplier_ranking(db, e)
     ch["C51"] = [{"process": k, **v} for k, v in e.dpmo().items()]
     return ch
 
 
 def excursion_grid(
-    db: Session, project_id: uuid.UUID, months: list[tuple[date, date]]
+    db: Session,
+    project_id: uuid.UUID,
+    months: list[tuple[date, date]],
+    flt: qk.QFilter | None = None,
 ) -> list[dict[str, Any]]:
     """C49: zone × month, worst severity of storage excursions (not dismissed, not voided)."""
     from app.models import Zone  # noqa: PLC0415
@@ -208,6 +225,7 @@ def excursion_grid(
             QExcursion.transient.is_(False),
             QExcursion.status.not_in(["dismissed", "voided"]),
             QExcursion.started_at >= a,
+            *(flt.at(QExcursion.site_id) if flt else []),
         )
     ):
         m = b.local_day(started).isoformat()[:7]

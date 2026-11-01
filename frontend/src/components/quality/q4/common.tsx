@@ -93,10 +93,3 @@ export function FileButton({ id, label, testId }: { id: string | null | undefine
 }
 
 export const MONTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-
-export function monthStart(offset = -1): { from: string; to: string } {
-  const d = new Date();
-  const s = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + offset, 1));
-  const e = new Date(Date.UTC(s.getUTCFullYear(), s.getUTCMonth() + 1, 0));
-  return { from: s.toISOString().slice(0, 10), to: e.toISOString().slice(0, 10) };
-}

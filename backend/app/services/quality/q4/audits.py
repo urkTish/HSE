@@ -1383,11 +1383,16 @@ def alerts(db: Session, at: Any) -> dict[str, int]:
 
 
 def mrv_due(db: Session, at: Any) -> dict[str, int]:
-    """Q-MRV-03: no review held for `mgmt_review_months` → alert 239 holders (monthly)."""
+    """Q-MRV-03: no review held for `mgmt_review_months` → alert 239 holders (monthly). Every
+    project with a Quality profile is checked; one that never held a review is due."""
+    from app.models.quality import QSettings  # noqa: PLC0415
+
     n = 0
-    for pid in db.scalars(select(QManagementReview.project_id).distinct()):
+    for pid in db.scalars(
+        select(QSettings.project_id).where(QSettings.sector_profile.is_not(None))
+    ):
         project = db.get(Project, pid)
-        if project is None or qc.profile_of(db, pid) is None:
+        if project is None:
             continue
         last = db.scalar(
             select(QManagementReview.held_on)

@@ -9,9 +9,11 @@ counted; voided IRs leave the KPIs (§B.4.2)."""
 from __future__ import annotations
 
 import uuid
+from collections.abc import Collection
 from dataclasses import dataclass, field
 from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -22,6 +24,7 @@ from app.models.quality import QSignoff
 from app.models.quality.q1 import QIr, QIrRound, QPunchItem
 
 R = QIrResult
+Ids = Collection[uuid.UUID] | None
 
 
 def _pct(n: int, d: int) -> Decimal | None:
@@ -52,8 +55,26 @@ class IrCounts:
         return _pct(self.rounds_failed, self.rounds_decided)
 
 
-def ir_counts(db: Session, project_id: uuid.UUID, start: date, end: date) -> IrCounts:
-    """Rounds decided in [start, end] (local dates)."""
+def _within(col_site: Any, col_eng: Any, sites: Ids, engs: Ids) -> list[Any]:
+    """Grant narrowing (Q-ROL-02 engagement tree, Phase 0 rule 11 sites); None = no narrowing."""
+    cs: list[Any] = []
+    if sites is not None:
+        cs.append(col_site.in_(list(sites) or [uuid.uuid4()]))
+    if engs is not None:
+        cs.append(col_eng.in_(list(engs) or [uuid.uuid4()]))
+    return cs
+
+
+def ir_counts(
+    db: Session,
+    project_id: uuid.UUID,
+    start: date,
+    end: date,
+    *,
+    site_ids: Ids = None,
+    engagement_ids: Ids = None,
+) -> IrCounts:
+    """Rounds decided in [start, end] (local dates), optionally narrowed to sites / engagements."""
     c = IrCounts()
     rows = db.execute(
         select(QIrRound, QIr)
@@ -65,6 +86,7 @@ def ir_counts(db: Session, project_id: uuid.UUID, start: date, end: date) -> IrC
             QIrRound.decided_date <= end,
             QIrRound.needs_confirmation.is_(False),
             QIrRound.round_no >= 1,
+            *_within(QIr.site_id, QIr.engagement_id, site_ids, engagement_ids),
         )
     ).all()
     for rnd, ir in rows:
@@ -108,7 +130,14 @@ class PunchCounts:
 
 
 def punch_counts(
-    db: Session, project_id: uuid.UUID, start: date, end: date, as_of: date
+    db: Session,
+    project_id: uuid.UUID,
+    start: date,
+    end: date,
+    as_of: date,
+    *,
+    site_ids: Ids = None,
+    engagement_ids: Ids = None,
 ) -> PunchCounts:
     """K-156: items closed on or before target with target in the period (≤ as_of) ÷ items with
     target in the period (≤ as_of); chips open A / open B."""
@@ -119,6 +148,9 @@ def punch_counts(
             QPunchItem.status != QPunchStatus.voided,
             QPunchItem.target_date >= start,
             QPunchItem.target_date <= min(end, as_of),
+            *_within(
+                QPunchItem.site_id, QPunchItem.responsible_engagement_id, site_ids, engagement_ids
+            ),
         )
     ):
         c.with_target += 1

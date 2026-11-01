@@ -444,6 +444,7 @@ def t_get_cold_chain_summary(
     """T29 (AC-Q4-32): per-zone excursions, TOR and MKT matching K-161 / K-162."""
     from sqlalchemy import func  # noqa: PLC0415
 
+    from app.kpi.quality_views import kpi_filter  # noqa: PLC0415
     from app.models import Zone  # noqa: PLC0415
     from app.models.quality.q3 import QExcursion, QHold, QStorageZone  # noqa: PLC0415
     from app.services.quality.q3 import storage  # noqa: PLC0415
@@ -464,7 +465,11 @@ def t_get_cold_chain_summary(
         for sz, z in ctx.db.execute(
             select(QStorageZone, Zone)
             .join(Zone, Zone.id == QStorageZone.zone_id)
-            .where(QStorageZone.project_id == pr.id, QStorageZone.active.is_(True))
+            .where(
+                QStorageZone.project_id == pr.id,
+                QStorageZone.active.is_(True),
+                *kpi_filter(ctx.p, pr.id).at(QStorageZone.site_id),  # grant sites (rule 11)
+            )
             .order_by(Zone.code)
         ):
             if want and z.code not in want:

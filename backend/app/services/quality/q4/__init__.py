@@ -527,7 +527,35 @@ def home_tiles(db: Session, p: Principal, project: Project) -> list[reg.HomeCoun
                 "danger" if overdue else "neutral",
             )
         )
+        out.extend(kpi_home_tiles(db, p, project))
     return out
+
+
+def kpi_home_tiles(db: Session, p: Principal, project: Project) -> list[reg.HomeCount]:
+    """§E.7: the profile's KPI tiles with RAG for the last complete month, from the same page
+    builder as `/quality/kpis` (grant narrowing and hidden tiles included, no charts)."""
+    from app.kpi import quality_views as qv  # noqa: PLC0415
+    from app.services.quality.q4 import base as b  # noqa: PLC0415
+
+    if qc.profile_of(db, project.id) is None:
+        return []
+    today = b.today(project)
+    end = today.replace(day=1) - timedelta(days=1)
+    pg = qv.page(db, p, project, end.replace(day=1), end, today, charts=False)
+    tone = {"red": "danger", "amber": "warning", "green": "success"}
+    return [
+        reg.HomeCount(
+            f"kpi-{t['kpi']}",
+            f"{t['kpi']} {t['name_en']}",
+            f"{t['kpi']} {t['name_ar']}",
+            0,
+            "/quality/kpis",
+            tone.get(t["rag"] or "", "neutral"),
+            display=t["display"],
+            rag=t["rag"],
+        )
+        for t in pg["tiles"]
+    ]
 
 
 def register() -> None:

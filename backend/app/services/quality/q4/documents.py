@@ -1239,6 +1239,9 @@ def send_transmittal(db: Session, p: Principal, tid: uuid.UUID) -> dict[str, Any
     if t.method == QTransmittalMethod.email:
         files = [str(t.cover_en_id), str(t.cover_ar_id)]
         size = 0
+        for cid in (t.cover_en_id, t.cover_ar_id):  # the cover sheets count towards the limit
+            cover = db.get(Attachment, cid) if cid else None
+            size += (cover.size_bytes or 0) if cover is not None else 0
         for it in db.scalars(
             select(QTransmittalItem).where(QTransmittalItem.transmittal_id == t.id)
         ):
@@ -1418,7 +1421,10 @@ def k159(db: Session, project_id: uuid.UUID, as_of: date) -> dict[str, Any]:
     req, done = db.execute(
         select(
             func.count(QDocAck.id),
-            func.count(QDocAck.id).filter(QDocAck.acked_at.is_not(None)),
+            # acknowledged by the end of the as_of day (an ack recorded later is not counted yet)
+            func.count(QDocAck.id).filter(
+                QDocAck.acked_at < b.day_start(as_of + timedelta(days=1))
+            ),
         )
         .join(QDocumentRevision, QDocumentRevision.id == QDocAck.revision_id)
         .join(QDocument, QDocument.id == QDocumentRevision.document_id)

@@ -230,6 +230,59 @@ def test_AC12_management_review(q_seed: None, api: Api, ids: Ids) -> None:
     assert out["status"] == "minutes_issued" and out["minutes_en_id"] and out["minutes_ar_id"]
 
 
+def test_AC07_quality_audits_not_in_k114_k115(q_seed: None, api: Api, ids: Ids) -> None:
+    """AC-Q4-07 (Q-AUD-05): an issued quality audit (QAU-RUH-CCH-2026-0006, issued 21 Sep) is
+    not counted by the 6d K-115 (nor K-114's programme); the same row as an HSE audit would be."""
+    from tests.train_helpers import kpi
+
+    q = {
+        "project_id": ids.project("RUH-CCH"),
+        "as_of": "2026-09-30",
+        "period": "month",
+        "anchor": "2026-09-30",
+    }
+
+    def k115() -> str:
+        res = api.as_("faisal.harbi").get(f"{API}/kpi/field-assurance", params=q)
+        assert res.status_code == 200, res.text
+        return str(kpi(res.json(), "K115")["display"])
+
+    assert k115() == "—"
+    with get_sessionmaker()() as db:
+        a6 = db.scalar(select(FieldAudit).where(FieldAudit.audit_no == "QAU-RUH-CCH-2026-0006"))
+        assert a6 is not None
+        a6.domain = "hse"  # type: ignore[assignment]
+        db.commit()
+    assert k115() != "—"  # the filter is what keeps it out
+
+
+def test_mrv_due_for_project_without_review(q_seed: None, ids: Ids) -> None:
+    """Q-MRV-03 (review item 3): a Quality project that never held a management review is due;
+    ANIA-EXP has none in the seed, so its 239 holder gets the alert, once per month."""
+    from app.core.clock import now
+    from app.models import Notification
+    from app.services.quality.q4 import audits
+
+    hatem = uuid.UUID(ids.user("hatem.shehri"))
+    pid = uuid.UUID(ids.project("ANIA-EXP"))
+    with get_sessionmaker()() as db:
+        assert audits.mrv_due(db, now())["q4_mrv"] >= 1
+        db.commit()
+        q = (
+            select(func.count())
+            .select_from(Notification)
+            .where(
+                Notification.user_id == hatem,
+                Notification.project_id == pid,
+                Notification.title_en == "Management review due",
+            )
+        )
+        assert db.scalar(q) == 1
+        audits.mrv_due(db, now())
+        db.commit()
+        assert db.scalar(q) == 1
+
+
 def test_AC13_supplier_gate(qsetup: None, api: Api, ids: Ids) -> None:
     from app.models.quality import QSupplier
     from app.services.quality.q4 import suppliers
@@ -387,3 +440,45 @@ def test_AC16_contractor_page_score(q_seed: None, api: Api, ids: Ids) -> None:
     assert rows[0]["score"] == "72.2" and rows[0]["band"] == "B"
     with get_sessionmaker()() as db:
         assert db.scalar(select(func.count()).select_from(QSupplierScore)) == n_scores
+
+
+def test_supplier_scores_refuse_scope_n(q_seed: None, api: Api, ids: Ids) -> None:
+    """Q-ROL-04 (review item 5): the responsible-person scope N reads no supplier scores, on the
+    project list or on the contractor page; a 238 holder does."""
+    pid = ids.project("ANIA-EXP")
+    abdullah = api.as_("abdullah.dossary")
+    err(abdullah.get(f"{API}/projects/{pid}/quality/supplier-scores"), 403, "FORBIDDEN")
+    cq = f"{API}/quality/contractor-quality/{ids.contractor('RAWABI')}"
+    err(abdullah.get(cq), 403, "FORBIDDEN")
+    ok(api.as_("hatem.shehri").get(f"{API}/projects/{pid}/quality/supplier-scores"))
+    ok(api.as_("hatem.shehri").get(cq))
+
+
+PNG_1PX = (
+    b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00"
+    b"\x1f\x15\xc4\x89\x00\x00\x00\rIDATx\x9cc\xf8\x0f\x00\x00\x01\x01\x00\x05\x18\xd8N\x00"
+    b"\x00\x00\x00IEND\xaeB`\x82"
+)
+
+
+def test_quality_audit_finding_photo_read(q_seed: None, api: Api, ids: Ids) -> None:
+    """Review item 1: a quality audit's finding photo (owner field_photo) follows the quality
+    audit's read rules, not capability 200; Viewer / Client never reads it (P6d-3)."""
+    from app.core.hse_enums import AttachmentOwner
+    from app.models.field import ChecklistResponse
+    from app.services import attachments
+
+    with get_sessionmaker()() as db:
+        a6 = db.scalar(select(FieldAudit).where(FieldAudit.audit_no == "QAU-RUH-CCH-2026-0006"))
+        assert a6 is not None
+        r = db.scalar(select(ChecklistResponse).where(ChecklistResponse.audit_id == a6.id))
+        assert r is not None
+        att = attachments.store(
+            db, AttachmentOwner.field_photo, r.id, r.project_id, "finding.png", PNG_1PX,
+            "image/png", a6.lead_auditor_id, shrink=False,
+        )  # fmt: skip
+        db.commit()
+        att_id = att.id
+    url = f"{API}/attachments/{att_id}/signed-url"
+    ok(api.as_("reem.mutairi").post(url))
+    err(api.as_("sarah.mitchell").post(url), 403, "FORBIDDEN")

@@ -358,6 +358,7 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id', name=op.f('pk_q_supplier_evaluations'))
     )
     op.create_index('ix_q_sev_supplier', 'q_supplier_evaluations', ['supplier_id', 'status'], unique=False)
+    op.create_index(op.f('ix_q_supplier_evaluations_project_id'), 'q_supplier_evaluations', ['project_id'], unique=False)
     op.create_table('q_transmittal_items',
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('transmittal_id', sa.Uuid(), nullable=False),
@@ -393,6 +394,7 @@ def downgrade() -> None:
     op.drop_column('field_audits', 'domain')
     op.drop_index(op.f('ix_q_transmittal_items_transmittal_id'), table_name='q_transmittal_items')
     op.drop_table('q_transmittal_items')
+    op.drop_index(op.f('ix_q_supplier_evaluations_project_id'), table_name='q_supplier_evaluations')
     op.drop_index('ix_q_sev_supplier', table_name='q_supplier_evaluations')
     op.drop_table('q_supplier_evaluations')
     op.drop_index(op.f('ix_q_doc_acks_user_id'), table_name='q_doc_acks')

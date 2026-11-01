@@ -6,6 +6,7 @@ the 6d engine (`QHYG`, owner `q_hygiene`), pest stations and pest-control visits
 from __future__ import annotations
 
 import uuid
+from collections.abc import Collection
 from datetime import date, datetime, timedelta
 from typing import Any
 
@@ -112,12 +113,21 @@ def due_status(
     return out
 
 
-def compliance(db: Session, project: Project, a: date, e: date, as_of: date) -> tuple[int, int]:
-    """K-168: (done in their period, due checks whose period ended in [a, e] and ≤ as_of)."""
+def compliance(
+    db: Session,
+    project: Project,
+    a: date,
+    e: date,
+    as_of: date,
+    site_ids: Collection[uuid.UUID] | None = None,
+) -> tuple[int, int]:
+    """K-168: (done in their period, due checks whose period ended in [a, e] and ≤ as_of),
+    optionally for some sites only."""
+    at = [] if site_ids is None else [QCheckSchedule.site_id.in_(list(site_ids) or [uuid.uuid4()])]
     done = total = 0
     for s in db.scalars(
         select(QCheckSchedule).where(
-            QCheckSchedule.project_id == project.id, QCheckSchedule.active.is_(True)
+            QCheckSchedule.project_id == project.id, QCheckSchedule.active.is_(True), *at
         )
     ):
         for pa, pe in periods(s, min(e, as_of)):

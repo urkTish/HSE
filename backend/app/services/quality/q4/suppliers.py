@@ -465,6 +465,7 @@ def metric_values(db: Session, supplier_id: uuid.UUID, start: date, end: date) -
             QMir.supplier_id == supplier_id,
             QTestRequest.results_entered_at >= a,
             QTestRequest.results_entered_at < e,
+            QTestRequest.status != "voided",  # like K-152
         )
     ).one()
     scar_req = scar_ok = 0
@@ -564,11 +565,9 @@ def list_scores(
     supplier_id: uuid.UUID | None,
 ) -> list[dict[str, Any]]:
     b.project(db, p, project_id)
-    if (
-        p.grant(project_id, C.supplier_manage) is None
-        and p.grant(project_id, C.quality_view) is None
-    ):
-        raise forbidden_error()
+    g = p.grant(project_id, C.supplier_manage)
+    if g is None or g.scope == b.S.responsible:
+        b.viewer(db, p, project_id)  # 238, never the responsible-person scope (Q-ROL-04)
     stmt = select(QSupplierScore)
     if period_start:
         stmt = stmt.where(QSupplierScore.period_start == period_start)
@@ -611,9 +610,13 @@ def latest_final(db: Session, supplier_id: uuid.UUID) -> QSupplierScore | None:
 def contractor_score(db: Session, p: Principal, contractor_id: uuid.UUID) -> list[dict[str, Any]]:
     """Q-SUP-05: the latest quality score of suppliers linked to a contractor (information only;
     never part of the 6g HSE scorecard)."""
-    if (
-        not any(p.grant(a.project_id, C.quality_view) for a in p.active_assignments if a.project_id)
-        and not p.is_manager
+
+    def reads(pid: uuid.UUID) -> bool:
+        g = p.grant(pid, C.quality_view)
+        return g is not None and g.scope != b.S.responsible  # not scope N (Q-ROL-04)
+
+    if not p.is_manager and not any(
+        reads(a.project_id) for a in p.active_assignments if a.project_id
     ):
         raise forbidden_error()
     out = []

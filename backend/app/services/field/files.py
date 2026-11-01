@@ -11,7 +11,8 @@ import uuid
 from sqlalchemy.orm import Session
 
 from app.core.enums import Capability
-from app.core.errors import not_found
+from app.core.errors import ApiError, not_found
+from app.core.field_enums import AuditDomain
 from app.core.hse_enums import AttachmentOwner
 from app.models import ChecklistResponse, FieldAudit, StopWorkOrder, ToolboxTalk
 from app.services.field import common as fc
@@ -38,6 +39,9 @@ def owner(
         pid, site, eng = r.project_id, r.site_id, r.engagement_id
         if r.inspector_id == p.user.id:
             return pid, False
+        au = db.get(FieldAudit, r.audit_id) if r.audit_id else None
+        if au is not None and au.domain == AuditDomain.quality:
+            return _quality_audit_photo(db, p, au), False
     elif owner_type == A.stop_work_photo:
         o = db.get(StopWorkOrder, owner_id)
         if o is None:
@@ -66,3 +70,18 @@ def owner(
     if site is not None and not g.covers_site(site):
         raise forbidden_error()
     return pid, False
+
+
+def _quality_audit_photo(db: Session, p: Principal, au: FieldAudit) -> uuid.UUID:
+    """Finding photos of a quality audit (8-quality §E.2) follow the quality audit's read rules
+    (276 / 277 / 238 through q4 `audits._get`), not capability 200; Viewer / Client still never
+    reads photos (P6d-3)."""
+    from app.services.quality.q4 import audits as qa  # noqa: PLC0415
+
+    if not p.can_see_project(au.project_id) or fc.is_viewer(p, au.project_id):
+        raise forbidden_error("Photos and files are not shown to Viewer / Client (P6d-3).")
+    try:
+        qa._get(db, p, au.id)
+    except ApiError as e:
+        raise forbidden_error() from e
+    return au.project_id
