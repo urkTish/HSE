@@ -194,7 +194,9 @@ def requesters(n: QNcr, step: str) -> frozenset[uuid.UUID]:
 
 
 def ctx_for(n: QNcr, step: str) -> rpm.Ctx:
-    return rpm.Ctx(n.site_id, n.responsible_engagement_id, requesters(n, step))
+    """Resolution context; the class is the qualifier, so class-specific matrix rows match."""
+    cls = n.classification.value if n.classification is not None else None
+    return rpm.Ctx(n.site_id, n.responsible_engagement_id, requesters(n, step), qualifier=cls)
 
 
 def open_steps(db: Session, project: Project) -> list[reg.OpenStep]:
@@ -223,7 +225,7 @@ def open_steps(db: Session, project: Project) -> list[reg.OpenStep]:
                         f"/quality/ncrs/{n.id}",
                         "Q0",
                     ),
-                    None,
+                    n.classification.value if n.classification is not None else None,
                     n.site_id,
                     n.responsible_engagement_id,
                     requesters(n, step),
@@ -387,6 +389,8 @@ def create(
         src = reg.NCR_SOURCES.get(st)
         if src is None or body.get("source_id") is None:
             raise qc.field_err("source_id", f"Source {st.value} is not available on this install.")
+        if src.visible is not None and not src.visible(db, p, body["source_id"]):
+            raise forbidden_error("You cannot see the source record.")
         info = src.resolve(db, project, body["source_id"])
     elif g.scope == S.responsible:
         raise forbidden_error("A responsible person raises NCRs from a record they act on.")
@@ -415,9 +419,14 @@ def create(
                 data[k] = v
         if data.get("classification") is None:
             data["classification"] = info.proposed_class or NCR_SOURCE_DEFS[st][1]
-    if g.scope != S.responsible and not qc.covers(
-        g, data.get("site_id"), data.get("responsible_engagement_id")
-    ):
+    site, eng = data.get("site_id"), data.get("responsible_engagement_id")
+    if g.scope == S.responsible:
+        # N from a source: the source's site and contractor must still be inside the assignment
+        if (site is not None and not g.covers_site(site)) or (
+            g.engagement_ids is not None and (eng is None or eng not in g.engagement_ids)
+        ):
+            raise forbidden_error("This site or contractor is outside your scope.")
+    elif not qc.covers(g, site, eng):
         raise forbidden_error("This site or contractor is outside your scope.")
     n = QNcr(
         id=uuid.uuid4(),
@@ -581,24 +590,35 @@ def delete_draft(db: Session, p: Principal, ncr_id: uuid.UUID) -> None:
 # ---- open (Q-NCR-03, -06, -16) ----------------------------------------------------------------
 
 
+_OPEN_NEEDS: dict[str, tuple[str, str]] = {
+    "category": ("Choose the category.", "اختر الفئة."),
+    "detection_stage": ("Choose where it was detected.", "اختر مرحلة الاكتشاف."),
+    "classification": ("Choose the class.", "اختر التصنيف."),
+    "responsible_engagement_id": ("Choose the responsible contractor.", "اختر المقاول المسؤول."),
+    "owner_id": ("Choose the NCR owner.", "اختر مالك التقرير."),
+}
+
+
 def _open_problems(db: Session, n: QNcr) -> list[FieldError]:
-    miss: list[tuple[str, str]] = []
+    miss: list[tuple[str, str, str]] = []
     if not (n.title or "").strip() or n.title == "—":
-        miss.append(("title", "The title is required."))
+        miss.append(("title", "The title is required.", "العنوان مطلوب."))
     if not qc.text_of(n.requirement_en, n.requirement_ar):
-        miss.append(("requirement_en", "State the requirement (one language)."))
+        miss.append(
+            (
+                "requirement_en",
+                "State the requirement (one language).",
+                "اكتب المتطلب (بلغة واحدة).",
+            )
+        )
     if not qc.text_of(n.finding_en, n.finding_ar):
-        miss.append(("finding_en", "State the finding (one language)."))
-    for k in (
-        "category",
-        "detection_stage",
-        "classification",
-        "responsible_engagement_id",
-        "owner_id",
-    ):
+        miss.append(
+            ("finding_en", "State the finding (one language).", "اكتب الملاحظة (بلغة واحدة).")
+        )
+    for k, (en, ar) in _OPEN_NEEDS.items():
         if getattr(n, k) is None:
-            miss.append((k, f"{k} is required to open the NCR."))
-    return [FieldError(loc=["body", k], msg=m, type="missing") for k, m in miss]
+            miss.append((k, en, ar))
+    return [FieldError(loc=["body", k], msg=m, msg_ar=a, type="missing") for k, m, a in miss]
 
 
 def open_ncr(db: Session, p: Principal, ncr_id: uuid.UUID) -> tuple[QNcr, list[ApiWarning]]:
@@ -621,8 +641,8 @@ def _do_open(db: Session, p: Principal | None, project: Project, n: QNcr) -> lis
         raise ApiError(
             422,
             ErrorCode.VALIDATION_ERROR,
-            "Complete the NCR before opening it: " + "; ".join(e.msg for e in problems),
-            "أكمل بيانات التقرير قبل فتحه.",
+            "Complete the NCR before opening it: " + " ".join(e.msg for e in problems),
+            "أكمل بيانات التقرير قبل فتحه: " + " ".join(e.msg_ar or "" for e in problems),
             errors=problems,
         )
     if n.classification == QNcrClass.critical and evidence_count(db, n) == 0:
@@ -759,7 +779,6 @@ def set_class(
     lowering = old is not None and CLASS_RANK[cls] < CLASS_RANK[old]
     details: dict[str, Any] = {}
     if lowering:
-        text = qc.reason(why, 20)
         try:
             rpm.check_signer(
                 db, p, project, RT, "disposition", ctx_for(n, "disposition"), record_id=n.id
@@ -774,6 +793,7 @@ def set_class(
                 "reason (Q-NCR-05).",
                 "لا يخفض التصنيف إلا الشخص المسؤول عن اعتماد المعالجة مع ذكر السبب.",
             ) from e
+        text = qc.reason(why, 20)  # only after the signer check (a non-resolver gets 422 above)
         details["reason"] = text
         if n.repeat_of_id is not None and cls == QNcrClass.minor:
             raise qc.err(

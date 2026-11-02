@@ -18,6 +18,28 @@ class AuditType(StrEnum):
     contractor_hse = "contractor_hse"
     system_iso45001 = "system_iso45001"
     client_requested = "client_requested"
+    # 8-quality §E.2.1: domain `quality` audits (Q4)
+    qms_internal = "qms_internal"
+    process_quality = "process_quality"
+    supplier_quality = "supplier_quality"
+    subcontractor_quality = "subcontractor_quality"
+
+
+class AuditDomain(StrEnum):
+    """8-quality §E.2.1 `field_audits.domain`: 6d HSE audits or Phase 8 quality audits."""
+
+    hse = "hse"
+    quality = "quality"
+
+
+QUALITY_AUDIT_TYPES: frozenset["AuditType"] = frozenset(
+    {
+        AuditType.qms_internal,
+        AuditType.process_quality,
+        AuditType.supplier_quality,
+        AuditType.subcontractor_quality,
+    }
+)
 
 
 class VersionStatus(StrEnum):

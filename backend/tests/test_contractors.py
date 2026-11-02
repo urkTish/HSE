@@ -148,7 +148,8 @@ def test_contractor_list_filters(api: Api) -> None:
     c.patch("/api/v1/auth/me", json={"preferred_language": "ar"})
     res = c.get("/api/v1/contractors", params={"sort": "name"})
     names = [x["legal_name_ar"] for x in res.json()["items"]]
-    assert len(names) == 6 and names[0].startswith("شركة")  # Arabic collation (ش before م)
+    # 7 with the 3PL operator WAHAT of 8-quality Appendix A.1; Arabic collation (ش before م)
+    assert len(names) == 7 and names[0].startswith("شركة")
 
 
 def test_officer_edits_only_unapproved(api: Api, ids: Ids, db: Session) -> None:

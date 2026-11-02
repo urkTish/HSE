@@ -17,7 +17,14 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.clock import now
-from app.core.enums import AuditAction, EntityType, NotificationKind, ProjectStatus
+from app.core.enums import (
+    AuditAction,
+    Capability,
+    EntityType,
+    NotificationKind,
+    ProjectStatus,
+    Role,
+)
 from app.core.errors import ErrorCode, not_found, validation_error
 from app.core.hijri import hijri_ar, hijri_en
 from app.core.hse_enums import (
@@ -29,6 +36,7 @@ from app.core.hse_enums import (
     MonthlyReportStatus,
 )
 from app.core.scorecard_enums import (
+    QUALITY_RP_TYPES,
     RpAction,
     RpFileKind,
     RpLanguages,
@@ -111,7 +119,8 @@ KPI_BY_CODE = {m.value: m for m in KpiMetric}
 
 def doc_no(rt: RpType, code: str, eng: str | None, period_end: date) -> str:
     mid = f"-{eng}" if eng else ""
-    tail = f"-{period_end.month:02d}" if rt in (RpType.MCR, RpType.SCP, RpType.CPS) else ""
+    tail = (f"-{period_end.month:02d}"
+            if rt in (RpType.MCR, RpType.SCP, RpType.CPS, *QUALITY_RP_TYPES) else "")  # fmt: skip
     return f"{rt.value}-{code}{mid}-{period_end.year}{tail}"
 
 
@@ -551,6 +560,11 @@ def build(db: Session, p: Principal | None, pk: RpPack) -> None:
     elif pk.report_type == RpType.HEAT:
         assert project is not None  # noqa: S101
         snap = _heat(db, project, pk.period_start.year, min(cm.local_day(), pk.period_end))
+    elif pk.report_type in QUALITY_RP_TYPES:  # 8-quality §E.8 (Q4)
+        from app.services.quality.q4 import packs as qpacks  # noqa: PLC0415
+
+        assert project is not None  # noqa: S101
+        snap = qpacks.snapshot(db, project, pk.report_type.value, pk.period_start, pk.period_end)
     else:
         assert p is not None and pk.contractor_id is not None  # noqa: S101
         snap = _cps(db, p, pk.contractor_id)
@@ -610,7 +624,7 @@ def to_doc(db: Session, pk: RpPack) -> render.Doc:
         key=s["key"], title_en=s["title_en"], title_ar=s["title_ar"],
         tables=[render.Table(columns=[tuple(c) for c in t["columns"]],
                              rows=t["rows"], title_en=t["title_en"], title_ar=t["title_ar"],
-                             sheet=t["sheet"]) for t in s["tables"]],
+                             sheet=t["sheet"], rows_ar=t.get("rows_ar")) for t in s["tables"]],
         paragraphs_en=s["paragraphs_en"], paragraphs_ar=s["paragraphs_ar"],
         watermark=s.get("watermark"),
     ) for s in snap.get("sections", [])]  # fmt: skip
@@ -678,6 +692,11 @@ def can_view(db: Session, p: Principal, pk: RpPack) -> bool:
         return True
     if pk.report_type == RpType.CPS or pk.project_id is None:
         return False
+    if pk.report_type in QUALITY_RP_TYPES:  # 8-quality §A.11 280: Viewer / HSE Officer issued only
+        if p.grant(pk.project_id, C.quality_report_pack) is None:
+            return False
+        return quality_pack_writer(p, pk.project_id) or pk.status in (
+            RpStatus.issued, RpStatus.superseded)  # fmt: skip
     if pk.with_names:
         return (pk.prepared_by_user_id == p.user.id
                 or p.grant(pk.project_id, C.export_identity) is not None)  # fmt: skip
@@ -757,7 +776,8 @@ def list_packs(
 ) -> RpPackPage:  # fmt: skip
     cm.project(db, p, project_id)
     if (p.grant(project_id, C.report_pack_view) is None
-            and p.grant(project_id, C.report_pack_prepare) is None):  # fmt: skip
+            and p.grant(project_id, C.report_pack_prepare) is None
+            and p.grant(project_id, C.quality_report_pack) is None):  # fmt: skip
         raise forbidden_error()
     stmt = select(RpPack).where(RpPack.project_id == project_id)
     if report_type is not None:
@@ -795,7 +815,7 @@ def file_url(db: Session, p: Principal, pack_id: uuid.UUID, kind: RpFileKind) ->
 
 
 def _period(body: RpPackCreate) -> tuple[date, date]:
-    if body.report_type in (RpType.MCR, RpType.SCP, RpType.CPS):
+    if body.report_type in (RpType.MCR, RpType.SCP, RpType.CPS, *QUALITY_RP_TYPES):
         if not body.month:
             raise validation_error("month", "Give the month (yyyy-mm).")
         m = cm.parse_month(body.month)
@@ -869,7 +889,9 @@ def create(db: Session, p: Principal, body: RpPackCreate) -> RpPackDetail:
         if body.project_id is None:
             raise validation_error("project_id", "Give the project.")
         project = cm.project(db, p, body.project_id)
-        p.require(project.id, C.report_pack_prepare)
+        p.require(project.id, _prep_cap(rt))
+        if rt in QUALITY_RP_TYPES:
+            _quality_writer(p, project.id)
         if rt == RpType.SCP:
             eng = cm.eng(db, body.engagement_id) if body.engagement_id else None
             if eng is None or eng.project_id != project.id:
@@ -900,6 +922,28 @@ def create(db: Session, p: Principal, body: RpPackCreate) -> RpPackDetail:
               details={"purpose": body.purpose.value if body.purpose else None})  # fmt: skip
     db.flush()
     return detail(db, pk)
+
+
+def _prep_cap(rt: RpType) -> Capability:
+    """8-quality Q-RPT-01: Quality packs are prepared and issued with 280."""
+    return C.quality_report_pack if rt in QUALITY_RP_TYPES else C.report_pack_prepare
+
+
+def _issue_cap(rt: RpType) -> Capability:
+    return C.quality_report_pack if rt in QUALITY_RP_TYPES else C.report_pack_issue
+
+
+def quality_pack_writer(p: Principal, project_id: uuid.UUID) -> bool:
+    """280 is "R (issued)" for the HSE Officer and the Viewer / Client (8-quality §A.11)."""
+    if p.is_manager:
+        return True
+    roles = {a.role for a in p.active_assignments if a.project_id == project_id}
+    return bool(roles & {Role.qa_qc_manager, Role.quality_engineer})
+
+
+def _quality_writer(p: Principal, project_id: uuid.UUID) -> None:
+    if p.grant(project_id, C.quality_report_pack) is None or not quality_pack_writer(p, project_id):
+        raise forbidden_error("Quality packs are prepared and issued by 280 holders (Q-RPT-01).")
 
 
 def _immutable() -> Exception:
@@ -958,14 +1002,18 @@ def transition(
     t = now()
     if a == RpAction.issue:
         if pk.project_id:
-            p.require(pk.project_id, C.report_pack_issue)
+            p.require(pk.project_id, _issue_cap(pk.report_type))
+            if pk.report_type in QUALITY_RP_TYPES:
+                _quality_writer(p, pk.project_id)
         if pk.status != RpStatus.in_review:
             raise bad
         _check_issue(db, p, pk, body)
         issue(db, pk, p.user.id, t, body.remove_xlsx_for_externals, p)
     else:
         if pk.project_id:
-            p.require(pk.project_id, C.report_pack_prepare)
+            p.require(pk.project_id, _prep_cap(pk.report_type))
+            if pk.report_type in QUALITY_RP_TYPES:
+                _quality_writer(p, pk.project_id)
         if a == RpAction.submit_for_review and pk.status == RpStatus.draft:
             pk.status = RpStatus.in_review
             pk.prepared_by_user_id, pk.prepared_at = p.user.id, t

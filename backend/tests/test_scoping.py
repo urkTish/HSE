@@ -182,8 +182,16 @@ def test_user_directory_scoping(api: Api) -> None:
     ahmed = {
         u["full_name_en"] for u in api.as_("ahmed.zahrani").get("/api/v1/users").json()["items"]
     }
-    # Rep sees users of RAWABI tree on ANIA-EXP (Omar, Ramesh, himself), not client staff
-    assert ahmed == {"Ahmed Al-Zahrani", "Omar Siddiqui", "Ramesh Kumar"}
+    # Rep sees users of RAWABI tree on ANIA-EXP (Omar, Ramesh, himself and the contractor-employed
+    # quality staff of 8-quality Appendix A.1: Bilal, Joseph, Arun), not client staff
+    assert ahmed == {
+        "Ahmed Al-Zahrani",
+        "Omar Siddiqui",
+        "Ramesh Kumar",
+        "Bilal Qureshi",
+        "Joseph Mathew",
+        "Arun Pillai",
+    }
     viewer = api.as_("sarah.mitchell").get("/api/v1/users")
     assert viewer.status_code == 403
     noura = api.as_("noura.qahtani").get("/api/v1/users").json()["items"]

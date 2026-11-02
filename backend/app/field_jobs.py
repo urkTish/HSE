@@ -196,6 +196,7 @@ def field_alerts(db: Session) -> dict[str, Any]:
         for a in db.scalars(
             select(FieldAudit).where(
                 FieldAudit.project_id == pid,
+                FieldAudit.domain == "hse",  # quality audits alert through Q4 (8-quality §4)
                 FieldAudit.status.in_((AuditStatus.in_progress, AuditStatus.fieldwork_complete)),
                 FieldAudit.fieldwork_end.is_not(None),
             )

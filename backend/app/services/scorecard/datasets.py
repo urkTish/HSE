@@ -300,7 +300,8 @@ NATIVE: list[Dataset] = [
             names_cap=C.field_view,
             where=lambda m: m.owner_type != "vehicle_check"),  # 7b checks: pre_use_checks
     Dataset("field_audits", "6d", C.field_view, C.field_view, "HSE audits", "تدقيقات السلامة",
-            model=FieldAudit, date_attr="planned_start", names_cap=C.field_view),
+            model=FieldAudit, date_attr="planned_start", names_cap=C.field_view,
+            where=lambda m: m.domain == "hse"),  # 8-quality Q-AUD-05
     Dataset("toolbox_talks", "6d", C.field_view, C.field_view, "Toolbox talks",
             "اجتماعات التوعية", model=ToolboxTalk, date_attr="delivered_date",
             names_cap=C.toolbox_names_view),

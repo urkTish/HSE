@@ -92,6 +92,9 @@ class SourceInfo:
 @dataclass
 class NcrSource:
     resolve: Callable[[Session, Project, uuid.UUID], SourceInfo]
+    # May the principal read the source record? Every part's adapter should set it: a
+    # responsible person (scope N) raises NCRs only from records they can see.
+    visible: Callable[[Session, Principal, uuid.UUID], bool] | None = None
     on_ncr_status: Callable[[Session, QNcr, QNcrStatus], None] | None = None
     close_check: Callable[[Session, QNcr], list[Blocker]] | None = None
 
@@ -195,6 +198,9 @@ CRITERIA_EVALUATORS: dict[str, Callable[[dict[str, Any], dict[str, Any]], Verdic
 
 # released(db, itp_point_id, location_key) → True / False / None (unknown)
 HOLD_CHECKS: dict[str, Callable[[Session, uuid.UUID, str | None], bool | None]] = {}
+# hold_point_of(db, ir_id) → (itp_point_id, location_key) of the hold point a pre-pour IR releases,
+# or None (Q1, D-370): Q2 pours check that point at the IR's own location key.
+HOLD_POINT_OF_IR: dict[str, Callable[[Session, uuid.UUID], tuple[uuid.UUID, str] | None]] = {}
 
 
 # ---- competence (Q2 → Q1, Q3, Q4) ----------------------------------------------------------------
@@ -240,7 +246,14 @@ DOSSIER_SECTIONS: dict[str, DossierSection] = {}
 
 # ---- jobs (§4) -----------------------------------------------------------------------------------
 
-JOB_SLOTS = ("quality_daily", "quality_alerts", "quality_weekly", "quality_monthly")
+# `quality_hourly` (minute 17) carries deadlines shorter than a day: Q3 hold 24 h / 4 h (D-370)
+JOB_SLOTS = (
+    "quality_daily",
+    "quality_alerts",
+    "quality_weekly",
+    "quality_monthly",
+    "quality_hourly",
+)
 
 
 @dataclass
@@ -251,6 +264,11 @@ class JobDef:
 
 
 JOBS: dict[str, JobDef] = {}
+
+# Called after a project's Quality settings change: fn(db, project_id, changed) where changed
+# maps each changed key to its new value (D-370; Q3 drops its cached zone-day sums when
+# `reading_gap_factor` changes, since the minute model of D-351 depends on it).
+SETTING_HOOKS: list[Callable[[Session, uuid.UUID, dict[str, Any]], None]] = []
 
 
 # ---- export datasets, seeds, supplier gates, home tiles --------------------------------------
@@ -268,6 +286,8 @@ class HomeCount:
     value: int
     href: str | None = None
     tone: str = "neutral"
+    display: str | None = None  # a formatted value instead of the count (Q4 KPI tiles, §E.7)
+    rag: str | None = None  # red / amber / green against the KPI target
 
 
 # extra counts on the Quality home (Q-NAV, §E.7 band): fn(db, principal, project) → counts

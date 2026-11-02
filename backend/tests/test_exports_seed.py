@@ -28,9 +28,10 @@ def test_AC33_viewer_export_has_no_contacts(api: Api, db: Session) -> None:
     assert not {"primary_contact_name", "primary_contact_mobile", "primary_contact_email"} & set(
         header
     )
-    assert len(rows) - 1 == 6
+    # 6 Phase 0 contractors + WAHAT (Quality seed, engaged on RUH-CCH where Sarah is a viewer)
+    assert len(rows) - 1 == 7
     entry = db.scalars(select(AuditEntry).where(AuditEntry.action == AuditAction.export)).one()
-    assert entry.details is not None and entry.details["row_count"] == 6
+    assert entry.details is not None and entry.details["row_count"] == 7
     assert entry.details["dataset"] == "contractors"
 
 
@@ -57,13 +58,14 @@ def test_export_scoping(api: Api, ids: Ids) -> None:
     )
     assert {r[0] for r in eng[1:]} == {"RAWABI", "NAJD", "GULFPAVE", "SAHARA"}
     users = _csv(api.as_("faisal.harbi").get("/api/v1/exports/users"))
-    assert "email" in users[0] and len(users) == 9
+    # 8 Phase 0 users + 13 Quality users (8-quality Appendix A.1), plus the header row
+    assert "email" in users[0] and len(users) == 22
 
 
 def test_AC34_seed_data_is_fake(db: Session) -> None:
     mobile = re.compile(r"^\+96650000\d{4}$")
     users = db.scalars(select(User)).all()
-    assert len(users) == 8
+    assert len(users) == 21  # 8 Phase 0 users + 13 Quality users (8-quality Appendix A.1)
     for u in users:
         assert u.email.endswith("@example.com")
         assert u.mobile and mobile.match(u.mobile)

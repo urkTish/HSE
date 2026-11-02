@@ -136,7 +136,7 @@ def _ensure_row(db: Session, project_id: uuid.UUID) -> QSettings:
 def _can_read(p: Principal, project_id: uuid.UUID) -> bool:
     return any(
         p.grant(project_id, c) is not None
-        for c in (C.quality_view, C.quality_settings, C.ncr_raise, C.quality_acknowledge)
+        for c in (C.quality_view, C.quality_settings, C.ncr_raise)
     )
 
 
@@ -213,6 +213,12 @@ def patch(
     row.updated_by_user_id = p.user.id
     db.flush()
     if after:
+        from app.services.quality import ensure_registered  # noqa: PLC0415
+        from app.services.quality import registry as reg  # noqa: PLC0415
+
+        ensure_registered()
+        for hook in reg.SETTING_HOOKS:
+            hook(db, project.id, after)
         audit.record(
             db,
             AuditAction.settings_changed,

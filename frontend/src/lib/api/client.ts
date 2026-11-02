@@ -16,6 +16,8 @@ export class ApiError extends Error {
   readonly fieldErrors: FieldError[];
   /** Extra machine data (e.g. WORKER_EXISTS → worker_id/worker_no, VALIDITY_EXCEEDS_LIMIT → limiting_factor, WAP_BLOCKED → blockers). */
   readonly meta: Record<string, unknown>;
+  /** Show the server's EN / AR text before the generic text for the code (Quality screens: the server names the step and the rule). */
+  serverText = false;
 
   constructor(
     status: number,

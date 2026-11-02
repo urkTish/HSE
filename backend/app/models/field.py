@@ -26,6 +26,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.field_enums import (
     AttendanceMethod,
+    AuditDomain,
     AuditGrade,
     AuditStatus,
     AuditType,
@@ -230,7 +231,10 @@ class FieldAudit(Audited, Numbered, Base):
     """§3.7."""
 
     __tablename__ = "field_audits"
-    __table_args__ = (UniqueConstraint("project_id", "year", "seq"),)
+    __table_args__ = (
+        UniqueConstraint("project_id", "year", "seq"),
+        Index("ix_field_audits_domain", "project_id", "domain"),
+    )
 
     audit_no: Mapped[str] = mapped_column(String(40), unique=True)
     project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id"), index=True)
@@ -261,6 +265,12 @@ class FieldAudit(Audited, Numbered, Base):
     status: Mapped[AuditStatus] = enum_col(AuditStatus, default=AuditStatus.planned)
     status_reason: Mapped[str | None] = mapped_column(String(500))
     alerts_sent: Mapped[list[str]] = mapped_column(STRS, default=list)
+    # 8-quality §E.2.1 (Q4): quality audits are rows with domain `quality`
+    domain: Mapped[AuditDomain] = enum_col(
+        AuditDomain, default=AuditDomain.hse, server_default="hse"
+    )
+    auditee_supplier_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("q_suppliers.id"))
+    process_ids: Mapped[list[uuid.UUID]] = mapped_column(UUIDS, default=list, server_default="{}")
 
 
 class ToolboxTalk(Audited, Numbered, Base):

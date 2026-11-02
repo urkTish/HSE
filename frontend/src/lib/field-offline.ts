@@ -19,7 +19,9 @@ const DB = "hse-field";
 const STORE = "kv";
 const DEFAULT_CACHE_HOURS = 72;
 
-export type OutboxKind = "checklist" | "talk";
+/** `q_ncr`: a Quality NCR raised on the phone without signal (8-quality Q-NCR-01, idempotent by client_uuid).
+ * `q_ir_round`: an IR round decided without signal (Q-IR-14; the body carries `ir_id`, checked again at sync). */
+export type OutboxKind = "checklist" | "talk" | "q_ncr" | "q_ir_round";
 export interface OutboxItem {
   id: string; // client_uuid
   kind: OutboxKind;
@@ -27,7 +29,7 @@ export interface OutboxItem {
   label: string;
   created_at: string;
   expires_at: string;
-  body: S["SubmissionCreate"] | S["TalkCreate"];
+  body: S["SubmissionCreate"] | S["TalkCreate"] | S["QNcrCreate"] | (S["QIrDecide"] & { ir_id: string });
   /** Set when the server refused the item (4xx): kept so the user sees why, until discarded. */
   error?: { code: string; message: string; message_ar?: string | null } | null;
   /** Record created on the server (the item is then removed); kept for the caller only. */
@@ -255,6 +257,13 @@ function isTransient(e: unknown): boolean {
 
 async function post(item: OutboxItem): Promise<{ id: string }> {
   const path = { params: { path: { project_id: item.project_id } } };
+  if (item.kind === "q_ir_round") {
+    const { ir_id, ...body } = item.body as S["QIrDecide"] & { ir_id: string };
+    return unwrap(api.POST("/api/v1/quality/inspection-requests/{ir_id}/decide", { params: { path: { ir_id } }, body }));
+  }
+  if (item.kind === "q_ncr") {
+    return unwrap(api.POST("/api/v1/projects/{project_id}/quality/ncrs", { ...path, body: item.body as S["QNcrCreate"] }));
+  }
   if (item.kind === "checklist") {
     return unwrap(api.POST("/api/v1/projects/{project_id}/checklist-submissions", { ...path, body: item.body as S["SubmissionCreate"] }));
   }
@@ -271,13 +280,15 @@ export type SendResult<T> = { status: "sent"; record: T } | { status: "queued" }
 export async function submitWithOutbox<T extends { id: string }>(kind: OutboxKind, projectId: string, body: OutboxItem["body"], label: string, cacheHours = DEFAULT_CACHE_HOURS): Promise<SendResult<T>> {
   const now = Date.now();
   const item: OutboxItem = {
-    id: body.client_uuid,
+    id: body.client_uuid ?? newUuid(),
     kind,
     project_id: projectId,
     label,
     created_at: new Date(now).toISOString(),
     expires_at: new Date(now + cacheHours * 3_600_000).toISOString(),
-    body,
+    // an IR round kept on the device carries the time it was recorded: the server treats it as an
+    // offline sync (Q-IR-14); the immediate send below goes without it
+    body: kind === "q_ir_round" ? { ...(body as S["QIrDecide"] & { ir_id: string }), recorded_at: new Date(now).toISOString() } : body,
   };
   const stored = available();
   if (stored) {
@@ -289,7 +300,7 @@ export async function submitWithOutbox<T extends { id: string }>(kind: OutboxKin
   }
   if (typeof navigator !== "undefined" && !navigator.onLine && stored) return { status: "queued" };
   try {
-    const record = (await post(item)) as T;
+    const record = (await post({ ...item, body })) as T;
     if (stored) await discardOutbox(item.id).catch(() => undefined);
     return { status: "sent", record };
   } catch (e) {

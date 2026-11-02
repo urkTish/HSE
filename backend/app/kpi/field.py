@@ -326,6 +326,7 @@ def audit_stats(e: Engine, w: Window) -> AuditStats:
     for au in ff.db.scalars(
         select(FieldAudit).where(
             FieldAudit.project_id.in_(ff.pids),
+            FieldAudit.domain == "hse",  # 8-quality Q-AUD-05: quality audits not in K-114 / K-115
             FieldAudit.status.in_((AuditStatus.issued, AuditStatus.closed)),
             FieldAudit.issued_at.is_not(None),
         )

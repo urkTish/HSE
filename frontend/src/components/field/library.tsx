@@ -25,7 +25,8 @@ import { StackedDate } from "@/components/medical/common";
 import { Link, useRouter } from "@/i18n/navigation";
 import { api, unwrap, type Schemas } from "@/lib/api/client";
 import { useFieldRefresh, useTemplate, useTemplates, useTopic, useTopics } from "@/lib/api/field";
-import { CONTROL_LEVELS, ITEM_TYPES, LINKED_REF_KINDS, OPTION_MAPPINGS, SCORED_TYPES, TEMPLATE_KINDS, VERSION_STATUSES, WORKER_LANGUAGES, ZONE_TYPES } from "@/lib/field-enums";
+import { CONTROL_LEVELS, ITEM_TYPES, LINKED_REF_KINDS, OPTION_MAPPINGS, QUALITY_CHECKLIST_TYPES, QUALITY_TEMPLATE_KIND, SCORED_TYPES, TEMPLATE_KINDS, VERSION_STATUSES, WORKER_LANGUAGES, ZONE_TYPES } from "@/lib/field-enums";
+import { useQLabels } from "@/components/quality/q0/common";
 import { useRefLists } from "@/lib/reference";
 import { useSearchState } from "@/lib/url-state";
 import { CriticalMark, FieldLibrarySubNav, FieldReasonDialog, VersionStatusBadge, useBi, useFieldCaps, useFieldRef } from "./common";
@@ -46,11 +47,16 @@ export function TemplatesPage() {
   const { label } = useFieldRef();
   const ref = useRefLists();
   const s = useSearchState();
-  const kind = (s.get("kind") ?? "") as S["TemplateKind"] | "";
+  const { l } = useQLabels();
+  // Quality users without 6d 191 see (and may only list) kind `quality`
+  const kinds: S["TemplateKind"][] = [...(caps.libraryView ? TEMPLATE_KINDS : []), ...(caps.qualityView ? [QUALITY_TEMPLATE_KIND] : [])];
+  const asked = (s.get("kind") ?? "") as S["TemplateKind"] | "";
+  const kind: S["TemplateKind"] | "" = caps.libraryView ? asked : QUALITY_TEMPLATE_KIND;
   const status = (s.get("status") ?? "") as S["VersionStatus"] | "";
-  const q = useTemplates({ kind: kind || null, status: status ? [status] : null }, { enabled: caps.libraryView });
+  const allowed = caps.libraryView || caps.qualityView;
+  const q = useTemplates({ kind: kind || null, status: status ? [status] : null }, { enabled: allowed });
   const [creating, setCreating] = useState(false);
-  if (!caps.libraryView) return <Alert tone="info">{tc("notAllowed")}</Alert>;
+  if (!allowed) return <Alert tone="info">{tc("notAllowed")}</Alert>;
   const items = q.data?.items ?? [];
   return (
     <div>
@@ -58,7 +64,7 @@ export function TemplatesPage() {
         title={t("title")}
         description={t("subtitle")}
         actions={
-          caps.author ? (
+          caps.author || caps.qualityAuthor ? (
             <Button onClick={() => setCreating(true)} data-testid="tpl-new">
               <Plus aria-hidden />
               {t("new")}
@@ -66,9 +72,9 @@ export function TemplatesPage() {
           ) : null
         }
       />
-      <FieldLibrarySubNav />
+      {caps.libraryView ? <FieldLibrarySubNav /> : null}
       <ListToolbar>
-        <SelectFilter id="tpl-kind" label={t("kind")} value={kind} onChange={(v) => s.set({ kind: v })} options={TEMPLATE_KINDS.map((x) => ({ value: x, label: te(`fdTemplateKind.${x}`) }))} />
+        <SelectFilter id="tpl-kind" label={t("kind")} value={kind} onChange={(v) => s.set({ kind: v })} options={kinds.map((x) => ({ value: x, label: te(`fdTemplateKind.${x}`) }))} />
         <SelectFilter id="tpl-status" label={tc("status")} value={status} onChange={(v) => s.set({ status: v })} options={VERSION_STATUSES.map((x) => ({ value: x, label: te(`fdVersionStatus.${x}`) }))} />
       </ListToolbar>
       {q.isLoading ? (
@@ -98,7 +104,7 @@ export function TemplatesPage() {
                 </TD>
                 <TD label={t("titleCol")}>{bi(x.title_en, x.title_ar)}</TD>
                 <TD label={t("type")}>
-                  {te(`fdTemplateKind.${x.kind}`)} · {x.kind === "inspection" ? ref.label("inspection_type", x.inspection_type) : label("audit_types", x.audit_type)}
+                  {te(`fdTemplateKind.${x.kind}`)} · {x.kind === "inspection" ? ref.label("inspection_type", x.inspection_type) : x.kind === "quality" ? l("checklist_type", x.quality_type) : label("audit_types", x.audit_type)}
                   {x.zone_types.length ? <span className="block text-xs text-muted-foreground">{x.zone_types.map((z) => te(`fdZoneType.${z}`)).join(" · ")}</span> : null}
                 </TD>
                 <TD label={t("items")} className="text-end tabular-nums">
@@ -121,25 +127,29 @@ export function TemplatesPage() {
       ) : (
         <EmptyState message={t("empty")} />
       )}
-      {creating ? <NewTemplateDialog onClose={() => setCreating(false)} /> : null}
+      {creating ? <NewTemplateDialog kinds={[...(caps.author ? TEMPLATE_KINDS : []), ...(caps.qualityAuthor ? [QUALITY_TEMPLATE_KIND] : [])]} initial={kind || undefined} onClose={() => setCreating(false)} /> : null}
     </div>
   );
 }
 
-function NewTemplateDialog({ onClose }: { onClose: () => void }) {
+function NewTemplateDialog({ kinds, initial, onClose }: { kinds: S["TemplateKind"][]; initial?: S["TemplateKind"]; onClose: () => void }) {
   const t = useTranslations("field.lib");
   const te = useTranslations("enums");
   const ref = useRefLists();
   const { items, label } = useFieldRef();
+  const { l, options } = useQLabels();
   const router = useRouter();
   const refresh = useFieldRefresh();
   const [code, setCode] = useState("");
-  const [kind, setKind] = useState<S["TemplateKind"]>("inspection");
+  const [kind, setKind] = useState<S["TemplateKind"]>(initial && kinds.includes(initial) ? initial : (kinds[0] ?? "inspection"));
   const [type, setType] = useState("");
+  const [profiles, setProfiles] = useState<S["QProfileScope"]>("both");
   const [en, setEn] = useState("");
   const [ar, setAr] = useState("");
   const [pass, setPass] = useState("85.0");
-  const valid = /^[A-Z]{2,8}$/.test(code) && type && en.trim();
+  const quality = kind === QUALITY_TEMPLATE_KIND;
+  // HSE codes are letters only; quality codes start with Q and may hold digits and dashes (QSTC-FW)
+  const valid = (quality ? /^Q[A-Z0-9-]{1,7}$/ : /^[A-Z]{2,8}$/).test(code) && type && en.trim();
   return (
     <StepDialog
       title={t("new")}
@@ -155,6 +165,8 @@ function NewTemplateDialog({ onClose }: { onClose: () => void }) {
               kind,
               inspection_type: kind === "inspection" ? (type as S["InspectionType"]) : null,
               audit_type: kind === "audit" ? (type as S["AuditType"]) : null,
+              quality_type: quality ? (type as S["QChecklistType"]) : null,
+              sector_profiles: quality ? profiles : null,
               title_en: en.trim(),
               title_ar: ar.trim(),
               pass_mark_pct: pass,
@@ -170,13 +182,13 @@ function NewTemplateDialog({ onClose }: { onClose: () => void }) {
       }}
       onClose={onClose}
     >
-      <FormField id="nt-code" label={t("code")} required hint={t("codeHint")}>
+      <FormField id="nt-code" label={t("code")} required hint={quality ? t("codeHintQuality") : t("codeHint")}>
         <Input className="ltr" maxLength={8} value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} data-testid="nt-code" />
       </FormField>
       <div className="grid gap-3 sm:grid-cols-2">
         <FormField id="nt-kind" label={t("kind")} required>
-          <Select value={kind} onChange={(e) => (setKind(e.target.value as S["TemplateKind"]), setType(""))}>
-            {TEMPLATE_KINDS.map((k) => (
+          <Select value={kind} onChange={(e) => (setKind(e.target.value as S["TemplateKind"]), setType(""))} data-testid="nt-kind">
+            {kinds.map((k) => (
               <option key={k} value={k}>
                 {te(`fdTemplateKind.${k}`)}
               </option>
@@ -186,7 +198,13 @@ function NewTemplateDialog({ onClose }: { onClose: () => void }) {
         <FormField id="nt-type" label={t("type")} required>
           <Select value={type} onChange={(e) => setType(e.target.value)} data-testid="nt-type">
             <option value="">—</option>
-            {kind === "inspection"
+            {quality
+              ? QUALITY_CHECKLIST_TYPES.map((c) => (
+                  <option key={c} value={c}>
+                    {l("checklist_type", c)}
+                  </option>
+                ))
+              : kind === "inspection"
               ? ref.options("inspection_type").map((o) => (
                   <option key={o.value} value={o.value}>
                     {o.label}
@@ -200,6 +218,17 @@ function NewTemplateDialog({ onClose }: { onClose: () => void }) {
           </Select>
         </FormField>
       </div>
+      {quality ? (
+        <FormField id="nt-profiles" label={t("sectorProfiles")} required>
+          <Select value={profiles} onChange={(e) => setProfiles(e.target.value as S["QProfileScope"])} data-testid="nt-profiles">
+            {options("profile").map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </Select>
+        </FormField>
+      ) : null}
       <FormField id="nt-en" label={t("titleEn")} required>
         <Input maxLength={150} value={en} onChange={(e) => setEn(e.target.value)} data-testid="nt-en" />
       </FormField>
@@ -224,13 +253,17 @@ export function TemplatePage({ id }: { id: string }) {
   const router = useRouter();
   const refresh = useFieldRefresh();
   const q = useTemplate(id);
-  const versions = useTemplates({ template_code: q.data?.template_code ?? "" }, { enabled: Boolean(q.data) });
+  const { l } = useQLabels();
+  const versions = useTemplates({ template_code: q.data?.template_code ?? "", kind: q.data?.kind ?? null }, { enabled: Boolean(q.data) });
   const [dialog, setDialog] = useState<"header" | "section" | "publish" | "retire" | "delete" | { item: Item | null } | null>(null);
   if (q.isError) return <ErrorState error={q.error} onRetry={() => q.refetch()} />;
   if (!q.data) return <LoadingState />;
   const x = q.data;
   const draft = x.status === "draft";
-  const editable = draft && caps.author;
+  // kind quality: author 240, publish 239 (8-quality Q-CHK-01)
+  const author = x.kind === "quality" ? caps.qualityAuthor : caps.author;
+  const publish = x.kind === "quality" ? caps.qualityPublish : caps.publish;
+  const editable = draft && author;
   const hasDraft = (versions.data?.items ?? []).some((v) => v.status === "draft");
   async function patch(body: S["TemplateUpdate"]) {
     await unwrap(api.PATCH("/api/v1/checklist-templates/{template_id}", { params: { path: { template_id: x.id } }, body }));
@@ -244,7 +277,7 @@ export function TemplatePage({ id }: { id: string }) {
         <CardHeader className="flex-row flex-wrap items-start justify-between gap-2">
           <div>
             <p className="text-sm text-muted-foreground">
-              <Code>{x.template_code}</Code> <span className="ltr">v{x.version}</span> · {te(`fdTemplateKind.${x.kind}`)} · {x.kind === "inspection" ? ref.label("inspection_type", x.inspection_type) : label("audit_types", x.audit_type)}
+              <Code>{x.template_code}</Code> <span className="ltr">v{x.version}</span> · {te(`fdTemplateKind.${x.kind}`)} · {x.kind === "inspection" ? ref.label("inspection_type", x.inspection_type) : x.kind === "quality" ? `${l("checklist_type", x.quality_type)} · ${l("profile", x.sector_profiles)}` : label("audit_types", x.audit_type)}
             </p>
             <CardTitle className="flex flex-wrap items-center gap-2">
               <span data-testid="tpl-title">{bi(x.title_en, x.title_ar)}</span>
@@ -258,13 +291,13 @@ export function TemplatePage({ id }: { id: string }) {
                 {t("editHeader")}
               </Button>
             ) : null}
-            {draft && caps.publish ? (
+            {draft && publish ? (
               <Button size="sm" onClick={() => setDialog("publish")} data-testid="tpl-publish">
                 <Send aria-hidden />
                 {t("publish")}
               </Button>
             ) : null}
-            {x.status === "published" && caps.author && !hasDraft ? (
+            {x.status === "published" && author && !hasDraft ? (
               <Button
                 size="sm"
                 variant="outline"
@@ -279,7 +312,7 @@ export function TemplatePage({ id }: { id: string }) {
                 {t("newVersion")}
               </Button>
             ) : null}
-            {x.status === "published" && caps.publish ? (
+            {x.status === "published" && publish ? (
               <Button size="sm" variant="outline" onClick={() => setDialog("retire")} data-testid="tpl-retire">
                 <Archive aria-hidden />
                 {t("retire")}
@@ -332,7 +365,7 @@ export function TemplatePage({ id }: { id: string }) {
               </FieldItem>
             ) : null}
           </FieldList>
-          {!draft && caps.author ? <p className="mt-3 text-xs text-muted-foreground">{t("immutable")}</p> : null}
+          {!draft && author ? <p className="mt-3 text-xs text-muted-foreground">{t("immutable")}</p> : null}
         </CardContent>
       </Card>
       <div className="mt-6 flex flex-col gap-4">
@@ -534,7 +567,8 @@ function ItemDialog({ x, item, onSave, onClose }: { x: Template; item: Item | nu
   const set = (p: Partial<Item>) => setV({ ...v, ...p });
   const scored = SCORED_TYPES.includes(v.item_type);
   const opts = v.options ?? [];
-  const valid = /^[A-Z]{2,8}-\d{2,3}$/.test(v.item_code ?? "") && (v.text_en ?? "").trim() && (isNew ? !x.items.some((i) => i.item_code === v.item_code) : true);
+  const codeRule = x.kind === "quality" ? /^[A-Z][A-Z0-9-]{1,8}-\d{2,3}$/ : /^[A-Z]{2,8}-\d{2,3}$/;
+  const valid = codeRule.test(v.item_code ?? "") && (v.text_en ?? "").trim() && (isNew ? !x.items.some((i) => i.item_code === v.item_code) : true);
   return (
     <StepDialog
       wide
@@ -607,7 +641,7 @@ function ItemDialog({ x, item, onSave, onClose }: { x: Template; item: Item | nu
           <FormField id="ti-stop" label={t("stopRule")}>
             <Select value={v.stop_rule ?? "none"} onChange={(e) => set({ stop_rule: e.target.value as S["StopRule"] })} data-testid="ti-stop">
               <option value="none">{te("fdStopRule.none")}</option>
-              <option value="stop_work">{te("fdStopRule.stop_work")}</option>
+              {x.kind === "quality" ? null : <option value="stop_work">{te("fdStopRule.stop_work")}</option>}
             </Select>
           </FormField>
         </div>

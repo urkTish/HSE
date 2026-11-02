@@ -80,6 +80,8 @@ def alert_owner(
     from app.services.quality import alerts  # noqa: PLC0415
 
     a: QAlert = alerts.get_alert(db, p, owner_id)
+    if _viewer(p, a.project_id):
+        raise forbidden_error("Files are not shown to the Viewer / Client (P8-3).")
     if write:
         p.require(a.project_id, C.ncr_manage)
     return a.project_id, a.status.value == "draft"
@@ -91,6 +93,8 @@ def complaint_owner(
     from app.services.quality import complaints  # noqa: PLC0415
 
     c: QComplaint = complaints.get_complaint(db, p, owner_id)
+    if _viewer(p, c.project_id):
+        raise forbidden_error("Files are not shown to the Viewer / Client (P8-3).")
     if write:
         p.require(c.project_id, C.complaint_manage)
     return c.project_id, c.status.value not in ("closed", "withdrawn")

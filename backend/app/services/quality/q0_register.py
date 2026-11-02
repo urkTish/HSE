@@ -10,6 +10,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.errors import ApiError
 from app.core.quality.common import (
     QAlertStatus,
     QComplaintStatus,
@@ -257,6 +258,26 @@ def _datasets() -> None:
     reg.DATASETS.update({d.code: d for d in rows})
 
 
+def _sees_observation(db: Session, p: Principal, rid: uuid.UUID) -> bool:
+    from app.services.quality import observations  # noqa: PLC0415
+
+    try:
+        observations.get_obs(db, p, rid)
+    except ApiError:
+        return False
+    return True
+
+
+def _sees_complaint(db: Session, p: Principal, rid: uuid.UUID) -> bool:
+    from app.services.quality import complaints  # noqa: PLC0415
+
+    try:
+        complaints.get_complaint(db, p, rid)
+    except ApiError:
+        return False
+    return True
+
+
 def register() -> None:
     from app.services.quality.ncr import sources  # noqa: PLC0415
 
@@ -328,8 +349,12 @@ def register() -> None:
             engagement=lambda _db, r: r.owner_engagement_id,
         ),
     )
-    reg.register_ncr_source(QNcrSourceType.observation, reg.NcrSource(sources.observation))
-    reg.register_ncr_source(QNcrSourceType.complaint, reg.NcrSource(sources.complaint))
+    reg.register_ncr_source(
+        QNcrSourceType.observation, reg.NcrSource(sources.observation, visible=_sees_observation)
+    )
+    reg.register_ncr_source(
+        QNcrSourceType.complaint, reg.NcrSource(sources.complaint, visible=_sees_complaint)
+    )
     reg.OPEN_STEPS["Q0"] = open_steps
     reg.PENDING_STEPS["Q0"] = pending
     files.register()

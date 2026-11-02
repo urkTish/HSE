@@ -837,15 +837,29 @@ _QUALITY_BASE: dict[Capability, CapabilityScope] = {
     C.settings_view: S.project,
     C.history_view: S.project,
     C.profile_edit_own: S.all,
+    # Every role reads the lessons library (6f) and its own exports log (6g).
+    C.lesson_library_view: S.project,
+    C.export_log: S.project,
 }
 for _role in QUALITY_ROLES:
     MATRIX[_role] = (
-        {C.project_view: S.project, C.site_zone_view: S.project, C.profile_edit_own: S.all}
+        {
+            C.project_view: S.project,
+            C.site_zone_view: S.project,
+            C.profile_edit_own: S.all,
+            C.lesson_library_view: S.project,
+            C.export_log: S.project,
+        }
         if _role == Role.responsible_person
         else dict(_QUALITY_BASE)
     )
 for _role, _caps in PHASE8_MATRIX.items():
     MATRIX[_role].update(_caps)
+# D-368: the AI assistant (40) for the QA/QC Manager and the Quality Engineer, so T26–T29
+# reach quality staff; not for the QC inspector, warehouse QC or the responsible person. The
+# licence's monthly AI question count (D-292) is unchanged.
+for _role in (Role.qa_qc_manager, Role.quality_engineer):
+    MATRIX[_role][C.ai_ask] = S.project
 PHASE8_CAPABILITIES: frozenset[Capability] = frozenset(
     c for caps in PHASE8_MATRIX.values() for c in caps
 )

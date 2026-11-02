@@ -155,6 +155,8 @@ class Ctx:
     engagement_id: uuid.UUID | None = None
     requesters: frozenset[uuid.UUID] = frozenset()
     on: date | None = None
+    # the record's qualifier (e.g. the NCR class); an explicit `qualifier=` argument wins
+    qualifier: str | None = None
 
 
 @dataclass
@@ -166,10 +168,10 @@ class Resolution:
 def _covers(g: Grant | None, ctx: Ctx) -> bool:
     if g is None:
         return False
+    if ctx.site_id is not None and not g.covers_site(ctx.site_id):
+        return False  # a site-limited assignment limits N too
     if g.scope == S.responsible:
         return True
-    if ctx.site_id is not None and not g.covers_site(ctx.site_id):
-        return False
     return g.engagement_ids is None or (
         ctx.engagement_id is not None and ctx.engagement_id in g.engagement_ids
     )
@@ -251,7 +253,12 @@ def resolve(
 ) -> Resolution:
     sd = step_def(record_type, step)
     rule = effective_rule(
-        db, project.id, record_type, step, qualifier=qualifier, record_id=record_id
+        db,
+        project.id,
+        record_type,
+        step,
+        qualifier=qualifier if qualifier is not None else ctx.qualifier,
+        record_id=record_id,
     )
     if sd is None or rule is None:
         return Resolution(rule)
@@ -758,6 +765,19 @@ def update_rule(
     return rule_read(r)
 
 
+def _record_on_project(
+    db: Session, project: Project, record_type: QRecordType, record_id: uuid.UUID
+) -> bool:
+    """The record exists and belongs to the project (suppliers are org-wide: they only exist)."""
+    if record_type == QRecordType.supplier:
+        from app.models.quality import QSupplier  # noqa: PLC0415
+
+        return db.get(QSupplier, record_id) is not None
+    adapter = reg.RECORD_TYPES.get(record_type)
+    rec = adapter.get(db, record_id) if adapter else None
+    return rec is not None and adapter is not None and adapter.project_id(rec) == project.id
+
+
 def reassign(
     db: Session,
     p: Principal,
@@ -776,6 +796,10 @@ def reassign(
         raise forbidden_error("Re-assigning a step needs capability 239 or the HSE Manager.")
     if step_def(record_type, step) is None:
         raise qc.field_err("step", "This record type has no such step.", "خطوة غير معروفة.")
+    if not _record_on_project(db, project, record_type, record_id):
+        raise qc.field_err(
+            "record_id", "No such record on this project.", "لا يوجد هذا السجل في هذا المشروع."
+        )
     text = qc.reason(why, 20)
     for old in db.scalars(
         select(QRpRule).where(

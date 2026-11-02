@@ -382,21 +382,25 @@ def transition(
             )
         project = qc.get_project(db, p, project_id)
         qc.writable(project, p)
-        if src == SS.pending_approval and to in (SS.approved, SS.conditional):
-            blockers = [b for gate in reg.SUPPLIER_GATES for b in gate(db, s, to.value)]
-            if blockers:
-                raise qc.err(
-                    422,
-                    ErrorCode.TRANSITION_CONDITION_NOT_MET,
-                    blockers[0].detail_en,
-                    blockers[0].detail_ar,
-                    blockers=[b.__dict__ for b in blockers],
-                )
         requesters = {u for u in (s.created_by_user_id, s.updated_by_user_id) if u}
         ctx = rpm.Ctx(requesters=frozenset(requesters if step == "approve" else ()))
         rule, capacity = rpm.check_signer(
             db, p, project, QRecordType.supplier, step, ctx, record_id=s.id
         )
+        # Q4 gate after the signer checks: the signer first learns whether they may sign
+        if src == SS.pending_approval and to in (SS.approved, SS.conditional):
+            blockers = [b for gate in reg.SUPPLIER_GATES for b in gate(db, s, to.value)]
+            if blockers:
+                raise qc.err(
+                    422,
+                    # the gate's own code when it names one (Q4: SUPPLIER_EVALUATION_REQUIRED)
+                    ErrorCode(blockers[0].code)
+                    if blockers[0].code in ErrorCode._value2member_map_
+                    else ErrorCode.TRANSITION_CONDITION_NOT_MET,
+                    blockers[0].detail_en,
+                    blockers[0].detail_ar,
+                    blockers=[b.__dict__ for b in blockers],
+                )
         signoff.sign(
             db, p, project, QRecordType.supplier, s.id, step, DECISION[to], text, rule, capacity
         )

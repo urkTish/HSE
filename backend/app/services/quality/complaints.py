@@ -71,6 +71,10 @@ def read(db: Session, p: Principal, c: QComplaint) -> dict[str, Any]:
     ack_due, resp_due = deadlines(db, c)
     at = now()
     from app.services.quality.ncr import capa  # noqa: PLC0415
+    from app.services.quality.ncr.core import read_only_viewer  # noqa: PLC0415
+
+    # P8-2 / P8-4: the Viewer / Client reads the complaint, never who signed or acted on it
+    hide = read_only_viewer(p, c.project_id)
 
     return {
         "id": c.id,
@@ -110,8 +114,10 @@ def read(db: Session, p: Principal, c: QComplaint) -> dict[str, Any]:
         "closed_at": c.closed_at,
         "status": c.status,
         "status_reason": c.status_reason,
-        "actions": capa.summary(db, CaSourceType.quality_complaint, c.id),
-        "signoffs": [signoff.read(db, s) for s in signoff.signoffs_for(db, RT, c.id)],
+        "actions": [] if hide else capa.summary(db, CaSourceType.quality_complaint, c.id),
+        "signoffs": []
+        if hide
+        else [signoff.read(db, s) for s in signoff.signoffs_for(db, RT, c.id)],
         "links": links.links_for(db, p, RT, c.id),
     }
 

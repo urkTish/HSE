@@ -7,6 +7,9 @@ export const FIELD_KPIS = ["K-110", "K-111", "K-112", "K-113", "K-114", "K-115",
 export const FIELD_KPI_GROUP_BY = ["inspection_type", "template", "item_code", "contractor", "zone", "month", "language"] as const satisfies readonly S["FieldKpiGroupBy"][];
 export const VERSION_STATUSES = ["draft", "published", "superseded", "retired"] as const satisfies readonly S["VersionStatus"][];
 export const TEMPLATE_KINDS = ["inspection", "audit"] as const satisfies readonly S["TemplateKind"][];
+/** Kind `quality` (8-quality Q-CHK-01) is offered only to Quality authors / viewers. */
+export const QUALITY_TEMPLATE_KIND = "quality" as const satisfies S["TemplateKind"];
+export const QUALITY_CHECKLIST_TYPES = ["ir_inspection", "punch_walkdown", "mir_inspection", "receiving", "reefer_preload", "hygiene", "pest_visit", "return_inspection", "q_audit", "supplier_audit"] as const satisfies readonly S["QChecklistType"][];
 export const ZONE_TYPES = ["airside", "landside", "other"] as const satisfies readonly S["ZoneType"][];
 export const ITEM_TYPES = ["yes_no", "rating_0_3", "numeric", "single_select", "text", "photo", "count"] as const satisfies readonly S["ItemType"][];
 export const SCORED_TYPES: readonly S["ItemType"][] = ["yes_no", "rating_0_3", "numeric", "single_select"];

@@ -218,6 +218,14 @@ class RpType(StrEnum):
     CPS = "CPS"
     OSHA300 = "OSHA300"
     HEAT = "HEAT"
+    # 8-quality §E.8 (Q4): Quality report packs (prepare and issue need 280)
+    QMR = "QMR"
+    QNCR = "QNCR"
+    QSUP = "QSUP"
+    QMRV = "QMRV"
+
+
+QUALITY_RP_TYPES: frozenset[RpType] = frozenset({RpType.QMR, RpType.QNCR, RpType.QSUP, RpType.QMRV})
 
 
 class RpStatus(StrEnum):

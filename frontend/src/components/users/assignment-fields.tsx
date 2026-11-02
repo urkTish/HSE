@@ -9,7 +9,7 @@ import { useMeData } from "@/components/shell/me-context";
 import type { Schemas } from "@/lib/api/client";
 import { useEngagements, useSites } from "@/lib/api/queries";
 import { useCurrentProject } from "@/lib/current-project";
-import { CONTRACTOR_SCOPED_ROLES, OFFICER_ASSIGNABLE_ROLES, ROLES } from "@/lib/enums";
+import { CONTRACTOR_SCOPED_ROLES, OFFICER_ASSIGNABLE_ROLES, QUALITY_ROLES, ROLES } from "@/lib/enums";
 import { emptyToNull } from "@/lib/forms";
 import { useLocalizedName } from "@/lib/i18n-helpers";
 import { can } from "@/lib/permissions";
@@ -62,7 +62,7 @@ export function toAssignmentCreate(v: AssignmentValue): Schemas["RoleAssignmentC
     role: v.role as Schemas["Role"],
     project_id: org ? null : emptyToNull(v.project_id),
     site_ids: org ? [] : v.site_ids,
-    contractor_engagement_id: v.role && CONTRACTOR_SCOPED_ROLES.includes(v.role) ? emptyToNull(v.contractor_engagement_id) : null,
+    contractor_engagement_id: v.role && (CONTRACTOR_SCOPED_ROLES.includes(v.role) || QUALITY_ROLES.includes(v.role)) ? emptyToNull(v.contractor_engagement_id) : null,
     valid_from: emptyToNull(v.valid_from),
     valid_to: emptyToNull(v.valid_to),
   };
@@ -88,10 +88,15 @@ export function AssignmentFields({
   const me = useMeData();
   const name = useLocalizedName();
   const { projects } = useCurrentProject();
-  const roleOptions = me.is_hse_manager ? [...ROLES] : [...OFFICER_ASSIGNABLE_ROLES];
-  const projectOptions = projects.filter((p) => me.is_hse_manager || can(me, "user.invite", p.id));
+  // 8-quality Q-ROL-01: the QA/QC Manager (239) assigns the quality roles; an HSE Officer does not
+  const qualityAssigner = !me.is_hse_manager && can(me, "quality.settings", value.project_id || null);
+  const roleOptions = me.is_hse_manager
+    ? [...ROLES]
+    : [...(can(me, "user.invite", value.project_id || null) ? OFFICER_ASSIGNABLE_ROLES : []), ...(qualityAssigner ? QUALITY_ROLES : [])];
+  const projectOptions = projects.filter((p) => me.is_hse_manager || can(me, "user.invite", p.id) || can(me, "quality.settings", p.id));
   const needsProject = value.role !== "hse_manager";
-  const needsEngagement = value.role !== "" && CONTRACTOR_SCOPED_ROLES.includes(value.role);
+  const contractorRole = value.role !== "" && CONTRACTOR_SCOPED_ROLES.includes(value.role);
+  const needsEngagement = contractorRole || (value.role !== "" && QUALITY_ROLES.includes(value.role));
   const sites = useSites(needsProject ? value.project_id : "", { page_size: 100, sort: "code" });
   const engagements = useEngagements(needsProject ? value.project_id : "", { page_size: 200 }, needsEngagement);
   const set = (patch: Partial<AssignmentValue>) => onChange({ ...value, ...patch });
@@ -127,8 +132,8 @@ export function AssignmentFields({
           id={`${idPrefix}-engagement`}
           label={t("fields.contractor_engagement")}
           error={errors?.contractor_engagement_id?.message}
-          hint={t("engagementRequired")}
-          required
+          hint={contractorRole ? t("engagementRequired") : undefined}
+          required={contractorRole}
           className="sm:col-span-2"
         >
           <Select value={value.contractor_engagement_id} onChange={(e) => set({ contractor_engagement_id: e.target.value })} data-testid="assignment-engagement">

@@ -101,6 +101,7 @@ def main() -> None:
     sched.add_job(_job, "cron", day_of_week="sun", hour=7, minute=12, second=30,
                   args=["quality_weekly"])  # fmt: skip
     sched.add_job(_job, "cron", day=2, hour=7, minute=24, args=["quality_monthly"])
+    sched.add_job(_job, "cron", minute=17, args=["quality_hourly"])  # D-370: hold deadlines
     sched.start()
 
 

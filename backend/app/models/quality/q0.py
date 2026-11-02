@@ -260,6 +260,9 @@ class QCustomer(Audited, Base):
     contact_mobile: Mapped[str | None] = mapped_column(String(20))
     contact_email: Mapped[str | None] = mapped_column(String(254))
     owner_release_approval: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Q-RCV-01 / D-370: the depositor's own minimum remaining shelf life at receipt (10–100 %);
+    # the product's value wins, else this, else the project setting.
+    min_remaining_shelf_life_pct: Mapped[Decimal | None] = mapped_column(Numeric(6, 2))
     status: Mapped[QCustomerStatus] = enum_col(QCustomerStatus, default=QCustomerStatus.active)
 
 
@@ -325,6 +328,12 @@ class QMteUsage(Base):
     verdict: Mapped[QMteUseVerdict] = enum_col(QMteUseVerdict)
     cal_status_at_use: Mapped[QCalStatus] = enum_col(QCalStatus)
     value_note: Mapped[str | None] = mapped_column(String(200))
+    # D-342 / D-370: the measured value and the criterion limits in structured form (read by the
+    # out-of-tolerance review, Q-CAL-04); `value_note` stays the free text and the fallback.
+    value: Mapped[Decimal | None] = mapped_column(Numeric(18, 6))
+    limit_low: Mapped[Decimal | None] = mapped_column(Numeric(18, 6))
+    limit_high: Mapped[Decimal | None] = mapped_column(Numeric(18, 6))
+    unit: Mapped[str | None] = mapped_column(String(16))
     recorded_by_user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))
     seed_fake: Mapped[bool] = mapped_column(Boolean, default=False)
 

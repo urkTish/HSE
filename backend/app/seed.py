@@ -45,6 +45,7 @@ from app.models import (
 from app.models.org import AIRSIDE_FIELDS
 from app.seed_access import seed_access_data
 from app.seed_hse import seed_data, seed_settings
+from app.seed_quality import Q_CONTRACTORS, Q_EXTRA_ROLES, Q_PROJECTS, Q_SITES, Q_USERS, Q_ZONES
 
 VALID_FROM = date(2025, 1, 1)
 
@@ -421,6 +422,17 @@ USERS: list[dict[str, Any]] = [
 ]
 
 
+# Phase 8 Quality base layer (8-quality Appendix A.1): the logistics project RUH-CCH, its site,
+# zones and 3PL contractor, the quality users, and Sarah's Viewer role on RUH-CCH.
+PROJECTS += Q_PROJECTS
+SITES += Q_SITES
+ZONES += Q_ZONES
+CONTRACTORS += Q_CONTRACTORS
+USERS += Q_USERS
+for _spec in USERS:
+    _spec["roles"] = [*_spec["roles"], *Q_EXTRA_ROLES.get(_spec["email"], [])]
+
+
 def _vat(i: int) -> str:
     return f"3{i:013d}3"
 
@@ -663,6 +675,10 @@ def main() -> int:
         from app.seed_site_vehicle import seed_site_vehicle_data  # noqa: PLC0415
 
         seed_site_vehicle_data(db)  # Option 7b Appendix A (additive, prototype)
+        db.commit()
+        from app.seed_quality import seed_quality_data  # noqa: PLC0415
+
+        seed_quality_data(db)  # Phase 8 Quality Appendix A (both sector profiles, every part)
         db.commit()
     print("Seed data loaded.")
     return 0

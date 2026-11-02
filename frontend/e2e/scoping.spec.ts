@@ -35,7 +35,8 @@ test.describe("Role scoping visible in the UI", () => {
     const ania = await projectId(api, "ANIA-EXP");
     await login(page, USERS.sarah);
     await page.goto("/en/projects");
-    await expect(page.getByTestId("project-row")).toHaveCount(2);
+    // ANIA-EXP, RBT-52 and the Quality logistics project RUH-CCH (8-quality Appendix A.2)
+    await expect(page.getByTestId("project-row")).toHaveCount(3);
     await expect(page.getByTestId("new-project")).toHaveCount(0);
     await page.goto(`/en/projects/${ania}`);
     await expect(page.getByTestId("read-only-badge")).toBeVisible();

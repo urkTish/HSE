@@ -32,6 +32,7 @@ def read(c: QCustomer, contacts: bool) -> dict[str, Any]:
         "name_ar": c.name_ar,
         "kind": c.kind,
         "owner_release_approval": c.owner_release_approval,
+        "min_remaining_shelf_life_pct": c.min_remaining_shelf_life_pct,
         "status": c.status,
         **{k: (getattr(c, k) if contacts else None) for k in CONTACT},
         "contacts_visible": contacts,
@@ -81,6 +82,7 @@ def create(
         name_ar=body["name_ar"],
         kind=QCustomerKind(body["kind"]),
         owner_release_approval=bool(body.get("owner_release_approval", False)),
+        min_remaining_shelf_life_pct=body.get("min_remaining_shelf_life_pct"),
         status=QCustomerStatus.active,
         created_by_user_id=p.user.id,
         **{k: body.get(k) for k in CONTACT},
@@ -109,7 +111,13 @@ def update(
     qc.writable(project, p)
     _editor(p, project.id)
     before = read(c, True)
-    for k in ("name_en", "name_ar", "owner_release_approval", *CONTACT):
+    for k in (
+        "name_en",
+        "name_ar",
+        "owner_release_approval",
+        "min_remaining_shelf_life_pct",
+        *CONTACT,
+    ):
         if k in body and body[k] is not None:
             setattr(c, k, body[k])
     if body.get("kind") is not None:

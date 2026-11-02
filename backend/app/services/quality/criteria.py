@@ -60,6 +60,20 @@ def _v(verdict: QVerdict, en: str, ar: str, **detail: Any) -> reg.Verdict:
     return reg.Verdict(verdict, en, ar, detail)
 
 
+def limits(c: QCriterion) -> tuple[Decimal | None, Decimal | None]:
+    """Acceptance limits of a numeric criterion (range, min, max, target ± tolerance); (None, None)
+    for pass / fail, text and coded rules. Stored with M&TE usages for the OOT review (D-370)."""
+    if c.kind == K.range:
+        return c.min_value, c.max_value
+    if c.kind == K.min:
+        return c.min_value, None
+    if c.kind == K.max:
+        return None, c.max_value
+    if c.kind == K.target_tolerance and c.target is not None:
+        return c.target - (c.tol_minus or Decimal(0)), c.target + (c.tol_plus or Decimal(0))
+    return None, None
+
+
 def evaluate(c: QCriterion, values: dict[str, Any]) -> reg.Verdict:
     """Q-CRT-01 verdict pass · fail · indicative · not_evaluable with the reason in EN / AR."""
     if c.kind in (K.pass_fail, K.text):

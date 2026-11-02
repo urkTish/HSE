@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import select
@@ -266,6 +267,15 @@ def _problem(m: QMteItem) -> bool:
     )
 
 
+def _dec(v: Any) -> Decimal | None:
+    if v is None or v == "":
+        return None
+    try:
+        return Decimal(str(v))
+    except (ArithmeticError, ValueError):
+        return None
+
+
 def record_usage(
     db: Session,
     project: Project,
@@ -275,10 +285,17 @@ def record_usage(
     user_id: uuid.UUID | None,
     used_at: datetime | None = None,
     value_note: str | None = None,
+    *,
+    value: Decimal | None = None,
+    limit_low: Decimal | None = None,
+    limit_high: Decimal | None = None,
+    unit: str | None = None,
 ) -> tuple[QMteUsage, list[ApiWarning]]:
     """Q-SHR-04: every part that records a measurement with an instrument calls this. Overdue or
     out-of-service (or a retired / lost item) warns `MTE_NOT_CALIBRATED` (policy `warn`) or
-    refuses (policy `block`, 422); `unknown` (Q2 not installed) always warns."""
+    refuses (policy `block`, 422); `unknown` (Q2 not installed) always warns. `value` and the
+    criterion limits are stored in structured form for the out-of-tolerance review (D-342 /
+    D-370); `value_note` stays the free text."""
     m = db.get(QMteItem, mte_id)
     if m is None or m.project_id != project.id:
         raise qc.field_err("mte_id", "The instrument is not registered on this project.")
@@ -312,6 +329,10 @@ def record_usage(
         verdict=verdict,
         cal_status_at_use=m.cal_status,
         value_note=value_note,
+        value=_dec(value),
+        limit_low=_dec(limit_low),
+        limit_high=_dec(limit_high),
+        unit=unit[:16] if unit else None,
         recorded_by_user_id=user_id,
     )
     db.add(u)
@@ -333,6 +354,10 @@ def usage_api(db: Session, p: Principal, mte_id: uuid.UUID, body: dict[str, Any]
         p.user.id,
         body.get("used_at"),
         body.get("value_note"),
+        value=body.get("value"),
+        limit_low=body.get("limit_low"),
+        limit_high=body.get("limit_high"),
+        unit=body.get("unit"),
     )
     return {**usage_read(u), "warnings": [w.model_dump() for w in warnings]}
 
@@ -347,6 +372,10 @@ def usage_read(u: QMteUsage) -> dict[str, Any]:
         "verdict": u.verdict,
         "cal_status_at_use": u.cal_status_at_use,
         "value_note": u.value_note,
+        "value": u.value,
+        "limit_low": u.limit_low,
+        "limit_high": u.limit_high,
+        "unit": u.unit,
     }
 
 
