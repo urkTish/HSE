@@ -1,0 +1,21 @@
+HSE Platform - portable Windows edition: third-party software in this folder
+===========================================================================
+
+runtime\pgsql   PostgreSQL 16 (Windows binaries built by EnterpriseDB)
+                PostgreSQL Licence (BSD-style): https://www.postgresql.org/about/licence/
+                The binaries include libraries under their own licences (OpenSSL, ICU,
+                zlib, libxml2 and others); see https://www.enterprisedb.com/
+
+runtime\python  CPython (python-build-standalone build), Python Software Foundation
+                Licence: runtime\python\LICENSE.txt (when present) and
+                https://docs.python.org/3/license.html
+                Python packages installed under runtime\python\Lib\site-packages each
+                carry their licence in their *.dist-info folder.
+
+runtime\node    Node.js, MIT licence and bundled-component licences: runtime\node\LICENSE
+
+app\web         Next.js, React and the other npm packages of the web application; each
+                package under app\web\node_modules carries its own licence file.
+
+Microsoft Visual C++ runtime DLLs in runtime\pgsql\bin (when present) are redistributed
+app-locally under the Visual Studio redistribution terms.

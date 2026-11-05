@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   agentRules: false,
+  // Portable Windows edition only (portable/build.ps1 sets NEXT_OUTPUT=standalone): a
+  // self-contained server.js that runs on a bundled node.exe. Unset for the Docker build.
+  ...(process.env.NEXT_OUTPUT === "standalone" ? { output: "standalone" as const } : {}),
   async rewrites() {
     return [{ source: "/api/v1/:path*", destination: `${backendUrl}/api/v1/:path*` }];
   },
