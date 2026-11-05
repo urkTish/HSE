@@ -46,7 +46,7 @@ function Get-Verified([string]$Url, [string]$Path, [string]$Sha256) {
     if ($got -ne $Sha256.ToLowerInvariant()) {
         throw "Checksum mismatch for $Url`n  expected $Sha256`n  got      $got"
     }
-    Write-Host "sha256 ok: $got  $(Split-Path $Path -Leaf)"
+    Write-Host ("sha256 ok: {0}  {1} ({2:N1} MB)" -f $got, (Split-Path $Path -Leaf), ((Get-Item $Path).Length / 1MB))
 }
 
 function Remove-IfExists([string[]]$Paths) {
