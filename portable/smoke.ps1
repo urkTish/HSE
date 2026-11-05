@@ -127,7 +127,7 @@ function Stop-Launcher($L) {
     if ($L.Process.ExitCode -ne 0) { Fail "the launcher exit code was $($L.Process.ExitCode)" }
     $left = @()
     for ($i = 0; $i -lt 30; $i++) {
-        $left = Get-BundleProcesses
+        $left = @(Get-BundleProcesses)
         if ($left.Count -eq 0) { break }
         Start-Sleep -Seconds 1
     }
@@ -180,4 +180,5 @@ Stop-Launcher $L2
 
 Write-Host "----- launcher output, first start"; Get-Content $L1.Out
 Write-Host "----- launcher output, second start"; Get-Content $L2.Out
+Write-Host "----- data\logs\launcher.log"; Get-Content (Join-Path $Logs "launcher.log")
 Say "SMOKE TEST PASSED"
