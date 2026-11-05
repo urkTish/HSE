@@ -827,12 +827,19 @@ func (l *launcher) run() error {
 	if err := l.prepareDataDir(); err != nil {
 		return err
 	}
+	if strings.Contains(strings.ToLower(l.data), "onedrive") {
+		l.say("Note: this folder is inside OneDrive. OneDrive syncing the database files while the")
+		l.say("platform runs can slow it down or damage them. A folder outside OneDrive (e.g. C:\\HSE)")
+		l.say("is safer; see READ ME FIRST.txt.")
+		fmt.Println()
+	}
 	lock, err := acquireLock(l.path("run", "launcher.lock"))
 	if err != nil {
 		return l.alreadyRunning()
 	}
 	defer lock.release()
 	_ = os.Remove(l.path("run", "stop"))
+	_ = os.Remove(l.path("run", "state.json")) // left by a launcher that was killed
 	rotateLogs(l.path("logs"))
 	if l.logFile, err = os.OpenFile(l.path("logs", "launcher.log"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644); err != nil {
 		return err

@@ -6,6 +6,9 @@
 #     RUH-CCH (Logistics) answer 200.
 #  4. HSE.exe --stop: the launcher exits, no bundled process is left, PostgreSQL shut down cleanly.
 #  5. Second start on the same data folder: no re-seed, the same checks pass, stop again.
+#  6. Hard kill of HSE.exe (what Windows does if cleanup on window close runs out of time): the
+#     API, jobs and web server die with it; the next start recovers (stray database stopped,
+#     crash recovery) and works.
 param(
     [Parameter(Mandatory = $true)][string]$Bundle,
     [int]$FirstStartMinutes = 45
@@ -57,7 +60,7 @@ function Wait-Running($L, [int]$Minutes) {
         if ($L.Process.HasExited) { Fail "HSE.exe exited early with code $($L.Process.ExitCode)" }
         if (Test-Path $stateFile) {
             try { $st = Get-Content -Raw $stateFile | ConvertFrom-Json } catch { $st = $null }
-            if ($st -and $st.status -eq "running") { return $st.url }
+            if ($st -and $st.status -eq "running" -and $st.pid -eq $L.Process.Id) { return $st.url }
         }
         Start-Sleep -Seconds 5
     }
@@ -178,7 +181,33 @@ Say "second start reused the data folder (no re-seed)"
 Test-Running $web2
 Stop-Launcher $L2
 
+# ---- hard kill, then a start that must recover
+$L3 = Start-Launcher "killed"
+Wait-Running $L3 15 | Out-Null
+Say "Stop-Process -Force on HSE.exe (no clean-up by the launcher)"
+Stop-Process -Id $L3.Process.Id -Force
+$L3.Process.WaitForExit(30000) | Out-Null
+$left = @()
+for ($i = 0; $i -lt 30; $i++) {
+    $left = @(Get-BundleProcesses | Where-Object { $_.ProcessName -ne "postgres" })
+    if ($left.Count -eq 0) { break }
+    Start-Sleep -Seconds 1
+}
+if ($left.Count -ne 0) {
+    $left | Format-Table Id, ProcessName, Path -AutoSize | Out-String | Write-Host
+    Fail "API / jobs / web server processes survived a hard kill of the launcher"
+}
+$pgLeft = @(Get-BundleProcesses).Count
+Say "after the hard kill: API, jobs and web server gone; $pgLeft postgres process(es) left"
+$t2 = Get-Date
+$L4 = Start-Launcher "after-kill"
+$web4 = Wait-Running $L4 15
+Say ("start after the hard kill ready in {0:N0} s" -f ((Get-Date) - $t2).TotalSeconds)
+Test-Running $web4
+Stop-Launcher $L4
+
 Write-Host "----- launcher output, first start"; Get-Content $L1.Out
 Write-Host "----- launcher output, second start"; Get-Content $L2.Out
+Write-Host "----- launcher output, start after the hard kill"; Get-Content $L4.Out
 Write-Host "----- data\logs\launcher.log"; Get-Content (Join-Path $Logs "launcher.log")
 Say "SMOKE TEST PASSED"

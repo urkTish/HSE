@@ -26,8 +26,13 @@ recommended.
    "Properties". If you see an "Unblock" box at the bottom, tick it and click OK.
    (This avoids extra Windows warnings.)
 2. Right-click the zip again, choose "Extract All...", pick your Desktop or Documents,
-   and click "Extract".
+   and click "Extract". The download is about 670 MB and the unzipped folder about 2 GB
+   (many small files), so extracting takes a few minutes.
 3. Do not start HSE.exe from inside the zip: always unzip first.
+4. If your Desktop and Documents are kept in OneDrive (common on company laptops: the
+   folder path contains "OneDrive", or files show cloud or green-tick icons), prefer a
+   folder outside OneDrive, for example type C:\HSE in the "Extract All" box. OneDrive
+   syncing the database while the platform runs can slow it down or damage it.
 
 
 3. Start
