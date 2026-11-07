@@ -282,7 +282,8 @@ write_env() {
     value=${TUNNEL_TOKEN:-$(get_env TUNNEL_TOKEN)}
     [ -n "$value" ] || value=$(ask TUNNEL_TOKEN "Paste the Cloudflare tunnel token (or the whole install command): ")
     # Accept the whole "cloudflared service install eyJ..." command: keep the token only.
-    value=$(printf '%s' "$value" | tr -d '[:space:]' | sed -e 's/^.*\(eyJ\)/\1/')
+    value=$(printf '%s' "$value" | tr -d '[:space:]')
+    case "$value" in *eyJ*) value="eyJ${value#*eyJ}" ;; esac
     printf '%s' "$value" | grep -Eq '^eyJ[A-Za-z0-9._=+/-]{40,}$' || die "that does not look like a tunnel token (it starts with eyJ)."
     set_env TUNNEL_TOKEN "$value"
     case ",$(get_env COMPOSE_PROFILES)," in
@@ -343,7 +344,9 @@ except urllib.error.HTTPError as e:
 }
 
 setup_needed() {
-  api GET /setup | grep -q '"needed":[[:space:]]*true'
+  local status
+  status=$(api GET /setup) || die "the backend did not answer: $status"
+  case "$status" in *'"needed":true'*) return 0 ;; *) return 1 ;; esac
 }
 
 create_admin() {

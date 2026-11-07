@@ -55,6 +55,10 @@ npm run dev
 
 Open http://localhost:3000.
 
+### On a server for real use (Oracle Cloud Always Free + Cloudflare)
+
+Step-by-step for a non-technical owner, browser only: [deploy/oracle/GUIDE.md](deploy/oracle/GUIDE.md). It runs the production compose override (`deploy/oracle/docker-compose.prod.yml`: no open ports, Cloudflare Tunnel and Access in front) with `setup.sh`, `update.sh`, `backup.sh` and `restore.sh`.
+
 ## Sending email
 
 Emails (invites, password resets, alerts, report packs) are written to the `email_outbox` table and sent by the `scheduler` service every minute over SMTP. Any provider works (Microsoft 365, Google Workspace, Amazon SES, SendGrid, Mailgun, a local relay). Without settings nothing is sent and the emails wait in the outbox.
