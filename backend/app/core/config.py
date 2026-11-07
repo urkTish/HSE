@@ -27,6 +27,10 @@ class Settings(BaseSettings):
     session_absolute_hours: int = 12
     cookie_secure: bool = False
     trust_proxy_headers: bool = False
+    # With TRUST_PROXY_HEADERS: a header that carries the visitor's IP alone and that the edge
+    # proxy always overwrites (e.g. `cf-connecting-ip` behind Cloudflare). Empty = the first
+    # X-Forwarded-For entry, as before.
+    client_ip_header: str = ""
 
     # Lockout (§5.1 rule 3)
     lockout_threshold: int = 10
