@@ -1,0 +1,216 @@
+name: Oracle deploy check
+
+# End-to-end check of deploy/oracle on an arm64 runner (the same CPU type as the Oracle Cloud
+# Ampere A1 server): setup.sh with production settings, update.sh, first-admin creation, login
+# through the frontend proxy as Cloudflare would forward it, a Quality endpoint, secure cookies,
+# no host ports, ClamAV, backup.sh and restore.sh. cloudflared itself is not started (no tunnel).
+
+on:
+  push:
+    branches: [claude/oracle-deploy]
+  workflow_dispatch:
+
+concurrency:
+  group: oracle-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  shellcheck:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install shellcheck
+        run: command -v shellcheck || (sudo apt-get update -q && sudo apt-get install -y -q shellcheck)
+      - name: shellcheck deploy/oracle
+        run: shellcheck -x deploy/oracle/*.sh
+
+  stack:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 75
+    env:
+      HOST: hse.example.test
+      ADMIN_EMAIL: admin@example.com
+      ADMIN_PASSWORD: Ci-Admin-Passw0rd!2026
+      BASE: http://127.0.0.1:3220
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Runner facts
+        run: |
+          uname -m
+          nproc
+          free -g
+          docker version --format 'docker {{.Server.Version}} ({{.Server.Arch}})'
+          docker compose version
+          sudo ss -Htln | awk '{print $4}' | sort -u > "$RUNNER_TEMP/listen-before.txt"
+          cat "$RUNNER_TEMP/listen-before.txt"
+
+      - name: Production compose publishes no ports
+        run: |
+          cp deploy/oracle/.env.prod.example "$RUNNER_TEMP/check.env"
+          echo "TUNNEL_TOKEN=eyJplaceholder" >> "$RUNNER_TEMP/check.env"
+          docker compose --env-file "$RUNNER_TEMP/check.env" -f docker-compose.yml \
+            -f deploy/oracle/docker-compose.prod.yml --profile tunnel --profile clamav \
+            config --format json > "$RUNNER_TEMP/prod.json"
+          python3 - "$RUNNER_TEMP/prod.json" <<'PY'
+          import json, sys
+          cfg = json.load(open(sys.argv[1]))
+          services = cfg["services"]
+          assert {"db", "backend", "scheduler", "frontend", "clamav", "cloudflared"} <= set(services), services.keys()
+          for name, svc in services.items():
+              assert not svc.get("ports"), f"{name} publishes {svc['ports']}"
+              if name != "storage-init":
+                  assert svc.get("restart") == "unless-stopped", f"{name}: restart={svc.get('restart')}"
+              assert svc.get("logging", {}).get("options", {}).get("max-size"), f"{name}: no log rotation"
+          env = services["backend"]["environment"]
+          assert env["ENVIRONMENT"] == "production" and env["COOKIE_SECURE"] == "true", env
+          assert env["FRONTEND_BASE_URL"].startswith("https://"), env["FRONTEND_BASE_URL"]
+          cf = services["cloudflared"]
+          assert cf["command"][-1] == "run" and cf["environment"]["TUNNEL_TOKEN"] == "eyJplaceholder"
+          print("OK: no published ports; restart, logging and production settings on every service")
+          PY
+
+      - name: cloudflared image runs on arm64
+        run: |
+          image=$(python3 -c "import json;print(json.load(open('$RUNNER_TEMP/prod.json'))['services']['cloudflared']['image'])")
+          docker run --rm "$image" --version
+          docker image inspect "$image" --format '{{.Architecture}}' | grep -x arm64
+
+      - name: setup.sh (production settings, no tunnel, first admin through /api/v1/setup)
+        run: |
+          sudo HSE_DIR="$GITHUB_WORKSPACE" HSE_HOSTNAME="$HOST" ADMIN_EMAIL="$ADMIN_EMAIL" \
+            ADMIN_PASSWORD="$ADMIN_PASSWORD" ORG_NAME_EN="CI Org" PROJECT_CODE="CI" \
+            bash deploy/oracle/setup.sh --skip-host --skip-git --no-tunnel --create-admin
+          sudo grep -c '^JWT_SECRET=[0-9a-f]\{64\}$' .env
+          sudo grep -q '^ENVIRONMENT=production$' .env
+
+      - name: setup.sh again is safe (keeps secrets, setup stays closed)
+        run: |
+          before=$(sudo grep '^FIELD_ENCRYPTION_KEY=' .env)
+          sudo HSE_DIR="$GITHUB_WORKSPACE" bash deploy/oracle/setup.sh --skip-host --skip-git --no-tunnel --create-admin
+          [ "$before" = "$(sudo grep '^FIELD_ENCRYPTION_KEY=' .env)" ]
+
+      - name: update.sh (rebuild, migrate, restart)
+        run: sudo HSE_SKIP_GIT=1 bash deploy/oracle/update.sh --no-backup
+
+      - name: Publish a temporary test port (127.0.0.1:3220, this job only)
+        run: |
+          cat > "$RUNNER_TEMP/ci-port.yml" <<'YML'
+          services:
+            frontend:
+              ports: ["127.0.0.1:3220:3000"]
+          YML
+          echo "CI_DC=docker compose -f docker-compose.yml -f deploy/oracle/docker-compose.prod.yml -f $RUNNER_TEMP/ci-port.yml" >> "$GITHUB_ENV"
+          cat > "$RUNNER_TEMP/port-up.sh" <<'SH'
+          set -euo pipefail
+          sudo $CI_DC up -d --wait --wait-timeout 300 frontend
+          for _ in $(seq 1 60); do curl -fsS -o /dev/null "$BASE/api/v1/health" && exit 0; sleep 2; done
+          exit 1
+          SH
+          bash "$RUNNER_TEMP/port-up.sh"
+
+      - name: Nothing listens on the host except the test port
+        run: |
+          sudo ss -Htln | awk '{print $4}' | sort -u > "$RUNNER_TEMP/listen-after.txt"
+          new=$(comm -13 "$RUNNER_TEMP/listen-before.txt" "$RUNNER_TEMP/listen-after.txt")
+          echo "New listeners: $new"
+          [ "$new" = "127.0.0.1:3220" ]
+          sudo docker compose ps --format '{{.Service}} {{.Ports}}'
+          published=$(sudo docker compose ps --format '{{.Service}} {{.Ports}}' | grep -- '->' || true)
+          [ "$published" = "frontend 127.0.0.1:3220->3000/tcp" ]
+
+      - name: Smoke test through the frontend proxy (as Cloudflare forwards it)
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/smoke.sh" <<'SH'
+          set -euo pipefail
+          T=$(mktemp -d)
+          CF=(-H "Host: $HOST" -H "X-Forwarded-Proto: https" -H "X-Forwarded-For: 10.9.9.9" -H "CF-Connecting-IP: 203.0.113.7")
+          j() { python3 -c "import json,sys; d=json.load(sys.stdin); print(eval(sys.argv[1]))" "$1"; }
+
+          curl -fsS "${CF[@]}" "$BASE/api/v1/health" | tee "$T/health.json"; echo
+          [ "$(j 'd["database"]' < "$T/health.json")" = ok ]
+
+          [ "$(curl -fsS "${CF[@]}" "$BASE/api/v1/setup" | j 'd["needed"]')" = False ]
+          code=$(curl -sS -o /dev/null -w '%{http_code}' "${CF[@]}" -H 'Content-Type: application/json' -d '{}' "$BASE/api/v1/setup")
+          echo "second setup attempt: $code"; [ "$code" = 409 ] || [ "$code" = 422 ]
+
+          curl -sS -D "$T/login.h" -o "$T/login.json" "${CF[@]}" -H 'Content-Type: application/json' \
+            -d "{\"email\":\"$ADMIN_EMAIL\",\"password\":\"$ADMIN_PASSWORD\"}" "$BASE/api/v1/auth/login"
+          head -1 "$T/login.h"; grep -q ' 200' <(head -1 "$T/login.h")
+          cookie=$(grep -i '^set-cookie: hse_session=' "$T/login.h" | tr -d '\r')
+          echo "$cookie" | sed 's/=[^;]*;/=<redacted>;/'
+          echo "$cookie" | grep -qi '; secure' || { echo "cookie is not Secure"; exit 1; }
+          echo "$cookie" | grep -qi '; httponly' || { echo "cookie is not HttpOnly"; exit 1; }
+          echo "$cookie" | grep -qi 'samesite=lax' || { echo "cookie is not SameSite=Lax"; exit 1; }
+          C=(-H "Cookie: $(echo "$cookie" | sed -e 's/^[Ss]et-[Cc]ookie: //' -e 's/;.*//')")
+
+          curl -fsS "${CF[@]}" "${C[@]}" "$BASE/api/v1/auth/me" > "$T/me.json"
+          [ "$(j 'd["email"]' < "$T/me.json")" = "$ADMIN_EMAIL" ]
+
+          curl -fsS "${CF[@]}" "${C[@]}" "$BASE/api/v1/projects" > "$T/projects.json"
+          pid=$(j '(d["items"] if isinstance(d, dict) else d)[0]["id"]' < "$T/projects.json")
+          echo "project $pid"
+          curl -fsS "${CF[@]}" "${C[@]}" "$BASE/api/v1/projects/$pid/quality/itps" | head -c 300; echo
+          curl -fsS "${CF[@]}" "${C[@]}" "$BASE/api/v1/projects/$pid/quality/q1-counts?date_from=2026-01-01&date_to=2026-12-31" | head -c 300; echo
+
+          # Pages: relative (or https) redirects, HSTS, rendered login page
+          curl -sS -o /dev/null -D "$T/root.h" "${CF[@]}" "$BASE/"
+          loc=$(grep -i '^location:' "$T/root.h" | tr -d '\r' | cut -d' ' -f2)
+          echo "/ -> $loc"
+          case "$loc" in /*|https://$HOST/*) ;; *) echo "bad redirect $loc"; exit 1 ;; esac
+          curl -fsS -D "$T/login-page.h" -o "$T/login.html" "${CF[@]}" "$BASE/en/login"
+          grep -qi '^strict-transport-security:' "$T/login-page.h"
+          grep -qi '<html' "$T/login.html"
+
+          # The visitor IP recorded for the session is Cloudflare's CF-Connecting-IP
+          ip=$(sudo docker compose exec -T db psql -U hse -d hse -tAc "select ip_address from user_sessions order by created_at desc limit 1")
+          echo "session ip: $ip"; [ "$ip" = 203.0.113.7 ]
+          echo "SMOKE OK"
+          SH
+          bash "$RUNNER_TEMP/smoke.sh"
+
+      - name: ClamAV (arm64 image) detects the EICAR test signature
+        run: |
+          for i in $(seq 1 90); do
+            state=$(sudo docker inspect -f '{{.State.Health.Status}}' "$(sudo docker compose ps -q clamav)")
+            [ "$state" = healthy ] && break
+            sleep 10
+          done
+          echo "clamav: $state"; [ "$state" = healthy ]
+          sudo docker compose exec -T backend python -c "
+          from app.services.scanner import scan_bytes
+          sig = 'X5O!P%@AP[4\\\\PZX54(P^)7CC)7}\$' + 'EICAR-STANDARD-ANTIVIRUS-' + 'TEST-FILE!\$H+H*'
+          v = scan_bytes(sig.encode()); print(v); assert v.infected
+          v = scan_bytes(b'hello'); print(v); assert not v.infected
+          "
+
+      - name: backup.sh and restore.sh round trip
+        run: |
+          set -euo pipefail
+          sudo bash deploy/oracle/backup.sh
+          archive=$(sudo find /var/backups/hse -name 'hse-backup-*.tar' | sort | tail -1)
+          sudo tar tf "$archive"
+          q() { sudo docker compose exec -T db psql -U hse -d hse -tAc "$1"; }
+          q "select count(*) from projects"
+          q "update installation set organisation_name_en = 'Changed after backup'"
+          sudo bash deploy/oracle/restore.sh "$archive" --yes --no-safety-backup
+          [ "$(q "select organisation_name_en from installation")" = "CI Org" ]
+          bash "$RUNNER_TEMP/port-up.sh"
+          bash "$RUNNER_TEMP/smoke.sh"
+
+      - name: Logs on failure
+        if: failure()
+        run: |
+          sudo docker compose ps -a || true
+          sudo docker compose logs --tail 150 || true
+
+      - name: Tear down
+        if: always()
+        run: sudo docker compose down -v --remove-orphans || true
