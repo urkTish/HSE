@@ -88,7 +88,10 @@ PG_DB=$(get_env POSTGRES_DB)
 PG_DB=${PG_DB:-hse}
 
 log "Stopping the application"
-dc stop cloudflared frontend scheduler backend >/dev/null 2>&1 || true
+# One at a time: a service whose profile is off (cloudflared with --no-tunnel) must not stop the rest.
+for service in cloudflared frontend scheduler backend; do
+  dc stop "$service" >/dev/null 2>&1 || true
+done
 dc up -d db
 wait_healthy db 180 || die "the database did not start."
 

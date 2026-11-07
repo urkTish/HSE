@@ -106,11 +106,13 @@ jobs:
             frontend:
               ports: ["127.0.0.1:3220:3000"]
           YML
-          echo "CI_DC=docker compose -f docker-compose.yml -f deploy/oracle/docker-compose.prod.yml -f $RUNNER_TEMP/ci-port.yml" >> "$GITHUB_ENV"
+          # A script, not $GITHUB_ENV: values written there only reach the later steps.
           cat > "$RUNNER_TEMP/port-up.sh" <<'SH'
           set -euo pipefail
-          sudo $CI_DC up -d --wait --wait-timeout 300 frontend
-          for _ in $(seq 1 60); do curl -fsS -o /dev/null "$BASE/api/v1/health" && exit 0; sleep 2; done
+          sudo docker compose -f docker-compose.yml -f deploy/oracle/docker-compose.prod.yml \
+            -f "$RUNNER_TEMP/ci-port.yml" up -d frontend
+          for _ in $(seq 1 90); do curl -fsS -o /dev/null "$BASE/api/v1/health" && exit 0; sleep 2; done
+          sudo docker compose ps -a
           exit 1
           SH
           bash "$RUNNER_TEMP/port-up.sh"
