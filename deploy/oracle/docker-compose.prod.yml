@@ -1,0 +1,146 @@
+# Production override for one server behind Cloudflare Tunnel (deploy/oracle/GUIDE.md).
+#
+#   docker compose -f docker-compose.yml -f deploy/oracle/docker-compose.prod.yml up -d
+#
+# setup.sh writes COMPOSE_FILE / COMPOSE_PROFILES / COMPOSE_PROJECT_NAME into /opt/hse/.env, so on
+# the server a plain `docker compose ...` inside /opt/hse uses this file. The default
+# docker-compose.yml (local development) is not changed by it.
+#
+# What it changes:
+# - No host-published ports at all: the only way in is the outbound Cloudflare Tunnel
+#   (`cloudflared`, profile `tunnel`), which reaches the frontend on the internal network.
+# - ENVIRONMENT=production, COOKIE_SECURE=true, FRONTEND_BASE_URL=https://$HSE_HOSTNAME; the
+#   visitor IP for audit/sessions comes from Cloudflare's CF-Connecting-IP header.
+# - restart: unless-stopped, healthchecks and log rotation on every service.
+# - Uploads are kept in the `uploads` volume (the default stack keeps them inside the container).
+# - ClamAV uses the multi-arch Debian image (the Alpine `clamav/clamav` image is amd64 only) and
+#   runs under the `clamav` profile, so it can be switched off on a small server.
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+x-backend-env: &backend-env
+  ENVIRONMENT: production
+  COOKIE_SECURE: "true"
+  FRONTEND_BASE_URL: https://${HSE_HOSTNAME:-hse.example.com}
+  # Only the frontend container can reach the backend, and only Cloudflare reaches the frontend,
+  # so the forwarded headers can be trusted; CF-Connecting-IP cannot be set by the visitor.
+  TRUST_PROXY_HEADERS: "true"
+  CLIENT_IP_HEADER: ${CLIENT_IP_HEADER-cf-connecting-ip}
+  STORAGE_DIR: /app/var/storage
+
+services:
+  db:
+    ports: !reset []
+    restart: unless-stopped
+    logging: *logging
+    shm_size: 256mb
+
+  # One-off: make the uploads volume writable by the backend's non-root user (uid 10001).
+  storage-init:
+    build:
+      context: ./backend
+    user: "0"
+    command: ["sh", "-c", "mkdir -p /app/var/storage && chown -R 10001 /app/var/storage"]
+    volumes:
+      - uploads:/app/var/storage
+    restart: "no"
+    logging: *logging
+
+  backend:
+    ports: !reset []
+    restart: unless-stopped
+    logging: *logging
+    environment:
+      <<: *backend-env
+      # 4 OCPU: 3 API processes leave a core for Postgres, the scheduler, Next.js and ClamAV.
+      WEB_CONCURRENCY: ${WEB_CONCURRENCY:-3}
+    volumes:
+      - uploads:/app/var/storage
+    depends_on:
+      storage-init:
+        condition: service_completed_successfully
+      # ClamAV can be switched off (profile `clamav` left out of COMPOSE_PROFILES, CLAMAV_HOST=).
+      clamav:
+        condition: service_started
+        required: false
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=5)"
+      interval: 30s
+      timeout: 10s
+      start_period: 120s
+      retries: 3
+
+  scheduler:
+    restart: unless-stopped
+    logging: *logging
+    environment:
+      <<: *backend-env
+      CLAMAV_HOST: ${CLAMAV_HOST-clamav}
+      CLAMAV_PORT: ${CLAMAV_PORT:-3310}
+    volumes:
+      - uploads:/app/var/storage
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      # The scheduler has no port; a database round trip with its settings shows it can work.
+      test:
+        - CMD
+        - python
+        - -c
+        - "from sqlalchemy import text; from app.db.session import get_engine; get_engine().connect().execute(text('SELECT 1'))"
+      interval: 60s
+      timeout: 20s
+      start_period: 60s
+      retries: 3
+
+  clamav:
+    # Multi-arch (linux/amd64, linux/arm64); clamav/clamav:1.x is published for amd64 only.
+    image: clamav/clamav-debian:1.5.4
+    profiles: ["clamav"]
+    restart: unless-stopped
+    logging: *logging
+
+  frontend:
+    ports: !reset []
+    restart: unless-stopped
+    logging: *logging
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/en/login',{redirect:'manual'}).then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))"
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+
+  # Outbound-only connection to Cloudflare. The public hostname (hse.<domain> -> http://frontend:3000)
+  # is configured on the tunnel in the Cloudflare Zero Trust dashboard; the token comes from .env.
+  cloudflared:
+    image: cloudflare/cloudflared:2026.10.7
+    profiles: ["tunnel"]
+    command: ["tunnel", "--no-autoupdate", "run"]
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:-}
+    restart: unless-stopped
+    logging: *logging
+    depends_on:
+      frontend:
+        condition: service_healthy
+    # The image has no shell or curl; `tunnel run` exits (and is restarted) when it cannot connect.
+
+volumes:
+  uploads:

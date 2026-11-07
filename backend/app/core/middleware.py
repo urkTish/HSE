@@ -35,9 +35,10 @@ async def _too_large(send: Send) -> None:
 
 
 class RequestContextMiddleware:
-    def __init__(self, app: ASGIApp, trust_proxy: bool = False) -> None:
+    def __init__(self, app: ASGIApp, trust_proxy: bool = False, client_ip_header: str = "") -> None:
         self.app = app
         self.trust_proxy = trust_proxy
+        self.client_ip_header = client_ip_header.strip().lower()
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":
@@ -50,7 +51,9 @@ class RequestContextMiddleware:
             await _too_large(send)
             return
         ip = scope["client"][0] if scope.get("client") else None
-        if self.trust_proxy and "x-forwarded-for" in headers:
+        if self.trust_proxy and self.client_ip_header and headers.get(self.client_ip_header):
+            ip = headers[self.client_ip_header].strip()
+        elif self.trust_proxy and "x-forwarded-for" in headers:
             ip = headers["x-forwarded-for"].split(",")[0].strip()
         request_id = headers.get("x-request-id") or uuid.uuid4().hex
         set_request_context(

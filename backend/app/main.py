@@ -234,7 +234,11 @@ def create_app() -> FastAPI:
         # Expired / invalid licence → read-only (D-290); no licence key = unlimited.
         dependencies=[Depends(read_only_guard)],
     )
-    app.add_middleware(RequestContextMiddleware, trust_proxy=get_settings().trust_proxy_headers)
+    app.add_middleware(
+        RequestContextMiddleware,
+        trust_proxy=get_settings().trust_proxy_headers,
+        client_ip_header=get_settings().client_ip_header,
+    )
     app.add_exception_handler(ApiError, api_error_handler)
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
     app.add_exception_handler(StarletteHTTPException, http_exception_handler)
